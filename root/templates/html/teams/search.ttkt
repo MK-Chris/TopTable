@@ -1,0 +1,9 @@
+<div id="form">
+<form method="get" action="[% c.uri_for('/teams/search') %]">
+<fieldset id="team_search">
+<legend>Team Search</legend>
+<label for="name">Name</label> <input type="text" id="q" name="q" value="" /><br />
+</fieldset>
+<input type="submit" name="Submit" value="Search" />
+</form>
+</div>

@@ -1,0 +1,46 @@
+<form method="post" action="[% form_action %]">
+<fieldset>
+  <legend>[% c.maketext("templates.form.legend.template-rules") %]</legend>
+  
+  <div class="label-field-container">
+    <label for="name">[% c.maketext("templates.field.name") %]</label>
+    <div class="field-container">
+      <input type="text" id="name" name="name" value="[% c.flash.name OR tt_template.name | html_entity %]" />
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+  
+  <div class="label-field-container">
+    <label for="singles_players_per_team">[% c.maketext("templates.team-match.field.singles-players-per-team") %]</label>
+    <div class="field-container">
+      <input type="number" id="singles_players_per_team" name="singles_players_per_team" min="1" value="[% c.flash.singles_players_per_team OR tt_template.singles_players_per_team | html_entity %]" />
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+  
+  <div class="label-field-container">
+    <label for="winner_type">[% c.maketext("templates.team-match.field.winner-type") %]</label>
+    <div class="field-container">
+      <select id="winner_type" name="winner_type" data-placeholder="[% c.maketext("templates.team-match.field.winner-type") %]">
+        <option value=""></option>
+[%
+# Loop through match score types
+FOREACH winner_type IN winner_types; 
+  # set selected text if needed;
+  IF c.flash.winner_type == winner_type.id;
+    SET SELECTED = ' selected="selected"';
+  ELSE;
+    SET SELECTED = '';
+  END;
+-%]
+        <option value="[% winner_type.id %]"[% SELECTED %] title="[% c.maketext("winner-type.description." _ winner_type.id) | html_entity %]">[% c.maketext("winner-type.name." _ winner_type.id) %]</option>
+[%
+END;
+-%]
+      </select>
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+</fieldset>
+<input type="submit" name="submit" value="[% c.maketext("form.button.save") %]" />
+</form>

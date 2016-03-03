@@ -1,0 +1,5 @@
+    
+    $("div#tabs").responsiveTabs({
+      startCollapsed: false
+    });
+    

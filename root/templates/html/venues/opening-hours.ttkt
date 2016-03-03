@@ -1,0 +1,166 @@
+<form method="post" action="[% c.uri_for(form_action) %]">
+<fieldset>
+<legend>Time</legend>
+
+<div class="label-field-container">
+  <label class="normal" for="start_hour[% session_counter %]">Start time</label>
+  <div class="field-container"> 
+[%
+SET session_counter = 0;
+FOREACH tt_session IN opening_hours;
+  SET session_counter = session_counter + 1;
+-%]
+    <select class="time" id="start_hour[% session_counter %]" name="start_hour" data-placeholder="Hour">
+      <option value=""></option>
+[%
+  SET counter = 0;
+  WHILE counter <= 23;
+    IF counter < 10;
+      SET counter_display = "0" _ counter;
+    ELSE;
+      SET counter_display = counter;
+    END;
+    # Now set selected text if needed;
+    IF counter_display == tt_session.start_hour;
+      SET SELECTED = ' selected="selected"';
+    ELSE;
+      SET SELECTED = '';
+    END;
+-%]
+      <option value="[% counter_display %]"[% SELECTED %]>[% counter_display %]</option>
+[%
+    SET counter = counter + 1;
+  END;
+-%]
+    </select>
+    :
+    <select class="time" id="start_minute[% session_counter %]" name="start_minute" data-placeholder="Minute">
+      <option value=""></option>
+[%
+  SET counter = 0;
+  WHILE counter <= 59;
+    IF counter < 10;
+      # Set leading zeroes if needed;
+      SET counter_display = "0" _ counter;
+    ELSE;
+      SET counter_display = counter;
+    END;
+    # Now set selected text if needed;
+    IF counter_display == tt_session.start_minute;
+      SET SELECTED = ' selected="selected"';
+    ELSE;
+      SET SELECTED = '';
+    END;
+-%]
+      <option value="[% counter_display %]"[% SELECTED %]>[% counter_display %]</option>
+[%
+    SET counter = counter + 1;
+  END;
+-%]
+    </select>
+  </div>
+  <div class="clear-fix"></div>
+</div>
+
+
+<div class="label-field-container">
+  <label class="normal" for="end_hour[% session_counter %]">End time</label>
+  <div class="field-container">
+    <select class="time" id="end_hour[% session_counter %]" name="end_hour" data-placeholder="Hour">
+      <option value=""></option>
+[%
+  SET counter = 0;
+  WHILE counter <= 23;
+    IF counter < 10;
+      SET counter_display = "0" _ counter;
+    ELSE;
+      SET counter_display = counter;
+    END;
+    # Now set selected text if needed;
+    IF counter_display == tt_session.end_hour;
+      SET SELECTED = ' selected="selected"';
+    ELSE;
+      SET SELECTED = '';
+    END;
+-%]
+  <option value="[% counter_display %]"[% SELECTED %]>[% counter_display %]</option>
+[%
+    SET counter = counter + 1;
+  END;
+-%]
+    </select>
+    :
+    <select class="time" id="end_minute[% session_counter %]" name="end_minute" data-placeholder="Minute">
+      <option value=""></option>
+[%
+  SET counter = 0;
+  WHILE counter <= 59;
+    IF counter < 10;
+      # Set leading zeroes if needed;
+      SET counter_display = "0" _ counter;
+    ELSE;
+      SET counter_display = counter;
+    END;
+    # Now set selected text if needed;
+    IF counter_display == tt_session.end_minute;
+      SET SELECTED = ' selected="selected"';
+    ELSE;
+      SET SELECTED = '';
+    END;
+-%]
+      <option value="[% counter_display %]"[% SELECTED %]>[% counter_display %]</option>
+[%
+    SET counter = counter + 1;
+  END;
+-%]
+    </select>
+  </div>
+  <div class="clear-fix"></div>
+</div>
+
+[%
+END;
+-%]
+</fieldset>
+<fieldset>
+<legend>Session Information</legend>
+
+<div class="label-field-container">
+  <label for="description[% session_counter %]">Description</label>
+  <div class="field-container">
+    <input type="text" name="description" id="description[% session_counter %]" value="[% tt_session.description %]" />
+  </div>
+  <div class="clear-fix"></div>
+</div>
+
+<div class="label-field-container">
+  <label for="price_information[% session_counter %]">Pricing information</label>
+  <div class="field-container">
+    <input type="text" name="price_information[% session_counter %]" id="price_information[% session_counter %]" />
+  </div>
+  <div class="clear-fix"></div>
+</div>
+
+<div class="label-field-container">
+  <label for="number_of_tables[% session_counter %]">Tables</label>
+  <div class="field-container">
+    <input type="number" name="number_of_tables" id="number_of_tables[% session_counter %]" min="1" value="[% tt_session.number_of_tables %]" />
+  </div>
+  <div class="clear-fix"></div>
+</div>
+</fieldset><br />
+<fieldset>
+<legend>Days</legend>
+<div class="button-toggle">
+[%
+  FOREACH day IN weekdays;
+-%]
+  <input type="checkbox" id="weekday_[% day.weekday_number %]_[% session_counter %]" name="weekday_[% day.weekday_number %]_[% session_counter %]" value="1" /><label for="weekday_[% day.weekday_number %]_[% session_counter %]">[% day.weekday_name %]</label>
+[%
+  END;
+-%]
+</div>
+</fieldset>
+<input type="hidden" name="id" value="[% venue.id %]" />
+<input type="submit" name="Submit" value="Save" />
+</form>

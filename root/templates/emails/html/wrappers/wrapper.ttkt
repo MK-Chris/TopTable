@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="author" content="Chris Welch" />
+<meta name="format-detection" content="telephone=yes" />
+
+</head>
+<body>
+<table width="100%">
+  <tr>
+    </td><a href="[% c.uri_for("/") %]"><img src="cid:logo" alt="[% name %]" title="[% name %]" /></a></td>
+  </tr>
+</table>
+
+<div id="content">
+[%
+# This is where TT will stick all of your template's contents.
+content
+-%]
+</div><!-- end content -->
+
+<div id="footer">[% c.maketext("footer.copyright") %] &copy; Chris Welch 2015</div><br /><br />
+</body>
+</html>

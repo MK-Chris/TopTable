@@ -1,0 +1,7 @@
+<form method="post" action="[% c.uri_for_action("/clubs/do_delete", [club.url_key]) %]">
+<input type="submit" name="Submit" value="[% c.maketext("form.button.delete") %]" />
+</form>
+
+[%
+INCLUDE "html/clubs/view.ttkt";
+%]

@@ -1,0 +1,41 @@
+[% # This is a TT comment. -%]
+[% # Note That the '-' at the beginning or end of TT code  -%]
+[% # "chomps" the whitespace/newline at that end of the    -%]
+[% # output (use View Source in browser to see the effect) -%]
+[% # Some basic HTML with a loop to display clubs -%]
+[%
+IF grids.count;
+  # Use PROCESS instead of INCLUDE so that the page_links_text is defined in the current template thereafter
+  PROCESS "html/generic/pagination.ttkt" OBJECT_PLURAL = c.maketext("object.plural.fixtures-grids");
+  page_links_text;
+  
+  WHILE (grid = grids.next);
+    grid_name_html = FILTER html_entity; grid.name; END;
+-%]
+<div class="list-item">
+  <a href="[% c.uri_for_action("/fixtures-grids/view_current_season", [grid.url_key]) %]">[% grid.name | html_entity %]</a>
+[%
+    IF authorisation.fixtures_edit;
+-%]
+  <a href="[% c.uri_for_action("/fixtures-grids/edit", [grid.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", grid_name_html) %]" title="[% c.maketext("admin.edit-object", grid_name_html) %]" /></a>
+[%
+    END;
+    IF authorisation.fixtures_delete and grid.can_delete;
+-%]
+  <a href="[% c.uri_for_action("/fixtures-grids/delete", [grid.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", grid_name_html) %]" title="[% c.maketext("admin.delete-object", grid_name_html) %]" /></a>
+[%
+    END;
+-%]
+</div>
+[%
+  END;
+  page_links_text;
+END;
+-%]
+[%
+IF authorisation.fixtures_create;
+-%]
+<a href="[% c.uri_for('/fixtures-grids/create') %]"><img src="[% c.uri_for('/static/images/icons/0009-Add-icon-48.png') %]" title="[% c.maketext("admin.create-object", c.maketext("object.singular.fixtures-grids")) %]" /></a><br />
+[%
+END;
+-%]

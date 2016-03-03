@@ -1,0 +1,67 @@
+[% # This is a TT comment. -%]
+
+[% # Note That the '-' at the beginning or end of TT code  -%]
+[% # "chomps" the whitespace/newline at that end of the    -%]
+[% # output (use View Source in browser to see the effect) -%]
+
+[% # Some basic HTML with a loop to display clubs -%]
+<div class="list-item">
+[%
+IF specific_season;
+  SET uri = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "teams"]);
+ELSE;
+  SET uri = c.uri_for_action("/fixtures-results/filter_view_current_season", ["teams"]);
+END;
+-%]
+  <a href="[% uri %]">[% c.maketext("menu.text.fixtures-results-by-team") %]</a>
+</div>
+<div class="list-item">
+[%
+IF specific_season;
+  SET uri = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "divisions"]);
+ELSE;
+  SET uri = c.uri_for_action("/fixtures-results/filter_view_current_season", ["divisions"]);
+END;
+-%]
+  <a href="[% uri %]">[% c.maketext("menu.text.fixtures-results-by-division") %]</a>
+</div>
+<div class="list-item">
+[%
+IF specific_season;
+  SET uri = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "days"]);
+ELSE;
+  SET uri = c.uri_for_action("/fixtures-results/filter_view_current_season", ["days"]);
+END;
+-%]
+  <a href="[% uri %]">[% c.maketext("menu.text.fixtures-results-by-day") %]</a>
+</div>
+<div class="list-item">
+[%
+IF specific_season;
+  SET uri = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "weeks"]);
+ELSE;
+  SET uri = c.uri_for_action("/fixtures-results/filter_view_current_season", ["weeks"]);
+END;
+-%]
+  <a href="[% uri %]">[% c.maketext("menu.text.fixtures-results-by-week") %]</a>
+</div>
+<div class="list-item">
+[%
+IF specific_season;
+  SET uri = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "months"]);
+ELSE;
+  SET uri = c.uri_for_action("/fixtures-results/filter_view_current_season", ["months"]);
+END;
+-%]
+  <a href="[% uri %]">[% c.maketext("menu.text.fixtures-results-by-month") %]</a>
+</div>
+<div class="list-item">
+[%
+IF specific_season;
+  SET uri = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "venues"]);
+ELSE;
+  SET uri = c.uri_for_action("/fixtures-results/filter_view_current_season", ["venues"]);
+END;
+-%]
+  <a href="[% uri %]">[% c.maketext("menu.text.fixtures-results-by-venue") %]</a>
+</div>

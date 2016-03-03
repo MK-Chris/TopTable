@@ -1,0 +1,28 @@
+<form method="post" action="[% form_action %]">
+<fieldset>
+  <legend>[% c.maketext("user.retrieve-username") %]</legend>
+  
+  <div class="label-field-container">
+    <label for="email_address">[% c.maketext("user.field.email-address") %]</label>
+    <div class="field-container">
+      <input type="email" id="email_address" name="email_address" value="[% c.flash.email_address | html_entity %]" />
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+  
+[%
+IF reCAPTCHA;
+-%]
+  <div class="label-field-container">
+    <div class="label-placeholder">&nbsp;</div>
+    <div class="field-container">
+      <div class="g-recaptcha" data-sitekey="[% c.config.Google.reCAPTCHA.site_key %]"></div>
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+[%
+END;
+-%]
+</fieldset>
+<input type="submit" name="activate" value="[% c.maketext("form.button.submit") %]">
+</form>

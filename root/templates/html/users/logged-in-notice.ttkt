@@ -1,0 +1,1 @@
+[% c.maketext("user.login.success.message", c.user.username, meta_refresh.url) | html_line_break %]

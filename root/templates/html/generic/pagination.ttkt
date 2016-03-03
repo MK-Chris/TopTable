@@ -1,0 +1,39 @@
+[%
+  IF page_info;
+    SET i = 1;
+    SET page_links_text = '<div class="pagination">' _ c.maketext("pagination.number-of-objects", page_info.total_entries, OBJECT_PLURAL) _ ' | ' _ c.maketext("pagination.page-x-of-y", page_info.current_page, page_info.last_page);
+    IF page_info.last_page != 1;
+      SET page_links_text = page_links_text _ ' | ';
+      FOREACH page IN page_links;
+        IF i == 1;
+          # First iteration, write the enclosing span
+          page_links_text = page_links_text _ '<span class="page-links">';
+        ELSE;
+          # If we're not on the first iteration, we'll add a separator...
+          # If there's only one difference between this and the last one, it's just a comma
+          SET page_number_difference = page.number - last_page_number;
+          
+          IF page_number_difference == 1;
+            SET page_links_text = page_links_text _ '<span class="page-separator">, </span>';
+          ELSE;
+            SET page_links_text = page_links_text _ '<span class="page-ellipsis"> ... </span>';
+          END;
+        END;
+        SET i = i + 1;
+        
+        IF page.number == page_info.current_page;
+          # Current page number is just displayed
+          SET page_links_text = page_links_text _ '<span class="current-page">' _ page.number _ '</span>';
+        ELSE;
+          # We need to link to it
+          SET page_links_text = page_links_text _ '<a href="' _ c.uri_for_action(page.action, page.arguments) _ '">' _ page.number _ '</a>';
+        END;
+        
+        SET last_page_number = page.number;
+      END;
+      
+      SET page_links_text = page_links_text _ '</span>';
+    END;
+    SET page_links_text = page_links_text _ '</div><br />';
+  END;
+%]

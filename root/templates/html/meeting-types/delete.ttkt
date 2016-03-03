@@ -1,0 +1,9 @@
+<div id="form">
+<form method="post" action="[% c.uri_for_action("/meeting-types/do_delete", [meeting_type.url_key]) %]">
+<input type="submit" name="Submit" value="[% c.maketext("form.button.delete") %]" />
+</form>
+</div>
+
+[%
+INCLUDE "html/meeting-types/view.ttkt";
+%]

@@ -1,0 +1,1 @@
+[% c.maketext("contact.thank-you.text", user_name) %]

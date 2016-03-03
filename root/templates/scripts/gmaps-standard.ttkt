@@ -1,0 +1,21 @@
+    
+    $("#map-canvas").gmap3({
+      map:{
+        options:{
+          center:[[% map_latitude %],[% map_longitude %]],
+          zoom:12,
+          mapTypeId: google.maps.MapTypeId.ROADMAP,
+          mapTypeControl: true,
+          mapTypeControlOptions: {
+            style: google.maps.MapTypeControlStyle.DROPDOWN_MENU
+          },
+          navigationControl: true,
+          scrollwheel: true,
+          streetViewControl: true,
+        }
+      },
+      marker:{
+        latLng:[[% map_latitude %],[% map_longitude %]],
+      }
+    });
+    

@@ -1,0 +1,41 @@
+[% # This is a TT comment. -%]
+[% # Note That the '-' at the beginning or end of TT code  -%]
+[% # "chomps" the whitespace/newline at that end of the    -%]
+[% # output (use View Source in browser to see the effect) -%]
+[% # Some basic HTML with a loop to display clubs -%]
+[%
+IF users.count;
+  # Use PROCESS instead of INCLUDE so that the page_links_text is defined in the current template thereafter
+  PROCESS "html/generic/pagination.ttkt" OBJECT_PLURAL = c.maketext("object.plural.users");
+  page_links_text;
+  
+  WHILE (user = users.next);
+    username_html = FILTER html_entity; user.username; END;
+-%]
+
+<div class="list-item">
+  <a href="[% c.uri_for_action("/users/view", [user.url_key]) %]">[% user.display_user_and_name | html_entity %]</a>
+[%
+    IF authorisation.user_edit_all OR ( authorisation.user_edit_own AND c.user_exists AND c.user.id == user.id );
+-%]
+  <a href="[% c.uri_for_action("/users/edit", [user.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", username_html) %]" title="[% c.maketext("admin.edit-object", username_html) %]" /></a>
+[%
+    END;
+    IF authorisation.user_delete_all OR ( authorisation.user_delete_own AND c.user_exists AND c.user.id == user.id );
+-%]
+  <a href="[% c.uri_for_action("/users/delete", [user.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", username_html) %]" title="[% c.maketext("admin.delete-object", username_html) %]" /></a>
+[%
+    END;
+-%]
+</div>
+[%
+  END;
+  page_links_text;
+ELSE;
+-%]
+<div class="list-item">
+  There are no users to view.
+</div>
+[%
+END;
+-%]

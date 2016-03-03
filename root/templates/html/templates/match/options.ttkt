@@ -1,0 +1,13 @@
+[% # This is a TT comment. -%]
+
+[% # Note That the '-' at the beginning or end of TT code  -%]
+[% # "chomps" the whitespace/newline at that end of the    -%]
+[% # output (use View Source in browser to see the effect) -%]
+
+[% # Some basic HTML with a loop to display match templates -%]
+<div class="list-item">
+  <a href="[% c.uri_for("/templates/match/individual") %]">[% c.maketext("menu.text.templates-invididual-match") %]</a>
+</div>
+<div class="list-item">
+  <a href="[% c.uri_for("/templates/match/team") %]">[% c.maketext("menu.text.templates-team-match") %]</a>
+</div>

@@ -1,0 +1,440 @@
+[% # Note That the '-' at the beginning or end of TT code  -%]
+[% # "chomps" the whitespace/newline at that end of the    -%]
+[% # output (use View Source in browser to see the effect) -%]
+
+[%
+SET scheduled_date = match.scheduled_date;
+CALL scheduled_date.set_locale( c.locale );
+IF match.rescheduled;
+  SET rescheduled_date = match.played_date;
+  CALL rescheduled_date.set_locale( c.locale );
+  SET date_display = c.maketext("matches.text.date-rescheduled", rescheduled_date.day_name, rescheduled_date.day, rescheduled_date.month_name, rescheduled_date.year, match.actual_start_time, scheduled_date.day_name, scheduled_date.day, scheduled_date.month_name, scheduled_date.year);
+ELSE;
+  SET date_display = c.maketext("matches.text.date-scheduled", scheduled_date.day_name, scheduled_date.day, scheduled_date.month_name, scheduled_date.year, match.actual_start_time);
+END;
+
+IF match.season.complete;
+  table_uri = c.uri_for_action("/league-tables/view_specific_season", [match.division.url_key, match.season.url_key]);
+ELSE;
+  table_uri = c.uri_for_action("/league-tables/view_current_season", [match.division.url_key]);
+END;
+
+IF division_season.name == match.division.name;
+  SET division_text = division_season.name;
+ELSE;
+  SET division_text = c.maketext("divisions.name-changed.both-names", division_season.name, match.division.name);
+END;
+-%]
+<div id="tabs">
+  <ul>
+    <li><a href="#games">[% c.maketext("matches.heading.games") %]</a></li>
+    <li><a href="#teams">[% c.maketext("matches.heading.team-summaries") %]</a></li>
+    <li><a href="#players">[% c.maketext("matches.heading.player-summaries") %]</a></li>
+    <li><a href="#match-details">[% c.maketext("matches.heading.details") %]</a></li>
+    <li><a href="#report">[% c.maketext("matches.heading.report") %]</a></li>
+  </ul>
+  
+  <div id="games">
+[%
+IF match.cancelled;
+-%]
+  <div class="list-item">
+    [% c.maketext("matches.message.info.cancelled") %]
+  </div>
+[%
+ELSE;
+-%]
+    <table class="responsive">
+      <thead>
+        <tr>
+          <th class="game-number">[% c.maketext("matches.game.field.game-number") %]</th>
+          <th>[% c.maketext("matches.game.field.result") %]</th>
+          <th>[% c.maketext("matches.game.field.score") %]</th>
+          <th>[% c.maketext("matches.game.field.match-score") %]</th>
+        </tr>
+      </thead>
+      <tbody>
+[%
+  FOREACH game IN match.team_match_games;
+    SET result = game.result;
+    SET summary_score = game.summary_score;
+-%]
+        <tr>
+          <td class="game-number" data-label="[% c.maketext("matches.game.field.game-number") %]">[% game.actual_game_number %]</td>
+[%
+    IF game.complete;
+      IF game.doubles_game;
+        # Doubles game
+        
+        IF match.season.complete;
+          # Specific season player links
+          SET home1_uri = c.uri_for_action("/people/view_specific_season", [game.home_doubles_pair.person1.url_key, match.season.url_key]);
+          SET home2_uri = c.uri_for_action("/people/view_specific_season", [game.home_doubles_pair.person2.url_key, match.season.url_key]);
+          SET away1_uri = c.uri_for_action("/people/view_specific_season", [game.away_doubles_pair.person1.url_key, match.season.url_key]);
+          SET away2_uri = c.uri_for_action("/people/view_specific_season", [game.away_doubles_pair.person2.url_key, match.season.url_key]);
+        ELSE;
+          # Current season player links
+          SET home1_uri = c.uri_for_action("/people/view_current_season", [game.home_doubles_pair.person1.url_key]);
+          SET home2_uri = c.uri_for_action("/people/view_current_season", [game.home_doubles_pair.person2.url_key]);
+          SET away1_uri = c.uri_for_action("/people/view_current_season", [game.away_doubles_pair.person1.url_key]);
+          SET away2_uri = c.uri_for_action("/people/view_current_season", [game.away_doubles_pair.person2.url_key]);
+        END;
+        
+        # Set the result text now we know the URIs
+        home1_html = FILTER html_entity; game.home_doubles_pair.person1.display_name; END;
+        home2_html = FILTER html_entity; game.home_doubles_pair.person2.display_name; END;
+        away1_html = FILTER html_entity; game.away_doubles_pair.person1.display_name; END;
+        away2_html = FILTER html_entity; game.away_doubles_pair.person2.display_name; END;
+        SET result = c.maketext(result.message.id, home1_html, home2_html, away1_html, away2_html, home1_uri, home2_uri, away1_uri, away2_uri);
+-%]
+          <td data-label="[% c.maketext("matches.game.field.result") %]">[% result %]</span> ([% summary_score.home %]-[% summary_score.away %])</td>
+[%
+      ELSE;
+        # Singles game
+        
+        # Set player classes if the player isn't an active team member
+        IF game.home_player_season.team_membership_type.id == "loan";
+          SET home_class = ' class="loan-player"';
+          SET loan_players = 1;
+        ELSIF game.home_player_season.team_membership_type.id == "inactive";
+          SET home_class = ' class="inactive-player"';
+          SET inactive = 1;
+        ELSE;
+          SET home_class = '';
+        END;
+        
+        IF game.away_player_season.team_membership_type.id == "loan";
+          SET away_class = ' class="loan-player"';
+          SET loan_players = 1;
+        ELSIF game.away_player_season.team_membership_type.id == "inactive";
+          SET away_class = ' class="inactive-player"';
+          SET inactive = 1;
+        ELSE;
+          SET away_class = '';
+        END;
+        
+        IF match.season.complete;
+          # Specific season player links
+          SET home_uri = c.uri_for_action("/people/view_specific_season", [game.home_player.url_key, match.season.url_key]);
+          SET away_uri = c.uri_for_action("/people/view_specific_season", [game.away_player.url_key, match.season.url_key]);
+        ELSE;
+          # Current season player links
+          SET home_uri = c.uri_for_action("/people/view_current_season", [game.home_player.url_key]);
+          SET away_uri = c.uri_for_action("/people/view_current_season", [game.away_player.url_key]);
+        END;
+        
+        # Set the result text now we know the URIs
+        home_html = FILTER html_entity; game.home_player.display_name; END;
+        away_html = FILTER html_entity; game.away_player.display_name; END;
+        SET result = c.maketext(result.message.id, home_html, away_html, home_uri, away_uri, home_class, away_class);
+      
+-%]
+          <td data-label="[% c.maketext("matches.game.field.result") %]">[% result %]
+[%-
+       IF summary_score.home OR summary_score.away;
+-%]
+ ([% summary_score.home %]-[% summary_score.away %])
+[%-
+        END;
+-%]
+</td>
+[%
+      END;
+      
+      # These only get displayed if the game is complete
+      # Set the detailed (leg) scores up
+      IF game.started;
+        SET detailed_scores = game.detailed_scores;
+        SET score_html = "";
+        SET leg_scores = game.detailed_scores;
+        SET leg_number = 1;
+        FOREACH leg_score = leg_scores;
+          IF leg_number > 1;
+            SET score_html = score_html _ '<span class="leg-separator">, </span>';
+          END;
+          
+          SET score_html = score_html _ '<span class="leg-score">' _ leg_score.home _ '-' _ leg_score.away _ '</span>';
+          SET leg_number = leg_number + 1;
+        END;
+      ELSE;
+        # The game is marked as complete, but not started - score is not applicable, as it's been awarded
+        SET score_html = c.maketext("msg.not-applicable");
+      END;
+-%]
+          <td class="leg-scores" data-label="[% c.maketext("matches.game.field.score") %]">[% score_html %]</td>
+          <td data-label="[% c.maketext("matches.game.field.match-score") %]">[% game.home_team_match_score %]-[% game.away_team_match_score %]</td>
+[%
+    ELSE;
+      # Game not yet played
+      SET result = c.maketext(result.message.id);
+-%]
+          <td colspan="4" data-label="[% c.maketext("matches.game.field.result") | html_entity %]">[% result %]</td>
+[%
+    END;
+-%]
+        </tr>
+[%
+  END;
+%]
+      </tbody>
+    </table>
+[%
+END;
+
+IF loan_players OR inactive;
+-%]
+    <div id="games-key">
+[%
+  IF loan_players;
+-%]
+      <div class="loan-player-key">&nbsp;</div> [% c.maketext("team-membership-type.name.loan") %]<br />
+[%
+  END;
+  IF inactive;
+-%]
+      <div class="inactive-player-key">&nbsp;</div> [% c.maketext("team-membership-type.name.inactive") %]<br />
+[%
+  END;
+-%]
+    </div>
+[%
+END;
+-%]
+  </div>
+  <div id="teams">
+[%
+IF match.season.complete;
+  # Specific season player links
+  SET home_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [match.home_team.club.url_key, match.home_team.url_key, match.season.url_key]);
+  SET away_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [match.away_team.club.url_key, match.away_team.url_key, match.season.url_key]);
+ELSE;
+  # Current season player links
+  SET home_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [match.home_team.club.url_key, match.home_team.url_key]);
+  SET away_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [match.away_team.club.url_key, match.away_team.url_key]);
+END;
+-%]
+    <table class="responsive">
+      <thead>
+        <tr>
+          <th>[% c.maketext("matches.summaries.heading.team") %]</th>
+          <th class="numeric">[% c.maketext("matches.summaries.heading.legs-won") %]</th>
+          <th class="numeric">[% c.maketext("matches.summaries.heading.legs-average") %]</th>
+          <th class="numeric">[% c.maketext("matches.summaries.heading.points-won") %]</th>
+          <th class="numeric">[% c.maketext("matches.summaries.heading.points-average") %]</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td data-label="[% c.maketext("matches.summaries.heading.team") %]"><a href="[% home_uri %]">[% match.home_team.club.short_name | html_entity %] [% match.home_team.name | html_entity %]</a></td>
+          <td class="numeric" data-label="[% c.maketext("matches.summaries.heading.legs-won") %]">[% match.home_team_legs_won %]</td>
+          <td class="numeric" data-label="[% c.maketext("matches.summaries.heading.legs-average") %]">[% match.home_team_average_leg_wins | format('%.2f') %]</td>
+          <td class="numeric" data-label="[% c.maketext("matches.summaries.heading.points-won") %]">[% match.home_team_points_won %]</td>
+          <td class="numeric" data-label="[% c.maketext("matches.summaries.heading.points-average") %]">[% match.home_team_average_point_wins | format('%.2f') %]</td>
+        </tr>
+        <tr>
+          <td data-label="[% c.maketext("matches.summaries.heading.team") %]"><a href="[% away_uri %]">[% match.away_team.club.short_name | html_entity %] [% match.away_team.name | html_entity %]</a></td>
+          <td class="numeric" data-label="[% c.maketext("matches.summaries.heading.legs-won") %]">[% match.away_team_legs_won %]</td>
+          <td class="numeric" data-label="[% c.maketext("matches.summaries.heading.legs-average") %]">[% match.away_team_average_leg_wins | format('%.2f') %]</td>
+          <td class="numeric" data-label="[% c.maketext("matches.summaries.heading.points-won") %]">[% match.away_team_points_won %]</td>
+          <td class="numeric" data-label="[% c.maketext("matches.summaries.heading.points-average") %]">[% match.away_team_average_point_wins | format('%.2f') %]</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  
+  <div id="players">
+[%
+home_team_html = FILTER html_entity; team_seasons.home.club.short_name _ " " _ team_seasons.home.name; END;
+away_team_html = FILTER html_entity; team_seasons.away.club.short_name _ " " _ team_seasons.away.name; END;
+-%]
+    <h4>[% c.maketext("matches.players", home_team_html, home_uri) %]</h4>
+    <table class="responsive">
+      <thead>
+        <tr>
+          <th>[% c.maketext("matches.summaries.heading.player") %]</th>
+          <th class="numeric">[% c.maketext("matches.summaries.heading.games-played") %]</th>
+          <th class="numeric">[% c.maketext("matches.summaries.heading.games-won") %]</th>
+          <th class="numeric">[% c.maketext("matches.summaries.heading.legs-played") %]</th>
+          <th class="numeric">[% c.maketext("matches.summaries.heading.legs-won") %]</th>
+          <th class="numeric">[% c.maketext("matches.summaries.heading.legs-average") %]</th>
+          <th class="numeric">[% c.maketext("matches.summaries.heading.points-played") %]</th>
+          <th class="numeric">[% c.maketext("matches.summaries.heading.points-won") %]</th>
+          <th class="numeric">[% c.maketext("matches.summaries.heading.points-average") %]</th>
+        </tr>
+      </thead>
+      <tbody>
+[%
+IF home_players.count;
+  WHILE (player = home_players.next);
+    SET person_season = player.player.person_seasons.first;
+    
+    # We need the below if so we don't get blank rows when a player is missing
+    IF player.player.id;
+      IF match.season.complete;
+        SET person_uri = c.uri_for_action("/people/view_specific_season", [player.player.url_key, match.season.url_key]);
+      ELSE;
+        SET person_uri = c.uri_for_action("/people/view_current_season", [player.player.url_key]);
+      END;
+-%]
+        <tr>
+          <td data-label="[% c.maketext("matches.summaries.heading.player") %]"><a href="[% person_uri %]">[% person_season.display_name %]</a>
+[%-
+IF player.loan_team.id;
+  SET loaning_team = player.loan_team_season;
+  SET loaning_division = loaning_team.division.division_seasons.first;
+  
+  IF match.season.complete;
+    SET loaning_team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [loaning_team.club.url_key, player.loan_team.url_key, match.season.url_key]);
+    SET loaning_division_uri = c.uri_for_action("/league-tables/view_specific_season", [loaning_team.division.division.url_key, match.season.url_key]);
+  ELSE;
+    SET loaning_team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [loaning_team.club.url_key, player.loan_team.url_key]);
+    SET loaning_division_uri = c.uri_for_action("/league-tables/view_current_season", [loaning_team.division.url_key]);
+  END;
+  "<br />" _ c.maketext("matches.text.loan-player-team", loaning_team.club.short_name, loaning_team.name, loaning_division.name, loaning_team_uri, loaning_division_uri);
+END;
+-%]</td>
+          <td class="numeric" data-label="[% c.maketext("matches.summaries.heading.games-played") %]">[% player.games_played %]</td>
+          <td class="numeric" data-label="[% c.maketext("matches.summaries.heading.games-won") %]">[% player.games_won %]</td>
+          <td class="numeric" data-label="[% c.maketext("matches.summaries.heading.legs-played") %]">[% player.legs_played %]</td>
+          <td class="numeric" data-label="[% c.maketext("matches.summaries.heading.legs-won") %]">[% player.legs_won %]</td>
+          <td class="numeric" data-label="[% c.maketext("matches.summaries.heading.legs-average") %]">[% player.average_leg_wins | format('%.2f') %]</td>
+          <td class="numeric" data-label="[% c.maketext("matches.summaries.heading.points-played") %]">[% player.points_played %]</td>
+          <td class="numeric" data-label="[% c.maketext("matches.summaries.heading.points-won") %]">[% player.points_won %]</td>
+          <td class="numeric" data-label="[% c.maketext("matches.summaries.heading.points-average") %]">[% player.average_point_wins | format('%.2f') %]</td>
+        </tr>
+[%
+    END;
+  END;
+ELSE;
+-%]
+        <tr>
+          <td colspan="9">[% c.maketext("matches.summaries.no-players-notice") %]</td>
+        </tr>
+[%
+END;
+-%]
+      </tbody>
+    </table>
+    
+    <h4>[% c.maketext("matches.players", away_team_html, away_uri) %]</h4>
+    <table class="responsive">
+      <thead>
+        <tr>
+          <th>[% c.maketext("matches.summaries.heading.player") %]</th>
+          <th class="numeric">[% c.maketext("matches.summaries.heading.games-played") %]</th>
+          <th class="numeric">[% c.maketext("matches.summaries.heading.games-won") %]</th>
+          <th class="numeric">[% c.maketext("matches.summaries.heading.legs-played") %]</th>
+          <th class="numeric">[% c.maketext("matches.summaries.heading.legs-won") %]</th>
+          <th class="numeric">[% c.maketext("matches.summaries.heading.legs-average") %]</th>
+          <th class="numeric">[% c.maketext("matches.summaries.heading.points-played") %]</th>
+          <th class="numeric">[% c.maketext("matches.summaries.heading.points-won") %]</th>
+          <th class="numeric">[% c.maketext("matches.summaries.heading.points-average") %]</th>
+        </tr>
+      </thead>
+      <tbody>
+[%
+IF away_players.count;
+  WHILE (player = away_players.next);
+    SET person_season = player.player.person_seasons.first;
+    
+    # We need the below if so we don't get blank rows when a player is missing
+    IF player.player.id;
+      IF match.season.complete;
+        SET person_uri = c.uri_for_action("/people/view_specific_season", [player.player.url_key, match.season.url_key]);
+      ELSE;
+        SET person_uri = c.uri_for_action("/people/view_current_season", [player.player.url_key]);
+      END;
+-%]
+        <tr>
+          <td data-label="[% c.maketext("matches.summaries.heading.player") %]"><a href="[% person_uri %]">[% person_season.display_name %]</a>
+[%-
+IF player.loan_team.id;
+  SET loaning_team = player.loan_team_season;
+  SET loaning_division = loaning_team.division.division_seasons.first;
+  
+  IF match.season.complete;
+    SET loaning_team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [loaning_team.club.url_key, player.loan_team.url_key, match.season.url_key]);
+    SET loaning_division_uri = c.uri_for_action("/league-tables/view_specific_season", [loaning_team.division.division.url_key, match.season.url_key]);
+  ELSE;
+    SET loaning_team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [loaning_team.club.url_key, player.loan_team.url_key]);
+    SET loaning_division_uri = c.uri_for_action("/league-tables/view_current_season", [loaning_team.division.url_key]);
+  END;
+  "<br />" _ c.maketext("matches.text.loan-player-team", loaning_team.club.short_name, loaning_team.name, loaning_division.name, loaning_team_uri, loaning_division_uri);
+END;
+-%]</td>
+          <td class="numeric" data-label="[% c.maketext("matches.summaries.heading.games-played") %]">[% player.games_played %]</td>
+          <td class="numeric" data-label="[% c.maketext("matches.summaries.heading.games-won") %]">[% player.games_won %]</td>
+          <td class="numeric" data-label="[% c.maketext("matches.summaries.heading.legs-played") %]">[% player.legs_played %]</td>
+          <td class="numeric" data-label="[% c.maketext("matches.summaries.heading.legs-won") %]">[% player.legs_won %]</td>
+          <td class="numeric" data-label="[% c.maketext("matches.summaries.heading.legs-average") %]">[% player.average_leg_wins | format('%.2f') %]</td>
+          <td class="numeric" data-label="[% c.maketext("matches.summaries.heading.points-played") %]">[% player.points_played %]</td>
+          <td class="numeric" data-label="[% c.maketext("matches.summaries.heading.points-won") %]">[% player.points_won %]</td>
+          <td class="numeric" data-label="[% c.maketext("matches.summaries.heading.points-average") %]">[% player.average_point_wins | format('%.2f') %]</td>
+        </tr>
+[%
+    END;
+  END;
+ELSE;
+-%]
+        <tr>
+          <td colspan="9">[% c.maketext("matches.summaries.no-players-notice") %]</td>
+        </tr>
+[%
+END;
+-%]
+      </tbody>
+    </table>
+  </div>
+  
+  <div id="match-details">
+    <table class="responsive-vertical">
+      <tr>
+        <th>[% c.maketext("matches.field.date") %]</th>
+        <td>[% date_display | ucfirst | html_entity %]</td>
+      </tr>
+[%
+IF match.tournament_round;
+  # Tournament
+-%]
+      <tr>
+        <th>[% c.maketext("matches.field.competition") %]</th>
+        <td><a href="[% # Tournament URI %]">[% match.tournament_round.tournament.name | html_entity %]</a></td>
+      </tr>
+[%
+ELSE;
+  # League
+-%]
+      <tr>
+        <th>[% c.maketext("matches.field.competition") %]</th>
+        <td>[% c.maketext("matches.field.competition.value.league") %]</td>
+      </tr>
+      <tr>
+        <th>[% c.maketext("matches.field.division") %]</th>
+        <td><a href="[% table_uri %]">[% division_text | html_entity %]</a></td>
+      </tr>
+[%
+END;
+-%]
+      <tr>
+        <th>[% c.maketext("matches.field.venue") %]</th>
+        <td><a href="[% c.uri_for_action("/venues/view", [match.venue.url_key]) %]">[% match.venue.name | html_entity %]</a></td>
+      </tr>
+      <tr>
+        <th>[% c.maketext("matches.field.season") %]</th>
+        <td><a href="[% c.uri_for_action("/seasons/view", [match.season.url_key]) %]">[% match.season.name | html_entity %]</a></td>
+      </tr>
+      <tr>
+        <th>[% c.maketext("matches.summaries.heading.legs-played") %]</th>
+        <td>[% ( match.home_team_legs_won + match.away_team_legs_won ) %]</td>
+      </tr>
+      <tr>
+        <th>[% c.maketext("matches.summaries.heading.points-played") %]</th>
+        <td>[% ( match.home_team_points_won + match.away_team_points_won ) %]</td>
+      </tr>
+    </table>
+  </div>
+  
+  <div id="report">
+    
+  </div>
+</div>

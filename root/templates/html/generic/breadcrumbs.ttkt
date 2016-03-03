@@ -1,0 +1,28 @@
+[%
+IF breadcrumbs.size >= c.config.breadcrumbs.display_threshold AND c.config.breadcrumbs.show_breadcrumbs and !hide_breadcrumbs;
+-%]
+<ul id="breadcrumbs">
+[%
+  SET counter = breadcrumbs.size;
+  FOREACH item IN breadcrumbs;
+    IF item.path AND !loop.last;
+      # Link exists, make the text clickable
+-%]
+  <li><a href="[% item.path %]" style="z-index: [% counter %]">[% span %][% item.label %]</a></li>
+[%
+    ELSE;
+      IF ( loop.last AND !c.config.breadcrumbs.hide_current ) OR !loop.last;
+        # No link exists, just display the text if we are configured to
+-%]
+  <li><span class="current">[% item.label %]</span></li>
+[%
+      END;
+    END;
+    
+    SET counter = counter - 1;
+  END;
+-%]
+</ul>
+[%
+END;
+-%]

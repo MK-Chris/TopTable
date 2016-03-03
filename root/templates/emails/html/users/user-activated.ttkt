@@ -1,0 +1,10 @@
+Hi [% username %]<br /><br />
+
+Your account on [% name %] has now been activated and you may login using the link below:<br /><br />
+
+[% c.uri_for('/login') %]<br /><br />
+
+Regards,<br /><br /><br /><br />
+
+
+Admin<br /><br />

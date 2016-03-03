@@ -1,0 +1,116 @@
+<form method="post" action="[% form_action %]">
+<fieldset id="template_details">
+  <legend>[% c.maketext("templates.form.legend.template-rules") %]</legend>
+  
+  <div class="label-field-container">
+    <label for="name">[% c.maketext("templates.field.name") %]</label>
+    <div class="field-container">
+      <input type="text" id="name" name="name" value="[% c.flash.name OR tt_template.name | html_entity %]" />
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+  
+  <div class="label-field-container">
+    <label for="game_type">[% c.maketext("templates.individual-match.field.game-type") %]</label>
+    <div class="field-container">
+      <select id="game_type" name="game_type" data-placeholder="[% c.maketext("templates.individual-match.field.game-type") %]">
+        <option value=""></option>
+[%
+# Loop through game types
+FOREACH game_type IN game_types;
+  # Set selected text if needed;
+  IF c.flash.game_type == game_type.id;
+    SET GAME_TYPE_SELECTED = ' selected="selected"';
+  ELSE;
+    SET GAME_TYPE_SELECTED = '';
+  END;
+-%]
+        <option value="[% game_type.id %]"[% GAME_TYPE_SELECTED %] title="[% c.maketext("game-type.description." _ game_type.id) %]">[% c.maketext("game-type.name." _ game_type.id) %]</option>
+[%
+END;
+-%]
+      </select>
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+  
+  <div class="label-field-container">
+    <label for="legs_per_game">[% c.maketext("templates.individual-match.field.legs-per-game") %]</label>
+    <div class="field-container">
+      <input type="number" id="legs_per_game" name="legs_per_game" min="0" value="[% c.flash.legs_per_game OR tt_template.legs_per_game %]" />
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+</fieldset>
+
+<fieldset id ="points_required">
+  <legend>[% c.maketext("templates.individual-match.form.legend.win-requirements") %]</legend>
+  
+  <div class="label-field-container">
+    <label for="minimum_points_win">[% c.maketext("templates.individual-match.field.minimum-points-win") %]</label>
+    <div class="field-container">
+      <input type="number" id="minimum_points_win" name="minimum_points_win" min="1" value="[% c.flash.minimum_points_win OR tt_template.minimum_points_win %]" />
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+  
+  <div class="label-field-container">
+    <label for="clear_points_win">[% c.maketext("templates.individual-match.field.clear-points-win") %]</label>
+    <div class="field-container">
+      <input type="number" id="clear_points_win" name="clear_points_win" min="1" value="[% c.flash.clear_points_win OR tt_template.clear_points_win %]" />
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+</fieldset>
+
+<fieldset>
+  <legend>[% c.maketext("templates.individual-match.form.legend.serving") %]</legend>
+  
+  <div class="label-field-container">
+    <label for="serve_type">[% c.maketext("templates.individual-match.field.serve-type") %]</label>
+    <div class="field-container">
+      <select id="serve_type" name="serve_type" data-placeholder="[% c.maketext("templates.individual-match.field.serve-type") %]">
+        <option value=""></option>
+[%
+# Disable number of serve fields if needed
+IF c.flash.serve_type == 3;
+  SET SERVE_NUMBERS_DISABLED = '';
+ELSE;
+  SET SERVE_NUMBERS_DISABLED = ' disabled="disabled"';
+END;
+
+# Loop through serve types
+FOREACH serve_type IN serve_types;
+  IF c.flash.serve_type == serve_type.id;
+    SET SERVES_SELECTED = ' selected="selected"';
+  ELSE;
+    SET SERVES_SELECTED = '';
+  END;
+-%]
+        <option value="[% serve_type.id %]"[% SERVES_SELECTED %] title="[% c.maketext("serve-type.description." _ serve_type.id) %]">[% c.maketext("serve-type.name." _ serve_type.id) %]</option>
+[%
+END;
+-%]
+      </select>
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+  
+  <div class="label-field-container">
+    <label for="serves">[% c.maketext("templates.individual-match.field.serves") %]</label>
+    <div class="field-container">
+      <input type="number" id="serves" name="serves"[% SERVE_NUMBERS_DISABLED %] min="1" value="[% c.flash.serves OR tt_template.serves %]" />
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+  
+  <div class="label-field-container">
+    <label for="serves_deuce">[% c.maketext("templates.individual-match.field.serves-deuce") %]</label>
+    <div class="field-container">
+      <input type="number" id="serves_deuce" name="serves_deuce"[% SERVE_NUMBERS_DISABLED %] min="1" value="[% c.flash.serves_deuce OR tt_template.serves_deuce %]" />
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+</fieldset>
+<input type="submit" name="Submit" value="[% c.maketext("form.button.save") %]" />
+</form>

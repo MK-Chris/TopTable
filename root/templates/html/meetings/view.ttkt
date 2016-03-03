@@ -1,0 +1,125 @@
+[% # Note That the '-' at the beginning or end of TT code  -%]
+[% # "chomps" the whitespace/newline at that end of the    -%]
+[% # output (use View Source in browser to see the effect) -%]
+[%
+IF is_event;
+  SET date        = event_season.date_and_start_time;
+  SET all_day     = event_season.all_day;
+  SET finish_time = event_season.finish_time;
+  SET venue       = event_season.venue;
+  SET organiser   = event_season.organiser;
+ELSE;
+  SET date        = meeting.date_and_start_time;
+  SET all_day     = meeting.all_day;
+  SET finish_time = meeting.finish_time;
+  SET venue       = meeting.venue;
+  SET organiser   = meeting.organiser;
+END;
+
+CALL date.set_locale( c.locale );
+
+USE zeroes = format("%02d");
+SET hour    = zeroes( date.hour );
+SET minute  = zeroes( date.minute );
+
+IF all_day;
+  SET date_display = c.maketext("meetings.display.date-all-day", date.day_name, date.day, date.month_name, date.year, hour, minute);
+ELSIF finish_time;
+  SET finish_hour   = finish_time.substr(0, 2);
+  SET finish_minute = finish_time.substr(3, 2);
+  SET date_display = c.maketext("meetings.display.date-with-finish-time", date.day_name, date.day, date.month_name, date.year, hour, minute, finish_hour, finish_minute);
+ELSE;
+  SET date_display = c.maketext("meetings.display.date", date.day_name, date.day, date.month_name, date.year, hour, minute);
+END;
+ 
+-%]
+<div id="meeting-details">
+  <h4>[% c.maketext("meetings.heading.details") %]</h4>
+  
+  <table class="responsive-vertical">
+    <tr>
+      <th>[% c.maketext("meetings.field.date") %]</th>
+      <td>[% date_display %]</td>
+    </tr>
+    <tr>
+      <th>[% c.maketext("meetings.field.venue") %]</th>
+      <td><a href="[% c.uri_for_action("/venues/view", [venue.url_key]) %]">[% venue.name | html_entity %]</a></td>
+    </tr>
+[%
+IF organiser;
+-%]
+    <tr>
+      <th>[% c.maketext("meetings.field.organiser") %]</th>
+      <td><a href="[% c.uri_for_action("/people/view_current_season", [organiser.url_key]) %]">[% organiser.display_name | html_entity %]</a></td>
+    </tr>
+[%
+END;
+-%]
+  </table>
+</div>
+
+<div id="tabs">
+  <ul>
+    <li><a href="#agenda">[% c.maketext("meetings.tab.agenda") %]</a></li>
+    <li><a href="#attendees">[% c.maketext("meetings.tab.attendees") %]</a></li>
+    <li><a href="#minutes">[% c.maketext("meetings.tab.minutes") %]</a></li>
+  </ul>
+  
+  <div id="agenda">
+[% meeting.agenda %]
+  </div>
+  <div id="attendees">
+    <div id="meeting-attendees">
+      <h5>[% c.maketext("meetings.field.attendees") %]</h5>
+      
+[%
+IF attendees.size;
+-%]
+        <ul>
+[%
+  FOREACH attendee = attendees;
+-%]
+          <li><a href="[% c.uri_for_action("/people/view_current_season", [attendee.person.url_key]) %]">[% attendee.person.display_name | html %]</a></li>
+[%
+  END;
+-%]
+        </ul>
+[%
+ELSE;
+  # No attendees
+-%]
+      [% c.maketext("meetings.attendees-apologies.none") %]
+[%
+END;
+-%]
+    </div>
+    <div id="meeting-apologies">
+      <h5>[% c.maketext("meetings.field.apologies") %]</h5>
+      
+[%
+IF apologies.size;
+-%]
+        <ul>
+[%
+  FOREACH apology = apologies;
+-%]
+          <li><a href="[% c.uri_for_action("/people/view_current_season", [apology.person.url_key]) %]">[% apology.person.display_name | html %]</a></li>
+[%
+  END;
+-%]
+        </ul>
+[%
+ELSE;
+  # No attendees
+-%]
+      [% c.maketext("meetings.attendees-apologies.none") %]
+[%
+END;
+-%]
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+  <div id="minutes">
+[% meeting.minutes %]
+  </div>
+</div>

@@ -1,0 +1,47 @@
+[% # Note That the '-' at the beginning or end of TT code  -%]
+[% # "chomps" the whitespace/newline at that end of the    -%]
+[% # output (use View Source in browser to see the effect) -%]
+
+[%
+IF user.avatar;
+  # User has an avatar, display it over the background
+  IF user.avatar == "upload";
+    SET image_source = ""; # Stream avatar URI
+  ELSE;
+    SET image_source = user.avatar;
+  END;
+ELSE;
+  # No avatar, display the user icon
+  SET image_source = c.uri_for("/static/images/icons/0046-User-icon-48.png");
+END;
+
+username_html = FILTER html_entity; user.username; END;
+-%]
+<!--<div id="user">-->
+  <div id="avatar-container-block">
+    <div id="avatar-container">
+      <div id="avatar">
+        <img src="[% image_source %]" />
+      </div>
+    </div>
+  </div>
+  <div id="user-info">
+    <table class="responsive-vertical">
+      <tr>
+        <th>[% c.maketext("user.person.name") %]</th>
+[%
+IF user.person.id;
+-%]
+        <td><a href="[% c.uri_for_action("/people/view_current_season", [user.person.url_key]) %]">[% user.person.display_name %]</a></td>
+[%
+ELSE;
+-%]
+        <td>[% c.maketext("user.person.not-associated", username_html) %]</td>
+[%
+END;
+-%]
+      </tr>
+    </table>
+  </div>
+<!--</div>-->
+<div class="clear-fix"></div>

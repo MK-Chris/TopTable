@@ -1,0 +1,48 @@
+
+
+<form method="post" action="[% form_action %]">
+<fieldset>
+  <legend>[% c.maketext("templates.form.legend.template-rules") %]</legend>
+  
+  <div class="label-field-container">
+    <label for="name">[% c.maketext("templates.field.name") %]</label>
+    <div class="field-container">
+      <input type="text" id="name" name="name" value="[% template_name = c.flash.name OR tt_template.name | html_entity %]" />
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+[% # Work out what's checked and what's disabled for points scoring
+IF c.flash.award_points == 1 OR tt_template.award_points == 1;
+  SET ASSIGN_POINTS_CHECKED = ' checked="checked"';
+ELSE;
+  SET POINTS_VALUATION_DISABLED = ' disabled="disabled"';
+END -%]
+  <input type="checkbox" id="assign_points" name="assign_points" value="1" data-label="[% c.maketext("templates.league-table-ranking.field.assign-points") %]"[% ASSIGN_POINTS_CHECKED %] />
+  
+  <div class="label-field-container">
+    <label for="points_per_win">[% c.maketext("templates.league-table-ranking.field.points-per-win") %]</label>
+    <div class="field-container">
+      <input type="number" id="points_per_win" name="points_per_win" class="points_awarded" value="[% c.flash.points_per_win OR tt_template.points_per_win %]"[% POINTS_VALUATION_DISABLED %] />
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+  
+  <div class="label-field-container">
+    <label for="points_per_draw">[% c.maketext("templates.league-table-ranking.field.points-per-draw") %]</label>
+    <div class="field-container">
+      <input type="number" id="points_per_draw" name="points_per_draw" class="points_awarded" value="[% c.flash.points_per_draw OR tt_template.points_per_draw %]"[% POINTS_VALUATION_DISABLED %] />
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+  
+  <div class="label-field-container">
+    <label for="points_per_loss">[% c.maketext("templates.league-table-ranking.field.points-per-loss") %]</label>
+    <div class="field-container">
+      <input type="number" id="points_per_loss" name="points_per_loss" class="points_awarded" value="[% c.flash.points_per_loss OR tt_template.points_per_loss %]"[% POINTS_VALUATION_DISABLED %] />
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+      
+  <input type="submit" id="submit" name="submit" value="[% c.maketext("form.button.save") %]" />
+</fieldset>
+</form>

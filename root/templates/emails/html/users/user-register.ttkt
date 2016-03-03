@@ -1,0 +1,10 @@
+Hi [% username %]<br /><br />
+
+Thank you for registering on [% name %].  You now need to activate your account by clicking <a href="[% c.uri_for_action("/users/activate", [activation_key]) | url %]">here</a><br /><br />
+
+If the above does not appear as a link, try pasting it into your browser's address bar.<br /><br />
+
+Regards,<br /><br /><br />
+
+
+Admin<br /><br />

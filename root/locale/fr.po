@@ -1,0 +1,2693 @@
+### Menu text items
+## Home
+msgid "menu.text.home"
+msgstr "Accueil"
+
+msgid "menu.title.home"
+msgstr "Page d'accueil"
+
+## News
+msgid "menu.text.news"
+msgstr "Nouvelles"
+
+msgid "menu.title.news"
+msgstr "Indice de nouvelles"
+
+## Fixtures & Results
+msgid "menu.text.fixtures-results"
+msgstr "Calendrier et résultats"
+
+msgid "menu.title.fixtures-results"
+msgstr "Calendrier et résultats pour %1"
+
+msgid "menu.title.fixtures-results-by-team"
+msgstr "Calendrier et résultats pour %1 par équipe"
+
+msgid "menu.title.fixtures-results-by-month"
+msgstr "Calendrier et résultats pour %1 par mois"
+
+msgid "menu.title.fixtures-results-by-week"
+msgstr "Calendrier et résultats pour %1 par semaine"
+
+msgid "menu.title.fixtures-results-by-day"
+msgstr "Calendrier et résultats pour %1 par jour"
+
+msgid "menu.title.fixtures-results-by-venue"
+msgstr "Calendrier et résultats pour %1 par lieu"
+
+msgid "menu.title.fixtures-results-by-division"
+msgstr "Calendrier et résultats pour %1 par division"
+
+msgid "menu.text.fixtures-results-by-team"
+msgstr "Par équipe"
+
+msgid "menu.text.fixtures-results-by-month"
+msgstr "Par mois"
+
+msgid "menu.text.fixtures-results-by-week"
+msgstr "Par semaine"
+
+msgid "menu.text.fixtures-results-by-day"
+msgstr "Par jour"
+
+msgid "menu.text.fixtures-results-by-venue"
+msgstr "Par lieu"
+
+msgid "menu.text.fixtures-results-by-division"
+msgstr "Par division"
+
+## Matches
+msgid "menu.text.matches"
+msgstr "Matchs"
+
+msgid "menu.text.team-matches"
+msgstr "Matchs de l'équipe"
+
+msgid "menu.text.team-matches-breadcrumbs"
+msgstr "Équipe"
+
+## Statistics / league tables / league averages
+msgid "menu.text.divisions"
+msgstr "Divisions"
+
+msgid "menu.text.statistics"
+msgstr "Statistiques"
+
+msgid "menu.title.statistics"
+msgstr "Statistiques pour %1"
+
+msgid "menu.text.league-tables"
+msgstr "Tableaux de classement"
+
+msgid "menu.title.league-tables"
+msgstr "Tableaux de classement pour %1"
+
+msgid "menu.title.league-tables-division"
+msgstr "%1 tableaux de classement pour %2"
+
+msgid "menu.text.league-averages"
+msgstr "Moyennes de la ligue"
+
+msgid "menu.title.league-averages"
+msgstr "Moyennes de la ligue pour %1"
+
+msgid "menu.text.league-averages-singles"
+msgstr "Célibataires"
+
+msgid "menu.title.league-averages-singles"
+msgstr "Célibataires moyennes de la ligue pour %1"
+
+msgid "menu.title.league-averages-singles-division"
+msgstr "%1 célibataires moyennes de la ligue pour %2"
+
+msgid "menu.text.league-averages-doubles-individuals"
+msgstr "Double (individus)"
+
+msgid "menu.title.league-averages-doubles-individuals"
+msgstr "Double (individus) moyennes de la ligue pour %1"
+
+msgid "menu.title.league-averages-doubles-individuals-division"
+msgstr "%1 double (individus) moyennes de la ligue pour %2"
+
+msgid "menu.text.league-averages-doubles-pairs"
+msgstr "Double (paires)"
+
+msgid "menu.title.league-averages-doubles-pairs"
+msgstr "Double (paires) moyennes de la ligue pour %1"
+
+msgid "menu.title.league-averages-doubles-pairs-division"
+msgstr "%1 double (paires) moyennes de la ligue pour %2"
+
+## Events
+msgid "menu.text.events"
+msgstr "Evénements"
+
+msgid "menu.title.events"
+msgstr "Evénements pour %1"
+
+## Clubs
+msgid "menu.text.clubs"
+msgstr "Clubs"
+
+msgid "menu.title.clubs"
+msgstr "Clubs pour %1"
+
+## Teams
+msgid "menu.text.teams"
+msgstr "Équipes"
+
+## People
+msgid "menu.text.people"
+msgstr "Personnes"
+
+## Information
+msgid "menu.text.info"
+msgstr "D'informations"
+
+msgid "menu.title.info"
+msgstr "Informations sur la ligue"
+
+msgid "menu.text.officials"
+msgstr "Fonctionnaires"
+
+msgid "menu.title.officials"
+msgstr "Responsables de la ligue"
+
+msgid "menu.text.rules"
+msgstr "Règles"
+
+msgid "menu.title.rules"
+msgstr "Règles de la ligue"
+
+msgid "menu.text.contact"
+msgstr "Contact"
+
+msgid "menu.title.contact"
+msgstr "Contactez nous"
+
+## Venues
+msgid "menu.text.venues-where-to-play"
+msgstr "Où jouer"
+
+msgid "menu.title.venues-where-to-play"
+msgstr "Où jouer"
+
+msgid "menu.text.venues-list"
+msgstr "Liste lieu"
+
+msgid "menu.title.venues-list"
+msgstr "Liste lieu"
+
+msgid "menu.text.venues"
+msgstr "Venues"
+
+msgid "menu.text.venues-search"
+msgstr "Recherche"
+
+msgid "menu.title.venues-search"
+msgstr "Recherche lieu"
+
+## Seasons
+msgid "menu.text.seasons"
+msgstr "Saisons"
+
+msgid "menu.title.seasons"
+msgstr "Indice saisons"
+
+msgid "menu.seasons.none"
+msgstr "Aucun saisons archivés pour voir"
+
+## Fixtures grids
+msgid "menu.text.fixtures-grids"
+msgstr "Calendrier Grilles"
+
+## User
+msgid "menu.text.users"
+msgstr "Utilisateurs"
+
+msgid "menu.text.user.profile"
+msgstr "Profil"
+
+msgid "menu.title.user.profile"
+msgstr "Profil de l'utilisateur"
+
+## Event log
+msgid "menu.text.system-event-log"
+msgstr "Journal des événements"
+
+## Templates
+msgid "menu.text.templates"
+msgstr "Modèles"
+
+msgid "menu.text.templates-match-breadcrumbs"
+msgstr "Match"
+
+msgid "menu.text.templates-match"
+msgstr "Modèles match"
+
+msgid "menu.text.templates-invididual-match"
+msgstr "Modèles de match individuel"
+
+msgid "menu.text.templates-invididual-match-breadcrumbs"
+msgstr "Tndividu"
+
+msgid "menu.text.templates-team-match"
+msgstr "Modèles de match par équipe"
+
+msgid "menu.text.templates-team-match-breadcrumbs"
+msgstr "Équipes"
+
+msgid "menu.text.templates-team-match-games"
+msgstr "Jeux"
+
+msgid "menu.text.templates-league-table-ranking"
+msgstr "Tableau de classement de la ligue modèles"
+
+msgid "menu.text.templates-league-table-ranking-breadcrumbs"
+msgstr "Ligue classement de table"
+
+### Home page
+msgid "home-page.welcome"
+msgstr "Bienvenue"
+
+msgid "home-page.updates.recent"
+msgstr "Mises à jour récentes"
+
+msgid "home-page.updates.view-more"
+msgstr "Voir d'autres mises à jour"
+
+msgid "home-page.news.recent"
+msgstr "Dernières nouvelles"
+
+msgid "home-page.news.view-more"
+msgstr "Voir d'autres articles de presse"
+
+msgid "home-page.users-online.summary"
+msgstr "Il ya %2 %3 en ligne"
+
+msgid "home-page.users-online.is"
+msgstr "est"
+
+msgid "home-page.users-online.are"
+msgstr "sont"
+
+msgid "home-page.todays-matches"
+msgstr "Matches à jouer aujourd'hui"
+
+### Clubs
+msgid "clubs.create"
+msgstr "Créer un nouveau club"
+
+msgid "clubs.create.error.no-venues"
+msgstr "Impossible de créer un nouveau club sans lieux pour sélectionner. Créer au moins une première."
+
+msgid "clubs.legend.details"
+msgstr "Détails du club"
+
+msgid "clubs.field.full_name"
+msgstr "Nom complet"
+
+msgid "clubs.field.short_name"
+msgstr "Nom court"
+
+msgid "clubs.field.email-address"
+msgstr "Addresse email"
+
+msgid "clubs.field.website"
+msgstr "Site Internet"
+
+msgid "clubs.field.start-time"
+msgstr "Heure de départ"
+
+msgid "clubs.field.start-hour"
+msgstr "Heure"
+
+msgid "clubs.field.start-minute"
+msgstr "Minute"
+
+msgid "clubs.field.venue"
+msgstr "Lieu"
+
+msgid "clubs.field.secretary"
+msgstr "Secrétaire"
+
+msgid "clubs.secretary.none"
+msgstr "Aucun"
+
+msgid "clubs.field.secretary-no-people"
+msgstr "Il n'y a pas de personnes actuellement dans la base de données; vous aurez l'option d'ajouter des personnes en tant que secrétaires pour les clubs quand vous les créez."
+
+msgid "clubs.none"
+msgstr "Il n'y a pas de clubs à afficher."
+
+msgid "clubs.create"
+msgstr "Créer un nouveau club"
+
+msgid "clubs.form.error.club-invalid"
+msgstr "Le club spécifié est invalide."
+
+msgid "clubs.form.error.full-name-exists"
+msgstr "Un club avec le nom complet '%1' existe déjà."
+
+msgid "clubs.form.error.full-name-blank"
+msgstr "Le champ de nom complet est vide."
+
+msgid "clubs.form.error.short-name-exists"
+msgstr "Un club avec le nom court '%1' existe déjà."
+
+msgid "clubs.form.error.short-name-blank"
+msgstr "Le champ de nom court est vide."
+
+msgid "clubs.form.error.email-invalid"
+msgstr "L'adresse email est invalide."
+
+msgid "clubs.form.error.website-invalid"
+msgstr "Le site est invalide."
+
+msgid "clubs.form.error.venue-invalid"
+msgstr "Le lieu est pas valide."
+
+msgid "clubs.form.error.secretary-invalid"
+msgstr "Le secrétaire est pas une personne valide."
+
+msgid "clubs.form.error.start-hour-invalid"
+msgstr "La valeur par défaut match de début de l'heure est invalide; il doit être choisi dans la liste ('00' à '23'). Vous pouvez laisser cette valeur vide et équipes de ce club sera par défaut à l'heure de début de match de défaut de la saison."
+
+msgid "clubs.form.error.start-minute-invalid"
+msgstr "La valeur par défaut match de début de minutes est invalide; il doit être choisi dans la liste ('00' à '59'). Vous pouvez laisser cette valeur vide et équipes de ce club sera par défaut à l'heure de début de match de défaut de la saison."
+
+msgid "clubs.form.error.start-time-not-complete"
+msgstr "Le temps de démarrage est pas complète; si vous spécifiez l'heure de début, vous devez sélectionner l'heure de début et de minutes. Si vous ne le spécifiez pas, les équipes de ce club seront par défaut à l'heure de début de match de défaut de la saison."
+
+msgid "clubs.tokeninput.type-secretary"
+msgstr "Une personne peut être secrétaire pour plusieurs clubs - sélectionner autant que vous avez besoin"
+
+msgid "clubs.delete.error.cannot-delete"
+msgstr "Vous ne pouvez pas supprimer %1, car il dispose d'équipes assignées soit cette saison ou dans les saisons historiques."
+
+### Teams
+msgid "teams.create"
+msgstr "Créer une nouvelle équipe"
+
+msgid "teams.create-for"
+msgstr "Créer une nouvelle équipe pour %1"
+
+msgid "teams.field.name"
+msgstr "Nom"
+
+msgid "teams.field.club"
+msgstr "Club"
+
+msgid "teams.field.captain"
+msgstr "Capitaine"
+
+msgid "teams.field.players"
+msgstr "Joueurs"
+
+msgid "teams.field.division"
+msgstr "Division"
+
+msgid "teams.field.home-night"
+msgstr "Accueil nuit"
+
+msgid "teams.field.start-time"
+msgstr "Heure de début de match"
+
+msgid "teams.field.start-hour"
+msgstr "Heure"
+
+msgid "teams.field.start-hour"
+msgstr "Minute"
+
+msgid "teams.captain.none"
+msgstr "Aucun"
+
+msgid "teams.league-position"
+msgstr "La position de la ligue"
+
+msgid "teams.points"
+msgstr "Points"
+
+msgid "teams.matches-played"
+msgstr "Matches joués"
+
+msgid "teams.matches-won"
+msgstr "Matchs gagnés"
+
+msgid "teams.matches-drawn"
+msgstr "Matches nuls"
+
+msgid "teams.matches-lost"
+msgstr "Matchs perdus"
+
+msgid "teams.games-played"
+msgstr "Participation aux jeux"
+
+msgid "teams.games-won"
+msgstr "Jeux gagné"
+
+msgid "teams.games-lost"
+msgstr "Jeux perdus"
+
+msgid "teams.games-won-percentage"
+msgstr "Jeux gagné (%)"
+
+msgid "teams.legs-played"
+msgstr "Jambes joués"
+
+msgid "teams.legs-won"
+msgstr "Jambes gagné"
+
+msgid "teams.legs-lost"
+msgstr "Jambes perdus"
+
+msgid "teams.legs-won-percentage"
+msgstr "Jambes gagné (%)"
+
+msgid "teams.points-played"
+msgstr "Points joués"
+
+msgid "teams.points-won"
+msgstr "Points gagné"
+
+msgid "teams.points-lost"
+msgstr "Points perdus"
+
+msgid "teams.points-won-percentage"
+msgstr "Points gagné (%)"
+
+msgid "teams.club.changed-notice"
+msgstr "%1 %2 joue maintenant pour <a href=\"%3\">%4</a>."
+
+msgid "teams.name.changed-notice"
+msgstr "%1 %2 est maintenant connu comme %3 %4."
+
+msgid "teams.tokeninput.type"
+msgstr "Commencez à taper le nom d'une équipe ou du club"
+
+msgid "teams.tokeninput.type-captain"
+msgstr "Une personne peut capitaine plusieurs équipes - sélectionner autant que vous avez besoin"
+
+msgid "teams.form.error.matches-exist"
+msgstr "Il existe déjà des Matches Set pour la saison en cours, de sorte que de nouvelles équipes ne peuvent pas être créés."
+
+msgid "teams.form.error.no-current-season"
+msgstr "Il n'y a aucune saison en cours, de sorte que de nouvelles équipes ne peuvent pas être créés - créer une nouvelle saison en premier."
+
+msgid "teams.form.error.season-not-current"
+msgstr "Vous ne pouvez ajouter des joueurs pour la saison en cours."
+
+msgid "teams.form.error.team-invalid"
+msgstr "L'équipe spécifié est invalide."
+
+msgid "teams.form.error.matches-exist-team-not-entered"
+msgstr "%1 %2 ne peut pas être modifié, car ils ne sont pas entrés cette saison et les matchs ont déjà été créé."
+
+msgid "teams.form.error.club-change-not-allowed"
+msgstr "The team's club cannot be changed after matches in the current season have been created."
+
+msgid "teams.form.error.division-change-not-allowed"
+msgstr "La division de l'équipe ne peut pas être changé après les matches de la saison en cours ont été créés."
+
+msgid "teams.form.error.create-not-allowed"
+msgstr "Les équipes ne peuvent pas être créés après les matches dans la saison en cours ont été créés."
+
+msgid "teams.form.error.division-full"
+msgstr "Vous ne pouvez pas affecter plusieurs équipes en %1, que la grille qui lui est attribué a un nombre maximum de %2 et il a déjà %3 des équipes affectées; vous devrez supprimer certaines équipes ou modifier la grille assignée à %1."
+
+msgid "teams.form.error.name-exists"
+msgstr "Une équipe avec le nom '%1' existe déjà dans %2."
+
+msgid "teams.form.error.name-blank"
+msgstr "Le champ nom est vide."
+
+msgid "teams.form.error.captain-invalid"
+msgstr "Le capitaine est invalide."
+
+msgid "teams.form.error.home-night-invalid"
+msgstr "La nuit de la maison est invalide."
+
+msgid "teams.form.error.start-hour-invalid"
+msgstr "La valeur par défaut match de début de l'heure est invalide; il doit être choisi dans la liste ('00' à '23'). Vous pouvez laisser cette valeur vide et les matches à domicile de l'équipe sera par défaut à l'heure de début du match du club; si cette zone est vide, l'heure de début de match de défaut de la saison sera utilisé."
+
+msgid "teams.form.error.start-minute-invalid"
+msgstr "La valeur par défaut match de début de minutes est invalide; il doit être choisi dans la liste ('00' à '59'). Vous pouvez laisser le champ vide pour utiliser l'heure de début de match de défaut du club."
+
+msgid "teams.form.error.start-time-not-complete"
+msgstr "Le temps de démarrage est pas complète; si vous spécifiez l'heure de début, vous devez sélectionner l'heure de début et de minutes. Si vous ne le spécifiez pas, les matches à domicile de l'équipe sera par défaut à l'heure de début du match du club; si cette zone est vide, l'heure de début de match de défaut de la saison sera utilisé."
+
+msgid "teams.form.warning.player-reassigned-old-membership-inactive"
+msgstr "%1 avait déjà un membre actif de %2 %3 en %4, qui a été marqué comme inactif; si vous souhaitez réaffecter %5 à cette équipe, vous aurez besoin de modifier leur composition de l'équipe dans leur page d'édition."
+
+msgid "teams.form.warning.player-reassigned-old-membership-removed"
+msgstr "%1 avait déjà un membre actif de %2 %3% en %4, qui a été enlevé; si vous souhaitez réaffecter cette %5 à cette équipe, vous aurez besoin de modifier leur composition de l'équipe dans leur page d'édition."
+
+msgid "teams.form.warning.player-not-reassigned"
+msgstr "%1 a déjà un abonnement actif pour %2 %3 en %4; si vous souhaitez réaffecter %5 à cette équipe, vous aurez besoin de modifier leur composition de l'équipe dans leur page d'édition."
+
+msgid "teams.form.warning.player-invalid-singular"
+msgstr "There was 1 invalid player submitted for %1 %2; check the team's players list after to see if you need to add anyone else to the team."
+
+msgid "teams.form.warning.players-invalid-multiple"
+msgstr "There were %1 invalid players submitted for %2 %3; check the team's players list after to see if you need to add anyone else to the team."
+
+msgid "teams.delete.error.cannot-delete"
+msgstr "Vous ne pouvez pas supprimer %1 %2, car il a des personnes et / ou des allumettes assignées soit cette saison ou dans les saisons historiques."
+
+msgid "teams.form.legend.team-details"
+msgstr "Détails de l'équipe"
+
+msgid "teams.message.did-not-enter"
+msgstr "%1 %2 n'a pas entrer %3"
+
+### People
+msgid "people.create"
+msgstr "Créer une nouvelle personne"
+
+msgid "people.create-for"
+msgstr "Créer une nouvelle personne pour %1 %2"
+
+msgid "person.tokeninput.type"
+msgstr "Commencez à taper le nom d'une personne"
+
+msgid "people.create.no-season"
+msgstr "Il n'y a aucune saison en cours, afin que les gens ne peut pas être créé - créer une nouvelle saison en premier."
+
+msgid "people.edit.no-season"
+msgstr "Il n'y a aucune saison en cours, afin que les gens ne peut pas être modifié - créer une nouvelle saison en premier."
+
+msgid "people.import.no-season"
+msgstr "Il n'y a aucune saison en cours, afin que les gens ne peut être importé - créer une nouvelle saison en premier."
+
+msgid "people.create.form.import-notice"
+msgstr "Si vous avez un grand nombre de personnes pour créer, vous pouvez <a href="%1">les importer à partir d'un fichier CSV</a>."
+
+msgid "people.delete.error.played-matches"
+msgstr "Vous ne pouvez pas supprimer %1, comme ils ont déjà joué les matchs."
+
+msgid "people.form.legend.personal-details"
+msgstr "Details personnels"
+
+msgid "people.form.field.name"
+msgstr "Nom"
+
+msgid "people.form.field.first-name"
+msgstr "Prénom(s)"
+
+msgid "people.form.field.surname"
+msgstr "Nom de famille"
+
+msgid "people.form.field.address"
+msgstr "Adresse"
+
+msgid "people.form.field.address1"
+msgstr "Adresse 1"
+
+msgid "people.form.field.address2"
+msgstr "Adresse 2"
+
+msgid "people.form.field.address3"
+msgstr "Adresse 3"
+
+msgid "people.form.field.address4"
+msgstr "Adresse 4"
+
+msgid "people.form.field.address5"
+msgstr "Adresse 5"
+
+msgid "people.form.field.postcode"
+msgstr "Code postal"
+
+msgid "people.form.field.home-phone"
+msgstr "Accueil téléphonique"
+
+msgid "people.form.field.mobile-phone"
+msgstr "Téléphone mobile"
+
+msgid "people.form.field.work-phone"
+msgstr "Téléphone au travail"
+
+msgid "people.form.field.email-address"
+msgstr "Adresse email"
+
+msgid "people.form.field.gender"
+msgstr "Sexe"
+
+msgid "people.form.field.date-of-birth"
+msgstr "Date d'anniversaire"
+
+msgid "people.form.legend.league-details"
+msgstr "Les détails de la ligue"
+
+msgid "people.form.field.club"
+msgstr "Club"
+
+msgid "people.form.field.team"
+msgstr "Équipe"
+
+msgid "people.form.button.change-team"
+msgstr "Changement équipe"
+
+msgid "people.form.button.captain-of"
+msgstr "Capitaine de"
+
+msgid "people.form.button.captain-of-club"
+msgstr "Capitaine de (club)"
+
+msgid "people.form.button.captain-of-team"
+msgstr "Capitaine de (l'équipe)"
+
+msgid "people.form.button.secretary-for"
+msgstr "Secrétaire pour"
+
+msgid "people.form.button.fees-paid"
+msgstr "Frais payés?"
+
+msgid "people.form.button.registration-date"
+msgstr "Date d'enregistrement"
+
+msgid "people.form.legend.website-details"
+msgstr "Détails de site web"
+
+msgid "people.form.field.website-username"
+msgstr "Site nom d'utilisateur"
+
+msgid "people.form.dialog.change-team.title"
+msgstr "Changer équipe?"
+
+msgid "people.form.dialog.change-team"
+msgstr "Parce %1 a déjà joué pour leur équipe actuelle, %2 %3, en changeant l'équipe qu'ils jouent pour se créer une nouvelle association avec la nouvelle équipe et marquer leur association avec la nouvelle équipe, mais pas supprimer leur association avec l'équipe actuelle - à la place, ce sera marquée comme une composition de l'équipe inactive. Etes-vous sûr que vous voulez changer l'équipe 1% pour les pièces de théâtre?"
+
+msgid "people.form.error.season-not-current"
+msgstr "Vous ne pouvez ajouter des joueurs pour la saison en cours."
+
+msgid "people.form.error.person-not-valid"
+msgstr "La personne indiquée est incorrecte."
+
+msgid "people.form.error.duplicate-name"
+msgstr "Il ya déjà une personne avec le nom %1 %2; s'il vous plaît entrer quelque chose (comme une initiale moyenne dans le domaine des premiers noms) pour les distinguer."
+
+msgid "people.form.error.first-name-blank"
+msgstr "Le premier champ de nom est vide."
+
+msgid "people.form.error.surname-blank"
+msgstr "Le champ nom est vide."
+
+msgid "people.form.error.email-invalid"
+msgstr "L'adresse email est invalide."
+
+msgid "people.form.error.gender-invalid"
+msgstr "Le genre indiqué est incorrect."
+
+msgid "people.form.error.date-of-birth-invalid"
+msgstr "La date de naissance est pas une date valide."
+
+msgid "people.form.error.registration-date-invalid"
+msgstr "La date d'enregistrement est pas une date valide."
+
+msgid "people.form.error.team-not-entered"
+msgstr "%1 %2 n'a pas conclu pour %3; s'il vous plaît enlever ou assurer qu'ils sont ajoutés à une division pour cette première saison (vous ne pouvez pas le faire si les matchs ont déjà été créés)."
+
+msgid "people.form.error.team-invalid"
+msgstr "L'équipe qui a été spécifié pour cette personne de jouer pour ne est pas valide."
+
+msgid "people.form.error.captain-team-not-entered"
+msgstr "%1 %2 n'a pas conclu pour %3; s'il vous plaît les retirer du champ de capitaines ou assurer qu'ils sont ajoutés à une division pour cette première saison (vous ne pouvez pas le faire si les matchs ont déjà été créés)."
+
+msgid "people.form.error.captain-team-invalid"
+msgstr "Une des équipes spécifiées pour le capitaine est invalide: '%1'."
+
+msgid "people.form.error.secretary-club-invalid"
+msgstr "Un des clubs spécifiées pour cette personne d'être secrétaire d'est invalide ('%1')."
+
+msgid "people.form.error.username-invalid"
+msgstr "Le nom d'utilisateur qui a été spécifié pour cette personne d'être associé à est pas valide."
+
+msgid "people.form.import-results.heading-failed"
+msgstr "Les importations ont échoué"
+
+msgid "people.form.import-results.heading-successful"
+msgstr "Les importations réussies"
+
+msgid "people.form.legend.import-file"
+msgstr "Importer un fichier"
+
+msgid "people.form.import.warning"
+msgstr "Si vous avez un grand nombre de personnes à importer, ce qui peut prendre quelques minutes pour remplir; s'il vous plaît être patient et ne pas cliquer sur 'Importer' plus d'une fois."
+
+msgid "people.form.field.csv-file"
+msgstr "Fichier CSV"
+
+msgid "people.none"
+msgstr "Il n'y a pas de gens à voir."
+
+msgid "people.heading.contact-details"
+msgstr "Détails du contact"
+
+msgid "people.heading.season-summary"
+msgstr "<a href="%1">%2</a> résumé"
+
+msgid "people.field.team-membership-type"
+msgstr "Type d'adhésion"
+
+msgid "people.field.averages-position"
+msgstr "La position des moyennes"
+
+msgid "people.message.did-not-enter"
+msgstr "%1 n'a pas entrer %2"
+
+msgid "people.delete.error.not-allowed"
+msgstr "%1 ne peut pas être supprimé car ils ont été impliqués dans des matchs."
+
+### Venues
+msgid "venues.create"
+msgstr "Créer un nouveau lieu"
+
+msgid "venues.opening-hours"
+msgstr "Heures d'ouverture"
+
+msgid "venues.delete.error.not-allowed"
+msgstr "Vous ne pouvez pas supprimer %1, car il est utilisé comme lieu de un ou plusieurs clubs."
+
+msgid "venues.form.error.venue-invalid"
+msgstr "Le lieu indiqué est incorrect."
+
+msgid "venues.form.error.name-exists"
+msgstr "Un lieu avec le nom '%1' existe déjà."
+
+msgid "venues.form.error.name-blank"
+msgstr "Le champ nom est vide."
+
+msgid "venues.form.error.map-coordinates-invalid"
+msgstr "Les Google Maps coordonnées ne sont pas valides."
+
+msgid "venues.form.error.telephone-invalid"
+msgstr "Le numéro de téléphone est invalide."
+
+msgid "venues.form.error.email-invalid"
+msgstr "L'adresse email est invalide."
+
+msgid "venues.form.legend.venue-details"
+msgstr "Détails du lieu"
+
+msgid "venues.field.name"
+msgstr "Nom"
+
+msgid "venues.field.address"
+msgstr "Adresse"
+
+msgid "venues.field.postcode"
+msgstr "Code Postal"
+
+msgid "venues.field.google-maps-geolocation"
+msgstr "Localisation Google Maps"
+
+msgid "venues.field.telephone"
+msgstr "Numéro de téléphone"
+
+msgid "venues.field.email-address"
+msgstr "Adresse email"
+
+msgid "venues.location-contact"
+msgstr "Localisation / Contact"
+
+msgid "venues.directions"
+msgstr "Instructions"
+
+msgid "venues.contact-details"
+msgstr "Détails du contact"
+
+msgid "venues.none"
+msgstr "Il n'y a pas de lieux à afficher."
+
+### Seasons
+msgid "seasons.create"
+msgstr "Créer une nouvelle saison"
+
+msgid "seasons.invalid-find-current"
+msgstr "L'identifiant de la saison '%1' est invalide; en essayant de trouver la saison en cours (ou à défaut, la dernière saison) à la place."
+
+msgid "seasons.text.current"
+msgstr "Courant"
+
+msgid "seasons.none"
+msgstr "Il n'y a pas de saisons à afficher."
+
+msgid "season.form.error.season-invalid"
+msgstr "La saison spécifié est invalide."
+
+msgid "seasons.form.legend.season-details"
+msgstr "Les détails de la saison"
+
+msgid "seasons.form.field.start-date"
+msgstr "Date de début"
+
+msgid "seasons.form.field.start-date"
+msgstr "Date de fin"
+
+msgid "seasons.form.field.name"
+msgstr "Nom"
+
+msgid "seasons.form.field.default-match-start"
+msgstr "Heure de début de match par défaut"
+
+msgid "seasons.form.field.hour"
+msgstr "Heure"
+
+msgid "seasons.form.field.minute"
+msgstr "Minute"
+
+msgid "seasons.form.field.timezone"
+msgstr "Fuseau horaire"
+
+msgid "seasons.form.legend.substitutes"
+msgstr "Les joueurs remplaçants"
+
+msgid "seasons.form.field.allow-substitutes"
+msgstr "Autoriser substituts"
+
+msgid "seasons.form.field.allow-subs-from-lower"
+msgstr "De divisions ci-dessous"
+
+msgid "seasons.form.field.allow-subs-from-higher"
+msgstr "De divisions ci-dessus"
+
+msgid "seasons.form.field.allow-subs-from-same-level"
+msgstr "De la même niveau"
+
+msgid "seasons.form.field.subs-from-same-club-only"
+msgstr "Doivent jouer pour le même club"
+
+msgid "seasons.form.field.allow-subs-multiple-teams-per-division"
+msgstr "Peut jouer pour plusieurs équipes dans la même division"
+
+msgid "seasons.form.substitutes.limits-message"
+msgstr "Pour les champs ci-dessous, 0 signifie 'pas de limite'."
+
+msgid "seasons.form.field.substitutes-limit-per-player"
+msgstr "Le nombre maximum de fois où un joueur peut jouer en tant que substitut"
+
+msgid "seasons.form.field.substitutes-limit-per-player-per-team"
+msgstr "Le nombre maximum de fois où un joueur peut jouer en tant que substitut de la même équipe"
+
+msgid "seasons.form.field.substitutes-limit-per-team"
+msgstr "Le nombre maximum de fois où une équipe peut jouer joueurs remplaçants"
+
+msgid "seasons.form.error.current-season-exists"
+msgstr "Impossible de créer une nouvelle saison, lorsque celui-ci est encore incomplète. Tous les matchs doivent être joués ou marqués comme annulée avant une saison peut être réputée complète."
+
+msgid "seasons.form.error.no-individual-match-templates"
+msgstr "Impossible de créer une nouvelle saison sans modèles de match individuel à définir pour le modèle de match de l'équipe que nous devons choisir. Créer les modèles de rencontres individuelles que vous aurez besoin d'utiliser d'abord, puis le modèle de match par équipe."
+
+msgid "seasons.form.error.no-team-match-templates"
+msgstr "Impossible de créer une nouvelle saison sans modèles de match pour sélectionner. Créer un modèle de match de l'équipe première."
+
+msgid "seasons.form.error.no-ranking-templates"
+msgstr "Impossible de créer une nouvelle saison sans classement par équipe modèles à choisir. Créer au moins une première."
+
+msgid "seasons.form.error.no-fixtures-grids"
+msgstr "Impossible de créer une nouvelle saison sans agencements grilles pour sélectionner. Créer au moins une première."
+
+msgid "seasons.form.error.edit-season-complete"
+msgstr "Cette saison est complète et ne peut pas être modifié."
+
+msgid "seasons.form.error.season-invalid"
+msgstr "La saison spécifié est invalide."
+
+msgid "seasons.form.error.name-exists"
+msgstr "Une saison avec le nom '%1' existe déjà."
+
+msgid "seasons.form.error.name-blank"
+msgstr "Le champ nom est vide."
+
+msgid "seasons.form.error.start-hour-invalid"
+msgstr "La valeur par défaut match de début de l'heure est invalide; il doit être choisi dans la liste ('00' à '23')."
+
+msgid "seasons.form.error.start-minute-invalid"
+msgstr "La valeur par défaut match de début de minutes est invalide; il doit être choisi dans la liste ('00' à '59')."
+
+msgid "seasons.form.error.start-date-invalid"
+msgstr "La date de début est invalide."
+
+msgid "seasons.form.error.end-date-invalid"
+msgstr "La date de fin est invalide."
+
+msgid "seasons.form.error.start-date-after-end-date"
+msgstr "La date de début de saison doit avoir lieu avant la date de fin."
+
+msgid "seasons.form.error.substitites-limit-per-player-invalid"
+msgstr "Le nombre maximum de fois où un joueur peut jouer en tant que substitut doit être un nombre entre 0 et 99; mis à zéro pour un nombre illimité."
+
+msgid "seasons.form.error.substitites-limit-per-player-per-team-invalid"
+msgstr "Le nombre maximum de fois où un joueur peut jouer en tant que substitut de la même équipe doivent être compris entre 0 et 99; mis à zéro pour un nombre illimité."
+
+msgid "seasons.form.error.substitites-limit-per-team"
+msgstr "Le nombre maximum de fois une équipe peut jouer substituts doivent être compris entre 0 et 99; mis à zéro pour un nombre illimité."
+
+msgid "seasons.form.success"
+msgstr "%1 a été %2 avec succès."
+
+msgid "seasons.form.success-divisions-errored"
+msgstr "%1 %2 était réussi, mais il y avait des erreurs dans la création / édition des divisions; s'il vous plaît entrer de nouveau cette information et essayez à nouveau."
+
+msgid "seasons.form.teams.error.no-current-season"
+msgstr "Vous ne pouvez pas modifier la liste des équipes, car il n'y a pas de saison en cours pour modifier la liste pour."
+
+msgid "seasons.form.teams.error.matches-exist"
+msgstr "Vous ne pouvez pas modifier la liste des équipes, comme les matchs pour la saison en cours ont déjà été créés."
+
+msgid "seasons.form.teams.no-teams-create-yes"
+msgstr "Vous ne pouvez pas modifier la liste des équipes, car il n'y a pas d'équipes dans la base de données; créer les équipes de première."
+
+msgid "seasons.form.teams.no-teams-create-no"
+msgstr "Vous ne pouvez pas modifier la liste des équipes, car il n'y a pas d'équipes dans la base de données; contacter la dispersion chargé de créer les équipes, que ceux-ci doivent d'abord être créé."
+
+msgid "seasons.form.teams.error.no-teams-submitted"
+msgstr "Aucun équipes ont été soumises."
+
+msgid "seasons.form.teams.success-with-warnings"
+msgstr "La liste des équipes pour %1 a été modifié, mais les mises en garde ci-dessous est à noter."
+
+msgid "seasons.form.teams.success"
+msgstr "La liste des équipes pour %1 a été modifié.
+
+msgid "seasons.delete.error.matches-exist"
+msgstr "Vous ne pouvez pas supprimer %1, comme il l'a déjà matches."
+
+msgid "seasons.create.error.incomplete-season-exists"
+msgstr "Impossible de créer une nouvelle saison, lorsque celui-ci est encore incomplète. Tous les matchs doivent être joués ou marqués comme annulée avant une saison peut être réputée complète."
+
+msgid "seasons.set-teams.heading"
+msgstr "Sélectionnez équipes pour %1"
+
+msgid "seasons.set-teams.notice.name-changes"
+msgstr "Si des équipes ont changé leurs noms, ceux-ci peuvent être édités via leurs pages d'édition individuels une fois que les changements sur cette page ont été réalisés."
+
+msgid "seasons.set-teams.error.no-current-season"
+msgstr "Vous ne pouvez pas modifier la liste des équipes parce qu'il n'y a pas de saison en cours; vous aurez besoin pour créer une première saison."
+
+msgid "seasons.set-teams.error.matches-created"
+msgstr "Vous ne pouvez pas modifier la liste des équipes, comme les matchs pour la saison en cours ont déjà été créés."
+
+msgid "seasons.set-teams.error.invalid-team"
+msgstr "Une équipe spécifié est invalide."
+
+msgid "seasons.set-teams.error.invalid-club"
+msgstr "Le club spécifié pour% 1% 2 est invalide."
+
+msgid "seasons.set-teams.error.name-exists-in-club"
+msgstr "Il ya déjà une équipe appelée %1 en %2 %3."
+
+msgid "seasons.set-teams.error.division-not-used"
+msgstr "La division spécifié pour %1 %2 (%3) n'a pas été utilisé dans %4."
+
+msgid "seasons.set-teams.error.division-invalid"
+msgstr "La division spécifié pour %1 %2 est invalide."
+
+msgid "seasons.set-teams.error.home-night-invalid"
+msgstr "La nuit de la maison spécifié pour% s% s est invalide."
+
+msgid "seasons.set-teams.error.too-many-teams-in-division"
+msgstr "Il y aurait %1 équipes inscrites en %2, mais le maximum pour le réseau qu'il utilise (%3) est %4. S'il vous plaît supprimer certaines équipes de cette division, ou modifier la saison, la sélection d'une grille de luminaires différente avec un plus grand nombre d'équipes maximales."
+
+msgid "seasons.set-team.warning.captain-invalid"
+msgstr "Le capitaine spécifié pour %1 %2 est invalide."
+
+msgid "seasons.set-team.warning.player-entered-more-than-once"
+msgstr "%1 a déjà été conclu pour une autre équipe, de sorte que leur appartenance %2 %3 a été supprimé; vous pouvez changer cela en éditant% s et de modifier leur équipe."
+
+msgid "seasons.set-teams.warning.player-already-active-reassigned"
+msgstr "%1 avait déjà un membre actif de %2 %3 en %4, qui a été enlevé; si vous souhaitez réaffecter %5 à cette équipe, vous aurez besoin de modifier leur composition de l'équipe dans leur page d'édition."
+
+msgid "seasons.set-teams.warning.player-already-active-not-reassigned"
+msgstr "%1 a déjà un abonnement actif pour %2 %3 en %4; si vous souhaitez réaffecter %5 à cette équipe, vous aurez besoin de modifier leur composition de l'équipe dans leur page d'édition."
+
+msgid "seasons.set-teams.warning.player-invalid"
+msgstr "Il y avait 1 joueur soumis à %1 %2 qui était invalide."
+
+msgid "seasons.set-teams.warning.players-invalid"
+msgstr "Il y avait %1 des joueurs soumis à %2 %3 qui étaient invalides."
+
+### Divisions
+msgid "divisions.option.league-tables"
+msgstr "Tableaux de classement"
+
+msgid "divisions.option.league-averages-singles"
+msgstr "Moyennes de ligue (de célibataires)"
+
+msgid "divisions.option.league-averages-doubles-individuals"
+msgstr "Moyennes de ligue (Doubles - Particuliers)"
+
+msgid "divisions.option.league-averages-doubles-pairs"
+msgstr "Moyennes de ligue (Doubles - Paires)"
+
+msgid "divisions.form.legend.division-rank"
+msgstr "Division rang"
+
+msgid "divisions.form.field.use"
+msgstr "Utiliser division"
+
+msgid "divisions.form.field.name"
+msgstr "Nom"
+
+msgid "divisions.form.field.fixtures-grid"
+msgstr "Calendrier grille"
+
+msgid "divisions.form.field.league-match-template"
+msgstr "Ligue modèle match"
+
+msgid "divisions.form.field.league-ranking-template"
+msgstr "Classement par équipe modèle"
+
+msgid "divisions.form.button.add-division"
+msgstr "Ajouter une division"
+
+msgid "divisions.form.error.checkboxes-wrong"
+msgstr "Si vous avez décoché à 'utilisation' d'une division, toutes les suivantes, ci-dessous, il doit être décochée ainsi."
+
+msgid "divisions.form.error.id-invalid"
+msgstr "L'identifiant spécifié pour la division dans le rang %1 est invalide."
+
+msgid "divisions.form.error.division-invalid"
+msgstr "La division spécifié est invalide."
+
+msgid "division.form.error.division-exists"
+msgstr "Une division avec le nom '%1' existe déjà."
+
+msgid "division.form.error.name-blank"
+msgstr "Le champ de nom pour la division dans le rang %1 est vide."
+
+msgid "division.form.error.duplicate-names"
+msgstr "Le nom de la division '%1' a été saisi %2 fois; chaque nom doit être unique."
+
+msgid "division.form.error.selected-grid-too-many-weeks-for-season"
+msgstr "Les dates de début et de fin entrés a créé la saison avec %1 semaines, mais la grille des appareils sélectionnés pour la division en position %2 travées 3% semaines. S'il vous plaît choisir une autre grille de luminaires ou modifier vos dates de telle sorte que la saison couvre plus de %3 semaines."
+
+msgid "division.form.error.grid-invalid"
+msgstr "La grille des appareils spécifié pour la division dans le rang %1 est invalide."
+
+msgid "division.form.error.league-match-template-invalid"
+msgstr "Le modèle de match de championnat spécifié pour la division dans le rang %1 est invalide."
+
+msgid "division.form.error.league-ranking-template-invalid"
+msgstr "Le modèle de la ligue classement spécifiée pour la division dans le rang %1 est invalide."
+
+msgid "divisions.no-season"
+msgstr "Il n'y a pas de saisons pour voir les divisions pour."
+
+msgid "divisions.name-changed.both-names"
+msgstr "%1 (maintenant connu sous le nom %2)"
+
+### Fixtures grids
+msgid "fixtures-grids.matches"
+msgstr "Les matchs"
+
+msgid "fixtures-grids.teams"
+msgstr "Équipes"
+
+msgid "fixtures-grids.allocate-teams"
+msgstr "Allouer des équipes vers les numéros de la grille"
+
+msgid "fixtures-grids.teams.error.no-current-season"
+msgstr "Vous ne pouvez pas régler les équipes à leurs numéros de la grille car il n'y a pas de saison en cours; d'abord créer une nouvelle saison."
+
+msgid "fixtures-grids.teams.error.matches-already-set"
+msgstr "Vous ne pouvez pas régler les équipes à leurs numéros de la grille que les appareils pour la saison en cours ont déjà été créés."
+
+msgid "fixtures-grids.form.teams.success"
+msgstr "Les matchs pour %1 ont été fixés."
+
+msgid "fixtures-grids.create-fixtures"
+msgstr "Créer luminaires"
+
+msgid "fixtures-grids.delete-fixtures"
+msgstr "Supprimer luminaires"
+
+msgid "fixtures-grids.form.error.grid-invalid"
+msgstr "La grille des appareils spécifié est invalide."
+
+msgid "fixtures-grids.form.error.grid-exists"
+msgstr "Une grille des appareils avec le nom '%1' existe déjà."
+
+msgid "fixtures-grids.form.error.name-blank"
+msgstr "Le champ Nom est vide."
+
+msgid "fixtures-grids.form.error.maximum-teams-invalid"
+msgstr "Les équipes maximum par champ de division doit être un nombre pair entre 2 et 98."
+
+msgid "fixtures-grids.form.error.repeat-fixtures-invalid"
+msgstr "Le nombre de fois où un appareil est répétée doit être un nombre compris entre 1 et 9."
+
+msgid "fixtures-grids.form.matches.home-team-blank"
+msgstr "L'équipe de la maison pour la semaine %1, match de %2 est vide."
+
+msgid "fixtures-grids.form.matches.home-team-blank"
+msgstr "L'équipe visiteuse pour la semaine %1, match de %2 est vide."
+
+msgid "fixtures-grids.form.matches.home-number-invalid"
+msgstr "L'équipe de la maison pour la semaine %1, match de %2 est invalide; il doit être un nombre compris entre 1 et %3."
+
+msgid "fixtures-grids.form.matches.away-number-invalid"
+msgstr "L'équipe visiteuse pour la semaine %1, match de %2 est invalide; il doit être un nombre compris entre 1 et %3."
+
+msgid "fixtures-grids.form.matches.team-overused"
+msgstr "Dans la semaine %1, l'équipe %2 est utilisé plus d'une fois: (%3).  S'il vous plaît assurer que chaque équipe est utilisé une seule fois dans une semaine donnée."
+
+msgid "fixtures-grids.form.matches.success"
+msgstr "Les matchs de cette grille ont été mis avec succès."
+
+msgid "fixtures-grids.form.create-fixtures.error.no-current-season"
+msgstr "Vous ne pouvez pas créer des luminaires, car il n'y a pas de saison en cours; d'abord créer une nouvelle saison."
+
+msgid "fixtures-grids.form.create-fixtures.error.fixtures-already-exist"
+msgstr "Les luminaires pour cette grille ont déjà été créés."
+
+msgid "fixtures-grids.form.create-fixtures.error.matches-incomplete"
+msgstr "The weekly matches for this grid are not yet complete; please complete them and then return to the fixtures creation page."
+
+msgstr "fixtures-grids.form.create-fixtures.error.teams-incomplete"
+msgid "Les positions de l'équipe pour cette grille ne sont pas encore complète; s'il vous plaît de les compléter et ensuite revenir à la page de création de luminaires."
+
+msgsid "fixtures-grids.form.create-fixtures.warning"
+msgstr "Ce processus crée les matchs pour une saison entière pour cette grille, ce qui peut prendre quelques minutes pour remplir, de sorte s'il vous plaît être patient et ne cliquez sur Enregistrer une fois."
+
+msgid "fixtures-grids.form.matches.notice-repeated-fixtures"
+msgstr "Si, après le premier tour des matchs, les luminaires sont répétés exactement avec la maison et les équipes de distance allumés, vous pouvez cocher la case ci-dessus et uniquement définir le premier tour des lieux."
+
+msgid "fixtures-grids.form.create-fixtures.error.season-complete"
+msgstr "La saison spécifié est complet, si les matchs ne peut pas être rempli."
+
+msgid "fixtures-grids.form.create-fixtures.error.matches-exist"
+msgstr "Les luminaires pour cette grille ont déjà été créés pour %1."
+
+msgid "fixtures-grids.form.create-fixtures.error.date-occurs-before-previous-date"
+msgstr "La saison date de la semaine de la grille numéro de la semaine %1 se produit en même temps que, ou avant à la semaine précédente. Chaque semaine de la grille doit être affecté à une semaine de la saison qui se produit après celle qui la précède."
+
+msgid "fixtures-grids.form.create-fixtures.error.week-invalid"
+msgstr "La date de la ligue numéro de la semaine %1 est pas valable; s'il vous plaît sélectionner dans la liste."
+
+msgid "fixtures-grids.form.create-fixtures.error.week-blank"
+msgstr "The date for league week number %1 has not been selected."
+
+msgid "fixtures-grids.form.create-fixtures.success"
+msgstr "Calendrier de la grille '%1' ont été créés pour 2%."
+
+msgid "fixtures-grids.form.delete-fixtures.error.cant-delete"
+msgstr "Vous ne pouvez pas supprimer les appareils à %1; il peut avoir matchs qui ont été réalisés ou ne pas avoir eu les matchs encore créé."
+
+msgid "fixtures-grids.form.delete-fixtures.error.delete-failed"
+msgstr "Impossible de supprimer les matchs."
+
+msgid "fixture-grids.form.delete-fixtures.success"
+msgstr "Supprimé %1 matches de la saison pour %2."
+
+msgid "fixtures-grids.field.name"
+msgstr "Nom"
+
+msgid "fixtures-grids.field.maximum-teams-per-division"
+msgstr "Maximum équipes par division"
+
+msgid "fixtures-grids.field.fixtures-repeated-question"
+msgstr "Combien de fois sont luminaires répétées?"
+
+msgid "fixtures-grids.field.fixtures-repeated"
+msgstr "Calendrier répétées"
+
+msgid "fixtures-grids.field.fixtures-repeated-times"
+msgstr "%1 fois"
+
+msgid "fixtures-grids.create-fixtures.legend.assign-weeks"
+msgstr "Attribuer des numéros de semaine de la grille à quelques semaines de la saison"
+
+msgid "fixtures-grids.field.week"
+msgstr "Semaine %1"
+
+msgid "fixtures-grids.create-fixtures.field.week-beginning"
+msgstr "Semaine à partir du %1"
+
+msgid "fixtures-grids.create-fixtures.label.season-week"
+msgstr "Semaine de saison"
+
+msgid "fixtures-grids.create-fixtures.field-value.week-beginning"
+msgstr "Semaine à partir du %1"
+
+msgid "fixtures-grids.delete-fixtures.explain"
+msgstr "Supprimer %1 luminaires qui ont été créés par cette grille? Les appareils devront être recréé."
+
+msgid "fixtures-grids.form.matches.field.match-home-team"
+msgstr "Match %1: la maison"
+
+msgid "fixtures-grids.form.matches.field.match-away-team"
+msgstr "Match %1: distance"
+
+msgid "fixtures-grids.form.matches.field.team-number"
+msgstr "Équipe %1"
+
+msgid "fixtures-grids.form.teams.bye"
+msgstr "Bye"
+
+msgid "fixtures-grids.teams.view.no-season"
+msgstr "Il n'y a aucune saison pour afficher les positions pour."
+
+msgid "fixtures-grids.matches.view.match-not-set"
+msgstr "Matchs %1 pas réglé."
+
+msgid "fixtures-grids.matches.view.matches-not-set"
+msgstr "Matches pour cette grille n'a pas encore été fixée."
+
+msgid "fixtures-grids.matches.set-link"
+msgstr "Définissez les matchs pour cette grille"
+
+msgid "fixtures-grids.teams.set-link"
+msgstr "Réglez les positions de l'équipe pour cette grille"
+
+msgid "fixtures-grids.create-fixtures.link"
+msgstr "Créer luminaires"
+
+msgid "fixtures-grids.delete-fixtures.link"
+msgstr "Supprimer luminaires"
+
+msgid "fixtures-grids.delete.error.cant-delete"
+msgstr "Vous ne pouvez pas supprimer %1, car il dispose d'équipes assignées soit cette saison ou dans les saisons historiques."
+
+### Fixtures and results
+msgid "fixtures-results.view.match-count"
+msgstr "%1 matchs"
+
+msgid "fixtures-results.view.week-beginning"
+msgstr "Semaine à partir du %1"
+
+msgid "fixtures-results.no-matches"
+msgstr "Il n'y a pas de matchs à afficher."
+
+### Matches
+msgid "matches.versus-abbreviation"
+msgstr "v"
+
+msgid "matches.update-score"
+msgstr "Mettre à jour le score"
+
+msgid "matches.update.form.legend.match-details"
+msgstr "Feuille de match"
+
+msgid "matches.field.date"
+msgstr "Date du match"
+
+msgid "matches.field.competition"
+msgstr "Compétition"
+
+msgid "matches.field.competition.value.league"
+msgstr "Ligue"
+
+msgid "matches.field.venue"
+msgstr "Lieu"
+
+msgid "matches.field.division"
+msgstr "Division"
+
+msgid "matches.field.season"
+msgstr "Saison"
+
+msgid "matches.update.form.legend.match-players"
+msgstr "Joueurs"
+
+msgid "matches.players"
+msgstr "Joueurs %1"
+
+msgid "matches.field.player"
+msgstr "Joueur %1"
+
+msgid "matches.field.substitute"
+msgstr "Suppléant"
+
+msgid "matches.field.player-missing"
+msgstr "Joueur manquant"
+
+msgid "matches.update.form.legend.games"
+msgstr "Jeux"
+
+msgid "matches.update.games.notice"
+msgstr "Si les jeux ont été joués dans un ordre différent à ce qui est la valeur par défaut, vous pouvez faire glisser les rubriques de jeu dans le bon ordre.\n"
+"Bien que seuls les champs pour une seule jambe seront visibles pour commencer, que vous remplissez les scores, un score valide donné les prochains champs à remplir."
+
+msgid "matches.game.header.number"
+msgstr "Jeu %1"
+
+msgid "matches.game.header.doubles"
+msgstr "doubles"
+
+msgid "matches.game.header.match-score"
+msgstr "Score du match"
+
+msgid "matches.game.field.doubles-home-players"
+msgstr "Joueurs accueil"
+
+msgid "matches.game.field.doubles-away-players"
+msgstr "Joueurs à l'extérieur"
+
+msgid "matches.game.field.umpire"
+msgstr "Juge-arbitre"
+
+msgid "matches.game.field.scores.home"
+msgstr "Accueil"
+
+msgid "matches.game.field.scores.away"
+msgstr "Un moyen"
+
+msgid "matches.game.field.scores.award"
+msgstr "Accorder"
+
+msgid "matches.game.field.game-number"
+msgstr "Jeu"
+
+msgid "matches.game.field.scheduled-game-number"
+msgstr "Jeu planifiée"
+
+msgid "matches.game.field.result"
+msgstr "Résultat"
+
+msgid "matches.game.field.score"
+msgstr "But"
+
+msgid "matches.game.field.match-score"
+msgstr "Score du match"
+
+msgid "matches.game.fill-out-players.singles-notice"
+msgstr "S'il vous plaît entrer les deux joueurs avant de remplir le score pour ce jeu."
+
+msgid "matches.game.fill-out-players.doubles-notice"
+msgstr "S'il vous plaît entrer tous les joueurs avant de remplir le score pour ce jeu."
+
+msgid "matches.update.error.season-complete"
+msgstr "Vous ne pouvez pas mettre à jour un match dans une saison qui a été marquée comme étant terminée."
+
+msgid "matches.update-playing-order.success"
+msgstr "Jeu jeu afin modifié avec succès."
+
+msgid "matches.update-playing-order.error.game-number-invalid"
+msgstr "Le nombre de jeu réel spécifiée (%1) pour prévue jeu %2 est invalide; il doit être un nombre compris entre 1 et %3."
+
+msgid "matches.update-playing-order.error.game-specified-multiple"
+msgstr "Le nombre %1 a été spécifié plus d'une fois (pour le numéro de jeu %2 et %3)."
+
+msgid "matches.update-match-date.success"
+msgstr "Réussi à changer la date du match."
+
+msgid "matches.update-match-date.error.date-invalid"
+msgstr "La date fournie est invalide."
+
+msgid "matches.update-match-date.error.database-update-failed"
+msgstr "Impossible de mettre à jour les matches joué."
+
+msgid "matches.update-venue.success"
+msgstr "Réussi à changer le lieu du match."
+
+msgid "matches.update-venue.error.venue-invalid"
+msgstr "Le lieu indiqué est incorrect."
+
+msgid "matches.update-match-date.error.database-update-failed"
+msgstr "Impossible de mettre à jour le lieu."
+
+msgid "matches.substitute-player.tokeninput.hint-text"
+msgstr "Rechercher un joueur remplaçant en position %1"
+
+msgid "matches.substitute-player.add.error.player-active-for-team"
+msgstr "%1 a une participation active pour %2 %3, ne peut donc être utilisé comme un lecteur de remplacement dans un match impliquant cette équipe."
+
+msgid "matches.add-player.error.player-already-set"
+msgstr "%1 est déjà réglé en position %2, ne peut donc pas être mis dans une autre position jusqu'à ce qu'ils soient retirés de celui-ci."
+
+msgid "matches.substitute-player.add.error.player-not-active"
+msgstr "%1 est pas enregistré à jouer dans %2."
+
+msgid "matches.add-player.error.person-invalid"
+msgstr "La personne indiquée est incorrecte."
+
+msgid "matches.add-player.error.update-game-failed"
+msgstr "Impossible de mettre à jour jeu %1 dans la table de jeux de match de l'équipe."
+
+msgid "matches.add-player.error.update-failed"
+msgstr "Impossible de mettre à jour lecteur; s'il vous plaît rafraîchir la page et essayez à nouveau. Si l'erreur persiste, s'il vous plaît contactez l'administrateur du système."
+
+msgid "matches.substitute-player.add.success"
+msgstr "%1 a été ajouté comme un substitut à la position %2."
+
+msgid "matches.active-player.add.success"
+msgstr "%1 a été ajouté à la position %2."
+
+msgid "matches.player.remove.success"
+msgstr "Joueur supprimé de la position %1."
+
+msgid "matches.substitute-player.add.refresh-doubles-lists.error"
+msgstr "Échec pour actualiser la liste des joueurs pour les doubles; si le joueur remplaçant simplement ajouté joué dans un jeu en double, vous aurez besoin de rafraîchir la page afin de sélectionner le joueur de la liste."
+
+msgid "matches.umpire.tokeninput.hint-text"
+msgstr "Commencez à taper le nom de l'arbitre"
+
+msgid "matches.umpire.add.database-error"
+msgstr "Erreur d'ajout de l'arbitre; s'il vous plaît rafraîchir la page et essayez à nouveau. Si le problème persiste, s'il vous plaît contactez l'administrateur du système."
+
+msgid "matches.umpire.add.error.person-invalid"
+msgstr "La personne indiquée est incorrecte."
+
+msgid "matches.umpire.remove.database-error"
+msgstr "Erreur enlever l'arbitre; s'il vous plaît rafraîchir la page et essayez à nouveau. Si le problème persiste, s'il vous plaît contactez l'administrateur du système."
+
+msgid "matches.umpire.add.success"
+msgstr "%1 réglé avec succès comme l'arbitre pour le jeu %2"
+
+msgid "matches.umpire.remove.success"
+msgstr "Juge-arbitre pour le jeu %1 supprimé avec succès."
+
+msgid "matches.update.error.match-invalid"
+msgstr "Le match indiqué est incorrect."
+
+msgid "matches.update.error.season-complete"
+msgstr "Vous ne pouvez pas mettre à jour un match dans une saison qui a déjà été complété."
+
+msgid "matches.update-single.error.game-invalid"
+msgstr "Le jeu spécifié est invalide."
+
+msgid "matches.update-single.error.leg-invalid"
+msgstr "La jambe spécifié est invalide."
+
+msgid "matches.game.update-doubles.error.not-doubles-game"
+msgstr "Jeu %1 est pas un jeu double."
+
+msgid "matches.game.update-doubles.error.location-invalid"
+msgstr "L'emplacement doit être spécifié comme 'home' (maison) ou 'away' (loin) pour indiquer l'équipe qui est mis à jour."
+
+msgid "matches.game.update-doubles.error.home-player1-invalid"
+msgstr "La personne spécifiée comme le premier joueur de double à domicile est invalide."
+
+msgid "matches.game.update-doubles.error.home-player2-invalid"
+msgstr "The person specified as the second home doubles player is invalid."
+
+msgid "matches.game.update-doubles.error.away-player1-invalid"
+msgstr "La personne désignée comme le premier double de distance joueur est invalide."
+
+msgid "matches.game.update-doubles.error.home-player2-invalid"
+msgstr "La personne désignée comme le deuxième double distance joueur est invalide."
+
+msgid "matches.game.update-doubles.error.players-identical"
+msgstr "Les deux joueurs en double spécifiées pour l'équipe %1 sont la même personne; s'il vous plaît sélectionner deux joueurs différents."
+
+msgid "matches.game.update-doubles.error.player-ineligible"
+msgstr "%1 est inéligible pour jouer en double pour %2 %3."
+
+msgid "matches.game.update-doubles.add.success"
+msgstr "%1 et %2 ont été fixés comme la paire %3 doubles pour le match %4."
+
+msgid "matches.game.update-doubles.remove.success"
+msgstr "La paire de double %1 a été supprimé; si des scores étaient entrée, ils ont été remis à zéro et devront être reinput lorsque vous entrez dans la paire de double."
+
+msgid "matches.game.update-score.singles.error.select-players"
+msgstr "Vous ne pouvez pas mettre à jour le score pour un jeu sans que les deux joueurs sont choisis en premier."
+
+msgid "matches.game.update-score.doubles.error.select-players"
+msgstr "Vous ne pouvez pas mettre à jour le score pour un jeu en double, sans tous les joueurs étant sélectionnés d'abord."
+
+msgid "matches.game.update-score.singles.error.player-missing"
+msgstr "Vous ne pouvez pas mettre à jour le score pour un jeu où l'un des joueurs est marqué comme 'disparus'. Sélectionnez un joueur si vous souhaitez remplir le score pour ce jeu."
+
+msgid "matches.game.update-score.error.home-not-numeric-or-less-than-zero"
+msgstr "Le score de la maison dans la jambe %1 est pas une valeur numérique valide supérieur à zéro."
+
+msgid "matches.game.update-score.error.away-not-numeric-or-less-than-zero"
+msgstr "Le score loin dans la jambe %1 est pas une valeur numérique valide supérieur à zéro."
+
+msgid "matches.game.update-score.error.home-and-away-scores-equal"
+msgstr "Les scores à domicile et à la jambe pour 1% sont les mêmes; il doit y avoir un gagnant de chaque jambe."
+
+msgid "matches.game.update-score.error.score-invalid"
+msgstr "La jambe %1 résultat (%2-%3) ne sont pas un score final valide; le gagnant doit avoir %4 points et gagner par %5 ou plus, ou doit avoir plus de %4 et gagne avec exactement %5 points."
+
+msgid "matches.game.update-score.error.score-incomplete"
+msgstr "Le score soumis dans le jeu %1 ne semble pas être une partition complète; s'il vous plaît remplir les champs complètement."
+
+msgid "matches.game.update-score.success-game-complete"
+msgstr "Le jeu a été mis à jour avec succès."
+
+msgid "matches.game.update-score.success-match-complete"
+msgstr "Le match a été complété avec succès."
+
+msgid "matches.message.info.not-started"
+msgstr "Ce match tableau de bord n'a pas encore été remplie."
+
+msgid "matches.message.info.started-not-complete"
+msgstr "Ce match tableau de bord a été commencé, mais n'a pas encore abouti."
+
+msgid "matches.heading.player-summaries"
+msgstr "Résumés des joueurs"
+
+msgid "matches.heading.team-summaries"
+msgstr "Des résumés de l'équipe"
+
+msgid "matches.summaries.heading.player"
+msgstr "Joueur"
+
+msgid "matches.summaries.no-players-notice"
+msgstr "Aucun joueur n'a encore été conclu pour le match."
+
+msgid "matches.summaries.heading.team"
+msgstr "Équipe"
+
+msgid "matches.summaries.heading.games-played"
+msgstr "Jeux joués"
+
+msgid "matches.summaries.heading.games-won"
+msgstr "Jeux gagnés"
+
+msgid "matches.summaries.heading.legs-played"
+msgstr "Jambes joués"
+
+msgid "matches.summaries.heading.legs-won"
+msgstr "Jambes gagné"
+
+msgid "matches.summaries.heading.legs-average"
+msgstr "Jambes moyen (%)"
+
+msgid "matches.summaries.heading.points-played"
+msgstr "Points joués"
+
+msgid "matches.summaries.heading.points-won"
+msgstr "Points gagné"
+
+msgid "matches.summaries.heading.points-average"
+msgstr "Moyenne des points (%)"
+
+msgid "matches.heading.games"
+msgstr "Jeux"
+
+msgid "matches.game.score.not-yet-updated"
+msgstr "Ce jeu n'a pas encore été mis à jour."
+
+msgid "matches.game.result.home-singles-win"
+msgstr "a battu"
+
+msgid "matches.game.result.away-singles-win"
+msgstr "perdu à"
+
+msgid "matches.game.result.home-doubles-win"
+msgstr "battu"
+
+msgid "matches.game.result.away-doubles-win"
+msgstr "perdu à"
+
+msgid "matches.game.result.draw"
+msgstr "a dessiné avec"
+
+msgid "matches.game.result.both-players-missing"
+msgstr "Ce jeu n'a pas été joué, car la maison et à l'extérieur joueurs étaient absents."
+
+msgid "matches.game.result.home-player-missing"
+msgstr "Ce jeu n'a pas été joué parce que le joueur de la maison était absent."
+
+msgid "matches.game.result.away-player-missing"
+msgstr "Ce jeu n'a pas été joué car le lecteur à l'écart était absent."
+
+msgid "matches.heading.details"
+msgstr "Feuille de match"
+
+msgid "matches.text.date-scheduled"
+msgstr "%1, %2 %3 %4 à %5"
+
+msgid "matches.text.date-rescheduled"
+msgstr "%1 %3 %2 %4 à %5 (initialement prévue pour %6 %8 %7 %9)"
+
+msgid "matches.heading.report"
+msgstr "Rapport"
+
+### Generic statistics
+msgid "stats.no-divisions"
+msgstr "Il n'y a pas de divisions à afficher."
+
+msgid "stats.table-heading.position"
+msgstr "Position"
+
+msgid "stats.table-heading.player"
+msgstr "Joueur"
+
+msgid "stats.table-heading.players"
+msgstr "Des joueurs"
+
+msgid "stats.table-heading.player-number"
+msgstr "Joueur %1"
+
+msgid "stats.table-heading.team"
+msgstr "Équipe"
+
+msgid "stats.table-heading.matches-played"
+msgstr "Matches joués"
+
+msgid "stats.table-heading.matches-won"
+msgstr "Matchs gagné"
+
+msgid "stats.table-heading.matches-drawn"
+msgstr "Matchs nuls"
+
+msgid "stats.table-heading.matches-lost"
+msgstr "Matchs perdus"
+
+msgid "stats.table-heading.for"
+msgstr "Pour"
+
+msgid "stats.table-heading.against"
+msgstr "Contre"
+
+msgid "stats.table-heading.games-played"
+msgstr "Jeux joués"
+
+msgid "stats.table-heading.games-won"
+msgstr "Jeux gagné"
+
+msgid "stats.table-heading.games-lost"
+msgstr "Jeux perdu"
+
+msgid "stats.table-heading.legs-played"
+msgstr "Jambes joués"
+
+msgid "stats.table-heading.legs-won"
+msgstr "Jambes gagné"
+
+msgid "stats.table-heading.legs-lost"
+msgstr "Jambes perdu"
+
+msgid "stats.table-heading.points-played"
+msgstr "Points joués"
+
+msgid "stats.table-heading.points-won"
+msgstr "Points gagné"
+
+msgid "stats.table-heading.points-lost"
+msgstr "Points perdu"
+
+msgid "stats.table-heading.average"
+msgstr "Moyenne (%)"
+
+### League Tables
+msgid "stats.no-teams"
+msgstr "Aucun équipes ont été conclus cette saison."
+
+### League Averages
+msgid "averages.competitor-type.players"
+msgstr "joueurs"
+
+msgid "averages.competitor-type.pairs"
+msgstr "paires"
+
+msgid "averages.no-players"
+msgstr "Pas de joueurs ont été conclus cette saison."
+
+msgid "averages.filter-form.field.defined"
+msgstr "Appliquer un filtre prédéfini"
+
+msgid "averages.filter-form.field.custom"
+msgstr "Appliquer un filtre personnalisé"
+
+msgid "averages.filter-form.only-show"
+msgstr "Seulement %1 montrer qui ont"
+
+msgid "averages.filter-form.criteria-field"
+msgstr "champ"
+
+msgid "averages.filter-form.criteria-field.played"
+msgstr "joué"
+
+msgid "averages.filter-form.criteria-field.won"
+msgstr "gagné"
+
+msgid "averages.filter-form.criteria-field.lost"
+msgstr "perdu"
+
+msgid "averages.filter-form.operator"
+msgstr "opérateur"
+
+msgid "averages.filter-form.operator.more-than"
+msgstr "plus que"
+
+msgid "averages.filter-form.operator.at-least"
+msgstr "au moins"
+
+msgid "averages.filter-form.operator.exactly"
+msgstr "exactement"
+
+msgid "averages.filter-form.operator.at-most"
+msgstr "au plus"
+
+msgid "averages.filter-form.operator.less-than"
+msgstr "moins de"
+
+msgid "averages.filter-form.criteria-type.matches"
+msgstr "matchs"
+
+msgid "averages.filter-form.criteria-type.games"
+msgstr "jeux"
+
+msgid "averages.filter-form.filter"
+msgstr "Filtre"
+
+msgid "averages.filter-form.defined.name"
+msgstr "Nom"
+
+### News
+msgid "news.form.legend.article-details"
+msgstr "Article Détails"
+
+msgid "news.form.field.headline"
+msgstr "Titre"
+
+msgid "news.no-articles"
+msgstr "Il n'y a pas de nouvelles des articles à afficher."
+
+### Templates
+msgid "templates.form.legend.template-rules"
+msgstr "Règles modèle"
+
+msgid "templates.field.name"
+msgstr "Nom"
+
+msgid "templates.edit.error.not-allowed"
+msgstr "Vous ne pouvez pas modifier %1, car il a été utilisé dans une ou plusieurs saisons; une fois par saison a utilisé un modèle, vous devez créer un nouveau lieu de le modifier."
+
+msgid "templates.delete.error.not-allowed"
+msgstr "Vous ne pouvez pas supprimer %1, car il a été utilisé dans une ou plusieurs saisons; une fois par saison a utilisé un modèle, vous ne pouvez pas le supprimer."
+
+msgid "templates.league-table-ranking.form.error.template-invalid"
+msgstr "Le modèle ligue de classement de la table spécifiée est invalide."
+
+msgid "templates.form.error.name-exists"
+msgstr "Un modèle avec le nom '%1' existe déjà."
+
+msgid "templates.form.error.name-blank"
+msgstr "Le champ nom est vide."
+
+msgid "templates.league-table-ranking.form.error.points-per-win-invalid"
+msgstr "Les points par champ de victoire doivent être une valeur numérique."
+
+msgid "templates.league-table-ranking.form.error.points-per-draw-invalid"
+msgstr "Les points par champ de tirage doivent être une valeur numérique."
+
+msgid "templates.league-table-ranking.form.error.points-per-loss-invalid"
+msgstr "Les points par champ de perte doivent être une valeur numérique."
+
+msgid "templates.league-table-ranking.field.assign-points"
+msgstr "Des points pour les résultats des matchs"
+
+msgid "templates.league-table-ranking.field.points-per-win"
+msgstr "Points pour une victoire"
+
+msgid "templates.league-table-ranking.field.points-per-draw"
+msgstr "Points pour un nul"
+
+msgid "templates.league-table-ranking.field.points-per-loss"
+msgstr "Points pour une défaite"
+
+msgid "templates.league-table-ranking.field.points-per-win-draw-loss"
+msgstr "Points pour une victoire / nul / défaite"
+
+msgid "template.league-table-ranking.field.points.determined-by-score"
+msgstr "Déterminé par le score du match"
+
+msgid "templates.league-table-ranking.none"
+msgstr "Il n'y a pas de table de la ligue Classement des modèles à afficher."
+
+msgid "templates.individual-match.field.game-type"
+msgstr "Type de jeu"
+
+msgid "templates.individual-match.field.legs-per-game"
+msgstr "Legs par match"
+
+msgid "templates.individual-match.form.legend.win-requirements"
+msgstr "Exigences remporter"
+
+msgid "templates.individual-match.field.minimum-points-win"
+msgstr "Minimum de points requis pour gagner"
+
+msgid "templates.individual-match.field.clear-points-win"
+msgstr "Points d'avance délais requis pour gagner"
+
+msgid "templates.individual-match.form.legend.serving"
+msgstr "Servir"
+
+msgid "templates.individual-match.field.serve-type"
+msgstr "Servir type"
+
+msgid "templates.individual-match.field.serves"
+msgstr "Sert"
+
+msgid "templates.individual-match.field.serves-deuce"
+msgstr "Sert en diable"
+
+msgid "templates.individual-match.form.error.template-invalid"
+msgstr "Le modèle de match individuel spécifié est invalide."
+
+msgid "templates.individual-match.form.error.game-type-invalid"
+msgstr "Le type de jeu spécifié est invalide."
+
+msgid "templates.individual-match.form.error.legs-per-game-invalid"
+msgstr "Les jambes par champ de jeu doit être une valeur numérique entre 1 et 99."
+
+msgid "templates.individual-match.form.error.minimum-points-win-invalid"
+msgstr "Le minimum de points pour gagner le terrain doivent être une valeur numérique comprise entre 1 et 99."
+
+msgid "templates.individual-match.form.error.clear-points-win"
+msgstr "Les points clairs mènent à gagner champ doit être une valeur numérique entre 1 et 99."
+
+msgid "templates.individual-match.form.error.serve-type-invalid"
+msgstr "La valeur servir de type est invalide."
+
+msgid "templates.individual-match.form.error.serves-invalid"
+msgstr "Le champ sert doit être une valeur numérique entre 1 et 99."
+
+msgid "templates.individual-match.form.error.serves-deuce-invalid"
+msgstr "Les sert dans le domaine de deuce doivent être une valeur numérique comprise entre 1 et 99."
+
+msgid "templates.team-match.form.error.no-individual-templates"
+msgstr "Impossible de créer un nouveau modèle de match de l'équipe sans modèles de match individuel pour définir pour les différents matches. Créer les modèles de rencontres individuelles que vous aurez besoin d'utiliser en premier."
+
+msgid "templates.team-match.form.error.template-invalid"
+msgstr "Le modèle de match de l'équipe spécifié est invalide."
+
+msgid "templates.team-match.form.error.singles-players-per-team-invalid"
+msgstr "Les joueurs de simple par champ de l'équipe doivent être une valeur numérique comprise entre 1 et 99."
+
+msgid "templates.team-match.form.error.winner-type-invalid"
+msgstr "Le type de vainqueur spécifié est invalide."
+
+msgid "templates.team-match.field.singles-players-per-team"
+msgstr "Singles joueurs par équipe"
+
+msgid "templates.team-match.field.winner-type"
+msgstr "Type de vainqueur"
+
+msgid "templates.team-match.games.success"
+msgstr "%1 %2 jeux pour ont été créés."
+
+msgid "templates.team-match.games.field.game-number"
+msgstr "Numéro de jeu"
+
+msgid "templates.team-match.games.field.game-template"
+msgstr "Modèle de jeu"
+
+msgid "templates.team-match.games.field.singles-players"
+msgstr "Singles joueurs"
+
+msgid "templates.team-match.games.field.home-player"
+msgstr "Lecteur accueil"
+
+msgid "templates.team-match.games.field.away-player"
+msgstr "Lecteur à l'écart"
+
+msgid "templates.team-match.games.form.field.home-player"
+msgstr "Accueil"
+
+msgid "templates.team-match.games.form.field.away-player"
+msgstr "Un moyen"
+
+msgid "templates.team-match.games.field.players"
+msgstr "Doubles"
+
+msgid "templates.team-match.games.field.doubles-game"
+msgstr "Doubles jeu"
+
+msgid "templates.team-match.games.error.home-player-number-invalid"
+msgstr "Le nombre de célibataires joueur de la maison dans le jeu %1 est invalide; il doit être un nombre compris entre 1 et %2."
+
+msgid "templates.team-match.games.error.away-player-number-invalid"
+msgstr "Le nombre de célibataires joueur de la maison dans le jeu %1 est invalide; il doit être un nombre compris entre %2 et %3."
+
+msgid "templates.team-match.games.form.legend.game"
+msgstr "Jeu"
+
+msgid "templates.team-match.games.add"
+msgstr "Ajouter un jeu"
+
+### Generic admin messages
+msgid "admin.create"
+msgstr "Créer"
+
+msgid "admin.edit"
+msgstr "Modifier"
+
+msgid "admin.delete"
+msgstr "Effacer"
+
+msgid "admin.update"
+msgstr "Mettre à jour"
+
+# Currently only used for people, but could be expanded, so keep it generic
+msgid "admin.import"
+msgstr "Importer"
+
+msgid "admin.import-results"
+msgstr "Résultats"
+
+msgid "admin.import-results-heading"
+msgstr "Résultats de l'importation"
+
+msgid "admin.create-object"
+msgstr "Créer un nouveau %1"
+
+msgid "admin.edit-object"
+msgstr "Modifier %1"
+
+msgid "admin.delete-object"
+msgstr "Supprimer %1"
+
+msgid "admin.update-object"
+msgstr "Mise à jour %1"
+
+msgid "admin.form.invalid-action"
+msgstr "Action non valide (de %1) a adopté; l'action doit être 'create' ou 'edit'."
+
+msgid "admin.message.created"
+msgstr "créé"
+
+msgid "admin.message.edited"
+msgstr "édité"
+
+msgid "admin.message.deleted"
+msgstr "supprimé"
+
+msgid "admin.form.success"
+msgstr "%1 a été %2 avec succès."
+
+msgid "admin.forms.success-with-warnings"
+msgstr "%1 a été avec succès %2, mais les mises en garde ci-dessous ont été rencontrées."
+
+msgid "admin.delete.error.database"
+msgstr "Il y avait une erreur de supprimer %1 à partir de la base de données; s'il vous plaît essayer de nouveau et contactez l'administrateur système si le problème persiste."
+
+### Users
+msgid "user.login"
+msgstr "S'identifier"
+
+msgid "user.login.error.authentication-failed"
+msgstr "Le nom d'utilisateur ou mot de passe est incorrect; veuillez réessayer."
+
+msgid "user.login.error.user-not-activated"
+msgstr "Le nom d'utilisateur saisi n'a pas encore été activé; s'il vous plaît vérifier le nom d'utilisateur, ou, si cela est le bon compte, vous pouvez <a href=\"%1\"> renvoyer l'email d'activation </a>."
+
+msgid "user.login.success.header"
+msgstr "Connecté"
+
+msgid "user.login.success.message"
+msgstr "Merci de vous connecter %1. Vous allez maintenant être redirigé vers la page précédente; si cela ne se produit pas, s'il vous plaît cliquez <a href=\"%2\">ici</a>."
+
+msgid "user.login.success.status-message"
+msgstr "Vous êtes connecté avec succès."
+
+msgid "user.register"
+msgstr "Inscription"
+
+msgid "user.forgot-password"
+msgstr "Mot de passe oublié?"
+
+msgid "user.forgot-username"
+msgstr "Identifiant oublié?"
+
+msgid "user.registration.success-header"
+msgstr "Registration successful"
+
+msgid "user.registration.success-message"
+msgstr "Merci, %1.\n\n"
+"Vous devez maintenant vérifier votre compte; un e-mail a été envoyé à l'adresse e-mail que vous avez fournis (de %2) avec un lien pour vérifier votre compte; s'il vous plaît cliquer sur ce lien lorsque le courrier arrive. Si cela vous ne pouvez pas le voir, s'il vous plaît vérifier votre dossier spam. Si il est pas encore là, vous pouvez <a href=\"%3\">renvoyer le d'activation.</a>\n\n"
+
+msgid "user.activation.error-already-activated"
+msgstr "Cet utilisateur est déjà activé; Connectez vous s'il vous plait."
+
+msgid "user.activation.success"
+msgstr "Votre compte a été activé; connectez vous s'il vous plait."
+
+msgid "user.activation.error.key-incorrect"
+msgstr "La clé d'activation est incorrect; s'il vous plaît essayer de nouveau ou connectez-vous si votre compte a été déjà activé."
+
+msgid "user.activation.email-resent-header"
+msgstr "Activation email renvoyé"
+
+msgid "user.activation.email-resent-message"
+msgstr "Votre e-mail d'activation a été en vouloir au compte e-mail que vous avez enregistré avec; vous devrez cliquer sur le lien dans cet e-mail pour vérifier votre compte."
+
+msgid "user.activation.already-activated"
+msgstr "Cet utilisateur est déjà activé; Connectez vous s'il vous plait."
+
+msgid "user.form.activation.legend.activation-details"
+msgstr "Les détails d'activation"
+
+msgid "user.form.activation.field.activation-id"
+msgstr "ID d'activation"
+
+msgid "user.form.change-password.legend.change-password"
+msgstr "Changer le mot de passe"
+
+msgid "user.logout"
+msgstr "Se déconnecter"
+
+msgid "user.logout.error.not-logged-in"
+msgstr "Vous n'êtes pas connecté, donc ne pouvez pas déconnecter."
+
+msgid "user.logout.success"
+msgstr "Vous êtes déconnecté."
+
+msgid "user.login.error.already-logged-in"
+msgstr "Vous êtes déjà connecté."
+
+msgid "user.field.username"
+msgstr "Nom d'utilisateur"
+
+msgid "user.field.ip-address"
+msgstr "Adresse IP"
+
+msgid "user.field.operating-system"
+msgstr "Système d'exploitation"
+
+msgid "user.field.browser"
+msgstr "Navigateur"
+
+msgid "user.field.location"
+msgstr "Emplacement"
+
+msgid "user.field.location-last-updated"
+msgstr "Dernière mise à jour"
+
+msgid "user.field.username-change-disabled"
+msgstr "L'administrateur du site ne permet pas de changer les noms d'utilisateur."
+
+msgid "user.form.text.current-password"
+msgstr "Les modifications apportées aux champs ci-dessus vous obliger à confirmer votre mot de passe actuel dans la case ci-dessous."
+
+msgid "user.field.password"
+msgstr "Mot de passe"
+
+msgid "user.field.remember-username"
+msgstr "Rappelez-vous le nom d'utilisateur?"
+
+msgid "user.field.password-new"
+msgstr "Nouveau mot de passe"
+
+msgid "user.field.password-confirm"
+msgstr "Confirmez le mot de passe"
+
+msgid "user.field.email-address"
+msgstr "Adresse email"
+
+msgid "user.field.email-address-confirm"
+msgstr "Confirmer votre adresse email"
+
+msgid "user.field.password-current"
+msgstr "Mot de passe actuel"
+
+msgid "users.online-view-heading"
+msgstr "Les utilisateurs en ligne"
+
+msgid "user.auth.login"
+msgstr "Vous devez vous connecter pour %1"
+
+msgid "user.auth.denied"
+msgstr "Vous n'êtes pas autorisé à %1"
+
+msgid "user.auth.view-venues"
+msgstr "voir les lieux"
+
+msgid "user.auth.create-venues"
+msgstr "créer des lieux"
+
+msgid "user.auth.edit-venues"
+msgstr "modifier lieux"
+
+msgid "user.auth.delete-venues"
+msgstr "supprimer lieux"
+
+msgid "user.auth.view-clubs"
+msgstr "voir les clubs"
+
+msgid "user.auth.create-clubs"
+msgstr "créer des clubs"
+
+msgid "user.auth.edit-clubs"
+msgstr "modifier clubs"
+
+msgid "user.auth.delete-clubs"
+msgstr "supprimer clubs"
+
+msgid "user.auth.view-teams"
+msgstr "voir les équipes"
+
+msgid "user.auth.create-teams"
+msgstr "créer des équipes"
+
+msgid "user.auth.edit-teams"
+msgstr "modifier équipes"
+
+msgid "user.auth.delete-teams"
+msgstr "supprimer équipes"
+
+msgid "user.auth.view-people"
+msgstr "voir les gens"
+
+msgid "user.auth.create-people"
+msgstr "créer des gens"
+
+msgid "user.auth.edit-people"
+msgstr "modifier des personnes"
+
+msgid "user.auth.delete-people"
+msgstr "supprimer personnes"
+
+msgid "user.auth.view-divisions"
+msgstr "voir les divisions"
+
+msgid "user.auth.view-seasons"
+msgstr "voir les saisons"
+
+msgid "user.auth.create-seasons"
+msgstr "créer des saisons"
+
+msgid "user.auth.edit-seasons"
+msgstr "modifier saisons"
+
+msgid "user.auth.delete-seasons"
+msgstr "supprimer saisons"
+
+msgid "user.auth.view-league-averages"
+msgstr "moyennes vue de la ligue"
+
+msgid "user.auth.view-league-tables"
+msgstr "voir les tableaux de la ligue"
+
+msgid "user.auth.view-fixtures-grids"
+msgstr "voir luminaires grilles"
+
+msgid "user.auth.create-fixtures-grids"
+msgstr "créer des agencements de grilles"
+
+msgid "user.auth.edit-fixtures-grids"
+msgstr "modifier luminaires grilles"
+
+msgid "user.auth.delete-fixtures-grids"
+msgstr "supprimer luminaires grilles"
+
+msgid "user.auth.view-fixtures"
+msgstr "view fixtures"
+
+msgid "user.auth.create-fixtures"
+msgstr "créer des luminaires"
+
+msgid "user.auth.delete-fixtures"
+msgstr "supprimer luminaires"
+
+msgid "user.auth.view-matches"
+msgstr "voir les matchs"
+
+msgid "user.auth.update-matches"
+msgstr "matchs de mise à jour"
+
+msgid "user.auth.view-news"
+msgstr "articles de presse"
+
+msgid "user.auth.create-news"
+msgstr "écrire des articles de presse"
+
+msgid "user.auth.edit-news"
+msgstr "modifier cet article de nouvelles"
+
+msgid "user.auth.delete-news"
+msgstr "supprimer cet article de nouvelles"
+
+msgid "user.auth.view-templates"
+msgstr "view templates"
+
+msgid "user.auth.create-templates"
+msgstr "create templates"
+
+msgid "user.auth.edit-templates"
+msgstr "edit templates"
+
+msgid "user.auth.delete-templates"
+msgstr "delete templates"
+
+msgid "user.auth.view-users"
+msgstr "voir les utilisateurs"
+
+msgid "user.auth.edit-user"
+msgstr "modifier cet utilisateur"
+
+msgid "user.auth.view-online-users"
+msgstr "afficher les utilisateurs en ligne"
+
+### Users
+msgid "user.person.name"
+msgstr "Nom complet"
+
+msgid "user.field.language"
+msgstr "Langue"
+
+msgid "user.field.timezone"
+msgstr "Fuseau horaire"
+
+msgid "user.field.website"
+msgstr "Site Internet"
+
+msgid "user.field.interests"
+msgstr "Intérêts"
+
+msgid "user.field.occupation"
+msgstr "Occupation"
+
+msgid "user.field.location"
+msgstr "Emplacement"
+
+msgid "user.field.hide-status"
+msgstr "Cacher mon statut en ligne"
+
+msgid "user.form.legend.details"
+msgstr "Détails de l'utilisateur"
+
+msgid "user.form.legend.localisation"
+msgstr "Localisation"
+
+msgid "user.form.legend.preferences"
+msgstr "Préférences"
+
+msgid "user.person.not-associated"
+msgstr "%1 est pas associée à une personne."
+
+msgid "user.form.error.username-registered"
+msgstr "Le nom d'utilisateur est déjà enregistré."
+
+msgid "user.form.error.username-invalid"
+msgstr "Le nom d'utilisateur est valide, s'il vous plaît utilisez uniquement des lettres, des chiffres, des espaces, des traits d'union et caractères de soulignement."
+
+msgid "user.form.error.username-blank"
+msgstr "Le champ nom d'utilisateur est vide."
+
+msgid "user.form.error.user-invalid"
+msgstr "Vous avez spécifié un utilisateur invalide à modifier.";
+
+msgid "user.form.error.email-registered"
+msgstr "L'adresse e-mail indiquée est déjà enregistré à un autre utilisateur."
+
+msgid "user.form.error.email-confirm-mismatch"
+msgstr "Les adresses email ne correspondent pas."
+
+msgid "user.form.error.email-blank"
+msgstr "Le champ d'adresse e-mail est vide."
+
+msgid "user.form.error.email-invalid"
+msgstr "L'adresse email est invalide."
+
+msgid "user.form.error.password-confirm-mismatch"
+msgstr "Les champs de mot de passe ne correspondent pas."
+
+msgid "user.form.error.password-too-short"
+msgstr "Le mot de passe doit être d'au moins %1 caractères."
+
+msgid "user.form.error.password-complexity"
+msgstr "Le mot de passe doit contenir au moins une lettre minuscule, au moins une lettre majuscule et au moins un numéro."
+
+msgid "user.form.error.password-blank"
+msgstr "Le champ de mot de passe est vide."
+
+msgid "user.form.error.curent-password-blank"
+msgstr "Certains des champs qui ont été modifiés exigent que vous remplissez votre mot de passe actuel afin d'authentifier."
+
+msgid "user.form.error.curent-password-incorrect"
+msgstr "Le mot de passe actuel rempli est incorrect."
+
+msgid "user.form.error.language-invalid"
+msgid "La langue sélectionnée est invalide."
+
+msgid "user.form.error.language-blank"
+msgstr "S'il vous plaît sélectionner une langue."
+
+msgid "user.form.error.timezone-invalid"
+msgstr "Le fuseau horaire est invalide."
+
+msgid "user.form.error.timezone-blank"
+msgstr "S'il vous plaît sélectionner un fuseau horaire."
+
+msgid "user.edit.success"
+msgstr "%1 a été modifié avec succès."
+
+msgid "user.tokeninput.type-person-association"
+msgstr "Commencez à taper un nom d'utilisateur d'associer cette personne avec un login site"
+
+### File uploads / downloads
+msgid "file.upload.error.copy-failure"
+msgstr "Impossible de copier le fichier."
+
+msgid "file.upload.error.invalid-file-type"
+msgstr "Type de fichier non valide téléchargé."
+
+msgid "file.upload.error.not-uploaded"
+msgstr "Fichier pas téléchargé."
+
+msgid "file.download.errror.file-doesnt-exist"
+msgstr "Impossible de trouver ou de lire le fichier; il peut avoir été supprimé."
+
+msgid "image.upload.error.copy-failure"
+msgstr "Impossible de copier l'image."
+
+msgid "image.upload.error.invalid-file-type"
+msgstr "Invalid type d'image téléchargée."
+
+msgid "image.upload.error.not-uploaded"
+msgstr "Image non téléchargé."
+
+msgid "image.download.errror.file-doesnt-exist"
+msgstr "Impossible de trouver ou de lire l'image; il peut avoir été supprimé."
+
+### Generic messages
+msgid "page.error.heading"
+msgstr "Erreur"
+
+msgid "page.error.not-found.heading"
+msgstr "Page non trouvée"
+
+msgid "page.error.not-found.message"
+msgstr "La page que vous recherchez n'a pu être trouvée; s'il vous plaît utiliser le menu en haut de la page."
+
+msgid "footer.copyright"
+msgstr "Droit d'auteur"
+
+msgid "ajax.error.refresh-advice"
+msgstr "S'il vous plaît rafraîchir la page et essayez à nouveau; Si le problème persiste, s'il vous plaît contactez l'administrateur du système."
+
+msgid "ajax.error.unknown"
+msgstr "Erreur inconnue"
+
+msgid "msg.and"
+msgstr "et"
+
+msgid "msg.unknown"
+msgstr "Inconnu"
+
+### Genders
+msgid "gender.male.gender"
+msgstr "mâle"
+
+msgid "gender.female.gender"
+msgstr "femelle"
+
+msgid "gender.male.nominative-pronoun"
+msgstr "il"
+
+msgid "gender.female.nominative-pronoun"
+msgstr "elle"
+
+msgid "gender.male.accusative-pronoun"
+msgstr "lui"
+
+msgid "gender.female.accusative-pronoun"
+msgstr "elle"
+
+msgid "gender.male.pronominal-possessive-pronoun"
+msgstr "son"
+
+msgid "gender.female.pronominal-possessive-pronoun"
+msgstr "elle"
+
+msgid "gender.male.predicative-possessive-pronoun"
+msgstr "son"
+
+msgid "gender.female.predicative-possessive-pronoun"
+msgstr "la sienne"
+
+msgid "gender.male.reflexive-pronoun"
+msgstr "lui-même"
+
+msgid "gender.female.reflexive-pronoun"
+msgstr "elle-même"
+
+### Game types
+msgid "game-type.name.best-of"
+msgstr "Meilleur de (x) jeux victoires"
+
+msgid "game-type.name.static"
+msgstr "Parasites"
+
+msgid "game-type.description.best-of"
+msgstr "Le match est gagné par le joueur à remporter le meilleur de (x), où les jambes (x) est le nombre indiqué ci-dessous dans le champ 'jambes par match."
+
+msgid "game-type.description.static"
+msgstr "Le match se termine après (x) jambes, quel que soit le score actuel, où (x) est le nombre défini ci-dessous dans le «jambes par match 'domaine."
+
+### Serve types
+msgid "serve-type.name.last-point"
+msgstr "Vainqueur du dernier point sert"
+
+msgid "serve-type.name.static"
+msgstr "Parasites"
+
+msgid "serve-type.name.whole-leg"
+msgstr "Un joueur sert pour toute la jambe"
+
+msgid "serve-type.description.last-point"
+msgstr "Chaque point est servi par le joueur qui a remporté le dernier point."
+
+msgid "serve-type.description.static"
+msgstr "Swaps de service après (x) points, où (x) est un numéro défini comme «sert» et «sert au diable '."
+
+msgid "serve-type.description.whole-leg"
+msgstr "Le même joueur sert pour les jambes et des services swaps entières quand une nouvelle jambe commence."
+
+### Winner types
+msgid "winner-type.name.games"
+msgstr "Jeux"
+
+msgid "winner-type.name.points"
+msgstr "Points"
+
+msgid "winner-type.description.games"
+msgstr "L'équipe avec le plus de jeux gagne."
+
+msgid "winner-type.description.points"
+msgstr "L'équipe avec le plus de points gagne."
+
+### Team membership types
+msgid "team-membership-type.name.active"
+msgstr "Actif"
+
+msgid "team-membership-type.name.substitute"
+msgstr "Suppléant"
+
+msgid "team-membership-type.name.inactive"
+msgstr "Inactif"
+
+msgid "team-membership-type.description.active"
+msgstr "L'équipe que ce joueur est enregistré pour la saison; Cela peut changer si elles commencent à jouer pour une équipe, puis ré-inscrire à un autre (dans ce cas, la composition originale 'actif' devient 'inactif' - il n'y a donc qu'un seul de ces par joueur, par saison à un moment donné)."
+
+msgid "team-membership-type.description.substitute"
+msgstr "Une équipe dont le joueur a joué comme un substitut. Il peut y avoir plus d'un de ces si les joueurs sont autorisés à jouer pour plus d'une équipe. Ils peuvent également être mis à niveau vers 'active', dans ce cas, la composition précédemment actif devient jeux 'inactifs' si le joueur avait joué pour cette équipe déjà (sinon, l'adhésion est tout simplement supprimé)."
+
+msgid "team-membership-type.description.inactive"
+msgstr "Une composition de l'équipe inactive. Cette aurait auparavant été actif; Le joueur doit avoir joué pour l'équipe et puis re-enregistré pour une équipe différente pour une adhésion à être marqué comme inactif."
+
+### Week days
+msgid "weekdays.1"
+msgstr "lundi"
+
+msgid "weekdays.2"
+msgstr "mardi"
+
+msgid "weekdays.3"
+msgstr "mercredi"
+
+msgid "weekdays.4"
+msgstr "jeudi"
+
+msgid "weekdays.5"
+msgstr "vendredi"
+
+msgid "weekdays.6"
+msgstr "samedi"
+
+msgid "weekdays.7"
+msgstr "dimarche"
+
+### Pagination
+msgid "pagination.page-x-of-y"
+msgstr "Page %1 sur %2"
+
+msgid "pagination.number-of-objects"
+msgstr "%1 %2"
+
+msgid "pagination.page-invalid-redirect"
+msgstr "Page %1 ne existe pas; redirigé vers la page 1."
+
+msgid "pagination.page-invalid-no-redirect"
+msgstr "Page %1 ne existe pas."
+
+### System event log
+msgid "system-event-log.description.create"
+msgstr "Créé %1%2."
+
+msgid "system-event-log.description.edit"
+msgstr "Modifié %1%2."
+
+msgid "system-event-log.description.delete"
+msgstr "Supprimé %1%2."
+
+msgid "system-event-log.description.upload"
+msgstr "Téléchargée %1%2."
+
+msgid "system-event-log.description.set-matches"
+msgstr "Set matchs pour %1%2."
+
+msgid "system-event-log.description.set-teams"
+msgstr "Réglez les positions de l'équipe pour %1%2."
+
+msgid "system-event-log.description.update-score"
+msgstr "Mis à jour le score pour %1%2."
+
+msgid "system-event-log.description.import"
+msgstr "Importé %1%2."
+
+msgid "system-event-log.description.update-match-date"
+msgstr "Mise à jour de la date pour les matches où l'équipe de la maison est %1%2."
+
+msgid "system-event-log.description.create-games"
+msgstr "Jeux créés pour %1%2."
+
+msgid "system-event-log.description.edit-games"
+msgstr "Jeux édités pour %1%2."
+
+msgid "system-event-log.description.delete-games"
+msgstr "Jeux supprimé pour %1%2."
+
+msgid "system-event-log.description.activate"
+msgstr "%1%2 activé."
+
+msgid "system-event-log.description.activation-invalid"
+msgstr "Clé d'activation valide essayé."
+
+msgid "system-event-log.description.login"
+msgstr "%1%2 connecté."
+
+msgid "system-event-log.description.login-failed"
+msgstr "Échec de connexion en utilisant le nom d'utilisateur %1%2."
+
+msgid "system-event-log.description.logout"
+msgstr "%1%2 déconnecté."
+
+msgid "system-event-log.description.register"
+msgstr "%1%2 enregistré."
+
+msgid "system-event-log.and"
+msgstr "et"
+
+msgid "system-event-log.other-objects"
+msgstr " et <a href=\"javascript:void(0)\" class=\"tip\" title=\"%1\">%2 autres %3</a>"
+
+msgid "system-event-log.others"
+msgstr " et %1 autres"
+
+### Objects
+msgid "object.singular.venues"
+msgstr "lieu"
+
+msgid "object.plural.venues"
+msgstr "lieux"
+
+msgid "object.singular.clubs"
+msgstr "club"
+
+msgid "object.plural.clubs"
+msgstr "clubs"
+
+msgid "object.singular.teams"
+msgstr "équipe"
+
+msgid "object.plural.teams"
+msgstr "équipes"
+
+msgid "object.singular.people"
+msgstr "personne"
+
+msgid "object.plural.people"
+msgstr "gens"
+
+msgid "object.singular.seasons"
+msgstr "saison"
+
+msgid "object.plural.seasons"
+msgstr "saisons"
+
+msgid "object.singular.divisions"
+msgid "division"
+
+msgid "object.plural.divisions"
+msgstr "divisions"
+
+msgid "object.singular.fixtures-grids"
+msgstr "calendrier grille"
+
+msgid "object.plural.fixtures-grids"
+msgstr "calendrier grilles"
+
+msgid "object.singular.matches"
+msgid "match"
+
+msgid "object.plural.matches"
+msgstr "matchs"
+
+msgid "object.singular.news"
+msgstr "article de nouvelles"
+
+msgid "object.plural.news"
+msgstr "articles de presse"
+
+msgid "object.singular.users"
+msgstr "utilisateur"
+
+msgid "object.plural.users"
+msgstr "utilisateurs"
+
+msgid "object.singular.events"
+msgstr "événement"
+
+msgid "object.plural.events"
+msgstr "événements"
+
+msgid "object.singular.templates.league-table-ranking"
+msgstr "classement ligue modèle"
+
+msgid "object.plural.templates.league-table-ranking"
+msgstr "classé ligue modèles"
+
+msgid "object.singular.templates.match-individual"
+msgstr "modèle de match individuel"
+
+msgid "object.plural.templates.match-individual"
+msgstr "modèles de match individuels"
+
+msgid "object.singular.templates.match-team"
+msgstr "équipe modèle de correspondance"
+
+msgid "object.plural.templates.match-team"
+msgstr "modèles de match de l'équipe"
+
+### Generic forms
+msgid "form.button.save"
+msgstr "Sauvegarder"
+
+msgid "form.button.delete"
+msgstr "Effacer"
+
+msgid "form.button.import"
+msgstr "Importer"
+
+msgid "form.button.activate"
+msgstr "Activer"
+
+msgid "form.button.login"
+msgstr "S'identifier"
+
+msgid "tokeninput.text.no-results"
+msgstr "Aucun résultat"
+
+msgid "tokeninput.text.searching"
+msgstr "Recherche..."
+
+### Google reCAPTCHA response codes (these are constructed slightly differently, as they match exactly Google's reponse codes)
+msgid "missing-input-secret"
+msgstr "Réponse CAPTCHA non valide: le paramètre secret est manquant; s'il vous plaît contactez l'administrateur du site pour résoudre."
+
+msgid "invalid-input-secret"
+msgstr "Réponse CAPTCHA non valide: Le paramètre secret est invalide ou malformé; s'il vous plaît contactez l'administrateur du site pour résoudre."
+
+msgid "missing-input-response"
+msgstr "Le 'je ne suis pas un robot' case à cocher a été pas cochée, ou l'image associée n'a pas été tapé correctement."
+
+msgid "invalid-input-response"
+msgstr "Le texte saisi de l'image était incorrecte ou les mauvaises images ont été sélectionnées."
+
+msgid "google.recaptcha.error-sending"
+msgstr "Impossible d'envoyer CAPTCHA demande de validation; s'il vous plaît contactez l'administrateur du site."
+
+msgid "google.recaptcha.error"
+msgstr "Erreur CAPTCHA"
+
+msgid "google.recaptcha.request-failed"
+msgstr "Impossible d'envoyer CAPTCHA demande de validation; s'il vous plaît contactez l'administrateur du site."

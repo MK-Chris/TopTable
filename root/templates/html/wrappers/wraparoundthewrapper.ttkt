@@ -1,0 +1,9 @@
+[%
+IF no_wrapper;
+  debug("Passing page through as text: $template.name");
+  content;
+ELSE;
+  wrapper = wrapper || 'html/wrappers/responsive.ttkt';
+  content WRAPPER $wrapper;
+END;
+-%]

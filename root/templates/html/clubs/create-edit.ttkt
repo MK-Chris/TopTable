@@ -1,0 +1,131 @@
+<form method="post" action="[% form_action %]">
+<fieldset>
+  <legend>[% c.maketext("clubs.legend.details") %]</legend>
+  <div class="label-field-container">
+    <label for="full_name">[% c.maketext("clubs.field.full_name") %]</label>
+    <div class="field-container">
+      <input type="text" id="full_name" name="full_name" value="[% c.flash.full_name OR club.full_name %]" />
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+  
+  <div class="label-field-container">
+    <label for="short_name">[% c.maketext("clubs.field.short_name") %]</label>
+    <div class="field-container">
+      <input type="text" id="short_name" name="short_name" value="[% c.flash.short_name OR club.short_name %]" />
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+  
+  <div class="label-field-container">
+    <label for="email_address">[% c.maketext("clubs.field.email-address") %]</label>
+    <div class="field-container">
+      <input type="email" id="email_address" name="email_address" value="[% c.flash.email_address OR club.email_address %]" />
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+  
+  <div class="label-field-container">
+    <label for="website">[% c.maketext("clubs.field.website") %]</label>
+    <div class="field-container">
+      <input type="url" id="website" name="website" placeholder="http://www." value="[% c.flash.website OR club.website %]" />
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+  
+  <div class="label-field-container">
+    <label for="start_hour">[% c.maketext("clubs.field.start-time") %]</label>
+    <div class="field-container">
+      <select id="start_hour" class="time" name="start_hour" data-placeholder="[% c.maketext("clubs.field.start-hour") %]">
+        <option value=""></option>
+[%
+SET counter = 0;
+WHILE counter <= 23;
+  IF counter < 10;
+    SET counter_display = "0" _ counter;
+  ELSE;
+    SET counter_display = counter;
+  END;
+  # Now set selected text if needed;
+  IF counter_display == c.flash.start_hour;
+    SET SELECTED = ' selected="selected"';
+  ELSE;
+    SET SELECTED = '';
+  END;
+-%]
+        <option value="[% counter_display %]"[% SELECTED %]>[% counter_display %]</option>
+[%
+  SET counter = counter + 1;
+END;
+-%]
+      </select>:
+      <select id="start_minute" class="time" name="start_minute" data-placeholder="[% c.maketext("clubs.field.start-minute") %]">
+        <option value=""></option>
+[%
+SET counter = 0;
+WHILE counter <= 59;
+  IF counter < 10;
+    # Set leading zeroes if needed;
+    SET counter_display = "0" _ counter;
+  ELSE;
+    SET counter_display = counter;
+  END;
+  # Now set selected text if needed;
+  IF counter_display == c.flash.start_minute;
+    SET SELECTED = ' selected="selected"';
+  ELSE;
+    SET SELECTED = '';
+  END;
+-%]
+        <option value="[% counter_display %]"[% SELECTED %]>[% counter_display %]</option>
+[%
+  SET counter = counter + 1;
+END;
+-%]
+      </select>
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+  
+  <div class="label-field-container">
+    <label for="venue">[% c.maketext("clubs.field.venue") %]</label>
+    <div class="field-container">
+      <select id="venue" name="venue" data-placeholder="[% c.maketext("clubs.field.venue") %]">
+        <option value=""></option>
+[%
+FOREACH venue IN venues;
+  # Set selected text if needed;
+  IF c.flash.venue != "" AND c.flash.venue == venue.id;
+    SET SELECTED = ' selected="selected"';
+  ELSE;
+    SET SELECTED = '';
+  END;
+-%]
+        <option value="[% venue.id %]"[% SELECTED %]>[% venue.name %]</option>
+[%
+END;
+-%]
+      </select>
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+[%
+IF tokeninput_confs;
+-%]
+  <div class="label-field-container">
+    <label for="secretary">[% c.maketext("clubs.field.secretary") %]</label>
+    <div class="field-container">
+      <input type="text" id="secretary" name="secretary" value="" />
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+[%
+ELSE;
+-%]
+  [% c.maketext("clubs.field.secretary-no-people") %]
+[%
+END;
+-%]
+</fieldset>
+<input type="submit" name="Submit" value="[% c.maketext("form.button.save") %]" />
+</form>
