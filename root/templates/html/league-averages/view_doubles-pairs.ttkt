@@ -1,0 +1,151 @@
+[% # Note That the '-' at the beginning or end of TT code  -%]
+[% # "chomps" the whitespace/newline at that end of the    -%]
+[% # output (use View Source in browser to see the effect) -%]
+
+[%
+IF doubles_pair_averages.size;
+  # Set a count so when we process the form include, the variable is incremented and we get unique field IDs
+  SET filter_forms = 1;
+  
+  UNLESS no_filter;
+    PROCESS "html/league-averages/filter-view-form.ttkt" COMPETITORS = c.maketext("averages.competitor-type.pairs");
+  END;
+-%]
+<table class="responsive">
+  <thead>
+    <tr>
+      <th class="numeric">[% c.maketext("stats.table-heading.position") %]</th>
+      <th>[% c.maketext("stats.table-heading.players") %]</th>
+[%
+  UNLESS averages_team_page;
+-%]
+      <th>[% c.maketext("stats.table-heading.team") %]</th>
+[%
+  END;
+-%]
+      <th class="numeric">[% c.maketext("stats.table-heading.games-played") %]</th>
+      <th class="numeric">[% c.maketext("stats.table-heading.games-won") %]</th>
+      <th class="numeric">[% c.maketext("stats.table-heading.games-lost") %]</th>
+      <th class="numeric">[% c.maketext("stats.table-heading.average") %]</th>
+    </tr>
+  </thead>
+  <tbody>
+[%
+  # Count up as we go
+  SET i = 0;
+  FOREACH average IN doubles_pair_averages;
+    i = i + 1;
+    IF specific_season;
+      SET team_uri    = c.uri_for_action("/teams/view_specific_season_by_url_key", [average.team.club.url_key, average.team.url_key, season.url_key]);
+      SET person1_uri = c.uri_for_action("/people/view_specific_season", [average.person1.url_key, season.url_key]);
+      SET person2_uri = c.uri_for_action("/people/view_specific_season", [average.person2.url_key, season.url_key]);
+    ELSE;
+      SET team_uri    = c.uri_for_action("/teams/view_current_season_by_url_key", [average.team.club.url_key, average.team.url_key]);
+      SET person1_uri = c.uri_for_action("/people/view_current_season", [average.person1.url_key]);
+      SET person2_uri = c.uri_for_action("/people/view_current_season", [average.person2.url_key]);
+    END;
+    
+    IF average.person1.team_membership_type.id == "loan";
+      SET player1_class = ' class="loan-player"';
+      SET loan_players = 1;
+    ELSIF average.person1.team_membership_type.id == "inactive";
+      SET player1_class = ' class="inactive-player"';
+      SET inactive = 1;
+    ELSE;
+      SET player1_class = '';
+    END;
+    
+    IF average.person2.team_membership_type.id == "loan";
+      SET player2_class = ' class="loan-player"';
+      SET loan_players = 1;
+    ELSIF average.person2.team_membership_type.id == "inactive";
+      SET player2_class = ' class="inactive-player"';
+      SET inactive = 1;
+    ELSE;
+      SET player2_class = '';
+    END;
+-%]
+    <tr>
+      <td class="numeric[% add_player_class %]" data-label="[% c.maketext("stats.table-heading.position") %]">[% i %]</td>
+      <td class="fit-width" data-label="[% c.maketext("stats.table-heading.players") %]"><a href="[% person1_uri %]"[% player1_class %]>[% average.person1.display_name %]</a> [% c.maketext("msg.and") %] <a href="[% person2_uri %]"[% player2_class %]>[% average.person2.display_name %]</a></td>
+[%
+  UNLESS averages_team_page;
+-%]
+      <td data-label="[% c.maketext("stats.table-heading.team") %]"><a href="[% team_uri %]">[% average.team.club.short_name %] [% average.team.name %]</a></td>
+[%
+  END;
+-%]
+      <td class="numeric" data-label="[% c.maketext("stats.table-heading.games-played") %]">[% average.games_played %]</td>
+      <td class="numeric" data-label="[% c.maketext("stats.table-heading.games-won") %]">[% average.games_won %]</td>
+      <td class="numeric" data-label="[% c.maketext("stats.table-heading.games-lost") %]">[% average.games_lost %]</td>
+      <td class="numeric" data-label="[% c.maketext("stats.table-heading.average") %]">[% average.average_game_wins | format("%.2f") %]</td>
+    </tr>
+[%
+  END;
+-%]
+  </tbody>
+</table>
+[%
+  UNLESS no_filter;
+    PROCESS "html/league-averages/filter-view-form.ttkt" COMPETITORS = c.maketext("averages.competitor-type.pairs");
+  END;
+  IF loan_players OR inactive;
+-%]
+    <div id="games-key">
+[%
+    IF loan_players;
+-%]
+      <div class="loan-player-key">&nbsp;</div> [% c.maketext("team-membership-type.name.loan") %]<br />
+[%
+    END;
+    IF inactive;
+-%]
+      <div class="inactive-player-key">&nbsp;</div> [% c.maketext("team-membership-type.name.inactive") %]<br />
+[%
+    END;
+-%]
+    </div>
+[%
+  END;
+ELSE;
+-%]
+<div class="list-item">
+  [% c.maketext("averages.no-players") %]
+</div>
+[%
+END;
+
+UNLESS averages_team_page;
+-%]
+
+<div class="links-list">
+[%
+  season_html   = FILTER html_entity; season.name; END;
+  division_html = FILTER html_entity; division.name; END;
+  
+  IF specific_season;
+    SET heading_text            = c.maketext("menu.text.statistics-division-season", division_html, season_html);
+    SET tables_uri              = c.uri_for_action("/league-tables/view_specific_season", [division.url_key, season.url_key]);
+    SET singles_uri             = c.uri_for_action("/league-averages/view_specific_season", ["singles", division.url_key, season.url_key]);
+    SET doubles_individuals_uri = c.uri_for_action("/league-averages/view_specific_season", ["doubles-individuals", division.url_key, season.url_key]);
+    SET doubles_teams_uri       = c.uri_for_action("/league-averages/view_specific_season", ["doubles-teams", division.url_key, season.url_key]);
+  ELSE;
+    SET heading_text            = c.maketext("menu.text.statistics-division", division_html);
+    SET tables_uri              = c.uri_for_action("/league-tables/view_current_season", [division.url_key]);
+    SET singles_uri             = c.uri_for_action("/league-averages/view_current_season", ["singles", division.url_key]);
+    SET doubles_individuals_uri = c.uri_for_action("/league-averages/view_current_season", ["doubles-individuals", division.url_key]);
+    SET doubles_teams_uri = c.uri_for_action("/league-averages/view_current_season", ["doubles-teams", division.url_key]);
+  END;
+-%]
+  <div class="list-header">[% heading_text %]</div>
+  
+  <a href="[% tables_uri %]">[% c.maketext("divisions.option.league-table") %]</a>
+| <a href="[% singles_uri %]">[% c.maketext("divisions.option.league-averages-singles") %]</a>
+| <a href="[% doubles_individuals_uri %]">[% c.maketext("divisions.option.league-averages-doubles-individuals") %]</a>
+| [% c.maketext("divisions.option.league-averages-doubles-pairs") %]
+| <a href="[% doubles_teams_uri %]">[% c.maketext("divisions.option.league-averages-doubles-teams") %]</a>
+</div>
+[%
+  INCLUDE "html/league-averages/division-links.ttkt";
+END;
+-%]

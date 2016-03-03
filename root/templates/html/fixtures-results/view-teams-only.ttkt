@@ -1,0 +1,61 @@
+[% # This is a TT comment. -%]
+
+[% # Note That the '-' at the beginning or end of TT code  -%]
+[% # "chomps" the whitespace/newline at that end of the    -%]
+[% # output (use View Source in browser to see the effect) -%]
+
+[% # Some basic HTML with a loop to display clubs -%]
+<div id="matches">
+[%
+IF matches.count;
+-%]
+<table>
+[%
+  USE zeroes = format("%02d");
+  WHILE (match = matches.next);
+    SET date = match.scheduled_date;
+    SET month = zeroes( match.scheduled_date.month );
+    SET day   = zeroes( match.scheduled_date.day );
+    
+    IF specific_season;
+      SET home_team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [match.home_team.club.url_key, match.home_team.url_key, season.url_key]);
+      SET away_team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [match.away_team.club.url_key, match.away_team.url_key, season.url_key]);
+    ELSE;
+      SET home_team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [match.home_team.club.url_key, match.home_team.url_key]);
+      SET away_team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [match.away_team.club.url_key, match.away_team.url_key]);
+    END;
+    
+    # Display the score or 'v'?
+    IF match.home_team_match_score OR match.away_team_match_score;
+      SET score = match.home_team_match_score _ "-" _ match.away_team_match_score;
+      SET score_class = ' class="match-score"';
+    ELSE;
+      SET score = c.maketext("matches.versus-abbreviation");
+      SET score_class = ' class="match-versus"';
+    END;
+-%]
+  <tr>
+    <td>
+      <a href="[% home_team_uri %]">[% match.home_team.club.short_name | html_entity %] [% match.home_team.name | html_entity %]</a>
+    </td>
+    <td[% score_class %]>
+      <a href="[% c.uri_for_action('/matches/team/view_by_url_keys', [match.home_team.club.url_key, match.home_team.url_key, match.away_team.club.url_key, match.away_team.url_key, date.year, month, day]) %]" title="[% c.maketext("fixtures-results.view-scorecard") %]">[% score %]</a>
+    </td>
+    <td>
+      <a href="[% away_team_uri %]">[% match.away_team.club.short_name | html_entity %] [% match.away_team.name | html_entity %]</a>
+    </td>
+  </tr>
+[%
+  END;
+-%]
+</table>
+[%
+ELSE;
+-%]
+<div class="list-item">
+  [% c.maketext("fixtures-results.no-matches") %]
+</div>
+[%
+END;
+-%]
+</div>

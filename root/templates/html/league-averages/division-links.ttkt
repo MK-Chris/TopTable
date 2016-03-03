@@ -1,0 +1,34 @@
+[% # Note That the '-' at the beginning or end of TT code  -%]
+[% # "chomps" the whitespace/newline at that end of the    -%]
+[% # output (use View Source in browser to see the effect) -%]
+
+<div class="links-list">
+  <div class="list-header">[% c.maketext("menu.text.divisions") %]</div>
+[%
+SET i = 1;
+FOREACH division_season IN divisions;
+  IF specific_season;
+    SET uri = c.uri_for_action("/league-averages/view_specific_season", [averages_type, division_season.division.url_key, season.url_key]);
+  ELSE;
+    SET uri = c.uri_for_action("/league-averages/view_current_season", [averages_type, division_season.division.url_key]);
+  END;
+  
+  IF i > 1;
+-%]
+| 
+[%-
+  END;
+  
+  IF division_season.division.id == division.id;
+-%]
+  [% division_season.name | html_entity %]
+[%
+  ELSE;
+-%]
+  <a href="[% uri %]">[% division_season.name | html_entity %]</a>
+[%
+  END;
+  i = i + 1;
+END;
+-%]
+</div>

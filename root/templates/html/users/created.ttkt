@@ -1,0 +1,1 @@
+[% c.maketext("user.registration.success-message", username, email_address c.uri_for_action("/users/resend_activation", [user.url_key]) ) | html_line_break %]

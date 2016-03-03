@@ -1,0 +1,21 @@
+[% # This is a TT comment. -%]
+[% # Note That the '-' at the beginning or end of TT code  -%]
+[% # "chomps" the whitespace/newline at that end of the    -%]
+[% # output (use View Source in browser to see the effect) -%]
+[% # Some basic HTML with a loop to display clubs -%]
+[%
+FOREACH division IN display_options;
+-%]
+<div class="list-item">
+[%
+  IF specific_season;
+    SET uri = c.uri_for_action("/fixtures-results/view_division_specific_season_first_page", [season.url_key, division.url_key]);
+  ELSE;
+    SET uri = c.uri_for_action("/fixtures-results/view_division_current_season_first_page", [division.url_key]);
+  END;
+-%]
+  <a href="[% uri %]">[% division.name %]</a>
+</div>
+[%
+END;
+-%]

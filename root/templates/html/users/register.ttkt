@@ -1,0 +1,147 @@
+<form method="post" action="[% c.uri_for('/users/create') %]">
+<fieldset id="user-details">
+<legend>[% c.maketext("user.form.legend.details") %]</legend>
+
+<div class="label-field-container">
+  <label for="username">[% c.maketext("user.field.username") %]</label>
+  <div class="field-container">
+    <input type="text" id="username" name="username" value="[% c.flash.username | html_entity %]" />
+  </div>
+  <div class="clear-fix"></div>
+</div>
+
+<div class="label-field-container">
+  <label for="email_address">[% c.maketext("user.field.email-address") %]</label>
+  <div class="field-container">
+    <input type="email" id="email_address" name="email_address" value="[% c.flash.email_address | html_entity %]" />
+  </div>
+  <div class="clear-fix"></div>
+</div>
+
+<div class="label-field-container">
+  <label for="confirm_email_address">[% c.maketext("user.field.email-address-confirm") %]</label>
+  <div class="field-container">
+    <input type="email" id="confirm_email_address" name="confirm_email_address" value="[% c.flash.confirm_email_address | html_entity %]" autocomplete="off" />
+  </div>
+  <div class="clear-fix"></div>
+</div>
+
+<div class="label-field-container">
+  <label for="password">[% c.maketext("user.field.password") %]</label>
+  <div class="field-container">
+    <input type="password" id="password" name="password" value="" />
+  </div>
+  <div class="clear-fix"></div>
+</div>
+
+<div class="label-field-container">
+  <label for="confirm_password">[% c.maketext("user.field.password-confirm") %]</label>
+  <div class="field-container">
+    <input type="password" id="confirm_password" name="confirm_password" value="" />
+  </div>
+  <div class="clear-fix"></div>
+</div>
+
+
+<div class="label-field-container">
+  <label for="language">[% c.maketext("user.field.language") %]</label>
+  <div class="field-container">
+    <select id="language" name="language" data-placeholder="[% c.maketext("user.field.language") %]">
+      <option value="">
+[%
+IF c.flash.language;
+  SET check_language = c.flash.language;
+ELSE;
+  SET check_language = c.locale;
+END;
+
+FOREACH key IN languages.keys;
+  IF key == check_language;
+    SET language_selected = ' selected="selected"';
+  ELSE;
+    SET language_selected = '';
+  END;
+-%]
+      <option value="[% key %]"[% language_selected %]>[% languages.$key.name OR key | html_entity %]</option>
+[%
+END;
+-%]
+    </select>
+  </div>
+  <div class="clear-fix"></div>
+</div>
+
+<div class="label-field-container">
+  <label for="locale">[% c.maketext("user.field.timezone") %]</label>
+  <div class="field-container">
+    <select id="timezone" name="timezone" data-placeholder="[% c.maketext("user.field.timezone") %]">
+        <option></option>
+[%
+# Set up the timezone to check against
+SET locale = c.locale;
+IF c.flash.timezone;
+  SET check_timezone = c.flash.timezone;
+ELSIF c.user.timezone;
+  SET check_timezone = c.user.timezone;
+ELSIF c.config.I18N.locales.$locale.timezone;
+  SET check_timezone = c.config.I18N.locales.$locale.timezone;
+ELSIF c.config.DateTime.default_timezone;
+  SET check_timezone = c.config.DateTime.default_timezone;
+END;
+
+SET i = 1;
+FOREACH category IN timezones.keys.sort;
+  IF i > 1;
+    # End the last optgroup if we need to
+-%]
+      </optgroup>
+[%
+  END;
+-%]
+      <optgroup label="[% category %]">
+[%
+  FOREACH timezone IN timezones.$category;
+    IF category _ "/" _ timezone == check_timezone;
+      SET SELECTED = ' selected="selected"';
+    ELSE;
+      SET SELECTED = '';
+    END;
+-%]
+        <option value="[% category _ "/" _ timezone %]"[% SELECTED %]>[% timezone.replace("_", " ") %]</option>
+[%
+  END;
+  SET i = i + 1;
+END
+-%]
+      </optgroup>
+    </select>
+  </div>
+  <div class="clear-fix"></div>
+</div>
+
+[%
+IF c.flash.html_emails;
+  html_emails_checked = ' checked="checked"';
+ELSE;
+  html_emails_checked = '';
+END;
+-%]
+<input type="checkbox" name="html_emails" id="html_emails" value="1" data-label="[% c.maketext("user.field.html-emails") %]"[% html_emails_checked %] />
+<div class="clear-fix"></div>
+
+[%
+IF reCAPTCHA AND c.config.Google.reCAPTCHA.site_key;
+-%]
+<div class="label-field-container">
+  <div class="label-placeholder">&nbsp;</div>
+  <div class="field-container">
+    <div class="g-recaptcha" data-sitekey="[% c.config.Google.reCAPTCHA.site_key %]"></div>
+  </div>
+  <div class="clear-fix"></div>
+</div>
+[%
+END;
+-%]
+</fieldset>
+<input type="submit" name="Submit" value="[% c.maketext("user.register") %]">
+</form>

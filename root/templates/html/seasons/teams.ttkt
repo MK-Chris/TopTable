@@ -1,0 +1,182 @@
+[% # This is a TT comment. -%]
+
+[% # Note That the '-' at the beginning or end of TT code  -%]
+[% # "chomps" the whitespace/newline at that end of the    -%]
+[% # output (use View Source in browser to see the effect) -%]
+
+[% # Some basic HTML with a loop to display clubs -%]
+<form method="post" action="[% c.uri_for("/seasons/set-teams") %]">
+<!--<input type="button" id="active-toggle" value="Show inactive teams" />-->
+<div id="accordion">
+[% # Set the counter
+SET i = 0;
+SET club_teams = 0;
+FOREACH team IN teams;
+  SET team_season = team.team_seasons.first;
+  SET team_id = team.id;
+  SET i = i + 1;
+  
+  # Check if we're on a different club now
+  IF team.club.id != LAST_ID;
+    IF i > 1;
+      # Check if there were any clubs to display there
+      IF club_teams == 0;
+-%]
+<div class="no-active-teams">There are no active teams to display for this club.</div>
+[%
+      END;
+      club_teams = 0;
+-%]
+</div>
+<!-- END club div -->
+[%
+    END;
+-%]
+<h3>[% team.club.full_name %]</h3>
+<!-- START club div -->
+<div>
+[%
+    SET LAST_ID = team.club.id;
+  END;
+  
+  IF c.flash.errored_form;
+    # If the form has errored, the rules are different, as the data we sent (even if it's unchanged from the DB data) is in the flashed data
+    IF c.flash.teams.$team_id.entered;
+      SET TEAM_DIVISION     = c.flash.teams.$team_id.new_division.id;
+      SET TEAM_CLUB         = c.flash.teams.$team_id.new_club.id;
+      SET TEAM_HOME_NIGHT   = c.flash.teams.$team_id.new_home_night.weekday_number;
+      SET CHECKBOX_CHECKED  = ' checked="checked"';
+      SET DIV_DISPLAY       = '';
+      club_teams            = club_teams + 1;
+    ELSE;
+      SET TEAM_DIVISION     = '';
+      SET TEAM_CLUB         = '';
+      SET TEAM_HOME_NIGHT   = '';
+      SET CHECKBOX_CHECKED  = '';
+      SET DIV_DISPLAY       = ' style="display: none;"';
+    END;
+  ELSE;
+    IF team.team_seasons;
+      # Set the team's last division
+      SET TEAM_DIVISION     = team_season.division.id;
+      SET TEAM_CLUB         = team.club.id;
+      SET TEAM_HOME_NIGHT   = team_season.home_night.weekday_number;
+      SET CHECKBOX_CHECKED  = ' checked="checked"';
+      SET DIV_DISPLAY       = '';
+      club_teams            = club_teams + 1;
+    ELSE;
+      SET TEAM_DIVISION     = '';
+      SET TEAM_CLUB         = '';
+      SET TEAM_HOME_NIGHT   = '';
+      SET CHECKBOX_CHECKED  = '';
+      SET DIV_DISPLAY       = ' style="display: none;"';
+    END;
+  END;
+%]
+<!-- START individual team div -->
+<fieldset id="team_div_[% team.id %]">
+  <legend>[% team.name %]</legend>
+  <input type="hidden" id="team_[% team.id %]" name="id" value="[% team.id %]" />
+  
+  <div class="form-column-single">
+    <input type="checkbox" id="use_[% team.id %]" data-team-id="[% team.id %]" name="[% team.id %]_entered" data-label="Entered" value="1"[% CHECKBOX_CHECKED %] />
+  </div>
+  
+  <div id="team-div-[% team.id %]"[% DIV_DISPLAY %]>
+    <div class="form-column">
+      <div class="label-field-container">
+        <label for="club_[% team.id %]">Club</label>
+        <div class="field-container">
+          <select name="club_[% team.id %]" id="club_[% team.id %]" data-placeholder="Club">
+            <option value=""></option>
+  [%
+    FOREACH club IN clubs;
+      IF TEAM_CLUB == club.id;
+        SET SELECTED = ' selected="selected"';
+      ELSE;
+        SET SELECTED = '';
+      END;
+  -%]
+            <option value="[% club.id %]"[% SELECTED %]>[% club.short_name %]</option>
+  [%
+    END;
+  -%]
+          </select>
+        </div>
+        <div class="clear-fix"></div>
+      </div>
+      
+      <div class="label-field-container">
+        <label for="division_[% team.id %]">Division</label>
+        <div class="field-container">
+          <select id="division_[% team.id %]" name="division_[% team.id %]" data-placeholder="Division"[% SELECT_DISABLED %]>
+            <option value=""></option>
+  [%
+    FOREACH division IN divisions;
+      # Now set selected text if needed;
+      IF TEAM_DIVISION == division.id;
+        SET SELECTED = ' selected="selected"';
+      ELSE;
+        SET SELECTED = '';
+      END;
+  -%]
+            <option value="[% division.id %]"[% SELECTED %]>[% division.name %]</option>
+  [%
+    END;
+  -%]
+          </select>
+        </div>
+        <div class="clear-fix"></div>
+      </div>
+      
+      <div class="label-field-container">
+        <label for="home_night_[% team.id %]">Home night</label>
+        <div class="field-container">
+          <select name="home_night_[% team.id %]" id="home_night_[% team.id %]" data-placeholder="Home night">
+            <option value=""></option>
+  [%
+    FOREACH night IN home_nights;
+      IF TEAM_HOME_NIGHT == night.weekday_number;
+        SET SELECTED = ' selected="selected"';
+      ELSE;
+        SET SELECTED = '';
+      END;
+  -%]
+            <option value="[% night.weekday_number %]"[% SELECTED %]>[% night.weekday_name %]</option>
+  [%
+    END;
+  -%]
+          </select>
+        </div>
+        <div class="clear-fix"></div>
+      </div>
+      
+      <div class="label-field-container">
+        <label for="token-input-captain_[% team.id %]">Captain</label>
+        <div class="field-container">
+          <input type="text" id="captain_[% team.id %]" name="captain_[% team.id %]" />
+        </div>
+        <div class="clear-fix"></div>
+      </div>
+    </div>
+    <div class="form-column">
+      <div class="label-field-container">
+        <label for="token-input-players_[% team.id %]">Players</label>
+        <div class="field-container">
+          <input type="text" id="players_[% team.id %]" name="players_[% team.id %]" />
+        </div>
+        <div class="clear-fix"></div>
+      </div>
+    </div>
+  </div>
+</fieldset>
+<!-- END individual team div -->
+[%
+END;
+-%]
+</div>
+<!-- END club div -->
+</div><br />
+<!-- END accordion div -->
+<input type="submit" name="Submit" value="Save" />
+</form>

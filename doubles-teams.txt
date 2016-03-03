@@ -1,0 +1,854 @@
+Chackmore Hasbeens
+Officially played: 0 games, changed to: 18
+Officially won: 0 games, changed to: 14
+Officially lost: 0 games, changed to: 4
+Official game average: 0, changed to: 77
+Officially played: 0 legs, changed to: 72
+Officially won: 0 legs, changed to: 46
+Officially lost: 0 legs, changed to: 26
+Official leg average: 0, change to: 63
+Officially played: 0 points, changed to: 1331
+Officially won: 0 points, changed to: 695
+Officially lost: 0 points, changed to: 636
+Official point average: 0, changed to: 52
+
+Chackmore Wannabes
+Officially played: 0 games, changed to: 18
+Officially won: 0 games, changed to: 6
+Officially lost: 0 games, changed to: 12
+Official game average: 0, changed to: 33
+Officially played: 0 legs, changed to: 66
+Officially won: 0 legs, changed to: 25
+Officially lost: 0 legs, changed to: 41
+Official leg average: 0, change to: 37
+Officially played: 0 points, changed to: 1261
+Officially won: 0 points, changed to: 598
+Officially lost: 0 points, changed to: 663
+Official point average: 0, changed to: 47
+
+Greenleys Kings
+Officially played: 0 games, changed to: 18
+Officially won: 0 games, changed to: 10
+Officially lost: 0 games, changed to: 8
+Official game average: 0, changed to: 55
+Officially played: 0 legs, changed to: 73
+Officially won: 0 legs, changed to: 40
+Officially lost: 0 legs, changed to: 33
+Official leg average: 0, change to: 54
+Officially played: 0 points, changed to: 1413
+Officially won: 0 points, changed to: 717
+Officially lost: 0 points, changed to: 696
+Official point average: 0, changed to: 50
+
+Greenleys Monarchs
+Officially played: 0 games, changed to: 18
+Officially won: 0 games, changed to: 13
+Officially lost: 0 games, changed to: 5
+Official game average: 0, changed to: 72
+Officially played: 0 legs, changed to: 68
+Officially won: 0 legs, changed to: 43
+Officially lost: 0 legs, changed to: 25
+Official leg average: 0, change to: 63
+Officially played: 0 points, changed to: 1276
+Officially won: 0 points, changed to: 671
+Officially lost: 0 points, changed to: 605
+Official point average: 0, changed to: 52
+
+Greenleys Eagles
+Officially played: 0 games, changed to: 18
+Officially won: 0 games, changed to: 11
+Officially lost: 0 games, changed to: 7
+Official game average: 0, changed to: 61
+Officially played: 0 legs, changed to: 75
+Officially won: 0 legs, changed to: 42
+Officially lost: 0 legs, changed to: 33
+Official leg average: 0, change to: 56
+Officially played: 0 points, changed to: 1399
+Officially won: 0 points, changed to: 724
+Officially lost: 0 points, changed to: 675
+Official point average: 0, changed to: 51
+
+Greenleys Warriors
+Officially played: 0 games, changed to: 18
+Officially won: 0 games, changed to: 12
+Officially lost: 0 games, changed to: 6
+Official game average: 0, changed to: 66
+Officially played: 0 legs, changed to: 73
+Officially won: 0 legs, changed to: 41
+Officially lost: 0 legs, changed to: 32
+Official leg average: 0, change to: 56
+Officially played: 0 points, changed to: 1365
+Officially won: 0 points, changed to: 704
+Officially lost: 0 points, changed to: 661
+Official point average: 0, changed to: 51
+
+Greenleys Cardinals
+Officially played: 0 games, changed to: 18
+Officially won: 0 games, changed to: 12
+Officially lost: 0 games, changed to: 6
+Official game average: 0, changed to: 66
+Officially played: 0 legs, changed to: 75
+Officially won: 0 legs, changed to: 44
+Officially lost: 0 legs, changed to: 31
+Official leg average: 0, change to: 58
+Officially played: 0 points, changed to: 1417
+Officially won: 0 points, changed to: 752
+Officially lost: 0 points, changed to: 665
+Official point average: 0, changed to: 53
+
+Greenleys Troopers
+Officially played: 0 games, changed to: 18
+Officially won: 0 games, changed to: 12
+Officially lost: 0 games, changed to: 6
+Official game average: 0, changed to: 66
+Officially played: 0 legs, changed to: 72
+Officially won: 0 legs, changed to: 43
+Officially lost: 0 legs, changed to: 29
+Official leg average: 0, change to: 59
+Officially played: 0 points, changed to: 1313
+Officially won: 0 points, changed to: 681
+Officially lost: 0 points, changed to: 632
+Official point average: 0, changed to: 51
+
+Greenleys Crusaders
+Officially played: 0 games, changed to: 15
+Officially won: 0 games, changed to: 8
+Officially lost: 0 games, changed to: 7
+Official game average: 0, changed to: 53
+Officially played: 0 legs, changed to: 58
+Officially won: 0 legs, changed to: 31
+Officially lost: 0 legs, changed to: 27
+Official leg average: 0, change to: 53
+Officially played: 0 points, changed to: 1037
+Officially won: 0 points, changed to: 536
+Officially lost: 0 points, changed to: 501
+Official point average: 0, changed to: 51
+
+Greenleys Dukes
+Officially played: 0 games, changed to: 15
+Officially won: 0 games, changed to: 9
+Officially lost: 0 games, changed to: 6
+Official game average: 0, changed to: 60
+Officially played: 0 legs, changed to: 70
+Officially won: 0 legs, changed to: 37
+Officially lost: 0 legs, changed to: 33
+Official leg average: 0, change to: 52
+Officially played: 0 points, changed to: 1300
+Officially won: 0 points, changed to: 653
+Officially lost: 0 points, changed to: 647
+Official point average: 0, changed to: 50
+
+Greenleys Moghuls
+Officially played: 0 games, changed to: 15
+Officially won: 0 games, changed to: 3
+Officially lost: 0 games, changed to: 12
+Official game average: 0, changed to: 20
+Officially played: 0 legs, changed to: 56
+Officially won: 0 legs, changed to: 18
+Officially lost: 0 legs, changed to: 38
+Official leg average: 0, change to: 32
+Officially played: 0 points, changed to: 987
+Officially won: 0 points, changed to: 435
+Officially lost: 0 points, changed to: 552
+Official point average: 0, changed to: 44
+
+Greenleys Sovereigns
+Officially played: 0 games, changed to: 16
+Officially won: 0 games, changed to: 7
+Officially lost: 0 games, changed to: 9
+Official game average: 0, changed to: 43
+Officially played: 0 legs, changed to: 65
+Officially won: 0 legs, changed to: 30
+Officially lost: 0 legs, changed to: 35
+Official leg average: 0, change to: 46
+Officially played: 0 points, changed to: 1205
+Officially won: 0 points, changed to: 599
+Officially lost: 0 points, changed to: 606
+Official point average: 0, changed to: 49
+
+Little Horwood Wooden Tops
+Officially played: 0 games, changed to: 17
+Officially won: 0 games, changed to: 6
+Officially lost: 0 games, changed to: 11
+Official game average: 0, changed to: 35
+Officially played: 0 legs, changed to: 70
+Officially won: 0 legs, changed to: 29
+Officially lost: 0 legs, changed to: 41
+Official leg average: 0, change to: 41
+Officially played: 0 points, changed to: 1308
+Officially won: 0 points, changed to: 629
+Officially lost: 0 points, changed to: 679
+Official point average: 0, changed to: 48
+
+Little Horwood Cruisers
+Officially played: 0 games, changed to: 15
+Officially won: 0 games, changed to: 5
+Officially lost: 0 games, changed to: 10
+Official game average: 0, changed to: 33
+Officially played: 0 legs, changed to: 57
+Officially won: 0 legs, changed to: 22
+Officially lost: 0 legs, changed to: 35
+Official leg average: 0, change to: 38
+Officially played: 0 points, changed to: 1074
+Officially won: 0 points, changed to: 507
+Officially lost: 0 points, changed to: 567
+Official point average: 0, changed to: 47
+
+Little Horwood Destroyers
+Officially played: 0 games, changed to: 16
+Officially won: 0 games, changed to: 6
+Officially lost: 0 games, changed to: 10
+Official game average: 0, changed to: 37
+Officially played: 0 legs, changed to: 59
+Officially won: 0 legs, changed to: 24
+Officially lost: 0 legs, changed to: 35
+Official leg average: 0, change to: 40
+Officially played: 0 points, changed to: 1072
+Officially won: 0 points, changed to: 505
+Officially lost: 0 points, changed to: 567
+Official point average: 0, changed to: 47
+
+Little Horwood Frigates
+Officially played: 0 games, changed to: 13
+Officially won: 0 games, changed to: 5
+Officially lost: 0 games, changed to: 8
+Official game average: 0, changed to: 38
+Officially played: 0 legs, changed to: 49
+Officially won: 0 legs, changed to: 22
+Officially lost: 0 legs, changed to: 27
+Official leg average: 0, change to: 44
+Officially played: 0 points, changed to: 896
+Officially won: 0 points, changed to: 438
+Officially lost: 0 points, changed to: 458
+Official point average: 0, changed to: 48
+
+Milton Keynes Kingpins
+Officially played: 0 games, changed to: 18
+Officially won: 0 games, changed to: 10
+Officially lost: 0 games, changed to: 8
+Official game average: 0, changed to: 55
+Officially played: 0 legs, changed to: 69
+Officially won: 0 legs, changed to: 39
+Officially lost: 0 legs, changed to: 30
+Official leg average: 0, change to: 56
+Officially played: 0 points, changed to: 1334
+Officially won: 0 points, changed to: 683
+Officially lost: 0 points, changed to: 651
+Official point average: 0, changed to: 51
+
+Milton Keynes Phoenix
+Officially played: 0 games, changed to: 18
+Officially lost: 0 games, changed to: 18
+Official game average: 0, changed to: 0
+Officially played: 0 legs, changed to: 68
+Officially won: 0 legs, changed to: 14
+Officially lost: 0 legs, changed to: 54
+Official leg average: 0, change to: 20
+Officially played: 0 points, changed to: 1237
+Officially won: 0 points, changed to: 535
+Officially lost: 0 points, changed to: 702
+Official point average: 0, changed to: 43
+
+Milton Keynes Powers
+Officially played: 0 games, changed to: 18
+Officially won: 0 games, changed to: 3
+Officially lost: 0 games, changed to: 15
+Official game average: 0, changed to: 16
+Officially played: 0 legs, changed to: 58
+Officially won: 0 legs, changed to: 12
+Officially lost: 0 legs, changed to: 46
+Official leg average: 0, change to: 20
+Officially played: 0 points, changed to: 1081
+Officially won: 0 points, changed to: 470
+Officially lost: 0 points, changed to: 611
+Official point average: 0, changed to: 43
+
+Milton Keynes Sasaki
+Officially played: 0 games, changed to: 17
+Officially won: 0 games, changed to: 9
+Officially lost: 0 games, changed to: 8
+Official game average: 0, changed to: 52
+Officially played: 0 legs, changed to: 65
+Officially won: 0 legs, changed to: 33
+Officially lost: 0 legs, changed to: 32
+Official leg average: 0, change to: 50
+Officially played: 0 points, changed to: 1230
+Officially won: 0 points, changed to: 622
+Officially lost: 0 points, changed to: 608
+Official point average: 0, changed to: 50
+
+Milton Keynes Spinners
+Officially played: 0 games, changed to: 17
+Officially won: 0 games, changed to: 13
+Officially lost: 0 games, changed to: 4
+Official game average: 0, changed to: 76
+Officially played: 0 legs, changed to: 62
+Officially won: 0 legs, changed to: 43
+Officially lost: 0 legs, changed to: 19
+Official leg average: 0, change to: 69
+Officially played: 0 points, changed to: 1164
+Officially won: 0 points, changed to: 643
+Officially lost: 0 points, changed to: 521
+Official point average: 0, changed to: 55
+
+Milton Keynes Walking Wounded
+Officially played: 0 games, changed to: 18
+Officially won: 0 games, changed to: 13
+Officially lost: 0 games, changed to: 5
+Official game average: 0, changed to: 72
+Officially played: 0 legs, changed to: 67
+Officially won: 0 legs, changed to: 41
+Officially lost: 0 legs, changed to: 26
+Official leg average: 0, change to: 61
+Officially played: 0 points, changed to: 1291
+Officially won: 0 points, changed to: 672
+Officially lost: 0 points, changed to: 619
+Official point average: 0, changed to: 52
+
+Milton Keynes Bandits
+Officially played: 0 games, changed to: 18
+Officially won: 0 games, changed to: 13
+Officially lost: 0 games, changed to: 5
+Official game average: 0, changed to: 72
+Officially played: 0 legs, changed to: 72
+Officially won: 0 legs, changed to: 45
+Officially lost: 0 legs, changed to: 27
+Official leg average: 0, change to: 62
+Officially played: 0 points, changed to: 1337
+Officially won: 0 points, changed to: 707
+Officially lost: 0 points, changed to: 630
+Official point average: 0, changed to: 52
+
+Milton Keynes Classics
+Officially played: 0 games, changed to: 18
+Officially won: 0 games, changed to: 2
+Officially lost: 0 games, changed to: 16
+Official game average: 0, changed to: 11
+Officially played: 0 legs, changed to: 68
+Officially won: 0 legs, changed to: 17
+Officially lost: 0 legs, changed to: 51
+Official leg average: 0, change to: 25
+Officially played: 0 points, changed to: 1226
+Officially won: 0 points, changed to: 531
+Officially lost: 0 points, changed to: 695
+Official point average: 0, changed to: 43
+
+Milton Keynes Pumas
+Officially played: 0 games, changed to: 18
+Officially won: 0 games, changed to: 12
+Officially lost: 0 games, changed to: 6
+Official game average: 0, changed to: 66
+Officially played: 0 legs, changed to: 77
+Officially won: 0 legs, changed to: 42
+Officially lost: 0 legs, changed to: 35
+Official leg average: 0, change to: 54
+Officially played: 0 points, changed to: 1452
+Officially won: 0 points, changed to: 731
+Officially lost: 0 points, changed to: 721
+Official point average: 0, changed to: 50
+
+Milton Keynes Rovers
+Officially played: 0 games, changed to: 18
+Officially won: 0 games, changed to: 13
+Officially lost: 0 games, changed to: 5
+Official game average: 0, changed to: 72
+Officially played: 0 legs, changed to: 68
+Officially won: 0 legs, changed to: 46
+Officially lost: 0 legs, changed to: 22
+Official leg average: 0, change to: 67
+Officially played: 0 points, changed to: 1227
+Officially won: 0 points, changed to: 668
+Officially lost: 0 points, changed to: 559
+Official point average: 0, changed to: 54
+
+Milton Keynes Topspin
+Officially played: 0 games, changed to: 18
+Officially won: 0 games, changed to: 7
+Officially lost: 0 games, changed to: 11
+Official game average: 0, changed to: 38
+Officially played: 0 legs, changed to: 71
+Officially won: 0 legs, changed to: 29
+Officially lost: 0 legs, changed to: 42
+Official leg average: 0, change to: 40
+Officially played: 0 points, changed to: 1288
+Officially won: 0 points, changed to: 613
+Officially lost: 0 points, changed to: 675
+Official point average: 0, changed to: 47
+
+Milton Keynes Hit 'n' Hope
+Officially played: 0 games, changed to: 18
+Officially won: 0 games, changed to: 9
+Officially lost: 0 games, changed to: 9
+Official game average: 0, changed to: 50
+Officially played: 0 legs, changed to: 72
+Officially won: 0 legs, changed to: 36
+Officially lost: 0 legs, changed to: 36
+Official leg average: 0, change to: 50
+Officially played: 0 points, changed to: 1299
+Officially won: 0 points, changed to: 661
+Officially lost: 0 points, changed to: 638
+Official point average: 0, changed to: 50
+
+Milton Keynes Blades
+Officially played: 0 games, changed to: 18
+Officially won: 0 games, changed to: 13
+Officially lost: 0 games, changed to: 5
+Official game average: 0, changed to: 72
+Officially played: 0 legs, changed to: 65
+Officially won: 0 legs, changed to: 44
+Officially lost: 0 legs, changed to: 21
+Official leg average: 0, change to: 67
+Officially played: 0 points, changed to: 1186
+Officially won: 0 points, changed to: 635
+Officially lost: 0 points, changed to: 551
+Official point average: 0, changed to: 53
+
+Milton Keynes Eagles
+Officially played: 0 games, changed to: 18
+Officially won: 0 games, changed to: 4
+Officially lost: 0 games, changed to: 14
+Official game average: 0, changed to: 22
+Officially played: 0 legs, changed to: 75
+Officially won: 0 legs, changed to: 29
+Officially lost: 0 legs, changed to: 46
+Official leg average: 0, change to: 38
+Officially played: 0 points, changed to: 1395
+Officially won: 0 points, changed to: 662
+Officially lost: 0 points, changed to: 733
+Official point average: 0, changed to: 47
+
+Milton Keynes Shambles
+Officially played: 0 games, changed to: 18
+Officially won: 0 games, changed to: 6
+Officially lost: 0 games, changed to: 12
+Official game average: 0, changed to: 33
+Officially played: 0 legs, changed to: 70
+Officially won: 0 legs, changed to: 28
+Officially lost: 0 legs, changed to: 42
+Official leg average: 0, change to: 40
+Officially played: 0 points, changed to: 1323
+Officially won: 0 points, changed to: 643
+Officially lost: 0 points, changed to: 680
+Official point average: 0, changed to: 48
+
+Milton Keynes Cavaliers
+Officially played: 0 games, changed to: 18
+Officially won: 0 games, changed to: 7
+Officially lost: 0 games, changed to: 11
+Official game average: 0, changed to: 38
+Officially played: 0 legs, changed to: 66
+Officially won: 0 legs, changed to: 28
+Officially lost: 0 legs, changed to: 38
+Official leg average: 0, change to: 42
+Officially played: 0 points, changed to: 1235
+Officially won: 0 points, changed to: 579
+Officially lost: 0 points, changed to: 656
+Official point average: 0, changed to: 46
+
+Milton Keynes Musketeers
+Officially played: 0 games, changed to: 18
+Officially won: 0 games, changed to: 10
+Officially lost: 0 games, changed to: 8
+Official game average: 0, changed to: 55
+Officially played: 0 legs, changed to: 72
+Officially won: 0 legs, changed to: 38
+Officially lost: 0 legs, changed to: 34
+Official leg average: 0, change to: 52
+Officially played: 0 points, changed to: 1353
+Officially won: 0 points, changed to: 699
+Officially lost: 0 points, changed to: 654
+Official point average: 0, changed to: 51
+
+Milton Keynes Flames
+Officially played: 0 games, changed to: 15
+Officially won: 0 games, changed to: 11
+Officially lost: 0 games, changed to: 4
+Official game average: 0, changed to: 73
+Officially played: 0 legs, changed to: 57
+Officially won: 0 legs, changed to: 37
+Officially lost: 0 legs, changed to: 20
+Official leg average: 0, change to: 64
+Officially played: 0 points, changed to: 1074
+Officially won: 0 points, changed to: 568
+Officially lost: 0 points, changed to: 506
+Official point average: 0, changed to: 52
+
+Milton Keynes Sharks
+Officially played: 0 games, changed to: 15
+Officially won: 0 games, changed to: 12
+Officially lost: 0 games, changed to: 3
+Official game average: 0, changed to: 80
+Officially played: 0 legs, changed to: 59
+Officially won: 0 legs, changed to: 40
+Officially lost: 0 legs, changed to: 19
+Official leg average: 0, change to: 67
+Officially played: 0 points, changed to: 1082
+Officially won: 0 points, changed to: 594
+Officially lost: 0 points, changed to: 488
+Official point average: 0, changed to: 54
+
+Milton Keynes Allsorts
+Officially played: 0 games, changed to: 15
+Officially won: 0 games, changed to: 11
+Officially lost: 0 games, changed to: 4
+Official game average: 0, changed to: 73
+Officially played: 0 legs, changed to: 53
+Officially won: 0 legs, changed to: 36
+Officially lost: 0 legs, changed to: 17
+Official leg average: 0, change to: 67
+Officially played: 0 points, changed to: 909
+Officially won: 0 points, changed to: 513
+Officially lost: 0 points, changed to: 396
+Official point average: 0, changed to: 56
+
+Milton Keynes Eclipse
+Officially played: 0 games, changed to: 14
+Officially won: 0 games, changed to: 10
+Officially lost: 0 games, changed to: 4
+Official game average: 0, changed to: 71
+Officially played: 0 legs, changed to: 50
+Officially won: 0 legs, changed to: 32
+Officially lost: 0 legs, changed to: 18
+Official leg average: 0, change to: 64
+Officially played: 0 points, changed to: 905
+Officially won: 0 points, changed to: 484
+Officially lost: 0 points, changed to: 421
+Official point average: 0, changed to: 53
+
+Milton Keynes Braves
+Officially played: 0 games, changed to: 15
+Officially won: 0 games, changed to: 12
+Officially lost: 0 games, changed to: 3
+Official game average: 0, changed to: 80
+Officially played: 0 legs, changed to: 55
+Officially won: 0 legs, changed to: 38
+Officially lost: 0 legs, changed to: 17
+Official leg average: 0, change to: 69
+Officially played: 0 points, changed to: 993
+Officially won: 0 points, changed to: 558
+Officially lost: 0 points, changed to: 435
+Official point average: 0, changed to: 56
+
+Milton Keynes Miracles
+Officially played: 0 games, changed to: 16
+Officially won: 0 games, changed to: 4
+Officially lost: 0 games, changed to: 12
+Official game average: 0, changed to: 25
+Officially played: 0 legs, changed to: 61
+Officially won: 0 legs, changed to: 24
+Officially lost: 0 legs, changed to: 37
+Official leg average: 0, change to: 39
+Officially played: 0 points, changed to: 1132
+Officially won: 0 points, changed to: 529
+Officially lost: 0 points, changed to: 603
+Official point average: 0, changed to: 46
+
+Mursley Swallows
+Officially played: 0 games, changed to: 18
+Officially won: 0 games, changed to: 5
+Officially lost: 0 games, changed to: 13
+Official game average: 0, changed to: 27
+Officially played: 0 legs, changed to: 79
+Officially won: 0 legs, changed to: 35
+Officially lost: 0 legs, changed to: 44
+Official leg average: 0, change to: 44
+Officially played: 0 points, changed to: 1458
+Officially won: 0 points, changed to: 703
+Officially lost: 0 points, changed to: 755
+Official point average: 0, changed to: 48
+
+Mursley Hawks
+Officially played: 0 games, changed to: 18
+Officially won: 0 games, changed to: 6
+Officially lost: 0 games, changed to: 12
+Official game average: 0, changed to: 33
+Officially played: 0 legs, changed to: 68
+Officially won: 0 legs, changed to: 25
+Officially lost: 0 legs, changed to: 43
+Official leg average: 0, change to: 36
+Officially played: 0 points, changed to: 1310
+Officially won: 0 points, changed to: 606
+Officially lost: 0 points, changed to: 704
+Official point average: 0, changed to: 46
+
+Mursley Meths
+Officially played: 0 games, changed to: 17
+Officially won: 0 games, changed to: 6
+Officially lost: 0 games, changed to: 11
+Official game average: 0, changed to: 35
+Officially played: 0 legs, changed to: 67
+Officially won: 0 legs, changed to: 28
+Officially lost: 0 legs, changed to: 39
+Official leg average: 0, change to: 41
+Officially played: 0 points, changed to: 1261
+Officially won: 0 points, changed to: 595
+Officially lost: 0 points, changed to: 666
+Official point average: 0, changed to: 47
+
+Mursley Swifts
+Officially played: 0 games, changed to: 18
+Officially won: 0 games, changed to: 12
+Officially lost: 0 games, changed to: 6
+Official game average: 0, changed to: 66
+Officially played: 0 legs, changed to: 67
+Officially won: 0 legs, changed to: 42
+Officially lost: 0 legs, changed to: 25
+Official leg average: 0, change to: 62
+Officially played: 0 points, changed to: 1259
+Officially won: 0 points, changed to: 676
+Officially lost: 0 points, changed to: 583
+Official point average: 0, changed to: 53
+
+Mursley Strikers
+Officially played: 0 games, changed to: 16
+Officially won: 0 games, changed to: 6
+Officially lost: 0 games, changed to: 10
+Official game average: 0, changed to: 37
+Officially played: 0 legs, changed to: 65
+Officially won: 0 legs, changed to: 27
+Officially lost: 0 legs, changed to: 38
+Official leg average: 0, change to: 41
+Officially played: 0 points, changed to: 1187
+Officially won: 0 points, changed to: 574
+Officially lost: 0 points, changed to: 613
+Official point average: 0, changed to: 48
+
+Mursley Magpies
+Officially played: 0 games, changed to: 16
+Officially won: 0 games, changed to: 4
+Officially lost: 0 games, changed to: 12
+Official game average: 0, changed to: 25
+Officially played: 0 legs, changed to: 58
+Officially won: 0 legs, changed to: 19
+Officially lost: 0 legs, changed to: 39
+Official leg average: 0, change to: 32
+Officially played: 0 points, changed to: 1050
+Officially won: 0 points, changed to: 464
+Officially lost: 0 points, changed to: 586
+Official point average: 0, changed to: 44
+
+Newport Pagnell Blackadders
+Officially played: 0 games, changed to: 18
+Officially won: 0 games, changed to: 12
+Officially lost: 0 games, changed to: 6
+Official game average: 0, changed to: 66
+Officially played: 0 legs, changed to: 76
+Officially won: 0 legs, changed to: 44
+Officially lost: 0 legs, changed to: 32
+Official leg average: 0, change to: 57
+Officially played: 0 points, changed to: 1438
+Officially won: 0 points, changed to: 759
+Officially lost: 0 points, changed to: 679
+Official point average: 0, changed to: 52
+
+Newport Pagnell Lagondas
+Officially played: 0 games, changed to: 18
+Officially won: 0 games, changed to: 8
+Officially lost: 0 games, changed to: 10
+Official game average: 0, changed to: 44
+Officially played: 0 legs, changed to: 79
+Officially won: 0 legs, changed to: 36
+Officially lost: 0 legs, changed to: 43
+Official leg average: 0, change to: 45
+Officially played: 0 points, changed to: 1480
+Officially won: 0 points, changed to: 711
+Officially lost: 0 points, changed to: 769
+Official point average: 0, changed to: 48
+
+Newport Pagnell Vanquish
+Officially played: 0 games, changed to: 18
+Officially won: 0 games, changed to: 9
+Officially lost: 0 games, changed to: 9
+Official game average: 0, changed to: 50
+Officially played: 0 legs, changed to: 66
+Officially won: 0 legs, changed to: 30
+Officially lost: 0 legs, changed to: 36
+Official leg average: 0, change to: 45
+Officially played: 0 points, changed to: 1180
+Officially won: 0 points, changed to: 583
+Officially lost: 0 points, changed to: 597
+Official point average: 0, changed to: 49
+
+Open University 5Ds
+Officially played: 0 games, changed to: 18
+Officially won: 0 games, changed to: 7
+Officially lost: 0 games, changed to: 11
+Official game average: 0, changed to: 38
+Officially played: 0 legs, changed to: 74
+Officially won: 0 legs, changed to: 35
+Officially lost: 0 legs, changed to: 39
+Official leg average: 0, change to: 47
+Officially played: 0 points, changed to: 1411
+Officially won: 0 points, changed to: 700
+Officially lost: 0 points, changed to: 711
+Official point average: 0, changed to: 49
+
+Open University Tigers
+Officially played: 0 games, changed to: 18
+Officially won: 0 games, changed to: 10
+Officially lost: 0 games, changed to: 8
+Official game average: 0, changed to: 55
+Officially played: 0 legs, changed to: 73
+Officially won: 0 legs, changed to: 39
+Officially lost: 0 legs, changed to: 34
+Official leg average: 0, change to: 53
+Officially played: 0 points, changed to: 1362
+Officially won: 0 points, changed to: 681
+Officially lost: 0 points, changed to: 681
+Official point average: 0, changed to: 50
+
+Open University Penguins
+Officially played: 0 games, changed to: 17
+Officially won: 0 games, changed to: 7
+Officially lost: 0 games, changed to: 10
+Official game average: 0, changed to: 41
+Officially played: 0 legs, changed to: 67
+Officially won: 0 legs, changed to: 32
+Officially lost: 0 legs, changed to: 35
+Official leg average: 0, change to: 47
+Officially played: 0 points, changed to: 1289
+Officially won: 0 points, changed to: 629
+Officially lost: 0 points, changed to: 660
+Official point average: 0, changed to: 48
+
+Open University Newcomers
+Officially played: 0 games, changed to: 15
+Officially won: 0 games, changed to: 5
+Officially lost: 0 games, changed to: 10
+Official game average: 0, changed to: 33
+Officially played: 0 legs, changed to: 61
+Officially won: 0 legs, changed to: 23
+Officially lost: 0 legs, changed to: 38
+Official leg average: 0, change to: 37
+Officially played: 0 points, changed to: 1116
+Officially won: 0 points, changed to: 517
+Officially lost: 0 points, changed to: 599
+Official point average: 0, changed to: 46
+
+Padbury Otters
+Officially played: 0 games, changed to: 15
+Officially won: 0 games, changed to: 5
+Officially lost: 0 games, changed to: 10
+Official game average: 0, changed to: 33
+Officially played: 0 legs, changed to: 61
+Officially won: 0 legs, changed to: 26
+Officially lost: 0 legs, changed to: 35
+Official leg average: 0, change to: 42
+Officially played: 0 points, changed to: 1134
+Officially won: 0 points, changed to: 545
+Officially lost: 0 points, changed to: 589
+Official point average: 0, changed to: 48
+
+Stony Stratford Crickets
+Officially played: 0 games, changed to: 17
+Officially won: 0 games, changed to: 16
+Officially lost: 0 games, changed to: 1
+Official game average: 0, changed to: 94
+Officially played: 0 legs, changed to: 69
+Officially won: 0 legs, changed to: 50
+Officially lost: 0 legs, changed to: 19
+Official leg average: 0, change to: 72
+Officially played: 0 points, changed to: 1310
+Officially won: 0 points, changed to: 733
+Officially lost: 0 points, changed to: 577
+Official point average: 0, changed to: 55
+
+St. Christopher Van Hire
+Officially played: 0 games, changed to: 18
+Officially won: 0 games, changed to: 11
+Officially lost: 0 games, changed to: 7
+Official game average: 0, changed to: 61
+Officially played: 0 legs, changed to: 81
+Officially won: 0 legs, changed to: 44
+Officially lost: 0 legs, changed to: 37
+Official leg average: 0, change to: 54
+Officially played: 0 points, changed to: 1476
+Officially won: 0 points, changed to: 772
+Officially lost: 0 points, changed to: 704
+Official point average: 0, changed to: 52
+
+St. Christopher Buzzards
+Officially played: 0 games, changed to: 15
+Officially won: 0 games, changed to: 4
+Officially lost: 0 games, changed to: 11
+Official game average: 0, changed to: 26
+Officially played: 0 legs, changed to: 55
+Officially won: 0 legs, changed to: 20
+Officially lost: 0 legs, changed to: 35
+Official leg average: 0, change to: 36
+Officially played: 0 points, changed to: 995
+Officially won: 0 points, changed to: 471
+Officially lost: 0 points, changed to: 524
+Official point average: 0, changed to: 47
+
+St. Christopher Crunchers
+Officially played: 0 games, changed to: 14
+Officially won: 0 games, changed to: 10
+Officially lost: 0 games, changed to: 4
+Official game average: 0, changed to: 71
+Officially played: 0 legs, changed to: 49
+Officially won: 0 legs, changed to: 33
+Officially lost: 0 legs, changed to: 16
+Official leg average: 0, change to: 67
+Officially played: 0 points, changed to: 880
+Officially won: 0 points, changed to: 471
+Officially lost: 0 points, changed to: 409
+Official point average: 0, changed to: 53
+
+Woburn Sands Data
+Officially played: 0 games, changed to: 18
+Officially won: 0 games, changed to: 7
+Officially lost: 0 games, changed to: 11
+Official game average: 0, changed to: 38
+Officially played: 0 legs, changed to: 75
+Officially won: 0 legs, changed to: 34
+Officially lost: 0 legs, changed to: 41
+Official leg average: 0, change to: 45
+Officially played: 0 points, changed to: 1408
+Officially won: 0 points, changed to: 700
+Officially lost: 0 points, changed to: 708
+Official point average: 0, changed to: 49
+
+Woburn Sands Mosquitoes
+Officially played: 0 games, changed to: 18
+Officially won: 0 games, changed to: 1
+Officially lost: 0 games, changed to: 17
+Official game average: 0, changed to: 5
+Officially played: 0 legs, changed to: 74
+Officially won: 0 legs, changed to: 21
+Officially lost: 0 legs, changed to: 53
+Official leg average: 0, change to: 28
+Officially played: 0 points, changed to: 1383
+Officially won: 0 points, changed to: 610
+Officially lost: 0 points, changed to: 773
+Official point average: 0, changed to: 44
+
+Woburn Sands Rams
+Officially played: 0 games, changed to: 15
+Officially won: 0 games, changed to: 12
+Officially lost: 0 games, changed to: 3
+Official game average: 0, changed to: 80
+Officially played: 0 legs, changed to: 60
+Officially won: 0 legs, changed to: 40
+Officially lost: 0 legs, changed to: 20
+Official leg average: 0, change to: 66
+Officially played: 0 points, changed to: 1128
+Officially won: 0 points, changed to: 618
+Officially lost: 0 points, changed to: 510
+Official point average: 0, changed to: 54
+
+Woburn Sands Tyros
+Officially played: 0 games, changed to: 15
+Officially won: 0 games, changed to: 9
+Officially lost: 0 games, changed to: 6
+Official game average: 0, changed to: 60
+Officially played: 0 legs, changed to: 60
+Officially won: 0 legs, changed to: 30
+Officially lost: 0 legs, changed to: 30
+Official leg average: 0, change to: 50
+Officially played: 0 points, changed to: 1094
+Officially won: 0 points, changed to: 546
+Officially lost: 0 points, changed to: 548
+Official point average: 0, changed to: 49
+
+Finished.

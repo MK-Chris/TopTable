@@ -1,0 +1,38 @@
+This is the brand new website for [% name %].  Please use the menu above to navigate.<br /><br />
+
+If you register an account, you will be able to comment on matches.<br /><br />
+
+<h4>[% c.maketext("home-page.updates.recent") %]</h4>
+[%
+# Recent updates
+SET table_width = 70;
+INCLUDE "html/event-log/list.ttkt";
+-%]<br />
+<a href="[% c.uri_for("/event-log") %]">[% c.maketext("home-page.updates.view-more") %]</a><br /><br />
+<div id="index-news">
+<h4>[% c.maketext("home-page.news.recent") %]</h4>
+[%
+# Latest news
+INCLUDE "html/news/list.ttkt";
+-%]<br />
+<a href="[% c.uri_for("/news") %]">[% c.maketext("home-page.news.view-more") %]</a>.
+</div>
+<div id="index-matches-today">
+<h4>[% c.maketext("home-page.todays-matches") %]</h4>
+[%
+# Today's matches
+INCLUDE "html/fixtures-results/view-teams-only.ttkt";
+-%]
+</div><br /><br />
+<div id="users_online" class="clear-fix">
+[%
+IF online_user_count == 1;
+  SET is_are = c.maketext("home-page.users-online.is");
+  SET users_singular_plural = c.maketext("object.singular.users");
+ELSE;
+  SET is_are = c.maketext("home-page.users-online.are");
+  SET users_singular_plural = c.maketext("object.plural.users");
+END;
+-%]
+<!--<a href="[% c.uri_for("/users-online") %]">[% c.maketext("home-page.users-online.summary", is_are, online_user_count, users_singular_plural) %]</a>.<br /><br />-->
+</div>

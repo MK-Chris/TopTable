@@ -1,0 +1,89 @@
+
+<form method="post" action="[% form_action %]">
+<fieldset>
+  <legend>[% c.maketext("contact.form.legend.details") %]</legend>
+  <div class="label-field-container">
+    <label for="first_name">[% c.maketext("contact.form.field.name") %]</label>
+    <div class="field-container">
+[%
+IF c.user_exists;
+  # Use user details that we know already if the user is logged in
+-%]
+      [% c.user.display_name | html_entity %]
+[%
+ELSE;
+-%]
+      <input type="text" id="first_name" name="first_name" placeholder="[% c.maketext("contact.form.field.first-name") %]" value="[% c.flash.first_name | html_entity %]" />
+      <input type="text" id="surname" name="surname" placeholder="[% c.maketext("contact.form.field.surname") %]" value="[% c.flash.surname | html_entity %]" />
+[%
+END;
+-%]
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+  
+  <div class="label-field-container">
+    <label for="email_address">[% c.maketext("contact.form.field.email-address") %]</label>
+    <div class="field-container">
+[%
+IF c.user_exists;
+  # Use user details that we know already if the user is logged in
+-%]
+      [% c.user.email_address | html_entity %]
+[%
+ELSE;
+-%]
+      <input type="text" id="email_address" name="email_address" value="[% c.flash.email_address %]" />
+[%
+END;
+-%]
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+  
+  <div class="label-field-container">
+    <label for="reason">[% c.maketext("contact.form.field.reason") %]</label>
+    <div class="field-container">
+      <select name="reason" id="reason" data-placeholder="[% c.maketext("contact.form.field.reason") %]">
+        <option></option>
+[%
+FOREACH reason = reasons;
+  IF c.flash.reason == reason.id;
+    SET SELECTED = ' selected="selected"';
+  ELSE;
+    SET SELECTED = '';
+  END;
+-%]
+        <option value="[% reason.id %]"[% SELECTED %]>[% reason.name | html_entity %]</option>
+[%
+END;
+-%]
+      </select>
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+  
+  <div class="label-field-container">
+    <label for="reason">[% c.maketext("contact.form.field.reason") %]</label>
+    <div class="field-container">
+      <textarea id="message" name="message" placeholder="[% c.maketext("contact.form.field.message") %]">[% c.flash.message | html_entity %]</textarea>
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+[%
+IF reCAPTCHA AND c.config.Google.reCAPTCHA.site_key;
+-%]
+  <div class="label-field-container">
+    <div class="label-placeholder">&nbsp;</div>
+    <div class="field-container">
+      <div class="g-recaptcha" data-sitekey="[% c.config.Google.reCAPTCHA.site_key %]"></div>
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+[%
+END;
+-%]
+  
+  <input type="submit" id="submit" name="submit" value="[% c.maketext("form.button.save") %]" />
+</fieldset>
+</form>

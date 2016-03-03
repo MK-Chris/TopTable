@@ -1,0 +1,48 @@
+[% # This is a TT comment. -%]
+[% # Note That the '-' at the beginning or end of TT code  -%]
+[% # "chomps" the whitespace/newline at that end of the    -%]
+[% # output (use View Source in browser to see the effect) -%]
+[% # Some basic HTML with a loop to display clubs -%]
+[%
+IF articles.count;
+  PROCESS "html/generic/pagination.ttkt" OBJECT_PLURAL = "news articles";
+  page_links_text;
+  
+  USE zeroes = format("%02d");
+  WHILE (article = articles.next);
+    SET current_details = article.current_details( timezone );
+    SET month = zeroes( article.published_month );
+    headline_html = FILTER html_entity; current_details.headline; END;
+-%]
+<div class="list-item">
+  <a href="[% c.uri_for_action("/news/view_by_url_key", [article.published_year, month, article.url_key]) %]">[% article.headline | html_entity %]</a>
+[%
+    IF authorisation.news_article_edit_all OR ( authorisation.news_article_edit_own AND article.user.id == c.user.id )
+-%]
+  <a href="[% c.uri_for_action("/news/edit_by_url_key", [article.published_year, month, article.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" title="[% c.maketext("admin.edit-object", headline_html) %]" /></a>
+[%
+    END;
+    IF authorisation.news_article_delete_all OR ( authorisation.news_article_delete_own AND article.user.id == c.user.id );
+-%]
+  <a href="[% c.uri_for_action("/news/delete_by_url_key", [article.published_year, month, article.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" title="[% c.maketext("admin.delete-object", headline_html) %]" /></a>
+[%
+    END;
+-%]
+  <br /><span class="news-published">Published: [% article.date_updated.dmy("/") %] at [% article.date_updated.hms %]</span>
+</div>
+[%
+  END;
+  page_links_text;
+ELSE;
+-%]
+<div class="list-item">
+  [% c.maketext("news.no-articles") %]
+</div>
+[%
+END;
+IF authorisation.news_article_create;
+-%]
+<a href="[% c.uri_for("/news/create") %]"><img src="[% c.uri_for("/static/images/icons/0009-Add-icon-48.png") %]" title="[% c.maketext("admin.create-object", c.maketext("object.singular.news")) %]" /></a>
+[%
+END;
+-%]

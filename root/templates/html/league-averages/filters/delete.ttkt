@@ -1,0 +1,9 @@
+<div id="form">
+<form method="post" action="[% c.uri_for_action("/league-averages/filters/do_delete", [filter.url_key]) %]">
+<input type="submit" name="Submit" value="[% c.maketext("form.button.delete") %]" />
+</form>
+</div>
+
+[%
+INCLUDE "html/league-averages/filters/view.ttkt";
+%]

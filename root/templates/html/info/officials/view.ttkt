@@ -1,0 +1,52 @@
+[%
+IF officials.size;
+-%]
+<table class="responsive-vertical">
+[%
+  FOREACH official = officials;
+    IF specific_season;
+      SET uri = c.uri_for_action("/people/view_specific_season", [official.position_holder.url_key, season.url_key]);
+    ELSE;
+      SET uri = c.uri_for_action("/people/view_current_season", [official.position_holder.url_key]);
+    END;
+-%]
+  <tr>
+    <th>[% official.position %]</th>
+    <td>
+      <a href="[% uri %]">[% official.position_holder.display_name | html_entity %]</a>
+[%-
+    IF official.position_holder.home_telephone;
+%]
+<br />
+<b>[% people.form.field.home-phone %]:</b> [% official.position_holder.home_telephone %]
+[%-
+    END;
+    IF official.position_holder.mobile_telephone;
+%]
+<br />
+<b>[% people.form.field.mobile-phone %]:</b> [% official.position_holder.mobile_telephone %]
+[%-
+    END;
+    IF official.position_holder.email_address;
+%]
+<br />
+<b>[% people.form.field.email-address %]:</b> <a href="mailto:[% official.position_holder.email_address %]">[% official.position_holder.email_address %]</a>
+[%
+    END;
+-%]
+    </td>
+  </tr>
+[%
+  END;
+-%]
+</table>
+[%
+ELSE;
+  # No officials entered for this season yet.
+-%]
+<div class="list-item">
+  [% c.maketext("officials.none") %]
+</div>
+[%
+END;
+-%]

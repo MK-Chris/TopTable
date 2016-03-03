@@ -1,0 +1,106 @@
+[% # Note That the '-' at the beginning or end of TT code  -%]
+[% # "chomps" the whitespace/newline at that end of the    -%]
+[% # output (use View Source in browser to see the effect) -%]
+<div id="season-fixtures-results">
+[%
+IF season.complete;
+  SET team_uri      = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "team"]);
+  SET month_uri     = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "month"]);
+  SET week_uri      = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "week"]);
+  SET day_uri       = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "day"]);
+  SET venue_uri     = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "venue"]);
+  SET division_uri  = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "division"]);
+ELSE;
+  SET team_uri      = c.uri_for_action("/fixtures-results/filter_view_current_season", ["team"]);
+  SET month_uri     = c.uri_for_action("/fixtures-results/filter_view_current_season", ["month"]);
+  SET week_uri      = c.uri_for_action("/fixtures-results/filter_view_current_season", ["week"]);
+  SET day_uri       = c.uri_for_action("/fixtures-results/filter_view_current_season", ["day"]);
+  SET venue_uri     = c.uri_for_action("/fixtures-results/filter_view_current_season", ["venue"]);
+  SET division_uri  = c.uri_for_action("/fixtures-results/filter_view_current_season", ["division"]);
+END;
+-%]
+<h4>Fixtures &amp; Results</h4>
+<div class="list-item">
+  <a href="[% team_uri %]">By team</a>
+</div>
+<div class="list-item">
+  <a href="[% month_uri %]">By month</a>
+</div>
+<div class="list-item">
+  <a href="[% week_uri %]">By week</a>
+</div>
+<div class="list-item">
+  <a href="[% day_uri %]">By day</a>
+</div>
+<div class="list-item">
+  <a href="[% venue_uri %]">By venue</a>
+</div>
+<div class="list-item">
+  <a href="[% division_uri %]">By division</a>
+</div>
+</div><br />
+
+<div id="season-dates">
+<h4>Dates</h4>
+<table class="responsive-vertical">
+  <tr>
+    <th>Start date</th>
+    <td>[% season.start_date_long %]</td>
+  </tr>
+  <tr>
+    <th>End date</th>
+    <td>[% season.end_date_long %]</td>
+  </tr>
+</table>
+</div>
+
+<div id="season-divisions">
+<h4>Divisions</h4>
+<table class="responsive">
+  <thead>
+    <tr>
+      <th>Division</th>
+      <th colspan="4">Statistics</th>
+      <th>Fixtures Grid</th>
+      <th>League Match Template</th>
+      <th>League Table Ranking Template</th>
+    </tr>
+  </thead>
+  <tbody>
+[%
+FOREACH division IN divisions;
+  IF season.complete;
+    SET grid_uri                = c.uri_for_action("/fixtures-grids/view_specific_season", [division.division_seasons.fixtures_grid.url_key, season.url_key]);
+    SET tables_uri              = c.uri_for_action("/league-tables/view_specific_season", [division.url_key, season.url_key]);
+    SET singles_uri             = c.uri_for_action("/league-averages/view_specific_season", ["singles", division.url_key, season.url_key]);
+    SET doubles_individuals_uri = c.uri_for_action("/league-averages/view_specific_season", ["doubles-individuals", division.url_key, season.url_key]);
+    SET doubles_pairs_uri       = c.uri_for_action("/league-averages/view_specific_season", ["doubles-pairs", division.url_key, season.url_key]);
+  ELSE;
+    SET grid_uri                = c.uri_for_action("/fixtures-grids/view_current_season", [division.division_seasons.fixtures_grid.url_key]);
+    SET tables_uri              = c.uri_for_action("/league-tables/view_current_season", [division.url_key]);
+    SET singles_uri             = c.uri_for_action("/league-averages/view_current_season", ["singles", division.url_key]);
+    SET doubles_individuals_uri = c.uri_for_action("/league-averages/view_current_season", ["doubles-individuals", division.url_key]);
+    SET doubles_pairs_uri       = c.uri_for_action("/league-averages/view_current_season", ["doubles-pairs", division.url_key]);
+  END;
+-%]
+    <tr>
+      <td data-label="Division">[% division.name %]</td>
+      <td data-label="Statistics"><a href="[% tables_uri %]">Tables</a></td>
+      <td data-label="Statistics"><a href="[% singles_uri %]">Averages (Singles)</a></td>
+      <td data-label="Statistics"><a href="[% doubles_individuals_uri %]">Averages (Individuals)</a></td>
+      <td data-label="Statistics"><a href="[% doubles_pairs_uri %]">Averages (Doubles Pairs)</a></td>
+      <td data-label="Fixtures Grid"><a href="[% grid_uri %]">[% division.division_seasons.fixtures_grid.name | html_entity %]</a></td>
+      <td data-label="Match Template"><a href="[% c.uri_for_action("/templates/match/team/view", [division.division_seasons.league_match_template.url_key]) %]">[% division.division_seasons.league_match_template.name %]</a></td>
+      <td data-label="Ranking Template"><a href="[% c.uri_for_action("/templates/league-table-ranking/view", [division.division_seasons.league_table_ranking_template.url_key]) %]">[% division.division_seasons.league_table_ranking_template.name | html_entity %]</a></td>
+    </tr>
+[%
+END;
+-%]
+  </tbody>
+</table>
+</div><br />
+
+<div id="season-events">
+<h4>Events</h4>
+</div><br />
+

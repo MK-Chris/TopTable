@@ -1,0 +1,18 @@
+<div class="list-item">
+  <a href="[% c.uri_for("/info/officials") %]">[% c.maketext("menu.text.officials") %]</a>
+</div>
+<div class="list-item">
+  <a href="[% c.uri_for("/info/rules") %]">[% c.maketext("menu.text.rules") %]</a>
+</div>
+<div class="list-item">
+  <a href="[% c.uri_for("/info/contact") %]">[% c.maketext("menu.text.contact") %]</a>
+</div>
+[%
+IF authorisation.meeting_view;
+-%]
+<div class="list-item">
+  <a href="[% c.uri_for("/info/meetings") %]">[% c.maketext("menu.text.meetings") %]</a>
+</div>
+[%
+END;
+-%]

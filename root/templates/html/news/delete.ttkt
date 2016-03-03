@@ -1,0 +1,9 @@
+<div id="form">
+<form method="post" action="[% c.uri_for_action("/news/do_delete", [article.published_year, article.published_month, article.url_key]) %]">
+<input type="submit" name="Submit" value="[% c.maketext("form.button.delete") %]" />
+</form>
+</div>
+
+[%
+INCLUDE "html/news/view.ttkt";
+%]

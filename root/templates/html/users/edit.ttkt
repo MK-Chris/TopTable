@@ -1,0 +1,262 @@
+<form method="post" action="[% form_action %]">
+<div class="form-column">
+  <fieldset>
+    <legend>[% c.maketext("user.form.legend.details") %]</legend>
+    <div class="label-field-container">
+      <label for="username">[% c.maketext("user.field.username") %]</label>
+      <div class="field-container">
+[%
+IF c.config.users.allow_username_edit OR authorisation.user_edit_all;
+-%]
+        <input type="text" id="username" name="username" value="[% c.flash.username OR user.username | html_entity %]" />
+[%
+ELSE;
+-%]
+      [% user.username | html_entity %]<br />
+      [% c.maketext("user.field.username-change-disabled") %]
+[%
+END;
+-%]
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+    
+    <div class="label-field-container">
+      <label for="password">[% c.maketext("user.field.password-new") %]</label>
+      <div class="field-container">
+        <input type="password" id="password" name="password" value="" />
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+    
+    <div class="label-field-container">
+      <label for="confirm_password">[% c.maketext("user.field.password-confirm") %]</label>
+      <div class="field-container">
+        <input type="password" id="confirm_password" name="confirm_password" value="" />
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+    
+    <div class="label-field-container">
+      <label for="email_address">[% c.maketext("user.field.email-address") %]</label>
+      <div class="field-container">
+        <input type="text" id="email_address" name="email_address" value="[% c.flash.email_address OR user.email_address | html_entity %]" />
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+    
+    <div class="label-field-container">
+      <label for="confirm_email_address">[% c.maketext("user.field.email-address-confirm") %]</label>
+      <div class="field-container">
+        <input type="text" id="confirm_email_address" name="confirm_email_address" value="[% c.flash.email_address_confirm OR "" | html_entity %]" />
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+    
+    
+    <div class="label-field-container">
+      <div class="label-placeholder">&nbsp;</div>
+      <div class="field-container">
+        <div class="info-message-small">
+          <!--<button title="Close" role="button" class="ui-button ui-widget ui-state-default ui-corner-all ui-button-icon-only ui-dialog-titlebar-close" type="button">
+            <span class="ui-button-icon-primary ui-icon ui-icon-closethick"></span>
+            <span class="ui-button-text">Close</span>
+          </button>-->
+          <span class="message-text">[% c.maketext("user.form.text.current-password") %]</span>
+        </div>
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+    
+    <div class="label-field-container">
+      <label for="current_password">[% c.maketext("user.field.password-current") %]</label>
+      <div class="field-container">
+        <input type="password" id="current_password" name="current_password" value="" />
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+  </fieldset>
+  
+  <fieldset>
+    <legend>[% c.maketext("user.form.legend.localisation") %]</legend>
+    <div class="label-field-container">
+      <label for="language">[% c.maketext("user.field.language") %]</label>
+      <div class="field-container">
+        <select id="language" name="language" data-placeholder="[% c.maketext("user.field.language") %]">
+          <option value="">
+[%
+IF c.flash.language;
+  SET check_language = c.flash.language;
+ELSE;
+  SET check_language = user.locale;
+END;
+
+FOREACH key IN languages.keys;
+  IF key == check_language;
+    SET language_selected = ' selected="selected"';
+  ELSE;
+    SET language_selected = '';
+  END;
+-%]
+          <option value="[% key %]"[% language_selected %]>[% languages.$key.name OR key | html_entity %]</option>
+[%
+END;
+-%]
+        </select>
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+    
+    <div class="label-field-container">
+      <label for="locale">[% c.maketext("user.field.timezone") %]</label>
+      <div class="field-container">
+        <select id="timezone" name="timezone" data-placeholder="[% c.maketext("user.field.timezone") %]">
+            <option></option>
+[%
+SET i = 1;
+IF c.flash.timezone;
+  SET check_timezone = c.flash.timezone;
+ELSE;
+  SET check_timezone = user.timezone;
+END;
+
+FOREACH category IN timezones.keys.sort;
+  IF i > 1;
+    # End the last optgroup if we need to
+-%]
+          </optgroup>
+[%
+  END;
+-%]
+          <optgroup label="[% category %]">
+[%
+  FOREACH timezone IN timezones.$category;
+    IF category _ "/" _ timezone == check_timezone;
+      SET SELECTED = ' selected="selected"';
+    ELSE;
+      SET SELECTED = '';
+    END;
+-%]
+            <option value="[% category _ "/" _ timezone %]"[% SELECTED %]>[% timezone.replace("_", " ") %]</option>
+[%
+  END;
+  SET i = i + 1;
+END
+-%]
+          </optgroup>
+        </select>
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+  </fieldset>
+</div>
+
+<div class="form-column">
+  <fieldset>
+    <legend>Social</legend>
+    <div class="label-field-container">
+      <label for="facebook">Facebook</label>
+      <div class="field-container">
+        <input type="text" id="facebook" name="facebook" placeholder="https://www.facebook.com/" value="[% c.flash.facebook OR user.facebook %]" />
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+    
+    <div class="label-field-container">
+      <label for="twitter">Twitter</label>
+      <div class="field-container">
+        <input type="text" id="twitter" name="twitter" placeholder="https://twitter.com/" value="[% c.flash.twitter OR user.twitter %]" />
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+    
+    <div class="label-field-container">
+      <label for="aim">AIM</label>
+      <div class="field-container">
+        <input type="text" id="aim" name="aim" value="[% c.flash.aim OR user.aim %]" />
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+    
+    <div class="label-field-container">
+      <label for="jabber">Jabber</label>
+      <div class="field-container">
+        <input type="text" id="jabber" name="jabber" value="[% c.flash.jabber OR user.jabber %]" />
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+    
+    <div class="label-field-container">
+      <label for="website">[% c.maketext("user.field.website") %]</label>
+      <div class="field-container">
+        <input type="text" id="website" name="website" placeholder="http://" value="[% c.flash.website OR user.website | html_entity %]" />
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+    
+    <div class="label-field-container">
+      <label for="interests">[% c.maketext("user.field.interests") %]</label>
+      <div class="field-container">
+        <input type="text" id="interests" name="interests" value="[% c.flash.interests OR user.interests %]" />
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+    
+    <div class="label-field-container">
+      <label for="occupation">[% c.maketext("user.field.occupation") %]</label>
+      <div class="field-container">
+        <input type="text" id="occupation" name="occupation" value="[% c.flash.occupation OR user.occupation %]" />
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+    
+    <div class="label-field-container">
+      <label for="location">[% c.maketext("user.field.location") %]</label>
+      <div class="field-container">
+        <input type="text" id="location" name="location" value="[% c.flash.location OR user.location %]" />
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+  </fieldset>
+  
+  <fieldset>
+    <legend>[% c.maketext("user.form.legend.preferences") %]</legend>
+[%-
+# Check whether the 'hide online' box should be ticked
+IF c.flash.form_errored;
+  SET hide_online_check = c.flash.hide_online;
+  SET html_emails_check = c.flash.html_emails;
+ELSE;
+  SET hide_online_check = user.hide_online;
+  SET html_emails_check = user.html_emails;
+END;
+
+IF hide_online_check;
+  SET hide_online_checked = ' checked="checked"';
+ELSE;
+  SET hide_online_checked = '';
+END;
+
+IF html_emails_check;
+  SET html_emails_checked = ' checked="checked"';
+ELSE;
+  SET html_emails_checked = '';
+END;
+%]
+      <input type="checkbox" name="hide_online" id="hide_online" value="1" data-label="[% c.maketext("user.field.hide-status") %]"[% hide_online_checked %] />
+      <input type="checkbox" name="html_emails" id="html_emails" value="1" data-label="[% c.maketext("user.field.html-emails") %]"[% html_emails_checked %] />
+      <div class="clear-fix"></div>
+  </fieldset>
+</div>
+<div class="clear-fix"></div>
+
+<input type="submit" name="Submit" value="Save" />
+</form>
+
+[%
+IF action == "edit" and person_season;
+-%]
+<div id="dialog" title="Change team?">Because [% person.first_name %] has already played for their current team, [% person_season.team.club.short_name _ " " _ person_season.team.name %], changing the team they play for will create a new association with the new team and mark their association with the new team but not delete their association with the current team - instead, this will be marked as an inactive team membership.  Are you sure you wish to change the team [% person.first_name %] plays for?</div>
+[%
+END;
+-%]

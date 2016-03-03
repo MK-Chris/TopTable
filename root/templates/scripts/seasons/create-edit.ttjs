@@ -1,0 +1,291 @@
+/**
+ *  Handle form fields
+ *
+ *
+ */
+$(document).ready(function(){
+  /*
+    Replace <textarea>s with CKEditor instances.
+  */
+  $("textarea").ckeditor({
+    toolbarGroups: [
+    	{ name: 'document', groups: [ 'mode', 'document', 'doctools' ] },
+    	{ name: 'clipboard', groups: [ 'clipboard', 'undo' ] },
+    	{ name: 'editing', groups: [ 'find', 'selection', 'editing' ] },
+    	{ name: 'basicstyles', groups: [ 'basicstyles', 'cleanup' ] },
+    	'/',
+    	{ name: 'paragraph', groups: [ 'list', 'indent', 'blocks', 'align', 'bidi', 'paragraph' ] },
+    	{ name: 'links', groups: [ 'links' ] },
+    	{ name: 'insert', groups: [ 'insert' ] },
+    	'/',
+    	{ name: 'styles', groups: [ 'styles' ] },
+    	{ name: 'colors', groups: [ 'colors' ] },
+    	{ name: 'tools', groups: [ 'tools' ] },
+    	{ name: 'others', groups: [ 'others' ] },
+    	{ name: 'about', groups: [ 'about' ] }
+    ],
+    removeButtons: 'Form,Checkbox,Radio,TextField,Textarea,Select,Button,ImageButton,HiddenField,spellchecker,Save,NewPage,Maximize',
+    extraPlugins: 'lineutils,widget,oembed,enterkey',
+    enterMode: CKEDITOR.ENTER_BR
+  });
+  
+  /*
+    Loan players fields
+  */
+  $("#allow_loan_players").on("change", function() {
+    var $allow_loan_players = $(this);
+    
+    if ( $allow_loan_players.prop("checked") ) {
+      // Checked, re-enable the other fields
+      $("#loan-players-nested-fields").slideDown(400);
+    } else {
+      // Not checked, disable and uncheck / blank the other fields
+      $("#loan-players-nested-fields").slideUp(400);
+    }
+  });
+  
+  /*
+    Show add divisions div
+  */
+  $("#add-divisions-div").show();
+  
+  /*
+    Add a new division
+  */
+  $("#add-division").on("click", function(event) {
+    /*
+      Variable declaration
+    */
+    var current_divisions;  // Current number of games
+    var new_divisions;      // New number of games after adding one to the above number
+    var html;               // The HTML with the new fields to be appended to the games div
+    
+    /*
+      Work out the current / new number of divisions.
+    */
+    current_divisions = $("div.division").length;
+    new_divisions     = current_divisions + 1;
+    
+    /*
+      Set the HTML that will be appended to the games div
+    */
+    html = '<fieldset>\n';
+    html += '  <legend>[% c.maketext("divisions.form.legend.division-rank") %] ' + new_divisions + '</legend>\n';
+    html += '  <input type="hidden" id="division_id' + new_divisions + '" name="division_id' + new_divisions + '" value="new" />\n\n';
+    
+    html += '  <div class="form-column-single">\n';
+    html += '    <input type="checkbox" id="use_division' + new_divisions + '" name="use_division' + new_divisions + '" class="use-division" data-rank="' + new_divisions + '" data-label="Use division" checked="checked" />\n';
+    html += '  </div>\n\n';
+    
+    html += '  <div class="division" id="division-' + new_divisions + '">\n';
+    html += '    <div class="form-column">\n';
+    html += '      <div class="label-field-container">\n';
+    html += '        <label for="division_name' + new_divisions + '">[% c.maketext("divisions.form.field.name") %]</label>\n';
+    html += '        <div class="field-container">\n';
+    html += '          <input type="text" id="division_name' + new_divisions + '" name="division_name" value="" />\n';
+    html += '        </div>\n';
+    html += '        <div class="clear-fix"></div>\n';
+    html += '      </div>\n\n';
+    
+    html += '      <div class="label-field-container">\n';
+    html += '        <label for="fixtures_grid' + new_divisions + '">[% c.maketext("divisions.form.field.fixtures-grid") %]</label>\n';
+    html += '        <div class="field-container">\n';
+    html += '          <select id="fixtures_grid' + new_divisions + '" name="fixtures_grid" data-placeholder="[% c.maketext("divisions.form.field.fixtures-grid") %]">\n';
+    html += '            <option value=""></option>\n';
+[%
+FOREACH grid IN fixtures_grids;
+-%]
+    html += '            <option value="[% grid.id %]">[% grid.name %]</option>\n';
+[%
+END;
+-%]
+    html += '          </select>\n';
+    html += '        </div>\n';
+    html += '        <div class="clear-fix"></div>\n';
+    html += '      </div>\n';
+    html += '    </div>\n\n';
+    
+    html += '    <div class="form-column">\n';
+    html += '      <div class="label-field-container">\n';
+    html += '        <label for="league_match_template' + new_divisions + '">[% c.maketext("divisions.form.field.league-match-template") %]</label>\n';
+    html += '        <div class="field-container">\n';
+    html += '          <select id="league_match_template' + new_divisions + '" name="league_match_template" data-placeholder="[% c.maketext("divisions.form.field.league-match-template") %]">\n';
+    html += '            <option value=""></option>\n';
+[%
+FOREACH template IN match_templates;
+-%]
+    html += '            <option value="[% template.id %]">[% template.name %]</option>\n';
+[%
+END;
+-%]
+    html += '          </select>\n';
+    html += '        </div>\n';
+    html += '        <div class="clear-fix"></div>\n';
+    html += '      </div>\n';
+    html += '      <div class="label-field-container">\n';
+    html += '        <label class="normal" for="league_table_ranking_template' + new_divisions + '">[% c.maketext("divisions.form.field.league-ranking-template") %]</label>\n';
+    html += '        <div class="field-container">\n';
+    html += '          <select id="league_table_ranking_template' + new_divisions + '" name="league_table_ranking_template" data-placeholder="[% c.maketext("divisions.form.field.league-ranking-template") %]">\n';
+    html += '            <option value=""></option>\n';
+[%
+FOREACH template IN ranking_templates;
+-%]
+    html += '            <option value="[% template.id %]">[% template.name %]</option>\n';
+[%
+END;
+-%]
+    html += '          </select>\n';
+    html += '        </div>\n';
+    html += '        <div class="clear-fix"></div>\n';
+    html += '      </div>\n';
+    html += '    </div>\n';
+    html += '  </div>\n';
+    html += '</fieldset>\n';
+    
+    /*
+      Finally, append the text we've built
+    */
+    event.preventDefault();
+    $('#divisions').append(html);
+    
+    // Make the new checkbox pretty
+    $("#use_division" + new_divisions).prettyCheckable({
+      labelPosition: "left",
+      customClass: "label-field-container"
+    });
+    
+    // Select box replacements
+    $("#fixtures_grid" + new_divisions + ", #league_match_template" + new_divisions + ", #league_table_ranking_template" + new_divisions).chosen({
+      single_backstroke_delete: false,
+      allow_single_deselect: true
+    });
+    
+    // Focus on the new name field
+    $("#division_name" + new_divisions).focus();
+  });
+  
+  /* Show the division details when the tickbox is ticked, or hide when it's not */
+  $("form").on("change", "input.use-division", function() {
+    var $t = $(this);
+    var rank = $t.data("rank");
+    if ( $t.prop("checked") ) {
+      // Show the division details, as the tickbox is ticked
+      $("#division-" + rank).slideDown(400);
+      
+      // Find all other tickboxes above this one, as we can't enable this and not the ones above it
+      var $checkboxes = $("input.use-division").filter(function() {
+        return $(this).data("rank") < rank;
+      });
+      
+      $checkboxes.each(function() {
+        var loop_rank = $(this).data("rank");
+        $("#division-" + loop_rank).slideDown(400);
+        $(this).prettyCheckable("check");
+      });
+    } else {
+      $("#division-" + rank).slideUp(400);
+      
+      // Find all other tickboxes below this one, as we can't disable this and not the ones below it
+      var $checkboxes = $("input.use-division").filter(function() {
+        return $(this).data("rank") > rank;
+      });
+      
+      $checkboxes.each(function() {
+        var loop_rank = $(this).data("rank");
+        $("#division-" + loop_rank).slideUp(400);
+        $(this).prettyCheckable("uncheck");
+      });
+    }
+  });
+  
+  $("input.date_picker").datepicker({
+    dateFormat: "dd/mm/yy",
+    firstDay: 1,
+    changeMonth: true,
+    changeYear: true,
+    beforeShowDay: function(date) {
+      // Only enable Mondays in the date picker
+      var day = date.getDay();
+      return [(day == 1), ""];
+    }
+  });
+  
+  $("form").on("change", "input.date_picker", function() {
+    var start_year, end_year, season_name;
+    
+    // Get the start year from the last four characters
+    if ( $("#start_date").val() != "" ) {
+      start_year = $("#start_date").val().substring( $("#start_date").val().length - 4 );
+    } else {
+      // This 'else' section should avoid the 'undefined' string
+      start_year = "";
+    }
+    
+    // Get the end year from the last four characters
+    if ( $("#end_date").val() != "" ) {
+      end_year = $("#end_date").val().substring( $("#end_date").val().length - 4 );
+    } else {
+      // This 'else' section should avoid the 'undefined' string
+      end_year = "";
+    }
+    
+    // Build the season name
+    if ( start_year || end_year ) {
+      // If we have a start year, set that to the season name string
+      if ( start_year ) {
+        season_name = start_year;
+      }
+      
+      // Check if we have an end year
+      if ( end_year ) {
+        // If so, check that it's different to the start year
+        if ( end_year != start_year ) {
+          // Finally, check if we need to append or assign to the season name
+          if ( season_name ) {
+            season_name += "-" + end_year;
+          } else {
+            season_name = end_year;
+          }
+        }
+      }
+    } else {
+      season_name = "";
+    }
+    
+    $("#name").val(season_name);
+  });
+  
+  /*
+    Focus on the first available field
+  */
+  if ( $("#start_date").val() == "" ) {
+    $("#start_date").focus();
+  } else if ( $("#end_date").val() === "" ) {
+    $("#end_date").focus();
+  } else if ( $("#name").val() === "" ) {
+    $("#name").focus();
+  } else if ( $("#start_hour").val() === "" ) {
+    $("#start_hour").trigger("chosen:activate");
+  } else if ( $("#start_minute").val() === "" ) {
+    $("#start_minute").trigger("chosen:activate");
+  } else if ( $("#loan_players_limit_per_player").val() === "" ) {
+    $("#loan_players_limit_per_player").focus();
+  } else if ( $("#loan_players_limit_per_player_per_team").val() === "" ) {
+    $("#loan_players_limit_per_player_per_team").focus();
+  } else if ( $("#loan_players_limit_per_team").val() === "" ) {
+    $("#loan_players_limit_per_team").focus();
+  } else if ( $("#division_name1").val() === "" ) {
+    $("#division_name1").focus();
+  } else if ( $("#fixtures_grid1").val() === "" ) {
+    $("#fixtures_grid1").focus();
+  } else if ( $("#fixtures_grid1").val() === "" ) {
+    $("#fixtures_grid1").trigger("chosen:activate");
+  } else if ( $("#league_match_template1").val() === "" ) {
+    $("#league_match_template1").trigger("chosen:activate");
+  } else if ( $("#league_table_ranking_template1").val() === "" ) {
+    $("#league_table_ranking_template1").trigger("chosen:activate");
+  } else {
+    // Default back to name
+    $("#name").focus();
+  }
+});

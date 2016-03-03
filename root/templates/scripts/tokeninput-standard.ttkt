@@ -1,0 +1,15 @@
+
+    /*
+      Token inputs
+    */
+[%
+  SET i = 0;
+  FOREACH tokeninput_conf IN tokeninput_confs;
+-%]
+    $("#[% tokeninput_conf.selector %]").tokenInput("[% tokeninput_conf.script %]",
+      [% tokeninput_conf.options %]
+    );
+[%
+    i = i + 1;
+  END;
+-%]

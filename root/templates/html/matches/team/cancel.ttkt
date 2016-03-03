@@ -1,0 +1,52 @@
+
+
+<form method="post" action="[% form_action %]">
+<fieldset>
+  <legend>[% c.maketext("matches.cancel.form.legend.details") %]</legend>
+[%
+IF form_errored;
+  SET cancel_check        = c.flash.cancel;
+  SET home_points_awarded = c.flash.home_points_awarded;
+  SET away_points_awarded = c.flash.away_points_awarded;
+ELSE;
+  SET cancel_check = match.cancelled;
+  
+  IF cancel_check;
+    # Only prefill these with the database value if the match was cancelled already
+    SET home_points_awarded = match.home_team_match_score;
+    SET away_points_awarded = match.away_team_match_score;
+  ELSE;
+    # Otherwise zero them
+    SET home_points_awarded = 0;
+    SET away_points_awarded = 0;
+  END;
+END;
+
+IF cancel_check;
+  SET checked = ' checked="checked"';
+END;
+
+home_team = FILTER html_entity; match.home_team.club.short_name _ " " _ match.home_team.name; END;
+away_team = FILTER html_entity; match.away_team.club.short_name _ " " _ match.away_team.name; END;
+-%]
+  <input type="checkbox" name="cancel" id="cancel" data-label="[% c.maketext("matches.cancel.cancel") %]"[% checked %] />
+  
+  <div class="label-field-container">
+    <label for="home_points_awarded">[% c.maketext("matches.cancel.points-awarded", home_team) %]</label>
+    <div class="field-container">
+      <input type="number" id="home_points_awarded" name="home_points_awarded" value="[% home_points_awarded OR "0" %]" />
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+  
+  <div class="label-field-container">
+    <label for="away_points_awarded">[% c.maketext("matches.cancel.points-awarded", away_team) %]</label>
+    <div class="field-container">
+      <input type="number" id="away_points_awarded" name="away_points_awarded" value="[% away_points_awarded OR "0" %]" />
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+      
+  <input type="submit" id="submit" name="submit" value="[% c.maketext("form.button.save") %]" />
+</fieldset>
+</form>

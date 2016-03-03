@@ -1,0 +1,101 @@
+[% # This is a TT comment. -%]
+
+[% # Note That the '-' at the beginning or end of TT code  -%]
+[% # "chomps" the whitespace/newline at that end of the    -%]
+[% # output (use View Source in browser to see the effect) -%]
+
+[% # Some basic HTML with a loop to display clubs -%]
+[%
+IF matches.count;
+  PROCESS "html/generic/pagination.ttkt" OBJECT_PLURAL = c.maketext("object.plural.matches");
+  page_links_text;
+-%]
+<table class="responsive-no-headers">
+[%
+  USE zeroes = format("%02d");
+  SET i = 0;
+  WHILE (match = matches.next);
+    SET date = match.scheduled_date;
+    SET month = zeroes( match.scheduled_date.month );
+    SET day   = zeroes( match.scheduled_date.day );
+    
+    IF specific_season;
+      SET home_team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [match.home_team.club.url_key, match.home_team.url_key, season.url_key]);
+      SET away_team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [match.away_team.club.url_key, match.away_team.url_key, season.url_key]);
+      SET division_uri  = c.uri_for_action("/league-tables/view_specific_season", [match.division.url_key, season.url_key]);
+    ELSE;
+      SET home_team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [match.home_team.club.url_key, match.home_team.url_key]);
+      SET away_team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [match.away_team.club.url_key, match.away_team.url_key]);
+      SET division_uri  = c.uri_for_action("/league-tables/view_current_season", [match.division.url_key]);
+    END;
+    
+    # Display the score or 'v'?
+    IF match.home_team_match_score OR match.away_team_match_score;
+      SET score = match.home_team_match_score _ "-" _ match.away_team_match_score;
+      SET score_class = ' class="match-score"';
+    ELSE;
+      SET score = c.maketext("matches.versus-abbreviation");
+      SET score_class = ' class="match-versus"';
+    END;
+    
+    # Check if the division is different from last time round
+    IF match.home_team.team_seasons.division.id != last_division;
+-%]
+  <tr>
+    <th colspan="5">
+      <h4 style="padding-top: 5px;"><a href="[% division_uri %]">[% match.home_team.team_seasons.division.name %]</a></h4>
+    </th>
+  </tr>
+[%
+    END;
+-%]
+  <tr>
+    <td>
+      <a href="[% home_team_uri %]">[% match.home_team.club.short_name | html_entity %] [% match.home_team.name | html_entity %]</a>
+    </td>
+    <td[% score_class %]>
+      <a href="[% c.uri_for_action('/matches/team/view_by_url_keys', [match.home_team.club.url_key, match.home_team.url_key, match.away_team.club.url_key, match.away_team.url_key, date.year, month, day]) %]" title="[% c.maketext("fixtures-results.view-scorecard") %]">[% score %]</a>
+    </td>
+    <td>
+      <a href="[% away_team_uri %]">[% match.away_team.club.short_name | html_entity %] [% match.away_team.namev %]</a>
+    </td>
+    <td>
+      <a href="[% c.uri_for_action('/venues/view', [match.venue.url_key]) %]">[% match.venue.name | html_entity %]</a>
+    </td>
+[%
+    IF authorisation.match_update OR authorisation.match_cancel;
+-%]
+    <td>
+[%
+      IF authorisation.match_update;
+-%]
+      <a href="[% c.uri_for_action("/matches/team/update_by_url_keys", [match.home_team.club.url_key, match.home_team.url_key, match.away_team.club.url_key, match.away_team.url_key, date.year, month, day]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" width="16" height="16" title="[% c.maketext("matches.update-score") %]" /></a>
+[%
+      END;
+      IF authorisation.match_cancel;
+-%]
+      <a href="[% c.uri_for_action("/matches/team/cancel_by_url_keys", [match.home_team.club.url_key, match.home_team.url_key, match.away_team.club.url_key, match.away_team.url_key, date.year, month, day]) %]"><img src="[% c.uri_for("/static/images/icons/0006-Cross-icon-16.png") %]" width="16" height="16" title="[% c.maketext("matches.cancel") %]" /></a>
+[%
+      END;
+-%]
+    </td>
+[%
+    END;
+-%]
+  </tr>
+[%
+    SET last_division = match.home_team.team_seasons.division.id;
+    SET i = i + 1;
+  END;
+-%]
+</table>
+[%
+  page_links_text;
+ELSE;
+-%]
+<div class="list-item">
+  [% c.maketext("fixtures-results.no-matches") %]
+</div>
+[%
+END;
+-%]

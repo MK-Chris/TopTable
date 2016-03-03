@@ -1,0 +1,97 @@
+<h4>[% team_match_template.name %]</h4>
+<form method="post" action="[% form_action %]">
+<div id="games">
+[% SET i = 0;
+FOREACH game IN team_match_template_games;
+  SET i = i + 1;
+  
+  # Store the game number away for use later
+  SET number_of_games = game.game_number;
+  IF i > 1 -%]
+[% END -%]
+<fieldset>
+  <legend>[% c.maketext("templates.team-match.games.form.legend.game") %] [% game.game_number %]</legend>
+  
+  <div class="label-field-container">
+    <label for="individual_match_template[% game.game_number %]">[% c.maketext("templates.team-match.games.field.game-template") %]</label>
+    <div class="field-container">
+      <select id="individual_match_template[% game.game_number %]" name="individual_match_template" class="individual_match_template" data-placeholder="[% c.maketext("templates.team-match.games.field.game-template") %]">
+        <option value=""></option>
+[%
+FOREACH ind_match IN individual_match_templates;
+  # Set selected text if needed;
+  IF c.flash.individual_match_template.item(i - 1) == ind_match.id;
+    SET SELECTED_TEXT = ' selected="selected"';
+  ELSE;
+    SET SELECTED_TEXT = '';
+  END;
+-%]
+        <option value="[% ind_match.id %]"[% SELECTED_TEXT %]>[% ind_match.name %]</option>
+[%
+END;
+-%]
+      </select>
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+[% # Check the checked value of the doubles game;
+IF c.flash.doubles_game.item(i - 1) == 1 OR game.doubles_game == 1;
+  CHECKED_TEXT = ' checked="checked"';
+  DISABLED_TEXT = ' disabled="disabled"';
+ELSE;
+  CHECKED_TEXT = '';
+  DISABLED_TEXT = '';
+END; -%]
+  
+  <input type="checkbox" id="doubles_game[% game.game_number %]" name="doubles_game[% game.game_number %]" class="doubles" data-label="[% c.maketext("templates.team-match.games.field.doubles-game") %]" data-game="[% game.game_number %]" value="1"[% CHECKED_TEXT %] />
+  
+  <div class="label-field-container">
+    <label for="singles_home_player_number[% game.game_number %]">[% c.maketext("templates.team-match.games.field.singles-players") %]</label>
+    <div class="field-container">
+      <select id="singles_home_player_number[% game.game_number %]" class="game-[% game.game_number %] player-number" name="singles_home_player_number[% game.game_number %]"[% DISABLED_TEXT %] data-placeholder="[% c.maketext("templates.team-match.games.form.field.home-player") %]">
+        <option value=""></option>
+[% # Loop through until we reach the number of singles players in a match
+SET n = 1;
+WHILE n <= team_match_template.singles_players_per_team;
+# set selected text if needed;
+  IF c.flash.singles_home_player_number.item(i - 1) == n;
+    SET SELECTED_TEXT = ' selected="selected"';
+  ELSE;
+    SET SELECTED_TEXT = '';
+  END -%]
+        <option value="[% n %]"[% SELECTED_TEXT %]>[% n %]</option>
+[% n = n + 1;
+END -%]
+      </select>
+      [% c.maketext("matches.versus-abbreviation") %]
+      <select id="singles_away_player_number[% game.game_number %]" class="game-[% game.game_number %] player-number" name="singles_away_player_number[% game.game_number %]"[% DISABLED_TEXT %] data-placeholder="[% c.maketext("templates.team-match.games.form.field.away-player") %]">
+        <option value=""></option>
+[% # Loop through until we reach the number of singles players in a match
+SET n = 1 + team_match_template.singles_players_per_team;
+WHILE n <= (team_match_template.singles_players_per_team * 2);
+# set selected text if needed;
+  IF c.flash.singles_away_player_number.item(i - 1) == n;
+    SET SELECTED_TEXT = ' selected="selected"';
+  ELSE;
+    SET SELECTED_TEXT = '';
+  END -%]
+        <option value="[% n %]"[% SELECTED_TEXT %]>[% n %]</option>
+[%
+n = n + 1;
+END;
+-%]
+      </select>
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+</fieldset>
+[%
+END;
+-%]
+</div>
+<div id="add-games">
+  <a href="#" class="bold" id="add-game"><img id="add-game-img" src="[% c.uri_for('/static/images/icons/0009-Add-icon-48.png') %]" title="[% c.maketext("templates.team-match.games.add") %]" /></a><br /><br />
+</div>
+
+<input type="submit" id="submit" name="submit" value="[% c.maketext("form.button.save") %]" />
+</form>

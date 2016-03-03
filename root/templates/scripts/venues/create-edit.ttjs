@@ -1,0 +1,118 @@
+/**
+ *  Handle form fields
+ *
+ */
+$(document).ready(function(){
+  /*
+    When one geolocation field is changed, loop through all of them and if we have a value, do a search
+  */
+  $("input.geo").on("change", function() {
+    // We need a flag to set when we see a non-empty field, so we know whether to search or not
+    var all_fields_empty = 1;
+    
+    // This object will we what we send to the search routine
+    var search_parameters = {
+      content_type: "json"
+    };
+    $("input.geo").each(function() {
+      if ( $(this).val() != "" ) {
+        all_fields_empty = 0;
+        search_parameters[ $(this).prop("name") ] = $(this).val();
+      }
+    });
+    
+    // If we have some fields, do an AJAX request
+    if ( all_fields_empty ) {
+      $("#geolocation_select").prop("disabled", true);
+      $("#geolocation_select option[value!='']").remove();
+      $("#geolocation_select").trigger("chosen:updated");
+      $("#geolocation_select").trigger("change");
+    } else {
+      // Do a request
+      $.ajax({
+        url: "[% c.uri_for('/venues/geolocation') %]",
+        type: "POST",
+        dataType: "json",
+        data: search_parameters,
+        success: function(response) {
+          // Build the select options
+          $("#geolocation_select").prop("disabled", false);
+          $("#geolocation_select option[value!='']").remove();
+          $.each( response.json_results, function( index, value ) {
+            if ( $.type( value ) == "object" ) {
+              console.log(value.geometry.location.lat + "," + value.geometry.location.lng);
+              $("#geolocation_select")
+                .append( $("<option>", {
+                  value: value.geometry.location.lat + "," + value.geometry.location.lng,
+                  text: value.formatted_address
+                }));
+            }
+          });
+          
+          $("#geolocation_select").trigger("chosen:updated");
+          $("#geolocation_select").trigger("change");
+        },
+        error: function(xhr, ajax_options, thrown_error) {
+          $().toastmessage("showToast", {
+            text: thrown_error + ": " + xhr.responseJSON.json_error,
+            sticky: true,
+            position: "top-center",
+            type: "error"
+          });
+          
+          $("#geolocation_select").prop("disabled", true);
+          $("#geolocation_select option[value!='']").remove();
+          $("#geolocation_select").trigger("chosen:updated");
+          $("#geolocation_select").trigger("change");
+        }
+      });
+    }
+  });
+  
+  // Geolocation select box change
+  $("#geolocation_select").on("change", function() {
+    if ( $(this).val() == "" ) {
+      // No value, hide the map canvas
+      $("#map-canvas-form").hide();
+    } else {
+      var geo = $(this).val().split(",");
+      
+      if ( geo.length == 2 ) {
+        $("#map-canvas-form").show();
+        var lat = geo[0];
+        var lng = geo[1];
+        map_location = new google.maps.LatLng(lat, lng);
+        initialise_map();
+      } else {
+        $("#map-canvas-form").hide();
+      }
+    }
+  });
+  
+  /*
+    Focus on the first empty field
+  */
+  if ( $("#name").val() == "" ) {
+    $("#name").focus();
+  } else if ( $("#address1").val() === "" ) {
+    $("#address1").focus();
+  } else if ( $("#address2").val() === "" ) {
+    $("#address2").focus();
+  } else if ( $("#address3").val() === "" ) {
+    $("#address3").focus();
+  } else if ( $("#address4").val() === "" ) {
+    $("#address4").focus();
+  } else if ( $("#address5").val() === "" ) {
+    $("#address5").focus();
+  } else if ( $("#postcode").val() === "" ) {
+    $("#postcode").focus();
+  } else if ( $("#geolocation_select").val() === "" ) {
+    $("#geolocation_select").trigger("chosen:activate");
+  } else if ( $("#telephone").val() === "" ) {
+    $("#telephone").focus();
+  } else if ( $("#email_address").val() === "" ) {
+    $("#email_address").focus();
+  } else {
+    $("#name").focus();
+  }
+});

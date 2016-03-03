@@ -1,0 +1,47 @@
+[%
+IF map_id;
+-%]
+<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js"></script>
+[%
+END;
+-%]
+<script>
+[%
+IF map_id;
+  INCLUDE "scripts/google-map-standard.ttkt";
+END;
+IF geocode;
+  INCLUDE "scripts/google-geocode-standard.ttkt";
+END;
+IF directions;
+  INCLUDE "scripts/google-directions-standard.ttkt";
+END;
+-%]
+
+  $(document).ready(function() {
+[%
+IF map_id;
+-%]
+    /*
+      Initialise Google map
+    */
+    initialise_map();
+[%
+END;
+-%]
+    
+[%
+IF scripts;
+  FOREACH script IN scripts;
+    SET INCLUDED_SCRIPT = "scripts/" _ script _ ".ttkt";
+    INCLUDE $INCLUDED_SCRIPT;
+  END;
+END;
+-%]
+    
+    
+    if (jQuery.cookie("cc_cookie_accept") == "cc_cookie_accept") {
+      // insert the code you do not want to run UNTIL cookies are accepted here
+    } 
+  });
+</script>

@@ -1,0 +1,321 @@
+[% # Note That the '-' at the beginning or end of TT code  -%]
+[% # "chomps" the whitespace/newline at that end of the    -%]
+[% # output (use View Source in browser to see the effect) -%]
+[% USE Math; -%]
+[%-
+home_team_html = FILTER html_entity; match.home_team.club.short_name _ " " _ match.home_team.name; END;
+away_team_html = FILTER html_entity; match.away_team.club.short_name _ " " _ match.away_team.name; END;
+-%]
+
+<form method="post" action="[% form_action %]">
+<fieldset>
+  <legend>[% c.maketext("matches.update.form.legend.match-details") %]</legend>
+  
+  <div class="label-field-container">
+    <label for="played-date">[% c.maketext("matches.field.date") %]</label>
+    <div class="field-container">
+      <input id="played-date" class="date_picker" type="text" value="[% match.actual_date.dmy("/") %]" />
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+  
+  <div class="label-field-container">
+    <label for="venue">[% c.maketext("matches.field.venue") %]</label>
+    <div class="field-container">
+      <select name="venue" id="venue">
+[%
+  FOREACH venue IN venues;
+    IF venue.id == match.venue.id;
+      SET SELECTED = " selected='selected'";
+    ELSE;
+      SET SELECTED = "";
+    END;
+-%]
+        <option value="[% venue.id %]"[% SELECTED %]>[% venue.name %]</option>
+[%
+END;
+-%]
+      </select>
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+</fieldset>
+
+<fieldset>
+  <legend>[% c.maketext("matches.update.form.legend.match-players") %]</legend>
+  <div id="match-players">
+    <h3>[% c.maketext("matches.players-no-link", home_team_html) %]</h3>
+    <div>
+[%
+FOREACH player = match.team_match_players;
+-%]
+      <div class="label-field-container match-player-selection">
+        <label for="player_select[% player.player_number %]">[% c.maketext("matches.field.player", player.player_number) %]</label>
+[%
+  IF player.loan_team.id AND player.player.id AND !player.player_missing;
+    SET SELECT_DISPLAY  = ' style="display: none;"';
+    SET SEARCH_DISPLAY  = '';
+    SET LOAN_CHECKED    = ' checked="checked"';
+  ELSE;
+    SET SELECT_DISPLAY  = '';
+    SET SEARCH_DISPLAY  = ' style="display: none;"';
+    SET LOAN_CHECKED    = '';
+  END;
+  
+  IF player.player_number <= match.team_match_template.singles_players_per_team;
+    # If we've not reached the number of players per team yet, we still display the home players in the select lists
+    SET players_list = home_player_list;
+    SET location = "home";
+  ELSE;
+    # Otherwise, it's the away players
+    SET players_list = away_player_list;
+    SET location = "away";
+  END;
+  
+  IF player.player_missing;
+    SET MISSING_SELECTED = ' selected="selected"';
+  ELSE;
+    SET MISSING_SELECTED = '';
+  END;
+-%]
+        <div id="player_select_div[% player.player_number %]" class="field-container player-select"[% SELECT_DISPLAY %]>
+          <select id="player_select[% player.player_number %]" name="player_select[% player.player_number %]" class="player_select" data-player-number="[% player.player_number %]" data-location="[% location %]" data-placeholder="[% c.maketext("matches.field.player", player.player_number) %]">
+            <option value=""></option>
+            <option value="PLAYER-MISSING"[% MISSING_SELECTED %]>&laquo; [% c.maketext("matches.field.player-missing") %] &raquo;</option>
+[%
+  # Now loop through
+  FOREACH team_player IN players_list;
+    IF team_player.person.id == player.player.id AND !player.player_missing;
+      SET SELECTED_TEXT = ' selected="selected"';
+    ELSE;
+      SET SELECTED_TEXT = '';
+    END;
+-%]
+            <option value="[% team_player.person.id %]"[% SELECTED_TEXT %]>[% team_player.person.display_name | html_entity %]</option>
+[%
+  END;
+-%]
+          </select>
+        </div>
+        <div id="player_search_div[% player.player_number %]" class="field-container player-search"[% SEARCH_DISPLAY %]>
+          <input type="text" id="player_search[% player.player_number %]" name="player_search[% player.player_number %]" class="player_search" data-player-number="[% player.player_number %]">
+        </div>
+        <div class="clear-fix"></div>
+      </div>
+      <input type="checkbox" id="loan_player[% player.player_number %]" name="loan_player[% player.player_number %]" class="loan_player_check" data-player-number="[% player.player_number %]" data-location="[% location %]" data-label="[% c.maketext("matches.field.loan") %]" value="1"[% LOAN_CHECKED %] />
+
+[%
+  IF player.player_number == match.team_match_template.singles_players_per_team;
+-%]
+    </div>
+    <h3>[% c.maketext("matches.players-no-link", away_team_html) %]</h3>
+    <div>
+[%
+  END;
+END;
+-%]
+    </div>
+  </div>
+</fieldset>
+<fieldset>
+  <legend>[% c.maketext("matches.update.form.legend.games") %]</legend>
+  <div class="info-message-small">
+    <span class="message-text">[% c.maketext("matches.update.games.notice") | html_line_break %]</span>
+  </div>
+  <div id="match-games">
+[%
+FOREACH game IN match.team_match_games;
+  IF game.doubles_game;
+    IF game.game_in_progress OR game.complete;
+      IF match.winner_type.id == "games";
+        SET game_home_score = game.home_team_legs_won;
+        SET game_away_score = game.away_team_legs_won;
+      ELSE;
+        SET game_home_score = game.home_team_points_won;
+        SET game_away_score = game.away_team_points_won;
+      END;
+      
+      SET game_score_display = game_home_score _ "-" _ game_away_score;
+      SET match_score_display = c.maketext("matches.game.header.match-score") _ ": " _ game.home_team_match_score _ "-" _ game.away_team_match_score;
+    ELSE;
+      SET game_score_display = "";
+      SET match_score_display = "";
+    END;
+-%]
+    <div class="group" data-scheduled-game-number="[% game.scheduled_game_number %]">
+      <h3>[% c.maketext("matches.game.header.number", game.scheduled_game_number) %]: [% c.maketext("matches.game.header.doubles") %] <span id="game_[% game.scheduled_game_number %]_score" class="score">[% game_score_display %]</span> <span class="match_score" id="game_[% game.scheduled_game_number %]_match_score">[% match_score_display | html_entity %]</span></h3>
+[%
+  ELSE;
+    SET home_player_display = c.maketext("matches.field.player", game.home_player_number);
+    SET away_player_display = c.maketext("matches.field.player", game.away_player_number);
+    FOREACH player = match.team_match_players;
+      IF player.player_number == game.home_player_number AND player.player.id;
+        SET home_player_display = player.player.display_name;
+      ELSIF player.player_number == game.away_player_number AND player.player.id;
+        SET away_player_display = player.player.display_name;
+      END;
+    END;
+    
+    IF game.game_in_progress OR game.complete;
+      IF match.team_match_template.winner_type.id == "games";
+        SET game_home_score = game.home_team_legs_won;
+        SET game_away_score = game.away_team_legs_won;
+      ELSE;
+        SET game_home_score = game.home_team_points_won;
+        SET game_away_score = game.away_team_points_won;
+      END;
+      
+      SET game_score_display = game_home_score _ "-" _ game_away_score;
+      SET match_score_display = c.maketext("matches.game.header.match-score") _ ": " _ game.home_team_match_score _ "-" _ game.away_team_match_score;
+    ELSE;
+      SET game_score_display = c.maketext("matches.versus-abbreviation");
+      SET match_score_display = "";
+    END;
+-%]
+    <div class="group" data-scheduled-game-number="[% game.scheduled_game_number %]">
+      <h3>[% c.maketext("matches.game.header.number", game.scheduled_game_number) %]: <span class="game_player[%  game.home_player_number %]">[% home_player_display | html_entity %]</span> <span id="game_[% game.scheduled_game_number %]_score" class="score">[% game_score_display %]</span> <span class="game_player[% game.away_player_number %]">[% away_player_display | html_entity %]</span> <span class="match_score" id="game_[% game.scheduled_game_number %]_match_score">[% match_score_display %]</span></h3>
+[%
+  END;
+-%]
+    <div>
+[%
+  IF game.doubles_game;
+    IF game.home_doubles_pair.id AND game.away_doubles_pair.id;
+      SET GAME_VISIBILITY = ' style="display: show;"';
+      SET NO_PLAYERS_NOTICE_VISIBILITY = ' style="display: none;"';
+    ELSE;
+      SET GAME_VISIBILITY = ' style="display: none;"';
+      SET NO_PLAYERS_NOTICE_VISIBILITY = ' style="display: show;"';
+    END;
+    SET NO_PLAYERS_NOTICE = c.maketext("matches.game.fill-out-players.doubles-notice");
+    SET GAME_TYPE = ' data-game-type="doubles"';
+    SET HOME_PLAYER1 = game.home_doubles_pair.person1.id;
+    SET HOME_PLAYER2 = game.home_doubles_pair.person2.id;
+    SET AWAY_PLAYER1 = game.away_doubles_pair.person1.id;
+    SET AWAY_PLAYER2 = game.away_doubles_pair.person2.id;
+-%]
+      <div class="doubles_home_player_selection field-container">
+        <select name="game_[% game.scheduled_game_number %]_home_doubles_pairing" id="game_[% game.scheduled_game_number %]_home_doubles_pairing" class="doubles doubles_home doubles_game_[% game.scheduled_game_number %]" data-player-location="home" data-game="[% game.scheduled_game_number %]" multiple="multiple" data-placeholder="[% c.maketext("matches.game.field.doubles-home-players") %]">
+          <option></option>
+[%
+  # Now loop through the players
+  FOREACH team_player IN home_doubles_list;
+    IF team_player.value == HOME_PLAYER1 OR team_player.value == HOME_PLAYER2;
+      SET SELECTED_TEXT = ' selected="selected"';
+    ELSE;
+      SET SELECTED_TEXT = '';
+    END;
+-%]
+          <option value="[% team_player.value %]"[% SELECTED_TEXT %]>[% team_player.text %]</option>
+[%
+  END;
+-%]
+        </select>
+      </div>
+      <div class="doubles_away_player_selection field-container">
+        <select name="game_[% game.scheduled_game_number %]_away_doubles_pairing" id="game_[% game.scheduled_game_number %]_away_doubles_pairing" class="doubles doubles_away doubles_game_[% game.scheduled_game_number %]" data-player-location="away" data-game="[% game.scheduled_game_number %]" multiple="multiple" data-placeholder="[% c.maketext("matches.game.field.doubles-away-players") %]">
+          <option></option>
+[%
+  # Now loop through the players
+  FOREACH team_player IN away_doubles_list;
+    IF team_player.value == AWAY_PLAYER1 OR team_player.value == AWAY_PLAYER2;
+      SET SELECTED_TEXT = ' selected="selected"';
+    ELSE;
+      SET SELECTED_TEXT = '';
+    END;
+-%]
+          <option value="[% team_player.value %]"[% SELECTED_TEXT %]>[% team_player.text %]</option>
+[%
+  END;
+-%]
+        </select>
+      </div>
+      <div class="clear-fix"></div>
+[%
+  ELSE;
+    # Singles game
+    IF game.home_player AND game.away_player;
+      SET GAME_VISIBILITY = ' style="display: show;"';
+      SET NO_PLAYERS_NOTICE_VISIBILITY = ' style="display: none;"';
+    ELSE;
+      SET GAME_VISIBILITY = ' style="display: none;"';
+      SET NO_PLAYERS_NOTICE_VISIBILITY = ' style="display: show;"';
+    END;
+    SET NO_PLAYERS_NOTICE = c.maketext("matches.game.fill-out-players.singles-notice");
+    SET GAME_TYPE = ' data-game-type="singles"';
+    SET HOME_PLAYER_NUMBER = ' data-home-player-number="' _ game.home_player_number _ '"';
+    SET AWAY_PLAYER_NUMBER = ' data-away-player-number="' _ game.away_player_number _ '"';
+  END;
+-%]
+        <div class="player[% game.home_player_number %]_no_players player[% game.away_player_number %]_no_players" id="game_[% game.scheduled_game_number %]_no_players"[% NO_PLAYERS_NOTICE_VISIBILITY %]>
+          [% NO_PLAYERS_NOTICE | html_entity %]
+        </div>
+        <div class="player[% game.home_player_number %]_score player[% game.away_player_number %]_score game_[% game.scheduled_game_number %]_score" id="game_[% game.scheduled_game_number %]_score_detail"[% GAME_VISIBILITY %]>
+        <!-- Score / running score information -->
+        <input type="hidden" name="game_[% game.scheduled_game_number %]_home_team_legs_won" id="game_[% game.scheduled_game_number %]_home_team_score" class="game_score_legs" value="[% game.home_team_legs_won OR "0" %]" />
+        <input type="hidden" name="game_[% game.scheduled_game_number %]_away_team_legs_won" id="game_[% game.scheduled_game_number %]_away_team_score" class="game_score_legs" value="[% game.away_team_legs_won OR "0" %]" />
+        <input type="hidden" name="game_[% game.scheduled_game_number %]_home_team_match_score" id="game_[% game.scheduled_game_number %]_home_team_match_score" class="game_score_running" value="[% game.home_team_match_score OR "0" %]" />
+        <input type="hidden" name="game_[% game.scheduled_game_number %]_away_team_match_score" id="game_[% game.scheduled_game_number %]_away_team_match_score" class="game_score_running" value="[% game.away_team_match_score OR "0" %]" />
+        
+        <!-- Store the individual match template information for this game so we can access it in the client script further down -->
+        <input type="hidden" class="actual_game_number" name="game_[% game.scheduled_game_number %]_actual_game_number" id="game_[% game.scheduled_game_number %]_actual_game_number" data-scheduled-game-number="[% game.scheduled_game_number %]" value="[% game.actual_game_number OR game.scheduled_game_number %]" />
+        
+        <!-- Token input for the umpire -->
+        <div class="form-column-single">
+          <div class="label-field-container">
+            <label for="game_[% game.scheduled_game_number %]_umpire">[% c.maketext("matches.game.field.umpire") %]</label>
+            <div class="field-container">
+              <input type="text" name="game_[% game.scheduled_game_number %]_umpire" id="game_[% game.scheduled_game_number %]_umpire" />
+            </div>
+            <div class="clear-fix"></div>
+          </div>
+        </div>
+        
+        <div class="label-field-container-multi">
+          <div class="field-container">
+            [% c.maketext("matches.game.field.scores.home") %]
+          </div>
+          <div class="field-container">
+            [% c.maketext("matches.game.field.scores.away") %]
+          </div>
+          <div class="field-container">
+            [% c.maketext("matches.game.field.scores.award") %]
+          </div>
+          <div class="clear-fix"></div>
+        </div>
+[%
+    FOREACH leg = game.team_match_legs;
+-%]
+        <div class="game_score" id="game_[% game.scheduled_game_number %]_leg_[% leg.leg_number %]_score" data-game="[% game.scheduled_game_number %]" data-leg="[% leg.leg_number %]"[% VISIBILITY_TEXT %]>
+          <div class="label-field-container-multi">
+            <div class="field-container">
+              <input type="number" class="game-score" name="game_[% game.scheduled_game_number %]_leg_[% leg.leg_number %]_home" id="game_[% game.scheduled_game_number %]_leg_[% leg.leg_number %]_home" min="0" data-game="[% game.scheduled_game_number %]" data-leg="[% leg.leg_number %]" data-player-location="home"[% GAME_TYPE _ HOME_PLAYER_NUMBER _ AWAY_PLAYER_NUMBER %] value="[% leg.home_team_points_won OR "0" %]"[% DISABLED_TEXT %] />
+            </div>
+            <div class="field-container">
+              <input type="number" class="game-score away-score" name="game_[% game.scheduled_game_number %]_leg_[% leg.leg_number %]_away" id="game_[% game.scheduled_game_number %]_leg_[% leg.leg_number %]_away" min="0" data-game="[% game.scheduled_game_number %]" data-leg="[% leg.leg_number %]" data-player-location="away"[% GAME_TYPE _ HOME_PLAYER_NUMBER _ AWAY_PLAYER_NUMBER %] value="[% leg.away_team_points_won OR "0" %]"[% DISABLED_TEXT %] />
+            </div>
+            <div class="button-toggle" id="game_[% game.scheduled_game_number %]_leg_[% leg.leg_number %]_award">
+              <input type="checkbox" class="button-toggle award-game" value="1" id="game_[% game.scheduled_game_number %]_leg_[% leg.leg_number %]_home_award" name="game_[% game.scheduled_game_number %]_leg_[% leg.leg_number %]_home_award" data-game-number="[% game.scheduled_game_number %]" data-leg-number="[% leg.leg_number %]" data-location="home" /><label for="game_[% game.scheduled_game_number %]_leg_[% leg.leg_number %]_home_award">H</label>
+              <input type="checkbox" class="button-toggle award-game" value="1" id="game_[% game.scheduled_game_number %]_leg_[% leg.leg_number %]_away_award" name="game_[% game.scheduled_game_number %]_leg_[% leg.leg_number %]_away_award" data-game-number="[% game.scheduled_game_number %]" data-leg-number="[% leg.leg_number %]" data-location="away" /><label for="game_[% game.scheduled_game_number %]_leg_[% leg.leg_number %]_away_award">A</label>
+            </div>
+            <div class="clear-fix"></div>
+          </div>
+        </div>
+[%
+      # Set the previous leg so we can access it on the next iteration
+      SET previous_leg = leg;
+    END;
+-%]
+        </div>
+      </div>
+    </div>
+  
+[%
+END;
+-%]
+  </div>
+</fieldset>
+<input type="submit" name="Submit" value="[% c.maketext("form.button.save") %]" />
+</form>
+
+

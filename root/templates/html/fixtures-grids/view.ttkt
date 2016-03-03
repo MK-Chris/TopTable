@@ -1,0 +1,131 @@
+[% # Note That the '-' at the beginning or end of TT code  -%]
+[% # "chomps" the whitespace/newline at that end of the    -%]
+[% # output (use View Source in browser to see the effect) -%]
+
+<div id="grid_summary">
+<h4>Summary</h4>
+<table class="responsive-vertical">
+  <tr>
+    <th class="heading_column">[% c.maketext("fixtures-grids.field.maximum-teams-per-division") %]</th>
+    <td>[% grid.maximum_teams | html_entity %]</td>
+  </tr>
+  <tr>
+    <th>[% c.maketext("fixtures-grids.field.fixtures-repeated") %]</th>
+    <td>[% c.maketext("fixtures-grids.field.fixtures-repeated-times", grid.fixtures_repeated) %]</td>
+  </tr>
+</table>
+</div>
+
+<div id="grid-positions">
+  <h4>[% c.maketext("fixtures-grids.teams") %]</h4>
+[%
+IF season;
+  FOREACH division IN divisions;
+    IF specific_season;
+      SET division_uri = c.uri_for_action("/league-tables/view_specific_season", [division.url_key, season.url_key]);
+    ELSE;
+      SET division_uri = c.uri_for_action("/league-tables/view_current_season", [division.url_key]);
+    END;
+-%]
+<h5><a href="[% division_uri %]">[% division.name | html_entity %]</a></h5>
+[%
+    SET LAST_GRID_POSITION = 0;
+    FOREACH team_season = division.team_seasons;
+-%]
+  <div class="list-item">
+[%
+      IF specific_season;
+        SET team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [team_season.team.club.url_key, team_season.team.url_key, season.url_key]);
+      ELSE;
+        SET team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [team_season.team.club.url_key, team_season.team.url_key]);
+      END;
+      
+      team_name = FILTER html_entity; team_season.club.short_name _ " " _ team_season.name; END;
+      IF team_season.grid_position;
+        IF team_season.grid_position - LAST_GRID_POSITION > 1 AND LAST_POSITION_SET == 1;
+          # We have a bye position
+          SET team_bye = c.maketext("fixtures-grids.form.teams.bye");
+          LAST_GRID_POSITION + 1 _ ". [" _ team_bye _ "]<br />";
+-%]
+  </div>
+  <div class="list-item">
+[%
+        END;
+        
+        "   " _ team_season.grid_position _ ". <a href=" _ team_uri _ ">" _ team_name _ "</a><br />";
+        LAST_GRID_POSITION  = team_season.grid_position;
+        LAST_POSITION_SET   = 1;
+      ELSE;
+        "   <a href=" _ team_uri _ ">" _ team_name _ "</a> - division number not set<br />";
+        LAST_POSITION_SET   = 0;
+      END;
+-%]
+  </div>
+[%
+    END;
+  END;
+ELSE;
+-%]
+<div class="list-item">
+  [% c.maketext("fixtures-grids.teams.view.no-season") %]
+</div>
+[%
+END;
+-%]
+</div>
+
+
+<div id="grid-matches">
+  <h4>[% c.maketext("fixtures-grids.matches") %]</h4>
+[%
+SET SET_MATCHES = 0;
+FOREACH week IN weeks;
+-%]
+  <h5>[% c.maketext("fixtures-grids.field.week", week.week) %]</h5>
+  <div id="week[% week.week %]">
+[%
+  # Loop through all the matches for each week
+  FOREACH match = week.fixtures_grid_matches;
+    IF match.home_team OR match.away_team;
+-%]
+<div class="list-item">
+  [% c.maketext("fixtures-grids.form.matches.field.team-number", match.home_team) %] <b>v</b> [% c.maketext("fixtures-grids.form.matches.field.team-number", match.away_team) %]
+</div>
+[%
+      SET SET_MATCHES = SET_MATCHES + 1;
+    ELSE;
+%]
+<div class="list-item">
+  <b>[% c.maketext("fixtures-grids.matches.view.match-not-set", match.match_number) %]</b>
+</div>
+[%
+    END;
+  END;
+-%]
+  <br />
+  </div>
+[%
+END;
+IF SET_MATCHES == 0;
+  c.maketext("fixtures-grids.matches.view.matches-not-set");
+END;
+-%]
+</div>
+<div class="clear-fix"></div>
+[%
+IF authorisation.fixtures_edit AND !delete_screen;
+-%]
+<a href="[% c.uri_for_action("/fixtures-grids/matches", [grid.url_key]) %]">[% c.maketext("fixtures-grids.matches.set-link") %]</a> | <a href="[% c.uri_for_action("/fixtures-grids/teams", [grid.url_key]) %]">[% c.maketext("fixtures-grids.teams.set-link") %]</a>
+[%
+  IF grid.can_create_fixtures;
+-%]
+ | <a href="[% c.uri_for_action("/fixtures-grids/create_fixtures", [grid.url_key]) %]">[% c.maketext("fixtures-grids.create-fixtures.link") %]</a>
+[%
+  END;
+  IF grid.can_delete_fixtures;
+-%]
+ | <a href="[% c.uri_for_action("/fixtures-grids/delete_fixtures", [grid.url_key]) %]">[% c.maketext("fixtures-grids.delete-fixtures.link") %]</a>
+[%
+  END;
+END;
+-%]

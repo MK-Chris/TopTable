@@ -1,0 +1,21 @@
+[% # This is a TT comment. -%]
+[% # Note That the '-' at the beginning or end of TT code  -%]
+[% # "chomps" the whitespace/newline at that end of the    -%]
+[% # output (use View Source in browser to see the effect) -%]
+[% # Some basic HTML with a loop to display clubs -%]
+[%
+FOREACH venue IN display_options;
+-%]
+<div class="list-item">
+[%
+  IF specific_season;
+    SET uri = c.uri_for_action("/fixtures-results/view_venue_specific_season_first_page", [season.url_key, venue.venue.url_key]);
+  ELSE;
+    SET uri = c.uri_for_action("/fixtures-results/view_venue_current_season_first_page", [venue.venue.url_key]);
+  END;
+-%]
+  <a href="[% uri %]">[% venue.venue.name %]</a> ([% c.maketext("fixtures-results.view.match-count", venue.get_column("number_of_matches")) %])
+</div>
+[%
+END;
+-%]
