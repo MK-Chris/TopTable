@@ -1,0 +1,93 @@
+# rename this file to toptable.yml and put a ':' after 'name' if
+# you want to use YAML like in old versions of Catalyst
+name "Milton Keynes Table Tennis League"
+default_view HTML
+
+<Model::DB>
+    schema_class  TopTable::Schema
+    <connect_info>
+        dsn                 dbi:mysql:toptable
+        user                toptable
+        password            toptable
+        AutoCommit          1
+        disable_sth_caching 1
+    </connect_info>
+</Model::DB>
+
+<BaseURI>
+  #desktop  http://hp4535-cwe:3000/
+  #mobile   http://m.hp4535-cwe:3000/
+  desktop   http://192.168.1.69:3000/
+</BaseURI>
+
+<View::Email>
+  # Where to look in the stash for the email information.
+  # 'email' is the default, so you don't have to specify it.
+  stash_key  email
+</View::Email>
+
+<View::Email::Template>
+  <default>
+    view TT::NoWrap
+    
+    # Defines the default content type (mime type). Mandatory
+    content_type text/plain
+    
+    # Defines the default charset for every MIME part with the 
+    # content type text.
+    # According to RFC2049 a MIME part without a charset should
+    # be treated as US-ASCII by the mail client.
+    # If the charset is not set it won't be set for all MIME parts
+    # without an overridden one.
+    # Default: none
+    charset utf-8
+  </default>
+  
+  # Setup how to send the email
+  # all those options are passed directly to Email::Sender::Simple
+  <sender>
+    # if mailer doesn't start with Email::Sender::Simple::Transport::,
+    # then this is prepended.
+    mailer       SMTP
+    from_address admin@mkttl.co.uk
+    # mailer_args is passed directly into Email::Sender::Simple 
+    <mailer_args>
+        host          mail.mkttl.co.uk # defaults to localhost
+        sasl_username admin@mkttl.co.uk
+        sasl_password ReubenThomas2209
+    </mailer_args>
+  </sender>
+</View::Email::Template>
+
+<Plugin::Authentication>
+  default_realm users
+  <realms>
+    <users>
+      <credential>
+        class          Password
+        password_field password
+        password_type  self_check
+      </credential>
+      <store>
+        class         DBIx::Class
+        user_model    DB::User
+        role_relation roles
+        role_field    name
+      </store>
+    </users>
+  </realms>
+</Plugin::Authentication>
+
+# Or use an existing database handle from a DBIC/DBI class
+<Plugin::Session>
+  expires           3600
+  dbi_dbh           DB
+  dbi_table         sessions
+  dbi_id_field      id
+  dbi_data_field    data
+  dbi_expires_field expires
+</Plugin::Session>
+
+<Google>
+  api_key   AIzaSyD4RtzW-LE4FMSMg5yeFa1QwmB_8BsFgk0
+</Google>

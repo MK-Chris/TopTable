@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html>
+<head>
+[%
+IF meta_refresh.time AND meta_refresh.url;
+-%]
+<meta http-equiv="refresh" content="[% meta_refresh.time %]; url=[% meta_refresh.url %]" />
+[%
+END;
+-%]
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="author" content="Chris Welch" />
+<meta name="format-detection" content="telephone=yes" />
+<meta name="robots" content="NOODP,NOYDIR" />
+<meta name="theme-color" content="#0072bb" />
+<meta name="application-name" content="MK Table Tennis League">
+<meta name="msapplication-TileImage" content="[% c.uri_for("/static/images/web-app/web-app-icon-144x144.png") %]" />
+<meta name="msapplication-TileColor" content="#0072bb">
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="MK Table Tennis League" />
+
+<!-- Social -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@MKChris">
+[%
+IF c.config.social.twitter_account;
+-%]
+<meta name="twitter:creator" content="[% c.config.social.twitter_account %]">
+[%
+END;
+-%]
+<meta name="twitter:title" content="[% page_title %]" />
+<meta name="twitter:description" content="[% social_description OR c.config.site_description %]" />
+<meta name="twitter:image" content="[% c.uri_for("/static/images/social/twitter.png") %]" />
+
+<meta property="og:title" content="[% page_title %]" />
+<meta property="og:description" content="[% social_description OR c.config.site_description %]" />
+<meta property="og:type" content="website">
+<meta property="og:url" content="[% canonical_uri OR c.uri_for( c.request.path ) %]" />
+<meta property="og:image" content="[% c.uri_for("/static/images/social/facebook.png") %]" />
+<!-- End social -->
+
+<link rel="apple-touch-icon"  sizes="57x57"   href="[% c.uri_for("/static/images/web-app/web-app-icon-57x57.png") %]" />
+<link rel="apple-touch-icon"  sizes="72x72"   href="[% c.uri_for("/static/images/web-app/web-app-icon-72x72.png") %]" />
+<link rel="apple-touch-icon"  sizes="76x76"   href="[% c.uri_for("/static/images/web-app/web-app-icon-76x76.png") %]" />
+<link rel="apple-touch-icon"  sizes="120x120" href="[% c.uri_for("/static/images/web-app/web-app-icon-120x120.png") %]" />
+<link rel="apple-touch-icon"  sizes="114x114" href="[% c.uri_for("/static/images/web-app/web-app-icon-144x144.png") %]" />
+<link rel="apple-touch-icon"  sizes="152x152" href="[% c.uri_for("/static/images/web-app/web-app-icon-152x152.png") %]" />
+<link rel="apple-touch-icon"  sizes="192x192" href="[% c.uri_for("/static/images/web-app/web-app-icon-192x192.png") %]" />
+<link rel="apple-touch-icon"  sizes="196x196" href="[% c.uri_for("/static/images/web-app/web-app-icon-196x196.png") %]" />
+<link rel="shortcut icon"     sizes="57x57"   href="[% c.uri_for("/static/images/web-app/web-app-icon-57x57.png") %]" />
+<link rel="shortcut icon"     sizes="72x72"   href="[% c.uri_for("/static/images/web-app/web-app-icon-72x72.png") %]" />
+<link rel="shortcut icon"     sizes="76x76"   href="[% c.uri_for("/static/images/web-app/web-app-icon-76x76.png") %]" />
+<link rel="shortcut icon"     sizes="120x120" href="[% c.uri_for("/static/images/web-app/web-app-icon-120x120.png") %]" />
+<link rel="shortcut icon"     sizes="114x114" href="[% c.uri_for("/static/images/web-app/web-app-icon-144x144.png") %]" />
+<link rel="shortcut icon"     sizes="152x152" href="[% c.uri_for("/static/images/web-app/web-app-icon-152x152.png") %]" />
+<link rel="shortcut icon"     sizes="192x192" href="[% c.uri_for("/static/images/web-app/web-app-icon-192x192.png") %]" />
+<link rel="shortcut icon"     sizes="196x196" href="[% c.uri_for("/static/images/web-app/web-app-icon-196x196.png") %]" />
+[%
+IF canonical_uri;
+-%]
+<link rel="canonical" href="[% canonical_uri %]" />
+[%
+END;
+-%]
+
+<title>[% page_title %]</title>
+
+<link rel="stylesheet" href="[% c.uri_for('/static/css/main.css') %]" type="text/css" media="screen" />
+<link rel="stylesheet" href="[% c.uri_for('/static/css/jqueryui/jquery-ui.structure.min.css') %]" type="text/css" media="screen" />
+<link rel="stylesheet" href="[% c.uri_for('/static/css/jqueryui/jquery-ui.theme.min.css') %]" type="text/css" media="screen" />
+<link rel="stylesheet" href="[% c.uri_for('/static/css/smartmenus/sm-core-css.css') %]" type="text/css" media="screen" />
+<link rel="stylesheet" href="[% c.uri_for('/static/css/smartmenus/sm-blue/sm-blue.css') %]" type="text/css" media="screen" />
+[%
+# Cookie notice only if it's not a bot
+UNLESS c.request.browser_detect.robot;
+-%]
+<link rel="stylesheet" href="[% c.uri_for('/static/css/cookiecuttr/cookiecuttr.css') %]" type="text/css" media="screen" />
+[%
+END;
+
+IF external_styles;
+  FOREACH stylesheet IN external_styles;
+-%]
+<link rel="stylesheet" href="[% stylesheet %]" media="screen" />
+[%
+  END;
+END;
+-%]
+
+<script type="text/javascript" src="[% c.uri_for("/static/script/jquery-1.11.3.js") %]"></script>
+<script type="text/javascript" src="[% c.uri_for("/static/script/plugins/jquery-ui/jquery-ui-1-11-4.min.js") %]"></script>
+<script type="text/javascript" src="[% c.uri_for('/static/script/plugins/smartmenus/jquery.smartmenus.min.js') %]"></script>
+<script type="text/javascript" src="[% c.uri_for('/static/script/plugins/cookie/jquery.cookie.js') %]"></script>
+<script type="text/javascript" src="[% c.uri_for('/static/script/plugins/touch-punch/jquery.ui.touch-punch.min.js') %]"></script>
+<script type="text/javascript" src="[% c.uri_for('/static/plugins/jquery-scrollto/jquery-scrollto.js') %]"></script>
+<!--<script type="text/javascript" src="[% c.uri_for('/static/plugins/history.js/bundled/html4+html5/jquery.history.js') %]"></script>
+<script type="text/javascript" src="[% c.uri_for('/static/plugins/ajaxify/ajaxify-html5.js') %]"></script>-->
+[%
+# Cookie notice only if it's not a bot
+UNLESS c.request.browser_detect.robot;
+-%]
+<script type="text/javascript" src="[% c.uri_for('/static/script/plugins/cookiecuttr/jquery.cookiecuttr.js') %]"></script>
+[%
+END;
+-%]
+
+<script type="text/javascript" src="[% c.uri_for("/static/script/standard/main.js") %]"></script>
+[%
+INCLUDE "html/calling-scripts.ttkt";
+IF external_scripts;
+  FOREACH script IN external_scripts;
+-%]
+<script type="text/javascript" src="[% script %]"></script>
+[%
+  END;
+END;
+IF c.config.Google.Analytics.tracking_id;
+-%]
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', '[% c.config.Google.Analytics.tracking_id %]', 'auto');
+  ga('send', 'pageview');
+
+[%
+UNLESS c.request.browser_detect.robot;
+-%]
+  /*
+    Cookie notice
+  */
+  $.cookieCuttr({
+    cookieAnalytics: false,
+    cookiePolicyLink: "[% c.uri_for("/static/privacy") %]",
+    cookieMessage: "[% c.maketext("msg.cookie-notice") %]",
+    cookieCutter: true,
+    cookieDisable: ".no-cookies"
+  });
+[%
+END;
+-%]
+</script>
+[%
+END;
+%]
+
+
+</head>
+<body>
+<div id="header">
+[%# Insert the page title -%]
+<a href="[% c.uri_for("/") %]"><img class="banner-logo logo-tip" src="[% c.uri_for('/static/images/banner-logo-player-small.png') %]" alt="[% name %]" title="[% name %]" /></a>
+</div>
+
+<!-- START MENU -->
+<nav id="main-nav">
+<a id="menu-button"></a>
+<ul id="main-menu" class="sm sm-blue collapsed">
+  <li class="left"><a href="[% c.uri_for("/") %]" title="[% c.maketext("menu.title.home") %]">[% c.maketext("menu.text.home") %]</a></li>
+  <li><a href="[% c.uri_for("/news") %]" title="[% c.maketext("menu.title.news") %]">[% c.maketext("menu.text.news") %]</a>
+[%
+  IF nav_current_season;
+    season_html = FILTER html_entity; nav_current_season.name; END;
+%]
+  <li class="fixtures">
+    <a href="[% c.uri_for_action("/fixtures-results/root_current_season") %]" title="[% c.maketext("menu.title.fixtures-results", season_html) %]">[% c.maketext("menu.text.fixtures-results") %]</a>
+    <ul>
+      <li class="fixtures fixtures-team"><a href="[% c.uri_for_action("/fixtures-results/filter_view_current_season", ["teams"]) %]" title="[% c.maketext("menu.title.fixtures-results-by-team", season_html) %]">[% c.maketext("menu.text.fixtures-results-by-team")  %]</a></li>
+      <li class="fixtures fixtures-month"><a href="[% c.uri_for_action("/fixtures-results/filter_view_current_season", ["months"]) %]" title="[% c.maketext("menu.title.fixtures-results-by-month", season_html) %]">[% c.maketext("menu.text.fixtures-results-by-month") %]</a></li>
+      <li class="fixtures fixtures-week"><a href="[% c.uri_for_action("/fixtures-results/filter_view_current_season", ["weeks"]) %]" title="[% c.maketext("menu.title.fixtures-results-by-week", season_html) %]">[% c.maketext("menu.text.fixtures-results-by-week") %]</a></li>
+      <li class="fixtures fixtures-day"><a href="[% c.uri_for_action("/fixtures-results/filter_view_current_season", ["days"]) %]" title="[% c.maketext("menu.title.fixtures-results-by-day", season_html) %]">[% c.maketext("menu.text.fixtures-results-by-day") %]</a></li>
+      <li class="fixtures fixtures-venue"><a href="[% c.uri_for_action("/fixtures-results/filter_view_current_season", ["venues"]) %]" title="[% c.maketext("menu.title.fixtures-results-by-venue", season_html) %]">[% c.maketext("menu.text.fixtures-results-by-venue") %]</a></li>
+      <li class="fixtures fixtures-division"><a href="[% c.uri_for_action("/fixtures-results/filter_view_current_season", ["divisions"]) %]" title="[% c.maketext("menu.title.fixtures-results-by-division", season_html) %]">[% c.maketext("menu.text.fixtures-results-by-division") %]</a></li>
+    </ul>
+  </li>
+  <li class="statistics">
+    <a href="javascript:void(0)" title="[% c.maketext("menu.title.statistics", season_html) %]">[% c.maketext("menu.text.statistics") %]</a>
+    <ul>
+      <li>
+        <a href="[% c.uri_for("/league-tables") %]" title="[% c.maketext("menu.title.league-tables", season_html) %]">[% c.maketext("menu.text.league-tables") %]</a>
+        <ul>
+[%
+    FOREACH division_season = nav_current_season.division_seasons;
+      division_html = FILTER html_entity; division_season.name; END;
+-%]
+          <li><a href="[% c.uri_for_action("/league-tables/view_current_season", [division_season.division.url_key]) %]" title="[% c.maketext("menu.title.league-tables-division",division_html, season_html) %]">[% division_html %]</a></li>
+[%
+    END;
+-%]
+        </ul>
+      </li>
+      <li>
+        <a href="[% c.uri_for("/league-averages") %]" title="[% c.maketext("menu.text.league-averages", season_html) %]">[% c.maketext("menu.text.league-averages") %]</a>
+        <ul>
+          <li>
+            <a href="[% c.uri_for_action("/league-averages/list_first_page", ["singles"]) %]" title="[% c.maketext("menu.title.league-averages-singles", season_html) %]">[% c.maketext("menu.text.league-averages-singles") %]</a>
+            <ul>
+[%
+    FOREACH division_season = nav_current_season.division_seasons;
+      division_html = FILTER html_entity; division_season.name; END;
+-%]
+              <li><a href="[% c.uri_for_action("/league-averages/view_current_season", ["singles", division_season.division.url_key]) %]" title="[% c.maketext("menu.title.league-averages-singles-division", division_html, season_html) %]">[% division_html %]</a></li>
+[%
+    END;
+-%]
+            </ul>
+          </li>
+          <li>
+            <a href="[% c.uri_for_action("/league-averages/list_first_page", ["doubles-individuals"]) %]" title="[% c.maketext("menu.title.league-averages-doubles-individuals", season_html) %]">[% c.maketext("menu.text.league-averages-doubles-individuals") %]</a>
+            <ul>
+[%
+    FOREACH division_season = nav_current_season.division_seasons;
+      division_html = FILTER html_entity; division_season.name; END;
+-%]
+              <li><a href="[% c.uri_for_action("/league-averages/view_current_season", ["doubles-individuals", division_season.division.url_key]) %]" title="[% c.maketext("menu.title.league-averages-doubles-individuals-division", division_html, season_html) %]">[% division_html %]</a></li>
+[%
+    END;
+-%]
+            </ul>
+          </li>
+          <li>
+            <a href="[% c.uri_for_action("/league-averages/list_first_page", ["doubles-pairs"]) %]" title="[% c.maketext("menu.title.league-averages-doubles-pairs", nav_current_season.name) %]">[% c.maketext("menu.text.league-averages-doubles-pairs") %]</a>
+            <ul>
+[%
+    FOREACH division_season = nav_current_season.division_seasons;
+      division_html = FILTER html_entity; division_season.name; END;
+-%]
+              <li><a href="[% c.uri_for_action("/league-averages/view_current_season", ["doubles-pairs", division_season.division.url_key]) %]" title="[% c.maketext("menu.title.league-averages-doubles-pairs-division", division_html, season_html) %]">[% division_html %]</a></li>
+[%
+    END;
+-%]
+            </ul>
+          </li>
+          <li>
+            <a href="[% c.uri_for_action("/league-averages/list_first_page", ["doubles-teams"]) %]" title="[% c.maketext("menu.title.league-averages-doubles-teams", season_html) %]">[% c.maketext("menu.text.league-averages-doubles-teams") %]</a>
+            <ul>
+[%
+    FOREACH division_season = nav_current_season.division_seasons;
+      division_html = FILTER html_entity; division_season.name; END;
+-%]
+              <li><a href="[% c.uri_for_action("/league-averages/view_current_season", ["doubles-teams", division_season.division.url_key]) %]" title="[% c.maketext("menu.title.league-averages-doubles-teams-division", division_html, season_html) %]">[% division_html %]</a></li>
+[%
+    END;
+-%]
+            </ul>
+          </li>
+        </ul>
+      </li>
+    </ul>
+  </li>
+  <li>
+    <a href="[% c.uri_for("/events") %]" title="[% c.maketext("menu.title.events", season_html) %]">[% c.maketext("menu.text.events") %]</a>
+    <ul>
+[%
+IF nav_events.size;
+  FOREACH event IN nav_events;
+-%]
+      <li><a href="[% c.uri_for_action("/events/view_current_season", [event.url_key]) %]">[% event.name %]</a></li>
+[%
+  END;
+ELSE;
+-%]
+      <li><a href="javascript:void(0)">[% c.maketext("menu.events.none") %]</a></li>
+[%
+END;
+IF authorisation.event_create;
+-%]
+      <li><a href="[% c.uri_for("/events/create") %]" title="[% c.maketext("events.create") %]"><img src="[% c.uri_for("/static/images/icons/0009-Add-icon-16.png") %]" /> &laquo; [% c.maketext("admin.create") %] &raquo;</a></li>
+[%
+END;
+-%]
+    </ul>
+  </li>
+  <li class="clubs"><a href="[% c.uri_for("/clubs") %]" title="[% c.maketext("menu.title.clubs", season_html) %]">[% c.maketext("menu.text.clubs") %]</a>
+    <ul>
+[%
+  IF authorisation.club_view;
+    FOREACH club IN nav_clubs;
+      SET teams = club.teams;
+      club_full_name_html = FILTER html_entity; club.full_name; END;
+      club_short_name_html = FILTER html_entity; club.short_name; END;
+      
+      IF teams.size AND c.config.Menu.show_teams AND authorisation.team_view;
+        # We have teams, list them in sub-menus
+-%]
+      <li>
+        <a href="[% c.uri_for_action("/clubs/view_current_season", [club.url_key]) %]" title="[% club_full_name_html %]">[% club_full_name_html %]</a>
+        <ul>
+[%
+        FOREACH team = teams;
+          IF ( team.person_seasons.size AND c.config.Menu.show_players ) OR ( c.config.Menu.show_players AND authorisation.person_create );
+            # If there are people registered or we are authorised to create people, set the menu up to have sub menus
+            SET people_seasons = team.person_seasons;
+            team_html = FILTER html_entity; team.name; END;
+-%]
+          <li>
+            <a href="[% c.uri_for_action("/teams/view_current_season_by_url_key", [club.url_key, team.url_key]) %]" title="[% club_short_name_html %] [% team_html %]">[% team_html %]</a>
+            <ul>
+[%
+            # Loop through and list the people
+            IF c.config.Menu.show_players;
+              FOREACH person_season = people_seasons;
+                person_html = FILTER html_entity; person_season.display_name; END;
+-%]
+              <li><a href="[% c.uri_for_action("/people/view_current_season", [person_season.person.url_key]) %]" title="[% person_html %]">[% person_html %]</a></li>
+[%
+              END;
+            END;
+            
+            IF authorisation.person_create AND c.config.Menu.show_players AND authorisation.person_view;
+              # Only show the create option if we're listing players as well, otherwise it looks odd without them
+-%]
+              <li><a href="[% c.uri_for_action("/people/create_with_team_by_url_key", [team.club.url_key, team.url_key]) %]" title="[% c.maketext("people.create-for", club_short_name_html, team_html) %]"><img src="[% c.uri_for("/static/images/icons/0009-Add-icon-16.png") %]" /> &laquo; [% c.maketext("admin.create") %] &raquo;</a></li>
+[%
+            END;
+-%]
+            </ul>
+          </li>
+[%
+          ELSE;
+            # No people, just show the team
+-%]
+          <li><a href="[% c.uri_for_action("/teams/view_current_season_by_url_key", [club.url_key, team.url_key]) %]" title="[% club_short_name_html %] [% team_html %]">[% team_html %]</a></li>
+[%
+          END;
+        END;
+        IF authorisation.team_create;
+-%]
+          <li><a href="[% c.uri_for_action("/teams/create_with_club", [club.url_key]) %]" title="[% c.maketext("teams.create-for", club_full_name_html) %]"><img src="[% c.uri_for("/static/images/icons/0009-Add-icon-16.png") %]" /> &laquo; [% c.maketext("admin.create") %] &raquo;</a></li>
+[%
+        END;
+-%]
+        </ul>
+      </li>
+[%
+      ELSE;
+        # No teams, just list the club
+-%]
+      <li><a href="[% c.uri_for_action("/clubs/view_current_season", [club.url_key]) %]" title="[% club_full_name_html %]">[% club_full_name_html %]</a></li>
+[%
+      END;
+    END;
+    
+    IF authorisation.club_create;
+-%]
+      <li><a href="[% c.uri_for("/clubs/create") %]" title="[% c.maketext("club.create") %]"><img src="[% c.uri_for("/static/images/icons/0009-Add-icon-16.png") %]" /> &laquo; [% c.maketext("admin.create") %] &raquo;</a></li>
+[%
+    END;
+-%]
+    </ul>
+  </li>
+[%
+    END;
+  END;
+%]
+  <li>
+    <a href="[% c.uri_for("/info") %]" title="[% c.maketext("menu.title.info") %]">[% c.maketext("menu.text.info") %]</a>
+    <ul>
+      <li><a href="[% c.uri_for("/info/officials") %]" title="[% c.maketext("menu.title.officials") %]">[% c.maketext("menu.text.officials") %]</a></li>
+      <li><a href="[% c.uri_for("/info/rules") %]" title="[% c.maketext("menu.title.rules") %]">[% c.maketext("menu.text.rules") %]</a></li>
+      <li><a href="[% c.uri_for("/info/contact") %]" title="[% c.maketext("menu.title.contact") %]">[% c.maketext("menu.text.contact") %]</a></li>
+[%
+  IF authorisation.meeting_view;
+-%]
+      <li><a href="[% c.uri_for("/meetings") %]" title="[% c.maketext("menu.title.meetings") %]">[% c.maketext("menu.text.meetings") %]</a></li>
+[%
+  END;
+-%]
+    </ul>
+  </li>
+  <li class="venues">
+    <a href="javascript:void(0)" title="[% c.maketext("menu.title.venues-where-to-play") %]">[% c.maketext("menu.text.venues-where-to-play") %]</a>
+    <ul>
+[%
+    FOREACH venue IN nav_venues;
+      venue_html = FILTER html_entity; venue.name; END;
+-%]
+          <li><a href="[% c.uri_for_action("/venues/view", [venue.url_key]) %]" title="[% venue_html %]">[% venue_html %]</a></li>
+[%
+    END;
+    IF authorisation.venue_create;
+-%]
+        <li><a href="[% c.uri_for("/venues/create") %]" title="[% c.maketext("venues.create") %]"><img src="[% c.uri_for("/static/images/icons/0009-Add-icon-16.png") %]" /> &laquo; [% c.maketext("admin.create") %] &raquo;</a></li>
+[%
+    END;
+-%]
+    </ul>
+  </li>
+  <li>
+    <a href="[% c.uri_for("/seasons") %]" title="[% c.maketext("menu.title.seasons") %]">[% c.maketext("menu.text.seasons") %]</a>
+    <ul>
+[% # Loop through archived seasons
+    IF archived_seasons_count;
+      FOREACH season IN archived_seasons;
+        season_html = FILTER html_entity; season.name; END;
+%]
+      <li><a href="[% c.uri_for_action("/seasons/view", [season.url_key]) %]" title="[% season_html %]">[% season_html %]</a>
+        <ul>
+          <li>
+            <a href="[% c.uri_for_action("/fixtures-results/root_specific_season", [season.url_key]) %]" title="[% c.maketext("menu.title.results", season_html) %]">[% c.maketext("menu.text.results") %]</a>
+            <ul>
+              <li><a href="[% c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "teams"]) %]" title="[% c.maketext("menu.title.results-by-team", season_html) %]">[% c.maketext("menu.text.fixtures-results-by-team") %]</a></li>
+              <li><a href="[% c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "months"]) %]" title="[% c.maketext("menu.title.results-by-month", season_html) %]">[% c.maketext("menu.text.fixtures-results-by-month") %]</a></li>
+              <li><a href="[% c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "weeks"]) %]" title="[% c.maketext("menu.title.results-by-week", season_html) %]">[% c.maketext("menu.text.fixtures-results-by-week") %]</a></li>
+              <li><a href="[% c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "days"]) %]" title="[% c.maketext("menu.title.results-by-day", season_html) %]">[% c.maketext("menu.text.fixtures-results-by-day") %]</a></li>
+              <li><a href="[% c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "venues"]) %]" title="[% c.maketext("menu.title.results-by-venue", season_html) %]">[% c.maketext("menu.text.fixtures-results-by-venue") %]</a></li>
+              <li><a href="[% c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "divisions"]) %]" title="[% c.maketext("menu.title.results-by-division", season_html) %]">[% c.maketext("menu.text.fixtures-results-by-division") %]</a></li>
+            </ul>
+          </li>
+          <li>
+            <a href="javascript:void(0)" title="[% c.maketext("menu.title.statistics", season_html) %]">[% c.maketext("menu.text.statistics") %]</a>
+            <ul>
+              <li>
+                <a href="javascript:void(0)" title="[% c.maketext("menu.title.league-tables", season_html) %]">[% c.maketext("menu.text.league-tables") %]</a>
+                <ul>
+[%
+        FOREACH division_season = season.division_seasons;
+          division_html = FILTER html_entity; division_season.name; END;
+-%]
+                  <li><a href="[% c.uri_for_action("/league-tables/view_specific_season", [division_season.division.url_key, season.url_key]) %]" title="[% c.maketext("menu.title.league-tables-division", division_html, season_html) %]">[% division_html %]</a></li>
+[%
+        END;
+-%]
+                </ul>
+              </li>
+              <li>
+                <a href="javascript:void(0)" title="[% c.maketext("menu.text.league-averages", season.name) | html_entity %]">[% c.maketext("menu.text.league-averages") %]</a>
+                <ul>
+                  <li>
+                    <a href="javascript:void(0)" title="[% c.maketext("menu.title.league-averages-singles", season.name) | html_entity %]">[% c.maketext("menu.text.league-averages-singles") %]</a>
+                    <ul>
+[%
+        FOREACH division_season = season.division_seasons;
+          division_html = FILTER html_entity; division_season.name; END;
+-%]
+                      <li><a href="[% c.uri_for_action("/league-averages/view_specific_season", ["singles", division_season.division.url_key, season.url_key]) %]" title="[% c.maketext("menu.title.league-averages-singles-division", division_html, season_html) %]">[% division_html %]</a></li>
+[%
+        END;
+-%]
+                    </ul>
+                  </li>
+                  <li>
+                    <a href="javascript:void(0)" title="[% c.maketext("menu.title.league-averages-doubles-individuals", season_html) %]">[% c.maketext("menu.text.league-averages-doubles-individuals") %]</a>
+                    <ul>
+[%
+        FOREACH division_season = season.division_seasons;
+          division_html = FILTER html_entity; division_season.name; END;
+-%]
+                      <li><a href="[% c.uri_for_action("/league-averages/view_specific_season", ["doubles-individuals", division_season.division.url_key, season.url_key]) %]" title="[% c.maketext("menu.title.league-averages-doubles-individuals-division", division_html, season_html) %]">[% division_html %]</a></li>
+[%
+        END;
+-%]
+                    </ul>
+                  </li>
+                  <li>
+                    <a href="javascript:void(0)" title="[% c.maketext("menu.title.league-averages-doubles-pairs", season_html) %]">[% c.maketext("menu.text.league-averages-doubles-pairs") %]</a>
+                    <ul>
+[%
+        FOREACH division_season = season.division_seasons;
+          division_html = FILTER html_entity; division_season.name; END;
+-%]
+                      <li><a href="[% c.uri_for_action("/league-averages/view_specific_season", ["doubles-pairs", division_season.division.url_key, season.url_key]) %]" title="[% c.maketext("menu.title.league-averages-doubles-pairs-division", division_html, season_html) %]">[% division_html %]</a></li>
+[%
+        END;
+-%]
+                    </ul>
+                  </li>
+                  <li>
+                    <a href="javascript:void(0)" title="[% c.maketext("menu.title.league-averages-doubles-teams", season_html) %]">[% c.maketext("menu.text.league-averages-doubles-teams") %]</a>
+                    <ul>
+[%
+        FOREACH division_season = season.division_seasons;
+          division_html = FILTER html_entity; division_season.name; END;
+-%]
+                      <li><a href="[% c.uri_for_action("/league-averages/view_specific_season", ["doubles-teams", division_season.division.url_key, season.url_key]) %]" title="[% c.maketext("menu.title.league-averages-doubles-teams-division", division_html, season_html) %]">[% division_html %]</a></li>
+[%
+        END;
+-%]
+                    </ul>
+                  </li>
+                </ul>
+              </li>
+            </ul>
+          </li>
+          <li><a href="[% c.uri_for("/event") %]" title="[% c.maketext("menu.title.events", season_html) | html_entity %]">[% c.maketext("menu.text.events") %]</a></li>
+        </ul>
+      </li>
+[%
+      END;
+    ELSE;
+-%]
+      <li><a href="javascript:void(0)">[% c.maketext("menu.seasons.none") %]</a></li>
+[%    
+    END;
+    
+    IF authorisation.season_create AND !nav_current_season;
+-%]
+      <li><a href="[% c.uri_for("/seasons/create") %]" title="[% c.maketext("seasons.create") %]"><img src="[% c.uri_for("/static/images/icons/0009-Add-icon-16.png") %]" /> &laquo; [% c.maketext("admin.create") %] &raquo;</a></li>
+[%
+    END;
+-%]
+    </ul>
+  </li>
+[%
+IF c.user_exists;
+%]
+  <li>
+    <a href="[% c.uri_for("/logout") %]" title="[% c.maketext("user.logout") %] [% c.user.display_name | html_entity %]" class="right-menu-tip">[% c.maketext("user.logout") %] [ <b>[% c.user.display_name | html_entity %]</b> ]</a>
+    <ul>
+      <li><a href="[% c.uri_for_action("/users/view", [c.user.url_key]) %]" title="[% c.maketext("menu.title.user.profile") %]" class="right-menu-tip">[% c.maketext("menu.text.user.profile") %]</a></li>
+    </ul>
+  </li>
+[%
+ELSE;
+%]
+  <li>
+    <a href="[% c.uri_for("/login") %]" title="[% c.maketext("user.login") %] / [% c.maketext("user.register") %]" class="right-menu-tip">[% c.maketext("user.login") %] / [% c.maketext("user.register") %]</a>
+    <ul class="mega-menu">
+      <div class="no-cookies">
+      <form method="post" action="[% c.uri_for_action("/users/do_login") %]">
+      <input type="text" class="menu-input menu-margin" name="username" id="menu-username" value="[% c.request.cookie("toptable_username").value | html_entity %]" placeholder="[% c.maketext("user.field.username") %]">
+      <input type="password" class="menu-input menu-margin" name="password" id="menu-password" value="" placeholder="[% c.maketext("user.field.password") %]">
+      <input type="hidden" name="from_menu" value="1" />
+      <input type="submit" class="menu-margin" value="[% c.maketext("user.login") %]" /><br />
+      <a class="menu-margin" style="display: inline; background: #fff; padding: 0px; color: #000; text-shadow: 0px 0px 0px #000" href="[% c.uri_for("/register") %]">[% c.maketext("user.register") %]</a>
+      </form>
+      </div>
+    </ul>
+  </li>
+[%
+END;
+%]
+</ul>
+</nav>
+<!-- END MENU -->
+
+<div id="content">
+[%
+# Status and error messages
+IF status_msg.success;
+-%]
+<div class="success-message"><span class="message-text">[% status_msg.success | html_line_break %]</span></div>
+[%
+END;
+IF status_msg.error;
+-%]
+<div class="error-message"><span class="message-text">[% status_msg.error | html_line_break %]</span></div>
+[%
+ELSIF prepare_error_div;
+-%]
+<div class="error-message" style="display: none;"><span class="message-text">&nbsp;</span></div>
+[%
+END;
+IF status_msg.warning;
+-%]
+<div class="warning-message"><span class="message-text">[% status_msg.warning | html_line_break %]</span></div>
+[%
+END;
+IF status_msg.info;
+-%]
+<div class="info-message"><span class="message-text">[% status_msg.info | html_line_break %]</span></div>
+[%
+END;
+# Breadcrumbs
+INCLUDE "html/generic/breadcrumbs.ttkt";
+IF subtitle1;
+-%]
+<h2>[%-
+subtitle1;
+IF title_links.size;
+  FOREACH title_link IN title_links;
+    SET text = title_link.text;
+    IF title_link.image_uri;
+      SET link = ' <a href="' _ title_link.link_uri _ '"><img src="' _ title_link.image_uri _ '" title="' _ text _ '" alt="' _ text _ '" /></a>';
+    ELSE;
+      SET link = ' <a href="' _ title_link.link_uri _ '">' _ text _ '</a>';
+    END;
+    link;
+  END;
+END;
+-%]</h2>
+[%
+END;
+IF subtitle2;
+-%]
+<h3>[% subtitle2 -%]</h3>
+[%
+END;
+IF subtitle3;
+-%]
+<h4>[% subtitle3 %]</h4>
+[%
+END;
+# This is where TT will stick all of your template's contents.
+content;
+-%]
+<br />
+
+<a href="#" id="back-to-top" title="[% c.maketext("footer.back-to-top") %]">&nbsp;</a>
+
+</div><!-- end content -->
+
+<div id="footer">[% c.maketext("footer.copyright") %] &copy; 2014-[% c.datetime.year %] Chris Welch</div><br /><br />
+</body>
+</html>

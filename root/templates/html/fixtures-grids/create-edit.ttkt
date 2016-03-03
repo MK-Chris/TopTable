@@ -1,0 +1,31 @@
+<div id="form">
+<form method="post" action="[% form_action %]">
+<fieldset id="club_details">
+<legend>Fixtures Grid</legend>
+<div class="label-field-container">
+  <label for="name">[% c.maketext("fixtures-grids.field.name") %]</label>
+  <div class="field-container">
+    <input type="text" id="name" name="name" value="[% c.flash.name OR grid.name %]" />
+  </div>
+  <div class="clear-fix"></div>
+</div>
+
+<div class="label-field-container">
+  <label for="maximum_teams">[% c.maketext("fixtures-grids.field.maximum-teams-per-division") %]</label>
+  <div class="field-container">
+    <input type="number" id="maximum_teams" name="maximum_teams" min="2" value="[% c.flash.maximum_teams OR grid.maximum_teams %]" />
+  </div>
+  <div class="clear-fix"></div>
+</div>
+
+<div class="label-field-container">
+  <label for="fixtures_repeated">[% c.maketext("fixtures-grids.field.fixtures-repeated-question") %]</label>
+  <div class="field-container">
+    <input type="number" id="fixtures_repeated" name="fixtures_repeated" min="1" value="[% c.flash.fixtures_repeated OR grid.fixtures_repeated %]" />
+  </div>
+  <div class="clear-fix"></div>
+</div>
+
+<input type="submit" name="Submit" value="Save" />
+</form>
+</div>

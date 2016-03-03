@@ -1,0 +1,56 @@
+[% # This is a TT comment. -%]
+[% # Note That the '-' at the beginning or end of TT code  -%]
+[% # "chomps" the whitespace/newline at that end of the    -%]
+[% # output (use View Source in browser to see the effect) -%]
+[% # Some basic HTML with a loop to display clubs -%]
+[%
+IF meetings.count;
+  # Use PROCESS instead of INCLUDE so that the page_links_text is defined in the current template thereafter
+  PROCESS "html/generic/pagination.ttkt" OBJECT_PLURAL = c.maketext("object.plural.meetings");
+  page_links_text;
+  
+  USE zeroes = format("%02d");
+  WHILE (meeting = meetings.next);
+    name_html = FILTER html_entity; meeting.type.name; END;
+    SET date = meeting.date_and_start_time;
+    CALL date.set_locale( c.locale );
+    
+    SET month   = zeroes( date.month );
+    SET day     = zeroes( date.day );
+    SET hour    = zeroes( date.hour );
+    SET minute  = zeroes( date.minute );
+    SET date_display = c.maketext("meetings.display.date", date.day_name, date.day, date.month_name, date.year, hour, minute);
+-%]
+<div class="list-item">
+  <a href="[% c.uri_for_action("/meetings/view_by_type_and_date", [meeting.type.url_key, meeting.date_and_start_time.year, month, day]) %]">[% name_html %] ([% date_display %])</a>
+[%
+    IF authorisation.meeting_edit;
+-%]
+  <a href="[% c.uri_for_action("/meetings/edit_by_type_and_date" [meeting.type.url_key, meeting.date_and_start_time.year, month, day]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", name_html) %]" title="[% c.maketext("admin.edit-object", name_html) %]" /></a>
+[%
+    END;
+    IF authorisation.meeting_delete AND meeting.can_delete;
+-%]
+  <a href="[% c.uri_for_action("/meetings/delete_by_type_and_date" [meeting.type.url_key, meeting.date_and_start_time.year, month, day]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", name_html) %]" title="[% c.maketext("admin.delete-object", name_html) %]" /></a>
+[%
+    END;
+-%]
+</div>
+[%
+  END;
+  page_links_text;
+ELSE;
+-%]
+<div class="list-item">
+  [% c.maketext("meetings.none") %]
+</div>
+[%
+END;
+-%]
+[%
+IF authorisation.meeting_create;
+-%]
+<a class="bold" href="[% c.uri_for("/meetings/create") %]"><img src="[% c.uri_for("/static/images/icons/0009-Add-icon-48.png") %]" title="[% c.maketext("admin.create-object", c.maketext("object.singular.meetings")) %]" /></a><br />
+[%
+END;
+-%]

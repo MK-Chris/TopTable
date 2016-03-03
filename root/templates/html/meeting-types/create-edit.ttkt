@@ -1,0 +1,18 @@
+[%-
+name = c.flash.name OR meeting_type.name;
+name_html = FILTER html_entity; name; END;
+%]
+<form method="post" action="[% form_action %]">
+<fieldset>
+  <legend>[% c.maketext("meeting-types.form.legend.meeting-type-details") %]</legend>
+  
+  <div class="label-field-container">
+    <label for="name">[% c.maketext("meeting-types.form.field.name") %]</label>
+    <div class="field-container">
+      <input type="text" id="name" name="name" value="[% name_html %]" />
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+</fieldset>
+<input type="submit" name="Submit" value="[% c.maketext("form.button.save") %]" />
+</form>

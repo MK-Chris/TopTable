@@ -1,0 +1,1 @@
+[% c.maketext("user.activation.email-resent-message") %]<br /><br />

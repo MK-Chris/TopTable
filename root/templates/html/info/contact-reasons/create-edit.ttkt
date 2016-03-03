@@ -1,0 +1,25 @@
+
+
+<form method="post" action="[% form_action %]">
+<fieldset>
+  <legend>[% c.maketext("contact-reasons.form.legend.details") %]</legend>
+  
+  <div class="label-field-container">
+    <label for="name">[% c.maketext("contact-reasons.name") %]</label>
+    <div class="field-container">
+      <input type="text" id="name" name="name" value="[% c.flash.name OR reason.name | html_entity %]" />
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+  
+  <div class="label-field-container">
+    <label for="recipients">[% c.maketext("contact-reasons.recipients") %]</label>
+    <div class="field-container">
+      <input type="text" id="recipients" name="recipients" value="" />
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+      
+  <input type="submit" id="submit" name="submit" value="[% c.maketext("form.button.save") %]" />
+</fieldset>
+</form>

@@ -1,0 +1,17 @@
+<div id="form">
+<form method="post" action="[% form_action %]">
+<fieldset>
+  <legend>[% c.maketext("news.form.legend.article-details") %]</legend>
+  <div class="label-field-container">
+    <label for="headline">[% c.maketext("news.form.field.headline") %]</label>
+    <div class="field-container">
+      <input type="text" id="headline" name="headline" value="[% c.flash.headline OR article.current_details.headline %]" />
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+  <!--<label for="article">Article content</label>--><textarea id="article" name="article" rows="25" cols="100">[% c.flash.article_content OR article.current_details.article_content %]</textarea><br />
+</fieldset>
+<input type="hidden" name="file_upload_type" id="file_upload_type" value="news" />
+<input type="submit" name="Submit" value="[% c.maketext("form.button.save") %]" />
+</form>
+</div>

@@ -1,0 +1,28 @@
+[% # This is a TT comment. -%]
+[% # Note That the '-' at the beginning or end of TT code  -%]
+[% # "chomps" the whitespace/newline at that end of the    -%]
+[% # output (use View Source in browser to see the effect) -%]
+[% # Some basic HTML with a loop to display clubs -%]
+[%
+IF divisions.count;
+  # Use PROCESS instead of INCLUDE so that the page_links_text is defined in the current template thereafter
+  PROCESS "html/generic/pagination.ttkt" OBJECT_PLURAL = c.maketext("object.plural.divisions");
+  page_links_text;
+  
+  WHILE (division = divisions.next);
+-%]
+
+<div class="list-item">
+  <a href="[% c.uri_for_action("/league-tables/view_current_season", [division.url_key]) %]">[% division.name | html_entity %]</a>
+</div>
+[%
+  END;
+  page_links_text;
+ELSE;
+-%]
+<div class="list-item">
+  [% c.maketext("stats.no-divisions") %]
+</div>
+[%
+END;
+-%]

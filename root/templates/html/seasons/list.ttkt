@@ -1,0 +1,53 @@
+[% # This is a TT comment. -%]
+[% # Note That the '-' at the beginning or end of TT code  -%]
+[% # "chomps" the whitespace/newline at that end of the    -%]
+[% # output (use View Source in browser to see the effect) -%]
+[% # Some basic HTML with a loop to display clubs -%]
+[%
+IF seasons.count;
+  # Use PROCESS instead of INCLUDE so that the page_links_text is defined in the current template thereafter
+  PROCESS "html/generic/pagination.ttkt" OBJECT_PLURAL = c.maketext("object.plural.seasons");
+  page_links_text;
+  
+  WHILE (season = seasons.next);
+    IF season.complete;
+      SET CURRENT_TEXT = "";
+    ELSE;
+      SET CURRENT_TEXT = " (" _ c.maketext("seasons.text.current") _ ")";
+    END;
+    
+    name_html = FILTER html_entity; season.name; END;
+-%]
+<div class="list-item">
+  <a href="[% c.uri_for_action("/seasons/view", [season.url_key]) %]">[% season.name | html_entity %]</a> [% CURRENT_TEXT %]
+[%
+    IF authorisation.season_edit;
+-%]
+  <a href="[% c.uri_for_action("/seasons/edit" [season.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", name_html) %]" title="[% c.maketext("admin.edit-object", name_html) %]" /></a>
+[%
+    END;
+    IF authorisation.season_delete AND season.can_delete;
+-%]
+  <a href="[% c.uri_for_action("/seasons/delete" [season.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", name_html) %]" title="[% c.maketext("admin.delete-object", name_html) %]" /></a>
+[%
+    END;
+-%]
+</div>
+[%
+  END;
+  page_links_text;
+ELSE;
+-%]
+<div class="list-item">
+  [% c.maketext("seasons.none") %]
+</div>
+[%
+END;
+-%]
+[%
+IF authorisation.season_create;
+-%]
+<a class="bold" href="[% c.uri_for("/seasons/create") %]"><img src="[% c.uri_for("/static/images/icons/0009-Add-icon-48.png") %]" title="[% c.maketext("admin.create-object", c.maketext("object.singular.seasons")) %]" /></a><br />
+[%
+END;
+-%]

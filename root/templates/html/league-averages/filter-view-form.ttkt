@@ -1,0 +1,102 @@
+<form method="post">
+  <div id="filter-options[% filter_forms %]">
+[%-
+IF defined_filter;
+  SET DEFINED_CHECKED = ' checked="checked"';
+  SET DEFINED_VISIBLE = '';
+  SET CUSTOM_VISIBLE  = ' style="display: none;"';
+ELSIF custom_filter;
+  SET CUSTOM_CHECKED = ' checked="checked"';
+  SET DEFINED_VISIBLE = ' style="display: none;"';
+  SET CUSTOM_VISIBLE  = '';
+ELSE;
+  SET DEFINED_VISIBLE = ' style="display: none;"';
+  SET CUSTOM_VISIBLE  = ' style="display: none;"';
+END;
+%]
+    <input type="checkbox" id="defined-filter[% filter_forms %]" name="defined_filter" value="1" class="filter-type defined-filter" data-filter="defined" data-form="[% filter_forms %]" data-label="[% c.maketext("averages.filter-form.field.defined") %]" data-customClass="filter" data-labelPosition="right"[% DEFINED_CHECKED %] /><br />
+    <input type="checkbox" id="custom-filter[% filter_forms %]" name="custom_filter" value="1" class="filter-type custom-filter" data-filter="custom" data-form="[% filter_forms %]" data-label="[% c.maketext("averages.filter-form.field.custom") %]" data-customClass="filter" data-labelPosition="right"[% CUSTOM_CHECKED %] />
+  </div>
+  
+  <div class="filter-defined"[% DEFINED_VISIBLE %]>
+    <select id="filter_id[% filter_forms %]" name="filter_id" data-placeholder="[% c.maketext("averages.filter-form.defined.name") %]">
+      <option value=""></option>
+[%
+FOREACH filter IN defined_filters;
+  IF filter_id == filter.id;
+    SET NAME_SELECTED = ' selected="selected"';
+  ELSE;
+    SET NAME_SELECTED = '';
+  END;
+-%]
+      <option value="[% filter.id %]"[% NAME_SELECTED %]>[% filter.name %]</option>
+[%
+END;
+-%]
+    </select>
+    <input type="submit" name="filter-defined" class="average-filter-pre-defined" value="[% c.maketext("averages.filter-form.filter") %]" /><br />
+    <a href="[% c.uri_for_action("/league-averages/filters/list_first_page") %]"><img src="[% c.uri_for("/static/images/icons/0011-Info-icon-32.png") %]" width="32" height="32" alt="[% c.maketext("average-filter.view-list") %]" title="[% c.maketext("average-filter.view-list") %]" /></a>
+[%
+IF c.user_exists OR authorisation.average_filter_create_public;
+-%]
+    <a href="[% c.uri_for("/league-averages/filters/create") %]"><img src="[% c.uri_for("/static/images/icons/0009-Add-icon-32.png") %]" width="32" height="32" alt="[% c.maketext("admin.create-object", c.maketext("object.singular.average-filters")) %]" title="[% c.maketext("admin.create-object", c.maketext("object.singular.average-filters")) %]" /></a>
+[%
+END;
+-%]
+  </div>
+[%
+FOREACH type IN player_types;
+  IF type == "active";
+    SET ACTIVE_SELECTED = ' selected="selected"';
+  ELSIF type == "loan";
+    SET LOAN_SELECTED = ' selected="selected"';
+  ELSIF type == "inactive";
+    SET INACTIVE_SELECTED = ' selected="selected"';
+  END;
+END;
+
+SWITCH criteria_field;
+  CASE "played";
+    SET PLAYED_SELECTED = ' selected="selected"';
+  CASE "won";
+    SET WON_SELECTED = ' selected="selected"';
+  CASE "lost";
+    SET LOST_SELECTED = ' selected="selected"';
+END;
+
+SWITCH operator;
+  CASE ">";
+    SET GT_SELECTED = ' selected="selected"';
+  CASE ">=";
+    SET GE_SELECTED = ' selected="selected"';
+  CASE "=";
+    SET EQ_SELECTED = ' selected="selected"';
+  CASE "<";
+    SET LT_SELECTED = ' selected="selected"';
+  CASE "<=";
+    SET LE_SELECTED = ' selected="selected"';
+END;
+
+SWITCH criteria_type;
+  CASE "matches";
+    SET MATCHES_SELECTED = ' selected="selected"';
+  CASE "games";
+    SET GAMES_SELECTED = ' selected="selected"';
+END;
+-%]
+  <div class="filter-custom"[% CUSTOM_VISIBLE %]>
+    [% c.maketext("averages.filter-form.custom-options-" _ averages_type, COMPETITORS, ACTIVE_SELECTED, LOAN_SELECTED, INACTIVE_SELECTED, PLAYED_SELECTED, WON_SELECTED, LOST_SELECTED, GT_SELECTED, GE_SELECTED, EQ_SELECTED, LE_SELECTED, LT_SELECTED, criteria, MATCHES_SELECTED, GAMES_SELECTED) %]
+    <input type="submit" name="filter-custom" value="[% c.maketext("averages.filter-form.filter") %]" />
+  </div>
+[%
+IF filtered;
+-%]
+  <input type="submit" class="clear-filter" name="clear" value="[% c.maketext("averages.filter-form.clear-filter") %]" />
+[%
+END;
+-%]
+</form>
+[%
+# Increment so if it's included again, we have a unique number to use in the IDs
+SET filter_forms = filter_forms + 1;
+-%]

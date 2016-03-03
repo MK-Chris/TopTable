@@ -1,0 +1,271 @@
+[%-
+first_name = c.flash.first_name OR person.first_name;
+first_name_html = FILTER html_entity; first_name; END;
+
+surname = c.flash.surname OR person.surname;
+surname_html = FILTER html_entity; surname; END;
+
+address1 = c.flash.address1 OR person.address1;
+address1_html = FILTER html_entity; address1; END;
+
+address2 = c.flash.address2 OR person.address1;
+address2_html = FILTER html_entity; address2; END;
+
+address3 = c.flash.address3 OR person.address1;
+address3_html = FILTER html_entity; address3; END;
+
+address4 = c.flash.address4 OR person.address1;
+address4_html = FILTER html_entity; address4; END;
+
+address5 = c.flash.address5 OR person.address1;
+address5_html = FILTER html_entity; address5; END;
+
+postcode = c.flash.postcode OR person.postcode;
+postcode_html = FILTER html_entity; postcode; END;
+
+home_telephone = c.flash.home_telephone OR person.home_telephone;
+home_telephone_html = FILTER html_entity; home_telephone; END;
+
+mobile_telephone = c.flash.mobile_telephone OR person.mobile_telephone;
+mobile_telephone_html = FILTER html_entity; mobile_telephone; END;
+
+work_telephone = c.flash.work_telephone OR person.work_telephone;
+work_telephone_html = FILTER html_entity; work_telephone; END;
+
+email_address = c.flash.email_address OR person.email_address;
+email_address_html = FILTER html_entity; email_address; END;
+
+date_of_birth = c.flash.date_of_birth.dmy('/') OR c.flash.date_of_birth OR person.date_of_birth.dmy('/') OR person.date_of_birth;
+date_of_birth_html = FILTER html_entity; date_of_birth; END;
+
+registration_date = c.flash.registration_date.dmy('/') OR c.flash.registration_date OR person.registration_date.dmy('/') OR person.registration_date;
+registration_date_html = FILTER html_entity; registration_date; END;
+-%]
+
+<form method="post" action="[% form_action %]">
+<div class="form-column">
+  <fieldset>
+    <legend>[% c.maketext("people.form.legend.personal-details") %]</legend>
+    <div class="label-field-container">
+      <label for="first_name">[% c.maketext("people.form.field.name") %]</label>
+      <div class="field-container">
+        <input type="text" id="first_name" name="first_name" placeholder="[% c.maketext("people.form.field.first-name") %]" value="[% first_name_html %]" />
+        <input type="text" id="surname" name="surname" placeholder="[% c.maketext("people.form.field.surname") %]" value="[% surname_html %]" />
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+    
+    <div class="label-field-container">
+      <label for="address1">[% c.maketext("people.form.field.address") %]</label>
+      <div class="field-container">
+        <input type="text" id="address1" name="address1" value="[% address1_html %]" />
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+    
+    <div class="label-field-container">
+      <div class="label-placeholder">&nbsp;</div>
+      <div class="field-container">
+        <input type="text" id="address2" name="address2" value="[% address2_html %]" />
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+    
+    <div class="label-field-container">
+      <div class="label-placeholder">&nbsp;</div>
+      <div class="field-container">
+        <input type="text" id="address3" name="address3" value="[% address3_html %]" />
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+    
+    <div class="label-field-container">
+      <div class="label-placeholder">&nbsp;</div>
+      <div class="field-container">
+        <input type="text" id="address4" name="address4" value="[% address4_html %]" />
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+    
+    <div class="label-field-container">
+      <div class="label-placeholder">&nbsp;</div>
+      <div class="field-container">
+        <input type="text" id="address5" name="address5" value="[% address5_html %]" />
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+    
+    <div class="label-field-container">
+      <label for="postcode">[% c.maketext("people.form.field.postcode") %]</label>
+      <div class="field-container">
+        <input type="text" id="postcode" name="postcode" value="[% postcode_html %]" />
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+    
+    <div class="label-field-container">
+      <label for="home_telephone">[% c.maketext("people.form.field.home-phone") %]</label>
+      <div class="field-container">
+        <input type="text" id="home_telephone" name="home_telephone" value="[% home_telephone_html %]" />
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+    
+    <div class="label-field-container">
+      <label for="mobile_telephone">[% c.maketext("people.form.field.mobile-phone") %]</label>
+      <div class="field-container">
+        <input type="text" id="mobile_telephone" name="mobile_telephone" value="[% mobile_telephone_html %]" />
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+    
+    <div class="label-field-container">
+      <label for="work_telephone">[% c.maketext("people.form.field.work-phone") %]</label>
+      <div class="field-container">
+        <input type="text" id="work_telephone" name="work_telephone" value="[% work_telephone_html %]" />
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+    
+    <div class="label-field-container">
+      <label for="email_address">[% c.maketext("people.form.field.email-address") %]</label>
+      <div class="field-container">
+        <input type="text" id="email_address" name="email_address" value="[% email_address_html %]" />
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+
+[%
+IF c.flash.gender == '';
+  SET GENDER_CHECK = person.gender.gender;
+ELSE;
+  SET GENDER_CHECK = c.flash.gender;
+END;
+FOREACH gender IN genders;
+  IF gender.gender == GENDER_CHECK;
+    CHECKED = ' checked="checked"';
+  ELSE;
+    CHECKED = '';
+  END;
+-%]
+    <input type="radio" name="gender" value="[% gender.id %]" data-label="[% c.maketext("gender." _ gender.id _ ".gender") | ucfirst %]"[% CHECKED %]>
+    <div class="clear-fix"></div>
+[%
+END;
+-%]
+
+    <div class="label-field-container">
+      <label for="date_of_birth">[% c.maketext("people.form.field.date-of-birth") %]</label>
+      <div class="field-container">
+        <input type="text" id="date_of_birth" name="date_of_birth" class="date_picker" autocomplete="off" value="[% date_of_birth_html %]" />
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+  </fieldset>
+</div>
+
+<div class="form-column">
+  <fieldset>
+    <legend>[% c.maketext("people.form.legend.league-details") %]</legend>
+[%
+IF action == "edit" and person_season and !c.flash.team_changed;
+-%]
+    <div class="label-field-container" id="person-team-not-editable">
+      <label for="change_team">[% c.maketext("people.form.field.team") | html_entity %]</label>
+      <div class="field-container">
+        [% person_season.team.club.short_name | html_entity %] [% person_season.team.name | html_entity %] <input type="button" id="change_team" name="button" value="[% c.maketext("people.form.button.change-team") %]" />
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+    
+    <div id="person-team-editable" style="display: none;" class="label-field-container">
+      <label for="team">[% c.maketext("people.form.field.team") %]</label>
+      <div class="field-container">
+        <input type="text" id="team" name="team" value="" />
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+
+[%
+ELSE;
+-%]
+    <div class="label-field-container">
+      <label for="team">[% c.maketext("people.form.field.team") %]</label>
+      <div class="field-container">
+        <input type="text" id="team" name="team" value="" />
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+[%
+END;
+-%]
+    <div class="label-field-container">
+      <label for="captain">[% c.maketext("people.form.button.captain-of") %]</label>
+      <div class="field-container">
+        <input type="text" id="captain" name="captain" value="" />
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+    
+    <div class="label-field-container">
+      <label for="secretary">[% c.maketext("people.form.button.secretary-for") %]</label>
+      <div class="field-container">
+        <input type="text" id="secretary" name="secretary" value="" />
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+
+[%
+IF c.flash.form_errored == 1;
+  IF c.flash.fees_paid == 1;
+    SET CHECKBOX_CHECKED = ' checked="checked"';
+  ELSE;
+    SET CHECKBOX_CHECKED = '';
+  END;
+ELSE;
+  IF person_season.fees_paid == 1;
+    SET CHECKBOX_CHECKED = ' checked="checked"';
+  ELSE;
+    SET CHECKBOX_CHECKED = '';
+  END;
+END;
+-%]
+
+    <input type="checkbox" id="fees_paid" name="fees_paid" data-label="[% c.maketext("people.form.button.fees-paid") | html_entity %]" value="1"[% CHECKBOX_CHECKED %] />
+    <div class="clear-fix"></div>
+    
+    <div class="label-field-container">
+      <label for="registration_date">[% c.maketext("people.form.button.registration-date") %]</label>
+      <div class="field-container">
+        <input type="text" id="registration_date" name="registration_date" class="date_picker" autocomplete="off" value="[% registration_date_html %]" />
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+  </fieldset>
+  
+  <fieldset>
+    <legend>[% c.maketext("people.form.legend.website-details") %]</legend>
+    <div class="label-field-container">
+      <label for="website_username">[% c.maketext("people.form.field.website-username") %]</label>
+      <div class="field-container">
+        <input type="text" id="username" name="username" value="" />
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+  </fieldset>
+</div>
+<div class="clear-fix"></div>
+
+<input type="submit" name="Submit" value="[% c.maketext("form.button.save") | html_entity %]" />
+</form>
+
+[%
+IF action == "edit" and person_season;
+  first_name_html = FILTER html_entity; person.first_name; END;
+  club_html = FILTER html_entity; person.team.club.short_name; END;
+  team_html = FILTER html_entity; person.team.name; END;
+-%]
+<div id="dialog" title="[% c.maketext("people.form.dialog.change-team.title") | html_entity %]">[% c.maketext("people.form.dialog.change-team", first_name_html, club_html, team_html) %]</div>
+[%
+END;
+-%]

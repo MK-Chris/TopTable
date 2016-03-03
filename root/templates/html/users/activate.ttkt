@@ -1,0 +1,9 @@
+<div id="form">
+<form method="post" action="[% c.uri_for("activate") %]">
+<fieldset>
+<legend>[% c.maketext("user.form.activation.legend.activation-details") %]</legend>
+<label id="id_label" for="id">[% c.maketext("user.form.activation.field.activation-id") %]</label> <input type="text" id="id" name="id" value="[% c.flash.id %]" autocomplete="off" /><br />
+</fieldset>
+<input type="submit" name="activate" value="[% c.maketext("form.button.activate") %]">
+</form>
+</div>

@@ -1,0 +1,105 @@
+[% # This is a TT comment. -%]
+
+[% # Note That the '-' at the beginning or end of TT code  -%]
+[% # "chomps" the whitespace/newline at that end of the    -%]
+[% # output (use View Source in browser to see the effect) -%]
+
+[%
+# Pagination
+IF event_logs.count;
+  # Use PROCESS instead of INCLUDE so that the page_links_text is defined in the current template thereafter
+  PROCESS "html/generic/pagination.ttkt" CONTROLLER = "event-log", OBJECT_PLURAL = "events";
+  page_links_text;
+-%]
+
+<table class="responsive-no-headers">
+[%
+  WHILE (event = event_logs.next);
+    # Work out what object type we have
+    SET object = "system_event_log_" _ event.object_type _ "s";
+    SET display_description = event.display_description(3, 35);
+    SET display_object_text = ""; # Set the object text to blank when we start a new row
+    SET tooltip_object_text = "";
+    SET tooltip_display_text = "";
+    
+    # Keep a counter of how many objects we loop through.
+    SET display_object_counter = 0;
+    
+    # Loop through all our display objects
+    FOREACH display_object IN display_description.for_display;
+      SET display_object_counter = display_object_counter + 1;
+      
+      # If this is not the first loop through, we'll need to add a comma or "and", depending on some criteria...
+      IF display_object_counter > 1;
+        IF display_object_counter == display_description.for_display.size AND display_description.for_tooltip.size <= 1;
+          # If we're on the last display object and there are no tooltip objects, we need "and"
+          SET display_object_text = display_object_text _ " " _ c.maketext("system-event-log.and") _ " ";
+        ELSE;
+          # Otherwise, it'll be a comma
+          SET display_object_text = display_object_text _ ", ";
+        END;
+      END;
+      
+      IF display_object.ids(0).item(0) AND event.system_event_log_type.view_action_for_uri;
+        SET display_object_text = display_object_text _ '<a href="' _ c.uri_for_action( event.system_event_log_type.view_action_for_uri, display_object.ids ) _ '">' _ display_object.name _ '</a>';
+      ELSE;
+        SET display_object_text = display_object_text _ display_object.name;
+      END;
+    END;
+    
+    IF display_description.for_tooltip.size > 1;
+      # Keep count of our tooltip objects
+      SET tooltip_object_counter = 0;
+      
+      # Loop through all our tooltip objects
+      FOREACH tooltip_object IN display_description.for_tooltip;
+        # Increment the counter
+        SET tooltip_object_counter = tooltip_object_counter + 1;
+        
+        # If this is not the first iteration, add a <br />
+        IF tooltip_object_counter > 1;
+          SET tooltip_object_text = tooltip_object_text _ "<br />";
+        END;
+        
+        # Set this name into the tooltip
+        SET tooltip_object_text = tooltip_object_text _ "<a class='tooltip' href='" _ c.uri_for_action( event.system_event_log_type.view_action_for_uri, tooltip_object.ids ) _ "'>" _ tooltip_object.name _ "</a>";
+      END;
+      
+      # Set our 'others'
+      IF display_description.other.size > 1;
+        SET tooltip_object_text = tooltip_object_text _ "<br />" _ c.maketext("system-event-log.others", display_description.other.size);
+      END;
+      
+      # Set up the text to be displayed and the tooltip in the final display text
+      SET tooltip_link_text = c.maketext("system-event-log.other-objects", tooltip_object_text, ( display_description.for_tooltip.size + display_description.other.size ), c.maketext("object.plural." _ event.system_event_log_type.plural_objects) );
+    ELSE;
+      # Nothing to show in the tooltip, replace the text with nothing
+      SET tooltip_link_text = "";
+    END;
+-%]
+  <tr>
+[%
+    IF !exclude_event_user;
+-%]
+    <td class="event-user">[% event.user.person.display_name OR event.user.username OR "Guest" %]</td>
+[%
+    END;
+-%]
+    <td class="event-datetime"><nobr>[% event.log_updated_tz(timezone).dmy("/") _ " " _ event.log_updated.hms %]</nobr></td>
+    <td class="event-type"><nobr>[% c.maketext("object.plural." _ event.system_event_log_type.plural_objects) | ucfirst %]</nobr></td>
+    <td class="event-detail">[% c.maketext(event.system_event_log_type.description, display_object_text, tooltip_link_text) %]</td>
+  </tr>
+[%
+  END;
+-%]
+</table>
+[%
+page_links_text;
+ELSE;
+-%]
+<div class="list-item">
+  No events to display.
+</div>
+[%
+END;
+-%]

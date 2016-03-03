@@ -1,0 +1,142 @@
+/* Example tokeninput style #1: Token vertical list*/
+ul.token-input-list {
+  overflow: hidden; 
+  /*height: auto !important; 
+  height: 1%;*/
+  width: 100%;
+  max-width: 280px;
+  cursor: text;
+  z-index: 999;
+  margin: 0;
+  padding: 0;
+  background-color: #fff;
+  list-style-type: none;
+}
+
+ul.token-input-list li {
+  list-style-type: none;
+}
+
+ul.token-input-list li input {
+  border:1px solid #bdc7d8;
+  /*font-family: Calibri, Tahoma, Verdana, Arial, Serif;*/
+  width: 100%;
+  max-width: 280px;
+  margin-bottom:5px;
+  line-height:18px;
+  padding:2px 5px;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  border-radius: 5px;
+  margin-right: 15px;
+  margin-top: 5px;
+  margin-bottom: 5px;
+  overflow:visible;
+}
+
+li.token-input-token {
+  overflow: hidden; 
+  height: auto !important;
+  width: 100%;
+  max-width: 280px; 
+  height: 1%;
+  /*margin: 3px;
+  padding: 3px 5px;*/
+  margin: 2px 0px 0px;
+  padding: 0.5em 0.5em 0.5em 0.7em;
+  background-color: #bdd2ff;
+  border-radius: 5px;
+  border: 1px solid #77d5f7;
+  background: #0078ae url("../jqueryui/images/ui-bg_glass_45_0078ae_1x400.png") repeat-x scroll 50% 50%;
+  font-weight: normal;
+  color: #fff;
+  cursor: default;
+  display: block;
+}
+
+li.token-input-token p {
+  width: 90%;
+  max-width: 250px;
+  float: left;
+  padding: 0;
+  margin: 0;
+}
+
+li.token-input-token span {
+  /*width: 100%;
+  max-width: 280px;*/
+  float: right;
+  color: #fff;
+  cursor: pointer;
+}
+
+li.token-input-selected-token {
+  border: 1px solid #acdd4a;
+  background: #6EAC2C url("../jqueryui/images/ui-bg_gloss-wave_50_6eac2c_500x100.png") repeat-x scroll 50% 50%;
+  font-weight: normal;
+  color: #fff;
+}
+
+li.token-input-highlighted-token {
+	border: 1px solid #448dae;
+	background: #79c9ec url("../jqueryui/images/ui-bg_glass_75_79c9ec_1x400.png") 50% 50% repeat-x;
+	font-weight: normal;
+	color: #026890;
+}
+
+li.token-input-highlighted-token span {
+	font-weight: normal;
+	color: #026890;
+}
+
+/* Main div encompassing the whole thing */
+div.token-input-dropdown {
+  position: absolute;
+  width: 100%;
+  max-width: 280px;
+  background-color: #fff;
+  overflow: hidden;
+  border-left: 1px solid #ccc;
+  border-right: 1px solid #ccc;
+  border-bottom: 1px solid #ccc;
+  cursor: default;
+  font-size: 12px;
+  font-family: Verdana;
+  z-index: 1;
+}
+
+div.token-input-dropdown p {
+  margin: 0;
+  padding: 5px;
+  font-weight: bold;
+  color: #777;
+}
+
+div.token-input-dropdown ul {
+  margin: 0;
+  padding: 0;
+}
+
+div.token-input-dropdown ul li {
+  background-color: #fff;
+  padding: 3px;
+  list-style-type: none;
+}
+
+div.token-input-dropdown ul li.token-input-dropdown-item {
+  background-color: #fafafa;
+}
+
+div.token-input-dropdown ul li.token-input-dropdown-item2 {
+  background-color: #fff;
+}
+
+div.token-input-dropdown ul li em {
+  font-weight: bold;
+  font-style: normal;
+}
+
+div.token-input-dropdown ul li.token-input-selected-dropdown-item {
+  background-color: #bdd2ff;
+}
+

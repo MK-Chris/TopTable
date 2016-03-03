@@ -1,0 +1,51 @@
+[% # Note That the '-' at the beginning or end of TT code  -%]
+[% # "chomps" the whitespace/newline at that end of the    -%]
+[% # output (use View Source in browser to see the effect) -%]
+
+<div id="tabs">
+  <ul>
+    <li><a href="#location">[% c.maketext("venues.location-contact") %]</a></li>
+    <li><a href="#directions">[% c.maketext("venues.directions") %]</a></li>
+    <li><a href="#opening-hours">[% c.maketext("venues.opening-hours") %]</a></li>
+  </ul>
+  
+  <div id="location">
+    <div id="map-container">
+      <div id="venue-address">
+        <h4>[% c.maketext("venues.field.address") %]</h4>
+        <address>[% FILTER html_line_break;
+        venue.full_address;
+        END %]</address><br />
+      </div>
+      
+      <div id="map-canvas"></div>
+      <div class="clear-fix"></div>
+    </div>
+    
+    <div id="venue-contact">
+    [%
+    IF venue.telephone OR venue.email_address;
+    -%]
+    <h4>[% c.maketext("venues.contact-details") %]</h4>
+    [%
+      IF venue.telephone;
+        venue.telephone _ "<br />";
+      END;
+      IF venue.telephone;
+    -%]
+    <a href="mailto:[% venue.email_address | html_entity %]">[% venue.email_address | html_entity %]</a><br /><br />
+    [%
+      END;
+    END;
+    -%]
+    </div>
+  </div>
+  <div id="directions">
+[%
+    INCLUDE "html/generic/directions-standard.ttkt"
+-%]
+  </div>
+  <div id="opening-hours">
+    Opening hours will go here.
+  </div>
+</div>

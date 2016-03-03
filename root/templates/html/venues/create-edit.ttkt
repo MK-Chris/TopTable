@@ -1,0 +1,123 @@
+<form method="post" action="[% form_action %]">
+
+<div id="map-container">
+
+<fieldset id="venue_details">
+<legend>[% c.maketext("venues.form.legend.venue-details") %]</legend>
+
+<div class="label-field-container">
+  <label for="name">[% c.maketext("venues.field.name") %]</label>
+  <div class="field-container">
+    <input type="text" class="geo" id="name" name="name" value="[% c.flash.name OR venue.name | html_entity %]" />
+  </div>
+  <div class="clear-fix"></div>
+</div>
+
+<div class="label-field-container">
+  <label for="address1">[% c.maketext("venues.field.address") %]</label>
+  <div class="field-container">
+    <input class="geo" type="text" id="address1" name="address1" value="[% c.flash.address1 OR venue.address1 | html_entity %]" />
+  </div>
+  <div class="clear-fix"></div>
+</div>
+
+<div class="label-field-container">
+  <div class="label-placeholder">&nbsp;</div>
+  <div class="field-container">
+    <input class="geo" type="text" id="address2" name="address2" value="[% c.flash.address2 OR venue.address2 | html_entity %]" />
+  </div>
+  <div class="clear-fix"></div>
+</div>
+
+<div class="label-field-container">
+  <div class="label-placeholder">&nbsp;</div>
+  <div class="field-container">
+    <input class="geo" type="text" id="address3" name="address3" value="[% c.flash.address3 OR venue.address3 | html_entity %]" />
+  </div>
+  <div class="clear-fix"></div>
+</div>
+
+<div class="label-field-container">
+  <div class="label-placeholder">&nbsp;</div>
+  <div class="field-container">
+    <input class="geo" type="text" id="address4" name="address4" value="[% c.flash.address4 OR venue.address4 | html_entity %]" />
+  </div>
+  <div class="clear-fix"></div>
+</div>
+
+<div class="label-field-container">
+  <div class="label-placeholder">&nbsp;</div>
+  <div class="field-container">
+    <input class="geo" type="text" id="address5" name="address5" value="[% c.flash.address5 OR venue.address5 | html_entity %]" />
+  </div>
+  <div class="clear-fix"></div>
+</div>
+
+<div class="label-field-container">
+  <label for="postcode">[% c.maketext("venues.field.postcode") %]</label>
+  <div class="field-container">
+    <input class="geo" type="text" id="postcode" name="postcode" value="[% c.flash.postcode OR venue.postcode | html_entity %]" />
+  </div>
+  <div class="clear-fix"></div>
+</div>
+
+[%
+IF geocode_results.size;
+  # If we have geocode results to display
+  SET geolocation_disabled = '';
+ELSE;
+  SET geolocation_disabled = ' disabled="disabled"';
+END;
+
+SET map_visible = ' style="display: none;"';
+-%]
+
+
+<div class="label-field-container venue-create-geo">
+  <label for="geolocation_select">[% c.maketext("venues.field.google-maps-geolocation") %]</label>
+  <div class="field-container">
+    <select name="geolocation" id="geolocation_select" style="width: 300px;"[% geolocation_disabled %]>
+      <option value=""></option>
+[%
+FOREACH result IN geocode_results;
+  IF result.selectable AND result.closest;
+    SET geo_selected = ' selected="selected"';
+    SET map_visible = '';
+  ELSE;
+    SET geo_selected = '';
+  END;
+-%]
+      <option value="[% result.geometry.location.lat %],[% result.geometry.location.lng %]"[% geo_selected %]>[% result.formatted_address %]</option>
+[%
+END;
+-%]
+    </select>
+  </div>
+  <div class="clear-fix"></div>
+</div>
+
+<div class="label-field-container">
+  <label for="telephone">[% c.maketext("venues.field.telephone") %]</label>
+  <div class="field-container">
+    <input type="text" id="telephone" name="telephone" value="[% c.flash.telephone OR venue.telephone | html_entity %]" />
+  </div>
+  <div class="clear-fix"></div>
+</div>
+
+<div class="label-field-container">
+  <label for="email_address">[% c.maketext("venues.field.email-address") %]</label>
+  <div class="field-container">
+    <input type="text" id="email_address" name="email_address" value="[% c.flash.email_address OR venue.email_address | html_entity %]" />
+  </div>
+  <div class="clear-fix"></div>
+</div>
+
+<div id="map-canvas-form"[% map_visible %]></div>
+</fieldset>
+<input type="submit" name="Submit" value="[% c.maketext("form.button.save") %]" />
+
+</div><!-- End map container -->
+
+</form>
+
+<div class="clear-fix"></div>

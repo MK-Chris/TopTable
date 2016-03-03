@@ -1,0 +1,6 @@
+<div id="form">
+[% c.maketext("fixtures-grids.delete-fixtures.explain", grid.matches_in_current_season) %]
+<form method="post" action="[% form_action %]">
+<input type="submit" name="Submit" value="[% c.maketext("form.button.delete") %]" />
+</form>
+</div>

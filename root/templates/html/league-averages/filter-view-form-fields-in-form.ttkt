@@ -1,0 +1,110 @@
+<form method="post">
+  <div id="filter-options[% filter_forms %]">
+[%-
+IF defined_filter;
+  SET DEFINED_CHECKED = ' checked="checked"';
+  SET DEFINED_VISIBLE = '';
+  SET CUSTOM_VISIBLE  = ' style="display: none;"';
+ELSIF custom_filter;
+  SET CUSTOM_CHECKED = ' checked="checked"';
+  SET DEFINED_VISIBLE = ' style="display: none;"';
+  SET CUSTOM_VISIBLE  = '';
+ELSE;
+  SET DEFINED_VISIBLE = ' style="display: none;"';
+  SET CUSTOM_VISIBLE  = ' style="display: none;"';
+END;
+%]
+    <input type="checkbox" id="defined-filter[% filter_forms %]" name="defined_filter" value="1" class="filter-type defined-filter" data-filter="defined" data-form="[% filter_forms %]" data-label="[% c.maketext("averages.filter-form.field.defined") %]" data-customClass="filter" data-labelPosition="right"[% DEFINED_CHECKED %] /><br />
+    <input type="checkbox" id="custom-filter[% filter_forms %]" name="custom_filter" value="1" class="filter-type custom-filter" data-filter="custom" data-form="[% filter_forms %]" data-label="[% c.maketext("averages.filter-form.field.custom") %]" data-customClass="filter" data-labelPosition="right"[% CUSTOM_CHECKED %] />
+  </div>
+  
+  <div class="filter-defined"[% DEFINED_VISIBLE %]>
+    <div class="label-field-container">
+      <label for="name[% filter_forms %]">[% c.maketext("averages.filter-form.defined.name") %]</label>
+      <div class="field-container">
+        <select id="name[% filter_forms %]" name="name" data-placeholder="[% c.maketext("averages.filter-form.defined.name") %]">
+          <option value=""></option>
+[%
+FOREACH filter IN defined_filters;
+  IF name == filter.name;
+    SET NAME_SELECTED = ' selected="selected"';
+  ELSE;
+    SET NAME_SELECTED = '';
+  END;
+-%]
+            <option value="[% filter.id %]"[% NAME_SELECTED %]>[% filter.name %]</option>
+[%
+END;
+-%]
+        </select>
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+    
+    <input type="submit" value="[% c.maketext("averages.filter-form.filter") %]" />
+  </div>
+  
+  <div class="filter-custom"[% CUSTOM_VISIBLE %]>
+    <label for="criteria_field[% filter_forms %]">[% c.maketext("averages.filter-form.only-show", COMPETITORS) %]</label>
+    <select class="average-filter" name="criteria_field" id="criteria_field[% filter_forms %]" data-form="[% filter_forms %]" data-placeholder="[% c.maketext("averages.filter-form.criteria-field") %]">
+      <option value=""></option>
+[%
+SWITCH criteria_field;
+  CASE "played";
+    SET PLAYED_SELECTED = ' selected="selected"';
+  CASE "won";
+    SET WON_SELECTED = ' selected="selected"';
+  CASE "lost";
+    SET LOST_SELECTED = ' selected="selected"';
+END;
+-%]
+      <option value="played"[% PLAYED_SELECTED %]>[% c.maketext("averages.filter-form.criteria-field.played") %]</option>
+      <option value="won"[% WON_SELECTED %]>[% c.maketext("averages.filter-form.criteria-field.won") %]</option>
+      <option value="lost"[% LOST_SELECTED %]>[% c.maketext("averages.filter-form.criteria-field.lost") %]</option>
+    </select>
+    
+    <select class="average-filter" name="operator" id="operator[% filter_forms %]" data-form="[% filter_forms %]" data-placeholder="[% c.maketext("averages.filter-form.operator") %]">
+      <option value=""></option>
+[%
+SWITCH operator;
+  CASE ">";
+    SET GT_SELECTED = ' selected="selected"';
+  CASE ">=";
+    SET GE_SELECTED = ' selected="selected"';
+  CASE "=";
+    SET EQ_SELECTED = ' selected="selected"';
+  CASE "<";
+    SET LT_SELECTED = ' selected="selected"';
+  CASE "<=";
+    SET LE_SELECTED = ' selected="selected"';
+END;
+-%]
+      <option value=">"[% GT_SELECTED %]>[% c.maketext("averages.filter-form.operator.>") %]</option>
+      <option value=">="[% GE_SELECTED %]>[% c.maketext("averages.filter-form.operator.>=") %]</option>
+      <option value="="[% EQ_SELECTED %]>[% c.maketext("averages.filter-form.operator.=") %]</option>
+      <option value="<"[% LT_SELECTED %]>[% c.maketext("averages.filter-form.operator.<") %]</option>
+      <option value="<="[% LE_SELECTED %]>[% c.maketext("averages.filter-form.operator.<=") %]</option>
+    </select>
+    
+    <input type="number" name="criteria" id="criteria[% filter_forms %]" data-form="[% filter_forms %]" min="0" value="[% criteria %]" />
+    <select class="average-filter" name="criteria_type" id="criteria_type[% filter_forms %]" data-form="[% filter_forms %]" data-placeholder="[% c.maketext("averages.filter-form.criteria-field") %]">
+      <option value=""></option>
+[%
+SWITCH criteria_type;
+  CASE "matches";
+    SET MATCHES_SELECTED = ' selected="selected"';
+  CASE "games";
+    SET GAMES_SELECTED = ' selected="selected"';
+END;
+-%]
+      <option value="matches"[% MATCHES_SELECTED %]>[% c.maketext("averages.filter-form.criteria-type.matches") %]</option>
+      <option value="games"[% GAMES_SELECTED %]>[% c.maketext("averages.filter-form.criteria-type.games") %]</option>
+    </select>
+    
+    <input type="submit" value="[% c.maketext("averages.filter-form.filter") %]" />
+  </div>
+</form>
+[%
+# Increment so if it's included again, we have a unique number to use in the IDs
+SET filter_forms = filter_forms + 1;
+-%]

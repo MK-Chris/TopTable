@@ -1,0 +1,60 @@
+[% # Note That the '-' at the beginning or end of TT code  -%]
+[% # "chomps" the whitespace/newline at that end of the    -%]
+[% # output (use View Source in browser to see the effect) -%]
+
+<div id="template_rules">
+  <h4>[% c.maketext("templates.form.legend.template-rules") %]</h4>
+  <table class="responsive-vertical">
+    <tr>
+      <th>[% c.maketext("templates.team-match.field.winner-type") %]</th>
+      <td>[% c.maketext("winner-type.description." _ tt_template.winner_type.id) %]</td>
+    </tr>
+    <tr>
+      <th>[% c.maketext("templates.team-match.field.singles-players-per-team") %]</th>
+      <td>[% tt_template.singles_players_per_team %]</td>
+    </tr>
+  </table>
+</div>
+
+<h4>Template Games</h4>
+<table class="responsive">
+  <thead>
+    <tr>
+      <th>[% c.maketext("templates.team-match.games.field.game-number") %]</th>
+      <th>[% c.maketext("templates.team-match.games.field.game-template") %]</th>
+      <th>[% c.maketext("templates.team-match.games.field.home-player") %]</th>
+      <th>[% c.maketext("templates.team-match.games.field.away-player") %]</th>
+    </tr>
+  </thead>
+  <tbody>
+[%
+FOREACH game IN tt_template_games;
+-%]
+    <tr>
+      <td data-label="[% c.maketext("templates.team-match.games.field.game-number") %]">[% game.match_game_number %]</td>
+      <td data-label="[% c.maketext("templates.team-match.games.field.game-template") %]"><a href="[% c.uri_for_action("/templates/match/individual/view", [game.individual_match_template.url_key]) %]">[% game.individual_match_template.name | html_entity %]</a></td>
+[%
+  IF game.doubles_game == 1;
+-%]
+      <td colspan="2" data-label="[% c.maketext("templates.team-match.games.field.players") %]">[% c.maketext("templates.team-match.games.field.players") %]</td>
+[%
+  ELSE;
+-%]
+      <td data-label="[% c.maketext("templates.team-match.games.field.home-player") %]">[% game.singles_home_player_number %]</td>
+      <td data-label="[% c.maketext("templates.team-match.games.field.away-player") %]">[% game.singles_away_player_number %]</td>
+[%
+  END;
+-%]
+    </tr>
+[%
+END;
+-%]
+  </tbody>
+</table>
+[%
+IF authorisation.template_edit;
+-%]
+<a class="bold" href="[% c.uri_for_action('/templates/match/team/games', [tt_template.url_key]) %]"><img src="[% c.uri_for('/static/images/icons/0009-Add-icon-48.png') %]" alt="[% c.maketext("templates.team-match.games.add") %]" title="[% c.maketext("templates.team-match.games.add") %]" /></a><br /><br />
+[%
+END;
+-%]

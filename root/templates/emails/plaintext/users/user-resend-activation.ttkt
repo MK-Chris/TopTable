@@ -1,0 +1,12 @@
+Hi [% username %]
+
+Please see below the link you need to activate your account:
+
+[% c.uri_for_action("/users/activate/", [activation_key]) %]
+
+If the above link does not work, copy and paste it into the browser address bar.
+
+Regards,
+
+
+Admin

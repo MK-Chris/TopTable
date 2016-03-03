@@ -1,0 +1,9 @@
+team create
+season set teams
+teams view ([season name] summary)
+league ranking template view ('determined by match score', 'template rules' header)
+individual match template view (number of legs text)
+User forgot password form
+Forgot username form
+User list 'no users to view'
+Venue opening hours

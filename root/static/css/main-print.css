@@ -1,0 +1,532 @@
+body {
+  /*font-family: Calibri, Tahoma, Verdana, Arial, Serif;*/
+  background-color: #EEEEEE;
+	color:#6e6e6e;
+	font:500 13px museo-sans, Tahoma, Arial, sans-serif;
+}
+
+#header {
+  text-align: center;
+}
+
+img.banner_logo {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* _Reset */
+/*dl,dt,dd,ol,ul,li,*/
+html,body,div,span,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,abbr,address,cite,code,del,dfn,em,img,ins,kbd,q,samp,small,strong,sub,sup,var,b,i,fieldset,label,legend,table,caption,tbody,tfoot,thead,tr,th,td,article,aside,canvas,details,figcaption,figure,footer,header,hgroup,menu,section,summary,time,mark,audio,video{margin:0;padding:0;border:0;outline:0;vertical-align:baseline;}
+article,aside,details,figcaption,figure,footer,header,hgroup,menu,section {display: block}
+
+nav {
+  display: none;
+}
+
+/* _Typography */
+h1,h2,h3,h4,h5,h6{font-weight:normal}
+h1{font-size:3em;line-height:1;margin-bottom:0.5em}
+h2{font-size:2em;line-height:1;margin-bottom:0.75em}
+h3{font-size:1.5em;line-height:1;margin-bottom:1em}
+h4{font-size:1.2em;line-height:1.25;margin-bottom:1.25em}
+h5{font-size:1em;font-weight:bold;margin-bottom:1.5em}
+h6{font-size:1em;font-weight:bold}
+p{margin:0 0 1.5em}
+blockquote{margin:0 1.5em 1.5em;}
+address{font-style:normal;}
+blockquote,q{quotes:none}
+blockquote:before,blockquote:after,q:before,q:after{content:"";content:none}
+sub,sup{font-size:75%;line-height:0;position:relative}
+sup{top:-0.5em}
+sub{bottom:-0.25em}
+ins{background-color:#ff9;color:#000;text-decoration:none}
+mark{background-color:#ff9;color:#000;font-weight:bold}
+del{color:#666;text-decoration:line-through}
+abbr[title],dfn[title],acronym[title]{border-bottom:1px dotted;cursor:help}
+dfn{font-weight:bold}
+strong{font-weight:bold}
+pre{margin:1.5em 0;padding:15px;white-space:pre;white-space:pre-wrap;white-space:pre-line;word-wrap:break-word}
+pre,code,tt,kbd,samp{font:1em Monaco,"DejaVu Sans Mono","Lucida Console","Andale Mono",monospace;line-height:1.5}
+small{font-size:85%}
+hr{display:block;height:1px;border:0;border-top:1px solid #ccc;margin:1em 0;padding:0}
+a:active,a:hover{outline:none}
+a.bold {font-weight: bold;}
+
+a, a:active, a:visited {
+  color:#6e6e6e;
+  text-decoration: underline;
+}
+
+a.tooltip:active, a.tooltip:visited, a.tooltip {
+  color: #ffffff;
+  text-decoration: underline;
+}
+
+/* _Lists */
+/*ul,ol{margin:1.5em 2em}
+ul{list-style:disc outside}
+ol{list-style:decimal outside}
+li{margin:0.5em 0}
+li ul,li ol{margin:0 1.5em}
+dl{margin:0 0 1.5em 0}
+dt{font-weight:bold}
+dd{margin-left:1.5em}*/
+
+/* _Tables */
+table{border-collapse:collapse;border-spacing:0;margin-bottom:1.4em;width:100%;}
+/*.even th{background:#c3d9ff; border:1px solid #c3d9ff; text-align:left;}*/
+th,td,caption{padding:4px 5px}
+/*td{border:1px solid #ddd}*/
+/*.even td{background:#e5ecf9}
+.odd th{background:#ffffff; border: none;text-align:left}*/
+caption{background:#eee;border:1px solid #eee;color:#555;}
+
+th {
+  text-align: left;
+}
+
+td {
+  background: #f5f5f5;
+  border: 1px solid #ffffff;
+}
+
+td.active-row {
+  background: #dcdcdc;
+}
+
+/* _Forms */
+fieldset{border:none;margin-bottom:15px}
+legend{color:#222;font-size:1.15em;}
+.ie7 legend{margin-left:-7px}
+/*form li:before,form li:after{content:"\0020";display:block;height:0;visibility:hidden}
+form li:after{clear:both}
+form li{list-style:none;zoom:1}*/
+input,select{vertical-align:top;}
+button,input,textarea,select{-moz-box-sizing:border-box;-webkit-box-sizing:border-box;box-sizing:border-box;font-family:inherit;font-weight:inherit;margin:0;overflow:visible;}
+.text input{padding:1px 0}
+input[type=radio]{vertical-align:text-bottom}
+input[type=checkbox]{vertical-align:bottom}
+input[type=number]{width:45px;}
+input.date_picker {width: 100px;}
+.ie7 input[type=checkbox]{vertical-align:baseline}
+textarea{overflow:auto;vertical-align:text-top}
+label,input[type=submit],input[type=button],input[type=image],button,select{cursor:pointer}
+.blurred:invalid{border-radius:1px;-moz-box-shadow:0px 0px 5px red;-webkit-box-shadow:0px 0px 5px red;box-shadow:0px 0px 5px red}
+input::-moz-focus-inner,button::-moz-focus-inner{border:0;padding:0}
+.no-boxshadow .blurred:invalid{background-color:#f0dddd}
+
+/* jQuery UI extension */
+.ui-state-default {
+  background: #ffffff/*{bgColorContent}*/ url(../images/icons/message.png) /*{bgImgUrlContent}*/ 50% /*{bgContentXPos}*/ 50% /*{bgContentYPos}*/ repeat-x /*{bgContentRepeat}*/; color: #222222/*{fcContent}*/;
+}
+
+img.logo {
+  float: right;
+}
+
+#footer {
+  text-align: center;
+  font-style: italic;
+  padding-top: 20px;
+}
+
+#edit_details {
+  font-style: italic;
+}
+
+input[disabled="disabled"] {
+  cursor:not-allowed;
+}
+
+#menublock {
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 10px;
+}
+
+#main-menu {
+	position:relative;
+	z-index:9999;
+	width:auto;
+  clear: both;
+}
+
+#main-menu ul {
+	width:12em; /* fixed width only please - you can use the "subMenusMinWidth"/"subMenusMaxWidth" script options to override this if you like */
+}
+
+#content {
+  padding: 10px;
+  -webkit-border-radius: 10px;
+  -moz-border-radius: 10px;
+  border-radius: 10px;
+  border: 1px solid #999;
+  border: inset 1px solid #333;
+  -webkit-box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.3);
+  -moz-box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.3);
+  width: 90%;
+  background-color: #FFFFFF;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 50px;
+  position: relative;
+  /*overflow: auto;*/
+}
+
+.message {
+  color: #390;
+}
+
+.error {
+  color: #f00;
+}
+
+img.message_icon {float: left;}
+
+/*fieldset {
+  -webkit-border-radius: 7px;
+  -moz-border-radius: 7px;
+  border-radius: 7px;
+}*/
+
+label, span.label {
+  width:130px;
+  float:left;
+  vertical-align: middle;
+}
+
+label.game_score, div.forefeit_game_winner label {
+  width: auto;
+  float: none;
+  vertical-align: top;
+}
+
+div.game_score b, div.game_score {
+  vertical-align: top;
+}
+
+label.long {
+  width:300px;
+}
+
+input, select {
+  width:300px;
+}
+
+select.time{
+  width: 70px;
+}
+
+input, textarea {
+  border:1px solid #bdc7d8;
+  font-family: Calibri, Tahoma, Verdana, Arial, Serif;
+  margin-bottom:5px;
+  line-height:18px;
+  padding:2px 5px;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  border-radius: 5px;
+  margin-right: 15px;
+}
+
+.chosen-container {
+  padding-bottom: 5px;
+}
+
+/*select.player {
+  width:300px;
+}*/
+
+input.table-cell {
+  margin: auto;
+  line-height: auto;
+}
+
+input.spacesaver {
+  visibility: hidden;
+}
+
+input.active, textarea.active {
+  margin-bottom:5px;
+  line-height:18px;
+  padding:2px 5px;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  border-radius: 5px;
+  outline:none;
+  -webkit-box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+  -moz-box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+  border: 1px solid #5897fb;
+}
+
+/*select {
+  padding-bottom: 5px;
+}*/
+
+/*The Submit Button */
+input[type=button], input[type=submit], .ui-dialog .ui-dialog-buttonpane .ui-dialog-buttonset button {
+  margin-top:5px;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  border-radius: 5px;
+  border:2px solid #06C;
+  background-color:#09F;
+  color:#fff;
+  font-weight:bold;
+  width:auto;
+  vertical-align: middle;
+}
+
+input.menu-input {
+  width: 150px;
+}
+
+.menu-margin {
+  margin-left: 5px;
+}
+
+a.menu-link {
+  
+}
+
+/* Radio buttons */
+input[type=radio] {
+  width:auto;
+  float:left;
+  margin-left:5px;
+}
+
+#club_venue, #venue_address {
+  width: 300px;
+  float: left;
+  padding-bottom: 20px;
+}
+
+#club_secretary {
+  margin-left: 20px;
+  width: 300px;
+  float: left;
+  padding-bottom: 20px;
+}
+
+#index_news {
+  width: 60%;
+  float: left;
+  padding-bottom: 20px;
+}
+
+#index_matches_today {
+  margin-left: 20px;
+  width: 35%;
+  float: left;
+  padding-bottom: 20px;
+}
+
+#match_home_players {
+  float: left;
+  padding-bottom: 20px;
+  padding-right: 10px;
+  position: relative;
+  left: 0px;
+  top: 0px;
+  width: 48%;
+  border-right: 1px dashed #000000;
+}
+
+#match_away_players {
+  float: left;
+  padding-bottom: 20px;
+  position: relative;
+  left: 20px;
+  top: 0px;
+  width: 48%;
+}
+
+div.match_player_selection {
+  float: left;
+  width: 325px;
+}
+
+span.player_total {
+  vertical-align: top;
+  position: relative;
+  left: 10px;
+  top: 0px;
+}
+
+span.player_total_heading {
+  font-weight: bold;
+  position: absolute;
+  left: 512px;
+  top: 30px;
+}
+
+div.doubles_home_player_selection, div.doubles_away_player_selection {
+  display: inline-block;
+  padding-bottom: 20px;
+  padding-left: 40px;
+  width: 325px;
+}
+
+div.form_with_map {
+  width: 450px;
+  float: left;
+}
+
+#map_canvas {
+  margin-left: 20px;
+  float: left;
+  padding-bottom: 20px;
+  height: 400px;
+  width: 700px;
+}
+
+#map_canvas_form {
+  margin-left: 20px;
+  float: left;
+  padding-bottom: 20px;
+  height: 400px;
+  width: 400px;
+}
+
+#club_teams, #venue_contact, #users_online {
+  margin-top: 20px;
+  clear: both;
+}
+
+#venue_contact {
+  position: relative;
+  top: -230px;
+}
+
+/* Fix for SelectBoxIt */
+.collapsible {
+  position: static;
+}
+
+.collapsible-container {
+  position: relative;
+}
+
+.field_title {
+  font-weight: bold;
+}
+
+.links {
+  font-size: -1em;
+  text-align: center;
+}
+
+.links .header {
+  font-weight: bold;
+}
+
+#add_games_div, #add_divisions_div {
+  display: none;
+}
+
+.team_inactive {
+  display: none;
+}
+
+.nav_list {
+  text-align: center;
+}
+
+.heading_column {
+  width: 25%;
+}
+
+.table_data_numeric {
+  text-align: right !important;
+}
+
+.match_score {
+  float: right;
+}
+
+/*
+ Sortable
+*/
+.sortable {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  width: 60%;
+}
+
+.sortable li {
+  margin: 0 3px 3px 3px;
+  padding: 0.4em;
+  padding-left: 1.5em;
+  font-size: 0.9em;
+  height: 18px;
+}
+
+.sortable li span {
+  position: absolute;
+  margin-left: -1.3em;
+}
+
+/*
+  Sortable team position numbers
+*/
+span.team-position-number {
+  padding-left: 15px;
+}
+
+span.team-position-name {
+  padding-left: 30px;
+}
+
+/*#match_games h3 {
+	display: block;
+	cursor: pointer;
+	position: relative;
+	margin: 2px 0 0 0;
+	padding: .5em .5em .5em .7em;
+	min-height: 0; /* support: IE7 /
+	font-size: 100%;
+}
+
+#match_games > div {
+  display: none;
+}*/
+
+
+/* Start by setting display:none to make this hidden.
+   Then we position it in relation to the viewport window
+   with position:fixed. Width, height, top and left speak
+   speak for themselves. Background we set to 80% white with
+   our animation centered, and no-repeating */
+.modal {
+  display:    none;
+  position:   fixed;
+  z-index:    1000;
+  top:        0;
+  left:       0;
+  height:     100%;
+  width:      100%;
+  background: rgba( 170, 170, 170, .8 ) 
+              url('../images/ajax-loader-trans-white.gif') 
+              50% 50% 
+              no-repeat;
+}
+
+/* When the body has the loading class, we turn
+   the scrollbar off with overflow:hidden */
+body.loading {
+  overflow: hidden;
+}
+
+/* Anytime the body has the loading class, our
+   modal element will be visible */
+body.loading .modal {
+  display: block;
+}
+
+div.g-recaptcha {
+  margin-left: 129px;
+}

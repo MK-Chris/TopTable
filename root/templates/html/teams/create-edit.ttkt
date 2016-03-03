@@ -1,0 +1,197 @@
+[% # Several elements are disabled mid-season
+IF mid_season;
+  CLUB_DISABLED     = ' disabled="disabled"';
+  DIVISION_DISABLED = ' disabled="disabled"';
+  #CHECKBOX_DISABLED = ' disabled="disabled"';
+  CLUB_TOOLTIP = ' title="The club cannot be edited after matches have been created in the current season."';
+  DIVISION_TOOLTIP = ' title="The division cannot be edited after matches have been created in the current season."';
+  LOG_OLD_DETAILS_TOOLTIP = ' title="The old details cannot be saved against last season after matches have been created in the current season."';
+ELSIF !current_season;
+  DIVISION_DISABLED = ' disabled="disabled"';
+  DIVISION_TOOLTIP = ' title="The division cannot be edited until a new season has been created."';
+END;
+
+team_name = c.flash.name OR team.name;
+team_name_html = FILTER html_entity; team_name; END;
+-%]
+<form method="post" action="[% form_action %]">
+<fieldset>
+<legend>[% c.maketext("teams.form.legend.team-details") %]</legend>
+
+<div class="label-field-container">
+  <label for="name">[% c.maketext("teams.field.name") %]</label>
+  <div class="field-container">
+    <input type="text" id="name" name="name" value="[% team_name_html %]" />
+  </div>
+  <div class="clear-fix"></div>
+</div>
+
+<div class="label-field-container">
+  <label for="club">[% c.maketext("teams.field.club") %]</label>
+  <div class="field-container">
+    <select id="club" name="club"[% CLUB_DISABLED _ CLUB_TOOLTIP %] data-placeholder="[% c.maketext("teams.field.club") %]" autocomplete="off">
+      <option value=""></option>
+[%
+FOREACH club IN clubs;
+  # Now set selected text if needed;
+  IF c.flash.club == club.id;
+    SET SELECTED = ' selected="selected"';
+  ELSE;
+    SET SELECTED = '';
+  END;
+-%]
+      <option value="[% club.id %]"[% SELECTED %]>[% club.full_name | html_entity %]</option>
+[%
+END;
+-%]
+    </select>
+  </div>
+  <div class="clear-fix"></div>
+</div>
+
+<div class="label-field-container">
+  <label for="division">[% c.maketext("teams.field.division") %]</label>
+  <div class="field-container">
+    <select id="division" name="division"[% DIVISION_DISABLED _ DIVISION_TOOLTIP %] data-placeholder="[% c.maketext("teams.field.division") %]">
+      <option value=""></option>
+[%
+FOREACH division IN divisions;
+  # Now set selected text if needed;
+  IF c.flash.division == division.id;
+    SET SELECTED = ' selected="selected"';
+  ELSE;
+    SET SELECTED = '';
+  END;
+-%]
+      <option value="[% division.division.id %]"[% SELECTED %]>[% division.division.name | html_entity %]</option>
+[%
+END;
+-%]
+    </select>
+  </div>
+  <div class="clear-fix"></div>
+</div>
+
+<div class="label-field-container">
+  <label for="home_night">[% c.maketext("teams.field.home-night") %]</label>
+  <div class="field-container">
+    <select id="home_night" name="home_night" data-placeholder="[% c.maketext("teams.field.home-night") %]">
+      <option value=""></option>
+[%
+FOREACH night IN home_nights;
+  IF c.flash.home_night == night.weekday_number;
+    SET SELECTED = ' selected="selected"';
+  ELSE;
+    SET SELECTED = '';
+  END;
+-%]
+          <option value="[% night.weekday_number %]"[% SELECTED %]>[% c.maketext("weekdays." _ night.weekday_number) %]</option>
+[%
+END;
+-%]
+    </select>
+  </div>
+  <div class="clear-fix"></div>
+</div>
+
+<div class="label-field-container">
+  <label for="start_hour">[% c.maketext("teams.field.start-time") %]</label>
+  <div class="field-container">
+    <select class="time" id="start_hour" name="start_hour" data-placeholder="[% c.maketext("teams.field.start-hour") %]">
+      <option value=""></option>
+[%
+SET counter = 0;
+WHILE counter <= 23;
+  IF counter < 10;
+    SET counter_display = "0" _ counter;
+  ELSE;
+    SET counter_display = counter;
+  END;
+  # Now set selected text if needed;
+  IF counter_display == c.flash.start_hour;
+    SET SELECTED = ' selected="selected"';
+  ELSE;
+    SET SELECTED = '';
+  END;
+-%]
+      <option value="[% counter_display %]"[% SELECTED %]>[% counter_display %]</option>
+[%
+  SET counter = counter + 1;
+END;
+-%]
+    </select>
+    :
+    <select class="time" id="start_minute" name="start_minute" data-placeholder="[% c.maketext("teams.field.start-minute") %]">
+      <option value=""></option>
+[%
+SET counter = 0;
+WHILE counter <= 59;
+  IF counter < 10;
+    # Set leading zeroes if needed;
+    SET counter_display = "0" _ counter;
+  ELSE;
+    SET counter_display = counter;
+  END;
+  # Now set selected text if needed;
+  IF counter_display == c.flash.start_minute;
+    SET SELECTED = ' selected="selected"';
+  ELSE;
+    SET SELECTED = '';
+  END;
+-%]
+      <option value="[% counter_display %]"[% SELECTED %]>[% counter_display %]</option>
+[%
+  SET counter = counter + 1;
+END;
+-%]
+    </select>
+  </div>
+  <div class="clear-fix"></div>
+</div>
+[%
+IF tokeninput_confs;
+-%]
+<div class="label-field-container">
+  <label for="captain">[% c.maketext("teams.field.captain") %]</label>
+  <div class="field-container">
+    <input type="text" id="captain" name="captain" value="" />
+  </div>
+  <div class="clear-fix"></div>
+</div>
+[%
+ELSE;
+-%]
+<div class="label-field-container">
+  <div class="label-placeholder-always-show">[% c.maketext("teams.field.captain") %]</div>
+  <div class="field-container">There are no people currently in the database; you will get the option to add people as captains for teams when you create them.</div>
+  <div class="clear-fix"></div>
+</div>
+[%
+END;
+-%]
+
+[%
+IF tokeninput_confs;
+-%]
+<div class="label-field-container">
+  <label for="token-input-players_[% team.id %]">[% c.maketext("teams.field.players") %]</label>
+  <div class="field-container">
+    <input type="text" id="players" name="players" />
+  </div>
+  <div class="clear-fix"></div>
+</div>
+[%
+ELSE;
+-%]
+<div class="label-field-container">
+  <div class="label-placeholder-always-show">[% c.maketext("teams.field.players") | html_entity %]</div>
+  <div class="field-container">There are no people currently in the database; you will get the option to add people as players for teams when you create them.</div>
+  <div class="clear-fix"></div>
+</div>
+[%
+END;
+-%]
+
+</fieldset>
+<input type="submit" name="Submit" value="[% c.maketext("form.button.save") %]" />
+</form>

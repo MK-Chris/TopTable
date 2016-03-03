@@ -1,0 +1,134 @@
+[% # This is a TT comment. -%]
+
+[% # Note That the '-' at the beginning or end of TT code  -%]
+[% # "chomps" the whitespace/newline at that end of the    -%]
+[% # output (use View Source in browser to see the effect) -%]
+
+[% # Some basic HTML with a loop to display clubs -%]
+[%
+USE Dumper;
+IF matches.count;
+-%]
+<table class="responsive">
+  <thead>
+    <tr>
+      <th>[% c.maketext("teams.fixtures.day") %]</th>
+      <th>[% c.maketext("teams.fixtures.date") %]</th>
+      <th>[% c.maketext("teams.fixtures.home") %] / [% c.maketext("teams.fixtures.away") %]</th>
+      <th>[% c.maketext("teams.fixtures.opponent") %]</th>
+      <th>[% c.maketext("teams.fixtures.result") %]</th>
+      <th>[% c.maketext("teams.fixtures.score") %]</th>
+      <th>[% c.maketext("teams.fixtures.venue") %]</th>
+[%
+IF authorisation.match_update OR authorisation.match_cancel;
+-%]
+      <th>[% c.maketext("teams.fixtures.options") %]</th>
+[%
+END;
+-%]
+    </tr>
+  </thead>
+  <tbody>
+[%
+  USE zeroes = format("%02d");
+  WHILE (match = matches.next);
+    SET date = match.scheduled_date;
+    SET month = zeroes( match.scheduled_date.month );
+    SET day   = zeroes( match.scheduled_date.day );
+    
+    IF team.id == match.home_team.id;
+      # Team specified is at home
+      SET opponent = match.away_team;
+      SET location = "home";
+      SET location_text = c.maketext("teams.fixtures.home");
+    ELSIF team.id == match.away_team.id;
+      # Team specified is away
+      SET opponent = match.home_team;
+      SET location = "away";
+      SET location_text = c.maketext("teams.fixtures.away");
+    ELSE;
+      # Error
+      SET opponent = "Error";
+    END;
+    
+    IF specific_season;
+      SET opponent_uri      = c.uri_for_action("/teams/view_specific_season_by_url_key", [opponent.club.url_key, opponent.url_key, season.url_key]);
+      SET fixtures_day_uri  = c.uri_for_action("/fixtures-results/view_day_specific_season_first_page", [season.url_key, date.year, month, day]);
+    ELSE;
+      SET opponent_uri      = c.uri_for_action("/teams/view_current_season_by_url_key", [opponent.club.url_key, opponent.url_key]);
+      SET fixtures_day_uri  = c.uri_for_action("/fixtures-results/view_day_current_season_first_page", [date.year, month, day]);
+    END;
+    
+    SET match_result = match.result(location);
+    
+    SET date = match.scheduled_date;
+    CALL date.set_locale( c.locale );
+-%]
+  <tr>
+    <td data-label="[% c.maketext("teams.fixtures.day") %]">
+      [% date.day_name | ucfirst | html_entity %]
+    </td>
+    <td data-label="[% c.maketext("teams.fixtures.date") %]">
+      <a href="[% fixtures_day_uri %]">[% c.i18n_datetime_format_date.format_datetime(date) | html_entity %]</a>
+    </td>
+    <td data-label="[% c.maketext("teams.fixtures.home") %] / [% c.maketext("teams.fixtures.away") %]">
+      [% location_text %]
+    </td>
+    <td data-label="[% c.maketext("teams.fixtures.opponent") %]">
+      <a href="[% opponent_uri %]">[% opponent.club.short_name | html_entity %] [% opponent.name | html_entity %]</a>
+    </td>
+    <td data-label="[% c.maketext("teams.fixtures.result") %]">
+      [% c.maketext(match_result.result.id) %]
+    </td>
+    <td data-label="[% c.maketext("teams.fixtures.score") %]">
+[%
+IF match.started AND !match.cancelled;
+-%]
+      <a href="[% c.uri_for_action('/matches/team/view_by_url_keys', [match.home_team.club.url_key, match.home_team.url_key, match.away_team.club.url_key, match.away_team.url_key, date.year, month, day]) %]" title="[% c.maketext("fixtures-results.view-scorecard") %]">[% match_result.score %]</a>
+[%
+ELSE;
+-%]
+      &nbsp;
+[%
+END;
+-%]
+    </td>
+    <td data-label="[% c.maketext("teams.fixtures.venue") %]">
+      <a href="[% c.uri_for_action('/venues/view', [match.venue.url_key]) %]">[% match.venue.name | html_entity %]</a>
+    </td>
+[%
+    IF authorisation.match_update OR authorisation.match_cancel;
+-%]
+    <td data-label="[% c.maketext("teams.fixtures.options") %]">
+[%
+      IF authorisation.match_update;
+-%]
+      <a href="[% c.uri_for_action("/matches/team/update_by_url_keys", [match.home_team.club.url_key, match.home_team.url_key, match.away_team.club.url_key, match.away_team.url_key, date.year, month, day]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" width="16" height="16" title="[% c.maketext("matches.update-score") %]" /></a>
+[%
+      END;
+      IF authorisation.match_cancel;
+-%]
+      <a href="[% c.uri_for_action("/matches/team/cancel_by_url_keys", [match.home_team.club.url_key, match.home_team.url_key, match.away_team.club.url_key, match.away_team.url_key, date.year, month, day]) %]"><img src="[% c.uri_for("/static/images/icons/0006-Cross-icon-16.png") %]" width="16" height="16" title="[% c.maketext("matches.cancel") %]" /></a>
+[%
+      END;
+-%]
+    </td>
+[%
+    END;
+-%]
+  </tr>
+[%
+  END;
+-%]
+  </tbody>
+</table>
+[%
+ELSE;
+-%]
+<div class="list-item">
+  [% c.maketext("fixtures-results.no-matches") %]
+</div>
+[%
+END;
+-%]
+

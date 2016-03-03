@@ -1,0 +1,91 @@
+  
+  // Declare the variables for doing geocode requests
+  var geocoder = new google.maps.Geocoder();
+  var seen_coordinates = {}; // Used to determine whether or not
+  var successful_request; // Reset on each value change to false, changed to true on first successful request
+  var search_addresses = []; // Holds the various strings we need to search
+  
+  /**
+   *  Geocode the address
+   *  Takes various address field combinations and searches each of them, pushing on to one array
+   */
+  function build_addresses_and_geocode(address, $jquery_select, $jquery_select_current_options) {
+    var place, full_address, postcode;
+    var full_results = []; // The array that we'll push all final results on to
+    successful_request = false; // This gets changed when we get to at least one successful request
+    
+    // First search for the specific place name, if we have a name and postcode given
+    if ( address.name !== "" && address.postcode !== "" ) {
+      place = address.name . " " . address.postcode;
+      search_addresses.push(place);
+    } else if ( address.name !== " " ) {
+      place = address.name;
+      search_addresses.push(place);
+    }
+    
+    // Now build the full address to search for
+    if ( address.name !== "" ) {
+      full_address = address.name + " ";
+    }
+    
+    // Next loop through each address line, adding it to the string if it's not blank
+    var count;
+    while ( count < 6 ) {
+      if ( address["address" + count] !== "" ) {
+        full_address += address["address" + count] + " ";
+      }
+    }
+    
+    if ( address.postcode !== "" ) {
+      full_address += address.postcode;
+      postcode = address.postcode;
+    }
+    
+    if ( full_address !== "" ) {
+      search_addresses.push(full_address);
+    }
+    
+    if ( postcode !== "" ) {
+      search_addresses.push(postcode);
+    }
+    
+    // Disable the select and remove all current values
+    $jquery_select.prop("disabled", true);
+    $jquery_select_current_options.remove();
+    for ( i = 0; i < search_addresses.length; i++ ) {
+      geocode_search( search_addresses[i], $jquery_select );
+    }
+  }
+  
+    /**
+     *  Search for an address string
+     *
+     */
+    function geocode_search( search_string, $jquery_select ) {
+      geocoder.geocode({
+        address: search_string
+      }, function(results, status) {
+        if ( status == google.maps.GeocoderStatus.OK ) {
+          successful_request = true;
+          $jquery_select.prop("disabled", false);
+          check_coordinates(geocode_object.results, full_results);
+        }
+      });
+    }
+  
+  /**
+   *  Check the given array for co-ordinates we've seen before.
+   *
+   */
+  function check_coordinates( result_array, push_array ) {
+    // Iterate over the given array
+    for (i = 0; i < result_array.length; i++) {
+      var coordinates = result_array[i].geometry.location.lat + "," + result_array[i].geometry.location.lng;
+      if ( !( coordinates in seen_coordinates ) ) {
+        // We haven't seen this object before, add it to the push array and add this key to the seen coordinates
+        push_array.push(result_array[i]);
+        seen_coordinates[coordinates] = 1; 
+      }
+    }
+  }
+  

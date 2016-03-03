@@ -1,0 +1,44 @@
+
+  var map, map_location;
+  
+  function initialise_map() {
+    map = new google.maps.Map(document.getElementById("[% map_id %]"), {
+      zoom: 12,
+      center: map_location,
+      mapTypeId: google.maps.MapTypeId.ROADMAP,
+      mapTypeControl: true,
+      mapTypeControlOptions: {
+        style: google.maps.MapTypeControlStyle.DROPDOWN_MENU
+      },
+      navigationControl: true,
+      scrollwheel: true,
+      streetViewControl: true
+    });
+[%
+IF map_latitude AND map_longitude;
+-%]
+    map_location = new google.maps.LatLng([% map_latitude %], [% map_longitude %]);
+[%
+END;
+-%]
+    
+    var marker = new google.maps.Marker({
+      position: map_location,
+      map: map,
+      title: "[% marker_title | html_entity %]"
+    });
+  }
+  
+[%
+IF map_latitude AND map_longitude;
+-%]
+  google.maps.event.addDomListener(window, "load", initialise_map);
+[%
+END;
+-%]  
+  /* When the window is resized, recentre the map */
+  google.maps.event.addDomListener(window, "resize", function() {
+    map.setCenter(map_location);
+  });
+  
+  

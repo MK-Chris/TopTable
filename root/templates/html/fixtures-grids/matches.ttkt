@@ -1,0 +1,135 @@
+[% # This is a TT comment. -%]
+
+[% # Note That the '-' at the beginning or end of TT code  -%]
+[% # "chomps" the whitespace/newline at that end of the    -%]
+[% # output (use View Source in browser to see the effect) -%]
+<h4>[% grid.name %]</h4>
+<form method="post" action="[% form_action %]">
+<div class="repeat-fixtures">
+<h5>General Settings</h5>
+[%
+IF c.flash.repeat_fixtures;
+  SET CHECKED = ' checked="checked"';
+  SET REPEAT_DISPLAY = ' style="display: none;"';
+ELSE;
+  SET CHECKED = '';
+  SET REPEAT_DISPLAY = '';
+END;
+-%]
+  <input type="checkbox" id="repeat-fixtures" name="repeat_fixtures" data-label="Repeat fixtures?" value="1"[% CHECKED %] /><br />
+  <div class="info-message-small">
+    <!--<button title="Close" role="button" class="ui-button ui-widget ui-state-default ui-corner-all ui-button-icon-only ui-dialog-titlebar-close" type="button">
+      <span class="ui-button-icon-primary ui-icon ui-icon-closethick"></span>
+      <span class="ui-button-text">Close</span>
+    </button>-->
+    <span class="message-text">[% c.maketext("fixtures-grids.form.matches.notice-repeated-fixtures") %]</span>
+  </div>
+</div>
+[%
+# Set the number of non-repeated matches (i.e., first pass through) fixtures we have.  This is the maximum number of teams minus 1
+SET first_pass_fixtures = grid.maximum_teams - 1;
+SET first_repeated_week = grid.maximum_teams;
+SET repeated_matches_div_started = 0;
+FOREACH week IN weeks;
+  IF week.week > first_pass_fixtures;
+    SET REPEATED_SELECT_CLASS = ' repeated_match';
+    SET DATA_REPEATED = 1;
+    # If this is the first repeated week, we'll start a new div
+    IF week.week == first_repeated_week;
+      # Set this flag so we know to close the div at the end
+      SET repeated_matches_div_started = 1;
+-%]
+<div id="repeated-matches"[% REPEAT_DISPLAY %]>
+[%
+    END;
+  ELSE;
+    SET REPEATED_SELECT_CLASS = '';
+    SET DATA_REPEATED = 0;
+  END;
+-%]
+<div id="week-[% week.week %]">
+  <a name="week-[% week.week %]"></a><h5>[% c.maketext("fixtures-grids.field.week", week.week) %]</h5>
+[%
+  # Loop through all the matches for each week
+  FOREACH match = week.fixtures_grid_matches;
+    # Work out if there are home / away teams set
+    SET weeks_array_row = week.week - 1;
+    SET matches_array_row = match.match_number - 1;
+    
+    IF flashed_weeks.item(weeks_array_row).matches.item(matches_array_row).home_team != "";
+      SET HOME_SELECT_CHECK = flashed_weeks.item(weeks_array_row).matches.item(matches_array_row).home_team;
+    ELSIF match.home_team != "";
+      SET HOME_SELECT_CHECK = match.home_team;
+    ELSE;
+      SET HOME_SELECT_CHECK = "";
+    END;
+    
+    IF flashed_weeks.item(weeks_array_row).matches.item(matches_array_row).away_team != "";
+      SET AWAY_SELECT_CHECK = flashed_weeks.item(weeks_array_row).matches.item(matches_array_row).away_team;
+    ELSIF match.away_team != "";
+      SET AWAY_SELECT_CHECK = match.away_team;
+    ELSE;
+      SET AWAY_SELECT_CHECK = "";
+    END;
+    
+    # Extra select class for match number 1
+    IF match.match_number == 1;
+      FIRST_MATCH_CLASS = " first_match";
+    ELSE;
+      FIRST_MATCH_CLASS = "";
+    END;
+-%]
+  <select name="week_[% week.week %]_match_[% match.match_number %]_home" data-placeholder="[% c.maketext("fixtures-grids.form.matches.field.match-home-team", match.match_number) %]" data-week="[% week.week %]" data-match="[% match.match_number %]" data-repeated="[% DATA_REPEATED %]" class="grid-match home week[% week.week %] match[% REPEATED_SELECT_CLASS _ FIRST_MATCH_CLASS %]">
+    <option value=""></option>
+[%
+    SET i = 1;
+    WHILE i <= grid.maximum_teams;
+      # Check if we need to select this option or not
+      IF i == HOME_SELECT_CHECK;
+        SET HOME_SELECTED = ' selected="selected"';
+      ELSE;
+        SET HOME_SELECTED = '';
+      END;
+-%]
+    <option value="[% i %]"[% HOME_SELECTED %]>[% c.maketext("fixtures-grids.form.matches.field.team-number", i) %]</option>
+[%
+      SET i = i + 1;
+    END;
+-%]
+  </select>
+  v
+  <select name="week_[% week.week %]_match_[% match.match_number %]_away" data-placeholder="[% c.maketext("fixtures-grids.form.matches.field.match-away-team", match.match_number) %]" data-week="[% week.week %]" data-match="[% match.match_number %]" data-repeated="[% DATA_REPEATED %]" class="grid-match away week[% week.week %] match[% REPEATED_SELECT_CLASS %]">
+    <option value=""></option>
+[%
+    SET i = 1;
+    WHILE i <= grid.maximum_teams;
+      # Check if we need to select this option or not
+      IF i == AWAY_SELECT_CHECK;
+        SET AWAY_SELECTED = ' selected="selected"';
+      ELSE;
+        SET AWAY_SELECTED = '';
+      END;
+-%]
+    <option value="[% i %]"[% AWAY_SELECTED %]>[% c.maketext("fixtures-grids.form.matches.field.team-number", i) %]</option>
+[%
+      SET i = i + 1;
+    END;
+-%]
+  </select><br />
+[%
+  END;
+-%]
+<br />
+</div>
+[%
+END;
+
+# If we opened a repeated matches div, close it here
+IF repeated_matches_div_started;
+-%]
+</div>
+[%
+END;
+-%]
+<input type="submit" name="Submit" value="Save" />
+</form>

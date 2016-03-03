@@ -1,0 +1,219 @@
+use utf8;
+package TopTable::Schema::Result::SystemEventLogTeamMatch;
+
+# Created by DBIx::Class::Schema::Loader
+# DO NOT MODIFY THE FIRST PART OF THIS FILE
+
+=head1 NAME
+
+TopTable::Schema::Result::SystemEventLogTeamMatch
+
+=cut
+
+use strict;
+use warnings;
+
+use Moose;
+use MooseX::NonMoose;
+use MooseX::MarkAsMethods autoclean => 1;
+extends 'DBIx::Class::Core';
+
+=head1 COMPONENTS LOADED
+
+=over 4
+
+=item * L<DBIx::Class::InflateColumn::DateTime>
+
+=item * L<DBIx::Class::TimeStamp>
+
+=item * L<DBIx::Class::PassphraseColumn>
+
+=back
+
+=cut
+
+__PACKAGE__->load_components("InflateColumn::DateTime", "TimeStamp", "PassphraseColumn");
+
+=head1 TABLE: C<system_event_log_team_match>
+
+=cut
+
+__PACKAGE__->table("system_event_log_team_match");
+
+=head1 ACCESSORS
+
+=head2 id
+
+  data_type: 'integer'
+  extra: {unsigned => 1}
+  is_auto_increment: 1
+  is_nullable: 0
+
+=head2 system_event_log_id
+
+  data_type: 'integer'
+  extra: {unsigned => 1}
+  is_foreign_key: 1
+  is_nullable: 0
+
+=head2 object_home_team
+
+  data_type: 'integer'
+  extra: {unsigned => 1}
+  is_foreign_key: 1
+  is_nullable: 1
+
+=head2 object_away_team
+
+  data_type: 'integer'
+  extra: {unsigned => 1}
+  is_foreign_key: 1
+  is_nullable: 1
+
+=head2 object_scheduled_date
+
+  data_type: 'date'
+  datetime_undef_if_invalid: 1
+  is_foreign_key: 1
+  is_nullable: 1
+
+=head2 name
+
+  data_type: 'varchar'
+  is_nullable: 0
+  size: 620
+
+Only used if there is no ID (i.e., if the club was deleted and is not available).
+
+=head2 log_updated
+
+  data_type: 'datetime'
+  datetime_undef_if_invalid: 1
+  is_nullable: 0
+
+=head2 number_of_edits
+
+  data_type: 'tinyint'
+  extra: {unsigned => 1}
+  is_nullable: 0
+
+Used if the event is for an edit.
+
+=cut
+
+__PACKAGE__->add_columns(
+  "id",
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_auto_increment => 1,
+    is_nullable => 0,
+  },
+  "system_event_log_id",
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_foreign_key => 1,
+    is_nullable => 0,
+  },
+  "object_home_team",
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_foreign_key => 1,
+    is_nullable => 1,
+  },
+  "object_away_team",
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_foreign_key => 1,
+    is_nullable => 1,
+  },
+  "object_scheduled_date",
+  {
+    data_type => "date",
+    datetime_undef_if_invalid => 1,
+    is_foreign_key => 1,
+    is_nullable => 1,
+  },
+  "name",
+  { data_type => "varchar", is_nullable => 0, size => 620 },
+  "log_updated",
+  {
+    data_type => "datetime",
+    datetime_undef_if_invalid => 1,
+    is_nullable => 0,
+  },
+  "number_of_edits",
+  { data_type => "tinyint", extra => { unsigned => 1 }, is_nullable => 0 },
+);
+
+=head1 PRIMARY KEY
+
+=over 4
+
+=item * L</id>
+
+=back
+
+=cut
+
+__PACKAGE__->set_primary_key("id");
+
+=head1 RELATIONS
+
+=head2 system_event_log
+
+Type: belongs_to
+
+Related object: L<TopTable::Schema::Result::SystemEventLog>
+
+=cut
+
+__PACKAGE__->belongs_to(
+  "system_event_log",
+  "TopTable::Schema::Result::SystemEventLog",
+  { id => "system_event_log_id" },
+  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+);
+
+=head2 team_match
+
+Type: belongs_to
+
+Related object: L<TopTable::Schema::Result::TeamMatch>
+
+=cut
+
+__PACKAGE__->belongs_to(
+  "team_match",
+  "TopTable::Schema::Result::TeamMatch",
+  {
+    away_team      => "object_away_team",
+    home_team      => "object_home_team",
+    scheduled_date => "object_scheduled_date",
+  },
+  {
+    is_deferrable => 1,
+    join_type     => "LEFT",
+    on_delete     => "SET NULL",
+    on_update     => "CASCADE",
+  },
+);
+
+
+# Created by DBIx::Class::Schema::Loader v0.07043 @ 2015-10-20 23:27:35
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:MJ2CSe1ppzUrs22o4bKk6Q
+
+#
+# Enable automatic date handling
+#
+__PACKAGE__->add_columns(
+    "log_updated",
+    { data_type => "datetime", timezone => "UTC", set_on_create => 1, set_on_update => 1, },
+);
+
+# You can replace this text with custom code or comments, and it will be preserved on regeneration
+__PACKAGE__->meta->make_immutable;
+1;

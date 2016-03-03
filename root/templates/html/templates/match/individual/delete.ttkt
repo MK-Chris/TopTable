@@ -1,0 +1,9 @@
+<div id="form">
+<form method="post" action="[% c.uri_for_action("/templates/match/individual/do_delete", [tt_template.url_key]) %]">
+<input type="submit" name="Submit" value="[% c.maketext("form.button.delete") %]" />
+</form>
+</div>
+
+[%
+INCLUDE "html/templates/match/individual/view.ttkt";
+%]

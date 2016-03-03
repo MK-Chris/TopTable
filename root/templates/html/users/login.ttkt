@@ -1,0 +1,49 @@
+<form method="post" action="[% c.uri_for_action("/users/do_login") %]">
+<fieldset>
+  <legend>Login details</legend>
+  
+  <div class="label-field-container">
+    <label id="username_label" for="username">[% c.maketext("user.field.username") %]</label>
+    <div class="field-container">
+      <input type="text" id="username" name="username" value="[% c.flash.username OR c.request.cookie("toptable_username").value | html_entity %]" />
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+  
+  <div class="label-field-container">
+    <label id="password_label" for="password">[% c.maketext("user.field.password") %]</label>
+    <div class="field-container">
+      <input type="password" id="password" name="password" />
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+[%
+IF c.request.cookie("username").value;
+  SET remember_checked = ' checked="checked"';
+ELSE;
+  SET remember_checked = '';
+END;
+-%]
+
+  <input type="checkbox" name="remember_username" id="remember_username" data-label="[% c.maketext("user.field.remember-username") %]"[% remember_checked %] />
+  <div class="clear-fix"></div>
+[%
+IF reCAPTCHA AND c.config.Google.reCAPTCHA.site_key;
+-%]
+  <div class="label-field-container">
+    <div class="label-placeholder">&nbsp;</div>
+    <div class="field-container">
+      <div class="g-recaptcha" data-sitekey="[% c.config.Google.reCAPTCHA.site_key %]"></div>
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+
+[%
+END;
+-%]
+  <input type="hidden" name="redirect_uri" id="redirect_uri" value="[% c.flash.redirect_uri OR c.request.headers.referer %]">
+  <a href="[% c.uri_for("/register") %]">[% c.maketext("user.register") %]</a> | <a href="[% c.uri_for_action("/users/forgot_password") %]">[% c.maketext("user.forgot-username-password") %]</a>
+</fieldset>
+
+<input type="submit" name="login" value="[% c.maketext("form.button.login") %]">
+</form>

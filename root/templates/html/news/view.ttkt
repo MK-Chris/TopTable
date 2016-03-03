@@ -1,0 +1,21 @@
+[% # Note That the '-' at the beginning or end of TT code  -%]
+[% # "chomps" the whitespace/newline at that end of the    -%]
+[% # output (use View Source in browser to see the effect) -%]
+
+[%
+# We call the current_details sub here so that we only need to call it once.
+SET current_details = article.current_details( timezone );
+%]
+<div id="edit-details">Published [% article.date_updated.dmy("/") %] at [% article.date_updated.hms %] by [%- article.updated_by_user.person.display_name OR article.updated_by_user.username;
+IF current_details.number_of_edits;
+-%]
+; edited [% current_details.number_of_edits %] times, last on [% current_details.date_updated.dmy("/") %] at [% current_details.date_updated.hms %] by [% current_details.updated_by_user.person.display_name OR current_details.updated_by_user.username %].
+[%-
+ELSE;
+-%]
+.
+[%-
+END;
+-%]
+<br /><br /></div>
+[% current_details.article_content %]

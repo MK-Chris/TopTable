@@ -1,0 +1,273 @@
+[%
+event_name = c.flash.name OR event.name;
+event_name_html = FILTER html_entity; event_name; END;
+
+date = c.flash.date OR event_season.date;
+date_html = FILTER html_entity; date; END;
+
+season_name = FILTER html_entity; current_season.name; END;
+-%]
+
+<form method="post" action="[% form_action %]">
+<fieldset>
+  <legend>[% c.maketext("events.legend.general-details") %]</legend>
+  
+  <div class="label-field-container">
+    <label for="name">[% c.maketext("events.field.name") %]</label>
+    <div class="field-container">
+      <input type="text" id="name" name="name" value="[% event_name_html %]" />
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+  
+  <div class="label-field-container">
+    <label for="event_type">[% c.maketext("events.field.event-type") %]</label>
+    <div class="field-container">
+      <select type="text" id="event_type" name="event_type" data-placeholder="[% c.maketext("events.field.event-type") %]">
+        <option value=""></option>
+[%
+IF c.flash.errored_form;
+  SET event_type = c.flash.event_type;
+ELSE;
+  SET event_type = event.event_type.id;
+END;
+FOREACH type IN event_types;
+  IF type.id == event_type;
+    SET selected_text = ' selected="selected"';
+  ELSE;
+    SET selected_text = '';
+  END;
+-%]
+        <option value="[% type.id %]" title="[% c.maketext("event-type.description." _ type.id) %]"[% selected_text %]>[% c.maketext("event-type.name." _ type.id) %]</option>
+[%
+END;
+-%]
+      </select>
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+</fieldset>
+  
+<fieldset id="tournament-details-container">
+  <legend>[% c.maketext("events.legend.tournament-details") %]</legend>
+  
+  <div class="label-field-container">
+    <label for="tournament_type">[% c.maketext("events.field.tournament-type") %]</label>
+    <div class="field-container">
+      <select type="text" id="tournament_type" name="tournament_type" data-placeholder="[% c.maketext("events.field.tournament-type") %]">
+        <option value=""></option>
+[%
+IF c.flash.errored_form;
+  SET tournament_type = c.flash.tournament_type;
+ELSE;
+  SET tournament_type = event.tournament_type.id;
+END;
+FOREACH type IN tournament_types;
+  IF type.id == tournament_type;
+    SET selected_text = ' selected="selected"';
+  ELSE;
+    SET selected_text = '';
+  END;
+-%]
+        <option value="[% type.id %]" title="[% c.maketext("tournament-type.description." _ type.id) %]"[% selected_text %]>[% c.maketext("tournament-type.name." _ type.id) %]</option>
+[%
+END;
+-%]
+      </select>
+    </div>
+    <div class="clear-fix"></div>
+[%
+IF c.flash.errored_form;
+  SET online_entry_check = c.flash.allow_online_entries;
+ELSE;
+  SET online_entry_check = event.allow_online_entries;
+END;
+IF online_entry_check;
+  SET checked = ' checked="checked"';
+ELSE;
+  SET checked = '';
+END;
+-%]
+    <input type="checkbox" id="allow_online_entries" name="allow_online_entries" value="1"[% checked %] data-label="[% c.maketext("events.field.allow-online-entries") %]" />
+  </div>
+</fieldset>
+
+<fieldset>
+  <legend>[% c.maketext("events.legend.season-details", season_name) %]</legend>
+  
+  <div class="label-field-container" id="venue-container">
+    <label for="venue">[% c.maketext("events.field.venue") %]</label>
+    <div class="field-container">
+      <select type="text" id="venue" name="venue" data-placeholder="[% c.maketext("events.field.venue") %]">
+        <option value=""></option>
+[%
+IF c.flash.errored_form;
+  SET check_venue = c.flash.venue;
+ELSE;
+  SET tournament_type = event_season.venue.id;
+END;
+FOREACH venue IN venues;
+  IF venue.id == check_venue;
+    SET selected_text = ' selected="selected"';
+  ELSE;
+    SET selected_text = '';
+  END;
+-%]
+        <option value="[% venue.id %]"[% selected_text %]>[% venue.name | html_entity %]</option>
+[%
+END;
+-%]
+      </select>
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+  
+  <div class="label-field-container">
+    <label for="token-input-organiser">[% c.maketext("events.field.organiser") %]</label>
+    <div class="field-container">
+      <input type="text" id="organiser" name="organiser" value="" />
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+  
+  <div class="label-field-container" id="date-container">
+    <label for="date">[% c.maketext("events.field.date") %]</label>
+    <div class="field-container">
+      <input type="text" id="date" name="date" class="date_picker" autocomplete="off" value="[% date_html %]" />
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+  
+  <div class="label-field-container" id="start-time-container">
+    <label for="start_hour">[% c.maketext("events.field.start-time") %]</label>
+    <div class="field-container">
+      <select class="time" id="start_hour" name="start_hour" data-placeholder="[% c.maketext("events.field.hour") %]">
+        <option value=""></option>
+[%
+SET check_hour = c.flash.start_hour OR event_season.start_hour;
+SET counter = 0;
+WHILE counter <= 23;
+  IF counter < 10;
+    SET counter_display = "0" _ counter;
+  ELSE;
+    SET counter_display = counter;
+  END;
+  # Now set selected text if needed;
+  IF counter_display == check_hour;
+    SET SELECTED = ' selected="selected"';
+  ELSE;
+    SET SELECTED = '';
+  END;
+-%]
+        <option value="[% counter_display %]"[% SELECTED %]>[% counter_display %]</option>
+[%
+  SET counter = counter + 1;
+END;
+-%]
+      </select>
+      :
+      <select class="time" id="start_minute" name="start_minute" data-placeholder="[% c.maketext("events.field.minute") %]">
+        <option value=""></option>
+[%
+SET check_minute = c.flash.start_minute OR event_season.start_minute;
+SET counter = 0;
+WHILE counter <= 59;
+  IF counter < 10;
+    # Set leading zeroes if needed;
+    SET counter_display = "0" _ counter;
+  ELSE;
+    SET counter_display = counter;
+  END;
+  # Now set selected text if needed;
+  IF counter_display == check_minute;
+    SET SELECTED = ' selected="selected"';
+  ELSE;
+    SET SELECTED = '';
+  END;
+-%]
+        <option value="[% counter_display %]"[% SELECTED %]>[% counter_display %]</option>
+[%
+  SET counter = counter + 1;
+END;
+-%]
+      </select>
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+  
+  <div id="all-day-container">
+[%
+IF c.flash.errored_form;
+  SET all_day_check = c.flash.all_day;
+ELSE;
+  SET all_day_check = event_season.all_day;
+END;
+
+IF all_day_check;
+  SET checked = ' checked="checked"';
+ELSE;
+  SET checked = '';
+END;
+-%]
+    <input type="checkbox" id="all_day" name="all_day" value="1"[% checked %] data-label="[% c.maketext("events.field.duration-all-day") %]" />
+  </div>
+  
+  <div class="label-field-container" id="finish-time-container">
+    <label for="finish_hour">[% c.maketext("events.field.finish-time") %]</label>
+    <div class="field-container">
+      <select class="time" id="finish_hour" name="finish_hour" data-placeholder="[% c.maketext("events.field.hour") %]">
+        <option value=""></option>
+[%
+SET check_hour = c.flash.finish_hour OR event_season.finish_hour;
+SET counter = 0;
+WHILE counter <= 23;
+  IF counter < 10;
+    SET counter_display = "0" _ counter;
+  ELSE;
+    SET counter_display = counter;
+  END;
+  # Now set selected text if needed;
+  IF counter_display == check_hour;
+    SET SELECTED = ' selected="selected"';
+  ELSE;
+    SET SELECTED = '';
+  END;
+-%]
+        <option value="[% counter_display %]"[% SELECTED %]>[% counter_display %]</option>
+[%
+  SET counter = counter + 1;
+END;
+-%]
+      </select>
+      :
+      <select class="time" id="finish_minute" name="finish_minute" data-placeholder="[% c.maketext("events.field.minute") %]">
+        <option value=""></option>
+[%
+SET check_minute = c.flash.finish_minute OR event_season.finish_minute;
+SET counter = 0;
+WHILE counter <= 59;
+  IF counter < 10;
+    # Set leading zeroes if needed;
+    SET counter_display = "0" _ counter;
+  ELSE;
+    SET counter_display = counter;
+  END;
+  # Now set selected text if needed;
+  IF counter_display == check_minute;
+    SET SELECTED = ' selected="selected"';
+  ELSE;
+    SET SELECTED = '';
+  END;
+-%]
+        <option value="[% counter_display %]"[% SELECTED %]>[% counter_display %]</option>
+[%
+  SET counter = counter + 1;
+END;
+-%]
+      </select>
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+</fieldset>
+<input type="submit" name="Submit" value="[% c.maketext("form.button.save") %]" />
+</form>

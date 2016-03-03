@@ -1,0 +1,18 @@
+[% # Note That the '-' at the beginning or end of TT code  -%]
+[% # "chomps" the whitespace/newline at that end of the    -%]
+[% # output (use View Source in browser to see the effect) -%]
+[%
+IF meetings.count;
+  FOREACH meeting = meetings.next;
+-%]
+
+[%
+  END;
+ELSE;
+-%]
+<div class="list-item">
+  [% c.maketext("meetings.none") %]
+</div>
+[%
+END;
+-%]

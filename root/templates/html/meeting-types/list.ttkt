@@ -1,0 +1,47 @@
+[% # This is a TT comment. -%]
+[% # Note That the '-' at the beginning or end of TT code  -%]
+[% # "chomps" the whitespace/newline at that end of the    -%]
+[% # output (use View Source in browser to see the effect) -%]
+[% # Some basic HTML with a loop to display clubs -%]
+[%
+IF meeting_types.count;
+  # Use PROCESS instead of INCLUDE so that the page_links_text is defined in the current template thereafter
+  PROCESS "html/generic/pagination.ttkt" OBJECT_PLURAL = c.maketext("object.plural.meeting-types");
+  page_links_text;
+  
+  WHILE (meeting_type = meeting_types.next);
+    name_html = FILTER html_entity; meeting_type.name; END;
+-%]
+<div class="list-item">
+  <a href="[% c.uri_for_action("/meeting-types/view_first_page", [meeting_type.url_key]) %]">[% name_html %]</a>
+[%
+    IF authorisation.meeting_type_edit;
+-%]
+  <a href="[% c.uri_for_action("/meeting-types/edit" [meeting_type.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", name_html) %]" title="[% c.maketext("admin.edit-object", name_html) %]" /></a>
+[%
+    END;
+    IF authorisation.meeting_type_delete AND meeting_type.can_delete;
+-%]
+  <a href="[% c.uri_for_action("/meeting-types/delete" [meeting_type.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", name_html) %]" title="[% c.maketext("admin.delete-object", name_html) %]" /></a>
+[%
+    END;
+-%]
+</div>
+[%
+  END;
+  page_links_text;
+ELSE;
+-%]
+<div class="list-item">
+  [% c.maketext("meeting-types.none") %]
+</div>
+[%
+END;
+-%]
+[%
+IF authorisation.meeting_type_create;
+-%]
+<a class="bold" href="[% c.uri_for("/meeting-types/create") %]"><img src="[% c.uri_for("/static/images/icons/0009-Add-icon-48.png") %]" title="[% c.maketext("admin.create-object", c.maketext("object.singular.meeting-types")) %]" /></a><br />
+[%
+END;
+-%]
