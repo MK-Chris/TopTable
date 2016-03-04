@@ -248,6 +248,27 @@ __PACKAGE__->belongs_to(
 # Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-01-27 11:59:56
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:W27QNH8tr2kmJWlcmFb4dw
 
+=head2 check_and_delete
+
+Performs the deletion of the filter; currently no checks to perform, but this may change.
+
+=cut
+
+sub check_and_delete{
+  my ( $self ) = @_;
+  my $error = [];
+  
+  # Delete
+  my $ok = $self->delete unless scalar( @{ $error } );
+  
+  # Error if the delete was unsuccessful
+  push(@{ $error }, {
+    id          => "admin.delete.error.database",
+    parameters  => $self->name
+  }) unless $ok;
+  
+  return $error;
+}
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 __PACKAGE__->meta->make_immutable;
