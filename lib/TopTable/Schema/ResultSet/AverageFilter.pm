@@ -119,9 +119,7 @@ sub find_id_or_url_key {
   }
   
   return $self->find( $where, {
-    prefetch => {
-      "user",
-    }
+    prefetch => "user"
   });
 }
 
@@ -275,7 +273,7 @@ sub create_or_edit {
   # Check the criteria field
   push(@{ $return_value->{error} }, {id => "average-filter.form.error.criteria-field-invalid"}) unless $criteria_field eq "played" or $criteria_field eq "won" or $criteria_field eq "lost";
   push(@{ $return_value->{error} }, {id => "average-filter.form.error.operator-invalid"}) unless $operator eq ">" or $operator eq ">=" or $operator eq "=" or $operator eq "<=" or $operator eq "<";
-  push(@{ $return_value->{error} }, {id => "average-filter.form.error.criteria-invalid"}) unless !defined( $criteria ) or $criteria =~ /^\d$/;
+  push(@{ $return_value->{error} }, {id => "average-filter.form.error.criteria-invalid"}) unless !defined( $criteria ) or $criteria =~ /^\d+$/;
   push(@{ $return_value->{error} }, {id => "average-filter.form.error.criteria-type-invalid"}) unless $criteria_type eq "matches" or $criteria_type eq "games";
   
   if ( scalar( @{ $return_value->{error} } ) == 0 ) {

@@ -210,14 +210,14 @@ sub view :Chained("base") :PathPart("") :Args(0) {
     push(@title_links, {
       image_uri => $c->uri_for("/static/images/icons/0018-Pencil-icon-32.png"),
       text      => $c->maketext("admin.delete-object", $encoded_name),
-      link_uri  => $c->uri_for_action("/templates/league-table-ranking/edit", [$filter->url_key]),
+      link_uri  => $c->uri_for_action("/league-averages/filters/edit", [$filter->url_key]),
     }) if $can_edit;
     
     # Push a delete link if we're authorised and the venue can be deleted
     push(@title_links, {
       image_uri => $c->uri_for("/static/images/icons/0005-Delete-icon-32.png"),
       text      => $c->maketext("admin.delete-object", $encoded_name),
-      link_uri  => $c->uri_for_action("/templates/league-table-ranking/delete", [$filter->url_key]),
+      link_uri  => $c->uri_for_action("/league-averages/filters/delete", [$filter->url_key]),
     }) if $can_delete;
   }
   
@@ -356,7 +356,7 @@ sub delete :Chained("base") :PathPart("delete") :Args(0) {
   
   $c->stash({
     subtitle2           => $c->maketext("admin.delete"),
-    template            => "html/leaue-averages/filters/delete.ttkt",
+    template            => "html/league-averages/filters/delete.ttkt",
     view_online_display => sprintf( "Deleting %s", $encoded_name ),
     view_online_link    => 0,
   });
@@ -445,7 +445,7 @@ sub do_delete :Chained("base") :PathPart("do-delete") :Args(0) {
     return;
   } else {
     # Success, log a deletion and return to the venue list
-    $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["average-filters", "delete", {id => undef}, $filter_name] );
+    $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["average-filter", "delete", {id => undef}, $filter_name] );
     $c->response->redirect( $c->uri_for("/league-averages/filters",
                                 {mid => $c->set_status_msg( {success => $c->maketext( "admin.forms.success", $encoded_name, $c->maketext("admin.message.deleted") )} ) }) );
     $c->detach;
