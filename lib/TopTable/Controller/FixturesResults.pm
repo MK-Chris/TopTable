@@ -592,10 +592,67 @@ sub view_team :Private {
   my $specific_season   = $c->stash->{specific_season};
   my $season            = $c->stash->{season};
   my $team              = $c->stash->{team};
+  my $download          = $c->request->query_parameters->{download} || undef;
   my $subtitle_field; # will be subtitle2 or subtitle3, depending on whether we're using the current season or specifying one - if specifying, subtitle2 is the season name
   
   # $display_options will be a list of teams, divisions or dates, depending on our view method, to display on the page as links
   my ( $matches, $display_options );
+  
+  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["fixtures_view", $c->maketext("user.auth.view-fixtures"), 1] );
+  $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( match_update match_cancel ) ], "", 0] );
+  
+  if ( defined( $download ) and $download eq "calendar" ) {
+    # Get matches, but no pages if we're downloading
+    $matches = $c->model("DB::TeamMatch")->matches_for_team({
+      team              => $team,
+      season            => $season,
+    });
+    
+    my @events = ();
+    
+    # Loop through matches
+    while ( my $match = $matches->next ) {
+      my ( $description );
+      
+      # Split the start time for 
+      my ( $start_hour, $start_minute ) = split( ":", $match->actual_start_time );
+      
+      if ( defined( $match->tournament_round ) ) {
+        
+      } else {
+        $description = sprintf( "%s: %s\n%s: %s", $c->maketext("matches.field.competition"), $c->maketext("matches.field.competition.value.league"), $c->maketext("matches.field.division"), $match->division->name, $c->maketext("matches.field.season"), $match->season->name );
+      }
+      
+      my $event = {
+        summary         => sprintf( "%s %s %s %s %s", $match->home_team->club->short_name, $match->home_team->name, $c->maketext("matches.versus-abbreviation"), $match->away_team->club->short_name, $match->away_team->name ),
+        status          => ( $match->cancelled ) ? "CANCELLED" : "CONFIRMED",
+        description     => $description,
+        date_start_time => $match->actual_date->set( hour => $start_hour, minute => $start_minute ),
+        duration        => DateTime::Duration->new( minutes => $c->config->{Matches}{Team}{duration} ),
+        venue           => $match->venue,
+        url             => $c->uri_for_action("/matches/team/view_by_url_keys", $match->url_keys),
+      };
+      
+      push( @events, $event );
+    }
+    
+    # Now push the events into a calendar
+    my $calendar = $c->model("ICal")->add_events( \@events, {timezone => $c->stash->{timezone}} );
+    
+    # Content type is text/calendar
+    $c->response->header("Content-type" => "text/calendar");
+    $c->response->header("Content-Disposition" => 'attachment; filename="fixtures_' . $team->club->url_key . '-' . $team->url_key . '_' . $season->url_key . '"');
+    $c->response->body( $calendar->as_string );
+    $c->detach;
+  } else {
+    # Get the matches on this page
+    $matches = $c->model("DB::TeamMatch")->matches_for_team({
+      team              => $team,
+      season            => $season,
+      page_number       => $page_number,
+      results_per_page  => $c->config->{Pagination}{default_page_size},
+    });
+  }
   
   if ( $specific_season ) {
     if ( $page_number == 1 ) {
@@ -610,17 +667,6 @@ sub view_team :Private {
       $c->stash({canonical_uri => $c->uri_for_action("/fixtures-results/view_team_by_url_key_current_season_specific_page", [$team->club->url_key, $team->url_key, $page_number])});
     }
   }
-  
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["fixtures_view", $c->maketext("user.auth.view-fixtures"), 1] );
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( match_update match_cancel ) ], "", 0] );
-  
-  # Get the matches
-  $matches = $c->model("DB::TeamMatch")->matches_for_team({
-    team              => $team,
-    season            => $season,
-    page_number       => $page_number,
-    results_per_page  => $c->config->{Pagination}{default_page_size},
-  });
   
   # Work out the arguments and actions based on whether or not we've specified the season or just using the current one
   my ( $page1_action, $specific_page_action, $page1_arguments, $specific_page_arguments );
