@@ -1,0 +1,28 @@
+<form method="post" action="[% form_action %]" id="form">
+<fieldset>
+  <legend>[% c.maketext("calendar-types.form.calendar-type") %]</legend>
+  
+  <div class="label-field-container">
+    <label for="type">[% c.maketext("calendar-types.form.calendar-type") %]</label>
+    <div class="field-container">
+      <select id="type" name="type" data-placeholder="[% c.maketext("calendar-types.form.calendar-type") %]">
+        <option value=""></option>
+[%
+FOREACH calendar_type IN calendar_types;
+  # Set selected text if needed;
+  IF c.flash.type == calendar_type.id;
+    SET SELECTED = ' selected="selected"';
+  ELSE;
+    SET SELECTED = '';
+  END;
+-%]
+        <option value="[% calendar_type.id %]"[% SELECTED %]>[% calendar_type.name | html_entity %]</option>
+[%
+END;
+-%]
+      </select>
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+</fieldset>
+<input type="submit" name="Submit" value="[% c.maketext("form.button.submit") %]" />
