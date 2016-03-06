@@ -1428,6 +1428,10 @@ msgstr "Week beginning %1"
 msgid "fixtures-results.view-scorecard"
 msgstr "View scorecard"
 
+### Calendar types
+msgid "calendar-types.form.calendar-type"
+msgstr "Calendar type"
+
 ### Matches
 msgid "matches.versus-abbreviation"
 msgstr "v"
