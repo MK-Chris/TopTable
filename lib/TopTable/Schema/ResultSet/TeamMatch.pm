@@ -122,7 +122,7 @@ sub match_counts_by_month {
         month     => "scheduled_date"
       },
       order_by    => {
-        -asc            => "scheduled_date"
+        -asc      => "scheduled_date"
       },
     };
   } else {
@@ -143,9 +143,9 @@ sub match_counts_by_month {
       },
       order_by    => [
         {
-          -desc  => [ qw( season.complete start_date end_date ) ]
+          -desc   => [ qw( season.complete start_date end_date ) ]
         }, {
-          -asc   => "scheduled_date"
+          -asc    => "scheduled_date"
         }
       ],
     };
@@ -271,7 +271,7 @@ sub matches_for_team {
   );
   
   # If we have a page number and a number of results per page, paginate
-  if ( exists( $parameters->{page_number} ) and exists( $parameters->{results_per_page} ) ) {
+  if ( exists( $parameters->{page_number} ) or exists( $parameters->{results_per_page} ) ) {
     $page_number      = delete $parameters->{page_number};
     $results_per_page = delete $parameters->{results_per_page};
     
@@ -306,19 +306,7 @@ sub matches_in_division {
   my $season            = $parameters->{season};
   my $page_number       = $parameters->{page_number};
   my $results_per_page  = $parameters->{results_per_page};
-  
-  # Set a default for results per page if it's not provided or invalid
-  $results_per_page = 25 if !defined($results_per_page) or $results_per_page !~ m/^\d+$/;
-  
-  # Default the page number to 1
-  $page_number = 1 if !defined($page_number) or $page_number !~ m/^\d+$/;
-  
-  return $self->search({
-    season    => $season->id,
-    division  => $division->id,
-  }, {
-    page      => $page_number,
-    rows      => $results_per_page,
+  my $attributes        = {
     prefetch  => [{
       home_team  => "club"
     }, {
@@ -327,8 +315,22 @@ sub matches_in_division {
     "venue",],
     order_by  => {
       -asc => [ qw( scheduled_date club.short_name home_team.name ) ]
-    }
-  });
+    },
+  };
+  
+  # If we have a page number or a results_per_page parameter defined, we have to ensure both are provided and sane
+  if ( defined( $results_per_page ) or defined( $page_number ) ) {
+    $results_per_page = 25 if !defined($results_per_page) or $results_per_page !~ m/^\d+$/;
+    $page_number = 1 if !defined($page_number) or $page_number !~ m/^\d+$/;
+    
+    $attributes->{page} = $page_number;
+    $attributes->{rows} = $results_per_page;
+  }
+  
+  return $self->search({
+    season    => $season->id,
+    division  => $division->id,
+  }, $attributes);
 }
 
 =head2 matches_in_date_range
@@ -344,17 +346,7 @@ sub matches_in_date_range {
   my $season            = $parameters->{season};
   my $page_number       = $parameters->{page_number};
   my $results_per_page  = $parameters->{results_per_page};
-  
-  return $self->search({
-    "scheduled_week.season"   => $season->id,
-    "team_seasons.season"     => $season->id,
-    "division_seasons.season" => $season->id,
-    scheduled_date => {
-      -between => [$start_date->ymd, $end_date->ymd]
-    },
-  }, {
-    page      => $page_number,
-    rows      => $results_per_page,
+  my $attributes        = {
     prefetch  => [{
       home_team => ["club", {
         "team_seasons" => {
@@ -370,7 +362,25 @@ sub matches_in_date_range {
     order_by  =>  {
       -asc => [ qw( division.rank scheduled_date )]
     }
-  });
+  };
+  
+  # If we have a page number or a results_per_page parameter defined, we have to ensure both are provided and sane
+  if ( defined( $results_per_page ) or defined( $page_number ) ) {
+    $results_per_page = 25 if !defined($results_per_page) or $results_per_page !~ m/^\d+$/;
+    $page_number = 1 if !defined($page_number) or $page_number !~ m/^\d+$/;
+    
+    $attributes->{page} = $page_number;
+    $attributes->{rows} = $results_per_page;
+  }
+  
+  return $self->search({
+    "scheduled_week.season"   => $season->id,
+    "team_seasons.season"     => $season->id,
+    "division_seasons.season" => $season->id,
+    scheduled_date => {
+      -between => [$start_date->ymd, $end_date->ymd]
+    },
+  }, $attributes);
 }
 
 =head2 matches_in_week
@@ -385,22 +395,7 @@ sub matches_in_week {
   my $week              = $parameters->{week};
   my $page_number       = $parameters->{page_number};
   my $results_per_page  = $parameters->{results_per_page};
-  
-  # Set a default for results per page if it's not provided or invalid
-  $results_per_page = 25 if !defined($results_per_page) or $results_per_page !~ m/^\d+$/;
-  
-  # Default the page number to 1
-  $page_number = 1 if !defined($page_number) or $page_number !~ m/^\d+$/;
-  
-  
-  return $self->search({
-    "scheduled_week.season"   => $season->id,
-    "team_seasons.season"     => $season->id,
-    "division_seasons.season" => $season->id,
-    "scheduled_week.id"       => $week->id,
-  }, {
-    page      => $page_number,
-    rows      => $results_per_page,
+  my $attributes        = {
     prefetch  => [{
       home_team  => ["club", {
         "team_seasons" => {
@@ -416,7 +411,23 @@ sub matches_in_week {
     order_by  => {
       -asc => [ qw(division.rank scheduled_date club.short_name home_team.name) ]
     }
-  });
+  };
+  
+  # If we have a page number or a results_per_page parameter defined, we have to ensure both are provided and sane
+  if ( defined( $results_per_page ) or defined( $page_number ) ) {
+    $results_per_page = 25 if !defined($results_per_page) or $results_per_page !~ m/^\d+$/;
+    $page_number = 1 if !defined($page_number) or $page_number !~ m/^\d+$/;
+    
+    $attributes->{page} = $page_number;
+    $attributes->{rows} = $results_per_page;
+  }
+  
+  return $self->search({
+    "scheduled_week.season"   => $season->id,
+    "team_seasons.season"     => $season->id,
+    "division_seasons.season" => $season->id,
+    "scheduled_week.id"       => $week->id,
+  }, $attributes);
 }
 
 =head2 matches_on_date
@@ -510,11 +521,36 @@ sub matches_at_venue {
   my $results_per_page  = $parameters->{results_per_page};
   my ( $where );
   
-  # Set a default for results per page if it's not provided or invalid
-  $results_per_page = 25 if !defined($results_per_page) or $results_per_page !~ m/^\d+$/;
+  my $attributes = {
+    prefetch  => [{
+      home_team  => [
+        "club", {
+          team_seasons => {
+            division => "division_seasons"
+          },
+        }]
+      }, {
+        away_team => "club"
+      }, {
+        scheduled_week => "season"
+      },
+      "venue"
+    ],
+    order_by  => {
+      -asc => [
+        qw (scheduled_date division.rank)
+      ]
+    },
+  };
   
-  # Default the page number to 1
-  $page_number = 1 if !defined($page_number) or $page_number !~ m/^\d+$/;
+  # If we have a page number or a results_per_page parameter defined, we have to ensure both are provided and sane
+  if ( defined( $results_per_page ) or defined( $page_number ) ) {
+    $results_per_page = 25 if !defined($results_per_page) or $results_per_page !~ m/^\d+$/;
+    $page_number = 1 if !defined($page_number) or $page_number !~ m/^\d+$/;
+    
+    $attributes->{page} = $page_number;
+    $attributes->{rows} = $results_per_page;
+  }
   
   if ( $season ) {
     $where = {
@@ -529,31 +565,7 @@ sub matches_at_venue {
     };
   }
   
-  return $self->search($where, {
-    page      => $page_number,
-    rows      => $results_per_page,
-    prefetch  => [
-      {
-        home_team  => [
-          "club", {
-            team_seasons => {
-              division => "division_seasons"
-            },
-          }
-        ]
-      }, {
-        away_team => "club"
-      }, {
-        scheduled_week => "season"
-      },
-      "venue"
-    ],
-    order_by  => {
-      -asc => [
-        qw (scheduled_date division.rank)
-      ]
-    }
-  });
+  return $self->search($where, $attributes);
 }
 
 =head2 get_match_by_ids

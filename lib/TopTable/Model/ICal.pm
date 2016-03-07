@@ -37,9 +37,7 @@ sub ACCEPT_CONTEXT {
   # Create the geocoder object if we need to
   $self->{calendar} ||= Data::ICal->new(
     calname     => $c->config->{"Model::ICal"}{calname} || "TopTable",
-    rfc_strict  => 0,
-    audo_uid    => 1,
-    product_id  => "TopTable"
+    rfc_strict  => 1,
   );
   
   # Set an empty hashref for timezones we've seen already
@@ -63,6 +61,7 @@ sub add_events {
   foreach my $event ( @$events ) {
     my $timezone  = $event->{timezone};
     my $now_tz    = DateTime->now( time_zone => $timezone );
+    #$event->{date_start_time}->set_time_zone( $timezone );
     
     # Create the timezone definition unless it exists already
     unless ( exists( $self->{timezones}{$timezone} ) ) {
@@ -73,6 +72,7 @@ sub add_events {
     
     my $entry = Data::ICal::Entry::Event->new;
     $entry->add_properties(
+      uid             => $event->{uid},
       summary         => $event->{summary},
       status          => $event->{status},
       description     => $event->{description},
