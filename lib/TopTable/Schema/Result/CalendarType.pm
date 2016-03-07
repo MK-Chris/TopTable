@@ -79,6 +79,12 @@ URI to redirect to.  Enter {cal-uri} to replace with the URI that generates the 
 
 Enter a value, for example webcal, to change the calendar scheme URI to webcal://
 
+=head2 uri_escape_replacements
+
+  data_type: 'tinyint'
+  default_value: 0
+  is_nullable: 0
+
 =head2 display_order
 
   data_type: 'smallint'
@@ -104,6 +110,8 @@ __PACKAGE__->add_columns(
   { data_type => "varchar", is_nullable => 0, size => 500 },
   "calendar_scheme",
   { data_type => "varchar", is_nullable => 1, size => 10 },
+  "uri_escape_replacements",
+  { data_type => "tinyint", default_value => 0, is_nullable => 0 },
   "display_order",
   { data_type => "smallint", is_nullable => 0 },
 );
@@ -135,8 +143,8 @@ __PACKAGE__->set_primary_key("id");
 __PACKAGE__->add_unique_constraint("name", ["name"]);
 
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-03-06 19:54:14
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:853wffIxXK+2cxXVOvSYUQ
+# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-03-07 21:10:05
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:6FLyvfYwC5hXjHS3R2eUlg
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
