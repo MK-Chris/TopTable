@@ -290,8 +290,9 @@ Type: Row-level helper method to get the address with blank lines removed.
 =cut
 
 sub full_address {
-    my ( $self ) = @_;
+    my ( $self, $separator ) = @_;
     my @full_address = ();
+    $separator ||= "\n";
     
     # Add each address line if it's not blank
     push(@full_address, $self->address1) if $self->address1 ne "";
@@ -302,7 +303,7 @@ sub full_address {
     push(@full_address, $self->postcode) if $self->postcode ne "";
     
     # Return the string joined with linefeeds. 
-    return join("\n", @full_address);
+    return join($separator, @full_address);
 }
 
 =head2 can_delete
