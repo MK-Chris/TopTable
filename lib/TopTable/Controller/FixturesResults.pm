@@ -2308,28 +2308,19 @@ sub download :Private {
       
       # Loop through matches
       while ( my $match = $matches->next ) {
-        my ( $description );
-        
-        # Split the start time for 
-        my ( $start_hour, $start_minute ) = split( ":", $match->actual_start_time );
-        
-        if ( defined( $match->tournament_round ) ) {
-          
-        } else {
-          $description = sprintf( "%s: %s\n%s: %s\n%s: %s", $c->maketext("matches.field.competition"), $c->maketext("matches.field.competition.value.league"), $c->maketext("matches.field.division"), $match->division->name, $c->maketext("matches.field.season"), $match->season->name );
-        }
-        
-        my $event = {
-          uid             => sprintf( "matches.team.%s-%s.%s-%s.%s@%s", $match->home_team->club->url_key, $match->home_team->url_key, $match->away_team->club->url_key, $match->away_team->url_key, $match->actual_date->ymd("-"), $c->request->uri->host ),
-          summary         => sprintf( "%s %s %s %s %s", $match->home_team->club->short_name, $match->home_team->name, $c->maketext("matches.versus-abbreviation"), $match->away_team->club->short_name, $match->away_team->name ),
-          status          => ( $match->cancelled ) ? "CANCELLED" : "CONFIRMED",
-          description     => $description,
-          date_start_time => $match->actual_date->set( hour => $start_hour, minute => $start_minute ),
-          duration        => DateTime::Duration->new( minutes => $c->config->{Matches}{Team}{duration} ),
-          venue           => $match->venue,
-          url             => $c->uri_for_action("/matches/team/view_by_url_keys", $match->url_keys),
-          timezone        => $match->season->timezone,
-        };
+        my $event = $match->generate_ical_data(
+          get_language_components => sub{{
+            versus                  => $c->maketext("matches.versus-abbreviation"),
+            competition_heading     => $c->maketext("matches.field.competition"),
+            competition_league      => $c->maketext("matches.field.competition.value.league"),
+            competition_tournament  => $c->maketext("matches.field.competition.value.tournament"),
+            division_heading        => $c->maketext("matches.field.division"),
+            season_heading          => $c->maketext("matches.field.season"),
+          }},
+          get_host                  => sub{ $c->request->uri->host },
+          get_uri                   => sub{ $c->uri_for_action("/matches/team/view_by_url_keys", $_[0]) },
+          get_duration              => sub{ $c->config->{Matches}{Team}{duration} },
+        );
         
         push( @events, $event );
       }
