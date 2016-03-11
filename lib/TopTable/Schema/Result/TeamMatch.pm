@@ -875,6 +875,7 @@ __PACKAGE__->belongs_to(
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:HE+z9tIufJQqXKpCYhRTpQ
 
 use Try::Tiny;
+use DateTime::Duration;
 
 #
 # Enable automatic date handling
@@ -1733,6 +1734,39 @@ sub result {
   }
   
   return \%return_value;
+}
+
+=head2 generate_ical_data
+
+Generate a hashref of data that can be easily manipulated into iCal format.  Takes a get_uri, get_versus_abbreviation parameter as a hostname to generate things this model can't know about.
+
+=cut
+
+sub generate_ical_data {
+  my $self = shift;
+  my %parameters = @_;
+  
+  # Get the versus abbreviation
+  my $lang = &{ $parameters{get_language_components} };
+  
+  # Split the start time for setting the hour and minute
+  my ( $start_hour, $start_minute ) = split( ":", $self->actual_start_time );
+  
+  my $description = ( defined( $self->tournament_round ) )
+    ? undef
+    : sprintf( "%s: %s\n%s: %s\n%s: %s", $lang->{competition_heading}, $lang->{competition_league}, $lang->{division_heading}, $self->division->name, $lang->{season_heading}, $self->season->name );
+  
+  return {
+    uid             => sprintf( "matches.team.%s-%s.%s-%s.%s@%s", $self->home_team->club->url_key, $self->home_team->url_key, $self->away_team->club->url_key, $self->away_team->url_key, $self->actual_date->ymd("-"), &{ $parameters{get_host} } ),
+    summary         => sprintf( "%s %s %s %s %s", $self->home_team->club->short_name, $self->home_team->name, $lang->{versus}, $self->away_team->club->short_name, $self->away_team->name ),
+    status          => ( $self->cancelled ) ? "CANCELLED" : "CONFIRMED",
+    description     => $description,
+    date_start_time => $self->actual_date->set( hour => $start_hour, minute => $start_minute ),
+    duration        => DateTime::Duration->new( minutes => &{ $parameters{get_duration} } ),
+    venue           => $self->venue,
+    url             => $parameters{get_uri}->($self->url_keys),
+    timezone        => $self->season->timezone,
+  };
 }
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
