@@ -862,20 +862,47 @@ msgstr "There are no people to view."
 msgid "people.heading.contact-details"
 msgstr "Contact details"
 
-msgid "people.heading.season-summary"
-msgstr "<a href="%1">%2</a> summary"
-
 msgid "people.field.team-membership-type"
 msgstr "Membership type"
 
 msgid "people.field.averages-position"
 msgstr "Averages position"
 
+msgid "people.teams.loan"
+msgstr "Played on loan"
+
+msgid "people.teams.inactive"
+msgstr "Inactive"
+
+msgid "people.games"
+msgstr "Games played"
+
+msgid "people.no-games-played"
+msgstr "%1 has not played any games yet."
+
 msgid "people.message.did-not-enter"
 msgstr "%1 did not enter %2"
 
 msgid "people.delete.error.not-allowed"
 msgstr "%1 cannot be deleted because they have been involved in matches."
+
+msgid "people.opponents.date"
+msgstr "Date"
+
+msgid "people.opponents.playing-for"
+msgstr "Playing for"
+
+msgid "people.opponents.playing-against"
+msgstr "Playing against"
+
+msgid "people.opponents.opponent"
+msgstr "Opponent"
+
+msgid "people.opponents.score"
+msgstr "Score"
+
+msgid "people.opponents.result"
+msgstr "Result"
 
 ### Venues
 msgid "venues.create"

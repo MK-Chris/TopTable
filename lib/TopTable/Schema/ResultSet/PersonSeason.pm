@@ -32,22 +32,102 @@ A find() wrapper that also prefetches the teams and divisions; the 'active' memb
 =cut
 
 sub get_person_season_and_teams_and_divisions {
-  my ( $self, $person, $season ) = @_;
+  my ( $self, $parameters ) = @_;
+  my $person                    = $parameters->{person};
+  my $season                    = $parameters->{season};
+  my $separate_membership_types = $parameters->{separate_membership_types} || 0;
+  
+  if ( $separate_membership_types ) {
+    my %teams = (
+      # Get ACTIVE team
+      active  => $self->find({
+        person                    => $person->id,
+        "me.season"               => $season->id,
+        "team_seasons.season"     => $season->id,
+        "me.team_membership_type" => "active",
+      }, {
+        prefetch => {
+          team => {
+            team_seasons => [ qw( division club ) ],
+          },
+        },
+      }),
+      
+      # Get LOAN teams
+      loan  => $self->search({
+        person                    => $person->id,
+        "me.season"               => $season->id,
+        "team_seasons.season"     => $season->id,
+        "me.team_membership_type" => "loan",
+      }, {
+        prefetch => {
+          team => {
+            team_seasons => [ qw( division club ) ],
+          },
+        },
+        order_by => {
+          -asc => [ qw( division.rank club.short_name team.name ) ],
+        },
+      }),
+      
+      inactive  => $self->search({
+        person                    => $person->id,
+        "me.season"               => $season->id,
+        "team_seasons.season"     => $season->id,
+        "me.team_membership_type" => "inactive",
+      }, {
+        prefetch => {
+          team => {
+            team_seasons => [ qw( division club ) ],
+          },
+        },
+        order_by => {
+          -asc => [ qw( division.rank club.short_name team.name ) ],
+        },
+      }),
+    );
+    
+    return \%teams;
+  } else {
+    # We're not separating, just return as called.
+    return $self->search({
+      person                => $person->id,
+      "me.season"           => $season->id,
+      "team_seasons.season" => $season->id,
+    }, {
+      prefetch => ["team_membership_type", {
+        team => {
+          team_seasons => [ qw( division club ) ],
+        }
+      }],
+      order_by => {
+        -asc => [ qw( team_membership_type.display_order division.rank club.short_name team.name ) ],
+      },
+    });
+  }
+}
+
+=head2 get_team_membership_types_for_person_in_season
+
+Get a list of all team membership types that a person is using in the season
+
+=cut
+
+sub get_team_membership_types_for_person_in_season {
+  my ( $self, $parameters ) = @_;
+  my $person  = $parameters->{person};
+  my $season  = $parameters->{season};
   
   return $self->search({
-    person      => $person->id,
-    "me.season" => $season->id,
+      person      => $person->id,
+      "me.season" => $season->id,
   }, {
-    prefetch => ["team_membership_type", {
-      team => [
-        "club", {
-          "team_seasons" => "division"
-        }
-      ]
-    }],
-    order_by => {
-      -asc => "team_membership_type.display_order",
-    },
+    columns   => [ qw( team_membership_type.id ) ],
+    distinct  => 1,
+    join      => "team_membership_type",
+    order_by  => {
+      -asc    => [ qw( team_membership_type.display_order ) ]
+    }
   });
 }
 
