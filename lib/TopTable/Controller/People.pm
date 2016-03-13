@@ -244,6 +244,7 @@ sub view_specific_season :Chained("view") :PathPart("seasons") :Args(1) {
   }
   
   # Forward to the routine that stashes the team's season
+  $c->log->debug( "Get season" );
   $c->forward("get_person_season");
   
   # Push the current URI on to the breadcrumbs
@@ -269,31 +270,18 @@ sub get_person_season :Private {
   my ( $self, $c ) = @_;
   my ( $person, $season ) = ( $c->stash->{person}, $c->stash->{season} );
   
-  # If we've found a season, try and find the team's statistics and players from it
-  my $person_season_teams = [ $c->model("DB::PersonSeason")->get_person_season_and_teams_and_divisions( $person, $season ) ];
-  
-  foreach my $person_season_team ( @{$person_season_teams} ) {
-    my @people = $c->model("DB::PersonSeason")->get_people_in_division_in_singles_averages_order({
-      season  => $season,
-      division  => $person_season_team->team->team_seasons->first->division,
-    });
-    
-    # Loop through our people, counting up, until we find this person's ID
-    my $i = 0;
-    for my $person_position ( @people ) {
-      # Increment our count
-      $i++;
-      
-      # Exit the loop when we find the person
-      last if $person_position->person->id == $person->id;
-    }
-    
-    $c->stash->{teams}{$person_season_team->team->id}{position} = $i;
-  }
-  
+  my $games = $person->games_played_in_season({season => $season});
   $c->stash({
-    person_season_teams => $person_season_teams,
-    season              => $season,
+    teams   => [ $c->model("DB::PersonSeason")->get_person_season_and_teams_and_divisions({
+      person  => $person,
+      season  => $season,
+    }) ],
+    types   => [ $c->model("DB::PersonSeason")->get_team_membership_types_for_person_in_season({
+      person  => $person,
+      season  => $season,
+    }) ],
+    games   => $games,
+    season  => $season,
   });
 }
 
@@ -336,6 +324,14 @@ sub view_finalise :Private {
   # Set up the template to use
   $c->stash({
     template            => "html/people/view.ttkt",
+    external_scripts    => [
+      $c->uri_for("/static/script/plugins/responsive-tabs/jquery.responsiveTabs.mod.js"),
+      $c->uri_for("/static/script/standard/responsive-tabs.js"),
+    ],
+    external_styles     => [
+      $c->uri_for("/static/css/responsive-tabs/responsive-tabs.css"),
+      $c->uri_for("/static/css/responsive-tabs/style-jqueryui.css"),
+    ],
     title_links         => \@title_links,
     view_online_display => sprintf( "Viewing %s", $encoded_display_name ),
     view_online_link    => 1,
