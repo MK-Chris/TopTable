@@ -812,6 +812,50 @@ sub check_and_delete {
   return $error;
 }
 
+=head2 games_played_in_season
+
+Return a list of games played by the person in this season.
+
+=cut
+
+sub games_played_in_season {
+  my ( $self, $parameters ) = @_;
+  my $season = $parameters->{season};
+  
+  return $self->result_source->schema->resultset("TeamMatchGame")->search([{
+    home_player               => $self->id,
+    "team_match.season"       => $season->id,
+    "team_seasons.season"     => $season->id,
+    "team_seasons_2.season"   => $season->id,
+    "person_seasons.season"   => $season->id,
+    "person_seasons_2.season" => $season->id,
+  }, {
+    away_player               => $self->id,
+    "team_match.season"       => $season->id,
+    "team_seasons.season"     => $season->id,
+    "team_seasons_2.season"   => $season->id,
+    "person_seasons.season"   => $season->id,
+    "person_seasons_2.season" => $season->id,
+  }], {
+    prefetch  => ["winner", {
+      home_player => "person_seasons",
+      away_player => "person_seasons",
+      team_match  => [{
+        home_team => {
+          team_seasons => "club"
+        },
+      }, {
+        away_team => {
+          team_seasons => "club"
+        },
+      }],
+    }],
+    order_by  => {
+      -asc    => [ qw( team_match.scheduled_date me.actual_game_number ) ],
+    },
+  });
+}
+
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 __PACKAGE__->meta->make_immutable;
 1;

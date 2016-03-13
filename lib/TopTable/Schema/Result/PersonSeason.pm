@@ -683,6 +683,39 @@ __PACKAGE__->add_columns(
     { data_type => "datetime", timezone => "UTC", set_on_create => 1, set_on_update => 1, },
 );
 
+=head2 averages_position
+
+Get the averages position of this person for the team / season association.
+
+=cut
+
+sub averages_position {
+  my ( $self ) = @_;
+  my $season    = $self->season;
+  
+  my $division = $self->team->find_related("team_seasons", {
+    season => $season->id,
+  })->division;
+  
+  my @people = $self->result_source->resultset->get_people_in_division_in_singles_averages_order({
+    season    => $season,
+    division  => $division,
+  });
+  
+  # Loop through our people, counting up, until we find this person's ID
+  my $i = 0;
+  for my $person_position ( @people ) {
+    # Increment our count
+    $i++;
+    
+    # Return with the current position if we've found our person
+    last if $person_position->person->id == $self->person->id;
+  }
+  
+  # Return the position we found
+  return $i;
+}
+
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 __PACKAGE__->meta->make_immutable;
 1;
