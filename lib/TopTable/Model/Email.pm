@@ -9,12 +9,12 @@ __PACKAGE__->config(
     mail_client => {
       mailer => "SMTP",
       mailer_args => {
-        host => "mail.mkttl.co.uk",
-        username => 'admin@mkttl.co.uk',
-        password => "ReubenThomas2209",
+        host      => "mail.host.server.name",
+        username  => "email-user-name",
+        password  => "email-password",
       },
     },
-    from      => [ 'admin@mkttl.co.uk', "Milton Keynes Table Tennis League" ],
+    from      => [ 'from@domain.com', "From Display Name" ],
     template_args => {
       # Set the location for TT files
       INCLUDE_PATH => [
