@@ -83,6 +83,11 @@ IF matches.count;
       <a href="[% c.uri_for_action("/matches/team/cancel_by_url_keys", [match.home_team.club.url_key, match.home_team.url_key, match.away_team.club.url_key, match.away_team.url_key, date.year, month, day]) %]"><img src="[% c.uri_for("/static/images/icons/0006-Cross-icon-16.png") %]" width="16" height="16" title="[% c.maketext("matches.cancel") %]" /></a>
 [%
       END;
+      IF match.can_report( c.user );
+-%]
+      <a href="[% c.uri_for_action("/matches/team/report_by_url_keys", [match.home_team.club.url_key, match.home_team.url_key, match.away_team.club.url_key, match.away_team.url_key, date.year, month, day]) %]"><img src="[% c.uri_for("/static/images/icons/0037-Notepad-icon-16.png") %]" width="16" height="16" title="[% c.maketext("matches.report") %]" /></a>
+[%
+      END;
 -%]
     </td>
 [%

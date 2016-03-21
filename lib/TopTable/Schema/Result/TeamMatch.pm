@@ -299,11 +299,6 @@ References a person on the home team who has verified the result.
 
 References a person on the away team who has verified the result.
 
-=head2 report
-
-  data_type: 'longtext'
-  is_nullable: 1
-
 =head2 cancelled
 
   data_type: 'tinyint'
@@ -544,8 +539,6 @@ __PACKAGE__->add_columns(
     is_foreign_key => 1,
     is_nullable => 1,
   },
-  "report",
-  { data_type => "longtext", is_nullable => 1 },
   "cancelled",
   { data_type => "tinyint", default_value => 0, is_nullable => 0 },
 );
@@ -820,6 +813,25 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
+=head2 team_match_reports
+
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::TeamMatchReport>
+
+=cut
+
+__PACKAGE__->has_many(
+  "team_match_reports",
+  "TopTable::Schema::Result::TeamMatchReport",
+  {
+    "foreign.away_team"      => "self.away_team",
+    "foreign.home_team"      => "self.home_team",
+    "foreign.scheduled_date" => "self.scheduled_date",
+  },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
 =head2 team_match_template
 
 Type: belongs_to
@@ -871,11 +883,12 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-01-27 11:59:56
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:HE+z9tIufJQqXKpCYhRTpQ
+# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-03-15 21:13:22
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:8VXXWIQwO+CKZN/pK2gPVA
 
 use Try::Tiny;
 use DateTime::Duration;
+use Set::Object;
 
 #
 # Enable automatic date handling
@@ -1767,6 +1780,163 @@ sub generate_ical_data {
     url             => $parameters{get_uri}->($self->url_keys),
     timezone        => $self->season->timezone,
   };
+}
+
+=head2 get_reports
+
+Retrieve the reports for this match (reports is plural because it also retrieves previous edits of the report).  The live report (most recent edit) will always be the first record (if there are any); subsequent reports if there are any will be edits in descending date published order.
+
+=cut
+
+sub get_reports {
+  my ( $self ) = @_;
+  
+  return $self->search_related("team_match_reports", {}, {
+    prefetch => "author",
+    order_by => {
+      -desc => "published",
+    },
+  });
+}
+
+=head2 get_original_report
+
+Retrieve the original report for this match (useful for getting the author of the original report).
+
+=cut
+
+sub get_original_report {
+  my ( $self ) = @_;
+  
+  return $self->search_related("team_match_reports", {}, {
+    prefetch  => "author",
+    order_by  => {
+      -asc    => "published",
+    },
+    rows      => 1,
+  })->single;
+}
+
+=head2 get_original_report
+
+Retrieve the original report for this match (useful for getting the author of the original report).
+
+=cut
+
+sub get_latest_report {
+  my ( $self ) = @_;
+  
+  return $self->search_related("team_match_reports", {}, {
+    prefetch  => "author",
+    order_by  => {
+      -desc   => "published",
+    },
+    rows      => 1,
+  })->single;
+}
+
+=head2 can_report
+
+Test whether a match can be reported on.  If a user parameter is not passed, this just checks whether the match is in the current season and returns true if so and false if not; if a user and the authorisation check from the main app is passed, this will also perform an additional check (if the match is in the current season, otherwise it's pointless) that the user is authorised to submit reports for the team.
+
+=cut
+
+sub can_report {
+  my ( $self, $user ) = @_;
+  my $season = $self->season;
+  
+  # Just return false if the season is complete - no one can submit or edit a report in a completed season.
+  return 0 if $season->complete or !defined( $user );
+  
+  # Check the user is authorised to do this - first of all we check if there are any reports already
+  my $original_report = $self->get_original_report;
+  
+  # The roles the user has will always be the same regardless of the original; need roles depends on the situation
+  my $have_roles = Set::Object->new( $user->roles );
+  my @need_roles;
+  
+  if ( defined( $original_report ) ) {
+    # We have an original report, so we need to check if the current user is the original author before we can get the
+    # roles that will be allowed to edit.
+    
+    # Work out which field name we're looking for
+    my $auth_column = ( $original_report->author->id == $user->id ) ? "match_report_edit_own" : "match_report_edit_all";
+    
+    @need_roles = $self->result_source->schema->resultset("Role")->search({
+      $auth_column => 1
+    }, {
+      order_by => {
+        -asc => [ qw( name ) ],
+      },
+    });
+  } else {
+    # There is no report yet, so we need to check if the user is associated with any clubs or teams before we can get the
+    # roles that will be allowed to edit.
+    my $home_team = $self->home_team;
+    my $away_team = $self->away_team;
+    my $home_club = $self->home_team->club;
+    my $away_club = $self->away_team->club;
+    
+    my $auth_column = ( $user->plays_for({team => $home_team, season => $season}) or
+      $user->captain_for({team => $home_team, season => $season}) or
+      $user->plays_for({team => $away_team, season => $season}) or
+      $user->captain_for({team => $away_team, season => $season}) or
+      $user->secretary_for({club => $home_club}) or
+      $user->secretary_for({club => $away_club})
+      ) ? "match_report_create_associated"
+        : "match_report_create";
+    
+    @need_roles = $self->result_source->schema->resultset("Role")->search({
+      $auth_column => 1
+    }, {
+      order_by => {
+        -asc => [ qw( name ) ],
+      },
+    });
+  }
+  
+  # Extract the name column for each returned value
+  @need_roles = map( $_->name, @need_roles );
+  
+  my $need_roles = Set::Object->new( @need_roles );
+  if ( $have_roles->intersection( $need_roles )->size > 0 ) {
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+=head2 add_report
+
+Add a report to the match.
+
+=cut
+
+sub add_report {
+  my ( $self, $parameters ) = @_;
+  my %return_value = (errors => []);
+  my $report  = $parameters->{report};
+  my $user    = $parameters->{user};
+  my $lang    = $parameters->{lang};
+  my $raw_report = TopTable->model("FilterHTML")->filter( $report );
+  $raw_report =~ s/^\s+|\s+$//g;
+  
+  push( @{ $return_value{errors} }, $lang->("matches.report.error.not-authorised", $user->username) ) unless $self->can_report( $user );
+  push( @{ $return_value{errors} }, $lang->("matches.report.error.report-blank") ) unless $raw_report;
+  
+  # No errors so far, try and add a report
+  unless ( scalar( @{ $return_value{errors} } ) ) {
+    # Determine whether we're creating or editing
+    my $original_report = $self->get_original_report;
+    $return_value{action} = ( defined( $original_report ) ) ? "edit" : "create";
+    
+    my $report = $self->create_related("team_match_reports", {
+      author  => $user->id,
+      report  => TopTable->model("FilterHTML")->filter( $report, "textarea" ),
+    });
+  }
+  
+  return \%return_value;
 }
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

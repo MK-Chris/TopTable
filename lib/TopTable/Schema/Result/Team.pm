@@ -361,6 +361,24 @@ sub get_players {
   });
 }
 
+=head2 get_captain
+
+Retrieve the captain registered for this team for the given season.
+
+=cut
+
+sub get_captain {
+  my ( $self, $parameters ) = @_;
+  my $season = $parameters->{season};
+  
+  return $self->search_related("team_seasons", {
+    season => $season->id,
+  }, {
+    prefetch => "captain",
+    rows => 1, 
+  })->single->captain;
+}
+
 =head2 get_season
 
 Retrieve details for the specified season for this team.

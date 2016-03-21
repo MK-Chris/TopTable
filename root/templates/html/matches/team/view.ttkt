@@ -31,7 +31,13 @@ END;
     <li><a href="#teams">[% c.maketext("matches.heading.team-summaries") %]</a></li>
     <li><a href="#players">[% c.maketext("matches.heading.player-summaries") %]</a></li>
     <li><a href="#match-details">[% c.maketext("matches.heading.details") %]</a></li>
+[%
+IF reports;
+-%]
     <li><a href="#report">[% c.maketext("matches.heading.report") %]</a></li>
+[%
+END;
+-%]
   </ul>
   
   <div id="games">
@@ -434,7 +440,27 @@ END;
     </table>
   </div>
   
+[%
+IF reports;
+-%]
   <div id="report">
-    
+[%
+  IF reports > 1;
+    # Report has been edited
+-%]
+
+    <div id="edit-details">[% c.maketext("matches.report.publish-info-with-edits", c.i18n_datetime_format_datetime.format_datetime( original_report.published_date ), original_report.author.display_name, reports - 1, c.i18n_datetime_format_datetime.format_datetime( latest_report.published_date ), latest_report.author.display_name ) %]</div>
+[%
+  ELSE;
+    # Report has not been edited
+-%]
+    <div id="edit-details">[% c.maketext("matches.report.publish-info-no-edits", c.i18n_datetime_format_datetime.format_datetime( original_report.published_date ), original_report.author.display_name ) %]</div>
+[%
+  END;
+-%]
+    <div id="report-text">[% latest_report.report %]</div>
   </div>
+[%
+END;
+-%]
 </div>

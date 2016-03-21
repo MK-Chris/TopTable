@@ -306,6 +306,52 @@ __PACKAGE__->table("roles");
   extra: {unsigned => 1}
   is_nullable: 0
 
+=head2 match_report_create
+
+  data_type: 'tinyint'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 0
+
+If 1 the person can create match reports for any team.
+
+=head2 match_report_create_associated
+
+  data_type: 'tinyint'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 0
+
+If 1 the person can create match reports involving teams the user is associated with (by playing for or captaining the team or being secretary for the club)
+
+=head2 match_report_edit_own
+
+  data_type: 'tinyint'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 0
+
+=head2 match_report_edit_all
+
+  data_type: 'tinyint'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 0
+
+=head2 match_report_delete_own
+
+  data_type: 'tinyint'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 0
+
+=head2 match_report_delete_all
+
+  data_type: 'tinyint'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 0
+
 =head2 meeting_view
 
   data_type: 'tinyint'
@@ -964,6 +1010,48 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
+  "match_report_create",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
+  "match_report_create_associated",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
+  "match_report_edit_own",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
+  "match_report_edit_all",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
+  "match_report_delete_own",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
+  "match_report_delete_all",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
   "meeting_view",
   {
     data_type => "tinyint",
@@ -1419,8 +1507,8 @@ Composing rels: L</user_roles> -> user
 __PACKAGE__->many_to_many("users", "user_roles", "user");
 
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-02-02 09:27:06
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:ggi6exxqYs6ISbwyxunImQ
+# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-03-16 00:35:41
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:S4uZXOsue50wuf6B340Hiw
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

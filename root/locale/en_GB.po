@@ -1473,6 +1473,9 @@ msgstr "Update score"
 msgid "matches.cancel"
 msgstr "Cancel match"
 
+msgid "matches.report"
+msgstr "Write a match report"
+
 msgid "matches.update.form.legend.match-details"
 msgstr "Match details"
 
@@ -1899,6 +1902,27 @@ msgstr "Cancel this match?  (You may revisit this page and untick the box to und
 
 msgid "matches.cancel.points-awarded"
 msgstr "Points to award to %1"
+
+msgid "matches.report.heading"
+msgstr "Match report"
+
+msgid "matches.report.publish-info-no-edits"
+msgstr "Published %1 by %2."
+
+msgid "matches.report.publish-info-with-edits"
+msgstr "Published %1 by %2; edited %3 times, last on %4 by %5."
+
+msgid "matches.report.error.season-not-current"
+msgstr "You cannot create or edit match reports for matches in a season that has been completed."
+
+msgid "matches.report.error.not-authorised"
+msgstr "%1 is not authorised to report on this match."
+
+msgid "matches.report.error.report-blank"
+msgstr "The match report has not been filled out."
+
+msgid "matches.report.success"
+msgstr "The match report has been %1."
 
 ### Generic statistics
 msgid "stats.no-divisions"
@@ -2744,6 +2768,9 @@ msgstr "Delete"
 msgid "admin.update"
 msgstr "Update"
 
+msgid "admin.£"
+msgstr "Report"
+
 msgid "admin.cancel"
 msgstr "Cancel"
 
@@ -2771,6 +2798,9 @@ msgstr "Update %1"
 
 msgid "admin.cancel-object"
 msgstr "Cancel %1"
+
+msgid "admin.report-object"
+msgstr "Report on %1"
 
 msgid "admin.form.invalid-action"
 msgstr "Invalid action (%1) passed; the action must be &#39;create&#39; or &#39;edit&#39;."
@@ -2980,6 +3010,15 @@ msgstr "view matches"
 
 msgid "user.auth.update-matches"
 msgstr "update matches"
+
+msgid "user.auth.create-match-reports"
+msgstr "write a report for this match"
+
+msgid "user.auth.edit-match-reports"
+msgstr "edit this match report"
+
+msgid "user.auth.edit-match-reports"
+msgstr "delete this match report"
 
 msgid "user.auth.cancel-matches"
 msgstr "cancel matches"
@@ -3535,6 +3574,12 @@ msgstr "Cancelled %1%2."
 
 msgid "system-event-log.description.uncancel"
 msgstr "Undid the cancellation for %1%2."
+
+msgid "system-event-log.description.report-create"
+msgstr "Published a match report for %1%2."
+
+msgid "system-event-log.description.report-edit"
+msgstr "Edited a match report for %1%2."
 
 msgid "system-event-log.description.import"
 msgstr "Imported %1%2."

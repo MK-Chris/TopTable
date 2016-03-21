@@ -491,7 +491,7 @@ sub view_finalise :Private {
       $c->uri_for("/static/css/responsive-tabs/responsive-tabs.css"),
       $c->uri_for("/static/css/responsive-tabs/style-jqueryui.css"),
     ],
-    view_online_display => sprintf( "Viewing %s %s", $encoded_name ),
+    view_online_display => sprintf( "Viewing %s", $encoded_name ),
     view_online_link    => 1,
     no_filter           => 1, # Don't include the averages filter form on a team averages view
     matches             => $matches,

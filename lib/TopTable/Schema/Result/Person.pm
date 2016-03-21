@@ -688,8 +688,8 @@ __PACKAGE__->many_to_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-01-08 16:54:51
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:/zZ/bIljpo18UkEaEHqulA
+# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-03-21 21:51:46
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:dMz4v08d1MvpmEX2IjAl3g
 
 #
 # Row-level helper methods
@@ -854,6 +854,72 @@ sub games_played_in_season {
       -asc    => [ qw( team_match.scheduled_date me.actual_game_number ) ],
     },
   });
+}
+
+=head2 plays_for
+
+Returns true if the person plays for the specified team in the specified season.
+
+=cut
+
+sub plays_for {
+  my ( $self, $parameters ) = @_;
+  my $team    = $parameters->{team};
+  my $season  = $parameters->{season};
+  
+  my @players = $team->get_players({season => $season});
+  
+  # Start off with a default of false
+  my $plays_for = 0;
+  
+  # Loop through the players trying to find the person ID
+  foreach my $player ( @players ) {
+    if ( $player->person->id == $self->id ) {
+      # IDs match, set plays for to true
+      $plays_for = 1;
+      
+      # Exit the loop
+      last;
+    }
+  }
+  
+  return $plays_for;
+}
+
+=head2 captain_for
+
+Returns true if the person is captain for the specified team in the specified season.
+
+=cut
+
+sub captain_for {
+  my ( $self, $parameters ) = @_;
+  my $team    = $parameters->{team};
+  my $season  = $parameters->{season};
+  
+  # Get the team's captain
+  my $captain = $team->get_captain({season => $season});
+  $captain = $captain->id if defined( $captain );
+  
+  # Return true if the IDs match or false if not
+  return ( defined( $captain ) and $captain == $self->id ) ? 1 : 0;
+}
+
+=head2 secretary_for
+
+Returns true if the person is secretary for the specified club.
+
+=cut
+
+sub secretary_for {
+  my ( $self, $parameters ) = @_;
+  my $club = $parameters->{club};
+  
+  # Get the club's secretary
+  my $secretary = $club->secretary->id if defined( $club->secretary );
+  
+  # Return true if the IDs match or false if not
+  return ( defined( $secretary ) and $secretary == $self->id ) ? 1 : 0;
 }
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

@@ -547,6 +547,21 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
+=head2 team_match_reports
+
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::TeamMatchReport>
+
+=cut
+
+__PACKAGE__->has_many(
+  "team_match_reports",
+  "TopTable::Schema::Result::TeamMatchReport",
+  { "foreign.author" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
 =head2 user_ip_addresses_browsers
 
 Type: has_many
@@ -588,8 +603,8 @@ Composing rels: L</user_roles> -> role
 __PACKAGE__->many_to_many("roles", "user_roles", "role");
 
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-02-12 15:53:56
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:5WQryficE9sSSjiGW+qJsw
+# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-03-21 21:51:47
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:0/bf09wjOfmvMRQSdLbD2g
 
 use Digest::SHA qw( sha256_hex );
 use Time::HiRes;
@@ -764,6 +779,74 @@ sub reset_password {
   }
   
   return \@errors;
+}
+
+=head2 plays_for
+
+Returns true if the user plays for the specified team in the specified season.
+
+=cut
+
+sub plays_for {
+  my ( $self, $parameters ) = @_;
+  my $team    = $parameters->{team};
+  my $season  = $parameters->{season};
+  
+  # Get the person associated with this user
+  my $person = $self->person;
+  
+  # Return false straight away if there's no person associated
+  return 0 unless defined( $person );
+  
+  # Otherwise return the value of the same routine in the Person model
+  return $person->plays_for({
+    team    => $team,
+    season  => $season,
+  });
+}
+
+=head2 captain_for
+
+Returns true if the user is captain for the specified team in the specified season.
+
+=cut
+
+sub captain_for {
+  my ( $self, $parameters ) = @_;
+  my $team    = $parameters->{team};
+  my $season  = $parameters->{season};
+  
+  # Get the person associated with this user
+  my $person = $self->person;
+  
+  # Return false straight away if there's no person associated
+  return 0 unless defined( $person );
+  
+  # Otherwise return the value of the same routine in the Person model
+  return $person->captain_for({
+    team    => $team,
+    season  => $season,
+  });
+}
+
+=head2 secretary_for
+
+Returns true if the user is secretary for the specified club in the specified season.
+
+=cut
+
+sub secretary_for {
+  my ( $self, $parameters ) = @_;
+  my $club = $parameters->{club};
+  
+  # Get the person associated with this user
+  my $person = $self->person;
+  
+  # Return false straight away if there's no person associated
+  return 0 unless defined( $person );
+  
+  # Otherwise return the value of the same routine in the Person model
+  return $person->secretary_for({club => $club});
 }
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
