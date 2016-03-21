@@ -336,7 +336,7 @@ sub edit :Private {
   my $current_details = $article->current_details;
   
   # Check that we are authorised to edit this article
-  my $redirect_on_fail = 1 if !$c->user_exists;
+  my $redirect_on_fail = 1 if !$c->user_exists or ( $c->user_exists and $c->user->id != $article->updated_by_user->id );
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["news_article_edit_all", $c->maketext("user.auth.edit-news"), $redirect_on_fail] );
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["news_article_edit_own", $c->maketext("user.auth.edit-news"), 1] ) if !$c->stash->{authorisation}{news_article_edit_all} and $c->user_exists and $c->user->id == $article->updated_by_user->id;
   
@@ -396,7 +396,7 @@ sub delete :Private {
   
   # Check that we are authorised to delete this article
   # The second check (if we get to it) does not redirect, as we don't know the original creator of this article yet (or if the article even exists)
-  my $redirect_on_fail = 1 unless $c->user_exists;
+  my $redirect_on_fail = 1 if !$c->user_exists or ( $c->user_exists and $c->user->id != $article->updated_by_user->id );
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["news_article_delete_all", $c->maketext("user.auth.delete-news"), $redirect_on_fail] );
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["news_article_delete_own", $c->maketext("user.auth.delete-news"), 1] ) if !$c->stash->{authorisation}{news_article_edit_all} and $c->user_exists;
   

@@ -208,6 +208,12 @@ sub view :Private {
       text      => $c->maketext("admin.cancel-object",  $scoreless_name),
       link_uri  => $c->uri_for_action("/matches/team/cancel_by_url_keys", $match->url_keys),
     }) if $c->stash->{authorisation}{match_cancel};
+    
+    push(@title_links, {
+      image_uri => $c->uri_for("/static/images/icons/0037-Notepad-icon-32.png"),
+      text      => $c->maketext("admin.report-object",  $scoreless_name),
+      link_uri  => $c->uri_for_action("/matches/team/report_by_url_keys", $match->url_keys),
+    }) if $match->can_report( $c->user );
   }
   
   my $date = $match->actual_date->set_locale( $c->locale );
@@ -235,6 +241,9 @@ sub view :Private {
     subtitle2           => sprintf( "%s, %d %s %d", ucfirst( $date->day_name ), $match->actual_date->day, $match->actual_date->month_name, $match->actual_date->year ),
     view_online_display => sprintf( "Viewing match %s", $scoreless_name ),
     view_online_link    => 1,
+    reports             => $match->get_reports->count,
+    latest_report       => $match->get_latest_report,
+    original_report     => $match->get_original_report,
     canonical_uri       => $c->uri_for_action("/matches/team/view_by_url_keys", $match->url_keys),
   });
   
@@ -891,7 +900,7 @@ sub do_cancel :Private {
   my ( $self, $c ) = @_;
   my $match = $c->stash->{match};
   my $home_points_awarded = $c->request->parameters->{home_points_awarded};
-  my $away_points_awarded = $c->request->parameters->{away_points_awarded},
+  my $away_points_awarded = $c->request->parameters->{away_points_awarded};
   
   # Check that we are authorised to cancel matches
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["match_update", $c->maketext("user.auth.cancel-matches"), 1] );
@@ -944,6 +953,199 @@ sub do_cancel :Private {
   }
 }
 
+=head2 report_by_ids
+
+Report on a match using the information given in base_by_ids
+
+=cut
+
+sub report_by_ids :Chained("base_by_ids") :PathPart("report") :Args(0) {
+  my ( $self, $c ) = @_;
+  
+  # Forward to the real update routine
+  $c->detach( "report" );
+}
+
+=head2 report_by_url_keys
+
+Report on a match using the information given in base_by_ids
+
+=cut
+
+sub report_by_url_keys :Chained("base_by_url_keys") :PathPart("report") :Args(0) {
+  my ( $self, $c ) = @_;
+  
+  # Forward to the real update routine
+  $c->detach( "report" );
+}
+
+=head2 report
+
+Show the form fields for updating a match.
+
+=cut
+
+sub report :Private {
+  my ( $self, $c ) = @_;
+  my $match = $c->stash->{match};
+  
+  $c->forward( "check_report_create_edit_authorisation" );
+  
+  # Stash the template values
+  $c->stash({
+    template            => "html/matches/team/report.ttkt",
+    external_scripts    => [
+      $c->uri_for("/static/script/plugins/ckeditor/ckeditor.js"),
+      $c->uri_for("/static/script/plugins/ckeditor/adapters/jquery.js"),
+      $c->uri_for("/static/script/standard/ckeditor.js"),
+    ],
+    form_action         => $c->uri_for_action("/matches/team/publish_report_by_url_keys", $match->url_keys),
+    subtitle2           => $c->maketext("matches.report.heading"),
+    latest_report       => $match->get_latest_report,
+    view_online_display => "Writing a match report",
+    view_online_link    => 0,
+  });
+  
+  # Push the breadcrumbs links
+  push( @{ $c->stash->{breadcrumbs} }, {
+    path  => $c->uri_for_action("/matches/team/report_by_url_keys", $match->url_keys),
+    label => $c->maketext("admin.report"),
+  });
+}
+
+=head2 publish_report_by_ids
+
+Report on a match using the information given in base_by_ids
+
+=cut
+
+sub publish_report_by_ids :Chained("base_by_ids") :PathPart("publish-report") :Args(0) {
+  my ( $self, $c ) = @_;
+  
+  # Forward to the real update routine
+  $c->detach( "publish_report" );
+}
+
+=head2 publish_report_by_url_keys
+
+Report on a match using the information given in base_by_ids
+
+=cut
+
+sub publish_report_by_url_keys :Chained("base_by_url_keys") :PathPart("publish-report") :Args(0) {
+  my ( $self, $c ) = @_;
+  
+  # Forward to the real update routine
+  $c->detach( "publish_report" );
+}
+
+=head2 publish_report
+
+Process the form for publishing a match report.
+
+=cut
+
+sub publish_report :Private {
+  my ( $self, $c ) = @_;
+  my $match   = $c->stash->{match};
+  my $report  = $c->request->body_parameters->{report};
+  
+  # Check we're authorised
+  $c->forward( "check_report_create_edit_authorisation" );
+  
+  my $actioned = $match->add_report({
+    user  => $c->user,
+    report  => $report
+  });
+  
+  if ( scalar( @{ $actioned->{errors} } ) ) {
+    # Errors - build them into something we can show the user and redirect back to the form
+    $c->flash->{report} = $report;
+    my $errors = $c->build_message( $actioned->{errors} );
+    
+    $c->response->redirect( $c->uri_for_action("/matches/team/report_by_url_keys", $match->url_keys,
+                              {mid => $c->set_status_msg( {success => $errors} ) }) );
+    $c->detach;
+    return;
+  } else {
+    my $action = $actioned->{action};
+    
+    my $action_description = ( $action eq "create" ) ? "created" : "edited";
+    
+    $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["team-match", "report-$action", {home_team => $match->home_team->id, away_team => $match->away_team->id, scheduled_date => $match->scheduled_date->ymd}, sprintf("%s %s %s %s", $match->home_team->club->short_name, $match->home_team->name, $match->away_team->club->short_name, $match->away_team->name)] );
+    $c->response->redirect( $c->uri_for_action("/matches/team/view_by_url_keys", $match->url_keys,
+                              {mid => $c->set_status_msg( {success =>  $c->maketext("matches.report.success", $c->maketext("admin.message.$action_description"))} ) }) );
+    $c->detach;
+    return;
+  }
+}
+
+=head2 check_report_create_edit_authorisation
+
+Checks we're authorised to create or edit a report (whichever is necessary) for the stashed match.
+
+=cut
+
+sub check_report_create_edit_authorisation :Private {
+  my ( $self, $c ) = @_;
+  my $match     = $c->stash->{match};
+  my $season    = $match->season;
+  my $home_team = $match->home_team;
+  my $away_team = $match->away_team;
+  my $home_club = $match->home_team->club;
+  my $away_club = $match->away_team->club;
+  
+  if ( $season->complete ) {
+    # Season is not current, so we can't submit or edit a match report
+    $c->response->redirect( $c->uri_for_action("/matches/team/view_by_url_keys", $match->url_keys,
+                                {mid => $c->set_status_msg( {error => $c->maketext( "matches.report.error.season-not-current" )} ) }) );
+    $c->detach;
+    return;
+  }
+  
+  # Before we can auth this, we need to know if a reports exists - if it does, we'll be editing; if not, we'll be creating
+  my $reports                 = $match->get_reports;
+  my $original_report_number  = ( $reports->count > 0 ) ? $reports->count - 1 : 0;
+  
+  # The live report will always be the first one - and the original will always be the last one (report count - 1 in a zero-based list).
+  my ( $live_report )     = $reports->slice( 0, 0 );
+  my ( $original_report ) = $reports->slice( $original_report_number, $original_report_number );
+  
+  # If we have a live report, we're editing, otherwise we're creating.
+  my $action  = ( defined( $live_report ) ) ? "edit" : "create";
+  
+  if ( $action eq "create" ) {
+    # Creating - check we can create match reports
+    # Redirect on fail if:
+    #  * We're not logged in
+    #  * We are logged in and not associated with either the home club, home team, away club or away team in any way (by playing for or captaining the team or being secretary for the club)
+    my $redirect_on_fail = (
+      $c->user_exists and (
+        $c->user->plays_for({team => $home_team, season => $season}) or
+        $c->user->captain_for({team => $home_team, season => $season}) or
+        $c->user->plays_for({team => $away_team, season => $season}) or
+        $c->user->captain_for({team => $away_team, season => $season}) or
+        $c->user->secretary_for({club => $home_club}) or
+        $c->user->secretary_for({club => $away_club})
+      ) ) ? 0 : 1;
+    
+    # Now do the authorisation
+    $c->forward( "TopTable::Controller::Users", "check_authorisation", ["match_report_create", $c->maketext("user.auth.create-match-reports"), $redirect_on_fail] );
+    $c->forward( "TopTable::Controller::Users", "check_authorisation", ["match_report_create_associated", $c->maketext("user.auth.create-match-reports"), 1] ) unless $c->stash->{authorisation}{match_report_create};
+  } else {
+    # Editing - check we can edit the report for this match.
+    my $redirect_on_fail = ( $c->user_exists and ( $c->user->id == $original_report->author->id ) ) ? 0 : 1;
+    $c->forward( "TopTable::Controller::Users", "check_authorisation", ["match_report_edit_all", $c->maketext("user.auth.edit-match-reports"), $redirect_on_fail] );
+    $c->forward( "TopTable::Controller::Users", "check_authorisation", ["match_report_edit_own", $c->maketext("user.auth.edit-match-reports"), 1] ) if !$c->stash->{authorisation}{match_report_edit_all} and $c->user_exists and $c->user->id == $original_report->author->id;
+  }
+  
+  # Stash some values for the routines we're returning to
+  $c->stash({
+    reports         => $reports,
+    live_report     => $live_report,
+    original_report => $original_report,
+  });
+}
 
 =encoding utf8
 

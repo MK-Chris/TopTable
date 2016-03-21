@@ -161,6 +161,9 @@ sub create_or_edit {
   $return_value->{error} .= "The article content has not been filled out.\n" if !$raw_article_content;
   
   if ( !$return_value->{error} ) {
+    # Filter the HTML
+    $article_content = TopTable->model("FilterHTML")->filter( $article_content );
+    
     # Get the current year and month
     my $today = DateTime->today( time_zone => "UTC" );
     my ( $published_year, $published_month ) = ( $today->year, $today->month );

@@ -1,0 +1,8 @@
+<form method="post" action="[% form_action %]">
+<fieldset>
+  <legend>[% c.maketext("matches.report.heading") %]</legend>
+  <textarea id="report" name="report" rows="25" cols="100">[% c.flash.report OR latest_report.report %]</textarea><br />
+</fieldset>
+<input type="hidden" name="file_upload_type" id="file_upload_type" value="report" />
+<input type="submit" name="Submit" value="[% c.maketext("form.button.save") %]" />
+</form>

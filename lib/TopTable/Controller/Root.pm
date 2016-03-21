@@ -53,12 +53,6 @@ Routines to run on every page load.
 sub begin :Private {
   my ( $self, $c ) = @_;
   
-  # Disable SSL if in debug mode
-  if ( $c->debug ) {
-    $c->config->{require_ssl}{disabled}       = 1;
-    $c->config->{require_ssl}{ignore_on_post} = 1;
-  }
-  
   # Select the language if we have one - if not, the request headers sent by the browser will be used instead
   # Ensure dashes are replaced with underscores
   my $language = $c->get_locale_with_uri;

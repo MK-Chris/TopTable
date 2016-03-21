@@ -674,6 +674,7 @@ span.player_total_heading {
 span.news-published, #edit-details {
   font-style: italic;
   font-size: 0.9em;
+  margin-bottom: 10px;
 }
 
 div.doubles_home_player_selection, div.doubles_away_player_selection {
