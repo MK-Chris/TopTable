@@ -1060,9 +1060,11 @@ sub setup_person :Private {
   } else {
     my $person = $details->{person};
     
+    my $action_description = ( $action eq "create" ) ? "created" : "edited";
+    
     $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["person", $action, {id => $person->id}, $person->display_name] );
     $c->response->redirect( $c->uri_for_action("/people/view_current_season", [$person->url_key],
-                                {mid => $c->set_status_msg( {success => $c->maketext( "admin.forms.success", $person->display_name, $c->maketext("admin.message.$action") ) }) }) );
+                                {mid => $c->set_status_msg( {success => $c->maketext( "admin.forms.success", $person->display_name, $c->maketext("admin.message.$action_description") ) }) }) );
     $c->detach;
     return;
   }
