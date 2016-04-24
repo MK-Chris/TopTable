@@ -1,0 +1,16 @@
+[% # Note That the '-' at the beginning or end of TT code  -%]
+[% # "chomps" the whitespace/newline at that end of the    -%]
+[% # output (use View Source in browser to see the effect) -%]
+
+<div id="recipients">
+<h4>[% c.maketext("contact-reasons.recipients") %]</h4>
+
+[%
+FOREACH recipient IN reason.contact_reason_recipients;
+-%]
+<div class="list-item">
+  <a href="[% c.uri_for_action("/people/view_current_season", [recipient.person.url_key]) %]">[% recipient.person.display_name | html %]</a> ([% recipient.person.email_address | html_entity %])
+</div>
+[%
+END;
+-%]

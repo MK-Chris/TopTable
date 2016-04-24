@@ -1,0 +1,419 @@
+[%
+IF role.system;
+  SET role_name     = c.maketext("roles.name." _ role.name);
+  SET name_disabled = ' disabled="disabled"';
+  
+  IF role.sysadmin;
+    SET permissions_disabled = ' disabled="disabled"';
+  END;
+ELSE;
+  SET name_disabled = '';
+  IF c.flash.form_errored;
+    role_name = FILTER html_entity; c.flash.name; END;
+  ELSE;
+    role_name = FILTER html_entity; role.name; END;
+  END;
+END;
+-%]
+
+<form method="post" action="[% form_action %]">
+<fieldset>
+  <legend>[% c.maketext("roles.form.legend.details") %]</legend>
+  
+  <div class="form-column">
+    <div class="label-field-container">
+      <label for="name">[% c.maketext("role.name") %]</label>
+      <div class="field-container">
+        <input type="text" id="name" name="name"[% name_disabled %] value="[% role_name %]" />
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+  </div>
+  <div class="form-column">
+    
+  </div>
+</fieldset>
+
+<fieldset>
+  <legend>[% c.maketext("menu.text.clubs") %]</legend>
+  
+  <div class="form-column">
+    <input type="checkbox" name="club_view" id="club_view" value="1" data-category="club" data-permission="view" data-label="[% c.maketext("msg.view") %]" />
+    <div class="clear-fix"></div>
+    <input type="checkbox" name="club_create" id="club_create" value="1" data-category="club" data-permission="create" data-label="[% c.maketext("admin.create") %]" />
+    <div class="clear-fix"></div>
+  </div>
+  <div class="form-column">
+    <input type="checkbox" name="club_edit" id="club_edit" value="1" data-category="club" data-permission="edit" data-label="[% c.maketext("admin.edit") %]" />
+    <div class="clear-fix"></div>
+    <input type="checkbox" name="club_delete" id="club_delete" value="1" data-category="club" data-permission="delete" data-label="[% c.maketext("admin.delete") %]" />
+    <div class="clear-fix"></div>
+  </div>
+  <div class="clear-fix"></div>
+</fieldset>
+
+<fieldset>
+  <legend>[% c.maketext("menu.text.teams") %]</legend>
+  
+  <div class="form-column">
+    <input type="checkbox" name="team_view" id="team_view" value="1" data-category="team" data-permission="view" data-label="[% c.maketext("msg.view") %]" />
+    <div class="clear-fix"></div>
+    <input type="checkbox" name="team_create" id="team_create" value="1" data-category="team" data-permission="create" data-label="[% c.maketext("admin.create") %]" />
+    <div class="clear-fix"></div>
+  </div>
+  <div class="form-column">
+    <input type="checkbox" name="team_edit" id="team_edit" value="1" data-category="team" data-permission="edit" data-label="[% c.maketext("admin.edit") %]" />
+    <div class="clear-fix"></div>
+    <input type="checkbox" name="team_delete" id="team_delete" value="1" data-category="team" data-permission="delete" data-label="[% c.maketext("admin.delete") %]" />
+    <div class="clear-fix"></div>
+  </div>
+  <div class="clear-fix"></div>
+</fieldset>
+
+<fieldset>
+  <legend>[% c.maketext("menu.text.people") %]</legend>
+  
+  <div class="form-column">
+    <input type="checkbox" name="person_view" id="person_view" value="1" data-category="person" data-permission="view" data-label="[% c.maketext("msg.view") %]" />
+    <div class="clear-fix"></div>
+    <input type="checkbox" name="person_contact_view" id="person_contact_view" value="1" data-category="person" data-permission="view" data-label="[% c.maketext("msg.view-contact-details") %]" />
+    <div class="clear-fix"></div>
+  </div>
+  <div class="form-column">
+    <input type="checkbox" name="person_create" id="person_create" value="1" data-category="person" data-permission="create" data-label="[% c.maketext("admin.create") %]" />
+    <div class="clear-fix"></div>
+    <input type="checkbox" name="person_edit" id="person_edit" value="1" data-category="person" data-permission="edit" data-label="[% c.maketext("admin.edit") %]" />
+    <div class="clear-fix"></div>
+    <input type="checkbox" name="person_delete" id="person_delete" value="1" data-category="person" data-permission="delete" data-label="[% c.maketext("admin.delete") %]" />
+    <div class="clear-fix"></div>
+  </div>
+  <div class="clear-fix"></div>
+</fieldset>
+
+<fieldset>
+  <legend>[% c.maketext("menu.text.venues") %]</legend>
+  
+  <div class="form-column">
+    <input type="checkbox" name="venue_view" id="venue_view" value="1" data-category="venue" data-permission="view" data-label="[% c.maketext("msg.view") %]" />
+    <div class="clear-fix"></div>
+    <input type="checkbox" name="venue_create" id="venue_create" value="1" data-category="venue" data-permission="create" data-label="[% c.maketext("admin.create") %]" />
+    <div class="clear-fix"></div>
+  </div>
+  <div class="form-column">
+    <input type="checkbox" name="venue_edit" id="venue_edit" value="1" data-category="venue" data-permission="edit" data-label="[% c.maketext("admin.edit") %]" />
+    <div class="clear-fix"></div>
+    <input type="checkbox" name="venue_delete" id="venue_delete" value="1" data-category="venue" data-permission="delete" data-label="[% c.maketext("admin.delete") %]" />
+    <div class="clear-fix"></div>
+  </div>
+  <div class="clear-fix"></div>
+</fieldset>
+
+<fieldset>
+  <legend>[% c.maketext("menu.text.seasons") %]</legend>
+  
+  <div class="form-column">
+    <input type="checkbox" name="season_view" id="season_view" value="1" data-category="season" data-permission="view" data-label="[% c.maketext("msg.view") %]" />
+    <div class="clear-fix"></div>
+    <input type="checkbox" name="season_create" id="season_create" value="1" data-category="season" data-permission="create" data-label="[% c.maketext("admin.create") %]" />
+    <div class="clear-fix"></div>
+  </div>
+  <div class="form-column">
+    <input type="checkbox" name="season_edit" id="season_edit" value="1" data-category="season" data-permission="edit" data-label="[% c.maketext("admin.edit") %]" />
+    <div class="clear-fix"></div>
+    <input type="checkbox" name="season_delete" id="season_delete" value="1" data-category="season" data-permission="delete" data-label="[% c.maketext("admin.delete") %]" />
+    <div class="clear-fix"></div>
+  </div>
+  <div class="clear-fix"></div>
+</fieldset>
+
+<fieldset>
+  <legend>[% c.maketext("menu.text.fixtures") %]</legend>
+  
+  <div class="form-column">
+    <input type="checkbox" name="fixtures_view" id="fixtures_view" value="1" data-category="fixtures" data-permission="view" data-label="[% c.maketext("msg.view") %]" />
+    <div class="clear-fix"></div>
+    <input type="checkbox" name="fixtures_create" id="fixtures_create" value="1" data-category="fixtures" data-permission="create" data-label="[% c.maketext("admin.create") %]" />
+    <div class="clear-fix"></div>
+  </div>
+  <div class="form-column">
+    <input type="checkbox" name="fixtures_edit" id="fixtures_edit" value="1" data-category="fixtures" data-permission="edit" data-label="[% c.maketext("admin.edit") %]" />
+    <div class="clear-fix"></div>
+    <input type="checkbox" name="fixtures_delete" id="fixtures_delete" value="1" data-category="fixtures" data-permission="delete" data-label="[% c.maketext("admin.delete") %]" />
+    <div class="clear-fix"></div>
+  </div>
+  <div class="clear-fix"></div>
+</fieldset>
+
+<fieldset>
+  <legend>[% c.maketext("menu.text.matches") %]</legend>
+  
+  <div class="form-column">
+    <input type="checkbox" name="match_view" id="match_view" value="1" data-category="match" data-permission="view" data-label="[% c.maketext("msg.view") %]" />
+    <div class="clear-fix"></div>
+    <input type="checkbox" name="match_create" id="match_create" value="1" data-category="match" data-permission="create" data-label="[% c.maketext("admin.create") %]" />
+    <div class="clear-fix"></div>
+  </div>
+  <div class="form-column">
+    <input type="checkbox" name="match_edit" id="match_edit" value="1" data-category="match" data-permission="edit" data-label="[% c.maketext("admin.edit") %]" />
+    <div class="clear-fix"></div>
+    <input type="checkbox" name="match_delete" id="match_delete" value="1" data-category="match" data-permission="delete" data-label="[% c.maketext("admin.delete") %]" />
+    <div class="clear-fix"></div>
+  </div>
+  <div class="clear-fix"></div>
+</fieldset>
+
+<fieldset>
+  <legend>[% c.maketext("menu.text.match-reports") %]</legend>
+  
+  <div class="form-column">
+    <input type="checkbox" name="match_create" id="match_create" value="1" data-category="match_report" data-permission="view" data-label="[% c.maketext("role.permission.match-reports.create-any") %]" />
+    <div class="clear-fix"></div>
+    <input type="checkbox" name="match_create_associated" id="match_create_associated" value="1" data-category="match_report" data-permission="create" data-label="[% c.maketext("role.permission.match-reports.create-associated") %]" />
+    <div class="clear-fix"></div>
+    <input type="checkbox" name="match_edit_all" id="match_edit_all" value="1" data-category="match_report" data-permission="edit" data-label="[% c.maketext("role.permission.match-reports.edit-all") %]" />
+    <div class="clear-fix"></div>
+  </div>
+  <div class="form-column">
+    <input type="checkbox" name="match_edit_own" id="match_edit_own" value="1" data-category="match_report" data-permission="edit" data-label="[% c.maketext("role.permission.match-reports.edit-own") %]" />
+    <div class="clear-fix"></div>
+    <input type="checkbox" name="match_delete_all" id="match_delete_all" value="1" data-category="match_report" data-permission="delete" data-label="[% c.maketext("role.permission.match-reports.delete-all") %]" />
+    <div class="clear-fix"></div>
+    <input type="checkbox" name="match_delete_own" id="match_delete_own" value="1" data-category="match_report" data-permission="delete" data-label="[% c.maketext("role.permission.match-reports.delete-own") %]" />
+    <div class="clear-fix"></div>
+  </div>
+  <div class="clear-fix"></div>
+</fieldset>
+
+<fieldset>
+  <legend>[% c.maketext("menu.text.news") %]</legend>
+  
+  <div class="form-column">
+    <input type="checkbox" name="news_view" id="news_view" value="1" data-category="news" data-permission="view" data-label="[% c.maketext("msg.view") %]" />
+    <div class="clear-fix"></div>
+    <input type="checkbox" name="news_create" id="news_create" value="1" data-category="news" data-permission="create" data-label="[% c.maketext("admin.create") %]" />
+    <div class="clear-fix"></div>
+    <input type="checkbox" name="news_edit_all" id="news_edit_all" value="1" data-category="news" data-permission="edit" data-label="[% c.maketext("role.permission.news.edit-all") %]" />
+    <div class="clear-fix"></div>
+  </div>
+  <div class="form-column">
+    <input type="checkbox" name="news_edit" id="news_edit" value="1" data-category="news" data-permission="edit" data-label="[% c.maketext("role.permission.news.edit-own") %]" />
+    <div class="clear-fix"></div>
+    <input type="checkbox" name="news_delete_all" id="news_delete_all" value="1" data-category="news" data-permission="delete" data-label="[% c.maketext("role.permission.news.delete-all") %]" />
+    <div class="clear-fix"></div>
+    <input type="checkbox" name="news_delete_own" id="news_delete_own" value="1" data-category="news" data-permission="delete" data-label="[% c.maketext("role.permission.news.delete-own") %]" />
+    <div class="clear-fix"></div>
+  </div>
+  <div class="clear-fix"></div>
+</fieldset>
+
+<fieldset>
+  <legend>[% c.maketext("menu.title.officials") %]</legend>
+  
+  <div class="form-column">
+    <input type="checkbox" name="committee_view" id="committee_view" value="1" data-category="committee" data-permission="view" data-label="[% c.maketext("msg.view") %]" />
+    <div class="clear-fix"></div>
+    <input type="checkbox" name="committee_create" id="committee_create" value="1" data-category="committee" data-permission="create" data-label="[% c.maketext("admin.create") %]" />
+    <div class="clear-fix"></div>
+  </div>
+  <div class="form-column">
+    <input type="checkbox" name="committee_edit" id="committee_edit" value="1" data-category="committee" data-permission="edit" data-label="[% c.maketext("admin.edit") %]" />
+    <div class="clear-fix"></div>
+    <input type="checkbox" name="committee_delete" id="committee_delete" value="1" data-category="committee" data-permission="delete" data-label="[% c.maketext("admin.delete") %]" />
+    <div class="clear-fix"></div>
+  </div>
+  <div class="clear-fix"></div>
+</fieldset>
+
+<fieldset>
+  <legend>[% c.maketext("menu.text.events") %]</legend>
+  
+  <div class="form-column">
+    <input type="checkbox" name="event_view" id="event_view" value="1" data-category="event" data-permission="view" data-label="[% c.maketext("msg.view") %]" />
+    <div class="clear-fix"></div>
+    <input type="checkbox" name="event_create" id="event_create" value="1" data-category="event" data-permission="create" data-label="[% c.maketext("admin.create") %]" />
+    <div class="clear-fix"></div>
+  </div>
+  <div class="form-column">
+    <input type="checkbox" name="event_edit" id="event_edit" value="1" data-category="event" data-permission="edit" data-label="[% c.maketext("admin.edit") %]" />
+    <div class="clear-fix"></div>
+    <input type="checkbox" name="event_delete" id="event_delete" value="1" data-category="event" data-permission="delete" data-label="[% c.maketext("admin.delete") %]" />
+    <div class="clear-fix"></div>
+  </div>
+  <div class="clear-fix"></div>
+</fieldset>
+
+<fieldset>
+  <legend>[% c.maketext("menu.text.meetings") %]</legend>
+  
+  <div class="form-column">
+    <input type="checkbox" name="meeting_view" id="meeting_view" value="1" data-category="meeting" data-permission="view" data-label="[% c.maketext("msg.view") %]" />
+    <div class="clear-fix"></div>
+    <input type="checkbox" name="meeting_create" id="meeting_create" value="1" data-category="meeting" data-permission="create" data-label="[% c.maketext("admin.create") %]" />
+    <div class="clear-fix"></div>
+  </div>
+  <div class="form-column">
+    <input type="checkbox" name="meeting_edit" id="meeting_edit" value="1" data-category="meeting" data-permission="edit" data-label="[% c.maketext("admin.edit") %]" />
+    <div class="clear-fix"></div>
+    <input type="checkbox" name="meeting_delete" id="meeting_delete" value="1" data-category="meeting" data-permission="delete" data-label="[% c.maketext("admin.delete") %]" />
+    <div class="clear-fix"></div>
+  </div>
+  <div class="clear-fix"></div>
+</fieldset>
+
+<fieldset>
+  <legend>[% c.maketext("menu.text.tournaments") %]</legend>
+  
+  <div class="form-column">
+    <input type="checkbox" name="tournament_view" id="tournament_view" value="1" data-category="tournament" data-permission="view" data-label="[% c.maketext("msg.view") %]" />
+    <div class="clear-fix"></div>
+    <input type="checkbox" name="tournament_create" id="tournament_create" value="1" data-category="tournament" data-permission="create" data-label="[% c.maketext("admin.create") %]" />
+    <div class="clear-fix"></div>
+  </div>
+  <div class="form-column">
+    <input type="checkbox" name="tournament_edit" id="tournament_edit" value="1" data-category="tournament" data-permission="edit" data-label="[% c.maketext("admin.edit") %]" />
+    <div class="clear-fix"></div>
+    <input type="checkbox" name="tournament_delete" id="tournament_delete" value="1" data-category="tournament" data-permission="delete" data-label="[% c.maketext("admin.delete") %]" />
+    <div class="clear-fix"></div>
+  </div>
+  <div class="clear-fix"></div>
+</fieldset>
+
+<fieldset>
+  <legend>[% c.maketext("menu.text.average-filters") %]</legend>
+  
+  <div>
+    <div class="form-column">
+      <input type="checkbox" name="average_filter_create_public" id="average_filter_create_public" value="1" data-category="average_filter_public" data-permission="create" data-label="[% c.maketext("role.permission.average-filters.create-public") %]" />
+      <div class="clear-fix"></div>
+      <input type="checkbox" name="average_filter_edit_public" id="average_filter_edit_public" value="1" data-category="average_filter_public" data-permission="edit" data-label="[% c.maketext("role.permission.average-filters.edit-public") %]" />
+      <div class="clear-fix"></div>
+    </div>
+    <div class="form-column">
+      <input type="checkbox" name="average_filter_delete_public" id="average_filter_delete_public" value="1" data-category="average_filter_public" data-permission="delete" data-label="[% c.maketext("role.permission.average-filters.delete-public") %]" />
+      <div class="clear-fix"></div>
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+  
+  <div>
+    <div class="form-column">
+      <input type="checkbox" name="average_filter_view_all" id="average_filter_view_all" value="1" data-category="average_filter_all" data-permission="view" data-label="[% c.maketext("role.permission.average-filters.view-all") %]" />
+      <div class="clear-fix"></div>
+      <input type="checkbox" name="average_filter_edit_all" id="average_filter_edit_all" value="1" data-category="average_filter_all" data-permission="edit" data-label="[% c.maketext("role.permission.average-filters.edit-all") %]" />
+      <div class="clear-fix"></div>
+    </div>
+    <div class="form-column">
+      <input type="checkbox" name="average_filter_delete_all" id="average_filter_delete_all" value="1" data-category="average_filter_all" data-permission="delete" data-label="[% c.maketext("role.permission.average-filters.delete-all") %]" />
+      <div class="clear-fix"></div>
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+</fieldset>
+
+<fieldset>
+  <legend>[% c.maketext("menu.text.contact-reasons") %]</legend>
+  
+  <div class="form-column">
+    <input type="checkbox" name="contact_reason_view" id="contact_reason_view" value="1" data-category="contact_reason" data-permission="view" data-label="[% c.maketext("msg.view") %]" />
+    <div class="clear-fix"></div>
+    <input type="checkbox" name="contact_reason_create" id="contact_reason_create" value="1" data-category="contact_reason" data-permission="create" data-label="[% c.maketext("admin.create") %]" />
+    <div class="clear-fix"></div>
+  </div>
+  <div class="form-column">
+    <input type="checkbox" name="contact_reason_edit" id="contact_reason_edit" value="1" data-category="contact_reason" data-permission="edit" data-label="[% c.maketext("admin.edit") %]" />
+    <div class="clear-fix"></div>
+    <input type="checkbox" name="contact_reason_delete" id="contact_reason_delete" value="1" data-category="contact_reason" data-permission="delete" data-label="[% c.maketext("admin.delete") %]" />
+    <div class="clear-fix"></div>
+  </div>
+  <div class="clear-fix"></div>
+</fieldset>
+
+<fieldset>
+  <legend>[% c.maketext("menu.text.meeting-types") %]</legend>
+  
+  <div class="form-column">
+    <input type="checkbox" name="meeting_type_view" id="meeting_type_view" value="1" data-category="meeting_type" data-permission="view" data-label="[% c.maketext("msg.view") %]" />
+    <div class="clear-fix"></div>
+    <input type="checkbox" name="meeting_type_create" id="meeting_type_create" value="1" data-category="meeting_type" data-permission="create" data-label="[% c.maketext("admin.create") %]" />
+    <div class="clear-fix"></div>
+  </div>
+  <div class="form-column">
+    <input type="checkbox" name="meeting_type_edit" id="meeting_type_edit" value="1" data-category="meeting_type" data-permission="edit" data-label="[% c.maketext("admin.edit") %]" />
+    <div class="clear-fix"></div>
+    <input type="checkbox" name="meeting_type_delete" id="meeting_type_delete" value="1" data-category="meeting_type" data-permission="delete" data-label="[% c.maketext("admin.delete") %]" />
+    <div class="clear-fix"></div>
+  </div>
+  <div class="clear-fix"></div>
+</fieldset>
+
+<fieldset>
+  <legend>[% c.maketext("menu.text.templates") %]</legend>
+  
+  <div class="form-column">
+    <input type="checkbox" name="template_view" id="template_view" value="1" data-category="template" data-permission="view" data-label="[% c.maketext("msg.view") %]" />
+    <div class="clear-fix"></div>
+    <input type="checkbox" name="template_create" id="template_create" value="1" data-category="template" data-permission="create" data-label="[% c.maketext("admin.create") %]" />
+    <div class="clear-fix"></div>
+  </div>
+  <div class="form-column">
+    <input type="checkbox" name="template_edit" id="template_edit" value="1" data-category="template" data-permission="edit" data-label="[% c.maketext("admin.edit") %]" />
+    <div class="clear-fix"></div>
+    <input type="checkbox" name="template_delete" id="template_delete" value="1" data-category="template" data-permission="delete" data-label="[% c.maketext("admin.delete") %]" />
+    <div class="clear-fix"></div>
+  </div>
+  <div class="clear-fix"></div>
+</fieldset>
+
+<fieldset>
+  <legend>[% c.maketext("menu.text.roles") %]</legend>
+  
+  <div class="form-column">
+    <input type="checkbox" name="role_view" id="role_view" value="1" data-category="role" data-permission="view" data-label="[% c.maketext("msg.view") %]" />
+    <div class="clear-fix"></div>
+    <input type="checkbox" name="role_create" id="role_create" value="1" data-category="role" data-permission="create" data-label="[% c.maketext("admin.create") %]" />
+    <div class="clear-fix"></div>
+  </div>
+  <div class="form-column">
+    <input type="checkbox" name="role_edit" id="role_edit" value="1" data-category="role" data-permission="edit" data-label="[% c.maketext("admin.edit") %]" />
+    <div class="clear-fix"></div>
+    <input type="checkbox" name="role_delete" id="role_delete" value="1" data-category="role" data-permission="delete" data-label="[% c.maketext("admin.delete") %]" />
+    <div class="clear-fix"></div>
+  </div>
+  <div class="clear-fix"></div>
+</fieldset>
+
+<fieldset>
+  <legend>[% c.maketext("menu.text.users") %]</legend>
+  
+  <div class="form-column">
+    <input type="checkbox" name="user_view" id="user_view" value="1" data-category="user" data-permission="view" data-label="[% c.maketext("msg.view") %]" />
+    <div class="clear-fix"></div>
+    <input type="checkbox" name="view_users_ip" id="view_users_ip" value="1" data-category="user" data-permission="view" data-label="[% c.maketext("role.permission.user.view-ip") %]" />
+    <div class="clear-fix"></div>
+    <input type="checkbox" name="view_users_user_agent" id="view_users_user_agent" value="1" data-category="user" data-permission="view" data-label="[% c.maketext("role.permission.user.view-user-agent") %]" />
+    <div class="clear-fix"></div>
+    <input type="checkbox" name="user_edit_own" id="user_edit_own" value="1" data-category="user" data-permission="edit" data-label="[% c.maketext("role.permission.user.edit-own") %]" />
+    <div class="clear-fix"></div>
+  </div>
+  <div class="form-column">
+    <input type="checkbox" name="user_edit_all" id="user_edit_all" value="1" data-category="user" data-permission="edit" data-label="[% c.maketext("role.permission.user.edit-all") %]" />
+    <div class="clear-fix"></div>
+    <input type="checkbox" name="delete_own" id="delete_own" value="1" data-category="user" data-permission="delete" data-label="[% c.maketext("role.permission.user.delete-own") %]" />
+    <div class="clear-fix"></div>
+    <input type="checkbox" name="delete_all" id="delete_all" value="1" data-category="user" data-permission="delete" data-label="[% c.maketext("role.permission.user.delete-all") %]" />
+    <div class="clear-fix"></div>
+  </div>
+  <div class="clear-fix"></div>
+</fieldset>
+
+<fieldset>
+  <legend>[% c.maketext("menu.text.system-event-log") %]</legend>
+  
+  <div class="form-column-single">
+    <input type="checkbox" name="system_event_log_view_all" id="system_event_log_view_all" value="1" data-category="event-log" data-permission="view" data-label="[% c.maketext("role.permission.system-event-log.view-all") %]" />
+    <div class="clear-fix"></div>
+  <div class="clear-fix"></div>
+</fieldset>
+
+<input type="submit" id="submit" name="submit" value="[% c.maketext("form.button.save") %]" />
+</form>

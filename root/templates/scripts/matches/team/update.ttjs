@@ -56,9 +56,9 @@ FOREACH game IN match.team_match_games;
 -%]
 
     home_team_legs: [% game.home_team_legs_won %],
-    home_team_legs: [% game.home_team_legs_won %],
+    away_team_legs: [% game.away_team_legs_won %],
     home_team_points: [% game.home_team_points_won %],
-    home_team_points: [% game.home_team_points_won %],
+    away_team_points: [% game.away_team_points_won %],
     home_team_game_score: [% home_game_score %],
     away_team_game_score: [% away_game_score %],
     home_team_match_score: [% game.home_team_match_score %],

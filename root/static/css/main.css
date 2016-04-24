@@ -776,6 +776,9 @@ span.team-position-name {padding-left: 30px;}
 td.match-score, td.match-versus {text-align: center;}
 td.match-score {padding: 0;}
 
+/* System roles */
+.system {font-weight: bold;}
+
 /* Start by setting display:none to make this hidden.
    Then we position it in relation to the viewport window
    with position:fixed. Width, height, top and left speak

@@ -23,7 +23,7 @@ sub all_reasons {
 
 =head2 page_records
 
-Retrieve a paginated list of seasons.  If an object is specified (i.e., club, team, division, person), the list is limited to the seasons that involve the specified object
+Retrieve a paginated list of contact reasons.  If an object is specified (i.e., club, team, division, person), the list is limited to the seasons that involve the specified object
 
 =cut
 
@@ -65,7 +65,7 @@ sub check {
   });
 }
 
-=head2 find_key
+=head2 find_url_key
 
 Same as find(), but uses the key column instead of the id.  So we can use human-readable URLs.
 
@@ -146,7 +146,7 @@ sub generate_url_key {
 
 =head2 create_or_edit
 
-Provides the wrapper (including error checking) for adding / editing a meeting type.
+Provides the wrapper (including error checking) for adding / editing a contact reason.
 
 =cut
 

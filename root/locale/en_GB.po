@@ -38,6 +38,9 @@ msgstr "Fixtures &amp; Results for %1 by venue"
 msgid "menu.title.fixtures-results-by-division"
 msgstr "Fixtures &amp; Results for %1 by division"
 
+msgid "menu.text.fixtures"
+msgstr "Fixtures"
+
 msgid "menu.text.results"
 msgstr "Results"
 
@@ -89,6 +92,9 @@ msgstr "Team matches"
 
 msgid "menu.text.team-matches-breadcrumbs"
 msgstr "Team"
+
+msgid "menu.text.match-reports"
+msgstr "Match reports"
 
 ## Statistics / league tables / league averages / divisions
 msgid "menu.text.divisions"
@@ -265,6 +271,10 @@ msgstr "Profile"
 msgid "menu.title.user.profile"
 msgstr "User Profile"
 
+## Roles
+msgid "menu.text.roles"
+msgstr "User Roles"
+
 ## Event log
 msgid "menu.text.system-event-log"
 msgstr "Event log"
@@ -302,6 +312,9 @@ msgstr "League table ranking"
 
 msgid "menu.text.meeting-types"
 msgstr "Meeting types"
+
+msgid "menu.text.tournaments"
+msgstr "Tournaments"
 
 ### Home page
 msgid "home-page.welcome"
@@ -2768,7 +2781,7 @@ msgstr "Delete"
 msgid "admin.update"
 msgstr "Update"
 
-msgid "admin.£"
+msgid "admin.report"
 msgstr "Report"
 
 msgid "admin.cancel"
@@ -3068,6 +3081,21 @@ msgstr "edit this user"
 msgid "user.auth.view-online-users"
 msgstr "view online users"
 
+msgid "user.auth.view-roles"
+msgstr "view roles"
+
+msgid "user.auth.create-roles"
+msgstr "create roles"
+
+msgid "user.auth.edit-roles"
+msgstr "edit roles"
+
+msgid "user.auth.delete-roles"
+msgstr "delete roles"
+
+msgid "user.auth.edit-role-members"
+msgstr "edit role members"
+
 msgid "user.auth.view-meetings"
 msgstr "view meetings"
 
@@ -3164,6 +3192,9 @@ msgstr "Current password"
 msgid "user.field.html-emails"
 msgstr "Receive emails in HTML?"
 
+msgid "user.field.roles"
+msgstr "Roles"
+
 msgid "user.person.name"
 msgstr "Full name"
 
@@ -3196,6 +3227,9 @@ msgstr "Localisation"
 
 msgid "user.form.legend.preferences"
 msgstr "Preferences"
+
+msgid "user.form.legend.permissions"
+msgstr "Permissions"
 
 msgid "user.person.not-associated"
 msgstr "%1 is not associated with a person."
@@ -3254,8 +3288,23 @@ msgstr "The timezone is invalid."
 msgid "user.form.error.timezone-blank"
 msgstr "Please select a timezone."
 
+msgid "user.form.warning.one-or-more-roles-invalid"
+msgstr "%1 of the specified roles were invalid, so haven&#39;t been assigned to the user; check assigned roles and add some more required roles if necessary."
+
+msgid "user.form.error.no-valid-roles"
+msgstr "This user has been edited with no valid roles; all registered users must have at least one role assigned."
+
+msgid "user.form.warning.cant-add-to-anonymous"
+msgstr "You cannot add users to the Anonymous role, so that role has not been assigned."
+
+msgid "user.form.warning.cant-remove-last-sysadmin"
+msgstr "You cannot remove %1 from the Administrators group because they are the only member of the group and Administrators must have at least one member."
+
 msgid "user.edit.success"
 msgstr "%1 has been edited successfully."
+
+msgid "user.edit.success-with-warnings"
+msgstr "%1 has been successfully edited, but the warnings below should be noted."
 
 msgid "user.tokeninput.type-person-association"
 msgstr "Start typing a username to associate this person with a website login"
@@ -3292,6 +3341,112 @@ msgstr "Password changed"
 
 msgid "user.forgot-password.password-changed"
 msgstr "Thank you %1; your password has been changed.  You may now <a href="%2">login</a> with the new password."
+
+### Roles
+msgid "roles.none"
+msgstr "There are no roles to view."
+
+msgid "roles.name.administrators"
+msgstr "Administrators"
+
+msgid "roles.name.anonymous"
+msgstr "Anonymous"
+
+msgid "roles.name.league-officials"
+msgstr "League Officials"
+
+msgid "roles.name.registered-users"
+msgstr "Registered Users"
+
+msgid "roles.system.notice"
+msgstr "Roles in <span class="system">bold</span> are built-in and cannot be deleted."
+
+msgid "roles.form.error.role-invalid"
+msgstr "The role specified was invalid."
+
+msgid "roles.form.error.name-exists"
+msgstr "A role with the name &#39;%1&#39; already exists."
+
+msgid "roles.form.error.name-blank"
+msgstr "The name field is blank."
+
+msgid "roles.form.warning.users-invalid"
+msgstr "The members submitted included %1 invalid member; check the role&#39;s member list after to see if you need to add anyone else to the role."
+
+msgid "roles.form.legend.details"
+msgstr "Role details"
+
+msgid "role.name"
+msgstr "Name"
+
+msgid "role.permission.average-filters.create-public"
+msgstr "Create public filters (usable by anyone)"
+
+msgid "role.permission.average-filters.edit-public"
+msgstr "Edit public filters (usable by anyone)"
+
+msgid "role.permission.average-filters.delete-public"
+msgstr "Delete public filters (usable by anyone)"
+
+msgid "role.permission.average-filters.view-all"
+msgstr "View private filters created by others"
+
+msgid "role.permission.average-filters.edit-all"
+msgstr "Edit private filters created by others"
+
+msgid "role.permission.average-filters.delete-all"
+msgstr "Delete private filters created by others"
+
+msgid "role.permission.match-reports.create-any"
+msgstr "Create (regardless of association with team or club)"
+
+msgid "role.permission.match-reports.create-associated"
+msgstr "Create (where the user is associated with the team or club)"
+
+msgid "role.permission.match-reports.edit-all"
+msgstr "Edit any report"
+
+msgid "role.permission.match-reports.edit-own"
+msgstr "Edit their own reports"
+
+msgid "role.permission.match-reports.delete-all"
+msgstr "Delete any report"
+
+msgid "role.permission.match-reports.delete-own"
+msgstr "Delete their own reports"
+
+msgid "role.permission.news.edit-all"
+msgstr "Edit any article"
+
+msgid "role.permission.news.edit-own"
+msgstr "Edit their own articles"
+
+msgid "role.permission.news.delete-all"
+msgstr "Delete any article"
+
+msgid "role.permission.news.delete-own"
+msgstr "Delete their own articles"
+
+msgid "role.permission.user.edit-own"
+msgstr "Edit own user profile"
+
+msgid "role.permission.user.edit-all"
+msgstr "Edit any user profile"
+
+msgid "role.permission.user.delete-own"
+msgstr "Delete own user"
+
+msgid "role.permission.user.delete-all"
+msgstr "Delete any user"
+
+msgid "role.permission.user.view-ip"
+msgstr "View users' IP addresses"
+
+msgid "role.permission.user.view-user-agent"
+msgstr "View users' browsers"
+
+msgid "role.permission.system-event-log.view-all"
+msgstr "View private events"
 
 ### File / image uploads / downloads
 msgid "file.upload.error.copy-failure"
@@ -3354,6 +3509,12 @@ msgstr "Yes"
 
 msgid "msg.no"
 msgstr "No"
+
+msgid "msg.view"
+msgstr "View"
+
+msgid "msg.view-contact-details"
+msgstr "View contact details"
 
 msgid "msg.insecure-password-form"
 msgstr "This web site is not currently being served on a secure connection and you are about to fill in a form that has a password field; it's recommended that you use the <a href="%1">secure form</a> instead if possible, but bear in mind that the security certificate uses modern ciphers that are not compatible with Windows XP (which itself is no longer supported by Microsoft)."
@@ -3698,6 +3859,12 @@ msgstr "user"
 
 msgid "object.plural.users"
 msgstr "users"
+
+msgid "object.singular.roles"
+msgstr "role"
+
+msgid "object.plural.roles"
+msgstr "roles"
 
 msgid "object.singular.events"
 msgstr "event"

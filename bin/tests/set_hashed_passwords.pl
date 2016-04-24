@@ -14,5 +14,5 @@ printf "Found %d users.\n", scalar( @users );
 
 foreach my $user (@users) {
   printf "Found user: %s.\n", $user->username;
-  $user->update({password => "ReubenThomas22"});
+  $user->update({password => "password"});
 }
