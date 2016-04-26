@@ -26,7 +26,7 @@ ALTER TABLE `roles`
 
 UPDATE `toptable`.`roles` SET `name`='administrators', `system`='1', `sysadmin`='1', `role_view`='1', `role_create`='1', `role_edit`='1', `role_delete`='1' WHERE  `id`=1;
 UPDATE `toptable`.`roles` SET `name`='league-officials', `system`='1', `role_view`='1', `role_create`='1', `role_edit`='1', `role_delete`='1' WHERE  `id`=2;
-UPDATE `toptable`.`roles` SET `name`='anonymous', `system`='1', `anonymous`='1' `role_view`='1' WHERE  `id`=3;
+UPDATE `toptable`.`roles` SET `name`='anonymous', `system`='1', `anonymous`='1', `role_view`='1' WHERE  `id`=3;
 UPDATE `toptable`.`roles` SET `name`='registered-users', `system`='1', `apply_on_registration`='1', `role_view`='1' WHERE  `id`=4;
 
 CREATE TABLE `system_event_log_role` (
