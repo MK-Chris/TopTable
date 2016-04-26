@@ -1421,6 +1421,21 @@ __PACKAGE__->add_unique_constraint("url_key", ["url_key"]);
 
 =head1 RELATIONS
 
+=head2 system_event_log_roles
+
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::SystemEventLogRole>
+
+=cut
+
+__PACKAGE__->has_many(
+  "system_event_log_roles",
+  "TopTable::Schema::Result::SystemEventLogRole",
+  { "foreign.object_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
 =head2 user_roles
 
 Type: has_many
@@ -1447,8 +1462,8 @@ Composing rels: L</user_roles> -> user
 __PACKAGE__->many_to_many("users", "user_roles", "user");
 
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-04-02 22:04:02
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:VDtOJaHvbGK+vEQC1RZFZw
+# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-04-26 22:08:24
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:1RDK/c+81OTnfj6Dm1ziSA
 
 =head2 members
 

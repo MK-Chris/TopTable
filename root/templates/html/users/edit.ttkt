@@ -249,7 +249,7 @@ END;
   </fieldset>
   
 [%
-IF authorisation.role_membership_edit;
+IF authorisation.role_edit;
 -%]
   <fieldset>
     <legend>[% c.maketext("user.form.legend.permissions") %]</legend>

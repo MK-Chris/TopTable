@@ -28,3 +28,25 @@ UPDATE `toptable`.`roles` SET `name`='administrators', `system`='1', `sysadmin`=
 UPDATE `toptable`.`roles` SET `name`='league-officials', `system`='1', `role_view`='1', `role_create`='1', `role_edit`='1', `role_delete`='1' WHERE  `id`=2;
 UPDATE `toptable`.`roles` SET `name`='anonymous', `system`='1', `anonymous`='1' `role_view`='1' WHERE  `id`=3;
 UPDATE `toptable`.`roles` SET `name`='registered-users', `system`='1', `apply_on_registration`='1', `role_view`='1' WHERE  `id`=4;
+
+CREATE TABLE `system_event_log_role` (
+	`id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+	`system_event_log_id` INT UNSIGNED NOT NULL,
+	`object_id` INT UNSIGNED,
+	`name` VARCHAR(300) NOT NULL COMMENT 'Only used if there is no ID (i.e., if the club was deleted and is not available).',
+	`log_updated` DATETIME NOT NULL,
+	`number_of_edits` TINYINT(4) NOT NULL COMMENT 'Used if the event is for an edit.',
+	PRIMARY KEY (`id`),
+	CONSTRAINT `system_event_log_role` FOREIGN KEY (`object_id`) REFERENCES `roles` (`id`) ON UPDATE CASCADE ON DELETE SET NULL,
+	CONSTRAINT `role_system_event_log` FOREIGN KEY (`system_event_log_id`) REFERENCES `system_event_log` (`id`)
+)
+COLLATE='utf8_general_ci'
+ENGINE=InnoDB;
+
+INSERT INTO `toptable`.`system_event_log_types` (`object_type`, `event_type`, `object_description`, `description`, `view_action_for_uri`, `plural_objects`, `public_event`)
+VALUES
+('role', 'create', 'Role', 'system.event-log-description.create', '/roles/view', 'roles', '0'),
+('role', 'edit', 'Role', 'system.event-log-description.edit', '/roles/view', 'roles', '0'),
+('role', 'delete', 'Role', 'system.event-log-description.delete', 'roles', '0');
+
+

@@ -869,7 +869,7 @@ sub setup_role :Private {
     members => delete $c->request->parameters->{members},
     name    => delete $c->request->parameters->{name},
     fields  => $c->request->parameters, # Contains all permissions fields
-  });
+  }, $c);
   
   if ( scalar( @{ $details->{error} } ) ) {
     my $error = $c->build_message( $details->{error} );

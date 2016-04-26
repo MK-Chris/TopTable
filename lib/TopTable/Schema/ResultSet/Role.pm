@@ -5,6 +5,7 @@ use warnings;
 use base 'DBIx::Class::ResultSet';
 use HTML::Entities;
 use Set::Object;
+use Data::Dumper;
 
 __PACKAGE__->load_components(qw{Helper::ResultSet::SetOperations});
 
@@ -134,7 +135,7 @@ Provides the wrapper (including error checking) for adding / editing a role.
 =cut
 
 sub create_or_edit {
-  my ( $self, $action, $parameters ) = @_;
+  my ( $self, $action, $parameters, $c ) = @_;
   my ( $role_name_check );
   my $return_value = {error => [], warning => []};
   
@@ -197,40 +198,42 @@ sub create_or_edit {
   $column_names->delete( qw( id url_key name system sysadmin anonymous apply_on_registration ) );
   
   # Map them to a hash with the column names as keys and the values passed in $field_values as values
-  my %fields = map( $_ => $permission_values->{$_}, @$column_names );
+  my %fields = map{ $_ => $permission_values->{$_} || 0 } @$column_names;
+  
+  $c->log->debug( Dumper( \%fields ) );
   
   # Loop through and check that all the permissions are 1 or 0
   $fields{$_} = ( $fields{$_} ) ? 1 : 0 foreach ( keys %fields );
   
   # Check members - first make it an array if it isn't already
-  $members = [ $members ] unless ref( $members ) eq "ARRAY";
-  
-  # Set into an object so we can delete objects easily
-  my @members = @$members;
-  $members    = Set::Object->new( @members );
-  
-  # Loop through and check each one
-  my $invalid_members = 0;
-  foreach my $member ( @members ) {
-    $member = $self->result_source->schema->resultset("User")->find( $member );
-    
-    if ( defined( $member ) ) {
-      $members->insert( $member );
-    } else {
-      $invalid_members++;
-      
-      # Delete from the member IDs
-      $members->delete( $member );
-    }
-  }
-  
-  # Set the array of member IDs again from the object (which has now had invalid IDs deleted)
-  @members = @$members;
-  
-  push( @{ $return_value->{warning} }, {
-    id          => "roles.form.warning.users-invalid",
-    parameters  => [$invalid_members],
-  });
+#   $members = [ $members ] unless ref( $members ) eq "ARRAY";
+#   
+#   # Set into an object so we can delete objects easily
+#   my @members = @$members;
+#   $members    = Set::Object->new( @members );
+#   
+#   # Loop through and check each one
+#   my $invalid_members = 0;
+#   foreach my $member ( @members ) {
+#     $member = $self->result_source->schema->resultset("User")->find({id => $member});
+#     
+#     if ( defined( $member ) ) {
+#       $members->insert( $member );
+#     } else {
+#       $invalid_members++;
+#       
+#       # Delete from the member IDs
+#       $members->delete( $member );
+#     }
+#   }
+#   
+#   # Set the array of member IDs again from the object (which has now had invalid IDs deleted)
+#   @members = @$members;
+#   
+#   push( @{ $return_value->{warning} }, {
+#     id          => "roles.form.warning.users-invalid",
+#     parameters  => [$invalid_members],
+#   });
   
   if ( scalar( @{ $return_value->{error} } ) == 0 ) {
     # Generate a new URL key
@@ -253,12 +256,12 @@ sub create_or_edit {
     
     if ( $action eq "create" ) {
       # Now we have to map the member IDs into hashrefs
-      @members = map( {user => $_}, @members );
+#       @members = map( {user => $_}, @members );
       
       # Take the fields hash (which currently just has the permissions in) and add in the other fields
       $fields{name}       = $name;
       $fields{url_key}    = $url_key;
-      $fields{user_roles} = \@members;
+#       $fields{user_roles} = \@members;
       
       $role = $self->create( \%fields );
     } else {
@@ -270,36 +273,36 @@ sub create_or_edit {
       # Do the update
       $role->update( \%fields );
       
-      # Get the current roles so we can compare to the list of users submitted with the form
-      my @current_members = $role->search_related("user_roles", {}, {
-        prefetch => "user",
-      });
-      
-      # Map the ID only so that we can compare IDs to the IDs in the @roles
-      @current_members    = map( $_->user->id, @current_members );
-      
-      # From those two arrays we can now work out what to add and remove: currently @members contains all
-      # the roles we need to add; @current_members contains the current members.  We can use Set::Object
-      # to return a list of what's in @current_members and not in @members (members to remove) and also
-      # what's in @members and not in @current_members (members to add).  Anything in both is a role
-      # that is currently assigned and should stay assigned, so doesn't need to be touched.
-      my $current_members   = Set::Object->new( @current_members );
-      my $new_members       = Set::Object->new( @members );
-      my $members_to_add    = $new_members->difference( $current_members );
-      my $members_to_remove = $current_members->difference( $new_members );
-      
-      # Get the arrays back
-      my @members_to_add    = @$members_to_add;
-      my @members_to_remove = @$members_to_remove;
-      
-      # Now do the SQL operations themselves
-      $role->delete_related("user_roles", {
-        user => {
-          -in => \@members_to_remove,
-        },
-      }) if scalar @members_to_remove;
-      
-      $role->create_related("user_roles", {user => $_}) foreach @members_to_add;
+#       # Get the current roles so we can compare to the list of users submitted with the form
+#       my @current_members = $role->search_related("user_roles", {}, {
+#         prefetch => "user",
+#       });
+#       
+#       # Map the ID only so that we can compare IDs to the IDs in the @roles
+#       @current_members    = map( $_->user->id, @current_members );
+#       
+#       # From those two arrays we can now work out what to add and remove: currently @members contains all
+#       # the roles we need to add; @current_members contains the current members.  We can use Set::Object
+#       # to return a list of what's in @current_members and not in @members (members to remove) and also
+#       # what's in @members and not in @current_members (members to add).  Anything in both is a role
+#       # that is currently assigned and should stay assigned, so doesn't need to be touched.
+#       my $current_members   = Set::Object->new( @current_members );
+#       my $new_members       = Set::Object->new( @members );
+#       my $members_to_add    = $new_members->difference( $current_members );
+#       my $members_to_remove = $current_members->difference( $new_members );
+#       
+#       # Get the arrays back
+#       my @members_to_add    = @$members_to_add;
+#       my @members_to_remove = @$members_to_remove;
+#       
+#       # Now do the SQL operations themselves
+#       $role->delete_related("user_roles", {
+#         user => {
+#           -in => \@members_to_remove,
+#         },
+#       }) if scalar @members_to_remove;
+#       
+#       $role->create_related("user_roles", {user => $_}) foreach @members_to_add;
     }
     
     # Commit the database transactions
