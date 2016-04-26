@@ -326,6 +326,21 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
+=head2 system_event_log_roles
+
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::SystemEventLogRole>
+
+=cut
+
+__PACKAGE__->has_many(
+  "system_event_log_roles",
+  "TopTable::Schema::Result::SystemEventLogRole",
+  { "foreign.system_event_log_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
 =head2 system_event_log_seasons
 
 Type: has_many
@@ -497,8 +512,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-01-17 16:53:33
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:4UUYoJ7ysdOxkdAWb5ddzg
+# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-04-26 22:08:24
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:xhaWjKCzTmH7dvLM6GE6Vg
 
 #
 # Enable automatic date handling

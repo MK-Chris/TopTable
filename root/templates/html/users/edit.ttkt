@@ -247,16 +247,56 @@ END;
       <input type="checkbox" name="html_emails" id="html_emails" value="1" data-label="[% c.maketext("user.field.html-emails") %]"[% html_emails_checked %] />
       <div class="clear-fix"></div>
   </fieldset>
+  
+[%
+IF authorisation.role_edit;
+-%]
+  <fieldset>
+    <legend>[% c.maketext("user.form.legend.permissions") %]</legend>
+    <div class="label-field-container">
+      <label for="language">[% c.maketext("user.field.roles") %]</label>
+      <div class="field-container">
+        <select id="roles" name="roles" multiple="multiple" data-placeholder="[% c.maketext("user.field.roles") %]">
+          <option value="">
+[%
+  FOREACH role IN roles;
+    SET role_id = role.id;
+    
+    # Set the name
+    IF role.system;
+      SET role_name = c.maketext("roles.name." _ role.name);
+    ELSE;
+      role_name = FILTER html_entity; role.name; END;
+    END;
+    
+    IF c.flash.roles;
+      IF c.flash.roles.$role_id == role_id;
+        SET role_selected = ' selected="selected"';
+      ELSE;
+        SET role_selected = '';
+      END;
+    ELSE;
+      IF user.has_role( role );
+        SET role_selected = ' selected="selected"';
+      ELSE;
+        SET role_selected = '';
+      END;
+    END;
+-%]
+          <option value="[% role_id %]"[% role_selected %]>[% role_name %]</option>
+[%
+  END;
+-%]
+        </select>
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+  </fieldset>
+[%
+END;
+-%]
 </div>
 <div class="clear-fix"></div>
 
 <input type="submit" name="Submit" value="Save" />
 </form>
-
-[%
-IF action == "edit" and person_season;
--%]
-<div id="dialog" title="Change team?">Because [% person.first_name %] has already played for their current team, [% person_season.team.club.short_name _ " " _ person_season.team.name %], changing the team they play for will create a new association with the new team and mark their association with the new team but not delete their association with the current team - instead, this will be marked as an inactive team membership.  Are you sure you wish to change the team [% person.first_name %] plays for?</div>
-[%
-END;
--%]

@@ -61,6 +61,44 @@ __PACKAGE__->table("roles");
   is_nullable: 0
   size: 100
 
+For system (built-in) roles, this will not be the actual name, but the key for the translation routine to get the actual name in the correct language; for user-defined roles, it will be the name itself as entered by the user.
+
+=head2 system
+
+  data_type: 'tinyint'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 0
+
+System (built-in) roles are built-in from installation; they can't be deleted or renamed; the permissions can be edited (except administrators; anyone in administrators can do anything - they are denoted by the sysadmin field being 1).
+
+=head2 sysadmin
+
+  data_type: 'tinyint'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 0
+
+Should only be applied to built-in "Administrators" role - permissions cannot be altered.
+
+=head2 anonymous
+
+  data_type: 'tinyint'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 0
+
+Should only be applied to built-in "anonymous" role - anyone not logged in gets these permissions.
+
+=head2 apply_on_registration
+
+  data_type: 'tinyint'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 0
+
+If this is 1, upon registration, users will get assigned to the role automatically.  This can be altered on user-defined roles, but not on built-in roles.
+
 =head2 average_filter_create_public
 
   data_type: 'tinyint'
@@ -124,13 +162,6 @@ __PACKAGE__->table("roles");
   extra: {unsigned => 1}
   is_nullable: 0
 
-=head2 club_edit_silent
-
-  data_type: 'tinyint'
-  default_value: 0
-  extra: {unsigned => 1}
-  is_nullable: 0
-
 =head2 club_delete
 
   data_type: 'tinyint'
@@ -145,35 +176,21 @@ __PACKAGE__->table("roles");
   extra: {unsigned => 1}
   is_nullable: 0
 
-=head2 committee_position_create
+=head2 committee_create
 
   data_type: 'tinyint'
   default_value: 0
   extra: {unsigned => 1}
   is_nullable: 0
 
-=head2 committee_position_edit
+=head2 committee_edit
 
   data_type: 'tinyint'
   default_value: 0
   extra: {unsigned => 1}
   is_nullable: 0
 
-=head2 committee_position_delete
-
-  data_type: 'tinyint'
-  default_value: 0
-  extra: {unsigned => 1}
-  is_nullable: 0
-
-=head2 committee_member_assign
-
-  data_type: 'tinyint'
-  default_value: 0
-  extra: {unsigned => 1}
-  is_nullable: 0
-
-=head2 committee_member_remove
+=head2 committee_delete
 
   data_type: 'tinyint'
   default_value: 0
@@ -202,27 +219,6 @@ __PACKAGE__->table("roles");
   is_nullable: 0
 
 =head2 contact_reason_delete
-
-  data_type: 'tinyint'
-  default_value: 0
-  extra: {unsigned => 1}
-  is_nullable: 0
-
-=head2 division_view
-
-  data_type: 'tinyint'
-  default_value: 0
-  extra: {unsigned => 1}
-  is_nullable: 0
-
-=head2 division_edit
-
-  data_type: 'tinyint'
-  default_value: 0
-  extra: {unsigned => 1}
-  is_nullable: 0
-
-=head2 division_delete
 
   data_type: 'tinyint'
   default_value: 0
@@ -492,21 +488,7 @@ If 1 the person can create match reports involving teams the user is associated 
   extra: {unsigned => 1}
   is_nullable: 0
 
-=head2 person_personal_view
-
-  data_type: 'tinyint'
-  default_value: 0
-  extra: {unsigned => 1}
-  is_nullable: 0
-
 =head2 person_edit
-
-  data_type: 'tinyint'
-  default_value: 0
-  extra: {unsigned => 1}
-  is_nullable: 0
-
-=head2 person_edit_silent
 
   data_type: 'tinyint'
   default_value: 0
@@ -520,21 +502,28 @@ If 1 the person can create match reports involving teams the user is associated 
   extra: {unsigned => 1}
   is_nullable: 0
 
-=head2 role_permissions_create
+=head2 role_view
 
   data_type: 'tinyint'
   default_value: 0
   extra: {unsigned => 1}
   is_nullable: 0
 
-=head2 role_permissions_edit
+=head2 role_create
 
   data_type: 'tinyint'
   default_value: 0
   extra: {unsigned => 1}
   is_nullable: 0
 
-=head2 role_permissions_delete
+=head2 role_edit
+
+  data_type: 'tinyint'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 0
+
+=head2 role_delete
 
   data_type: 'tinyint'
   default_value: 0
@@ -611,13 +600,6 @@ If 1 the person can create match reports involving teams the user is associated 
   extra: {unsigned => 1}
   is_nullable: 0
 
-=head2 team_edit_silent
-
-  data_type: 'tinyint'
-  default_value: 0
-  extra: {unsigned => 1}
-  is_nullable: 0
-
 =head2 team_delete
 
   data_type: 'tinyint'
@@ -675,13 +657,6 @@ If 1 the person can create match reports involving teams the user is associated 
   is_nullable: 0
 
 =head2 tournament_delete
-
-  data_type: 'tinyint'
-  default_value: 0
-  extra: {unsigned => 1}
-  is_nullable: 0
-
-=head2 user_role_assign
 
   data_type: 'tinyint'
   default_value: 0
@@ -765,6 +740,34 @@ __PACKAGE__->add_columns(
   { data_type => "varchar", is_nullable => 0, size => 45 },
   "name",
   { data_type => "varchar", is_nullable => 0, size => 100 },
+  "system",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
+  "sysadmin",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
+  "anonymous",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
+  "apply_on_registration",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
   "average_filter_create_public",
   {
     data_type => "tinyint",
@@ -828,13 +831,6 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
-  "club_edit_silent",
-  {
-    data_type => "tinyint",
-    default_value => 0,
-    extra => { unsigned => 1 },
-    is_nullable => 0,
-  },
   "club_delete",
   {
     data_type => "tinyint",
@@ -849,35 +845,21 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
-  "committee_position_create",
+  "committee_create",
   {
     data_type => "tinyint",
     default_value => 0,
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
-  "committee_position_edit",
+  "committee_edit",
   {
     data_type => "tinyint",
     default_value => 0,
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
-  "committee_position_delete",
-  {
-    data_type => "tinyint",
-    default_value => 0,
-    extra => { unsigned => 1 },
-    is_nullable => 0,
-  },
-  "committee_member_assign",
-  {
-    data_type => "tinyint",
-    default_value => 0,
-    extra => { unsigned => 1 },
-    is_nullable => 0,
-  },
-  "committee_member_remove",
+  "committee_delete",
   {
     data_type => "tinyint",
     default_value => 0,
@@ -906,27 +888,6 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
   },
   "contact_reason_delete",
-  {
-    data_type => "tinyint",
-    default_value => 0,
-    extra => { unsigned => 1 },
-    is_nullable => 0,
-  },
-  "division_view",
-  {
-    data_type => "tinyint",
-    default_value => 0,
-    extra => { unsigned => 1 },
-    is_nullable => 0,
-  },
-  "division_edit",
-  {
-    data_type => "tinyint",
-    default_value => 0,
-    extra => { unsigned => 1 },
-    is_nullable => 0,
-  },
-  "division_delete",
   {
     data_type => "tinyint",
     default_value => 0,
@@ -1192,21 +1153,7 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
-  "person_personal_view",
-  {
-    data_type => "tinyint",
-    default_value => 0,
-    extra => { unsigned => 1 },
-    is_nullable => 0,
-  },
   "person_edit",
-  {
-    data_type => "tinyint",
-    default_value => 0,
-    extra => { unsigned => 1 },
-    is_nullable => 0,
-  },
-  "person_edit_silent",
   {
     data_type => "tinyint",
     default_value => 0,
@@ -1220,21 +1167,28 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
-  "role_permissions_create",
+  "role_view",
   {
     data_type => "tinyint",
     default_value => 0,
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
-  "role_permissions_edit",
+  "role_create",
   {
     data_type => "tinyint",
     default_value => 0,
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
-  "role_permissions_delete",
+  "role_edit",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
+  "role_delete",
   {
     data_type => "tinyint",
     default_value => 0,
@@ -1311,13 +1265,6 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
-  "team_edit_silent",
-  {
-    data_type => "tinyint",
-    default_value => 0,
-    extra => { unsigned => 1 },
-    is_nullable => 0,
-  },
   "team_delete",
   {
     data_type => "tinyint",
@@ -1375,13 +1322,6 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
   },
   "tournament_delete",
-  {
-    data_type => "tinyint",
-    default_value => 0,
-    extra => { unsigned => 1 },
-    is_nullable => 0,
-  },
-  "user_role_assign",
   {
     data_type => "tinyint",
     default_value => 0,
@@ -1481,6 +1421,21 @@ __PACKAGE__->add_unique_constraint("url_key", ["url_key"]);
 
 =head1 RELATIONS
 
+=head2 system_event_log_roles
+
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::SystemEventLogRole>
+
+=cut
+
+__PACKAGE__->has_many(
+  "system_event_log_roles",
+  "TopTable::Schema::Result::SystemEventLogRole",
+  { "foreign.object_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
 =head2 user_roles
 
 Type: has_many
@@ -1507,9 +1462,22 @@ Composing rels: L</user_roles> -> user
 __PACKAGE__->many_to_many("users", "user_roles", "user");
 
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-03-16 00:35:41
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:S4uZXOsue50wuf6B340Hiw
+# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-04-26 22:08:24
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:1RDK/c+81OTnfj6Dm1ziSA
 
+=head2 members
+
+Get a list of recipients associated with this contact reason.
+
+=cut
+
+sub members {
+  my ( $self ) = @_;
+  
+  return $self->search_related("user_roles", {}, {
+    prefetch => "user",
+  });
+}
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 __PACKAGE__->meta->make_immutable;

@@ -849,6 +849,18 @@ sub secretary_for {
   return $person->secretary_for({club => $club});
 }
 
+=head2 has_role
+
+Checks if the user has the given role.
+
+=cut
+
+sub has_role {
+  my ( $self, $role ) = @_;
+  
+  return ( defined( $self->find_related("user_roles", {role => $role->id}) ) ) ? 1 : 0;
+}
+
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 __PACKAGE__->meta->make_immutable;
 1;

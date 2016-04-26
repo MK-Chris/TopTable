@@ -213,10 +213,11 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
   my $redirect_on_fail = 1 unless $c->user_exists;
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["user_edit_all", "edit this user", $redirect_on_fail] );
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["user_edit_own", "edit this user", 1] ) if !$c->stash->{authorisation}{user_edit_all} and $c->user_exists and $c->user->id == $user->id;
+  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["role_edit", "", 0] );
   
   # Get the timezone categories, then map each timezone in that category with the category as the key to a hashref, value is an arrayref of countries
   my @tz_categories = DateTime::TimeZone->categories;
-  my $timezones = {};
+  my $timezones     = {};
   $timezones->{$_} = DateTime::TimeZone->names_in_category( $_ ) foreach @tz_categories;
   
   $c->stash({
@@ -236,6 +237,8 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
     languages         => $c->config->{I18N}{locales},
     timezones         => $timezones,
   });
+  
+  $c->stash({roles => [ $c->model("DB::Role")->all_roles ]}) if $c->stash->{authorisation}{role_edit};
   
   $c->warn_on_non_https;
   
@@ -403,6 +406,7 @@ sub setup_user :Private {
   my $occupation            = $c->request->parameters->{occupation};
   my $location              = $c->request->parameters->{location};
   my $hide_online           = $c->request->parameters->{hide_online};
+  my $roles                 = $c->request->parameters->{roles};
   my $error;
   
   if ( $action eq "register" and $c->config->{Google}{reCAPTCHA}{validate_on_register} ) {
@@ -445,7 +449,8 @@ sub setup_user :Private {
     $username_editable = 0;
   }
   
-  my $create_edit_parameters = {
+  # Send the form details to the model to do error checking and registration
+  my $user_result = $c->model("DB::User")->create_or_edit({
     action                => $action,
     username_editable     => $username_editable,
     username              => $username,
@@ -469,14 +474,9 @@ sub setup_user :Private {
     hide_online           => $hide_online,
     ip_address            => $c->request->address,
     installed_languages   => $c->config->{I18N}{locales},
+    roles                 => $roles,
     editing_user          => $c->user,
-  };
-  
-  # Look up the registered users role if we're creating
-  $create_edit_parameters->{role} = $c->model("DB::Role")->find({name => "Registered Users"}) if $action eq "register"; # This is ignored if we're editing
-  
-  # Send the form details to the model to do error checking and registration
-  my $user_result = $c->model("DB::User")->create_or_edit( $create_edit_parameters, $c );
+  });
   
   if ( scalar( @{ $user_result->{error} } ) ) {
     # If there are errors, redirect back to the registration form with errors
@@ -566,8 +566,21 @@ sub setup_user :Private {
       });
     } else {
       $c->locale( $language ) if $user_result->{set_locale};
-      $c->response->redirect( $c->uri_for_action("/users/view", [$user->url_key],
-                                  {mid => $c->set_status_msg( {success => $c->maketext("user.edit.success", $html_username) } ) }) );
+      
+      my $warnings = $user_result->{warning};
+      
+      if ( scalar @$warnings ) {
+        $warnings = $c->build_message( $warnings );
+        $c->response->redirect( $c->uri_for_action("/users/view", [$user->url_key],
+                                    {mid => $c->set_status_msg( {success  => $c->maketext("user.edit.success-with-warnings", $html_username),
+                                                                warning   => $warnings} ) }) );
+      } else {
+        $c->response->redirect( $c->uri_for_action("/users/view", [$user->url_key],
+                                    {mid => $c->set_status_msg( {success => $c->maketext("user.edit.success", $html_username) } ) }) );
+      }
+      
+      $c->detach;
+      return;
     }
   }
 }
@@ -1475,8 +1488,8 @@ sub check_authorisation :Private {
     
     # First find out if we can do this anonymously
     $anonymous_permission = $c->model("DB::Role")->find({
-      name    => "Anonymous",
-      $action => 1
+      anonymous => 1,
+      $action   => 1
     });
     
     if ( defined( $anonymous_permission ) ) {

@@ -37,8 +37,6 @@ sub auto :Private {
   });
 }
 
-
-
 =head2 base
 
 Chain base for getting the contact reason ID or URL key and checking it.

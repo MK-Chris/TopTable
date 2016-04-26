@@ -7,6 +7,8 @@ use Digest::SHA qw( sha256_hex );
 use DateTime;
 use DateTime::TimeZone;
 use Time::HiRes;
+use Set::Object;
+use HTML::Entities;
 
 =head2 search_by_name
 
@@ -188,10 +190,10 @@ sub create_or_edit {
   my $hide_online           = $parameters->{hide_online};
   my $ip_address            = $parameters->{ip_address};
   my $editing_user          = $parameters->{editing_user};
-  my $role                  = $parameters->{role};
+  my $roles                 = $parameters->{roles};
   my $installed_languages   = $parameters->{installed_languages};
   my $set_locale;
-  my $return_value          = {error => []};
+  my $return_value          = {error => [], warning => []};
   
   # Check the username is valid
   if ( $action ne "register" and $action ne "edit" ) {
@@ -314,7 +316,7 @@ sub create_or_edit {
     }
   }
   
-  if ( ( $username_changed or $email_changed or $password_changed ) and defined( $editing_user ) ) {
+  if ( ( $username_changed or $email_changed or $password_changed ) and defined( $editing_user ) and $editing_user->id == $user->id ) {
     # The username, email or password has changed, so we need to authenticate the current password
     if ( $current_password ) {
       # Check the current password entered is correct
@@ -342,6 +344,68 @@ sub create_or_edit {
   # Boolean sanity check - true = 1, false = 0
   $html_emails = ( $html_emails ) ? 1 : 0;
   
+  # Check roles - if we're editing, we need to check the editing user has permissions to do this.
+  # Default to check roles (we'll check roles if we're registering or if the user is authorised) to
+  # do so.
+  my @roles = (); # Final role objects to assign the users to
+  
+  if ( $action eq "register" ) {
+    # Add any roles that need to be added to newly registered users by default.
+    my $default_roles = $self->result_source->schema->resultset("Role")->search({apply_on_registration => 1});
+    
+    if ( $default_roles->count ) {
+      while ( my $role = $default_roles->next ) {
+        push(@roles, {role => $role->id});
+      }
+    }
+  } elsif ( $action eq "edit" ) {
+    # Check that we can edit roles, then loop through and add them
+    my @need_roles = $self->result_source->schema->resultset("Role")->search({
+      role_membership_edit => 1
+    }, {
+      order_by => {
+        -asc => [ qw( name ) ],
+      },
+    });
+    
+    @need_roles = map( $_->name, @need_roles );
+    
+    my $have_roles = Set::Object->new( $editing_user->roles );
+    my $need_roles = Set::Object->new( @need_roles );
+    
+    # Set check roles to zero unless we're authorised to do it.
+    my $can_edit_roles = ( $have_roles->intersection( $need_roles )->size > 0 ) ? 1 : 0;
+    
+    if ( $can_edit_roles ) {
+      # Check the roles we have.
+      $roles = [ $roles ] unless ref( $roles ) eq "ARRAY";
+      
+      my $invalid_roles = 0;
+      foreach my $role ( @{ $roles } ) {
+        $role = $self->result_source->schema->resultset("Role")->find( $role );
+        
+        if ( defined( $role ) ) {
+          if ( $role->anonymous ) {
+            # Don't push and warn that we can't add to anonymous
+            push(@{ $return_value->{warning} }, {id => "user.form.warning.cant-add-to-anonymous"});
+          } else {
+            push(@roles, $role->id);
+          }
+        } else {
+          $invalid_roles++;
+        }
+      }
+      
+      # Warn if any of the roles were invalid
+      push( @{ $return_value->{warning} }, {
+        id          => "user.form.warning.one-or-more-roles-invalid",
+        parameters  => $invalid_roles,
+      }) if $invalid_roles;
+      
+      push( @{ $return_value->{error} }, {id => "user.form.error.no-valid-roles"}) if scalar @roles == 0;
+    }
+  }
+  
   if ( scalar( @{ $return_value->{error} } == 0 ) ) {
     # This is a random verification key that we can then put into an email.
     my $activation_key = sha256_hex( $username . Time::HiRes::time . int(rand(100)) ) if $action eq "register";
@@ -353,6 +417,9 @@ sub create_or_edit {
     } elsif ( $action eq "register" ) {
       $url_key = $self->generate_url_key( $username );
     }
+    
+    # Start a transaction so we don't have a partially updated database
+    my $transaction = $self->result_source->schema->txn_scope_guard;
     
     if ( $action eq "register" ) {
       # Create new user
@@ -368,9 +435,7 @@ sub create_or_edit {
         html_emails     => $html_emails,
         activation_key  => $activation_key,
         activated       => 0,
-        user_roles      => [{
-          role          => $role->id, # Registered Users role
-        }],
+        user_roles      => \@roles,
       });
       
       # We will NEVER set locale if the user is being created, as that user needs to be activated first
@@ -410,7 +475,66 @@ sub create_or_edit {
       $update_data->{password} = $password if $password_changed;
       
       $user->update( $update_data );
+      
+      # Set up the roles - get the current roles first
+      my @current_roles = $user->search_related("user_roles");
+      
+      # Map the ID only so that we can compare IDs to the IDs in the @roles
+      @current_roles = map( $_->id, @current_roles );
+      
+      # From those two arrays we can now work out what to add and remove: currently @roles contains
+      # all the roles we need to add; @current_roles contains the current roles.  We can use Set::Object
+      # to return a list of what's in @current_roles and not in @roles (roles to remove) and also what's
+      # in @roles and not in @current_roles (roles to add).  Anything in both is a role that is currently
+      # assigned and should stay assigned, so doesn't need to be touched.
+      my $current_roles   = Set::Object->new( @current_roles );
+      my $new_roles       = Set::Object->new( @roles );
+      my $roles_to_add    = $new_roles->difference( $current_roles );
+      my $roles_to_remove = $current_roles->difference( $new_roles );
+      
+      # Get the arrays back
+      my @roles_to_add    = @$roles_to_add;
+      my @roles_to_remove = @$roles_to_remove;
+      
+      # Check if any of the roles we're removing is the sysadmin role
+      my $sysadmin_role = $self->result_source->schema->resultset("Role")->find({
+        sysadmin => 1,
+        id => {
+          -in => \@roles_to_remove,
+        }
+      });
+      
+      if ( defined( $sysadmin_role ) ) {
+        my $users = $sysadmin_role->search_related("user_roles")->search_related("user", {
+          id => {
+            "!=" => $user->id,
+          }
+        })->count;
+        
+        if ( $users == 0 ) {
+          # Trying to remove the last user from the sysadmin group - error
+          push( @{ $return_value->{warning} }, {
+            id          => "user.form.warning.cant-remove-last-sysadmin",
+            parameters  => [ encode_entities( $user->username ) ],
+          });
+          
+          $roles_to_remove->delete( $sysadmin_role->id );
+          @roles_to_remove = @$roles_to_remove;
+        }
+      }
+      
+      # Now do the SQL operations themselves
+      $user->delete_related("user_roles", {
+        role => {
+          -in => \@roles_to_remove,
+        },
+      }) if scalar @roles_to_remove;
+      
+      $user->create_related("user_roles", {role => $_}) foreach @roles_to_add;
     }
+    
+    # Commit the transaction
+    $transaction->commit;
     
     $return_value->{set_locale} = $set_locale;
     $return_value->{user}       = $user;
