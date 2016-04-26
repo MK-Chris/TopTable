@@ -4,7 +4,7 @@ ALTER TABLE `roles`
 	ADD COLUMN `anonymous` TINYINT(1) UNSIGNED NOT NULL DEFAULT '0' COMMENT 'Should only be applied to built-in "anonymous" role - anyone not logged in gets these permissions.' AFTER `sysadmin`,
 	ADD COLUMN `apply_on_registration` TINYINT(1) UNSIGNED NOT NULL DEFAULT '0' COMMENT 'If this is 1, upon registration, users will get assigned to the role automatically.  This can be altered on user-defined roles, but not on built-in roles.' AFTER `anonymous`,
 	ALTER `name` DROP DEFAULT,
-	CHANGE COLUMN `name` `name` VARCHAR(100) NOT NULL COMMENT 'For system (built-in) roles, this will not be the actual name, but the key for the translation routine to get the actual name in the correct language; for user-defined roles, it will be the name itself as entered by the user.' AFTER `url_key`,ALTER TABLE `roles`
+	CHANGE COLUMN `name` `name` VARCHAR(100) NOT NULL COMMENT 'For system (built-in) roles, this will not be the actual name, but the key for the translation routine to get the actual name in the correct language; for user-defined roles, it will be the name itself as entered by the user.' AFTER `url_key`,
 	ADD COLUMN `role_view` TINYINT(1) UNSIGNED NOT NULL DEFAULT '0' AFTER `person_delete`,
 	CHANGE COLUMN `role_permissions_create` `role_create` TINYINT(1) UNSIGNED NOT NULL DEFAULT '0' AFTER `role_view`,
 	CHANGE COLUMN `role_permissions_edit` `role_edit` TINYINT(1) UNSIGNED NOT NULL DEFAULT '0' AFTER `role_create`,
