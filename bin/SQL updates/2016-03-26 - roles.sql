@@ -9,7 +9,7 @@ ALTER TABLE `roles`
 	CHANGE COLUMN `role_permissions_create` `role_create` TINYINT(1) UNSIGNED NOT NULL DEFAULT '0' AFTER `role_view`,
 	CHANGE COLUMN `role_permissions_edit` `role_edit` TINYINT(1) UNSIGNED NOT NULL DEFAULT '0' AFTER `role_create`,
 	CHANGE COLUMN `role_permissions_delete` `role_delete` TINYINT(1) UNSIGNED NOT NULL DEFAULT '0' AFTER `role_edit`,
-	DROP COLUMN `club_edit_silent`;
+	DROP COLUMN `club_edit_silent`,
 	CHANGE COLUMN `committee_position_create` `committee_create` TINYINT(1) UNSIGNED NOT NULL DEFAULT '0' AFTER `committee_view`,
 	CHANGE COLUMN `committee_position_edit` `committee_edit` TINYINT(1) UNSIGNED NOT NULL DEFAULT '0' AFTER `committee_create`,
 	CHANGE COLUMN `committee_position_delete` `committee_delete` TINYINT(1) UNSIGNED NOT NULL DEFAULT '0' AFTER `committee_edit`,
