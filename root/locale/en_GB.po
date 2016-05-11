@@ -344,6 +344,199 @@ msgstr "are"
 msgid "home-page.todays-matches"
 msgstr "Matches playing today"
 
+### Page descriptions
+## Clubs
+msgid "description.clubs.list"
+msgstr "A list of clubs that play, or have played in %1."
+
+msgid "description.clubs.view-current"
+msgstr "%1 team listings, secretary and venue details in %2."
+
+msgid "description.clubs.view-specific"
+msgstr "%1 team listings (%2) in %3."
+
+msgid "description.clubs.list-seasons"
+msgstr "Seasons that %1 has entered teams into %2."
+
+## Divisions
+msgid "description.divisions.list"
+msgstr "A list of divisions in %1, including past divisions that may not currently be in use."
+
+msgid "description.divisions.view-current"
+msgstr "League tables and league averages (singles, individual doubles, doubles pairs and teams) for %1 in %2."
+
+msgid "description.divisions.view-specific"
+msgstr "%3 league tables and league averages (singles, individual doubles, doubles pairs and teams) for %1 in %2."
+
+msgid "description.divisions.list-seasons"
+msgstr "Seasons that %1 has been used in %2."
+
+## Events
+msgid "description.events.list"
+msgstr "A list of events in %1."
+
+msgid "description.clubs.view-current"
+msgstr "Event information for %1 in %2."
+
+msgid "description.clubs.view-specific"
+msgstr "Event information for %1 %3 in %2."
+
+msgid "description.events.list-seasons"
+msgstr "Seasons that %1 has been organised in %2."
+
+## Fixtures grids
+msgid "description.fixtures-grids.list"
+msgstr "A list of fixtures grids available for use in %1."
+
+msgid "description.fixtures-grids.view-current"
+msgstr "Teams assigned to the fixtures grid &#39;%1&#39 and weeks that they play each other."
+
+msgid "description.fixtures-grids.view-specific"
+msgstr "Teams assigned to the fixtures grid &#39;%1&#39 in %3 and weeks that they play each other."
+
+msgid "description.fixtures-grids.list-seasons"
+msgstr "Seasons that %1 has been used in %2."
+
+## Fixtures / Results
+# TODO
+
+## Info pages
+msgid "description.contact"
+msgstr "Send a message to %1."
+
+msgid "description.officials.view-current"
+msgstr "League officials for %1."
+
+msgid "description.officials.view-specific"
+msgstr "League officials (%2) for %1."
+
+msgid "description.officials.list-seasons"
+msgstr "A list of seasons that you can view league officials for on %1."
+
+msgid "description.rules.view-current"
+msgstr "League rules for %1."
+
+msgid "description.rules.view-specific"
+msgstr "League rules (%2) for %1."
+
+## League averages
+msgid "description.league-averages.options"
+msgstr "League averages for %1 - choose from singles, individual doubles, doubles pairs or team doubles performances."
+
+msgid "description.league-averages.list-divisions"
+msgstr "A list of divisions in %1 to view league averages for."
+
+msgid "description.league-averages.view-current"
+msgstr "League averages (%1) in %2 of %3."
+
+msgid "description.league-averages.view-specific"
+msgstr "%4 league averages (%1) in %2 of %3."
+
+msgid "description.league-averages.list-seasons"
+msgstr "A list of seasons that you can view %1 league averages for in %2."
+
+## League tables
+msgid "description.league-tables.list-divisions"
+msgstr "A list of divisions in %1 to view league tables for."
+
+msgid "description.league-tables.view-current"
+msgstr "League tables in %1 of %2."
+
+msgid "description.league-tables.view-specific"
+msgstr "%3 league tables in %1 of %2."
+
+msgid "description.league-tables.list-seasons"
+msgstr "A list of seasons that you can view %1 league tables for in %2."
+
+## Matches
+msgid "description.team-matches.view-not-started"
+msgstr "%1 details for the match due to take place on %2."
+
+msgid "description.team-matches.view-cancelled"
+msgstr "%1 details for the cancelled match, which was due to take place on %2."
+
+msgid "description.team-matches.view-started"
+msgstr "%1 match details (current score: %2)"
+
+msgid "description.team-matches.view-completed"
+msgstr "%1 match details (final score: %2), which took place on %3."
+
+## Meetings
+msgid "description.meetings.list"
+msgstr "A list of meetings that are available to view in %1."
+
+msgid "description.meetings.view"
+msgstr "The agenda, attendees, apologies and minutes for %1 in %2."
+
+## Meeting types
+msgid "description.meeting-types.list"
+msgstr "List of meeting types available for use in %1."
+
+msgid "description.meeting-types.view"
+msgstr "A list of %1 on %2."
+
+## News
+msgid "description.news.list"
+msgstr "List of news articles available to view on %1."
+
+## People
+msgid "description.people.list"
+msgstr "A list of current and historic people who have played in or been involved with %1."
+
+msgid "description.people.view-current"
+msgstr "%1&#39;s page on %2, including player statistics, match results and teams they have played for."
+
+msgid "description.people.view-current"
+msgstr "%1&#39;s page from %3 on %2, including player statistics, match results and teams they have played for."
+
+msgid "description.people.list-seasons"
+msgstr "A list of seasons that %1 has played in or been involved with %2."
+
+## Roles
+msgid "description.roles.list"
+msgstr "A list of user roles on the %1 web site."
+
+msgid "description.roles.view"
+msgstr "Permission details and users who are a member of the role &#39;%1&#39; in %2."
+
+## Seasons
+msgid "description.seasons.list"
+msgstr "A list of seasons available to view on %1."
+
+msgid "description.seasons.view"
+msgstr "%1 results, league tables, league averages, match results, team and player statistics in %2."
+
+## System event log
+msgid "description.event-log.list"
+msgstr "A list of updates on the %1 web site."
+
+## Teams
+msgid "description.teams.list"
+msgstr "A list of teams grouped by current club (or the last club they entered through) that are currently playing in or have in the past entered %1."
+
+msgid "description.teams.view-current"
+msgstr "%1 fixtures, results, player lists and statistics in %2."
+
+msgid "description.teams.view-specific"
+msgstr "%1 results, player lists and statistics for %3 in %2."
+
+msgid "description.teams.list-seasons"
+msgstr "Seasons that %1 has entered teams into %2."
+
+## Users
+msgid "description.users.list"
+msgstr "A list of users registered on the %1 web site."
+
+msgid "description.users.view"
+msgstr "%1's user profile on %2."
+
+## Venues
+msgid "description.venues.list"
+msgstr "A list of the venues available for %1."
+
+msgid "description.venues.view"
+msgstr "Address and contact details for %1, get directions and see when you can play table tennis there.  %1 is a venue in %2."
+
 ### Clubs
 msgid "clubs.create"
 msgstr "Create a new club"
@@ -530,7 +723,7 @@ msgid "teams.name.changed-notice"
 msgstr "%1 %2 is now known as %3 %4."
 
 msgid "teams.tokeninput.type"
-msgstr "Start typing a team or club's name"
+msgstr "Start typing a team or club&#39;s name"
 
 msgid "teams.tokeninput.type-captain"
 msgstr "A person can captain multiple teams - select as many as you need"
@@ -660,7 +853,7 @@ msgid "people.create-for"
 msgstr "Create a new person playing for %1 %2"
 
 msgid "person.tokeninput.type"
-msgstr "Start typing a person's name"
+msgstr "Start typing a person&#39;s name"
 
 msgid "people.create.no-season"
 msgstr "There is no current season, so people cannot be created - create a new season first."
@@ -846,10 +1039,10 @@ msgid "people.form.import-results.no-file-uploaded"
 msgstr "No file was uploaded; please browse to a file on your system."
 
 msgid "people.form.import-results.field-heading-invalid"
-msgstr "The field heading: '%1' is not valid."
+msgstr "The field heading: &#39;%1&#39; is not valid."
 
 msgid "people.form.import-results.secretary-club-invalid"
-msgstr "The secretaried club is not valid; please supply the club's short name."
+msgstr "The secretaried club is not valid; please supply the club&#39;s short name."
 
 msgid "people.form.import-results.gender-invalid"
 msgstr "The specified gender is invalid."
@@ -864,7 +1057,7 @@ msgid "people.form.import-results.team-not-specified"
 msgstr "The %1 team has not been specified; remove the %1 club or add a team that belongs to the specified club."
 
 msgid "people.form.import-results.club-invalid"
-msgstr "The %1 club is not valid; please supply the club's short name."
+msgstr "The %1 club is not valid; please supply the club&#39;s short name."
 
 msgid "people.form.import-results.club-not-specified"
 msgstr "The %1 team has been specified without a club."
@@ -2185,16 +2378,16 @@ msgid "average-filter.form.error.no-player-types"
 msgstr "You must select at least one player type to display."
 
 msgid "average-filter.form.error.criteria-field-invalid"
-msgstr "The criteria field must be 'played', 'won' or 'lost'."
+msgstr "The criteria field must be &#39;played&#39;, &#39;won&#39; or &#39;lost&#39;."
 
 msgid "average-filter.form.error.criteria-invalid"
 msgstr "The criteria must be a numeric value"
 
 msgid "average-filter.form.error.operator-invalid"
-msgstr "The operator must be 'more than', 'at least', 'exactly', 'at most' or 'less than'."
+msgstr "The operator must be &#39;more than&#39;, &#39;at least&#39;, &#39;exactly&#39;, &#39;at most&#39; or &#39;less than&#39;."
 
 msgid "average-filter.form.error.criteria-type-invalid"
-msgstr "The criteria field must be 'matches' or 'games'."
+msgstr "The criteria field must be &#39;matches&#39; or &#39;games&#39;."
 
 msgid "average-filter.view-list"
 msgstr "View average filters"
@@ -2369,7 +2562,7 @@ msgid "events.form.error.finish-minute-invalid"
 msgstr "The event finish minute value is invalid; it must be selected from the list (&#39;00&#39; to &#39;59&#39;), or you must select &#39;all day&#39;."
 
 msgid "events.form.error.cant-edit-event-type"
-msgstr "The event type can't be edited because it has either been used in previous seasons with the current type or there are matches / meetings associated with it already."
+msgstr "The event type can&#39;t be edited because it has either been used in previous seasons with the current type or there are matches / meetings associated with it already."
 
 msgid "events.edit.error.no-current-season"
 msgstr "You can&#39;t edit events until there is a current season to edit them in."
@@ -2466,7 +2659,7 @@ msgid "meetings.form.error.attendee-list-not-array"
 msgstr "The list of attendees must be passed as an array."
 
 msgid "meetings.form.error.apologies-list-not-array"
-msgstr "The list of people who've apologised for not attending must be passed as an array."
+msgstr "The list of people who&#39;ve apologised for not attending must be passed as an array."
 
 msgid "meetings.form.error.attendee-on-both-lists"
 msgstr "%1 is listed as having both attended and sent their apologies; please remove %2 from one or both lists."
@@ -2722,7 +2915,7 @@ msgid "contact-reasons.form.error.no-recipients"
 msgstr "No recipients have been specified."
 
 msgid "contact-reasons.form.error.no-email-for-person"
-msgstr "%1 cannot be added as a contact recipient, because they don't have an email address stored; you'll need to edit their details and add an email address first."
+msgstr "%1 cannot be added as a contact recipient, because they don&#39;t have an email address stored; you&#39;ll need to edit their details and add an email address first."
 
 ### Contact form
 msgid "contact.form.legend.details"
@@ -3313,10 +3506,10 @@ msgid "user.retrieve-username.error.email-address-missing"
 msgstr "Please fill out your email address."
 
 msgid "user.retrieve-username.form-submit-notice"
-msgstr "Thank you for filling our your username; if it's you have an account registered to that email address, your username will be emailed to you."
+msgstr "Thank you for filling our your username; if it&#39;s you have an account registered to that email address, your username will be emailed to you."
 
 msgid "user.forgot-password.error.username-missing"
-msgstr "Please fill out your username.  If you can't remember what it is, you must retrieve it <a href="%1">here</a> first."
+msgstr "Please fill out your username.  If you can&#39;t remember what it is, you must retrieve it <a href="%1">here</a> first."
 
 msgid "user.forgot-password.error.failed-to-set-key"
 msgstr "Failed to generate a password reset link.  Please try again or contact the administrator if the error persists."
@@ -3440,10 +3633,10 @@ msgid "role.permission.user.delete-all"
 msgstr "Delete any user"
 
 msgid "role.permission.user.view-ip"
-msgstr "View users' IP addresses"
+msgstr "View users&#39; IP addresses"
 
 msgid "role.permission.user.view-user-agent"
-msgstr "View users' browsers"
+msgstr "View users&#39; browsers"
 
 msgid "role.permission.system-event-log.view-all"
 msgstr "View private events"
@@ -3517,10 +3710,10 @@ msgid "msg.view-contact-details"
 msgstr "View contact details"
 
 msgid "msg.insecure-password-form"
-msgstr "This web site is not currently being served on a secure connection and you are about to fill in a form that has a password field; it's recommended that you use the <a href="%1">secure form</a> instead if possible, but bear in mind that the security certificate uses modern ciphers that are not compatible with Windows XP (which itself is no longer supported by Microsoft)."
+msgstr "This web site is not currently being served on a secure connection and you are about to fill in a form that has a password field; it&#39;s recommended that you use the <a href="%1">secure form</a> instead if possible, but bear in mind that the security certificate uses modern ciphers that are not compatible with Windows XP (which itself is no longer supported by Microsoft)."
 
 msgid "msg.cookie-notice"
-msgstr "We use cookies on this website to track user sessions and for Google Analytics. To use the website as intended, click 'accept'.  Continued use of this website also implies acceptance."
+msgstr "We use cookies on this website to track user sessions and for Google Analytics. To use the website as intended, click &#39;accept&#39;.  Continued use of this website also implies acceptance."
 
 ### Genders
 msgid "gender.male.gender"
@@ -4012,7 +4205,7 @@ msgstr "%1: %2, your user account has been activated"
 
 msgid "email.html.users.activated"
 msgstr "Hi %1<br /><br />\n\n"
-"Your account on %2 has now been activated and you may login by clicking <a href="%3">here</a> and entering your username and the password you created during the registration process.  If the link doesn't work, you can copy and paste the next line into your browser&#39;s address bar.<br /><br />\n\n"
+"Your account on %2 has now been activated and you may login by clicking <a href="%3">here</a> and entering your username and the password you created during the registration process.  If the link doesn&#39;t work, you can copy and paste the next line into your browser&#39;s address bar.<br /><br />\n\n"
 "%3<br /><br />\n\n"
 "Regards,<br /><br /><br />\n\n\n"
 "%2<br />\n"

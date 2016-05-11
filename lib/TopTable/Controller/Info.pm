@@ -59,6 +59,7 @@ Display a contact form.  If the user is logged in, use their user information, o
 
 sub contact :Local {
   my ( $self, $c ) = @_;
+  my $site_name = $c->stash->{encoded_site_name};
   
   $c->load_status_msgs;
   
@@ -81,6 +82,7 @@ sub contact :Local {
     external_styles     => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
     ],
+    page_description    => $c->maketext("description.contact", $site_name),
   });
   
   if ( !$c->user_exists and $c->config->{Google}{reCAPTCHA}{validate_on_contact} and $c->config->{Google}{reCAPTCHA}{site_key} and $c->config->{Google}{reCAPTCHA}{secret_key} ) {

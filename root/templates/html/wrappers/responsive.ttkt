@@ -21,7 +21,10 @@ END;
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-title" content="MK Table Tennis League" />
 
-<!-- Social -->
+<!-- Social / SEO -->
+<meta name="description" content="[% page_description OR c.config.site_description %]" />
+<meta name="author" content="Chris Welch" />
+
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:site" content="@MKChris">
 [%
@@ -32,15 +35,15 @@ IF c.config.social.twitter_account;
 END;
 -%]
 <meta name="twitter:title" content="[% page_title %]" />
-<meta name="twitter:description" content="[% social_description OR c.config.site_description %]" />
+<meta name="twitter:description" content="[% page_description OR c.config.site_description %]" />
 <meta name="twitter:image" content="[% c.uri_for("/static/images/social/twitter.png") %]" />
 
 <meta property="og:title" content="[% page_title %]" />
-<meta property="og:description" content="[% social_description OR c.config.site_description %]" />
+<meta property="og:description" content="[% page_description OR c.config.site_description %]" />
 <meta property="og:type" content="website">
 <meta property="og:url" content="[% canonical_uri OR c.uri_for( c.request.path ) %]" />
 <meta property="og:image" content="[% c.uri_for("/static/images/social/facebook.png") %]" />
-<!-- End social -->
+<!-- End social / SEO -->
 
 <link rel="apple-touch-icon"  sizes="57x57"   href="[% c.uri_for("/static/images/web-app/web-app-icon-57x57.png") %]" />
 <link rel="apple-touch-icon"  sizes="72x72"   href="[% c.uri_for("/static/images/web-app/web-app-icon-72x72.png") %]" />

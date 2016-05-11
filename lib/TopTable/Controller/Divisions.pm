@@ -78,9 +78,13 @@ Chain base for the list of divisions.  Matches /divisions
 
 sub base_list :Chained("/") PathPart("divisions") CaptureArgs(0) {
   my ( $self, $c ) = @_;
+  my $site_name = $c->stash->{encoded_site_name};
   
   # Check that we are authorised to view divisions
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["division_view", $c->maketext("user.auth.view-divisions"), 1] );
+  
+  # Page description
+  $c->stash({page_description => $c->maketext("description.divisions.list", $site_name)});
   
   # Load the messages
   $c->load_status_msgs;
@@ -174,7 +178,9 @@ Get and stash the current season (or last complete one if it doesn't exist) for 
 
 sub view_current_season :Chained("view") :PathPart("") :Args(0) {
   my ( $self, $c ) = @_;
-  my $division = $c->stash->{division};
+  my $division      = $c->stash->{division};
+  my $site_name     = $c->stash->{encoded_site_name};
+  my $division_name = $c->stash->{encoded_name};
   
   # No season ID, try to find the current season
   my $season = $c->model("DB::Season")->get_current;
@@ -187,6 +193,7 @@ sub view_current_season :Chained("view") :PathPart("") :Args(0) {
   if ( defined($season) ) {
     $c->stash({
       season              => $season,
+      page_description    => $c->maketext("description.divisions.view-current", $division_name, $site_name),
       view_online_display => sprintf( "Viewing %s", $division->name ),
       view_online_link    => 1,
     });
@@ -214,13 +221,14 @@ View a division with a specific season's details.
 
 sub view_specific_season :Chained("view") :PathPart("seasons") :Args(1) {
   my ( $self, $c, $season_id_or_url_key ) = @_;
-  my $division = $c->stash->{division};
-  my ( $season );
+  my $division      = $c->stash->{division};
+  my $site_name     = $c->stash->{encoded_site_name};
+  my $division_name = $c->stash->{encoded_name};
   
   # Check that we are authorised to view teams
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["division_view", $c->maketext("user.auth.view-divisions"), 1] );
     
-  $season = $c->model("DB::Season")->find_id_or_url_key( $season_id_or_url_key );
+  my $season = $c->model("DB::Season")->find_id_or_url_key( $season_id_or_url_key );
   
   if ( defined($season) ) {
     my $encoded_season_name = encode_entities( $season->name );
@@ -232,6 +240,7 @@ sub view_specific_season :Chained("view") :PathPart("seasons") :Args(1) {
       subtitle2           => $encoded_season_name,
       view_online_display => sprintf( "Viewing %s for %s", $division->name, $season->name ),
       view_online_link    => 1,
+      page_description    => $c->maketext("description.divisions.view-specific", $division_name, $site_name, $encoded_season_name),
     });
     
     # Push the season list URI and the current URI on to the breadcrumbs
@@ -311,7 +320,9 @@ Retrieve and display a list of seasons that this division has entered teams into
 
 sub view_seasons :Chained("view") :PathPart("seasons") :CaptureArgs(0) {
   my ( $self, $c ) = @_;
-  my $division = $c->stash->{division};
+  my $division      = $c->stash->{division};
+  my $site_name     = $c->stash->{encoded_site_name};
+  my $division_name = $c->stash->{encoded_name};
   
   # Stash the template; the data will be retrieved when we know what page we're on
   $c->stash({template  => "html/divisions/list-seasons.ttkt"});
@@ -320,6 +331,7 @@ sub view_seasons :Chained("view") :PathPart("seasons") :CaptureArgs(0) {
   push( @{ $c->stash->{breadcrumbs} }, {
     path  => $c->uri_for_action("/divisions/view_seasons_first_page", [$division->url_key]),
     label => $c->maketext("menu.text.seasons"),
+    page_description  => $c->maketext("description.divisions.list-seasons", $division_name, $site_name),
   });
 }
 

@@ -55,13 +55,17 @@ View the current season's rules (or the last completed season if there is no cur
 
 sub view_current_season :Chained("base") :PathPart("") :Args(0) {
   my ( $self, $c ) = @_;
+  my $site_name = $c->stash->{encoded_site_name};
   
   # Get and stash the current season
   my $season = $c->model("DB::Season")->get_current;
   $season = $c->model("DB::Season")->last_complete_season unless defined($season);
   
   if ( defined( $season ) ) {
-    $c->stash({season => $season});
+    $c->stash({
+      season            => $season,
+      page_description  => $c->maketext("description.rules.view-current"),
+    });
     
     $c->detach( "view_finalise" );
   } else {
@@ -83,7 +87,10 @@ sub view_specific_season :Chained("base") :PathPart("seasons") :Args(1) {
   my $season = $c->model("DB::Season")->find_id_or_url_key( $season_id_or_url_key );
   
   if ( defined( $season ) ) {
-    $c->stash({season => $season});
+    $c->stash({
+      season            => $season,
+      page_description  => $c->maketext("description.rules.view-specific"),
+    });
   
     # Push the season list URI and the current URI on to the breadcrumbs
     push( @{ $c->stash->{breadcrumbs} }, {

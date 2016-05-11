@@ -147,6 +147,7 @@ sub base :Private {
   $c->stash({
     encoded_name    => $encoded_name,
     scoreless_name  => $scoreless_name,
+    score           => $score,
     subtitle1       => $encoded_name,
     team_seasons    => $match->get_team_seasons,
     division_season => $match->get_division_season,
@@ -185,8 +186,9 @@ Private function forwarded from view_by_id and view_by_url_keys
 
 sub view :Private {
   my ( $self, $c ) = @_;
-  my $match = $c->stash->{match};
-  my $scoreless_name = $c->stash->{scoreless_name};
+  my $match           = $c->stash->{match};
+  my $scoreless_name  = $c->stash->{scoreless_name};
+  my $score           = $c->stash->{score};
   
   # Check that we are authorised to view clubs
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["match_view", $c->maketext("user.auth.view-matches"), 1] );
@@ -229,6 +231,25 @@ sub view :Private {
     push( @external_scripts, $c->uri_for("/static/script/matches/team/view.js") );
   }
   
+  # Inform that the scorecard is not yet complete if it's started but not complete
+  my $page_description = undef;
+  if ( $match->started and !$match->complete ) {
+    # Match started but not complete
+    $c->add_status_message("info", $c->maketext("matches.message.info.started-not-complete"));
+    $page_description = $c->maketext("description.team-matches.view-started", $scoreless_name, $score);
+  } elsif ( $match->cancelled ) {
+    # Match cancelled
+    $c->add_status_message("info", $c->maketext("matches.message.info.cancelled"));
+    $page_description = $c->maketext("description.team-matches.view-cancelled", $scoreless_name, $c->i18n_datetime_format_date->format_datetime($date));
+  } elsif ( !$match->started ) {
+    # Match not started
+    $c->add_status_message("info", $c->maketext("matches.message.info.not-started"));
+    $page_description = $c->maketext("description.team-matches.view-not-started", $scoreless_name, $c->i18n_datetime_format_date->format_datetime($date));
+  } else {
+    # Match complete
+    $page_description = $c->maketext("description.team-matches.view-completed", $scoreless_name, $score, $c->i18n_datetime_format_date->format_datetime($date));
+  }
+  
   # Set up the template to use
   $c->stash({
     template            => "html/matches/team/view.ttkt",
@@ -238,23 +259,15 @@ sub view :Private {
       $c->uri_for("/static/css/responsive-tabs/style-jqueryui.css"),
     ],
     title_links         => \@title_links,
-    subtitle2           => sprintf( "%s, %d %s %d", ucfirst( $date->day_name ), $match->actual_date->day, $match->actual_date->month_name, $match->actual_date->year ),
+    subtitle2           => sprintf( "%s, %d %s %d", ucfirst( $date->day_name ), $date->day, $date->month_name, $date->year ),
     view_online_display => sprintf( "Viewing match %s", $scoreless_name ),
     view_online_link    => 1,
     reports             => $match->get_reports->count,
     latest_report       => $match->get_latest_report,
     original_report     => $match->get_original_report,
     canonical_uri       => $c->uri_for_action("/matches/team/view_by_url_keys", $match->url_keys),
+    page_description    => $page_description,
   });
-  
-  # Inform that the scorecard is not yet complete if it's started but not complete
-  if ( $match->started and !$match->complete ) {
-    $c->add_status_message("info", $c->maketext("matches.message.info.started-not-complete"));
-  } elsif ( $match->cancelled ) {
-    $c->add_status_message("info", $c->maketext("matches.message.info.cancelled"));
-  } elsif ( !$match->started ) {
-    $c->add_status_message("info", $c->maketext("matches.message.info.not-started"));
-  }
 }
 
 =head2 update_by_ids

@@ -80,12 +80,16 @@ Chain base for the list of venues.  Matches /venues
 
 sub base_list :Chained("/") :PathPart("venues") :CaptureArgs(0) {
   my ( $self, $c ) = @_;
+  my $site_name = $c->stash->{encoded_site_name};
   
   # Check that we are authorised to view venues
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["venue_view", $c->maketext("user.auth.view-venues"), 1] );
   
   # Check the authorisation to edit venues we can display the link if necessary
   $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( venue_edit venue_delete venue_create) ], "", 0] );
+  
+  # Page description
+  $c->stash({page_description => $c->maketext("description.venues.list", $site_name)});
   
   # Load the messages
   $c->load_status_msgs;
@@ -161,8 +165,9 @@ sub retrieve_paged :Private {
 
 sub view :Chained("base") :PathPart("") :Args(0) {
   my ( $self, $c ) = @_;
-  my $venue = $c->stash->{venue};
-  my $encoded_name = $c->stash->{encoded_name};
+  my $venue       = $c->stash->{venue};
+  my $venue_name  = $c->stash->{encoded_name};
+  my $site_name   = $c->stash->{encoded_site_name};
   
   # Check that we are authorised to view venues
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["venue_view", $c->maketext("user.auth.view-venues"), 1] );
@@ -175,14 +180,14 @@ sub view :Chained("base") :PathPart("") :Args(0) {
     # Push edit / opening hour links if are authorised
     push(@title_links, {
       image_uri => $c->uri_for("/static/images/icons/0018-Pencil-icon-32.png"),
-      text      => $c->maketext("admin.edit-object", $encoded_name),
+      text      => $c->maketext("admin.edit-object", $venue_name),
       link_uri  => $c->uri_for_action("/venues/edit", [$venue->url_key]),
     }) if $c->stash->{authorisation}{venue_edit};
     
     # Push a delete link if we're authorised and the venue can be deleted
     push(@title_links, {
       image_uri => $c->uri_for("/static/images/icons/0005-Delete-icon-32.png"),
-      text      => $c->maketext("admin.delete-object", $encoded_name),
+      text      => $c->maketext("admin.delete-object", $venue_name),
       link_uri  => $c->uri_for_action("/venues/delete", [$venue->url_key]),
     }) if $c->stash->{authorisation}{venue_delete} and $venue->can_delete;
   }
@@ -211,6 +216,7 @@ sub view :Chained("base") :PathPart("") :Args(0) {
     view_online_link    => 1,
     map_latitude        => $venue->coordinates_latitude,
     map_longitude       => $venue->coordinates_longitude,
+    page_description    => $c->maketext("description.venues.view", $venue_name, $site_name),
   });
 }
 

@@ -58,13 +58,17 @@ View the current season's league officials (or the last completed season if ther
 
 sub view_current_season :Chained("base") :PathPart("") :Args(0) {
   my ( $self, $c ) = @_;
+  my $site_name = $c->stash->{encoded_site_name};
   
   # Get and stash the current season
   my $season = $c->model("DB::Season")->get_current;
   $season = $c->model("DB::Season")->last_complete_season unless defined($season);
   
   if ( defined( $season ) ) {
-    $c->stash({season => $season});
+    $c->stash({
+      season            => $season,
+      page_description  => $c->maketext("description.officials.view-current", $site_name),
+    });
     
     $c->detach( "view_finalise" );
   } else {
@@ -82,13 +86,18 @@ Load and view the specified season's officials.
 
 sub view_specific_season :Chained("base") :PathPart("seasons") :Args(1) {
   my ( $self, $c, $season_id_or_url_key ) = @_;
+  my $site_name = $c->stash->{encoded_site_name};
   
   my $season = $c->model("DB::Season")->find_id_or_url_key( $season_id_or_url_key );
   
   if ( defined( $season ) ) {
+    my $encoded_season_name = encode_entities( $season->name );
+    
     $c->stash({
-      season          => $season,
-      specific_season => 1,
+      season              => $season,
+      specific_season     => 1,
+      encoded_season_name => $encoded_season_name,
+      page_description    => $c->maketext("description.officials.view-specific", $site_name, $encoded_season_name),
     });
   
     # Push the season list URI and the current URI on to the breadcrumbs
@@ -184,6 +193,7 @@ Performs the lookups for clubs with the given page number.
 
 sub retrieve_paged_seasons :Private {
   my ( $self, $c, $page_number ) = @_;
+  my $site_name = $c->stash->{encoded_site_name};
   
   my $seasons = $c->model("DB::Season")->page_records({
     page_number       => $page_number,
@@ -208,6 +218,7 @@ sub retrieve_paged_seasons :Private {
     subtitle2           => $c->maketext("menu.text.seasons"),
     page_info           => $page_info,
     page_links          => $page_links,
+    page_description    => $c->maketext("description.officials.list-seasons", $site_name),
   });
 }
 

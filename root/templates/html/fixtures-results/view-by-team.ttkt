@@ -82,7 +82,7 @@ END;
     </td>
     <td data-label="[% c.maketext("teams.fixtures.score") %]">
 [%
-IF match.started AND !match.cancelled;
+IF match.started OR match.cancelled;
 -%]
       <a href="[% c.uri_for_action('/matches/team/view_by_url_keys', [match.home_team.club.url_key, match.home_team.url_key, match.away_team.club.url_key, match.away_team.url_key, date.year, month, day]) %]" title="[% c.maketext("fixtures-results.view-scorecard") %]">[% match_result.score %]</a>
 [%

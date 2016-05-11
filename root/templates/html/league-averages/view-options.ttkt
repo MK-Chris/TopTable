@@ -11,3 +11,6 @@
 <div class="list-item">
   <a href="[% c.uri_for_action('/league-averages/list_first_page', ['doubles-pairs']) %]">Doubles (Pairs)</a><br />
 </div>
+<div class="list-item">
+  <a href="[% c.uri_for_action('/league-averages/list_first_page', ['teams']) %]">Teams</a><br />
+</div>

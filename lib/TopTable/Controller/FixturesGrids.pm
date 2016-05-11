@@ -82,12 +82,16 @@ Chain base for the list of fixtures grids.  Matches /fixtures-grids
 
 sub base_list :Chained("/") :PathPart("fixtures-grids") :CaptureArgs(0) {
   my ( $self, $c ) = @_;
+  my $site_name = $c->stash->{encoded_site_name};
   
   # Check that we are authorised to view fixtures grids
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["fixtures_view", $c->maketext("user.auth.view-fixtures-grids"), 1] );
   
   # Check the authorisation to edit fixtures so we can display the link if necessary
   $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( fixtures_edit fixtures_delete fixtures_create) ], "", 0] );
+  
+  # Page description
+  $c->stash({page_description => $c->maketext("description.fixtures-grids.list", $site_name)});
   
   # Load the messages
   $c->load_status_msgs;
@@ -182,8 +186,9 @@ Get and stash the current season (or last complete one if it doesn't exist) for 
 
 sub view_current_season :Chained("view") :PathPart("") :Args(0) {
   my ( $self, $c ) = @_;
-  my $grid          = $c->stash->{grid};
-  my $encoded_name  = $c->stash->{encoded_name};
+  my $grid      = $c->stash->{grid};
+  my $site_name = $c->stash->{encoded_site_name};
+  my $grid_name = $c->stash->{encoded_name};
   
   # No season ID, try to find the current season
   my $season = $c->model("DB::Season")->get_current;
@@ -192,12 +197,13 @@ sub view_current_season :Chained("view") :PathPart("") :Args(0) {
   if ( defined( $season ) ) {
     $c->stash({
       season              => $season,
-      view_online_display => sprintf( "Viewing %s", $encoded_name ),
+      view_online_display => sprintf( "Viewing %s", $grid_name ),
       view_online_link    => 1,
+      page_description    => $c->maketext("description.fixtures-grids.view-current", $grid_name, $site_name),
     });
   } else {
     $c->stash({
-      view_online_display => sprintf( "Viewing %s", $grid->name ),
+      view_online_display => sprintf( "Viewing %s", $grid_name ),
       view_online_link    => 1,
     });
   }
@@ -214,13 +220,14 @@ View a fixtures grid with a specific season's details.
 
 sub view_specific_season :Chained("view") :PathPart("seasons") :Args(1) {
   my ( $self, $c, $season_id_or_url_key ) = @_;
-  my $grid = $c->stash->{grid};
-  my ( $season );
+  my $grid      = $c->stash->{grid};
+  my $site_name = $c->stash->{encoded_site_name};
+  my $grid_name = $c->stash->{encoded_name};
   
   # Check that we are authorised to view teams
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["fixtures_view", $c->maketext("user.auth.view-fixtures-grids"), 1] );
     
-  $season = $c->model("DB::Season")->find_id_or_url_key( $season_id_or_url_key );
+  my $season = $c->model("DB::Season")->find_id_or_url_key( $season_id_or_url_key );
   
   if ( defined($season) ) {
     my $encoded_season_name = encode_entities( $season->name );
@@ -232,6 +239,7 @@ sub view_specific_season :Chained("view") :PathPart("seasons") :Args(1) {
       encoded_season_name => $encoded_season_name,
       view_online_display => sprintf( "Viewing %s for %s", $grid->name, $season->name ),
       view_online_link    => 1,
+      page_description    => $c->maketext("description.fixtures-grids.view-specific", $grid_name, $site_name, $encoded_season_name),
     });
     
     # Push the season list URI and the current URI on to the breadcrumbs
@@ -323,10 +331,15 @@ Retrieve and display a list of seasons that this fixtures grid has been used for
 
 sub view_seasons :Chained("view") :PathPart("seasons") :CaptureArgs(0) {
   my ( $self, $c ) = @_;
-  my $grid = $c->stash->{grid};
+  my $grid      = $c->stash->{grid};
+  my $site_name = $c->stash->{encoded_site_name};
+  my $grid_name = $c->stash->{encoded_name};
   
   # Stash the template; the data will be retrieved when we know what page we're on
-  $c->stash({template  => "html/fixtures-grids/list-seasons.ttkt"});
+  $c->stash({
+    template          => "html/fixtures-grids/list-seasons.ttkt",
+    page_description  => $c->maketext("description.fixtures-grids.list-seasons", $grid_name, $site_name),
+  });
   
   # Push the current URI on to the breadcrumbs
   push( @{ $c->stash->{breadcrumbs} }, {

@@ -138,6 +138,7 @@ List the clubs that match the criteria offered in the provided arguments.
 
 sub list :Local {
   my ( $self, $c ) = @_;
+  my $site_name = $c->stash->{encoded_site_name};
   
   # Check that we are authorised to view clubs
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["team_view", $c->maketext("user.auth.view-teams"), 1] );
@@ -146,10 +147,7 @@ sub list :Local {
   $c->forward( "TopTable::Controller::Users", "check_authorisation", [[ qw( team_create team_edit team_delete ) ], "", 0] );
   
   # Retrieve all of the clubs to display
-  $c->stash(teams => [$c->model("DB::Team")->search({}, {
-    join      => "club",
-    order_by  => {-asc => ["club.full_name", "name"]}
-  })]);
+  $c->stash();
   
   # Set up the template to use
   $c->stash({
@@ -159,6 +157,11 @@ sub list :Local {
     ],
     view_online_display => "Viewing teams",
     view_online_link    => 1,
+    teams => [$c->model("DB::Team")->search({}, {
+      join      => "club",
+      order_by  => {-asc => ["club.full_name", "name"]}
+    })],
+    page_description    => $c->maketext("description.teams.list", $site_name),
   });
 }
 
@@ -268,6 +271,8 @@ Private function to grab the current (or last complete) season for viewing the t
 
 sub view_current_season :Private {
   my ( $self, $c ) = @_;
+  my $site_name = $c->stash->{encoded_site_name};
+  my $team_name = $c->stash->{encoded_name};
   
   # No season ID, try to find the current season (or the last completed season if there is no current season)
   my $season = $c->model("DB::Season")->get_current;
@@ -283,6 +288,7 @@ sub view_current_season :Private {
     $c->stash({
       season              => $season,
       encoded_season_name => $encoded_season_name,
+      page_description    => $c->maketext("description.teams.view-current", $team_name, $site_name),
     });
   } else {
     # There is no current season, so this page is invalid for now.
@@ -330,7 +336,9 @@ Private function to retrieve the specific season that for viewing a team.  Forwa
 
 sub view_specific_season :Private {
   my ( $self, $c, $season_id_or_url_key ) = @_;
-  my $team = $c->stash->{team};
+  my $team      = $c->stash->{team};
+  my $site_name = $c->stash->{encoded_site_name};
+  my $team_name = $c->stash->{encoded_name};
   
   my $season = $c->model("DB::Season")->find_id_or_url_key($season_id_or_url_key);
     
@@ -341,6 +349,7 @@ sub view_specific_season :Private {
       season              => $season,
       specific_season     => 1,
       encoded_season_name => $encoded_season_name,
+      page_description    => $c->maketext("description.teams.view-specific", $team_name, $site_name, $encoded_season_name),
     });
     
     # Breadcrumbs
@@ -533,7 +542,11 @@ Retrieve and display a list of seasons that this team has entered teams into.
 
 sub view_seasons :Private {
   my ( $self, $c ) = @_;
-  my $team = $c->stash->{team};
+  my $team      = $c->stash->{team};
+  my $site_name = $c->stash->{encoded_site_name};
+  my $team_name = $c->stash->{encoded_name};
+  
+  $c->stash({page_description => $c->maketext("description.teams.list-seasons", $team_name, $site_name)});
   
   # Push the current URI on to the breadcrumbs
   push( @{ $c->stash->{breadcrumbs} }, {

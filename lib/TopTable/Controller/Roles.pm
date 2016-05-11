@@ -76,12 +76,16 @@ Chain base for the list of roles.
 
 sub base_list :Chained("/") :PathPart("roles") :CaptureArgs(0) {
   my ( $self, $c ) = @_;
+  my $site_name = $c->stash->{encoded_site_name};
   
   # Check that we are authorised to view clubs
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["role_view", $c->maketext("user.auth.view-roles"), 1] );
   
   # Check the authorisation to edit clubs we can display the link if necessary
   $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( role_create role_edit role_delete ) ], "", 0] );
+  
+  # Page description
+  $c->stash({page_description => $c->maketext("description.roles.list", $site_name)});
   
   # Load the messages
   $c->load_status_msgs;
@@ -163,7 +167,8 @@ View the role (i.e., name, permissions and  members).
 sub view :Chained("base") :PathPart("") :Args(0) {
   my ( $self, $c ) = @_;
   my $role = $c->stash->{role};
-  my $encoded_name = $c->stash->{encoded_name};
+  my $site_name = $c->stash->{encoded_site_name};
+  my $role_name = $c->stash->{encoded_name};
   
   # Check that we are authorised to view
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["role_view", $c->maketext("user.auth.view-roles"), 1] );
@@ -176,14 +181,14 @@ sub view :Chained("base") :PathPart("") :Args(0) {
     # Push edit / opening hour links if are authorised
     push(@title_links, {
       image_uri => $c->uri_for("/static/images/icons/0018-Pencil-icon-32.png"),
-      text      => $c->maketext("admin.delete-object", $encoded_name),
+      text      => $c->maketext("admin.delete-object", $role_name),
       link_uri  => $c->uri_for_action("/roles/edit", [$role->url_key]),
     }) if $c->stash->{authorisation}{role_edit};
     
     # Push a delete link if we're authorised and the venue can be deleted
     push(@title_links, {
       image_uri => $c->uri_for("/static/images/icons/0005-Delete-icon-32.png"),
-      text      => $c->maketext("admin.delete-object", $encoded_name),
+      text      => $c->maketext("admin.delete-object", $role_name),
       link_uri  => $c->uri_for_action("/roles/delete", [$role->url_key]),
     }) if $c->stash->{authorisation}{role_delete};
   }
@@ -192,8 +197,9 @@ sub view :Chained("base") :PathPart("") :Args(0) {
   $c->stash({
     template            => "html/roles/view.ttkt",
     title_links         => \@title_links,
-    view_online_display => sprintf( "Viewing role: %s", $encoded_name ),
+    view_online_display => sprintf( "Viewing role: %s", $role_name ),
     view_online_link    => 0,
+    page_description    => $c->maketext("description.roles.view", $role_name, $site_name),
   });
 }
 

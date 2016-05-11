@@ -87,6 +87,7 @@ Chain base for the list of clubs.  Matches /clubs
 
 sub base_list :Chained("/") :PathPart("users") :CaptureArgs(0) {
   my ( $self, $c ) = @_;
+  my $site_name = $c->stash->{encoded_site_name};
   
   # Check that we are authorised to view users
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["user_view", $c->maketext("user.auth.view-users"), 1] );
@@ -95,6 +96,9 @@ sub base_list :Chained("/") :PathPart("users") :CaptureArgs(0) {
   $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( user_edit_all user_delete_all ) ], "", 0] );
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["user_edit_own", "", 0] ) if $c->user_exists and !$c->stash->{authorisation}{news_article_edit_all}; # Only do this if the user is logged in and we can't edit all articles
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["user_delete_own", "", 0] ) if $c->user_exists and !$c->stash->{authorisation}{news_article_delete_all}; # Only do this if the user is logged in and we can't delete all articles
+  
+  # Page description
+  $c->stash({page_description => $c->maketext("description.users.list", $site_name)});
   
   # Load the messages
   $c->load_status_msgs;
@@ -172,8 +176,9 @@ View a user's profile.
 
 sub view :Chained("base") :PathPart("") :Args(0) {
   my ( $self, $c ) = @_;
-  my $user = $c->stash->{user};
-  my $encoded_username = $c->stash->{encoded_username};
+  my $user              = $c->stash->{user};
+  my $encoded_username  = $c->stash->{encoded_username};
+  my $site_name         = $c->stash->{encoded_site_name};
   
   # Set up the title links if we need them
   my @title_links = ();
@@ -193,9 +198,10 @@ sub view :Chained("base") :PathPart("") :Args(0) {
   }) if $c->stash->{authorisation}{user_delete_all} or ( $c->stash->{authorisation}{user_delete_own} and $c->user_exists and $c->user->id == $user->id );
   
   $c->stash({
-    template      => "html/users/view.ttkt",
-    title_links   => \@title_links,
-    canonical_uri => $c->uri_for_action("/users/view", [$user->url_key]),
+    template          => "html/users/view.ttkt",
+    title_links       => \@title_links,
+    canonical_uri     => $c->uri_for_action("/users/view", [$user->url_key]),
+    page_description  => $c->maketext("description.users.view", $encoded_username, $site_name),
   });
 }
 
