@@ -59,9 +59,6 @@ sub base :Chained("/") :PathPart("league-averages") :CaptureArgs(1) {
   # Load the messages
   $c->load_status_msgs;
   
-  # Check that we are authorised to view divisions
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["division_view", $c->maketext("user.auth.view-league-averages"), 1] );
-  
   # Check that the type of averages we have is valid
   if ( exists( $c->stash->{average_types}{$averages_type} ) ) {
     $c->stash({averages_type => $averages_type});
@@ -86,12 +83,14 @@ Display the options (different types of averages) for viewing.
 
 sub base_options :Chained("/") :PathPart("league-averages") :Args(0) {
   my ( $self, $c ) = @_;
+  my $site_name = $c->stash->{encoded_site_name};
   
   # Stash the details
   $c->stash({
     template            => "html/league-averages/view-options.ttkt",
     view_online_display => "Viewing league averages",
     view_online_link    => 1,
+    page_description    => $c->maketext("description.league-averages.options", $site_name),
   });
 }
 
@@ -103,9 +102,9 @@ Chain base for the list of divisions.
 
 sub list_divisions :Chained("base") :PathPart("") :CaptureArgs(0) {
   my ( $self, $c ) = @_;
+  my $site_name = $c->stash->{encoded_site_name};
   
-  # Check that we are authorised to view divisions
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["division_view", $c->maketext("user.auth.view-league-averages"), 1] );
+  $c->stash({page_description => $c->maketext("description.league-averages.list-divisions", $site_name)});
 }
 
 =head2 list_first_page
@@ -212,6 +211,8 @@ sub view_current_season :Chained("view") :PathPart("") :Args(0) {
   my ( $self, $c ) = @_;
   my $division      = $c->stash->{division};
   my $averages_type = $c->stash->{averages_type};
+  my $division_name = $c->stash->{encoded_division_name};
+  my $site_name     = $c->stash->{encoded_site_name};
   
   # No season ID, try to find the current season
   my $season = $c->model("DB::Season")->get_current;
@@ -227,6 +228,7 @@ sub view_current_season :Chained("view") :PathPart("") :Args(0) {
         season              => $season,
         encoded_season_name => $encoded_season_name,
         division_season     => $division_season,
+        page_description    => $c->maketext("description.league-averages.view-current", lc( $c->maketext( sprintf("menu.text.league-averages-%s", $averages_type) ) ), $division_name, $site_name),
       });
     } else {
       # Division is not used for this season
@@ -251,6 +253,8 @@ sub view_specific_season :Chained("view") :PathPart("seasons") :Args(1) {
   my ( $self, $c, $season_id_or_url_key ) = @_;
   my $division      = $c->stash->{division};
   my $averages_type = $c->stash->{averages_type};
+  my $division_name = $c->stash->{encoded_division_name};
+  my $site_name     = $c->stash->{encoded_site_name};
   
   my $season = $c->model("DB::Season")->find_id_or_url_key( $season_id_or_url_key );
     
@@ -265,6 +269,7 @@ sub view_specific_season :Chained("view") :PathPart("seasons") :Args(1) {
         encoded_season_name => $encoded_season_name,
         specific_season     => 1,
         division_season     => $division_season,
+        page_description    => $c->maketext("description.league-averages.view-specific", lc( $c->maketext( sprintf("menu.text.league-averages-%s", $averages_type) ) ), $division_name, $site_name, $encoded_season_name),
       });
       
       # Push the season list URI and the current URI on to the breadcrumbs
@@ -406,7 +411,7 @@ sub view_finalise :Private {
 
 =head2 view_seasons
 
-Retrieve and display a list of seasons that this club has entered teams into.
+Retrieve and display a list of seasons that this division has averages to view for.
 
 =cut
 
@@ -414,9 +419,14 @@ sub view_seasons :Chained("view") :PathPart("seasons") :CaptureArgs(0) {
   my ( $self, $c ) = @_;
   my $division      = $c->stash->{division};
   my $averages_type = $c->stash->{averages_type};
+  my $division_name = $c->stash->{encoded_division_name};
+  my $site_name     = $c->stash->{encoded_site_name};
   
   # Stash the template; the data will be retrieved when we know what page we're on
-  $c->stash({template  => "html/divisions/averages-list-seasons.ttkt"});
+  $c->stash({
+    template          => "html/divisions/averages-list-seasons.ttkt",
+    page_description  => $c->maketext("description.league-averages.list-seasons", $division_name, $site_name),
+  });
   
   # Push the current URI on to the breadcrumbs
   push( @{ $c->stash->{breadcrumbs} }, {

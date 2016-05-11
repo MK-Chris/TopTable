@@ -84,12 +84,16 @@ Chain base for the list of events.  Matches /events
 
 sub base_list :Chained("/") :PathPart("events") :CaptureArgs(0) {
   my ( $self, $c ) = @_;
+  my $site_name = $c->stash->{encoded_site_name};
   
   # Check that we are authorised to view events
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["event_view", $c->maketext("user.auth.view-events"), 1] );
   
   # Check the authorisation to edit events we can display the link if necessary
   $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( event_edit event_delete event_create) ], "", 0] );
+  
+  # Page description
+  $c->stash({page_description => $c->maketext("description.events.list", $site_name)});
   
   # Load the messages
   $c->load_status_msgs;
@@ -184,14 +188,19 @@ Get and stash the current season (or last complete one if it doesn't exist) for 
 
 sub view_current_season :Chained("view") :PathPart("") :Args(0) {
   my ( $self, $c ) = @_;
-  my $event = $c->stash->{event};
+  my $event       = $c->stash->{event};
+  my $site_name   = $c->stash->{encoded_site_name};
+  my $event_name  = $c->stash->{encoded_event_name};
   
   # Try to find the current season (or the last completed season if there is no current season)
   my $season = $c->model("DB::Season")->get_current;
   $season = $c->model("DB::Season")->last_complete_season unless defined($season);
     
   if ( defined( $season ) ) {
-    $c->stash({season => $season});
+    $c->stash({
+      season            => $season,
+      page_description  => $c->maketext("description.events.view-current", $event_name, $site_name),
+    });
     
     # Get the team's details for the season.
     $c->forward("get_event_season");
@@ -213,7 +222,9 @@ View an event in a specific season.  Matches /events/*/seasons/* (End of chain)
 
 sub view_specific_season :Chained("view") :PathPart("seasons") :Args(1) {
   my ( $self, $c, $season_id_or_url_key ) = @_;
-  my $event = $c->stash->{event};
+  my $event       = $c->stash->{event};
+  my $site_name   = $c->stash->{encoded_site_name};
+  my $event_name  = $c->stash->{encoded_event_name};
   
   # Validate the passed season ID
   my $season = $c->model("DB::Season")->find_id_or_url_key( $season_id_or_url_key );
@@ -225,6 +236,7 @@ sub view_specific_season :Chained("view") :PathPart("seasons") :Args(1) {
       season          => $season,
       specific_season => 1,
       subtitle2       => $encoded_season_name,
+      page_description  => $c->maketext("description.events.view-specific", $event_name, $site_name, $encoded_season_name),
     });
   
     # Push the season list URI and the current URI on to the breadcrumbs
@@ -328,10 +340,15 @@ Retrieve and display a list of seasons that this event has been run in.
 
 sub view_seasons :Chained("view") :PathPart("seasons") :CaptureArgs(0) {
   my ( $self, $c ) = @_;
-  my $event = $c->stash->{event};
+  my $event       = $c->stash->{event};
+  my $site_name   = $c->stash->{encoded_site_name};
+  my $event_name  = $c->stash->{encoded_event_name};
   
   # Stash the template; the data will be retrieved when we know what page we're on
-  $c->stash({template  => "html/events/list-seasons.ttkt"});
+  $c->stash({
+    template          => "html/events/list-seasons.ttkt",
+    page_description  => $c->maketext("description.events.list-seasons", $event_name, $site_name),
+  });
   
   # Push the current URI on to the breadcrumbs
   push( @{ $c->stash->{breadcrumbs} }, {

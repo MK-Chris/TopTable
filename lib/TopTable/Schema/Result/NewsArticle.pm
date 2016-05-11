@@ -319,6 +319,22 @@ sub current_details {
   return $return_value;
 }
 
+=head2 article_description
+
+Returns an article description of either a brief description field (to be created) or the first 150 characters of the article itself.
+
+=cut
+
+sub article_description {
+  my ( $self ) = @_;
+  
+  # Get the current details so we access the latest edit
+  my $current_article_text = $self->current_details->{article_content};
+  
+  # Return a substring of the article
+  return substr( $current_article_text, 0, 150 );
+}
+
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 __PACKAGE__->meta->make_immutable;

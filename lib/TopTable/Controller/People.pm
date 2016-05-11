@@ -82,12 +82,16 @@ Chain base for the list of clubs.  Matches /clubs
 
 sub base_list :Chained("/") :PathPart("people") :CaptureArgs(0) {
   my ( $self, $c ) = @_;
+  my $site_name = $c->stash->{encoded_site_name};
   
   # Check that we are authorised to view clubs
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["person_view", $c->maketext("user.auth.view-people"), 1] );
   
   # Check the authorisation to edit clubs we can display the link if necessary
   $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( person_edit person_delete person_create) ], "", 0] );
+  
+  # Page description
+  $c->stash({page_description => $c->maketext("description.people.list", $site_name)});
   
   # Load the messages
   $c->load_status_msgs;
@@ -197,6 +201,8 @@ Get and stash the current season (or last complete one if it doesn't exist) for 
 
 sub view_current_season :Chained("view") :PathPart("") :Args(0) {
   my ( $self, $c ) = @_;
+  my $site_name   = $c->stash->{encoded_site_name};
+  my $person_name = $c->stash->{encoded_display_name};
   
   # No season ID, try to find the current season
   my $season = $c->model("DB::Season")->get_current;
@@ -208,6 +214,7 @@ sub view_current_season :Chained("view") :PathPart("") :Args(0) {
     $c->stash({
       season              => $season,
       encoded_season_name => $encoded_season_name,
+      page_description    => $c->maketext("description.people.view-current", $person_name, $site_name),
     });
     
     # Forward to the routine that stashes the person's season
@@ -226,8 +233,11 @@ View a team with a specific season's details.
 
 sub view_specific_season :Chained("view") :PathPart("seasons") :Args(1) {
   my ( $self, $c, $season_id_or_url_key ) = @_;
-  my $person = $c->stash->{person};
-  my $season = $c->model("DB::Season")->find_id_or_url_key($season_id_or_url_key);
+  my $person      = $c->stash->{person};
+  my $site_name   = $c->stash->{encoded_site_name};
+  my $person_name = $c->stash->{encoded_display_name};
+  
+  my $season = $c->model("DB::Season")->find_id_or_url_key( $season_id_or_url_key );
     
   if ( defined( $season ) ) {
     my $encoded_season_name = encode_entities( $season->name );
@@ -237,6 +247,7 @@ sub view_specific_season :Chained("view") :PathPart("seasons") :Args(1) {
       specific_season     => 1,
       subtitle2           => $encoded_season_name,
       encoded_season_name => $encoded_season_name,
+      page_description    => $c->maketext("description.people.view-specific", $person_name, $encoded_season_name, $site_name),
     });
   } else {
     # Invalid season
@@ -348,10 +359,15 @@ Retrieve and display a list of seasons that this club has entered teams into.
 
 sub view_seasons :Chained("view") :PathPart("seasons") :CaptureArgs(0) {
   my ( $self, $c ) = @_;
-  my $person = $c->stash->{person};
+  my $person      = $c->stash->{person};
+  my $site_name   = $c->stash->{encoded_site_name};
+  my $person_name = $c->stash->{encoded_display_name};
   
   # Stash the template; the data will be retrieved when we know what page we're on
-  $c->stash({template  => "html/people/list-seasons.ttkt"});
+  $c->stash({
+    template          => "html/people/list-seasons.ttkt",
+    page_description  => $c->maketext("description.people.list-seasons", $person_name, $site_name),
+  });
   
   # Push the current URI on to the breadcrumbs
   push( @{ $c->stash->{breadcrumbs} }, {

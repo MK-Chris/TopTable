@@ -116,6 +116,7 @@ Chain base for the list of news articles.  Matches /news
 
 sub base_list :Chained("/") :PathPart("news") :CaptureArgs(0) {
   my ( $self, $c ) = @_;
+  my $site_name = $c->stash->{encoded_site_name};
   
   # Check that we are authorised to view venues
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["news_article_view", $c->maketext("user.auth.view-news"), 1] );
@@ -124,6 +125,9 @@ sub base_list :Chained("/") :PathPart("news") :CaptureArgs(0) {
   $c->forward( "TopTable::Controller::Users", "check_authorisation", [[ qw( news_article_create news_article_edit_all news_article_delete_all ) ], "", 0] );
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["news_article_edit_own", "", 0] ) if $c->user_exists and !$c->stash->{authorisation}{news_article_edit_all}; # Only do this if the user is logged in and we can't edit all articles
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["news_article_delete_own", "", 0] ) if $c->user_exists and !$c->stash->{authorisation}{news_article_delete_all}; # Only do this if the user is logged in and we can't delete all articles
+  
+  # Page description
+  $c->stash({page_description => $c->maketext("description.news.list", $site_name)});
   
   # Load the messages
   $c->load_status_msgs;
@@ -263,6 +267,7 @@ sub view :Private {
     view_online_display => "Viewing " . $current_details->{headline},
     view_online_link    => 1,
     canonical_uri       => $c->uri_for_action("/news/view_by_url_key", [$article->published_year, sprintf("%02d", $article->published_month), $article->url_key]),
+    page_description    => $article->article_description,
   });
 }
 

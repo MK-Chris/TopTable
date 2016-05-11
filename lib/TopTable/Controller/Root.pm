@@ -41,7 +41,10 @@ sub auto :Private {
   
   # Stash the correct timezone
   # Only do timezone stuff if we're not processing a js file
-  $c->stash({timezone => $c->timezone}) unless $c->request->path =~ /\.js$/;
+  $c->stash({
+    timezone          => $c->timezone,
+    encoded_site_name => encode_entities( $c->config->{name} ),
+  }) unless $c->request->path =~ /\.js$/;
 }
 
 =head2 begin

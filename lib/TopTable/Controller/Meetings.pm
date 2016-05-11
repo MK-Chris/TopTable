@@ -124,6 +124,7 @@ Chain base for the list of seasons.  Matches /seasons
 
 sub base_list :Chained("/") :PathPart("meetings") :CaptureArgs(0) {
   my ( $self, $c ) = @_;
+  my $site_name = $c->stash->{encoded_site_name};
   
   # Check that we are authorised to view clubs
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["meeting_view", $c->maketext("user.auth.view-meetings"), 1] );
@@ -131,13 +132,16 @@ sub base_list :Chained("/") :PathPart("meetings") :CaptureArgs(0) {
   # Check the authorisation to edit clubs we can display the link if necessary
   $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( meeting_edit meeting_delete meeting_create) ], "", 0] );
   
+  # Page description
+  $c->stash({page_description => $c->maketext("description.meetings.list", $site_name)});
+  
   # Load the messages
   $c->load_status_msgs;
 }
 
 =head2 list_first_page
 
-List the clubs on the first page.
+List the meetings on the first page.
 
 =cut
 
@@ -149,7 +153,7 @@ sub list_first_page :Chained("base_list") :PathPart("") :Args(0) {
 
 =head2 list_specific_page
 
-List the clubs on the specified page.
+List the meetings on the specified page.
 
 =cut
 
@@ -236,6 +240,7 @@ sub view :Private {
   my $event                 = $c->stash->{event};
   my $event_season          = $c->stash->{event_season};
   my $encoded_meeting_type  = $c->stash->{encoded_meeting_type};
+  my $site_name             = $c->stash->{encoded_site_name};
   my ( $edit_uri, $delete_uri, $edit_auth_code, $delete_auth_code, $name, $meeting );
   
   if ( $is_event ) {
@@ -302,6 +307,7 @@ sub view :Private {
     view_online_display => sprintf( "Viewing %s", $name ),
     view_online_link    => 0,
     canonical_uri       => $canonical_uri,
+    page_description    => $c->maketext("description.meetings.view", $name, $site_name),
   });
 }
 

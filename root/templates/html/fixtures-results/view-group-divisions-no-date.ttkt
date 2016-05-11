@@ -57,7 +57,7 @@ IF matches.count;
       <a href="[% c.uri_for_action('/matches/team/view_by_url_keys', [match.home_team.club.url_key, match.home_team.url_key, match.away_team.club.url_key, match.away_team.url_key, date.year, month, day]) %]" title="[% c.maketext("fixtures-results.view-scorecard") %]">[% score %]</a>
     </td>
     <td>
-      <a href="[% away_team_uri %]">[% match.away_team.club.short_name | html_entity %] [% match.away_team.namev %]</a>
+      <a href="[% away_team_uri %]">[% match.away_team.club.short_name | html_entity %] [% match.away_team.name %]</a>
     </td>
     <td>
       <a href="[% c.uri_for_action('/venues/view', [match.venue.url_key]) %]">[% match.venue.name | html_entity %]</a>

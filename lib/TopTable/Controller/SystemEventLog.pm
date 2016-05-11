@@ -44,12 +44,16 @@ Base routine for the event log listing.  Checks the authorisation.
 
 sub base :Chained("/") :PathPart("event-log") :CaptureArgs(0) {
   my ( $self, $c ) = @_;
-  
-  # Load the messages
-  $c->load_status_msgs;
+  my $site_name = $c->stash->{encoded_site_name};
   
   # Check that we are authorised to view clubs
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["system_event_log_view_all", "view administrative updates", 0] );
+  
+  # Page description
+  $c->stash({page_description => $c->maketext("description.event-log.list", $site_name)});
+  
+  # Load the messages
+  $c->load_status_msgs;
 }
 
 =head2 list_first_page

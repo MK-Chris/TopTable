@@ -75,12 +75,16 @@ Chain base for the list of seasons.  Matches /seasons
 
 sub base_list :Chained("/") :PathPart("seasons") :CaptureArgs(0) {
   my ( $self, $c ) = @_;
+  my $site_name = $c->stash->{encoded_site_name};
   
   # Check that we are authorised to view clubs
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["season_view", $c->maketext("user.auth.view-seasons"), 1] );
   
   # Check the authorisation to edit clubs we can display the link if necessary
   $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( season_edit season_delete season_create) ], "", 0] );
+  
+  # Page description
+  $c->stash({page_description => $c->maketext("description.seasons.list", $site_name)});
   
   # Load the messages
   $c->load_status_msgs;
@@ -161,6 +165,7 @@ sub view :Chained("base") :PathPart("") :Args(0) {
   my ( $self, $c ) = @_;
   my $season        = $c->stash->{season};
   my $encoded_name  = $c->stash->{encoded_name};
+  my $site_name     = $c->stash->{encoded_site_name};
   my $edit_teams_allowed;
   
   # Check that we are authorised to view clubs
@@ -205,6 +210,7 @@ sub view :Chained("base") :PathPart("") :Args(0) {
     divisions           => $divisions,
     edit_teams_allowed  => $edit_teams_allowed,
     canonical_uri       => $c->uri_for_action("/seasons/view", [$season->url_key]),
+    page_description    => $c->maketext("description.seasons.view", $encoded_name, $site_name),
   });
 }
 

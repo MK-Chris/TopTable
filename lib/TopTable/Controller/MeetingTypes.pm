@@ -78,12 +78,16 @@ Chain base for the list of meeting types.
 
 sub base_list :Chained("/") :PathPart("meeting-types") :CaptureArgs(0) {
   my ( $self, $c ) = @_;
+  my $site_name = $c->stash->{encoded_site_name};
   
   # Check that we are authorised to view clubs
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["meeting_view", $c->maketext("user.auth.view-meetings"), 1] );
   
   # Check the authorisation to edit clubs we can display the link if necessary
   $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( meeting_type_edit meeting_type_delete meeting_type_create) ], "", 0] );
+  
+  # Page description
+  $c->stash({page_description => $c->maketext("description.meeting-types.list", $site_name)});
   
   # Load the messages
   $c->load_status_msgs;
@@ -244,6 +248,7 @@ sub view_finalise :Private {
   my ( $self, $c ) = @_;
   my $meeting_type  = $c->stash->{meeting_type};
   my $encoded_type  = $c->stash->{encoded_type};
+  my $site_name     = $c->stash->{encoded_site_name};
   
   # Set up the title links if we need them
   my @title_links = ();
@@ -272,6 +277,7 @@ sub view_finalise :Private {
     view_online_display => sprintf( "Viewing %s", $encoded_type ),
     view_online_link    => 0,
     canonical_uri       => $c->uri_for_action("/meeting-types/view", [$meeting_type->url_key]),
+    page_description    => $c->maketext("description.meeting-types.view", $encoded_type, $site_name)
   });
 }
 
