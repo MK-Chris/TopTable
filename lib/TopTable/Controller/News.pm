@@ -585,11 +585,20 @@ sub setup_article :Private {
     return;
   } else {
     my $action_description;
+    
+    if ( $action eq "create" ) {
+      # Ensure the article is defined even if creating by assigning it to the returned article in $details
+      $article = $details->{article};
+      $action_description = $c->maketext("admin.message.created");
+    } else {
+      $action_description = $c->maketext("admin.message.edited");
+    }
+    
     my $encoded_headline = encode_entities( $article->headline );
     
     $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["news", $action, {id => $article->id}, $article->headline] );
-    $c->response->redirect( $c->uri_for_action("/news/view", [$article->published_year, $article->published_month, $article->url_key],
-                                {mid => $c->set_status_msg( {success => $c->maketext("admin.forms.success", $encoded_headline, $c->maketext("admin.message.$action"))} ) }) );
+    $c->response->redirect( $c->uri_for_action("/news/view_by_url_key", [$article->published_year, $article->published_month, $article->url_key],
+                                {mid => $c->set_status_msg( {success => $c->maketext("admin.forms.success", $encoded_headline, $action_description)} ) }) );
   }
 }
 

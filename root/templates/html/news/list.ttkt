@@ -5,7 +5,7 @@
 [% # Some basic HTML with a loop to display clubs -%]
 [%
 IF articles.count;
-  PROCESS "html/generic/pagination.ttkt" OBJECT_PLURAL = "news articles";
+  PROCESS "html/generic/pagination.ttkt" OBJECT_PLURAL = c.maketext("object.plural.news-articles");
   page_links_text;
   
   USE zeroes = format("%02d");
@@ -42,7 +42,7 @@ ELSE;
 END;
 IF authorisation.news_article_create;
 -%]
-<a href="[% c.uri_for("/news/create") %]"><img src="[% c.uri_for("/static/images/icons/0009-Add-icon-48.png") %]" title="[% c.maketext("admin.create-object", c.maketext("object.singular.news")) %]" /></a>
+<a href="[% c.uri_for("/news/create") %]"><img src="[% c.uri_for("/static/images/icons/0009-Add-icon-48.png") %]" title="[% c.maketext("admin.create-object", c.maketext("object.singular.news-articles")) %]" /></a>
 [%
 END;
 -%]

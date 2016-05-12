@@ -4041,10 +4041,10 @@ msgstr "event"
 msgid "object.plural.events"
 msgstr "events"
 
-msgid "object.singular.news"
+msgid "object.singular.news-articles"
 msgstr "news article"
 
-msgid "object.plural.news"
+msgid "object.plural.news-articles"
 msgstr "news articles"
 
 msgid "object.singular.users"
