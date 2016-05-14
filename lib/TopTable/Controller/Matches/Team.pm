@@ -1067,7 +1067,7 @@ sub publish_report :Private {
   $c->forward( "check_report_create_edit_authorisation" );
   
   my $actioned = $match->add_report({
-    user  => $c->user,
+    user    => $c->user,
     report  => $report
   });
   

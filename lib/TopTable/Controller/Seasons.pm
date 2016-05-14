@@ -190,7 +190,14 @@ sub view :Chained("base") :PathPart("") :Args(0) {
       image_uri => $c->uri_for("/static/images/icons/0018-Pencil-icon-32.png"),
       text      => $c->maketext("admin.edit-object", $encoded_name),
       link_uri  => $c->uri_for_action("/seasons/edit", [$season->url_key]),
-    }) if $c->stash->{authorisation}{season_edit};
+    }) if $c->stash->{authorisation}{season_edit} and !$season->complete;
+    
+    # Push a delete link if we're authorised and the club can be deleted
+    push(@title_links, {
+      image_uri => $c->uri_for("/static/images/icons/0043-Safe-icon-32.png"),
+      text      => $c->maketext("admin.archive-object", $encoded_name),
+      link_uri  => $c->uri_for_action("/seasons/archive", [$season->url_key]),
+    }) if $c->stash->{authorisation}{season_edit} and $season->can_complete;
     
     # Push a delete link if we're authorised and the club can be deleted
     push(@title_links, {
@@ -325,17 +332,23 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
   my ( $self, $c ) = @_;
   my $season = $c->stash->{season};
   
-  # Editing is restricted to certain fields mid-season.
-  my ( $restricted_edit );
+  # Check that we are authorised to create clubs
+  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["season_edit", $c->maketext("user.auth.edit-seasons"), 1] );
   
-  unless ( $season->complete ) {
+  # Editing is restricted to certain fields mid-season.
+  my $restricted_edit;
+  
+  if ( $season->complete ) {
+    # Season is complete, unable to edit.
+    $c->response->redirect( $c->uri_for_action("/seasons/view", [$season->url_key],
+                                {mid => $c->set_status_msg( {error => $c->maketext("seasons.form.error.edit-season-complete")} ) }) );
+    $c->detach;
+    return;
+  } else {
     # Don't cache this page.
     $c->response->header("Cache-Control"  => "no-cache, no-store, must-revalidate");
     $c->response->header("Pragma"         => "no-cache");
     $c->response->header("Expires"        => 0);
-    
-    # Check that we are authorised to create clubs
-    $c->forward( "TopTable::Controller::Users", "check_authorisation", ["season_edit", $c->maketext("user.auth.edit-seasons"), 1] );
     
     # Find out if we can edit the dates for this season; otherwise we'll have to disable the date inputs
     my $league_matches = $c->model("DB::TeamMatch")->season_matches( $season )->count;
@@ -411,12 +424,6 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
     }
     
     $c->stash({subtitle2 => $c->maketext("admin.edit")});
-  } else {
-    # Season is complete, unable to edit.
-    $c->response->redirect( $c->uri_for_action("/seasons/view", [$season->url_key],
-                                {mid => $c->set_status_msg( {error => $c->maketext("seasons.form.error.edit-season-complete")} ) }) );
-    $c->detach;
-    return;
   }
   
   # Breadcrumbs
@@ -764,6 +771,94 @@ sub setup_season_and_divisions :Private {
         return;
       }
     }
+  }
+}
+
+=head2 archive
+
+Display a tick box to complete a season.  Warn that it can't be undone.
+
+=cut
+
+sub archive :Chained("base") :PathPart("archive") :Args(0) {
+  my ( $self, $c ) = @_;
+  my $season      = $c->stash->{season};
+  my $season_name = $c->stash->{encoded_name};
+  
+  # Check that we are authorised to create clubs
+  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["season_edit", $c->maketext("user.auth.edit-seasons"), 1] );
+  
+  # Check we can complete the season - there is a result class method for this (can_complete), but it only gives a true or false value, so we need to
+  # do manual checks if we want proper error messages.
+  if ( $season->complete ) {
+    $c->response->redirect( $c->uri_for("/seasons/view", [$season->url_key],
+                                {mid => $c->set_status_msg( {error => $c->maketext( "seasons.complete.error.season-complete", $season_name )} ) }) );
+    $c->detach;
+    return;
+  }
+  
+  if ( $c->model("DB::TeamMatch")->incomplete_and_not_cancelled({season => $season})->count > 0 ) {
+    $c->response->redirect( $c->uri_for_action("/seasons/view", [$season->url_key],
+                                {mid => $c->set_status_msg( {error => $c->maketext( "seasons.complete.error.matches-incomplete", $season_name )} ) }) );
+    $c->detach;
+    return;
+  }
+  
+  $c->stash({
+    template  => "html/seasons/complete.ttkt",
+    external_scripts    => [
+      $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
+      $c->uri_for("/static/script/standard/prettycheckable.js"),
+    ],
+    external_styles     => [
+      $c->uri_for("/static/css/prettycheckable/prettyCheckable.css"),
+    ],
+    form_action         => $c->uri_for_action("/seasons/do_archive", [$season->url_key]),
+    subtitle2           => $c->maketext("seasons.complete"),
+    view_online_display => "Completing a season",
+    view_online_link    => 0,
+  });
+  
+  $c->add_status_message( "warning", $c->maketext("seasons.complete.warning.standard") );
+}
+
+=head2 do_archive
+
+Process the completion form.
+
+=cut
+
+sub do_archive :Chained("base") :PathPart("do-archive") :Args(0) {
+  my ( $self, $c ) = @_;
+  my $season      = $c->stash->{season};
+  my $season_name = $c->stash->{encoded_name};
+  my $complete    = $c->request->parameters->{complete};
+  
+  # Check that we are authorised to create clubs
+  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["season_edit", $c->maketext("user.auth.edit-seasons"), 1] );
+  
+  if ( $complete ) {
+    my $error = $season->check_and_complete({lang => sub{ $c->maketext( @_ ) } });
+    
+    if ( scalar( @{ $error } ) ) {
+      # Errors, display them
+      $c->response->redirect( $c->uri_for_action("/seasons/view", [$season->url_key],
+                                  {mid => $c->set_status_msg( {error => $c->build_message( $error )} ) }) );
+      $c->detach;
+      return;
+    } else {
+      $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["season", "archive", {id => $season->id}, $season->name] );
+      $c->response->redirect( $c->uri_for_action("/seasons/view", [$season->url_key],
+                                  {mid => $c->set_status_msg( {success => $c->maketext( "seasons.complete.success", $season_name )} ) }) );
+      $c->detach;
+      return;
+    }
+  } else {
+    # Not ticked - eventually we may uncomplete the season (if it was previously completed) here, but that will come later.
+    $c->response->redirect( $c->uri_for_action("/seasons/view", [$season->url_key],
+                                {mid => $c->set_status_msg( {info => $c->maketext( "seasons.complete.info.not-ticked" )} ) }) );
+    $c->detach;
+    return;
   }
 }
 

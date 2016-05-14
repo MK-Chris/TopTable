@@ -1391,6 +1391,30 @@ msgstr "There was 1 player submitted for %1 %2 who was invalid."
 msgid "seasons.set-teams.warning.players-invalid"
 msgstr "There were %1 players submitted for %2 %3 who were invalid."
 
+msgid "seasons.complete.error.season-complete"
+msgstr "%1 cannot be archived because it has already been archived."
+
+msgid "seasons.complete.error.matches-incomplete"
+msgstr "%1 cannot be archived because there are incomplete matches.  Before you can archive the season, you must either complete the remaining matches or mark them as cancelled."
+
+msgid "seasons.complete.error.database"
+msgstr "Season could not be marked as complete; please retry.  If the error persists, please contact the site administrator."
+
+msgid "seasons.complete"
+msgstr "Archive"
+
+msgid "seasons.complete.form.legend"
+msgstr "Archive the season"
+
+msgid "seasons.complete.warning.standard"
+msgstr "If you submit this form with the tickbox checked, the season will be archived and this action cannot be undone.  After you've archived the season, matches cannot be edited, cancelled or uncancelled, or reported on; events cannot be created for that season; teams and people can't be created until a new season is created."
+
+msgid "seasons.complete.info.not-ticked"
+msgstr "The box to archive the season was not ticked, so the season has not been marked as archived."
+
+msgid "seasons.complete.success"
+msgstr "%1 was successfully marked as completed."
+
 ### Divisions
 msgid "divisions.option.league-tables"
 msgstr "League Tables"
@@ -2996,6 +3020,9 @@ msgstr "Create a new %1"
 msgid "admin.edit-object"
 msgstr "Edit %1"
 
+msgid "admin.archive-object"
+msgstr "Archive %1"
+
 msgid "admin.delete-object"
 msgstr "Delete %1"
 
@@ -3913,6 +3940,9 @@ msgstr "Deleted %1%2."
 
 msgid "system-event-log.description.upload"
 msgstr "Uploaded %1%2."
+
+msgid "system-event-log.description.archive"
+msgstr "Archived %1%2."
 
 msgid "system-event-log.description.set-matches"
 msgstr "Set matches for %1%2."

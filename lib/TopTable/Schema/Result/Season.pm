@@ -417,6 +417,8 @@ __PACKAGE__->has_many(
 # Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-02-02 09:27:06
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:cbMCrtdx2rfZrrj/BSbikg
 
+use HTML::Entities;
+
 =head2 number_of_weeks
 
 Returns the number of weeks in the season.
@@ -471,6 +473,71 @@ sub divisions {
       -asc    => [qw( rank )],
     }
   });
+}
+
+=head2 can_complete
+
+Checks whether or not we can complete this season, by checking that the matches are either completed or cancelled.  There may be other additions to this in future.
+
+=cut
+
+sub can_complete {
+  my ( $self ) = @_;
+  
+  # First check the season is not already complete - if it is, we can't complete it again.
+  return 0 if $self->complete;
+  
+  # Now check matches - return 0 straight away if there are any matches that are incomplete and not cancelled for this season
+  return 0 if $self->result_source->schema->resultset("TeamMatch")->incomplete_and_not_cancelled({season => $self})->count > 0;
+  
+  # If we get this far, return a true value because we can complete the season
+  return 1;
+}
+
+=head2 check_and_complete
+
+Update the season to show that it's now complete (if possible).
+
+=cut
+
+sub check_and_complete {
+  my ( $self, $parameters ) = @_;
+  my $lang  = $parameters->{lang};
+  my $encoded_name = encode_entities( $self->name );
+  my $error = [];
+  
+  # Check we can delete
+  if ( $self->complete ) {
+    push( @{ $error }, $lang->("seasons.complete.error.season-complete", $encoded_name) );
+    return $error;
+  }
+  
+  if ( $self->result_source->schema->resultset("TeamMatch")->incomplete_and_not_cancelled({season => $self})->count > 0 ) {
+    push( @{ $error }, $lang->("seasons.complete.error.matches-incomplete", $encoded_name) );
+    return $error;
+  }
+  
+  # Delete
+  my $ok = $self->update({complete => 1}) if !scalar( @{ $error } );
+  
+  # Error if the delete was unsuccessful
+  push(@{ $error }, {
+    id          => "seasons.complete.error.database",
+    parameters  => $self->name
+  }) unless $ok;
+  
+  return $error;
+}
+
+=head2 can_uncomplete
+
+This is here so we can call it from controllers, but there's no routine to uncomplete yet, so at the momen this just returns false.
+
+=cut
+
+sub can_uncomplete {
+  my ( $self ) = @_;
+  return 0;
 }
 
 =head2 can_delete
