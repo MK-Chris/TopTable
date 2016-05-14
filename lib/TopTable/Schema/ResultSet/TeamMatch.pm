@@ -1051,4 +1051,25 @@ sub check_and_populate {
   return $return_value;
 }
 
+=head2 incomplete_and_not_cancelled
+
+Returns matches that have either been completed or cancelled.  If a season parameter is passed, only looks in the given season.
+
+=cut
+
+sub incomplete_and_not_cancelled {
+  my ( $self, $parameters ) = @_;
+  my $season = delete $parameters->{season};
+  
+  # Set up the initial where clause that will exist regardless
+  my $where = {
+    cancelled => 0,
+    complete  => 0,
+  };
+  
+  $where->{season} = $season->id if defined( $season );
+  
+  return $self->search($where);
+}
+
 1;

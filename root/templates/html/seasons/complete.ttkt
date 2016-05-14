@@ -1,0 +1,21 @@
+
+
+<form method="post" action="[% form_action %]">
+<fieldset>
+  <legend>[% c.maketext("seasons.complete.form.legend") %]</legend>
+[%
+IF form_errored;
+  SET complete_check = c.flash.complete;
+ELSE;
+  SET complete_check = season.complete;
+END;
+
+IF cancel_check;
+  SET checked = ' checked="checked"';
+END;
+-%]
+  <input type="checkbox" name="complete" id="complete" value="1" data-label="[% c.maketext("seasons.complete") %]"[% checked %] />
+  
+  <input type="submit" id="submit" name="submit" value="[% c.maketext("form.button.save") %]" />
+</fieldset>
+</form>
