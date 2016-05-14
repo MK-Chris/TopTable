@@ -375,10 +375,10 @@ msgstr "Seasons that %1 has been used in %2."
 msgid "description.events.list"
 msgstr "A list of events in %1."
 
-msgid "description.clubs.view-current"
+msgid "description.events.view-current"
 msgstr "Event information for %1 in %2."
 
-msgid "description.clubs.view-specific"
+msgid "description.events.view-specific"
 msgstr "Event information for %1 %3 in %2."
 
 msgid "description.events.list-seasons"
