@@ -162,8 +162,6 @@ Perform the permissions checks for viewing a division.  The actual viewing routi
 
 sub view :Chained("base") :PathPart("") :CaptureArgs(0) {
   my ( $self, $c ) = @_;
-  # Check that we are authorised to view teams
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["division_view", $c->maketext("user.auth.view-league-tables"), 1] );
 }
 
 

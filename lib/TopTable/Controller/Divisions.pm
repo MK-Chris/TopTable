@@ -80,9 +80,6 @@ sub base_list :Chained("/") PathPart("divisions") CaptureArgs(0) {
   my ( $self, $c ) = @_;
   my $site_name = $c->stash->{encoded_site_name};
   
-  # Check that we are authorised to view divisions
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["division_view", $c->maketext("user.auth.view-divisions"), 1] );
-  
   # Page description
   $c->stash({page_description => $c->maketext("description.divisions.list", $site_name)});
   
@@ -165,9 +162,6 @@ View a given division's links (to tables and averages) for the current season (o
 
 sub view :Chained("base") :PathPart("") :CaptureArgs(0) {
   my ( $self, $c ) = @_;
-  
-  # Check that we are authorised to view teams
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["division_view", $c->maketext("user.auth.view-divisions"), 1] );
 }
 
 =head2
@@ -224,9 +218,6 @@ sub view_specific_season :Chained("view") :PathPart("seasons") :Args(1) {
   my $division      = $c->stash->{division};
   my $site_name     = $c->stash->{encoded_site_name};
   my $division_name = $c->stash->{encoded_name};
-  
-  # Check that we are authorised to view teams
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["division_view", $c->maketext("user.auth.view-divisions"), 1] );
     
   my $season = $c->model("DB::Season")->find_id_or_url_key( $season_id_or_url_key );
   
