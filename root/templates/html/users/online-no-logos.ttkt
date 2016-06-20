@@ -60,7 +60,7 @@ IF online_users.size;
     END;
     IF online_user.view_online_link;
 -%]
-      <td data-label="Location"><a href="[% c.request.base _ online_user.view_online_page %]">[% online_user.view_online_display %]</a></td>
+      <td data-label="Location"><a href="[% c.request.base _ online_user.page %]">[% online_user.view_online_display %]</a></td>
 [%
     ELSE;
 -%]

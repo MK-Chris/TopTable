@@ -279,10 +279,14 @@ sub end :ActionClass("RenderView") {
       $session_data->{ip_address}           = $c->request->address;
       $session_data->{user_agent}           = $c->stash->{user_agent}->id;
       $session_data->{locale}               = $c->locale;
-      $session_data->{view_online_page}     = $c->request->path;
+      $session_data->{path}                 = $c->request->path;
       $session_data->{view_online_display}  = $c->stash->{view_online_display};
       $session_data->{view_online_link}     = $c->stash->{view_online_link};
       $session_data->{hide_online}          = $hide_online;
+      $session_data->{secure}               = $c->request->secure;
+      $session_data->{query_string}         = $c->request->uri->query;
+      $session_data->{client_hostname}      = $c->request->hostname;
+      $session_data->{referrer}             = $c->request->referer;
     }
     
     $session_data->{last_active} = sprintf( "%s %s", $last_active_datetime->ymd, $last_active_datetime->hms );

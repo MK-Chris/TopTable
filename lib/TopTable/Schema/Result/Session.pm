@@ -72,11 +72,22 @@ __PACKAGE__->table("sessions");
   is_nullable: 1
   size: 40
 
+=head2 client_hostname
+
+  data_type: 'text'
+  is_nullable: 1
+
 =head2 user_agent
 
   data_type: 'integer'
   extra: {unsigned => 1}
   is_foreign_key: 1
+  is_nullable: 1
+
+=head2 secure
+
+  data_type: 'tinyint'
+  extra: {unsigned => 1}
   is_nullable: 1
 
 =head2 locale
@@ -85,11 +96,21 @@ __PACKAGE__->table("sessions");
   is_nullable: 1
   size: 6
 
-=head2 view_online_page
+=head2 path
 
   data_type: 'varchar'
   is_nullable: 1
   size: 255
+
+=head2 query_string
+
+  data_type: 'text'
+  is_nullable: 1
+
+=head2 referrer
+
+  data_type: 'text'
+  is_nullable: 1
 
 =head2 view_online_display
 
@@ -146,6 +167,8 @@ __PACKAGE__->add_columns(
   },
   "ip_address",
   { data_type => "varchar", is_nullable => 1, size => 40 },
+  "client_hostname",
+  { data_type => "text", is_nullable => 1 },
   "user_agent",
   {
     data_type => "integer",
@@ -153,10 +176,16 @@ __PACKAGE__->add_columns(
     is_foreign_key => 1,
     is_nullable => 1,
   },
+  "secure",
+  { data_type => "tinyint", extra => { unsigned => 1 }, is_nullable => 1 },
   "locale",
   { data_type => "varchar", is_nullable => 1, size => 6 },
-  "view_online_page",
+  "path",
   { data_type => "varchar", is_nullable => 1, size => 255 },
+  "query_string",
+  { data_type => "text", is_nullable => 1 },
+  "referrer",
+  { data_type => "text", is_nullable => 1 },
   "view_online_display",
   { data_type => "varchar", is_nullable => 1, size => 300 },
   "view_online_link",
@@ -239,8 +268,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-02-12 10:35:58
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:5rK06xuY+MdbrVgmljfTdg
+# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-06-20 11:58:16
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:7gOnrmmaFSV0a1GKRqFvZw
 
 use HTTP::BrowserDetect;
 
