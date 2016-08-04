@@ -312,6 +312,11 @@ sub end :ActionClass("RenderView") {
     
     # Add X-Frame-Options header to avoid clickjacking - https://www.owasp.org/index.php/Clickjacking_Defense_Cheat_Sheet
     $c->response->headers->header("X-Frame-Options", "SAMEORIGIN");
+    
+    # Filter meta description for HTML
+    $c->stash({
+      meta_description => $c->model("FilterHTML")->filter( $c->stash->{page_description} ),
+    }) if exists( $c->stash->{page_description} ) and defined( $c->stash->{page_description} );
   }
 }
 

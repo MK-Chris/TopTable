@@ -316,6 +316,10 @@ msgstr "Meeting types"
 msgid "menu.text.tournaments"
 msgstr "Tournaments"
 
+## Images
+msgid "menu.text.images"
+msgstr "Images"
+
 ### Home page
 msgid "home-page.welcome"
 msgstr "Welcome"
@@ -486,7 +490,7 @@ msgstr "A list of current and historic people who have played in or been involve
 msgid "description.people.view-current"
 msgstr "%1&#39;s page on %2, including player statistics, match results and teams they have played for."
 
-msgid "description.people.view-current"
+msgid "description.people.view-specific"
 msgstr "%1&#39;s page from %3 on %2, including player statistics, match results and teams they have played for."
 
 msgid "description.people.list-seasons"
@@ -3004,6 +3008,9 @@ msgstr "Report"
 msgid "admin.cancel"
 msgstr "Cancel"
 
+msgid "admin.upload"
+msgstr "Upload"
+
 # Currently only used for people, but could be expanded, so keep it generic
 msgid "admin.import"
 msgstr "Import"
@@ -3361,6 +3368,12 @@ msgstr "edit league officials"
 msgid "user.auth.delete-officials"
 msgstr "delete league officials"
 
+msgid "user.auth.upload-images"
+msgstr "upload images"
+
+msgid "user.auth.upload-files"
+msgstr "upload files"
+
 msgid "user.retrieve-username"
 msgstr "Retrieve username"
 
@@ -3690,6 +3703,12 @@ msgstr "Invalid image type uploaded."
 msgid "image.upload.error.not-uploaded"
 msgstr "Image not uploaded."
 
+msgid "image.upload.error.description-blank"
+msgstr "Please fill out a description."
+
+msgid "images.upload.success"
+msgstr "Image uploaded successfully."
+
 msgid "image.download.errror.file-doesnt-exist"
 msgstr "Can&#39;t find or read the image; it may have been deleted."
 
@@ -3892,6 +3911,13 @@ msgstr "Entrants to tournaments are doubles partners and matches follow an indiv
 
 msgid "tournament-type.description.team"
 msgstr "Entrants to tournaments are teams and the matches follow the same specification as league matches (where you supply a team match template and each game has an individual match template).  Unless otherwise specified (set per round), each match of the tournament is played at the home team&#39;s venue on the home team&#39;s home night at the default match start time for the home team.  For each round, you will specify a &#39;week&#39; of the season that the round takes place in."
+
+### Images
+msgid "images.form.image"
+msgstr "Image"
+
+msgid "images.form.description"
+msgstr "Description"
 
 ### Week days
 msgid "weekdays.1"

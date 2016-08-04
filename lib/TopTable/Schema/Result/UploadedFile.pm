@@ -49,6 +49,12 @@ __PACKAGE__->table("uploaded_files");
   is_auto_increment: 1
   is_nullable: 0
 
+=head2 url_key
+
+  data_type: 'varchar'
+  is_nullable: 0
+  size: 45
+
 =head2 filename
 
   data_type: 'varchar'
@@ -97,6 +103,8 @@ __PACKAGE__->add_columns(
     is_auto_increment => 1,
     is_nullable => 0,
   },
+  "url_key",
+  { data_type => "varchar", is_nullable => 0, size => 45 },
   "filename",
   { data_type => "varchar", is_nullable => 0, size => 255 },
   "description",
@@ -137,6 +145,20 @@ __PACKAGE__->add_columns(
 
 __PACKAGE__->set_primary_key("id");
 
+=head1 UNIQUE CONSTRAINTS
+
+=head2 C<url_key>
+
+=over 4
+
+=item * L</url_key>
+
+=back
+
+=cut
+
+__PACKAGE__->add_unique_constraint("url_key", ["url_key"]);
+
 =head1 RELATIONS
 
 =head2 system_event_log_files
@@ -155,8 +177,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2015-09-04 12:04:57
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:WYxlbTARKvxeNJRZS21kuw
+# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-07-01 16:13:30
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:DJuCpdGj0ajZbyYqxhZj9g
 
 #
 # Enable automatic date handling

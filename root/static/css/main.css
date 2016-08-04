@@ -401,6 +401,10 @@ td.active-row, div.active-row, ul.object-list li.active-item {
 	text-decoration: none;
 }
 
+img.img-view-page {
+  max-width: 80%;
+}
+
 /* Forms */
 form * {
   -webkit-box-sizing: border-box;
