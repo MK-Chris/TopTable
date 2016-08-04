@@ -361,7 +361,7 @@ sub create_or_edit {
   } elsif ( $action eq "edit" ) {
     # Check that we can edit roles, then loop through and add them
     my @need_roles = $self->result_source->schema->resultset("Role")->search({
-      role_membership_edit => 1
+      role_edit => 1
     }, {
       order_by => {
         -asc => [ qw( name ) ],

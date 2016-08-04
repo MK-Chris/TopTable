@@ -249,14 +249,14 @@ sub view :Private {
     push(@title_links, {
       image_uri => $c->uri_for("/static/images/icons/0018-Pencil-icon-32.png"),
       text      => $c->maketext("admin.edit-object", $encoded_headline),
-      link_uri  => $c->uri_for_action("/news/edit", [$article->published_year, sprintf("%02d", $article->published_month), $article->url_key]),
+      link_uri  => $c->uri_for_action("/news/edit_by_url_key", [$article->published_year, sprintf("%02d", $article->published_month), $article->url_key]),
     }) if $c->stash->{authorisation}{news_article_edit_all} or ( $c->stash->{authorisation}{news_article_create} and $c->stash->{authorisation}{news_article_edit_own} and defined( $c->user ) and $article->updated_by_user->id == $c->user->id );
     
     # Push a delete link if we're authorised and the club can be deleted
     push(@title_links, {
       image_uri => $c->uri_for("/static/images/icons/0005-Delete-icon-32.png"),
       text      => $c->maketext("admin.delete-object", $encoded_headline),
-      link_uri  => $c->uri_for_action("/news/delete", [$article->published_year, sprintf("%02d", $article->published_month), $article->url_key]),
+      link_uri  => $c->uri_for_action("/news/delete_by_url_key", [$article->published_year, sprintf("%02d", $article->published_month), $article->url_key]),
     }) if $c->stash->{authorisation}{news_article_delete_all} or ( $c->stash->{authorisation}{news_article_create} and $c->stash->{authorisation}{news_article_delete_own} and defined( $c->user ) and $article->updated_by_user->id == $c->user->id );
   }
   

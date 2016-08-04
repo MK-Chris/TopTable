@@ -253,6 +253,13 @@ If this is 1, upon registration, users will get assigned to the role automatical
   extra: {unsigned => 1}
   is_nullable: 0
 
+=head2 file_upload
+
+  data_type: 'tinyint'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 0
+
 =head2 fixtures_view
 
   data_type: 'tinyint'
@@ -275,6 +282,13 @@ If this is 1, upon registration, users will get assigned to the role automatical
   is_nullable: 0
 
 =head2 fixtures_delete
+
+  data_type: 'tinyint'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 0
+
+=head2 image_upload
 
   data_type: 'tinyint'
   default_value: 0
@@ -922,6 +936,13 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
+  "file_upload",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
   "fixtures_view",
   {
     data_type => "tinyint",
@@ -944,6 +965,13 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
   },
   "fixtures_delete",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
+  "image_upload",
   {
     data_type => "tinyint",
     default_value => 0,
@@ -1462,8 +1490,8 @@ Composing rels: L</user_roles> -> user
 __PACKAGE__->many_to_many("users", "user_roles", "user");
 
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-04-26 22:08:24
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:1RDK/c+81OTnfj6Dm1ziSA
+# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-07-01 16:13:30
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:f+WGT4VP5JxcF2UgtYIZUg
 
 =head2 members
 

@@ -1,0 +1,25 @@
+
+<form method="post" action="[% form_action %]" enctype="multipart/form-data">
+<fieldset id="file">
+<legend>[% c.maketext("people.form.legend.import-file") %]</legend>
+
+<div class="label-field-container">
+  <label for="image">[% c.maketext("images.form.image") %]</label>
+  <div class="field-container">
+    <input type="file" id="image" name="image" accept=".jpg,.jpeg,.gif,.png" />
+  </div>
+  <div class="clear-fix"></div>
+</div>
+
+<div class="label-field-container">
+  <label for="description">[% c.maketext("images.form.description") %]</label>
+  <div class="field-container">
+    <input type="text" id="description" name="description" value="[% c.flash.description OR image.description %]" />
+  </div>
+  <div class="clear-fix"></div>
+</div>
+
+</fieldset>
+<input type="submit" name="Submit" value="[% c.maketext("form.button.import") %]" />
+</form>
+
