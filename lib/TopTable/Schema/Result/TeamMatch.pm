@@ -1765,9 +1765,12 @@ sub generate_ical_data {
   # Split the start time for setting the hour and minute
   my ( $start_hour, $start_minute ) = split( ":", $self->actual_start_time );
   
+  # Get the URI
+  my $uri = $parameters{get_uri}->($self->url_keys);
+  
   my $description = ( defined( $self->tournament_round ) )
     ? undef
-    : sprintf( "%s: %s\n%s: %s\n%s: %s", $lang->{competition_heading}, $lang->{competition_league}, $lang->{division_heading}, $self->division->name, $lang->{season_heading}, $self->season->name );
+    : sprintf( "%s: %s\n%s: %s\n%s: %s\n%s", $lang->{competition_heading}, $lang->{competition_league}, $lang->{division_heading}, $self->division->name, $lang->{season_heading}, $self->season->name, $uri );
   
   return {
     uid             => sprintf( "matches.team.%s-%s.%s-%s.%s@%s", $self->home_team->club->url_key, $self->home_team->url_key, $self->away_team->club->url_key, $self->away_team->url_key, $self->actual_date->ymd("-"), &{ $parameters{get_host} } ),
@@ -1777,7 +1780,7 @@ sub generate_ical_data {
     date_start_time => $self->actual_date->set( hour => $start_hour, minute => $start_minute ),
     duration        => DateTime::Duration->new( minutes => &{ $parameters{get_duration} } ),
     venue           => $self->venue,
-    url             => $parameters{get_uri}->($self->url_keys),
+    url             => $uri,
     timezone        => $self->season->timezone,
   };
 }

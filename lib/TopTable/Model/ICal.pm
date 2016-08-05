@@ -32,11 +32,11 @@ it under the same terms as Perl itself.
 =cut
 
 sub ACCEPT_CONTEXT {
-  my ( $self, $c ) = @_;
+  my ( $self, $c, $calendar_name ) = @_;
   
   # Create the geocoder object if we need to
   $self->{calendar} ||= Data::ICal->new(
-    calname     => $c->config->{"Model::ICal"}{calname} || "TopTable",
+    calname     => $calendar_name || $c->config->{"Model::ICal"}{calname} || "TopTable",
     rfc_strict  => 1,
   );
   

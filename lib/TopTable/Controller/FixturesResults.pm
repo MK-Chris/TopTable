@@ -669,10 +669,6 @@ sub view_team :Private {
   }
   
   # Set up the template to use
-  my $calendar_uri = ( $specific_season )
-    ? $c->uri_for_action("/fixtures-results/download_team_by_url_key_specific_season", [$team->club->url_key, $team->url_key, $season->url_key, "calendar"])
-    : $c->uri_for_action("/fixtures-results/download_team_by_url_key_current_season", [$team->club->url_key, $team->url_key, "calendar"]);
-  
   $c->stash({
     template            => "html/fixtures-results/view-no-grouping.ttkt",
     view_online_display => $online_display,
@@ -684,7 +680,7 @@ sub view_team :Private {
     title_links         => [{
       image_uri => $c->uri_for("/static/images/icons/0038-Calender-icon-32.png"),
       text      => $c->maketext("calendar.download"),
-      link_uri  => $calendar_uri,
+      link_uri  => $c->uri_for_action("/fixtures-results/download_team_by_url_key_specific_season", [$season->url_key, $team->club->url_key, $team->url_key, "calendar"]),
     }],
   });
   
@@ -747,7 +743,7 @@ sub download_team_by_id_specific_season :Chained("view_team_by_id_specific_seaso
     download_type         => $download_type,
     
     # Calendar download link is required so we know in the generic function what to replace {cal-uri} with
-    calendar_download_uri => $c->uri_for_action("/fixtures-results/download_team_by_url_key_specific_season", [$team->club->url_key, $team->url_key, $season->url_key, $download_type], {type => "download"}),
+    calendar_download_uri => $c->uri_for_action("/fixtures-results/download_team_by_url_key_specific_season", [$season->url_key, $team->club->url_key, $team->url_key, $download_type], {type => "download"}),
   });
   
   $c->detach( "download_team" );
@@ -792,7 +788,7 @@ sub download_team_by_url_key_specific_season :Chained("view_team_by_url_key_spec
     download_type         => $download_type,
     
     # Calendar download link is required so we know in the generic function what to replace {cal-uri} with
-    calendar_download_uri => $c->uri_for_action("/fixtures-results/download_team_by_url_key_specific_season", [$team->club->url_key, $team->url_key, $season->url_key, $download_type], {type => "download"}),
+    calendar_download_uri => $c->uri_for_action("/fixtures-results/download_team_by_url_key_specific_season", [$season->url_key, $team->club->url_key, $team->url_key, $download_type], {type => "download"}),
   });
   
   $c->detach( "download_team" );
@@ -863,7 +859,7 @@ sub download_division_specific_season :Chained("view_division_specific_season") 
     download_type         => $download_type,
     
     # Calendar download link is required so we know in the generic function what to replace {cal-uri} with
-    calendar_download_uri => $c->uri_for_action("/fixtures-results/download_division_specific_season", [$division->url_key, $season->url_key, $download_type], {type => "download"}),
+    calendar_download_uri => $c->uri_for_action("/fixtures-results/download_division_specific_season", [$season->url_key, $division->url_key, $download_type], {type => "download"}),
   });
   
   $c->detach( "download_division" );
@@ -1004,10 +1000,6 @@ sub view_division :Private {
     $subtitle_field = "subtitle2";
   }
   
-  my $calendar_uri = ( $specific_season )
-    ? $c->uri_for_action("/fixtures-results/download_division_specific_season", [$division->url_key, $season->url_key, "calendar"])
-    : $c->uri_for_action("/fixtures-results/download_division_current_season", [$division->url_key, "calendar"]);
-  
   # Set up the template to use
   $c->stash({
     template            => "html/fixtures-results/view-no-grouping.ttkt",
@@ -1020,7 +1012,7 @@ sub view_division :Private {
     title_links         => [{
       image_uri => $c->uri_for("/static/images/icons/0038-Calender-icon-32.png"),
       text      => $c->maketext("calendar.download"),
-      link_uri  => $calendar_uri,
+      link_uri  => $c->uri_for_action("/fixtures-results/download_division_specific_season", [$season->url_key, $division->url_key, "calendar"]),
     }],
   });
   
@@ -1109,7 +1101,7 @@ sub download_venue_specific_season :Chained("view_venue_specific_season") :PathP
     download_type         => $download_type,
     
     # Calendar download link is required so we know in the generic function what to replace {cal-uri} with
-    calendar_download_uri => $c->uri_for_action("/fixtures-results/download_venue_specific_season", [$venue->url_key, $season->url_key, $download_type], {type => "download"}),
+    calendar_download_uri => $c->uri_for_action("/fixtures-results/download_venue_specific_season", [$season->url_key, $venue->url_key, $download_type], {type => "download"}),
   });
   
   $c->detach( "download_venue" );
@@ -1242,10 +1234,6 @@ sub view_venue :Private {
   my $encoded_venue_name = encode_entities( $venue->name );
   
   # Set up the template to use
-  my $calendar_uri = ( $specific_season )
-    ? $c->uri_for_action("/fixtures-results/download_venue_specific_season", [$venue->url_key, $season->url_key, "calendar"])
-    : $c->uri_for_action("/fixtures-results/download_venue_current_season", [$venue->url_key, "calendar"]);
-    
   $c->stash({
     template            => "html/fixtures-results/view-no-grouping-with-division-no-venue.ttkt",
     matches             => $matches,
@@ -1258,7 +1246,7 @@ sub view_venue :Private {
     title_links         => [{
       image_uri => $c->uri_for("/static/images/icons/0038-Calender-icon-32.png"),
       text      => $c->maketext("calendar.download"),
-      link_uri  => $calendar_uri,
+      link_uri  => $c->uri_for_action("/fixtures-results/download_venue_specific_season", [$season->url_key, $venue->url_key, "calendar"]),
     }],
   });
   
@@ -1347,7 +1335,7 @@ sub download_month_specific_season :Chained("view_month_specific_season") :PathP
     download_type         => $download_type,
     
     # Calendar download link is required so we know in the generic function what to replace {cal-uri} with
-    calendar_download_uri => $c->uri_for_action("/fixtures-results/download_month_specific_season", [$date->year, sprintf("%02d", $date->month), $season->url_key, $download_type], {type => "download"}),
+    calendar_download_uri => $c->uri_for_action("/fixtures-results/download_month_specific_season", [$season->url_key, $date->year, sprintf("%02d", $date->month), $download_type], {type => "download"}),
   });
   
   $c->detach( "download_month" );
@@ -1495,10 +1483,6 @@ sub view_month :Private {
   my $encoded_month = encode_entities( sprintf("%s %s", ucfirst( $start_date->month_name ), $start_date->year) );
   
   # Set up the template to use
-  my $calendar_uri = ( $specific_season )
-    ? $c->uri_for_action("/fixtures-results/download_month_specific_season", [$start_date->year, sprintf("%02d", $start_date->month), $season->url_key, "calendar"])
-    : $c->uri_for_action("/fixtures-results/download_month_current_season", [$start_date->year, sprintf("%02d", $start_date->month), "calendar"]);
-  
   $c->stash({
     template            => "html/fixtures-results/view-group-divisions.ttkt",
     view_online_display => $online_display,
@@ -1510,7 +1494,7 @@ sub view_month :Private {
     title_links         => [{
       image_uri => $c->uri_for("/static/images/icons/0038-Calender-icon-32.png"),
       text      => $c->maketext("calendar.download"),
-      link_uri  => $calendar_uri,
+      link_uri  => $c->uri_for_action("/fixtures-results/download_month_specific_season", [$season->url_key, $start_date->year, sprintf("%02d", $start_date->month), "calendar"]),
     }],
   });
   
@@ -1599,7 +1583,7 @@ sub download_week_specific_season :Chained("view_week_specific_season") :PathPar
     download_type         => $download_type,
     
     # Calendar download link is required so we know in the generic function what to replace {cal-uri} with
-    calendar_download_uri => $c->uri_for_action("/fixtures-results/download_week_specific_season", [$week_date->year, sprintf("%02d", $week_date->month), sprintf("%02d", $week_date->day), $season->url_key, $download_type], {type => "download"}),
+    calendar_download_uri => $c->uri_for_action("/fixtures-results/download_week_specific_season", [$season->url_key, $week_date->year, sprintf("%02d", $week_date->month), sprintf("%02d", $week_date->day), $download_type], {type => "download"}),
   });
   
   $c->detach( "download_week" );
@@ -1746,10 +1730,6 @@ sub view_week :Private {
   my $encoded_month_name  = encode_entities( $week_date->month_name );
   
   # Set up the template to use
-  my $calendar_uri = ( $specific_season )
-    ? $c->uri_for_action("/fixtures-results/download_week_specific_season", [$week_date->year, sprintf("%02d", $week_date->month), sprintf("%02d", $week_date->day), $season->url_key, "calendar"])
-    : $c->uri_for_action("/fixtures-results/download_week_current_season", [$week_date->year, sprintf("%02d", $week_date->month), sprintf("%02d", $week_date->day), "calendar"]);
-  
   $c->stash({
     template            => "html/fixtures-results/view-group-divisions.ttkt",
     view_online_display => $online_display,
@@ -1761,7 +1741,7 @@ sub view_week :Private {
     title_links         => [{
       image_uri => $c->uri_for("/static/images/icons/0038-Calender-icon-32.png"),
       text      => $c->maketext("calendar.download"),
-      link_uri  => $calendar_uri,
+      link_uri  => $c->uri_for_action("/fixtures-results/download_week_specific_season", [$season->url_key, $week_date->year, sprintf("%02d", $week_date->month), sprintf("%02d", $week_date->day), "calendar"]),
     }],
   });
   
@@ -1850,7 +1830,7 @@ sub download_day_specific_season :Chained("view_week_specific_season") :PathPart
     download_type         => $download_type,
     
     # Calendar download link is required so we know in the generic function what to replace {cal-uri} with
-    calendar_download_uri => $c->uri_for_action("/fixtures-results/download_day_specific_season", [$date->year, sprintf("%02d", $date->month), sprintf("%02d", $date->day), $season->url_key, $download_type], {type => "download"}),
+    calendar_download_uri => $c->uri_for_action("/fixtures-results/download_day_specific_season", [$season->url_key, $date->year, sprintf("%02d", $date->month), sprintf("%02d", $date->day), $download_type], {type => "download"}),
   });
   
   $c->detach( "download_day" );
@@ -1989,10 +1969,6 @@ sub view_day :Private {
   my $encoded_date = encode_entities( sprintf( "%s, %d %s %d", ucfirst( $date->day_name ), $date->day, $date->month_name, $date->year ) );
   
   # Set up the template to use
-  my $calendar_uri = ( $specific_season )
-    ? $c->uri_for_action("/fixtures-results/download_day_specific_season", [$date->year, sprintf("%02d", $date->month), sprintf("%02d", $date->day), $season->url_key, "calendar"])
-    : $c->uri_for_action("/fixtures-results/download_day_current_season", [$date->year, sprintf("%02d", $date->month), sprintf("%02d", $date->day), "calendar"]);
-  
   $c->stash({
     template            => "html/fixtures-results/view-group-divisions-no-date.ttkt",
     view_online_display => $online_display,
@@ -2004,7 +1980,7 @@ sub view_day :Private {
     title_links         => [{
       image_uri => $c->uri_for("/static/images/icons/0038-Calender-icon-32.png"),
       text      => $c->maketext("calendar.download"),
-      link_uri  => $calendar_uri,
+      link_uri  => $c->uri_for_action("/fixtures-results/download_day_specific_season", [$season->url_key, $date->year, sprintf("%02d", $date->month), sprintf("%02d", $date->day), "calendar"]),
     }],
   });
   
@@ -2054,8 +2030,9 @@ sub download_team :Private {
       });
       
       $c->stash({
-        matches   => $matches,
-        file_name => sprintf( "fixtures_team_%s-%s_%s", $team->club->url_key, $team->url_key, $season->url_key ),
+        matches       => $matches,
+        file_name     => sprintf( "fixtures_team_%s-%s_%s", $team->club->url_key, $team->url_key, $season->url_key ),
+        calendar_name => sprintf( "%s | %s %s | %s", $c->config->{"Model::ICal"}{calname}, $team->club->short_name, $team->name, $season->name ),
       });
     }
   }
@@ -2095,8 +2072,9 @@ sub download_division :Private {
       });
       
       $c->stash({
-        matches   => $matches,
-        file_name => sprintf( "fixtures_division_%s_%s", $division->url_key, $season->url_key ),
+        matches       => $matches,
+        file_name     => sprintf( "fixtures_division_%s_%s", $division->url_key, $season->url_key ),
+        calendar_name => sprintf( "%s | %s | %s", $c->config->{"Model::ICal"}{calname}, $division->name, $season->name ),
       });
     }
   }
@@ -2136,8 +2114,9 @@ sub download_venue :Private {
       });
       
       $c->stash({
-        matches   => $matches,
-        file_name => sprintf( "fixtures_venue_%s_%s", $venue->url_key, $season->url_key ),
+        matches       => $matches,
+        file_name     => sprintf( "fixtures_venue_%s_%s", $venue->url_key, $season->url_key ),
+        calendar_name => sprintf( "%s | %s | %s", $c->config->{"Model::ICal"}{calname}, $venue->name, $season->name ),
       });
     }
   }
@@ -2179,8 +2158,9 @@ sub download_month :Private {
       });
       
       $c->stash({
-        matches   => $matches,
-        file_name => sprintf( "fixtures_month_%s-%s", $start_date->year, sprintf("%02d", $start_date->month) ),
+        matches       => $matches,
+        file_name     => sprintf( "fixtures_month_%s-%s", $start_date->year, sprintf("%02d", $start_date->month) ),
+        calendar_name => sprintf( "%s | %s | %s", $c->config->{"Model::ICal"}{calname}, ucfirst( $start_date->month_name ), $season->name ),
       });
     }
   }
@@ -2223,8 +2203,9 @@ sub download_week :Private {
       });
       
       $c->stash({
-        matches   => $matches,
-        file_name => sprintf( "fixtures_week_%s-%s-%s", $week_date->year, sprintf("%02d", $week_date->month), sprintf("%02d", $week_date->day) ),
+        matches       => $matches,
+        file_name     => sprintf( "fixtures_week_%s-%s-%s", $week_date->year, sprintf("%02d", $week_date->month), sprintf("%02d", $week_date->day) ),
+        calendar_name => sprintf( "%s | %s %d %s %d | %s", $c->config->{"Model::ICal"}{calname}, $week_date->day_name, $week_date->day, $week_date->month_name, $week_date->year, $season->name ),
       });
     }
   }
@@ -2268,8 +2249,9 @@ sub download_day :Private {
       });
       
       $c->stash({
-        matches   => $matches,
-        file_name => sprintf( "fixtures_day_%s-%s-%s", $date->year, sprintf("%02d", $date->month), sprintf("%02d", $date->day) ),
+        matches       => $matches,
+        file_name     => sprintf( "fixtures_day_%s-%s-%s", $date->year, sprintf("%02d", $date->month), sprintf("%02d", $date->day) ),
+        calendar_name => sprintf( "%s | %s, %d %s %d | %s", $c->config->{"Model::ICal"}{calname}, ucfirst( $date->day_name ), $date->day, $date->month_name, $date->year, $season->name ),
       });
     }
   }
