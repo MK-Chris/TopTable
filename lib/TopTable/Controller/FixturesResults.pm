@@ -2281,6 +2281,7 @@ sub download :Private {
   my $calendar_type = $c->stash->{calendar_type};
   my $matches       = $c->stash->{matches};
   my $file_name     = $c->stash->{file_name};
+  my $calendar_name = $c->stash->{calendar_name};
   
   if ( $download_type eq "calendar" ) {
     if ( defined( $calendar_type) and $calendar_type eq "download" ) {
@@ -2308,7 +2309,7 @@ sub download :Private {
       }
       
       # Now push the events into a calendar
-      my $calendar = $c->model("ICal")->add_events( \@events, {timezone => $c->stash->{timezone}} );
+      my $calendar = $c->model("ICal", $calendar_name)->add_events( \@events, {timezone => $c->stash->{timezone}} );
       
       # Content type is text/calendar
       $c->response->header("Content-type" => "text/calendar");
