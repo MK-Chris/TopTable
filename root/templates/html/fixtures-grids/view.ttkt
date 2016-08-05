@@ -52,7 +52,7 @@ IF season;
 [%
         END;
         
-        "   " _ team_season.grid_position _ ". <a href=" _ team_uri _ ">" _ team_name _ "</a> ([% team_season.home_night.weekday_name %])<br />";
+        "   " _ team_season.grid_position _ ". <a href=" _ team_uri _ ">" _ team_name _ "</a> (" _ team_season.home_night.weekday_name _ ")<br />";
         LAST_GRID_POSITION  = team_season.grid_position;
         LAST_POSITION_SET   = 1;
       ELSE;
