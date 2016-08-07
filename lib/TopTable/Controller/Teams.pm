@@ -393,8 +393,12 @@ sub get_team_season :Private {
   my $team_season = $team->get_season( $season );
   
   # Check if the name has changed since the season we're viewing
-  $c->add_status_message( "info", $c->maketext( "teams.club.changed-notice", $team_season->club->short_name, $team_season->name, $c->uri_for_action("/clubs/view_current_season", [$team->club->url_key]), $team->club->full_name ) ) if $specific_season and $team_season->club->id != $team->club->id;
-  $c->add_status_message( "info", $c->maketext( "teams.name.changed-notice", $team_season->club->short_name, $team_season->name, $team->club->short_name, $team->name ) ) if $specific_season and $team_season->name ne $team->name;
+  if ( $specific_season and ( $team_season->club->id != $team->club->id or $team_season->name ne $team->name ) ) {
+    $c->add_status_message( "info", $c->maketext( "teams.club.changed-notice", $team_season->club->short_name, $team_season->name, $c->uri_for_action("/clubs/view_current_season", [$team->club->url_key]), $team->club->full_name ) ) if $specific_season and $team_season->club->id != $team->club->id;
+    $c->add_status_message( "info", $c->maketext( "teams.name.changed-notice", $team_season->club->short_name, $team_season->name, $team->club->short_name, $team->name ) ) if $specific_season and $team_season->name ne $team->name;
+    
+    $c->stash({subtitle1 => encode_entities( sprintf( "%s %s", $team_season->club->short_name, $team_season->name ) )});
+  }
   
   # Get the team's position - we need to get all teams in the division in an array ordered properly first
   my @teams_in_division = $c->model("DB::TeamSeason")->get_teams_in_division_in_league_table_order( $season, $team_season->division );
