@@ -416,18 +416,18 @@ sub create_or_edit {
     warning => [],
   };
   
-  my $team            = $parameters->{team};
-  my $name            = $parameters->{name};
-  my $club            = $parameters->{club};
-  my $division        = $parameters->{division};
-  my $start_hour      = $parameters->{start_hour};
-  my $start_minute    = $parameters->{start_minute};
-  my $captain         = $parameters->{captain};
-  my $home_night      = $parameters->{home_night};
-  my $players         = $parameters->{players};
-  my $season          = $parameters->{season};
-  my $reassign_active = $parameters->{reassign_active_players};
-  my $mid_season      = 0;
+  my $team              = $parameters->{team};
+  my $name              = $parameters->{name};
+  my $club              = $parameters->{club};
+  my $division          = $parameters->{division};
+  my $start_hour        = $parameters->{start_hour};
+  my $start_minute      = $parameters->{start_minute};
+  my $captain           = $parameters->{captain};
+  my $home_night        = $parameters->{home_night};
+  my $players           = $parameters->{players};
+  my $season            = $parameters->{season};
+  my $reassign_active   = $parameters->{reassign_active_players};
+  my $mid_season        = 0;
   
   # Set the players to an arrayref if it's not already
   $players = [ $players ] if ref( $players ) ne "ARRAY";
@@ -718,6 +718,9 @@ sub create_or_edit {
     # Loop through in reverse so that when we splice, we don't end up missing rows
     # Because we're looping through in reverse, we will reverse it first so that we actually loop through in the right order
     @{ $players } = reverse @{ $players };
+    
+    # We need to build the below array of submitted IDs that already exist as an active membership so that we can check against that list
+    my @existing_ids = ();
     foreach my $i ( reverse 0 .. $#{ $players } ) {
       my $player = $players->[$i];
       if ( defined( $player ) and ref( $player ) eq "TopTable::Model::DB::Person" ) {
@@ -733,30 +736,36 @@ sub create_or_edit {
         })->single;
         
         if ( defined( $active_membership ) ) {
-          # This person already has an active membership for another team; now we need to check the reassignment setting
-          if ( $reassign_active ) {
-            # Reassign and warn that we've reassigned; the membership needs either deleting or setting to inactive, depending on whether or not they've played any games yet
-            if ( $active_membership->matches_played > 0 ) {
-              $active_membership->update({team_membership_type => "inactive"});
-              push(@{ $return_value->{warning} }, {
-                id          => "teams.form.warning.player-reassigned",
-                parameters  => [$player->display_name, $team->club->short_name, $team->name, $season->name, $player->first_name],
-              });
+          if ( $active_membership->team->id == $team->id ) {
+            # Splice the player out, since their active membership is already for this team.
+            push(@existing_ids, $player->id);
+            splice(@{ $players }, $i, 1);
+          } else {
+            # This person already has an active membership for another team; now we need to check the reassignment setting
+            if ( $reassign_active ) {
+              # Reassign and warn that we've reassigned; the membership needs either deleting or setting to inactive, depending on whether or not they've played any games yet
+              if ( $active_membership->matches_played > 0 ) {
+                $active_membership->update({team_membership_type => "inactive"});
+                push(@{ $return_value->{warning} }, {
+                  id          => "teams.form.warning.player-reassigned",
+                  parameters  => [$player->display_name, $active_membership->team->club->short_name, $active_membership->team->name, $season->name, $player->first_name],
+                });
+              } else {
+                # No matches played, delete
+                $active_membership->delete;
+                push(@{ $return_value->{warning} }, {
+                  id          => "teams.form.warning.player-reassigned-old-membership-removed",
+                  parameters  => [$player->display_name, $active_membership->team->club->short_name, $active_membership->team->name, $season->name, $player->first_name],
+                });
+              }
             } else {
-              # No matches played, delete
-              $active_membership->delete;
+              # Do not reassign, just warn and splice the value from the array.
+              splice(@{ $players }, $i, 1);
               push(@{ $return_value->{warning} }, {
-                id          => "teams.form.warning.player-reassigned-old-membership-removed",
-                parameters  => [$player->display_name, $team->club->short_name, $team->name, $season->name, $player->first_name],
+                id          => "teams.form.warning.player-not-reassigned",
+                parameters  => [$player->display_name, $active_membership->team->club->short_name, $active_membership->team->name, $season->name, $player->first_name],
               });
             }
-          } else {
-            # Do not reassign, just warn and splice the value from the array.
-            splice(@{ $players }, $i, 1);
-            push(@{ $return_value->{warning} }, {
-              id          => "teams.form.warning.player-not-reassigned",
-              parameters  => [$player->display_name, $team->club->short_name, $team->name, $season->name, $player->first_name],
-            });
           }
         }
       } else {
@@ -778,6 +787,32 @@ sub create_or_edit {
         id          => "teams.form.warning.players-invalid-multiple",
         parameters  => [$invalid_players, $team->club->short_name, $team->name],
       });
+    }
+    
+    # Now we need to work out who's been removed - check the current list of players for that team
+    # who are not in the list of submitted players
+    my @players_to_remove = $team->search_related("person_seasons", {
+      season => $season->id,
+      team_membership_type => "active",
+      person  => {
+        -not_in => \@existing_ids,
+      }
+    });
+    
+    # Check if we have had rows returned
+    if ( scalar( @players_to_remove ) ) {
+      foreach my $remove_player ( @players_to_remove ) {
+        # Check if this person has played matches already
+        if ( $remove_player->matches_played > 0 ) {
+          # They've played matches, set them to inactive
+          $remove_player->update({
+            team_membership_type => "inactive",
+          });
+        } else {
+          # They haven't played matches, delete the association
+          $remove_player->delete;
+        }
+      }
     }
     
     # Finally done our error checking; create the person seasons

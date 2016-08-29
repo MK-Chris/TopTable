@@ -48,7 +48,7 @@
     }
   </style>
 </head>
-<body style="background: #fff; min-height:1000px; color:#6e6e6e; font-family: museo-sans, Tahoma, Arial, sans-serif; font-size:14px" alink="#6e6e6e" link="#6e6e6e" bgcolor="#fff" text="#6e6e6e" yahoo="fix">
+<body style="background: #fff; color:#6e6e6e; font-family: museo-sans, Tahoma, Arial, sans-serif; font-size:14px" alink="#6e6e6e" link="#6e6e6e" bgcolor="#fff" text="#6e6e6e" yahoo="fix">
   <div id="body_style" style="padding:15px">
     <div id="header" style="text-align: center;">
       <center><a href="[% home_uri %]"><img style="display:block; margin-left: auto; margin-right: auto;"  border="0" src="cid:logo" alt="[% name %]" title="[% name %]" /></a></center>

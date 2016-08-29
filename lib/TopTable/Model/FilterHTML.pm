@@ -34,7 +34,7 @@ sub filter {
 	# Create a HTML::Restrict object
 	my $hr = HTML::Restrict->new;
   
-  if ( $type eq "textarea" ) {
+  if ( defined( $type ) and $type eq "textarea" ) {
   	$hr->set_rules({
   		b           => [],
   		strong      => [],

@@ -694,6 +694,30 @@ sub update_person {
         
         $new_player_season->update;
       }
+    } elsif ( defined( $person ) and $match->started ) {
+      # We're adding a player where there wasn't previously one (we don't do this for the other way round - removing a player where
+      # there was previously one, as that's already handled above by the score deletion.  We don't need to check if the match was
+      # complete here, as it can't be - adding a player where there wasn't previously one means that there must be scores (in games
+      # involving this player) to be updated.
+      
+      # Search for the player's season object with this team and create it if it isn't there.
+      my $match_team_field = ( $location eq "home" ) ? "home_team" : "away_team";
+      
+      my $new_player_season = $person->search_related("person_seasons", {
+        season  => $match->season->id,
+        team    => $match->$match_team_field->id,
+      }, {
+        rows    => 1,
+      })->single;
+      
+      # Create a new season object for the new person if there isn't one already
+      $new_player_season = $person->create_related("person_seasons", {
+        season                => $self->team_match->season->id,
+        team                  => $self->team_match->$match_team_field->id,
+        team_membership_type  => "loan"
+      }) unless defined( $new_player_season );
+      
+      $new_player_season->update({matches_played => $new_player_season->matches_played + 1});
     }
     
     # Finally do the update of the person in the match itself
