@@ -162,7 +162,7 @@ sub create_or_edit {
   
   if ( !$return_value->{error} ) {
     # Filter the HTML
-    $article_content = TopTable->model("FilterHTML")->filter( $article_content );
+    $article_content = TopTable->model("FilterHTML")->filter( $article_content, "textarea" );
     
     # Get the current year and month
     my $today = DateTime->today( time_zone => "UTC" );
