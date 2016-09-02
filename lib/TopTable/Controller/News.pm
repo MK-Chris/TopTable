@@ -353,7 +353,7 @@ sub edit :Private {
       $c->uri_for("/static/script/plugins/ckeditor/adapters/jquery.js"),
       $c->uri_for("/static/script/standard/ckeditor.js"),
     ],
-    form_action         => $c->uri_for_action("/news/do_edit", [$article->published_year, $article->published_month, $article->url_key]),
+    form_action         => $c->uri_for_action("/news/do_edit_by_url_key", [$article->published_year, $article->published_month, $article->url_key]),
     subtitle2           => "Create",
     view_online_display => sprintf( "Editing news article '%s'", $current_details->{headline} ),
     view_online_link    => 0,
@@ -361,7 +361,7 @@ sub edit :Private {
   
   # Push the breadcrumbs links
   push( @{ $c->stash->{breadcrumbs} }, {
-    path  => $c->uri_for_action("/news/edit", [$article->published_year, $article->published_month, $article->url_key]),
+    path  => $c->uri_for_action("/news/edit_by_url_key", [$article->published_year, $article->published_month, $article->url_key]),
     label => $c->maketext("admin.edit"),
   });
 }
