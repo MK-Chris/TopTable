@@ -56,7 +56,7 @@ __PACKAGE__->table("meetings");
   is_foreign_key: 1
   is_nullable: 1
 
-Only populated if the meeting is created out of an event - otherwise it will be a type selected below.
+Only populated if the meeting is created out of an event - otherwise it will be a ENGINE selected below.
 
 =head2 season
 
@@ -65,7 +65,7 @@ Only populated if the meeting is created out of an event - otherwise it will be 
   is_foreign_key: 1
   is_nullable: 1
 
-Only populated if the meeting is created out of an event - otherwise it will be a type selected below.
+Only populated if the meeting is created out of an event - otherwise it will be a ENGINE selected below.
 
 =head2 type
 
@@ -309,8 +309,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-01-08 10:46:55
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:jgwYm6DnWmAqa54XK0h36Q
+# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-09-05 16:36:47
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:nb+KueaYJbUzZ7jsXTnFbw
 
 =head2 is_event
 

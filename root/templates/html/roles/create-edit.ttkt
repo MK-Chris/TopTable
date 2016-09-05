@@ -166,19 +166,19 @@ END;
   <legend>[% c.maketext("menu.text.match-reports") %]</legend>
   
   <div class="form-column">
-    <input type="checkbox" name="match_create" id="match_create" value="1" data-category="match_report" data-permission="view" data-label="[% c.maketext("role.permission.match-reports.create-any") %]" />
+    <input type="checkbox" name="match_report_create" id="match_report_create" value="1" data-category="match_report" data-permission="view" data-label="[% c.maketext("role.permission.match-reports.create-any") %]" />
     <div class="clear-fix"></div>
-    <input type="checkbox" name="match_create_associated" id="match_create_associated" value="1" data-category="match_report" data-permission="create" data-label="[% c.maketext("role.permission.match-reports.create-associated") %]" />
+    <input type="checkbox" name="match_report_create_associated" id="match_report_create_associated" value="1" data-category="match_report" data-permission="create" data-label="[% c.maketext("role.permission.match-reports.create-associated") %]" />
     <div class="clear-fix"></div>
-    <input type="checkbox" name="match_edit_all" id="match_edit_all" value="1" data-category="match_report" data-permission="edit" data-label="[% c.maketext("role.permission.match-reports.edit-all") %]" />
+    <input type="checkbox" name="match_report_edit_all" id="match_report_edit_all" value="1" data-category="match_report" data-permission="edit" data-label="[% c.maketext("role.permission.match-reports.edit-all") %]" />
     <div class="clear-fix"></div>
   </div>
   <div class="form-column">
-    <input type="checkbox" name="match_edit_own" id="match_edit_own" value="1" data-category="match_report" data-permission="edit" data-label="[% c.maketext("role.permission.match-reports.edit-own") %]" />
+    <input type="checkbox" name="match_report_edit_own" id="match_report_edit_own" value="1" data-category="match_report" data-permission="edit" data-label="[% c.maketext("role.permission.match-reports.edit-own") %]" />
     <div class="clear-fix"></div>
-    <input type="checkbox" name="match_delete_all" id="match_delete_all" value="1" data-category="match_report" data-permission="delete" data-label="[% c.maketext("role.permission.match-reports.delete-all") %]" />
+    <input type="checkbox" name="match_report_delete_all" id="match_report_delete_all" value="1" data-category="match_report" data-permission="delete" data-label="[% c.maketext("role.permission.match-reports.delete-all") %]" />
     <div class="clear-fix"></div>
-    <input type="checkbox" name="match_delete_own" id="match_delete_own" value="1" data-category="match_report" data-permission="delete" data-label="[% c.maketext("role.permission.match-reports.delete-own") %]" />
+    <input type="checkbox" name="match_report_delete_own" id="match_report_delete_own" value="1" data-category="match_report" data-permission="delete" data-label="[% c.maketext("role.permission.match-reports.delete-own") %]" />
     <div class="clear-fix"></div>
   </div>
   <div class="clear-fix"></div>

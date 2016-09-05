@@ -462,12 +462,15 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
       "tokeninput-standard",
     ],
     external_scripts    => [
+      $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
+      $c->uri_for("/static/script/standard/prettycheckable.js"),
       $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js"),
     ],
     external_styles     => [
       $c->uri_for("/static/css/tokeninput/token-input-tt.css"),
+      $c->uri_for("/static/css/prettycheckable/prettyCheckable.css"),
     ],
-    form_action         => $c->uri_for("do-create"),
+    form_action         => $c->uri_for_action("/roles/do_edit", [$role->url_key]),
     subtitle2           => $c->maketext("admin.edit"),
     view_online_display => "Editing roles",
     view_online_link    => 0,

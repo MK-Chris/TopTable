@@ -228,15 +228,22 @@ __PACKAGE__->table("users");
   is_nullable: 1
   size: 64
 
+=head2 activated
+
+  data_type: 'tinyint'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 0
+
 =head2 activation_expires
 
   data_type: 'datetime'
   datetime_undef_if_invalid: 1
   is_nullable: 1
 
-=head2 activated
+=head2 invalid_logins
 
-  data_type: 'tinyint'
+  data_type: 'smallint'
   default_value: 0
   extra: {unsigned => 1}
   is_nullable: 0
@@ -252,13 +259,6 @@ __PACKAGE__->table("users");
   data_type: 'datetime'
   datetime_undef_if_invalid: 1
   is_nullable: 1
-
-=head2 invalid_logins
-
-  data_type: 'smallint'
-  default_value: 0
-  extra: {unsigned => 1}
-  is_nullable: 0
 
 =head2 last_invalid_login
 
@@ -376,12 +376,6 @@ __PACKAGE__->add_columns(
   },
   "activation_key",
   { data_type => "varchar", is_nullable => 1, size => 64 },
-  "activation_expires",
-  {
-    data_type => "datetime",
-    datetime_undef_if_invalid => 1,
-    is_nullable => 1,
-  },
   "activated",
   {
     data_type => "tinyint",
@@ -389,9 +383,7 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
-  "password_reset_key",
-  { data_type => "varchar", is_nullable => 1, size => 64 },
-  "password_reset_expires",
+  "activation_expires",
   {
     data_type => "datetime",
     datetime_undef_if_invalid => 1,
@@ -403,6 +395,14 @@ __PACKAGE__->add_columns(
     default_value => 0,
     extra => { unsigned => 1 },
     is_nullable => 0,
+  },
+  "password_reset_key",
+  { data_type => "varchar", is_nullable => 1, size => 64 },
+  "password_reset_expires",
+  {
+    data_type => "datetime",
+    datetime_undef_if_invalid => 1,
+    is_nullable => 1,
   },
   "last_invalid_login",
   {
@@ -603,8 +603,8 @@ Composing rels: L</user_roles> -> role
 __PACKAGE__->many_to_many("roles", "user_roles", "role");
 
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-03-21 21:51:47
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:0/bf09wjOfmvMRQSdLbD2g
+# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-09-05 16:36:48
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:OLv252sxFjqv2GcwC4e1JA
 
 use Digest::SHA qw( sha256_hex );
 use Time::HiRes;

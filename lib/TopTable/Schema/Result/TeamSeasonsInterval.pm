@@ -70,6 +70,12 @@ __PACKAGE__->table("team_seasons_intervals");
   is_foreign_key: 1
   is_nullable: 0
 
+=head2 league_table_points
+
+  data_type: 'smallint'
+  extra: {unsigned => 1}
+  is_nullable: 0
+
 =head2 matches_played
 
   data_type: 'tinyint'
@@ -209,6 +215,8 @@ __PACKAGE__->add_columns(
     is_foreign_key => 1,
     is_nullable => 0,
   },
+  "league_table_points",
+  { data_type => "smallint", extra => { unsigned => 1 }, is_nullable => 0 },
   "matches_played",
   { data_type => "tinyint", extra => { unsigned => 1 }, is_nullable => 0 },
   "matches_won",
@@ -326,8 +334,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-02-22 22:41:47
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:PjP4b01okiO9dINLnvlYkA
+# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-09-05 16:36:47
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:FHjEs4ZgTDCOm0A7pYMTtQ
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

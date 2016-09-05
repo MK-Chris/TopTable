@@ -18,7 +18,7 @@ c.maketext("roles.system.notice") %]<br />
       SET name_html = c.maketext("roles.name." _ role.name);
       SET class     = ' class="system"';
     ELSE;
-      name_html = FILTER html_entity; reason.name; END;
+      name_html = FILTER html_entity; role.name; END;
       SET class     = '';
     END;
 -%]
