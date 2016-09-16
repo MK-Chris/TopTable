@@ -168,6 +168,7 @@ sub get_people_in_division_in_singles_averages_order {
   my $where = {
     "me.season"             => $season->id,
     "team_seasons.division" => $division->id,
+    "team_seasons.season"   => $season->id,
   };
   
   # Set up the team if there is one
