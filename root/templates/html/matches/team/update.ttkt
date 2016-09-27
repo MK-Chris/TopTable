@@ -315,7 +315,7 @@ END;
 -%]
   </div>
 </fieldset>
-<input type="submit" name="Submit" value="[% c.maketext("form.button.save") %]" />
+<!--<input type="submit" name="Submit" value="[% c.maketext("form.button.save") %]" />-->
 </form>
 
 
