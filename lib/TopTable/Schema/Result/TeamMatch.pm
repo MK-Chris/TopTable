@@ -1420,6 +1420,7 @@ sub update_scorecard {
   my ( $self, $parameters ) = @_;
   my %game_scores   = ();
   my $return_value = {error => []};
+  my $log = $parameters->{logger};
   
   # Single game if the 'game' and 'leg' parameters are provided
   my $single_game = ( exists( $parameters->{game} ) ) ? 1 : 0;

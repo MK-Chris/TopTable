@@ -588,6 +588,7 @@ Update the scores for this game.
 
 sub update_score {
   my ( $self, $parameters ) = @_;
+  my $log = $parameters->{logger};
   my $return_value = {error => []};
   
   # Convenience: get objects related to the game / match

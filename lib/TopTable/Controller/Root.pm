@@ -89,6 +89,14 @@ sub begin :Private {
     # Stash what we have of the breadcrumbs so far (which will either be 'Home' or just an empty array ready for pushing)
     $c->stash({breadcrumbs => \@breadcrumbs});
   }
+  
+  Log::Log4perl::MDC->put( "ip", $c->request->address );
+  
+  if ( defined( $c->user ) ) {
+    Log::Log4perl::MDC->put( "user", $c->user->username );
+  } else {
+    Log::Log4perl::MDC->put( "user", "(Guest)" );
+  }
 }
 
 =head2 index

@@ -4,6 +4,7 @@ use namespace::autoclean;
 use DateTime;
 use DateTime::TimeZone;
 use Data::Dumper;
+use Log::Log4perl::Catalyst;
 
 use Catalyst::Runtime 5.80;
 
@@ -54,6 +55,7 @@ use JavaScript::Value::Escape;
 extends 'Catalyst';
 __PACKAGE__->apply_request_class_roles(qw/CatalystX::I18N::TraitFor::Request/);
 __PACKAGE__->apply_response_class_roles(qw/CatalystX::I18N::TraitFor::Response/);
+__PACKAGE__->log(Log::Log4perl::Catalyst->new("log.conf")) if -e __PACKAGE__->path_to("log.conf");
 
 our $VERSION = "3.00 Beta";
 

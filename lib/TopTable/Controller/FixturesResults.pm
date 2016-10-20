@@ -2285,7 +2285,6 @@ sub download :Private {
   
   if ( $download_type eq "calendar" ) {
     if ( defined( $calendar_type) and $calendar_type eq "download" ) {
-      $c->log->debug( "Download" );
       # Valid calendar type
       my @events = ();
       

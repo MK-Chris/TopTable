@@ -463,8 +463,6 @@ sub setup_template :Private {
   my ( $self, $c, $action ) = @_;
   my $filter = $c->stash->{filter};
   
-  $c->log->debug( sprintf( "Got criteria: %d", $c->request->parameters->{criteria} ) );
-  
   my $create_edit_criteria = {
     filter          => $filter,
     name            => $c->request->parameters->{name},

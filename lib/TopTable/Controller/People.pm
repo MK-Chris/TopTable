@@ -255,7 +255,6 @@ sub view_specific_season :Chained("view") :PathPart("seasons") :Args(1) {
   }
   
   # Forward to the routine that stashes the team's season
-  $c->log->debug( "Get season" );
   $c->forward("get_person_season");
   
   # Push the current URI on to the breadcrumbs
@@ -309,7 +308,7 @@ sub view_finalise :Private {
   my $encoded_display_name = $c->stash->{encoded_display_name};
   
   # Get the list of seasons they have played in
-  my $person_seasons = [$c->model("DB::PersonSeason")->get_all_seasons_a_person_played_in( $person )];
+  my $person_seasons = $c->model("DB::PersonSeason")->get_all_seasons_a_person_played_in( $person );
   
   # Set up the title links if we need them
   my @title_links = ();
@@ -347,6 +346,7 @@ sub view_finalise :Private {
     view_online_display => sprintf( "Viewing %s", $encoded_display_name ),
     view_online_link    => 1,
     person_seasons      => $person_seasons,
+    seasons             => $person_seasons->count,
     canonical_uri       => $canonical_uri,
   });
 }

@@ -1114,6 +1114,9 @@ msgstr "Score"
 msgid "people.opponents.result"
 msgstr "Result"
 
+msgid "people.seasons.count-text"
+msgstr "There is a record of %1 in %2 %3."
+
 ### Venues
 msgid "venues.create"
 msgstr "Create a new venue"
@@ -1992,6 +1995,12 @@ msgstr "Games played"
 
 msgid "matches.summaries.heading.games-won"
 msgstr "Games won"
+
+msgid "matches.summaries.heading.games-average"
+msgstr "Games average (%)"
+
+msgid "matches.summaries.heading.games-average"
+msgstr "Games won (%)"
 
 msgid "matches.summaries.heading.legs-played"
 msgstr "Legs played"

@@ -415,8 +415,9 @@ Private function forwarded from do_update_by_ids and do_update_by_url_keys.  Upd
 
 sub do_update :Private {
   my ( $self, $c ) = @_;
-  my $match         = $c->stash->{match};
-  my $parameters    = $c->request->body_parameters;
+  my $match             = $c->stash->{match};
+  my $parameters        = $c->request->body_parameters;
+  $parameters->{logger} = sub{ my $level = shift; $c->log->$level( @_ ) };
   
   # Check that we are authorised to update scorecards
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["match_update", $c->maketext("user.auth.update-matches"), 1] );
@@ -464,8 +465,9 @@ Update the score for a game within a match.
 
 sub update_game_score :Private {
   my ( $self, $c ) = @_;
-  my $match         = $c->stash->{match};
-  my $parameters    = $c->request->body_parameters;
+  my $match             = $c->stash->{match};
+  my $parameters        = $c->request->body_parameters;
+  $parameters->{logger} = sub{ my $level = shift; $c->log->$level( @_ ) };
   
   # Check that we are authorised to update scorecards
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["match_update", $c->maketext("user.auth.update-matches"), 1] );

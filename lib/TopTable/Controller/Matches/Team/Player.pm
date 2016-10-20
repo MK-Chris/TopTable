@@ -166,6 +166,7 @@ sub update :Private {
     loan_player       => $loan_player,
     location          => $location,
     person            => $person,
+    logger            => sub{ my $level = shift; $c->log->$level( @_ ) },
   });
   
   if ( scalar( @{ $details->{error} } ) ) {

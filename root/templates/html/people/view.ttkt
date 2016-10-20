@@ -108,7 +108,7 @@ IF season;
         <td>[% c.i18n_numberformat.format_number( person_team.games_lost ) %]</td>
       </tr>
       <tr>
-        <th>[% c.maketext("stats.table-heading.games-played") %] (%)</th>
+        <th>[% c.maketext("matches.summaries.heading.legs-average") %]</th>
         <td>[% c.i18n_numberformat.format_number( person_team.average_game_wins, 2, 1) %]</td>
       </tr>
       <tr>
@@ -124,7 +124,7 @@ IF season;
         <td>[% c.i18n_numberformat.format_number( person_team.legs_lost ) %]</td>
       </tr>
       <tr>
-        <th>[% c.maketext("stats.table-heading.legs-won") %] (%)</th>
+        <th>[% c.maketext("matches.summaries.heading.legs-average") %]</th>
         <td>[% c.i18n_numberformat.format_number( person_team.average_leg_wins, 2, 1) %]</td>
       </tr>
       <tr>
@@ -144,8 +144,19 @@ IF season;
         <td>[% c.i18n_numberformat.format_number( person_team.average_point_wins, 2, 1) %]</td>
       </tr>
     </table>
-[% 
+[%
       SET last_type = person_team.team_membership_type.id;
+      
+      IF person_team.team_membership_type.id == "active";
+        IF seasons == 1;
+          SET season_text = c.maketext("object.singular.seasons");
+        ELSE;
+          SET season_text = c.maketext("object.plural.seasons");
+        END;
+-%]
+    <a href="[% c.uri_for_action("/people/view_seasons_first_page", [person.url_key]) %]">[% c.maketext("people.seasons.count-text", encoded_display_name, seasons, season_text) %]</a>
+[%
+      END;
     END;
 -%]
   </div>

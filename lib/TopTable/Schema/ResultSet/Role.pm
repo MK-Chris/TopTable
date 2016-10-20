@@ -200,8 +200,6 @@ sub create_or_edit {
   # Map them to a hash with the column names as keys and the values passed in $field_values as values
   my %fields = map{ $_ => $permission_values->{$_} || 0 } @$column_names;
   
-  $c->log->debug( Dumper( \%fields ) );
-  
   # Loop through and check that all the permissions are 1 or 0
   $fields{$_} = ( $fields{$_} ) ? 1 : 0 foreach ( keys %fields );
   
