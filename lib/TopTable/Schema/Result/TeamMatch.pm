@@ -1269,9 +1269,12 @@ Check whether a match has started by whether at least one game is marked as comp
 sub check_match_started {
   my ( $self ) = @_;
   
-  # Loop through the current resultset and push into the array of incomplete games if this one is not complete yet
+  # Find games in this match that have been both started and completed (if they are complete but haven't been
+  # started, that means at least one of the players is missing, so it technically can't denote that the match
+  # is started).
   my $complete_games = $self->search_related("team_match_games", {
-    complete => 1,
+    started   => 1,
+    complete  => 1,
   })->count;
   
   if ( $complete_games ) {

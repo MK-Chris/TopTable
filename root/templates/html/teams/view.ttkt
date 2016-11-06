@@ -37,12 +37,12 @@ END;
         <th>[% c.maketext("teams.field.club") %]</th>
 [%
   IF specific_season;
-    SET uri = c.uri_for_action("/clubs/view_specific_season", [team.club.url_key, season.url_key]);
+    SET club_uri = c.uri_for_action("/clubs/view_specific_season", [team.club.url_key, season.url_key]);
   ELSE;
-    SET uri = c.uri_for_action("/clubs/view_current_season", [team.club.url_key]);
+    SET club_uri = c.uri_for_action("/clubs/view_current_season", [team.club.url_key]);
   END;
 -%]
-        <td><a href="[% uri %]">[% team.club.full_name | html_entity %]</a></td>
+        <td><a href="[% club_uri %]">[% team.club.full_name | html_entity %]</a></td>
       </tr>
       <tr>
         <th>[% c.maketext("teams.field.home-night") %]</th>
@@ -63,17 +63,23 @@ END;
 [%
   IF team_season.captain.id;
     IF specific_season;
-      SET uri = c.uri_for_action("/people/view_specific_season" [team_season.captain.url_key, season.url_key]);
+      SET captain_uri = c.uri_for_action("/people/view_specific_season" [team_season.captain.url_key, season.url_key]);
     ELSE;
-      SET uri = c.uri_for_action("/people/view_current_season" [team_season.captain.url_key]);
+      SET captain_uri = c.uri_for_action("/people/view_current_season" [team_season.captain.url_key]);
     END;
 -%]
-        <td><a href="[% uri %]">[% team_season.captain.display_name %]</a></td>
+        <td><a href="[% captain_uri %]">[% team_season.captain.display_name %]</a></td>
 [%
   ELSE;
 -%]
         <td>[% c.maketext("teams.captain.none") %]</td>
 [%
+  END;
+  
+  IF specific_season;
+    SET table_uri = c.uri_for_action("/league-tables/view_specific_season" [team_season.division.url_key, season.url_key]);
+  ELSE;
+    SET table_uri = c.uri_for_action("/league-tables/view_current_season" [team_season.division.url_key]);
   END;
 -%]
       </tr>
@@ -83,7 +89,7 @@ END;
     <table class="responsive-vertical">
       <tr>
         <th>[% c.maketext("teams.field.division") %]</th>
-        <td><a href="[% uri %]">[% team_season.division.name | html_entity %]</a></td>
+        <td><a href="[% table_uri %]">[% team_season.division.name | html_entity %]</a></td>
       </tr>
       <tr>
         <th>[% c.maketext("teams.league-position") %]</th>
