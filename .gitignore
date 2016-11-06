@@ -1,6 +1,5 @@
 toptable_local.conf
 toptable.psgi
 bin/tests/set_hashed_passwords.pl
-root/stream-files/images/andrew-baggaley-national-table-tennis-day-2016.jpg
 root/maintenance.html
 root/logs/toptable.log
