@@ -421,7 +421,7 @@ sub delete :Private {
   
   # Push the breadcrumbs links
   push( @{ $c->stash->{breadcrumbs} }, {
-    path  => $c->uri_for_action("/news/delete", [$article->published_year, $article->published_month, $article->url_key]),
+    path  => $c->uri_for_action("/news/delete_by_url_key", [$article->published_year, sprintf("%02d", $article->published_month), $article->url_key]),
     label => $c->maketext("admin.delete"),
   });
 }
