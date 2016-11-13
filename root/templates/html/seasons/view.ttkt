@@ -4,19 +4,19 @@
 <div id="season-fixtures-results">
 [%
 IF season.complete;
-  SET team_uri      = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "team"]);
-  SET month_uri     = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "month"]);
-  SET week_uri      = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "week"]);
-  SET day_uri       = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "day"]);
-  SET venue_uri     = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "venue"]);
-  SET division_uri  = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "division"]);
+  SET team_uri      = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "teams"]);
+  SET month_uri     = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "months"]);
+  SET week_uri      = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "weeks"]);
+  SET day_uri       = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "days"]);
+  SET venue_uri     = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "venues"]);
+  SET division_uri  = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "divisions"]);
 ELSE;
-  SET team_uri      = c.uri_for_action("/fixtures-results/filter_view_current_season", ["team"]);
-  SET month_uri     = c.uri_for_action("/fixtures-results/filter_view_current_season", ["month"]);
-  SET week_uri      = c.uri_for_action("/fixtures-results/filter_view_current_season", ["week"]);
-  SET day_uri       = c.uri_for_action("/fixtures-results/filter_view_current_season", ["day"]);
-  SET venue_uri     = c.uri_for_action("/fixtures-results/filter_view_current_season", ["venue"]);
-  SET division_uri  = c.uri_for_action("/fixtures-results/filter_view_current_season", ["division"]);
+  SET team_uri      = c.uri_for_action("/fixtures-results/filter_view_current_season", ["teams"]);
+  SET month_uri     = c.uri_for_action("/fixtures-results/filter_view_current_season", ["months"]);
+  SET week_uri      = c.uri_for_action("/fixtures-results/filter_view_current_season", ["weeks"]);
+  SET day_uri       = c.uri_for_action("/fixtures-results/filter_view_current_season", ["days"]);
+  SET venue_uri     = c.uri_for_action("/fixtures-results/filter_view_current_season", ["venues"]);
+  SET division_uri  = c.uri_for_action("/fixtures-results/filter_view_current_season", ["divisions"]);
 END;
 -%]
 <h4>Fixtures &amp; Results</h4>

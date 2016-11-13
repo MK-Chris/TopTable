@@ -603,9 +603,9 @@ sub view_team :Private {
   
   if ( $specific_season ) {
     if ( $page_number == 1 ) {
-      $c->stash({canonical_uri => $c->uri_for_action("/fixtures-results/view_team_by_url_key_specific_season_first_page", [$team->club->url_key, $team->url_key, $season->url_key])});
+      $c->stash({canonical_uri => $c->uri_for_action("/fixtures-results/view_team_by_url_key_specific_season_first_page", [$season->url_key, $team->club->url_key, $team->url_key])});
     } else {
-      $c->stash({canonical_uri => $c->uri_for_action("/fixtures-results/view_team_by_url_key_specific_season_specific_page", [$team->club->url_key, $team->url_key, $season->url_key, $page_number])});
+      $c->stash({canonical_uri => $c->uri_for_action("/fixtures-results/view_team_by_url_key_specific_season_specific_page", [$season->url_key, $team->club->url_key, $team->url_key, $page_number])});
     }
   } else {
     if ( $page_number == 1 ) {

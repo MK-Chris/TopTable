@@ -58,8 +58,8 @@ h4 {
 }
 
 h5 {
-  font-size: 1em;
-  font-weight: bold;
+  font-size: 1.13em;
+  /*font-weight: bold;*/
   margin-bottom: 1.5em;
 }
 
@@ -573,7 +573,10 @@ input.active, textarea.active {
 input.menu-input {width: 150px;}
 .menu-margin {margin-left: 5px;}
 
-#club-secretary, #club-venue, #grid-positions, #grid-matches, #meeting-attendees, #meeting-apologies {
+#stats-left > table th, #stats-right > table th {width: 50%;}
+#stats-left > table td, #stats-right > table td {text-align: right;}
+
+#club-secretary, #club-venue, #grid-positions, #grid-matches, #stats-left, #stats-right, #meeting-attendees, #meeting-apologies {
   min-width: 280px;
   float: left;
   padding-bottom: 20px;
@@ -620,9 +623,9 @@ div.user-info-heading, div.user-info-data {
 
 div.user-info-heading {font-weight: bold;}
 
-#grid-positions, #grid-matches, #meeting-attendees, #meeting-apologies {width: 45%;}
+#grid-positions, #grid-matches, #stats-left, #stats-right, #meeting-attendees, #meeting-apologies {width: 45%;}
 #club-secretary, #club-venue {width: 25%;}
-#club-venue, #user, #grid-positions {margin-right: 20px;}
+#club-venue, #user, #grid-positions, #stats-left {margin-right: 20px;}
 
 #venue-address {
   width: 18%;
@@ -986,7 +989,7 @@ html[xmlns] .clearfix, html[xmlns] .clear-fix {display: block;}
   
   /* Responsive tables */
 	table.responsive-vertical th {
-		width: 20%;
+		width: 45%;
 	}
   
   /* User information, users page */

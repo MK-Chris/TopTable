@@ -1117,6 +1117,34 @@ msgstr "Result"
 msgid "people.seasons.count-text"
 msgstr "There is a record of %1 in %2 %3."
 
+### Generic team / person statistics labels
+msgid "stats.heading.matches"
+msgstr "Matches"
+
+msgid "stats.heading.games"
+msgstr "Games"
+
+msgid "stats.heading.legs"
+msgstr "Legs"
+
+msgid "stats.heading.points"
+msgstr "Points"
+
+msgid "stats.label.played"
+msgstr "Played"
+
+msgid "stats.label.won"
+msgstr "Won"
+
+msgid "stats.label.drawn"
+msgstr "Drawn"
+
+msgid "stats.label.lost"
+msgstr "Lost"
+
+msgid "stats.label.average"
+msgstr "Won (%)"
+
 ### Venues
 msgid "venues.create"
 msgstr "Create a new venue"

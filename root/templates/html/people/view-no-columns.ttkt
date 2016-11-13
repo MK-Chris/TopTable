@@ -69,91 +69,81 @@ IF season;
 [%
       END;
 -%]
-    <h4><a href="[% team_uri %]">[% team_season.club.short_name | html_entity %] [% team_season.name | html_entity %]</a> (<a href="[% averages_uri %]">[% team_season.division.name %]</a>)</h4>
-    <div id="stats-left">
-      <h5>[% c.maketext("stats.heading.matches") %]</h5>
-      <table>
-        <tr>
-          <th>[% c.maketext("stats.label.played") %]</th>
-          <td>[% c.i18n_numberformat.format_number( person_team.matches_played ) %]</td>
-        </tr>
-        <tr>
-          <th>[% c.maketext("stats.label.won") %]</th>
-          <td>[% c.i18n_numberformat.format_number( person_team.matches_won ) %]</td>
-        </tr>
-        <tr>
-          <th>[% c.maketext("stats.label.drawn") %]</th>
-          <td>[% c.i18n_numberformat.format_number( person_team.matches_drawn ) %]</td>
-        </tr>
-        <tr>
-          <th>[% c.maketext("stats.label.lost") %]</th>
-          <td>[% c.i18n_numberformat.format_number( person_team.matches_lost ) %]</td>
-        </tr>
-      </table>
-      
-      <h5>[% c.maketext("stats.heading.games") %]</h5>
-      <table>
-        <tr>
-          <th>[% c.maketext("stats.label.played") %]</th>
-          <td>[% c.i18n_numberformat.format_number( person_team.games_played ) %]</td>
-        </tr>
-        <tr>
-          <th>[% c.maketext("stats.label.won") %]</th>
-          <td>[% c.i18n_numberformat.format_number( person_team.games_won ) %]</td>
-        </tr>
-        <tr>
-          <th>[% c.maketext("stats.label.lost") %]</th>
-          <td>[% c.i18n_numberformat.format_number( person_team.games_lost ) %]</td>
-        </tr>
-        <tr>
-          <th>[% c.maketext("stats.label.average") %]</th>
-          <td>[% c.i18n_numberformat.format_number( person_team.average_game_wins, 2, 1) %]</td>
-        </tr>
-      </table>
-    </div>
-    
-    <div id="stats-right">
-      <h5>[% c.maketext("stats.heading.legs") %]</h5>
-      <table>
-        <tr>
-          <th>[% c.maketext("stats.label.played") %]</th>
-          <td>[% c.i18n_numberformat.format_number( person_team.legs_played ) %]</td>
-        </tr>
-        <tr>
-          <th>[% c.maketext("stats.label.won") %]</th>
-          <td>[% c.i18n_numberformat.format_number( person_team.legs_won ) %]</td>
-        </tr>
-        <tr>
-          <th>[% c.maketext("stats.label.lost") %]</th>
-          <td>[% c.i18n_numberformat.format_number( person_team.legs_lost ) %]</td>
-        </tr>
-        <tr>
-          <th>[% c.maketext("stats.label.average") %]</th>
-          <td>[% c.i18n_numberformat.format_number( person_team.average_leg_wins, 2, 1) %]</td>
-        </tr>
-      </table>
-      
-      <h5>[% c.maketext("stats.heading.points") %]</h5>
-      <table>
-        <tr>
-          <th>[% c.maketext("stats.label.played") %]</th>
-          <td>[% c.i18n_numberformat.format_number( person_team.points_played ) %]</td>
-        </tr>
-        <tr>
-          <th>[% c.maketext("stats.label.won") %]</th>
-          <td>[% c.i18n_numberformat.format_number( person_team.points_won ) %]</td>
-        </tr>
-        <tr>
-          <th>[% c.maketext("stats.label.lost") %]</th>
-          <td>[% c.i18n_numberformat.format_number( person_team.points_lost ) %]</td>
-        </tr>
-        <tr>
-          <th>[% c.maketext("stats.label.average") %]</th>
-          <td>[% c.i18n_numberformat.format_number( person_team.average_point_wins, 2, 1) %]</td>
-        </tr>
-      </table>
-    </div>
-    <div class="clear-fix"></div>
+    <h4><a href="[% team_uri %]">[% team_season.club.short_name | html_entity %] [% team_season.name | html_entity %]</a></h4>
+    <table class="responsive-vertical">
+      <tr>
+        <th>[% c.maketext("teams.field.division") %]</th>
+        <td><a href="[% averages_uri %]">[% team_season.division.name %]</a></td>
+      </tr>
+      <tr>
+        <th>[% c.maketext("people.field.averages-position") %]</th>
+        <td>[% c.i18n_numberformat.format_number( person_team.averages_position ) %]</td>
+      </tr>
+      <tr>
+        <th>[% c.maketext("stats.table-heading.matches-played") %]</th>
+        <td>[% c.i18n_numberformat.format_number( person_team.matches_played ) %]</td>
+      </tr>
+      <tr>
+        <th>[% c.maketext("stats.table-heading.matches-won") %]</th>
+        <td>[% c.i18n_numberformat.format_number( person_team.matches_won ) %]</td>
+      </tr>
+      <tr>
+        <th>[% c.maketext("stats.table-heading.matches-drawn") %]</th>
+        <td>[% c.i18n_numberformat.format_number( person_team.matches_drawn ) %]</td>
+      </tr>
+      <tr>
+        <th>[% c.maketext("stats.table-heading.matches-lost") %]</th>
+        <td>[% c.i18n_numberformat.format_number( person_team.matches_lost ) %]</td>
+      </tr>
+      <tr>
+        <th>[% c.maketext("stats.table-heading.games-played") %]</th>
+        <td>[% c.i18n_numberformat.format_number( person_team.games_played ) %]</td>
+      </tr>
+      <tr>
+        <th>[% c.maketext("stats.table-heading.games-won") %]</th>
+        <td>[% c.i18n_numberformat.format_number( person_team.games_won ) %]</td>
+      </tr>
+      <tr>
+        <th>[% c.maketext("stats.table-heading.games-lost") %]</th>
+        <td>[% c.i18n_numberformat.format_number( person_team.games_lost ) %]</td>
+      </tr>
+      <tr>
+        <th>[% c.maketext("matches.summaries.heading.legs-average") %]</th>
+        <td>[% c.i18n_numberformat.format_number( person_team.average_game_wins, 2, 1) %]</td>
+      </tr>
+      <tr>
+        <th>[% c.maketext("stats.table-heading.legs-played") %]</th>
+        <td>[% c.i18n_numberformat.format_number( person_team.legs_played ) %]</td>
+      </tr>
+      <tr>
+        <th>[% c.maketext("stats.table-heading.legs-won") %]</th>
+        <td>[% c.i18n_numberformat.format_number( person_team.legs_won ) %]</td>
+      </tr>
+      <tr>
+        <th>[% c.maketext("stats.table-heading.legs-lost") %]</th>
+        <td>[% c.i18n_numberformat.format_number( person_team.legs_lost ) %]</td>
+      </tr>
+      <tr>
+        <th>[% c.maketext("matches.summaries.heading.legs-average") %]</th>
+        <td>[% c.i18n_numberformat.format_number( person_team.average_leg_wins, 2, 1) %]</td>
+      </tr>
+      <tr>
+        <th>[% c.maketext("stats.table-heading.points-played") %]</th>
+        <td>[% c.i18n_numberformat.format_number( person_team.points_played ) %]</td>
+      </tr>
+      <tr>
+        <th>[% c.maketext("stats.table-heading.points-won") %]</th>
+        <td>[% c.i18n_numberformat.format_number( person_team.points_won ) %]</td>
+      </tr>
+      <tr>
+        <th>[% c.maketext("stats.table-heading.points-lost") %]</th>
+        <td>[% c.i18n_numberformat.format_number( person_team.points_lost ) %]</td>
+      </tr>
+      <tr>
+        <th>[% c.maketext("matches.summaries.heading.points-average") %]</th>
+        <td>[% c.i18n_numberformat.format_number( person_team.average_point_wins, 2, 1) %]</td>
+      </tr>
+    </table>
 [%
       SET last_type = person_team.team_membership_type.id;
       
