@@ -30,7 +30,7 @@ END;
     <li><a href="#fixtures-results">[% fixtures_results_text %]</a></li>
   </ul>
   
-  <div id="team-summary">
+  <div id="details">
     <h4>[% c.maketext("teams.heading.summary") %]</h4>
     <table class="responsive-vertical">
       <tr>
