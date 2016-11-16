@@ -1,0 +1,3 @@
+
+<a href="[% c.uri_for_action("/files/download", [file.url_key]) %]">[% encoded_file_description %]</a><br />
+This file has been downloaded [% file.downloaded_count %] times.  You may link to this download in a page by using the following URI:<br />[% c.uri_for_action("/files/download", [file.url_key]) %]

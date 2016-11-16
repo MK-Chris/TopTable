@@ -3731,6 +3731,9 @@ msgstr "File not uploaded."
 msgid "file.download.errror.file-doesnt-exist"
 msgstr "Can&#39;t find or read the file; it may have been deleted."
 
+msgid "file.upload.success"
+msgstr "File uploaded successfully."
+
 msgid "image.upload.error.copy-failure"
 msgstr "Couldn&#39;t copy image: %1"
 
@@ -3954,6 +3957,13 @@ msgid "images.form.image"
 msgstr "Image"
 
 msgid "images.form.description"
+msgstr "Description"
+
+### Files
+msgid "files.form.file"
+msgstr "File"
+
+msgid "files.form.description"
 msgstr "Description"
 
 ### Week days
@@ -4224,6 +4234,9 @@ msgstr "Submit"
 
 msgid "form.button.login"
 msgstr "Log in"
+
+msgid "form.button.upload"
+msgstr "Upload"
 
 msgid "tokeninput.text.no-results"
 msgstr "No results"

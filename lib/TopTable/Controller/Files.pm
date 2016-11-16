@@ -4,6 +4,7 @@ use namespace::autoclean;
 use MIME::Types;
 use File::Spec;
 use File::Basename;
+use HTML::Entities;
 
 BEGIN { extends 'Catalyst::Controller'; }
 
@@ -79,10 +80,80 @@ sub index :Path :Args(0) {
   $c->detach( qw/TopTable::Controller::Root default/ );
 }
 
-sub upload :Local Args(0) {
+=head2 base
+
+Chain base for getting the image ID and checking it.
+
+=cut
+
+sub base :Chained("/") :PathPart("files") :CaptureArgs(1) {
+  my ( $self, $c, $id_or_key ) = @_;
+  
+  # Load the messages
+  $c->load_status_msgs;
+  
+  if ( my $file = $c->model("DB::UploadedFile")->find_id_or_url_key( $id_or_key ) ) {
+    my $file_path = File::Spec->catfile( $c->config->{Paths}{file_downloads}, $file->filename );
+    
+    if ( -e $file_path and -r $file_path ) {
+      # Get MIME type
+      my $mime_type = $file->mime_type;
+      
+      # File exists and can be read
+      if ( grep( $_ eq $file->mime_type, @allowed_types ) ) {
+        # Correct file type
+        
+        # Stash it, then stash the name / view URL in the breadcrumbs section of our stash
+        my $encoded_file_description = encode_entities( $file->description );
+        $c->stash({
+          file                      => $file,
+          file_path                 => $file_path,
+          encoded_file_description  => $encoded_file_description,
+        });
+        
+        # Push the clubs list page on to the breadcrumbs
+        push( @{ $c->stash->{breadcrumbs} }, {
+          # Club view page (current season)
+          path  => $c->uri_for_action("/files/view", [$file->url_key]),
+          label => $encoded_file_description,
+        });
+      } else {
+        # Incorrect file type - 404
+        $c->detach( qw/TopTable::Controller::Root default/ );
+      }
+    } else {
+      # File does not exist or cannot be read - 404
+      $c->detach( qw/TopTable::Controller::Root default/ );
+    }
+  } else {
+    # Database record doesn't exist
+    $c->detach( qw/TopTable::Controller::Root default/ );
+  }
+}
+
+sub upload :Local :Args(0) {
+  my ( $self, $c ) = @_;
+  
+  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["file_upload", $c->maketext("user.auth.upload-files"), 1] );
+  
+  # Load the messages
+  $c->load_status_msgs;
+  
+  # Stash the template and information we need
+  $c->stash({
+    template            => "html/files/upload.ttkt",
+    subtitle2           => $c->maketext("admin.upload"),
+    form_action         => $c->uri_for_action("/files/do_upload"),
+    view_online_display => "Uploading files",
+    view_online_link    => 1,
+  });
+}
+
+sub do_upload :Path("do-upload") :Args(0) {
   my ( $self, $c ) = @_;
   my @errors;
-  my $type = $c->request->parameters->{type};
+  my $type        = $c->request->parameters->{type};
+  my $description = $c->request->parameters->{description};
   my ( $return_value, $filename, $new_filename );
   
   # The type determines whether we return some JSON or not
@@ -112,13 +183,24 @@ sub upload :Local Args(0) {
       
       if ( $upload->copy_to( File::Spec->catfile( $target_folder, $target_filename ) ) ) {
         # File has been copied successfully, insert it into the database
+        my $url_key = $c->model("DB::UploadedImage")->generate_url_key( $description );
+        
         my $file = $c->model("DB::UploadedFile")->create({
-          filename  => $target_filename,
-          mime_type => $mime_type,
+          url_key     => $url_key,
+          description => $description,
+          filename    => $target_filename,
+          mime_type   => $mime_type,
         });
         
         $return_value->{link} = $c->uri_for_action( "/files/download", [$file->id] )->as_string if $return_json;
         $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["file", "upload", {id => $file->id}, $file->filename] );
+        
+        unless ( $return_json ) {
+          $c->response->redirect($c->uri_for_action("/files/view", [$file->url_key],
+                      {mid => $c->set_status_msg( {success => $c->maketext("file.upload.success") } )}));
+          $c->detach;
+          return;
+        }
       } else {
         # Add an error if we can't copy the file
         push(@errors, $c->maketext("file.upload.error.copy-failure", $!));
@@ -135,8 +217,12 @@ sub upload :Local Args(0) {
     if ( $return_json ) {
       $return_value->{error} = join( "\n", @errors );
     } else {
-      $c->response->redirect($c->uri_for("/",
+      $c->flash->{description} = $description;
+      
+      $c->response->redirect($c->uri_for("/files/upload",
                   {mid => $c->set_status_msg( {error => $c->build_message( \@errors ) } )}));
+      $c->detach;
+      return;
     }
   }
   
@@ -146,7 +232,25 @@ sub upload :Local Args(0) {
   }
 }
 
-sub download :Local Args(1) {
+=head2 view
+
+View the file information within the confines of the file view page.
+
+=cut
+
+sub view :Chained("base") :PathPart("view") :Args(0) {
+  my ( $self, $c ) = @_;
+  my $file                      = $c->stash->{file};
+  my $encoded_file_description = $c->stash->{encoded_file_description};
+  
+  $c->stash({
+    template            => "html/files/view.ttkt",
+    view_online_display => sprintf( "Viewing %s", $encoded_file_description ),
+    view_online_link    => 1,
+  });
+}
+
+sub view :Chained("base") :PathPart("download") :Args(0) {
   my ( $self, $c, $file_id ) = @_;
   
   # Look for the file in the DB
