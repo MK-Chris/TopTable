@@ -250,7 +250,7 @@ sub view :Chained("base") :PathPart("view") :Args(0) {
   });
 }
 
-sub view :Chained("base") :PathPart("download") :Args(0) {
+sub download :Chained("base") :PathPart("download") :Args(0) {
   my ( $self, $c, $file_id ) = @_;
   
   # Look for the file in the DB
