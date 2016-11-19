@@ -238,7 +238,7 @@ View the file information within the confines of the file view page.
 
 =cut
 
-sub view :Chained("base") :PathPart("view") :Args(0) {
+sub view :Chained("base") :PathPart("") :Args(0) {
   my ( $self, $c ) = @_;
   my $file                      = $c->stash->{file};
   my $encoded_file_description = $c->stash->{encoded_file_description};
@@ -251,10 +251,8 @@ sub view :Chained("base") :PathPart("view") :Args(0) {
 }
 
 sub download :Chained("base") :PathPart("download") :Args(0) {
-  my ( $self, $c, $file_id ) = @_;
-  
-  # Look for the file in the DB
-  my $file = $c->model("DB::UploadedFile")->find_non_deleted( $file_id );
+  my ( $self, $c ) = @_;
+  my $file = $c->stash->{file};
   
   if ( defined( $file ) ) {
     # File found in the DB, check that it's still on disk
