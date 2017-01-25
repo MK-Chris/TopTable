@@ -415,6 +415,10 @@ sub transfer :Chained("base") :PathPart("transfer") :Args(0) {
           [$to_person->url_key], {mid => $c->set_status_msg( {success => $c->maketext("people.transfer.success")} ) } );
     }
     
+    # Log an event for each
+    $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["person", "transfer-from", {id => $from_person->id}, $from_person->display_name] );
+    $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["person", "transfer-to", {id => $to_person->id}, $to_person->display_name] );
+    
     $c->response->redirect( $redirect_uri );
     $c->detach;
     return;
