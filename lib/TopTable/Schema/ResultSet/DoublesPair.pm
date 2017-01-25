@@ -84,41 +84,4 @@ sub find_pair {
   });
 }
 
-=head2 pairs_involving_person
-
-Finds doubles pairs involving the given person
-
-=cut
-
-sub pairs_involving_person {
-  my ( $self, $parameters ) = @_;
-  my $person  = $parameters->{person};
-  my $season  = $parameters->{season};
-  my $team    = $parameters->{team};
-  
-  my $where = [{
-    person1 => $person->id,
-  }, {
-    person2 => $person->id,
-  }];
-  
-  # If we have a season, pass that into the where queries
-  if ( defined( $season ) ) {
-    $where->[0]{season} = $season->id;
-    $where->[1]{season} = $season->id;
-  }
-  
-  # If we have a team, pass that into the where queries
-  if ( defined( $team ) ) {
-    $where->[0]{team} = $team->id;
-    $where->[1]{team} = $team->id;
-  }
-  
-  return $self->search($where, {
-    prefetch  => ["person1", "person2", "season", {
-      team  => "club"
-    }],
-  });
-}
-
 1;

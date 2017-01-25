@@ -1117,27 +1117,6 @@ msgstr "Result"
 msgid "people.seasons.count-text"
 msgstr "There is a record of %1 in %2 %3."
 
-msgid "people.transfer-season"
-msgstr "Transfer season statistics"
-
-msgid "people.transfer.to"
-msgstr "Person to transfer to"
-
-msgid "people.transfer.to-person-invalid"
-msgstr "The person you wish to transfer the statistics to is invalid."
-
-msgid "people.transfer.season-invalid"
-msgstr "The season you wish to transfer statistics for is invalid."
-
-msgid "people.transfer.has-memberhsips"
-msgstr "The person to whom you wish to transfer these statistics already has team memberships in the specified season; if they have not played any matches, you may delete those memberships and try this again, otherwise you will not be able to transfer the statistics to this person."
-
-msgid "people.transfer.nothing-to-transfer"
-msgstr "Did not find any team memberships to transfer."
-
-msgid "people.transfer.success"
-msgstr "Season statistics successfully transferred."
-
 ### Generic team / person statistics labels
 msgid "stats.heading.matches"
 msgstr "Matches"
@@ -4061,12 +4040,6 @@ msgstr "Edited a match report for %1%2."
 
 msgid "system-event-log.description.import"
 msgstr "Imported %1%2."
-
-msgid "system-event-log.description.transfer-from"
-msgstr "Transferred season statistics from %1%2."
-
-msgid "system-event-log.description.transfer-to"
-msgstr "Transferred season statistics to %1%2."
 
 msgid "system-event-log.description.update-match-date"
 msgstr "Updated the date for matches where the home team is %1%2."

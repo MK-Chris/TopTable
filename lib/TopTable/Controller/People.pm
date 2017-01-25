@@ -186,6 +186,7 @@ View a person's details.
 
 sub view :Chained("base") :PathPart("") :CaptureArgs(0) {
   my ( $self, $c ) = @_;
+  my ( $season );
   
   # Check that we are authorised to view teams
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["person_view", $c->maketext("user.auth.view-people"), 1] );
@@ -330,47 +331,17 @@ sub view_finalise :Private {
     ? $c->uri_for_action("/people/view_specific_season", [$person->url_key, $season->url_key])
     : $c->uri_for_action("/people/view_current_season", [$person->url_key]);
   
-  my $scripts           = [];
-  my $tokeninput_confs  = [];
-  my $external_styles   = [
-    $c->uri_for("/static/css/responsive-tabs/responsive-tabs.css"),
-    $c->uri_for("/static/css/responsive-tabs/style-jqueryui.css"),
-  ];
-  my $external_scripts  = [
-    $c->uri_for("/static/script/plugins/responsive-tabs/jquery.responsiveTabs.mod.js"),
-    $c->uri_for("/static/script/standard/responsive-tabs.js"),
-  ];
-  
-  if ( $c->stash->{authorisation}{person_edit} ) {
-    my $tokeninput_options = {
-      jsonContainer => "json_people",
-      tokenLimit    => 1,
-      hintText      => $c->maketext("person.tokeninput.type"),
-      noResultsText => encode_entities( $c->maketext("tokeninput.text.no-results") ),
-      searchingText => encode_entities( $c->maketext("tokeninput.text.searching") ),
-    };
-    
-    # Add the pre-population if required
-    $tokeninput_options->{prePopulate} = [{id => $c->flash->{to}->id, name => encode_entities( $c->flash->{to}->display_name ) }] if defined( $c->flash->{to} );
-    
-    $scripts          = ["tokeninput-standard"];
-    $tokeninput_confs = [{
-      script    => $c->uri_for_action("/people/ajax_search"),
-      options   => encode_json( $tokeninput_options ),
-      selector  => "to"
-    }];
-    
-    push( @{ $external_styles }, $c->uri_for("/static/css/tokeninput/token-input-tt.css") );
-    push( @{ $external_scripts }, $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js") );
-  }
-  
   # Set up the template to use
   $c->stash({
     template            => "html/people/view.ttkt",
-    scripts             => $scripts,
-    external_scripts    => $external_scripts,
-    external_styles     => $external_styles,
-    tokeninput_confs    => $tokeninput_confs,
+    external_scripts    => [
+      $c->uri_for("/static/script/plugins/responsive-tabs/jquery.responsiveTabs.mod.js"),
+      $c->uri_for("/static/script/standard/responsive-tabs.js"),
+    ],
+    external_styles     => [
+      $c->uri_for("/static/css/responsive-tabs/responsive-tabs.css"),
+      $c->uri_for("/static/css/responsive-tabs/style-jqueryui.css"),
+    ],
     title_links         => \@title_links,
     view_online_display => sprintf( "Viewing %s", $encoded_display_name ),
     view_online_link    => 1,
@@ -378,63 +349,6 @@ sub view_finalise :Private {
     seasons             => $person_seasons->count,
     canonical_uri       => $canonical_uri,
   });
-}
-
-=head2 transfer
-
-Transfer the current season (including all team associations) to another person.  The person chosen to transfer to must have no team associations already of any sort for the season that you're transferring data for.
-
-This function is chained to "base", so that the "from" person is already obtained.
-
-=cut
-
-sub transfer :Chained("base") :PathPart("transfer") :Args(0) {
-  my ( $self, $c ) = @_;
-  my $from_person = $c->stash->{person};
-  
-  # Check that we are authorised to view teams
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["person_edit", $c->maketext("user.auth.edit-people"), 1] );
-  
-  my $to_person = $c->model("DB::Person")->find( $c->request->parameters->{to} );
-  my $season    = $c->model("DB::Season")->find( $c->request->parameters->{season} );
-  
-  my $result = $from_person->transfer_statistics({
-    to_person => $to_person,
-    season    => $season,
-  });
-  
-  if ( scalar( @{ $result->{errors} } ) == 0 ) {
-    # Success, redirect to the new person's view page and display a message.
-    my $redirect_uri;
-    
-    if ( defined( $season ) ) {
-      $redirect_uri = $c->uri_for_action("/people/view_specific_season",
-          [$to_person->url_key, $season->url_key], {mid => $c->set_status_msg( {success => $c->maketext("people.transfer.success")} ) } );
-    } else {
-      $redirect_uri = $c->uri_for_action("/people/view_current_season",
-          [$to_person->url_key], {mid => $c->set_status_msg( {success => $c->maketext("people.transfer.success")} ) } );
-    }
-    
-    $c->response->redirect( $redirect_uri );
-    $c->detach;
-    return;
-  } else {
-    # Failure, redirect back to the "from" view page and display the error(s).
-    my $error = $c->build_message( $result->{errors} );
-    my $redirect_uri;
-    
-    if ( defined( $season ) ) {
-      $redirect_uri = $c->uri_for_action("/people/view_specific_season",
-          [$from_person->url_key, $season->url_key], {mid => $c->set_status_msg( {error => $error} ) } );
-    } else {
-      $redirect_uri = $c->uri_for_action("/people/view_current_season",
-          [$from_person->url_key], {mid => $c->set_status_msg( {error => $error} ) } );
-    }
-    
-    $c->response->redirect( $redirect_uri );
-    $c->detach;
-    return;
-  }
 }
 
 =head2 view_seasons
