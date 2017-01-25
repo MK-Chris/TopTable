@@ -41,6 +41,13 @@ IF season;
   END;
 -%]
     <li><a href="#games">[% c.maketext("people.games") %]</a></li>
+[%
+  IF authorisation.person_edit;
+-%]
+    <li><a href="#transfer">[% c.maketext("people.transfer-season") %]</a></li>
+[%
+  END;
+-%]
   </ul>
 [%
   # Check there's a person's season
@@ -272,6 +279,27 @@ IF season;
     END;
 -%]
   </div>
+[%
+    IF authorisation.person_edit;
+-%]
+  <div id="transfer">
+    <form method="post" action="[% c.uri_for_action("/people/transfer", [person.url_key]) %]">
+      <input type="hidden" name="season" id="season" value="[% season.id %]">
+      
+      <div class="label-field-container">
+        <label for="to">[% c.maketext("people.transfer.to") %]</label>
+        <div class="field-container">
+          <input type="text" id="to" name="to" value="" />
+        </div>
+        <div class="clear-fix"></div>
+      </div>
+      
+      <input type="submit" name="Submit" value="[% c.maketext("form.button.save") | html_entity %]" />
+    </form>
+  </div>
+[%
+    END;
+-%]
 [%
   # Else for the check for a team season
   ELSE;
