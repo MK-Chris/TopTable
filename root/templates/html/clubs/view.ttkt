@@ -8,7 +8,18 @@
 <a href="[% c.uri_for_action("/venues/view", [club.venue.url_key]) %]">[% club.venue.name %]</a><br />
 <address>[% FILTER html_line_break;
 club.venue.full_address;
-END %]</address><br />
+END;
+IF club.email_address;
+-%]
+<b>[% c.maketext("clubs.field.email-address") %]:</b> <a href="mailto:[% club.email_address %]">[% club.email_address %]</a><br />
+[%
+END;
+IF club.website;
+-%]
+<b><a href="[% club.website %]">[% c.maketext("clubs.field.website") %]</a></b><br />
+[%
+END;
+-%]</address><br />
 </div>
 
 <div id="club-secretary">
@@ -30,16 +41,6 @@ END;
 [%
 ELSE;
 c.maketext("clubs.secretary.none");
-END;
-IF club.email;
--%]
-<b>[% c.maketext("clubs.field.email-address") %]:</b> <a href="mailto:[% club.email %]">[% club.email %]</a><br />
-[%
-END;
-IF club.website;
--%]
-<b><a href="[% club.website %]">[% c.maketext("clubs.field.website") %]</a></b><br />
-[%
 END;
 -%]
 </div>
