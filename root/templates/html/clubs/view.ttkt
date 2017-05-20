@@ -31,6 +31,16 @@ END;
 ELSE;
 c.maketext("clubs.secretary.none");
 END;
+IF club.email;
+-%]
+<b>[% c.maketext("clubs.field.email-address") %]:</b> <a href="mailto:[% club.email %]">[% club.email %]</a><br />
+[%
+END;
+IF club.website;
+-%]
+<b><a href="[% club.website %]">[% c.maketext("clubs.field.website") %]</a></b><br />
+[%
+END;
 -%]
 </div>
 
