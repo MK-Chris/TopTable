@@ -1502,6 +1502,13 @@ sub cancel {
   # Return with errors if we have them
   return $return_value if scalar( @{ $return_value->{error} } );
   
+  # Loop through all the games and delete the scores
+  my $games = $self->team_match_games;
+  while ( my $game = $games->next ) {
+    my $game_result = $game->update_score({delete => 1}) if $game->complete;
+  }
+  
+  
   # If the match was previously cancelled and we're just changing the values, we need to alter the awarded points
   if ( $self->cancelled ) {
     $home_points_awarded -= $self->home_team_match_score;
