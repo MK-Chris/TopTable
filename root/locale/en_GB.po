@@ -210,6 +210,9 @@ msgstr "Rules"
 msgid "menu.title.rules"
 msgstr "Rules"
 
+msgid "menu.text.privacy"
+msgstr "Privacy"
+
 msgid "menu.text.contact"
 msgstr "Contact"
 
@@ -3003,6 +3006,10 @@ msgstr "No recipients have been specified."
 msgid "contact-reasons.form.error.no-email-for-person"
 msgstr "%1 cannot be added as a contact recipient, because they don&#39;t have an email address stored; you&#39;ll need to edit their details and add an email address first."
 
+## Page text form
+msgid "page_text.form.error.page-key-missing"
+msgstr "The page key was not specified."
+
 ### Contact form
 msgid "contact.form.legend.details"
 msgstr "Contact form"
@@ -3120,6 +3127,9 @@ msgstr "%1 has been successfully %2, but the warnings below were encountered."
 
 msgid "admin.delete.error.database"
 msgstr "There was an error deleting %1 from the database; please try again and contact the system administrator if the problem persists."
+
+msgid "admin.edit.privacy"
+msgstr "Edit privacy policy"
 
 ### Users
 msgid "user.login"
@@ -3425,6 +3435,12 @@ msgstr "edit league officials"
 
 msgid "user.auth.delete-officials"
 msgstr "delete league officials"
+
+msgid "user.auth.view-privacy"
+msgstr "view the privacy policy"
+
+msgid "user.auth.edit-privacy"
+msgid "edit the privacy policy"
 
 msgid "user.auth.upload-images"
 msgstr "upload images"

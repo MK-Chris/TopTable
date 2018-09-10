@@ -91,7 +91,31 @@ __PACKAGE__->table("clubs");
 
   data_type: 'varchar'
   is_nullable: 1
-  size: 200
+  size: 2083
+
+=head2 facebook
+
+  data_type: 'varchar'
+  is_nullable: 1
+  size: 2083
+
+=head2 twitter
+
+  data_type: 'varchar'
+  is_nullable: 1
+  size: 2083
+
+=head2 instagram
+
+  data_type: 'varchar'
+  is_nullable: 1
+  size: 2083
+
+=head2 youtube
+
+  data_type: 'varchar'
+  is_nullable: 1
+  size: 2083
 
 =head2 default_match_start
 
@@ -131,7 +155,15 @@ __PACKAGE__->add_columns(
   "email_address",
   { data_type => "varchar", is_nullable => 1, size => 200 },
   "website",
-  { data_type => "varchar", is_nullable => 1, size => 200 },
+  { data_type => "varchar", is_nullable => 1, size => 2083 },
+  "facebook",
+  { data_type => "varchar", is_nullable => 1, size => 2083 },
+  "twitter",
+  { data_type => "varchar", is_nullable => 1, size => 2083 },
+  "instagram",
+  { data_type => "varchar", is_nullable => 1, size => 2083 },
+  "youtube",
+  { data_type => "varchar", is_nullable => 1, size => 2083 },
   "default_match_start",
   { data_type => "time", is_nullable => 1 },
 );
@@ -245,8 +277,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2015-09-04 12:04:55
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:50TaCxPMqm64yaeZO6LLKA
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2018-09-01 15:43:01
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:28iSHygWiCX5oeqwO1u2Wg
 
 =head2 can_delete
 

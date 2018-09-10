@@ -23,6 +23,7 @@ sub all_teams_by_club_by_team_name_with_season {
     $where = [{
       "season.id" => $season->id,
       "person_seasons.team_membership_type" => "active",
+      "person_seasons.season" => $season->id,
     }, {
       "season.id" => undef,
       "person_seasons.team_membership_type" => "active",

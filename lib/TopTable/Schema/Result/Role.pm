@@ -523,6 +523,20 @@ If 1 the person can create match reports involving teams the user is associated 
   extra: {unsigned => 1}
   is_nullable: 0
 
+=head2 privacy_view
+
+  data_type: 'tinyint'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 0
+
+=head2 privacy_edit
+
+  data_type: 'tinyint'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 0
+
 =head2 role_view
 
   data_type: 'tinyint'
@@ -1209,6 +1223,20 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
+  "privacy_view",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
+  "privacy_edit",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
   "role_view",
   {
     data_type => "tinyint",
@@ -1504,8 +1532,8 @@ Composing rels: L</user_roles> -> user
 __PACKAGE__->many_to_many("users", "user_roles", "user");
 
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-09-05 16:36:47
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:+GaW+91nEMAYts0WMTQpWA
+# Created by DBIx::Class::Schema::Loader v0.07046 @ 2018-09-02 13:56:58
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:MX0cpn5xXu+jatU2DiwNMg
 
 =head2 members
 
