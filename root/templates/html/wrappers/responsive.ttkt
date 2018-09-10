@@ -367,6 +367,7 @@ END;
       <li><a href="[% c.uri_for("/info/officials") %]" title="[% c.maketext("menu.title.officials") %]">[% c.maketext("menu.text.officials") %]</a></li>
       <li><a href="[% c.uri_for("/info/rules") %]" title="[% c.maketext("menu.title.rules") %]">[% c.maketext("menu.text.rules") %]</a></li>
       <li><a href="[% c.uri_for("/info/contact") %]" title="[% c.maketext("menu.title.contact") %]">[% c.maketext("menu.text.contact") %]</a></li>
+      <li><a href="[% c.uri_for("/info/privacy") %]" title="[% c.maketext("menu.title.privacy") %]">[% c.maketext("menu.text.privacy") %]</a></li>
 [%
   IF authorisation.meeting_view;
 -%]

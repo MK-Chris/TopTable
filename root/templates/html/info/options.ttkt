@@ -7,6 +7,9 @@
 <div class="list-item">
   <a href="[% c.uri_for("/info/contact") %]">[% c.maketext("menu.text.contact") %]</a>
 </div>
+<div class="list-item">
+  <a href="[% c.uri_for("/info/privacy") %]">[% c.maketext("menu.text.privacy") %]</a>
+</div>
 [%
 IF authorisation.meeting_view;
 -%]
