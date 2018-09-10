@@ -213,6 +213,9 @@ msgstr "Rules"
 msgid "menu.text.privacy"
 msgstr "Privacy"
 
+msgid "menu.title.privacy"
+msgstr "Privacy policy"
+
 msgid "menu.text.contact"
 msgstr "Contact"
 
