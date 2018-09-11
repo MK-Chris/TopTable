@@ -392,6 +392,9 @@ sub get_team_season :Private {
   #my $team_season = $c->model("DB::TeamSeason")->find({
   my $team_season = $team->get_season( $season );
   
+  # Check if we have a team season - if so, the team has entered this season
+  my $entered = ( defined( $team_season ) ) ? 1 : 0;
+  
   # Check if the name has changed since the season we're viewing
   if ( $specific_season and ( $team_season->club->id != $team->club->id or $team_season->name ne $team->name ) ) {
     $c->add_status_message( "info", $c->maketext( "teams.club.changed-notice", $team_season->club->short_name, $team_season->name, $c->uri_for_action("/clubs/view_current_season", [$team->club->url_key]), $team->club->full_name ) ) if $specific_season and $team_season->club->id != $team->club->id;
@@ -400,43 +403,54 @@ sub get_team_season :Private {
     $c->stash({subtitle1 => encode_entities( sprintf( "%s %s", $team_season->club->short_name, $team_season->name ) )});
   }
   
-  # Get the team's position - we need to get all teams in the division in an array ordered properly first
-  my @teams_in_division = $c->model("DB::TeamSeason")->get_teams_in_division_in_league_table_order( $season, $team_season->division );
-  
-  # Now we need to loop throug the array, counting up as we go
   my $league_position = 0;
-  foreach my $division_team ( @teams_in_division ) {
-    # Increment our count
-    $league_position++;
+  my $singles_averages = [];
+  my $doubles_individual_averages = [];
+  my $doubles_pair_averages = [];
+    if ( $entered ) {
+    # Get the team's position - we need to get all teams in the division in an array ordered properly first
+    my @teams_in_division = $c->model("DB::TeamSeason")->get_teams_in_division_in_league_table_order( $season, $team_season->division );
     
-    # Exit the loop once we find this team
-    last if $division_team->team->id == $team->id;
+    # Now we need to loop throug the array, counting up as we go
+    foreach my $division_team ( @teams_in_division ) {
+      # Increment our count
+      $league_position++;
+      
+      # Exit the loop once we find this team
+      last if $division_team->team->id == $team->id;
+    }
+    
+    $singles_averages = [ $c->model("DB::PersonSeason")->get_people_in_division_in_singles_averages_order({
+      season    => $season,
+      division  => $team_season->division,
+      team      => $team,
+    } ) ];
+    
+    $doubles_individual_averages = [ $c->model("DB::PersonSeason")->get_people_in_division_in_doubles_individual_averages_order({
+      season          => $season,
+      division        => $team_season->division,
+      team            => $team,
+      criteria_field  => "played",
+      operator        => ">=",
+      criteria        => 1,
+    }) ];
+    
+    $doubles_pair_averages = [ $c->model("DB::DoublesPair")->get_doubles_pairs_in_division_in_averages_order({
+      season          => $season,
+      division        => $team_season->division,
+      team            => $team,
+      criteria_field  => "played",
+      operator        => ">=",
+      criteria        => 1,
+    }) ];
   }
   
   # $team_players is called averages in the stash so we can include the team averages table
   $c->stash({
     team_season                 => $team_season,
-    singles_averages            => [ $c->model("DB::PersonSeason")->get_people_in_division_in_singles_averages_order({
-      season    => $season,
-      division  => $team_season->division,
-      team      => $team,
-    } ) ],
-    doubles_individual_averages => [ $c->model("DB::PersonSeason")->get_people_in_division_in_doubles_individual_averages_order({
-      season          => $season,
-      division        => $team_season->division,
-      team            => $team,
-      criteria_field  => "played",
-      operator        => ">=",
-      criteria        => 1,
-    }) ],
-    doubles_pair_averages       => [ $c->model("DB::DoublesPair")->get_doubles_pairs_in_division_in_averages_order({
-      season          => $season,
-      division        => $team_season->division,
-      team            => $team,
-      criteria_field  => "played",
-      operator        => ">=",
-      criteria        => 1,
-    }) ],
+    singles_averages            => $singles_averages,
+    doubles_individual_averages => $doubles_individual_averages,
+    doubles_pair_averages       => $doubles_pair_averages,
     averages_team_page          => 1,
     season                      => $season,
     league_position             => $league_position,
@@ -892,7 +906,7 @@ sub edit :Private {
   }
   
   # Get the last team season
-  $last_team_season = $c->model("DB::Season")->last_complete_season( $team );
+  $last_team_season = $c->model("DB::Season")->last_complete_season( $team )->team_seasons->first;
   
   my $home_night;
   if ( defined( $team_season ) ) {
@@ -924,7 +938,7 @@ sub edit :Private {
         $captain = $team_season->captain;
       } else {
         # If not, use the captain from the last completed season this team entered
-        $captain = $last_team_season->team_seasons->first->captain if defined( $last_team_season->team_seasons );
+        $captain = $last_team_season->captain if defined( $last_team_season );
       }
     }
     
@@ -1003,12 +1017,19 @@ sub edit :Private {
   my @time_bits = split ":", $c->stash->{team}->default_match_start if defined($c->stash->{team}->default_match_start);
   
   $c->flash->{club}             = $c->stash->{team}->club->id   if !$c->flash->{club};
-  $c->flash->{division}         = $team_season->division->id    if !$c->flash->{division} and defined( $team_season );
-  $c->flash->{captain}          = $team_season->captain         if !$c->flash->{captain} and defined($team_season->captain);
   $c->flash->{home_night}       = $home_night                   if !$c->flash->{home_night};
   $c->flash->{start_hour}       = $time_bits[0]                 if !$c->flash->{start_hour};
   $c->flash->{start_minute}     = $time_bits[1]                 if !$c->flash->{start_minute};
   $c->flash->{log_old_details}  = $c->stash->{log_old_details}  if !$c->flash->{log_old_details};
+  
+  if ( defined( $team_season ) ) {
+    $c->flash->{division}       = $team_season->division->id    if !$c->flash->{division};
+    $c->flash->{captain}        = $team_season->captain         if !$c->flash->{captain} and defined( $team_season->captain );
+  } elsif ( defined( $last_team_season ) ) {
+    $c->flash->{division}       = $last_team_season->division->id if !$c->flash->{division};
+    $c->flash->{captain}        = $last_team_season->captain      if !$c->flash->{captain} and defined( $last_team_season->captain );
+  }
+  
   
   # Breadcrumbs
   push(@{ $c->stash->{breadcrumbs} }, {

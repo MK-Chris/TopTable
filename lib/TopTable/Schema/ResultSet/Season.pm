@@ -24,7 +24,7 @@ sub last_complete_season {
       "team_seasons.team" => $team->id
     };
     $attributes = {
-      prefetch  => "team_seasons",
+      prefetch  => {team_seasons => "home_night"},
       order_by  => {  -desc => [qw/ start_date end_date /] },
       rows      => 1,
     };

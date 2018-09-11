@@ -526,7 +526,7 @@ sub create_or_edit {
   if ( defined( $division ) ) {
     # If we're editing, we only check this if the division has changed; if we're creating,
     # we check regardless.
-    if ( ( $action eq "edit" and $division->id != $old_division->id ) or $action eq "create" ) {
+    if ( ( $action eq "edit" and defined( $old_division ) and $division->id != $old_division->id ) or $action eq "create" ) {
       my $division_season = $division->search_related("division_seasons", {
         season => $season->id,
       }, {
