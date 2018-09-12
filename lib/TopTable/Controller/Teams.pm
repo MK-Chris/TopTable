@@ -906,7 +906,8 @@ sub edit :Private {
   }
   
   # Get the last team season
-  $last_team_season = $c->model("DB::Season")->last_complete_season( $team )->team_seasons->first;
+  $last_team_season = $c->model("DB::Season")->last_complete_season( $team );
+  $last_team_season = $last_team_season->team_seasons->first if defined( $last_team_season );
   
   my $home_night;
   if ( defined( $team_season ) ) {
