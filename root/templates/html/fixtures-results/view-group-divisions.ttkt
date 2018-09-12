@@ -15,21 +15,21 @@ IF matches.count;
   USE zeroes = format("%02d");
   SET i = 0;
   WHILE (match = matches.next);
-    SET date = match.scheduled_date;
+    SET date = match.actual_date;
     CALL date.set_locale( c.locale );
-    SET month = zeroes( match.scheduled_date.month );
-    SET day   = zeroes( match.scheduled_date.day );
+    SET month = zeroes( match.actual_date.month );
+    SET day   = zeroes( match.actual_date.day );
     
     IF specific_season;
       SET home_team_uri     = c.uri_for_action("/teams/view_specific_season_by_url_key", [match.home_team.club.url_key, match.home_team.url_key, season.url_key]);
       SET away_team_uri     = c.uri_for_action("/teams/view_specific_season_by_url_key", [match.away_team.club.url_key, match.away_team.url_key, season.url_key]);
       SET division_uri      = c.uri_for_action("/league-tables/view_specific_season", [match.division.url_key, season.url_key]);
-      SET fixtures_day_uri  = c.uri_for_action("/fixtures-results/view_day_specific_season_first_page", [season.url_key, match.scheduled_date.year, month, day]);
+      SET fixtures_day_uri  = c.uri_for_action("/fixtures-results/view_day_specific_season_first_page", [season.url_key, match.actual_date.year, month, day]);
     ELSE;
       SET home_team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [match.home_team.club.url_key, match.home_team.url_key]);
       SET away_team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [match.away_team.club.url_key, match.away_team.url_key]);
       SET division_uri  = c.uri_for_action("/league-tables/view_current_season", [match.division.url_key]);
-      SET fixtures_day_uri  = c.uri_for_action("/fixtures-results/view_day_current_season_first_page", [match.scheduled_date.year, month, day]);
+      SET fixtures_day_uri  = c.uri_for_action("/fixtures-results/view_day_current_season_first_page", [match.actual_date.year, month, day]);
     END;
     
     # Display the score or 'v'?

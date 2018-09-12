@@ -13,9 +13,9 @@ IF matches.count;
 [%
   USE zeroes = format("%02d");
   WHILE (match = matches.next);
-    SET date = match.scheduled_date;
-    SET month = zeroes( match.scheduled_date.month );
-    SET day   = zeroes( match.scheduled_date.day );
+    SET date = match.actual_date;
+    SET month = zeroes( match.actual_date.month );
+    SET day   = zeroes( match.actual_date.day );
     
     IF specific_season;
       SET home_team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [match.home_team.club.url_key, match.home_team.url_key, season.url_key]);

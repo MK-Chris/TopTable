@@ -32,9 +32,9 @@ END;
 [%
   USE zeroes = format("%02d");
   WHILE (match = matches.next);
-    SET date = match.scheduled_date;
-    SET month = zeroes( match.scheduled_date.month );
-    SET day   = zeroes( match.scheduled_date.day );
+    SET date = match.actual_date;
+    SET month = zeroes( match.actual_date.month );
+    SET day   = zeroes( match.actual_date.day );
     
     IF team.id == match.home_team.id;
       # Team specified is at home
@@ -61,7 +61,7 @@ END;
     
     SET match_result = match.result(location);
     
-    SET date = match.scheduled_date;
+    SET date = match.actual_date;
     CALL date.set_locale( c.locale );
 -%]
   <tr>
