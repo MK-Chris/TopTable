@@ -80,7 +80,7 @@ END;
       <a href="[% opponent_uri %]">[% opponent.club.short_name | html_entity %] [% opponent.name | html_entity %]</a>
     </td>
     <td data-label="[% c.maketext("teams.fixtures.result") %]">
-      [% c.maketext(match_result.result.id) %]
+      [% c.maketext(match_result.result.id) OR "&nbsp;" %]
     </td>
     <td data-label="[% c.maketext("teams.fixtures.score") %]">
 [%
