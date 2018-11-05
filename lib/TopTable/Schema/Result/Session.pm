@@ -286,7 +286,7 @@ sub browser_detected {
   my ( $self ) = @_;
   my $browser_string;
   
-  if ( defined( $self->user_agent->string ) ) {
+  if ( defined( $self->user_agent ) ) {
     my $browser = HTTP::BrowserDetect->new( $self->user_agent->string );
     
     if ( defined( $browser ) ) {
@@ -321,7 +321,7 @@ sub os_detected {
   my ( $self ) = @_;
   my $os_string;
   
-  if ( defined( $self->user_agent->string ) ) {
+  if ( defined( $self->user_agent ) ) {
     my $browser = HTTP::BrowserDetect->new( $self->user_agent->string );
     
     if ( defined( $browser ) ) {
