@@ -57,10 +57,9 @@ IF online_users.size;
 [%
     END;
     IF authorisation.view_users_user_agent;
-      SET browser = online_user.browser_detected;
 -%]
-      <td data-label="Operating System">[% browser.os_string %] [% browser.os_version %]</td>
-      <td data-label="Browser">[% browser.browser_string %] [% browser.browser_version %]</td>
+      <td data-label="Operating System">[% online_user.os_detected %]</td>
+      <td data-label="Browser">[% online_user.browser_detected %]</td>
 [%
     END;
     IF online_user.view_online_link;

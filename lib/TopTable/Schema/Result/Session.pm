@@ -281,11 +281,68 @@ __PACKAGE__->add_columns(
     { data_type => "datetime", timezone => "UTC" },
 );
 
-# Return the browser as an HTTP::BrowserDetect object
+# Return the browser string from the HTTP::BrowserDetect object
 sub browser_detected {
   my ( $self ) = @_;
+  my $browser_string;
   
-  return ( defined( $self->user_agent ) ) ? HTTP::BrowserDetect->new( $self->user_agent->string ) : "Unknown";
+  if ( defined( $self->user_agent->string ) ) {
+    my $browser = HTTP::BrowserDetect->new( $self->user_agent->string );
+    
+    if ( defined( $browser ) ) {
+      if ( defined( $browser->robot ) ) {
+        $browser_string = $browser->robot_string;
+        
+        if ( defined( $browser->robot_version ) and $browser->robot_version ne "" ) {
+          $browser_string .= " " . $browser->robot_version;
+        }
+        
+        $browser_string .= " (bot)";
+      } else {
+        $browser_string = $browser->browser_string;
+        
+        if ( defined( $browser->browser_version ) and $browser->browser_version ne "" ) {
+          $browser_string .= " " . $browser->browser_version;
+        }
+      }
+    } else {
+      $browser_string = "Unknown";
+    }
+  } else {
+    $browser_string = "No user agent string";
+  }
+  
+  
+  return $browser_string;
+}
+
+# Return the OS string from the HTTP::BrowserDetect object
+sub os_detected {
+  my ( $self ) = @_;
+  my $os_string;
+  
+  if ( defined( $self->user_agent->string ) ) {
+    my $browser = HTTP::BrowserDetect->new( $self->user_agent->string );
+    
+    if ( defined( $browser ) ) {
+      if ( defined( $browser->robot ) ) {
+        $os_string = "Bot";
+      } else {
+        $os_string = $browser->os_string;
+        
+        if ( defined( $browser->os_version ) and $browser->os_version ne "" ) {
+          $os_string .= " " . $browser->os_version;
+        }
+      }
+    } else {
+      $os_string = "Unknown";
+    }
+  } else {
+    $os_string = "No user agent string";
+  }
+  
+  
+  return $os_string;
 }
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
