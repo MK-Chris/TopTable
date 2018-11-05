@@ -285,7 +285,7 @@ __PACKAGE__->add_columns(
 sub browser_detected {
   my ( $self ) = @_;
   
-  return HTTP::BrowserDetect->new( $self->user_agent->string );
+  return ( defined( $self->user_agent ) ) ? HTTP::BrowserDetect->new( $self->user_agent->string ) : "Unknown";
 }
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

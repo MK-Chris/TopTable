@@ -1424,8 +1424,9 @@ sub current_activity :Path("/users-online") {
     # Can only view people who aren't hiding themselves
     $online_users = [ $c->model("DB::Session")->get_non_hidden_online_users( $online_users_last_active_limit ) ];
   }
-   
-  my $browser_detected = $_->browser_detected foreach ( @{ $online_users } );
+  
+  
+  $c->log->debug( sprintf( "View IP: %d, view user agent: %d", $c->stash->{authorisation}{view_users_ip}, $c->stash->{authorisation}{view_users_user_agent} ) );
   
   $c->stash({
     template            => "html/users/online.ttkt",
