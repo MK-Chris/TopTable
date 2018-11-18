@@ -383,6 +383,57 @@ sub matches_in_date_range {
   }, $attributes);
 }
 
+=head2 incomplete_matches
+
+A search for incomplete matches that should have been played before the specified cutoff.
+
+=cut
+
+sub incomplete_matches {
+  my ( $self, $parameters ) = @_;
+  my $date_cutoff       = $parameters->{date_cutoff};
+  my $season            = $parameters->{season};
+  my $page_number       = $parameters->{page_number};
+  my $results_per_page  = $parameters->{results_per_page};
+  my $attributes        = {
+    prefetch  => [{
+      home_team => ["club", {
+        "team_seasons" => {
+          "division" => "division_seasons"
+        }}]
+      }, {
+        away_team => "club"
+      }, {
+        scheduled_week => "season"
+      },
+      "venue"
+    ],
+    order_by  =>  {
+      -asc => [ qw( scheduled_date division.rank )]
+    }
+  };
+  
+  # If we have a page number or a results_per_page parameter defined, we have to ensure both are provided and sane
+  if ( defined( $results_per_page ) or defined( $page_number ) ) {
+    $results_per_page = 25 if !defined($results_per_page) or $results_per_page !~ m/^\d+$/;
+    $page_number = 1 if !defined($page_number) or $page_number !~ m/^\d+$/;
+    
+    $attributes->{page} = $page_number;
+    $attributes->{rows} = $results_per_page;
+  }
+  
+  return $self->search({
+    "scheduled_week.season"   => $season->id,
+    "team_seasons.season"     => $season->id,
+    "division_seasons.season" => $season->id,
+    "me.complete"             => 0,
+    "me.cancelled"            => 0,
+    scheduled_date => {
+      "<=" => sprintf( "%s %s", $date_cutoff->ymd, $date_cutoff->hms ),
+    },
+  }, $attributes);
+}
+
 =head2 matches_in_week
 
 A search for matches in the specified fixtures week.

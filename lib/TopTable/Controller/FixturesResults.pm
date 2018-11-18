@@ -1341,6 +1341,171 @@ sub download_month_specific_season :Chained("view_month_specific_season") :PathP
   $c->detach( "download_month" );
 }
 
+=head2 view_late_current_season
+
+Display the late scorecards in the current season.
+
+Matches "/fixtures-results/late".
+
+=cut
+
+sub view_late_current_season :Chained("load_current_season") :PathPart("late") :CaptureArgs(0) {
+  my ( $self, $c ) = @_;
+}
+
+=head2 view_late_specific_season
+
+Display the late scorecards in a specific season.
+
+Matches "/fixtures-results/seasons/*/late".
+
+=cut
+
+sub view_late_specific_season :Chained("load_specific_season") :PathPart("late") :CaptureArgs(0) {
+  my ( $self, $c ) = @_;
+}
+
+=head2 view_late_current_season_first_page
+
+Shows the first page of late scorecards in the current season.
+
+Matches "/fixtures-results/late" (end of chain).
+
+=cut
+
+sub view_late_current_season_first_page :Chained("view_late_current_season") :PathPart("") :Args(0) {
+  my ( $self, $c ) = @_;
+  $c->detach( "view_late", [1] );
+}
+
+=head2 view_late_specific_season_first_page
+
+Shows the first page of a given day's fixtures in the specified season.
+
+Matches "/fixtures-results/seasons/*/late" (end of chain).
+
+=cut
+
+sub view_late_specific_season_first_page :Chained("view_late_specific_season") :PathPart("") :Args(0) {
+  my ( $self, $c ) = @_;
+  $c->detach( "view_late", [1] );
+}
+
+=head2 view_late_current_season_specific_page
+
+Shows the specified page of a given day's fixtures in the current season.
+
+Matches "/fixtures-results/late/page/*" (end of chain).
+
+=cut
+
+sub view_late_current_season_specific_page :Chained("view_late_current_season") :PathPart("page") :Args(1) {
+  my ( $self, $c, $page_number ) = @_;
+  $c->detach( "clean_page_number", [$page_number, "view_late"] );
+}
+
+=head2 view_day_specific_season_specific_page
+
+Shows the specified page of a given day's fixtures in the specified season.
+
+Matches "/fixtures-results/seasons/*/late/page/*" (end of chain).
+
+=cut
+
+sub view_late_specific_season_specific_page :Chained("view_late_specific_season") :PathPart("page") :Args(1) {
+  my ( $self, $c, $page_number ) = @_;
+  $c->detach( "clean_page_number", [$page_number, "view_late"] );
+}
+
+=head2 view_late
+
+Private routine that all of the view_day_* functions end up at.  Does the match lookup and pagination with links to other pages if necessary.
+
+=cut
+
+sub view_late :Private {
+  my ( $self, $c, $page_number ) = @_;
+  my ( $subtitle_field, $matches );
+  my $season                = $c->stash->{season};
+  my $specific_season       = $c->stash->{specific_season};
+  my $late_scorecard_hours  = $c->config->{Matches}{Team}{late_scorecard_hours};
+  $late_scorecard_hours     = 72 if !defined( $late_scorecard_hours ) or !$late_scorecard_hours or $late_scorecard_hours !~ /^\d+$/ or $late_scorecard_hours < 1;
+  my $date_cutoff           = DateTime->now->subtract(hours => $late_scorecard_hours);
+  
+  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["fixtures_view", $c->maketext("user.auth.view-fixtures"), 1] );
+  $c->forward( "TopTable::Controller::Users", "check_authorisation", [[ qw( match_update match_cancel ) ], "", 0] );
+  
+  # Get the start / end date to look for matches; the start date will always be 1 and the end date will always be the last date of that particular month.
+  $matches = $c->model("DB::TeamMatch")->incomplete_matches({
+    season            => $season,
+    date_cutoff       => $date_cutoff,
+    page_number       => $page_number,
+    results_per_page  => $c->config->{Pagination}{default_page_size},
+  });
+  
+  # Work out the arguments and actions based on whether or not we've specified the season or just using the current one
+  my ( $page1_action, $specific_page_action, $page1_arguments, $specific_page_arguments );
+  if ( $specific_season ) {
+    $page1_action             = "/fixtures-results/view_late_specific_season_first_page";
+    $page1_arguments          = [ $season->url_key ];
+    $specific_page_action     = "/fixtures-results/view_late_specific_season_specific_page";
+    $specific_page_arguments  = [ $season->url_key ];
+  } else {
+    $page1_action             = "/fixtures-results/view_late_current_season_first_page";
+    $page1_arguments          = [];
+    $specific_page_action     = "/fixtures-results/view_late_current_season_specific_page";
+    $specific_page_arguments  = [];
+  }
+  
+  my $page_info   = $matches->pager;
+  my $page_links  = $c->forward( "TopTable::Controller::Root", "generate_pagination_links", [{
+    page_info                       => $page_info,
+    page1_action                    => $page1_action,
+    page1_action_arguments          => $page1_arguments,
+    specific_page_action            => $specific_page_action,
+    specific_page_action_arguments  => $specific_page_arguments,
+    current_page                    => $page_number,
+  }] );
+  
+  my $online_display;
+  if ( $specific_season ) {
+    $online_display = "Viewing late scorecards";
+    $subtitle_field = "subtitle3";
+  } else {
+    $online_display = "Viewing late scorecards";
+    $subtitle_field = "subtitle2";
+  }
+  
+  # Set up the template to use
+  $c->stash({
+    template            => "html/fixtures-results/view-group-weeks.ttkt",
+    view_online_display => $online_display,
+    view_online_link    => 1,
+    matches             => $matches,
+    $subtitle_field     => $c->maketext("fixtures-results.view.late-scorecards"),
+    page_info           => $page_info,
+    page_links          => $page_links,
+    title_links         => [{
+      image_uri => $c->uri_for("/static/images/icons/0038-Calender-icon-32.png"),
+      text      => $c->maketext("fixtures-results.view.late-scorecards"),
+      link_uri  => $c->uri_for_action("/fixtures-results/view_late_current_season_first_page"),
+    }],
+  });
+  
+  # Breadcrumbs links
+  if ( $specific_season ) {
+    push( @{ $c->stash->{breadcrumbs} }, {
+      path  => $c->uri_for_action("/fixtures-results/view_late_specific_season_first_page", [$season->url_key]),
+      label => $c->maketext("fixtures-results.view.late-scorecards"),
+    });
+  } else {
+    push( @{ $c->stash->{breadcrumbs} }, {
+      path  => $c->uri_for_action("/fixtures-results/view_late_current_season_first_page"),
+      label => $c->maketext("fixtures-results.view.late-scorecards"),
+    });
+  }
+}
+
 =head2 get_month
 
 Get and stash the month from the given year and month numbers.
