@@ -409,7 +409,7 @@ sub incomplete_matches {
       "venue"
     ],
     order_by  =>  {
-      -asc => [ qw( scheduled_date division.rank )]
+      -asc => [ qw( scheduled_week.id division.rank scheduled_date )]
     }
   };
   
