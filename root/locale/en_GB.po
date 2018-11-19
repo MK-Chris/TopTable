@@ -1744,8 +1744,8 @@ msgstr "There are no matches to display."
 msgid "fixtures-results.view-week.week-beginning"
 msgstr "Week beginning %1"
 
-msgid "fixtures-results.view.late-scorecards"
-msgstr "Late scorecards"
+msgid "fixtures-results.view.outstanding-scorecards"
+msgstr "Outstanding scorecards"
 
 msgid "fixtures-results.view-scorecard"
 msgstr "View scorecard"
