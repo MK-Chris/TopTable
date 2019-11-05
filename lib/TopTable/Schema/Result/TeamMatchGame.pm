@@ -2444,76 +2444,166 @@ sub update_doubles_pair {
           if ( $self->is_column_changed( $location_doubles_pair ) ) {
             #printf "Doubles pair has changed\n";
             # The doubles pair column has changed, so we need to recalculate some values
+            
             if ( defined( $original_doubles_pair ) ) {
               #printf "There was previously another doubles pair\n";
+              # Get the original player 1 / player 2 objects to update their individual statistics
+              my $original_player1  = $original_doubles_pair->person1->find_related("person_seasons", {season => $season->id, team => $team->id});
+              my $original_player2  = $original_doubles_pair->person2->find_related("person_seasons", {season => $season->id, team => $team->id});
+              
               # There is an original doubles pair to take some games off
-              $original_doubles_pair->games_played($original_doubles_pair->games_played - 1) if $self->complete;
+              if ( $self->complete ) {
+                $original_doubles_pair->games_played($original_doubles_pair->games_played - 1);
+                $original_player1->doubles_games_played( $original_player1->doubles_games_played - 1 );
+                $original_player2->doubles_games_played( $original_player2->doubles_games_played - 1 );
+              }
               
               # Work out whether we need to take a game won, lost or drawn off
               if ( $self->complete and defined( $self->winner ) and $self->winner->id == $match->$location_team->id ) {
                 # Game won
                 $original_doubles_pair->games_won( $original_doubles_pair->games_won - 1 );
+                $original_player1->doubles_games_won( $original_player1->doubles_games_won - 1 );
+                $original_player2->doubles_games_won( $original_player2->doubles_games_won - 1 );
               } elsif ( $self->complete and defined( $self->winner ) and $self->winner->id != $match->$location_team->id ) {
                 # Game lost
                 $original_doubles_pair->games_lost( $original_doubles_pair->games_lost - 1 );
+                $original_player1->doubles_games_lost( $original_player1->doubles_games_lost - 1 );
+                $original_player2->doubles_games_lost( $original_player2->doubles_games_lost - 1 );
               } elsif ( $self->complete and !defined( $self->winner ) ) {
                 # Game complete but no winner: draw (only relevant for games with a static number of legs)
                 $original_doubles_pair->games_drawn( $original_doubles_pair->games_drawn - 1 );
+                $original_player1->doubles_games_drawn( $original_player1->doubles_games_drawn - 1 );
+                $original_player2->doubles_games_drawn( $original_player2->doubles_games_drawn - 1 );
               }
               
               # Take away the legs that have been played, won and lost in this game from the original pair
               # In each game, we don't have a specific legs_played field, so we have to add the legs won for this team to the legs won for the opposition team,
               # then subtract that figure from the original legs_played value in the doubles pair, which will be the combination of all the legs they've played
               $original_doubles_pair->legs_played( $original_doubles_pair->legs_played - ( $self->$team_legs_won + $self->$opposition_legs_won ) );
+              $original_player1->doubles_legs_played( $original_player1->doubles_legs_played - ( $self->$team_legs_won + $self->$opposition_legs_won ) );
+              $original_player2->doubles_legs_played( $original_player2->doubles_legs_played - ( $self->$team_legs_won + $self->$opposition_legs_won ) );
+              
               $original_doubles_pair->legs_won( $original_doubles_pair->legs_won - $self->$team_legs_won );
+              $original_player1->doubles_legs_won( $original_player1->doubles_legs_won - $self->$team_legs_won );
+              $original_player2->doubles_legs_won( $original_player2->doubles_legs_won - $self->$team_legs_won );
+              
               $original_doubles_pair->legs_lost( $original_doubles_pair->legs_lost - $self->$opposition_legs_won );
+              $original_player1->doubles_legs_lost( $original_player1->doubles_legs_lost - $self->$opposition_legs_won );
+              $original_player2->doubles_legs_lost( $original_player2->doubles_legs_lost - $self->$opposition_legs_won );
               
               # Take away the points that have been played, won and lost in this game from the original pair
               # In each game, we don't have a specific legs_played field, so we have to add the legs won for this team to the legs won for the opposition team,
               # then subtract that figure from the original legs_played value in the doubles pair, which will be the combination of all the legs they've played
               $original_doubles_pair->points_played( $original_doubles_pair->points_played - ( $self->$team_points_won + $self->$opposition_points_won ) );
+              $original_player1->doubles_points_played( $original_player1->doubles_points_played - ( $self->$team_points_won + $self->$opposition_points_won ) );
+              $original_player2->doubles_points_played( $original_player2->doubles_points_played - ( $self->$team_points_won + $self->$opposition_points_won ) );
+              
               $original_doubles_pair->points_won( $original_doubles_pair->points_won - $self->$team_points_won );
+              $original_player1->doubles_points_won( $original_player1->doubles_points_won - $self->$team_points_won );
+              $original_player2->doubles_points_won( $original_player2->doubles_points_won - $self->$team_points_won );
+              
               $original_doubles_pair->points_lost( $original_doubles_pair->points_lost - $self->$opposition_points_won );
-            
+              $original_player1->doubles_points_lost( $original_player1->doubles_points_lost - $self->$opposition_points_won );
+              $original_player2->doubles_points_lost( $original_player2->doubles_points_lost - $self->$opposition_points_won );
+              
+              # Work out the averages again
+              $original_doubles_pair->games_played      ? $original_doubles_pair->average_game_wins( ( $original_doubles_pair->games_won / $original_doubles_pair->games_played ) * 100 )                 : $original_doubles_pair->average_game_wins( 0 );
+              $original_player1->doubles_games_played   ? $original_player1->doubles_average_game_wins( ( $original_player1->doubles_games_won / $original_player1->doubles_games_played ) * 100 )        : $original_player1->doubles_average_game_wins( 0 );
+              $original_player2->doubles_games_played   ? $original_player2->doubles_average_game_wins( ( $original_player2->doubles_games_won / $original_player2->doubles_games_played ) * 100 )        : $original_player2->doubles_average_game_wins( 0 );
+              
+              $original_doubles_pair->legs_played       ? $original_doubles_pair->average_leg_wins( ( $original_doubles_pair->legs_won / $original_doubles_pair->legs_played ) * 100 )                    : $original_doubles_pair->average_leg_wins( 0 );
+              $original_player1->doubles_legs_played    ? $original_player1->doubles_average_leg_wins( ( $original_player1->doubles_legs_won / $original_player1->doubles_legs_played ) * 100 )           : $original_player1->doubles_average_leg_wins( 0 );
+              $original_player2->doubles_legs_played    ? $original_player2->doubles_average_leg_wins( ( $original_player2->doubles_legs_won / $original_player2->doubles_legs_played ) * 100 )           : $original_player2->doubles_average_leg_wins( 0 );
+              
+              $original_doubles_pair->points_played     ? $original_doubles_pair->average_point_wins( ( $original_doubles_pair->points_won / $original_doubles_pair->points_played ) * 100 )              : $original_doubles_pair->average_point_wins( 0 );
+              $original_player1->doubles_points_played  ? $original_player1->doubles_average_point_wins( ( $original_player1->doubles_points_won / $original_player1->doubles_points_played ) * 100 )     : $original_player1->doubles_average_point_wins( 0 );
+              $original_player2->doubles_points_played  ? $original_player2->doubles_average_point_wins( ( $original_player2->doubles_points_won / $original_player2->doubles_points_played ) * 100 )     : $original_player2->doubles_average_point_wins( 0 );
+              
               # Do the actual update after everything's been calculated
               $original_doubles_pair->update;
+              $original_player1->update;
+              $original_player2->update;
             }
+            
+            my $player1_season = $doubles_pair->person1->find_related("person_seasons", {season => $season->id, team => $team->id});
+            my $player2_season = $doubles_pair->person2->find_related("person_seasons", {season => $season->id, team => $team->id});
             
             # Now add those values on to the current doubles pair
             # Add one to the games played
-            $doubles_pair->games_played( $doubles_pair->games_played + 1 ) if $self->complete;
+            if ( $self->complete ) {
+              $doubles_pair->games_played( $doubles_pair->games_played + 1 );
+              $player1_season->doubles_games_played( $player1_season->doubles_games_played + 1 );
+              $player2_season->doubles_games_played( $player2_season->doubles_games_played + 1 );
+            }
             
             # Work out whether we need to take a game won, lost or drawn off
             if ( $self->complete and defined( $self->winner ) and $self->winner->id == $match->$location_team->id ) {
               # Game won
               $doubles_pair->games_won( $original_doubles_pair->games_won + 1 );
+              $player1_season->doubles_games_won( $player1_season->doubles_games_won + 1 );
+              $player2_season->doubles_games_won( $player2_season->doubles_games_won + 1 );
               
               # Change the winner
               $self->winner( $match->$location_team->id );
             } elsif ( $self->complete and defined( $self->winner ) and $self->winner->id != $match->$location_team->id ) {
               # Game lost
               $doubles_pair->games_lost( $original_doubles_pair->games_lost + 1 );
+              $player1_season->doubles_games_lost( $player1_season->doubles_games_lost + 1 );
+              $player2_season->doubles_games_lost( $player2_season->doubles_games_lost + 1 );
             } elsif ( $self->complete and !defined( $self->winner ) ) {
               # Game complete but no winner: draw (only relevant for games with a static number of legs)
               $doubles_pair->games_drawn( $original_doubles_pair->games_drawn + 1 );
+              $player1_season->doubles_games_drawn( $player1_season->doubles_games_drawn + 1 );
+              $player2_season->doubles_games_drawn( $player2_season->doubles_games_drawn + 1 );
             }
             
             # Take away the legs that have been played, won and lost in this game from the original pair
             # In each game, we don't have a specific legs_played field, so we have to add the legs won for this team to the legs won for the opposition team,
             # then subtract that figure from the original legs_played value in the doubles pair, which will be the combination of all the legs they've played
             $doubles_pair->legs_played( $doubles_pair->legs_played + ( $self->$team_legs_won + $self->$opposition_legs_won ) );
+            $player1_season->doubles_legs_played( $player1_season->doubles_legs_played + ( $self->$team_legs_won + $self->$opposition_legs_won ) );
+            $player2_season->doubles_legs_played( $player2_season->doubles_legs_played + ( $self->$team_legs_won + $self->$opposition_legs_won ) );
+              
             $doubles_pair->legs_won( $doubles_pair->legs_won + $self->$team_legs_won );
+            $player1_season->doubles_legs_won( $player1_season->doubles_legs_won + $self->$team_legs_won );
+            $player2_season->doubles_legs_won( $player2_season->doubles_legs_won + $self->$team_legs_won );
+            
             $doubles_pair->legs_lost( $doubles_pair->legs_lost + $self->$opposition_legs_won );
+            $player1_season->doubles_legs_lost( $player1_season->doubles_legs_lost + $self->$opposition_legs_won );
+            $player2_season->doubles_legs_lost( $player2_season->doubles_legs_lost + $self->$opposition_legs_won );
             
             # Take away the points that have been played, won and lost in this game from the original pair
             # In each game, we don't have a specific legs_played field, so we have to add the legs won for this team to the legs won for the opposition team,
             # then subtract that figure from the original legs_played value in the doubles pair, which will be the combination of all the legs they've played
             $doubles_pair->points_played( $doubles_pair->points_played + ( $self->$team_points_won + $self->$opposition_points_won ) );
+            $player1_season->doubles_points_played( $player1_season->doubles_points_played + ( $self->$team_points_won + $self->$opposition_points_won ) );
+            $player2_season->doubles_points_played( $player2_season->doubles_points_played + ( $self->$team_points_won + $self->$opposition_points_won ) );
+            
             $doubles_pair->points_won( $doubles_pair->points_won + $self->$team_points_won );
+            $player1_season->doubles_points_won( $player1_season->doubles_points_won + $self->$team_points_won );
+            $player2_season->doubles_points_won( $player2_season->doubles_points_won + $self->$team_points_won );
+            
             $doubles_pair->points_lost( $doubles_pair->points_lost + $self->$opposition_points_won );
+            $player1_season->doubles_points_lost( $player1_season->doubles_points_lost + $self->$opposition_points_won );
+            $player2_season->doubles_points_lost( $player2_season->doubles_points_lost + $self->$opposition_points_won );
+            
+            # Work out the averages again
+            $doubles_pair->games_played             ? $doubles_pair->average_game_wins( ( $doubles_pair->games_won / $doubles_pair->games_played ) * 100 )                                  : $doubles_pair->average_game_wins( 0 );
+            $player1_season->doubles_games_played   ? $player1_season->doubles_average_game_wins( ( $player1_season->doubles_games_won / $player1_season->doubles_games_played ) * 100 )    : $player1_season->doubles_average_game_wins( 0 );
+            $player2_season->doubles_games_played   ? $player2_season->doubles_average_game_wins( ( $player2_season->doubles_games_won / $player2_season->doubles_games_played ) * 100 )    : $player2_season->doubles_average_game_wins( 0 );
+            
+            $doubles_pair->legs_played              ? $doubles_pair->average_leg_wins( ( $doubles_pair->legs_won / $doubles_pair->legs_played ) * 100 )                                     : $doubles_pair->average_leg_wins( 0 );
+            $player1_season->doubles_legs_played    ? $player1_season->doubles_average_leg_wins( ( $player1_season->doubles_legs_won / $player1_season->doubles_legs_played ) * 100 )       : $player1_season->doubles_average_leg_wins( 0 );
+            $player2_season->doubles_legs_played    ? $player2_season->doubles_average_leg_wins( ( $player2_season->doubles_legs_won / $player2_season->doubles_legs_played ) * 100 )       : $player2_season->doubles_average_leg_wins( 0 );
+            
+            $doubles_pair->points_played            ? $doubles_pair->average_point_wins( ( $doubles_pair->points_won / $doubles_pair->points_played ) * 100 )                               : $doubles_pair->average_point_wins( 0 );
+            $player1_season->doubles_points_played  ? $player1_season->doubles_average_point_wins( ( $player1_season->doubles_points_won / $player1_season->doubles_points_played ) * 100 ) : $player1_season->doubles_average_point_wins( 0 );
+            $player2_season->doubles_points_played  ? $player2_season->doubles_average_point_wins( ( $player2_season->doubles_points_won / $player2_season->doubles_points_played ) * 100 ) : $player2_season->doubles_average_point_wins( 0 );
             
             # Do the actual update after everything's been calculated
             $doubles_pair->update;
+            $player1_season->update;
+            $player2_season->update;
           }
           
           # Update our column if needed - we've already 'changed' the value, but not committed it
