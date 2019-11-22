@@ -81,7 +81,12 @@ sub base_list :Chained("/") :PathPart("league-tables") :CaptureArgs(0) {
   my ( $self, $c ) = @_;
   my $site_name = $c->stash->{encoded_site_name};
   
-  $c->stash({page_description => $c->maketext("description.league-tables.list-divisions", $site_name)});
+  $c->stash({
+    page_description  => $c->maketext("description.league-tables.list-divisions", $site_name),
+    external_scripts  => [
+      $c->uri_for("/static/script/standard/option-list.js"),
+    ],
+  });
   
   # Load the messages
   $c->load_status_msgs;
@@ -260,7 +265,7 @@ sub view_specific_season :Chained("view") :PathPart("seasons") :Args(1) {
 
 =head2 view_finalise
 
-A private function that retrieves the averages we need for display for the given season, division and averages type.
+A private function that retrieves the tables we need for display for the given season and division.
 
 =cut
 
@@ -285,6 +290,19 @@ sub view_finalise :Private {
     view_online_link    => 1,
     tables              => [ $c->model("DB::TeamSeason")->get_teams_in_division_in_league_table_order( $season, $division ) ],
     canonical_uri       => $canonical_uri,
+    external_scripts    => [
+      $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
+      $c->uri_for("/static/script/league-tables/view.js"),
+    ],
+    external_styles     => [
+      $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/fixedColumns.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
+    ],
   });
 }
 
@@ -304,6 +322,9 @@ sub view_seasons :Chained("view") :PathPart("seasons") :CaptureArgs(0) {
   $c->stash({
     template          => "html/clubs/list-seasons.ttkt",
     page_description  => $c->maketext("description.league-tables.list-seasons", $division_name, $site_name),
+    external_scripts  => [
+      $c->uri_for("/static/script/standard/option-list.js"),
+    ],
   });
   
   # Push the current URI on to the breadcrumbs

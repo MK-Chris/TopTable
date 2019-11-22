@@ -7,7 +7,7 @@
 [%
 IF online_users.size;
 %]
-<table class="responsive">
+<table id="datatable" class="stripe hover order-column row-border">
   <thead>
     <tr>
       <th>[% c.maketext("user.field.username") %]</th>
@@ -25,6 +25,7 @@ IF online_users.size;
   END;
 %]
       <th>[% c.maketext("user.field.location") %]</th>
+      <th>[% c.maketext("user.field.location-last-updated") %]</th>
       <th>[% c.maketext("user.field.location-last-updated") %]</th>
     </tr>
   </thead>
@@ -73,6 +74,7 @@ IF online_users.size;
     END;
 -%]
       <td data-label="Last update">[% online_user.last_active.dmy('/') _ " " _ online_user.last_active.hms(':') %]</td>
+      <td data-label="Last update">[% online_user.last_active.ymd _ online_user.last_active.hms %]</td>
     </tr>
 [%
   END;

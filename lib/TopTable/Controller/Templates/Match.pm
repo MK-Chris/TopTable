@@ -54,6 +54,9 @@ sub index :Path :Args(0) {
     template            => "html/templates/match/options.ttkt",
     view_online_display => "Viewing match templates",
     view_online_link    => 0,
+    external_scripts    => [
+      $c->uri_for("/static/script/standard/option-list.js"),
+    ],
   });
 }
 

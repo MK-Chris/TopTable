@@ -8,16 +8,16 @@ surname_html = FILTER html_entity; surname; END;
 address1 = c.flash.address1 OR person.address1;
 address1_html = FILTER html_entity; address1; END;
 
-address2 = c.flash.address2 OR person.address1;
+address2 = c.flash.address2 OR person.address2;
 address2_html = FILTER html_entity; address2; END;
 
-address3 = c.flash.address3 OR person.address1;
+address3 = c.flash.address3 OR person.address3;
 address3_html = FILTER html_entity; address3; END;
 
-address4 = c.flash.address4 OR person.address1;
+address4 = c.flash.address4 OR person.address4;
 address4_html = FILTER html_entity; address4; END;
 
-address5 = c.flash.address5 OR person.address1;
+address5 = c.flash.address5 OR person.address5;
 address5_html = FILTER html_entity; address5; END;
 
 postcode = c.flash.postcode OR person.postcode;
@@ -137,12 +137,13 @@ registration_date_html = FILTER html_entity; registration_date; END;
 
 [%
 IF c.flash.gender == '';
-  SET GENDER_CHECK = person.gender.gender;
+  SET GENDER_CHECK = person.gender.id;
 ELSE;
   SET GENDER_CHECK = c.flash.gender;
 END;
+
 FOREACH gender IN genders;
-  IF gender.gender == GENDER_CHECK;
+  IF gender.id == GENDER_CHECK;
     CHECKED = ' checked="checked"';
   ELSE;
     CHECKED = '';

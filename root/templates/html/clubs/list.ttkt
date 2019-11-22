@@ -8,39 +8,45 @@ IF clubs.count;
   # Use PROCESS instead of INCLUDE so that the page_links_text is defined in the current template thereafter
   PROCESS "html/generic/pagination.ttkt" OBJECT_PLURAL = c.maketext("object.plural.clubs");
   page_links_text;
-  
+-%]
+<ul class="option-list">
+[%
   WHILE (club = clubs.next);
     club_name_html = FILTER html_entity; club.full_name; END;
 -%]
-
-<div class="list-item">
-  <a href="[% c.uri_for_action("/clubs/view_current_season", [club.url_key]) %]">[% club_name_html %]</a>
+  <li>
+    <a href="[% c.uri_for_action("/clubs/view_current_season", [club.url_key]) %]">[% club_name_html %]</a>
 [%
     IF authorisation.club_edit;
 -%]
-  <a href="[% c.uri_for_action("/clubs/edit", [club.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", club_name_html) %]" title="[% c.maketext("admin.edit-object", club_name_html) %]" /></a>
+    <a href="[% c.uri_for_action("/clubs/edit", [club.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", club_name_html) %]" title="[% c.maketext("admin.edit-object", club_name_html) %]" /></a>
 [%
     END;
     IF authorisation.club_delete AND club.can_delete;
 -%]
-  <a href="[% c.uri_for_action("/clubs/delete", [club.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", club_name_html) %]" title="[% c.maketext("admin.delete-object", club_name_html) %]" /></a>
+    <a href="[% c.uri_for_action("/clubs/delete", [club.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", club_name_html) %]" title="[% c.maketext("admin.delete-object", club_name_html) %]" /></a>
 [%
     END;
     IF authorisation.team_create;
 -%]
-  <a href="[% c.uri_for_action("/teams/create_with_club", [club.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0009-Add-icon-16.png") %]" alt="[% c.maketext("teams.create-for", club_name_html) %]" title="[% c.maketext("teams.create-for", club_name_html) %]" /></a>
+<a href="[% c.uri_for_action("/teams/create_with_club", [club.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0009-Add-icon-16.png") %]" alt="[% c.maketext("teams.create-for", club_name_html) %]" title="[% c.maketext("teams.create-for", club_name_html) %]" /></a>
 [%
     END;
 -%]
-</div>
+  </li>
 [%
   END;
+-%]
+</ul>
+[%
   page_links_text;
 ELSE;
 -%]
-<div class="list-item">
-  [% c.maketext("clubs.none") %]
-</div>
+<ul class="option-list">
+  <li>
+    [% c.maketext("clubs.none") %]
+  </li>
+</ul>
 [%
 END;
 IF authorisation.club_create;

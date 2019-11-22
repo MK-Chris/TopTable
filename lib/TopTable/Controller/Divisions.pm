@@ -2,6 +2,7 @@ package TopTable::Controller::Divisions;
 use Moose;
 use namespace::autoclean;
 use HTML::Entities;
+use Data::Dumper;
 
 BEGIN { extends 'Catalyst::Controller'; }
 
@@ -81,7 +82,12 @@ sub base_list :Chained("/") PathPart("divisions") CaptureArgs(0) {
   my $site_name = $c->stash->{encoded_site_name};
   
   # Page description
-  $c->stash({page_description => $c->maketext("description.divisions.list", $site_name)});
+  $c->stash({
+    page_description  => $c->maketext("description.divisions.list", $site_name),
+    external_scripts  => [
+      $c->uri_for("/static/script/standard/option-list.js"),
+    ],
+  });
   
   # Load the messages
   $c->load_status_msgs;
@@ -316,7 +322,12 @@ sub view_seasons :Chained("view") :PathPart("seasons") :CaptureArgs(0) {
   my $division_name = $c->stash->{encoded_name};
   
   # Stash the template; the data will be retrieved when we know what page we're on
-  $c->stash({template  => "html/divisions/list-seasons.ttkt"});
+  $c->stash({
+      template  => "html/divisions/list-seasons.ttkt",
+      external_scripts      => [
+        $c->uri_for("/static/script/standard/option-list.js"),
+      ],
+    });
   
   # Push the current URI on to the breadcrumbs
   push( @{ $c->stash->{breadcrumbs} }, {

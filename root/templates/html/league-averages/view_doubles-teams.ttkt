@@ -5,7 +5,7 @@
 [%
 IF doubles_team_averages.size;
 -%]
-<table class="responsive">
+<table id="averages-doubles-teams" class="stripe hover row-border" width="100%;">
   <thead>
     <tr>
       <th class="numeric">[% c.maketext("stats.table-heading.position") %]</th>
@@ -29,12 +29,12 @@ IF doubles_team_averages.size;
     END;
 -%]
     <tr>
-      <td class="numeric" data-label="[% c.maketext("stats.table-heading.position") %]">[% i %]</td>
-      <td data-label="[% c.maketext("stats.table-heading.team") %]"><a href="[% team_uri %]">[% table_team.club.short_name | html_entity %] [% table_team.name | html_entity %]</a></td>
-      <td class="numeric" data-label="[% c.maketext("stats.table-heading.games-played") %]">[% table_team.doubles_games_played %]</td>
-      <td class="numeric" data-label="[% c.maketext("stats.table-heading.games-won") %]">[% table_team.doubles_games_won %]</td>
-      <td class="numeric" data-label="[% c.maketext("stats.table-heading.games-lost") %]">[% table_team.doubles_games_lost %]</td>
-      <td class="numeric" data-label="[% c.maketext("stats.table-heading.average") %]">[% table_team.doubles_average_game_wins | format("%.2f") %]</td>
+      <td class="numeric">[% i %]</td>
+      <td><a href="[% team_uri %]">[% table_team.club.short_name | html_entity %] [% table_team.name | html_entity %]</a></td>
+      <td class="numeric">[% table_team.doubles_games_played %]</td>
+      <td class="numeric">[% table_team.doubles_games_won %]</td>
+      <td class="numeric">[% table_team.doubles_games_lost %]</td>
+      <td class="numeric">[% table_team.doubles_average_game_wins | format("%.2f") %]</td>
     </tr>
 [%
   END;

@@ -10,9 +10,11 @@ IF meetings.count;
   END;
 ELSE;
 -%]
-<div class="list-item">
-  [% c.maketext("meetings.none") %]
-</div>
+<ul class="option-list">
+  <li>
+    [% c.maketext("meetings.none") %]
+  </li>
+</ul>
 [%
 END;
 -%]

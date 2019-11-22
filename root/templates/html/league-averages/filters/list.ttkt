@@ -10,33 +10,40 @@ IF reasons.count;
   # Use PROCESS instead of INCLUDE so that the page_links_text is defined in the current template thereafter
   PROCESS "html/generic/pagination.ttkt" OBJECT_PLURAL = c.maketext("object.plural.average-filters");
   page_links_text;
-  
+-%]
+<ul class="option-list">
+[%
   WHILE (filter = filters.next);
     name_html = FILTER html_entity; filter.name; END;
 -%]
-<div class="list-item">
-  <a href="[% c.uri_for_action("/league-averages/filters/view", [filter.url_key]) %]">[% name_html | html_entity %]</a>
+  <li>
+    <a href="[% c.uri_for_action("/league-averages/filters/view", [filter.url_key]) %]">[% name_html | html_entity %]</a>
 [%
     IF authorisation.contact_reason_edit;
 -%]
-  <a href="[% c.uri_for_action("/league-averages/filters/edit", [filter.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", name_html) %]" title="[% c.maketext("admin.edit-object", name_html) %]" /></a>
+    <a href="[% c.uri_for_action("/league-averages/filters/edit", [filter.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", name_html) %]" title="[% c.maketext("admin.edit-object", name_html) %]" /></a>
 [%
     END;
     IF authorisation.contact_reason_delete;
 -%]
-  <a href="[% c.uri_for_action("/league-averages/filters/delete", [filter.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", name_html) %]" title="[% c.maketext("admin.delete-object", name_html) %]" /></a>
+    <a href="[% c.uri_for_action("/league-averages/filters/delete", [filter.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", name_html) %]" title="[% c.maketext("admin.delete-object", name_html) %]" /></a>
 [%
     END;
 -%]
-</div>
+  </li>
 [%
   END;
+-%]
+</ul>
+[%
   page_links_text;
 ELSE;
 -%]
-<div class="list-item">
-  [% c.maketext("average-filters.none") %]
-</div>
+<ul class="option-list">
+  <li>
+    [% c.maketext("average-filters.none") %]
+  </li>
+</ul>
 [%
 END;
 -%]

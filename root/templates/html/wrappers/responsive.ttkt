@@ -71,7 +71,7 @@ END;
 
 <title>[% page_title %]</title>
 
-<link rel="stylesheet" href="[% c.uri_for('/static/css/main.css') %]" type="text/css" media="screen" />
+<link rel="stylesheet" href="[% c.uri_for('/static/css/main.css') %]?v1.2" type="text/css" media="screen" />
 <link rel="stylesheet" href="[% c.uri_for('/static/css/jqueryui/jquery-ui.structure.min.css') %]" type="text/css" media="screen" />
 <link rel="stylesheet" href="[% c.uri_for('/static/css/jqueryui/jquery-ui.theme.min.css') %]" type="text/css" media="screen" />
 <link rel="stylesheet" href="[% c.uri_for('/static/css/smartmenus/sm-core-css.css') %]" type="text/css" media="screen" />
@@ -93,22 +93,13 @@ IF external_styles;
 END;
 -%]
 
-<script type="text/javascript" src="[% c.uri_for("/static/script/jquery-1.11.3.js") %]"></script>
+<script type="text/javascript" src="[% c.uri_for("/static/script/jquery-1.12.4.min.js") %]"></script>
+<!--<script type="text/javascript" src="[% c.uri_for("/static/script/jquery-3.4.1.min.js") %]"></script>-->
 <script type="text/javascript" src="[% c.uri_for("/static/script/plugins/jquery-ui/jquery-ui-1-11-4.min.js") %]"></script>
 <script type="text/javascript" src="[% c.uri_for('/static/script/plugins/smartmenus/jquery.smartmenus.min.js') %]"></script>
 <script type="text/javascript" src="[% c.uri_for('/static/script/plugins/cookie/jquery.cookie.js') %]"></script>
 <script type="text/javascript" src="[% c.uri_for('/static/script/plugins/touch-punch/jquery.ui.touch-punch.min.js') %]"></script>
 <script type="text/javascript" src="[% c.uri_for('/static/plugins/jquery-scrollto/jquery-scrollto.js') %]"></script>
-<!--<script type="text/javascript" src="[% c.uri_for('/static/plugins/history.js/bundled/html4+html5/jquery.history.js') %]"></script>
-<script type="text/javascript" src="[% c.uri_for('/static/plugins/ajaxify/ajaxify-html5.js') %]"></script>-->
-[%
-# Cookie notice only if it's not a bot
-UNLESS c.request.browser_detect.robot;
--%]
-<script type="text/javascript" src="[% c.uri_for('/static/script/plugins/cookiecuttr/jquery.cookiecuttr.js') %]"></script>
-[%
-END;
--%]
 
 <script type="text/javascript" src="[% c.uri_for("/static/script/standard/main.js") %]"></script>
 [%
@@ -130,23 +121,6 @@ IF c.config.Google.Analytics.tracking_id;
 
   ga('create', '[% c.config.Google.Analytics.tracking_id %]', 'auto');
   ga('send', 'pageview');
-
-[%
-UNLESS c.request.browser_detect.robot;
--%]
-  /*
-    Cookie notice
-  */
-  $.cookieCuttr({
-    cookieAnalytics: false,
-    cookiePolicyLink: "[% c.uri_for("/static/privacy") %]",
-    cookieMessage: "[% c.maketext("msg.cookie-notice") %]",
-    cookieCutter: true,
-    cookieDisable: ".no-cookies"
-  });
-[%
-END;
--%]
 </script>
 [%
 END;
@@ -378,7 +352,7 @@ END;
     </ul>
   </li>
   <li class="venues">
-    <a href="javascript:void(0)" title="[% c.maketext("menu.title.venues-where-to-play") %]">[% c.maketext("menu.text.venues-where-to-play") %]</a>
+    <a href="[% c.uri_for_action("/venues/list_first_page") %]" title="[% c.maketext("menu.title.venues-list") %]">[% c.maketext("menu.text.venues-list") %]</a>
     <ul>
 [%
     FOREACH venue IN nav_venues;

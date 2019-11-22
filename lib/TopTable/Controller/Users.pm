@@ -98,7 +98,12 @@ sub base_list :Chained("/") :PathPart("users") :CaptureArgs(0) {
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["user_delete_own", "", 0] ) if $c->user_exists and !$c->stash->{authorisation}{news_article_delete_all}; # Only do this if the user is logged in and we can't delete all articles
   
   # Page description
-  $c->stash({page_description => $c->maketext("description.users.list", $site_name)});
+  $c->stash({
+    page_description  => $c->maketext("description.users.list", $site_name),
+    external_scripts  => [
+      $c->uri_for("/static/script/standard/option-list.js"),
+    ],
+  });
   
   # Load the messages
   $c->load_status_msgs;
@@ -1433,6 +1438,19 @@ sub current_activity :Path("/users-online") {
     subtitle1           => $c->maketext("users.online-view-heading"),
     online_users        => $online_users,
     view_online_display => "Viewing online users",
+    external_scripts    => [
+      $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
+      $c->uri_for("/static/script/users/online.js"),
+    ],
+    external_styles     => [
+      $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/fixedColumns.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
+    ],
   });
   
   # Breadcrumbs

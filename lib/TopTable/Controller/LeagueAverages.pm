@@ -91,6 +91,9 @@ sub base_options :Chained("/") :PathPart("league-averages") :Args(0) {
     view_online_display => "Viewing league averages",
     view_online_link    => 1,
     page_description    => $c->maketext("description.league-averages.options", $site_name),
+    external_scripts      => [
+      $c->uri_for("/static/script/standard/option-list.js"),
+    ],
   });
 }
 
@@ -104,7 +107,12 @@ sub list_divisions :Chained("base") :PathPart("") :CaptureArgs(0) {
   my ( $self, $c ) = @_;
   my $site_name = $c->stash->{encoded_site_name};
   
-  $c->stash({page_description => $c->maketext("description.league-averages.list-divisions", $site_name)});
+  $c->stash({
+    page_description  => $c->maketext("description.league-averages.list-divisions", $site_name),
+    external_scripts  => [
+      $c->uri_for("/static/script/standard/option-list.js"),
+    ],
+  });
 }
 
 =head2 list_first_page
@@ -387,10 +395,19 @@ sub view_finalise :Private {
       $c->uri_for("/static/script/standard/chosen.js"),
       $c->uri_for("/static/script/standard/prettycheckable.js"),
       $c->uri_for("/static/script/league-averages/filter.js"),
+      $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
+      sprintf( $c->uri_for("/static/script/league-averages/view-%s.js"), $averages_type ),
     ],
     external_styles     => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
       $c->uri_for("/static/css/prettycheckable/prettyCheckable.css"),
+      $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/fixedColumns.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
     ],
     view_online_display => sprintf( "Viewing %s %s for %s", $division->name, $c->stash->{average_types}{ $averages_type }, $season->name ),
     view_online_link    => 1,
@@ -432,6 +449,9 @@ sub view_seasons :Chained("view") :PathPart("seasons") :CaptureArgs(0) {
   push( @{ $c->stash->{breadcrumbs} }, {
     path  => $c->uri_for_action("/league-averages/view_seasons_first_page", [$division->url_key, $averages_type]),
     label => $c->maketext("menu.text.seasons"),
+    external_scripts      => [
+      $c->uri_for("/static/script/standard/option-list.js"),
+    ],
   });
 }
 

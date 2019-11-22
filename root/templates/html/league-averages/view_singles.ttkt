@@ -11,7 +11,7 @@ IF singles_averages.size;
     PROCESS "html/league-averages/filter-view-form.ttkt" COMPETITORS = c.maketext("averages.competitor-type.players");
   END;
 -%]
-<table class="responsive">
+<table id="averages-singles" class="stripe hover row-border" style="width: 100%;">
   <thead>
     <tr>
       <th class="numeric">[% c.maketext("stats.table-heading.position") %]</th>
@@ -58,8 +58,8 @@ IF singles_averages.size;
     END;
 -%]
     <tr>
-      <td class="numeric[% add_player_class %]" data-label="[% c.maketext("stats.table-heading.position") %]">[% i %]</td>
-      <td data-label="[% c.maketext("stats.table-heading.player") %]"[% player_class %]><a href="[% person_uri %]"[% player_class %]>[% average.display_name | html_entity %]</a></td>
+      <td class="numeric[% add_player_class %]">[% i %]</td>
+      <td[% player_class %]><a href="[% person_uri %]"[% player_class %]>[% average.display_name | html_entity %]</a></td>
 [%
     UNLESS averages_team_page;
       IF specific_season;
@@ -68,15 +68,15 @@ IF singles_averages.size;
         team_name = FILTER html_entity; average.team.club.short_name _ " " _ average.team.name; END;
       END;
 -%]
-      <td data-label="[% c.maketext("stats.table-heading.team") %]"[% player_class %]><a href="[% team_uri %]"[% player_class %]>[% team_name %]</a></td>
+      <td[% player_class %]><a href="[% team_uri %]"[% player_class %]>[% team_name %]</a></td>
 [%
     END;
 -%]
-      <td class="numeric[% add_player_class %]" data-label="[% c.maketext("stats.table-heading.matches-played") %]">[% average.matches_played %]</td>
-      <td class="numeric[% add_player_class %]" data-label="[% c.maketext("stats.table-heading.games-played") %]">[% average.games_played %]</td>
-      <td class="numeric[% add_player_class %]" data-label="[% c.maketext("stats.table-heading.games-won") %]">[% average.games_won %]</td>
-      <td class="numeric[% add_player_class %]" data-label="[% c.maketext("stats.table-heading.games-lost") %]">[% average.games_lost %]</td>
-      <td class="numeric[% add_player_class %]" data-label="[% c.maketext("stats.table-heading.average") %]">[% average.average_game_wins | format('%.2f') %]</td>
+      <td class="numeric[% add_player_class %]"><span[% player_class %]>[% average.matches_played %]</span></td>
+      <td class="numeric[% add_player_class %]"><span[% player_class %]>[% average.games_played %]</span></td>
+      <td class="numeric[% add_player_class %]"><span[% player_class %]>[% average.games_won %]</span></td>
+      <td class="numeric[% add_player_class %]"><span[% player_class %]>[% average.games_lost %]</span></td>
+      <td class="numeric[% add_player_class %]"><span[% player_class %]>[% average.average_game_wins | format('%.2f') %]</span></td>
     </tr>
 [%
   END;

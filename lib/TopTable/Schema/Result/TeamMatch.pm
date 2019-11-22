@@ -1148,21 +1148,7 @@ sub calculate_match_score {
   foreach my $game ( @games ) {
     if ( $winner_type eq "games" ) {
       # Match scores are determined by the number of games won
-      if ( $game->started and $game->complete ) {
-        if ( $game->home_team_legs_won > $game->away_team_legs_won ) {
-          # Home team win; increment $_home_won by 1, then assign the values to be set to the hash ($home_won and $away_won)
-          $_home_won++;
-          ( $home_won, $away_won ) = ( $_home_won, $_away_won );
-        } elsif ( $game->away_team_legs_won > $game->home_team_legs_won ) {
-          # Away team win
-          $_away_won++;
-          ( $home_won, $away_won ) = ( $_home_won, $_away_won );
-        } elsif ( $game->home_team_legs_won == $game->away_team_legs_won ) {
-          # Game drawn
-          $_drawn++;
-          $drawn = $_drawn;
-        }
-      } elsif ( $game->complete ) {
+      if ( $game->complete ) {
         # If the game is complete, but wasn't started, it must be a walkover - check the winner field.
         if ( defined( $game->winner ) ) {
           if ( $game->winner->id == $home_team->id ) {
@@ -1172,16 +1158,14 @@ sub calculate_match_score {
             # Awarded to the away team
             $_away_won++;
           }
-          
-          ( $home_won, $away_won ) = ( $_home_won, $_away_won );
         } else {
-          # Winner not specified, game is void, no scores are incremented
-          ( $home_won, $away_won ) = qw( 0 0 );
+          # Winner not specified, game is void, no scores are incremented.  Do nothing here
         }
       } else {
-        # Game not played or in progress
-        ( $home_won, $away_won ) = qw( 0 0 );
+        # Game not played or in progress, don't increment anything
       }
+        
+      ( $home_won, $away_won ) = ( $_home_won, $_away_won );
     } elsif ( $winner_type eq "points" ) {
       # Match scores are determined by the number of points won
       if ( $game->started and $game->complete ) {
@@ -1860,7 +1844,7 @@ sub can_report {
   my $season = $self->season;
   
   # Just return false if the season is complete - no one can submit or edit a report in a completed season.
-  return 0 if $season->complete or !defined( $user );
+  return 0 if $season->complete or !defined( $user ) or ref( $user ) ne "Catalyst::Authentication::Store::DBIx::Class::User";
   
   # Check the user is authorised to do this - first of all we check if there are any reports already
   my $original_report = $self->get_original_report;

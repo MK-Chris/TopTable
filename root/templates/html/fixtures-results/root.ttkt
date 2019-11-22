@@ -5,7 +5,8 @@
 [% # output (use View Source in browser to see the effect) -%]
 
 [% # Some basic HTML with a loop to display clubs -%]
-<div class="list-item">
+<ul class="option-list">
+  <li>
 [%
 IF specific_season;
   SET uri = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "teams"]);
@@ -13,9 +14,9 @@ ELSE;
   SET uri = c.uri_for_action("/fixtures-results/filter_view_current_season", ["teams"]);
 END;
 -%]
-  <a href="[% uri %]">[% c.maketext("menu.text.fixtures-results-by-team") %]</a>
-</div>
-<div class="list-item">
+    <a href="[% uri %]">[% c.maketext("menu.text.fixtures-results-by-team") %]</a>
+  </li>
+  <li>
 [%
 IF specific_season;
   SET uri = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "divisions"]);
@@ -23,9 +24,9 @@ ELSE;
   SET uri = c.uri_for_action("/fixtures-results/filter_view_current_season", ["divisions"]);
 END;
 -%]
-  <a href="[% uri %]">[% c.maketext("menu.text.fixtures-results-by-division") %]</a>
-</div>
-<div class="list-item">
+    <a href="[% uri %]">[% c.maketext("menu.text.fixtures-results-by-division") %]</a>
+  </li>
+  <li>
 [%
 IF specific_season;
   SET uri = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "days"]);
@@ -33,9 +34,9 @@ ELSE;
   SET uri = c.uri_for_action("/fixtures-results/filter_view_current_season", ["days"]);
 END;
 -%]
-  <a href="[% uri %]">[% c.maketext("menu.text.fixtures-results-by-day") %]</a>
-</div>
-<div class="list-item">
+    <a href="[% uri %]">[% c.maketext("menu.text.fixtures-results-by-day") %]</a>
+  </li>
+  <li>
 [%
 IF specific_season;
   SET uri = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "weeks"]);
@@ -43,9 +44,9 @@ ELSE;
   SET uri = c.uri_for_action("/fixtures-results/filter_view_current_season", ["weeks"]);
 END;
 -%]
-  <a href="[% uri %]">[% c.maketext("menu.text.fixtures-results-by-week") %]</a>
-</div>
-<div class="list-item">
+    <a href="[% uri %]">[% c.maketext("menu.text.fixtures-results-by-week") %]</a>
+  </li>
+  <li>
 [%
 IF specific_season;
   SET uri = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "months"]);
@@ -53,9 +54,9 @@ ELSE;
   SET uri = c.uri_for_action("/fixtures-results/filter_view_current_season", ["months"]);
 END;
 -%]
-  <a href="[% uri %]">[% c.maketext("menu.text.fixtures-results-by-month") %]</a>
-</div>
-<div class="list-item">
+    <a href="[% uri %]">[% c.maketext("menu.text.fixtures-results-by-month") %]</a>
+  </li>
+  <li>
 [%
 IF specific_season;
   SET uri = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "venues"]);
@@ -63,5 +64,6 @@ ELSE;
   SET uri = c.uri_for_action("/fixtures-results/filter_view_current_season", ["venues"]);
 END;
 -%]
-  <a href="[% uri %]">[% c.maketext("menu.text.fixtures-results-by-venue") %]</a>
-</div>
+    <a href="[% uri %]">[% c.maketext("menu.text.fixtures-results-by-venue") %]</a>
+  </li>
+</ul>

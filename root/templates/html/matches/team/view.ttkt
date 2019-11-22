@@ -50,7 +50,7 @@ IF match.cancelled;
 [%
 ELSE;
 -%]
-    <table class="responsive">
+    <table id="games-table" class="stripe hover order-column row-border" style="width: 100%;">
       <thead>
         <tr>
           <th class="game-number">[% c.maketext("matches.game.field.game-number") %]</th>
@@ -66,7 +66,7 @@ ELSE;
     SET summary_score = game.summary_score;
 -%]
         <tr>
-          <td class="game-number" data-label="[% c.maketext("matches.game.field.game-number") %]">[% game.actual_game_number %]</td>
+          <td class="game-number">[% game.actual_game_number %]</td>
 [%
     IF game.complete;
       IF game.doubles_game;
@@ -93,7 +93,7 @@ ELSE;
         away2_html = FILTER html_entity; game.away_doubles_pair.person2.display_name; END;
         SET result = c.maketext(result.message.id, home1_html, home2_html, away1_html, away2_html, home1_uri, home2_uri, away1_uri, away2_uri);
 -%]
-          <td data-label="[% c.maketext("matches.game.field.result") %]">[% result %]</span> ([% summary_score.home %]-[% summary_score.away %])</td>
+          <td>[% result %]</span> ([% summary_score.home %]-[% summary_score.away %])</td>
 [%
       ELSE;
         # Singles game
@@ -135,7 +135,7 @@ ELSE;
         SET result = c.maketext(result.message.id, home_html, away_html, home_uri, away_uri, home_class, away_class);
       
 -%]
-          <td data-label="[% c.maketext("matches.game.field.result") %]">[% result %]
+          <td>[% result %]
 [%-
        IF summary_score.home OR summary_score.away;
 -%]
@@ -167,14 +167,16 @@ ELSE;
         SET score_html = c.maketext("msg.not-applicable");
       END;
 -%]
-          <td class="leg-scores" data-label="[% c.maketext("matches.game.field.score") %]">[% score_html %]</td>
-          <td data-label="[% c.maketext("matches.game.field.match-score") %]">[% game.home_team_match_score %]-[% game.away_team_match_score %]</td>
+          <td class="leg-scores">[% score_html %]</td>
+          <td>[% game.home_team_match_score %]-[% game.away_team_match_score %]</td>
 [%
     ELSE;
       # Game not yet played
       SET result = c.maketext(result.message.id);
 -%]
-          <td colspan="4" data-label="[% c.maketext("matches.game.field.result") | html_entity %]">[% result %]</td>
+          <td>[% result %]</td>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
 [%
     END;
 -%]
@@ -219,7 +221,7 @@ ELSE;
   SET away_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [match.away_team.club.url_key, match.away_team.url_key]);
 END;
 -%]
-    <table class="responsive">
+    <table id="teams-table" class="stripe hover order-column row-border" style="width: 100%;">
       <thead>
         <tr>
           <th>[% c.maketext("matches.summaries.heading.team") %]</th>
@@ -232,17 +234,17 @@ END;
       <tbody>
         <tr>
           <td data-label="[% c.maketext("matches.summaries.heading.team") %]"><a href="[% home_uri %]">[% match.home_team.club.short_name | html_entity %] [% match.home_team.name | html_entity %]</a></td>
-          <td class="numeric" data-label="[% c.maketext("matches.summaries.heading.legs-won") %]">[% match.home_team_legs_won %]</td>
-          <td class="numeric" data-label="[% c.maketext("matches.summaries.heading.legs-average") %]">[% match.home_team_average_leg_wins | format('%.2f') %]</td>
-          <td class="numeric" data-label="[% c.maketext("matches.summaries.heading.points-won") %]">[% match.home_team_points_won %]</td>
-          <td class="numeric" data-label="[% c.maketext("matches.summaries.heading.points-average") %]">[% match.home_team_average_point_wins | format('%.2f') %]</td>
+          <td class="numeric">[% match.home_team_legs_won %]</td>
+          <td class="numeric">[% match.home_team_average_leg_wins | format('%.2f') %]</td>
+          <td class="numeric">[% match.home_team_points_won %]</td>
+          <td class="numeric">[% match.home_team_average_point_wins | format('%.2f') %]</td>
         </tr>
         <tr>
           <td data-label="[% c.maketext("matches.summaries.heading.team") %]"><a href="[% away_uri %]">[% match.away_team.club.short_name | html_entity %] [% match.away_team.name | html_entity %]</a></td>
-          <td class="numeric" data-label="[% c.maketext("matches.summaries.heading.legs-won") %]">[% match.away_team_legs_won %]</td>
-          <td class="numeric" data-label="[% c.maketext("matches.summaries.heading.legs-average") %]">[% match.away_team_average_leg_wins | format('%.2f') %]</td>
-          <td class="numeric" data-label="[% c.maketext("matches.summaries.heading.points-won") %]">[% match.away_team_points_won %]</td>
-          <td class="numeric" data-label="[% c.maketext("matches.summaries.heading.points-average") %]">[% match.away_team_average_point_wins | format('%.2f') %]</td>
+          <td class="numeric">[% match.away_team_legs_won %]</td>
+          <td class="numeric">[% match.away_team_average_leg_wins | format('%.2f') %]</td>
+          <td class="numeric">[% match.away_team_points_won %]</td>
+          <td class="numeric">[% match.away_team_average_point_wins | format('%.2f') %]</td>
         </tr>
       </tbody>
     </table>
@@ -254,7 +256,7 @@ home_team_html = FILTER html_entity; team_seasons.home.club.short_name _ " " _ t
 away_team_html = FILTER html_entity; team_seasons.away.club.short_name _ " " _ team_seasons.away.name; END;
 -%]
     <h4>[% c.maketext("matches.players", home_team_html, home_uri) %]</h4>
-    <table class="responsive">
+    <table id="home-players-table" class="stripe hover order-column row-border" style="width: 100%;">
       <thead>
         <tr>
           <th>[% c.maketext("matches.summaries.heading.player") %]</th>
@@ -283,7 +285,7 @@ IF home_players.count;
       END;
 -%]
         <tr>
-          <td data-label="[% c.maketext("matches.summaries.heading.player") %]"><a href="[% person_uri %]">[% person_season.display_name %]</a>
+          <td><a href="[% person_uri %]">[% person_season.display_name %]</a>
 [%-
 IF player.loan_team.id;
   SET loaning_team = player.loan_team_season;
@@ -299,14 +301,14 @@ IF player.loan_team.id;
   "<br />" _ c.maketext("matches.text.loan-player-team", loaning_team.club.short_name, loaning_team.name, loaning_division.name, loaning_team_uri, loaning_division_uri);
 END;
 -%]</td>
-          <td class="numeric" data-label="[% c.maketext("matches.summaries.heading.games-played") %]">[% player.games_played %]</td>
-          <td class="numeric" data-label="[% c.maketext("matches.summaries.heading.games-won") %]">[% player.games_won %]</td>
-          <td class="numeric" data-label="[% c.maketext("matches.summaries.heading.legs-played") %]">[% player.legs_played %]</td>
-          <td class="numeric" data-label="[% c.maketext("matches.summaries.heading.legs-won") %]">[% player.legs_won %]</td>
-          <td class="numeric" data-label="[% c.maketext("matches.summaries.heading.legs-average") %]">[% player.average_leg_wins | format('%.2f') %]</td>
-          <td class="numeric" data-label="[% c.maketext("matches.summaries.heading.points-played") %]">[% player.points_played %]</td>
-          <td class="numeric" data-label="[% c.maketext("matches.summaries.heading.points-won") %]">[% player.points_won %]</td>
-          <td class="numeric" data-label="[% c.maketext("matches.summaries.heading.points-average") %]">[% player.average_point_wins | format('%.2f') %]</td>
+          <td class="numeric">[% player.games_played %]</td>
+          <td class="numeric">[% player.games_won %]</td>
+          <td class="numeric">[% player.legs_played %]</td>
+          <td class="numeric">[% player.legs_won %]</td>
+          <td class="numeric">[% player.average_leg_wins | format('%.2f') %]</td>
+          <td class="numeric">[% player.points_played %]</td>
+          <td class="numeric">[% player.points_won %]</td>
+          <td class="numeric">[% player.average_point_wins | format('%.2f') %]</td>
         </tr>
 [%
     END;
@@ -314,7 +316,15 @@ END;
 ELSE;
 -%]
         <tr>
-          <td colspan="9">[% c.maketext("matches.summaries.no-players-notice") %]</td>
+          <td>[% c.maketext("matches.summaries.no-players-notice") %]</td>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
         </tr>
 [%
 END;
@@ -323,7 +333,7 @@ END;
     </table>
     
     <h4>[% c.maketext("matches.players", away_team_html, away_uri) %]</h4>
-    <table class="responsive">
+    <table id="away-players-table" class="stripe hover order-column row-border" style="width: 100%;">
       <thead>
         <tr>
           <th>[% c.maketext("matches.summaries.heading.player") %]</th>
@@ -352,7 +362,7 @@ IF away_players.count;
       END;
 -%]
         <tr>
-          <td data-label="[% c.maketext("matches.summaries.heading.player") %]"><a href="[% person_uri %]">[% person_season.display_name %]</a>
+          <td><a href="[% person_uri %]">[% person_season.display_name %]</a>
 [%-
 IF player.loan_team.id;
   SET loaning_team = player.loan_team_season;
@@ -368,14 +378,14 @@ IF player.loan_team.id;
   "<br />" _ c.maketext("matches.text.loan-player-team", loaning_team.club.short_name, loaning_team.name, loaning_division.name, loaning_team_uri, loaning_division_uri);
 END;
 -%]</td>
-          <td class="numeric" data-label="[% c.maketext("matches.summaries.heading.games-played") %]">[% player.games_played %]</td>
-          <td class="numeric" data-label="[% c.maketext("matches.summaries.heading.games-won") %]">[% player.games_won %]</td>
-          <td class="numeric" data-label="[% c.maketext("matches.summaries.heading.legs-played") %]">[% player.legs_played %]</td>
-          <td class="numeric" data-label="[% c.maketext("matches.summaries.heading.legs-won") %]">[% player.legs_won %]</td>
-          <td class="numeric" data-label="[% c.maketext("matches.summaries.heading.legs-average") %]">[% player.average_leg_wins | format('%.2f') %]</td>
-          <td class="numeric" data-label="[% c.maketext("matches.summaries.heading.points-played") %]">[% player.points_played %]</td>
-          <td class="numeric" data-label="[% c.maketext("matches.summaries.heading.points-won") %]">[% player.points_won %]</td>
-          <td class="numeric" data-label="[% c.maketext("matches.summaries.heading.points-average") %]">[% player.average_point_wins | format('%.2f') %]</td>
+          <td class="numeric">[% player.games_played %]</td>
+          <td class="numeric">[% player.games_won %]</td>
+          <td class="numeric">[% player.legs_played %]</td>
+          <td class="numeric">[% player.legs_won %]</td>
+          <td class="numeric">[% player.average_leg_wins | format('%.2f') %]</td>
+          <td class="numeric">[% player.points_played %]</td>
+          <td class="numeric">[% player.points_won %]</td>
+          <td class="numeric">[% player.average_point_wins | format('%.2f') %]</td>
         </tr>
 [%
     END;
@@ -383,7 +393,15 @@ END;
 ELSE;
 -%]
         <tr>
-          <td colspan="9">[% c.maketext("matches.summaries.no-players-notice") %]</td>
+          <td>[% c.maketext("matches.summaries.no-players-notice") %]</td>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
         </tr>
 [%
 END;
@@ -393,51 +411,35 @@ END;
   </div>
   
   <div id="match-details">
-    <table class="responsive-vertical">
-      <tr>
-        <th>[% c.maketext("matches.field.date") %]</th>
-        <td>[% date_display | ucfirst | html_entity %]</td>
-      </tr>
+    <dl>
+      <dt>[% c.maketext("matches.field.date") %]</dt>
+      <dd>[% date_display | ucfirst | html_entity %]</dd>
 [%
 IF match.tournament_round;
   # Tournament
 -%]
-      <tr>
-        <th>[% c.maketext("matches.field.competition") %]</th>
-        <td><a href="[% # Tournament URI %]">[% match.tournament_round.tournament.name | html_entity %]</a></td>
-      </tr>
+      <dt>[% c.maketext("matches.field.competition") %]</dt>
+      <dd><a href="[% # Tournament URI %]">[% match.tournament_round.tournament.name | html_entity %]</a></dd>
 [%
 ELSE;
   # League
 -%]
-      <tr>
-        <th>[% c.maketext("matches.field.competition") %]</th>
-        <td>[% c.maketext("matches.field.competition.value.league") %]</td>
-      </tr>
-      <tr>
-        <th>[% c.maketext("matches.field.division") %]</th>
-        <td><a href="[% table_uri %]">[% division_text | html_entity %]</a></td>
-      </tr>
+      <dt>[% c.maketext("matches.field.competition") %]</dt>
+      <dd>[% c.maketext("matches.field.competition.value.league") %]</dd>
+      <dt>[% c.maketext("matches.field.division") %]</dt>
+      <dd><a href="[% table_uri %]">[% division_text | html_entity %]</a></dd>
 [%
 END;
 -%]
-      <tr>
-        <th>[% c.maketext("matches.field.venue") %]</th>
-        <td><a href="[% c.uri_for_action("/venues/view", [match.venue.url_key]) %]">[% match.venue.name | html_entity %]</a></td>
-      </tr>
-      <tr>
-        <th>[% c.maketext("matches.field.season") %]</th>
-        <td><a href="[% c.uri_for_action("/seasons/view", [match.season.url_key]) %]">[% match.season.name | html_entity %]</a></td>
-      </tr>
-      <tr>
-        <th>[% c.maketext("matches.summaries.heading.legs-played") %]</th>
-        <td>[% ( match.home_team_legs_won + match.away_team_legs_won ) %]</td>
-      </tr>
-      <tr>
-        <th>[% c.maketext("matches.summaries.heading.points-played") %]</th>
-        <td>[% ( match.home_team_points_won + match.away_team_points_won ) %]</td>
-      </tr>
-    </table>
+      <dt>[% c.maketext("matches.field.venue") %]</dt>
+      <dd><a href="[% c.uri_for_action("/venues/view", [match.venue.url_key]) %]">[% match.venue.name | html_entity %]</a></dd>
+      <dt>[% c.maketext("matches.field.season") %]</dt>
+      <dd><a href="[% c.uri_for_action("/seasons/view", [match.season.url_key]) %]">[% match.season.name | html_entity %]</a></dd>
+      <dt>[% c.maketext("matches.summaries.heading.legs-played") %]</dt>
+      <dd>[% ( match.home_team_legs_won + match.away_team_legs_won ) %]</dd>
+      <dt>[% c.maketext("matches.summaries.heading.points-played") %]</dt>
+      <dd>[% ( match.home_team_points_won + match.away_team_points_won ) %]</dd>
+    </dl>
   </div>
   
 [%

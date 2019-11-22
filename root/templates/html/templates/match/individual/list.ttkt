@@ -9,33 +9,40 @@ IF match_templates.count;
   # Use PROCESS instead of INCLUDE so that the page_links_text is defined in the current template thereafter
   PROCESS "html/generic/pagination.ttkt" OBJECT_PLURAL = c.maketext("object.plural.templates.match-individual");
   page_links_text;
-  
+-%]
+<ul class="option-list">
+[%
   WHILE (tt_template = match_templates.next);
     template_html = FILTER html_entity; tt_template_name; END;
 -%]
-<div class="list-item">
-  <a href="[% c.uri_for_action("/templates/match/individual/view", [tt_template.url_key]) %]">[% tt_template.name | html_entity %]</a>
+  <li>
+    <a href="[% c.uri_for_action("/templates/match/individual/view", [tt_template.url_key]) %]">[% tt_template.name | html_entity %]</a>
 [%
     IF authorisation.template_edit;
 -%]
-  <a href="[% c.uri_for_action("/templates/match/individual/edit", [tt_template.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", template_html) %]" title="[% c.maketext("admin.edit-object", template_html) %]" /></a>
+    <a href="[% c.uri_for_action("/templates/match/individual/edit", [tt_template.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", template_html) %]" title="[% c.maketext("admin.edit-object", template_html) %]" /></a>
 [%
     END;
     IF authorisation.template_delete;
 -%]
-  <a href="[% c.uri_for_action("/templates/match/individual/delete", [tt_template.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", template_html) %]" title="[% c.maketext("admin.delete-object", template_html) %]" /></a>
+    <a href="[% c.uri_for_action("/templates/match/individual/delete", [tt_template.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", template_html) %]" title="[% c.maketext("admin.delete-object", template_html) %]" /></a>
 [%
     END;
 -%]
-</div>
+  </li>
 [%
   END;
+-%]
+</ul>
+[%
   page_links_text;
 ELSE;
 -%]
-<div class="list-item">
-  There are no individual match templates to view.
-</div>
+<ul class="option-list">
+  <li>
+    There are no individual match templates to view.
+  </li>
+</ul>
 [%
 END;
 IF authorisation.template_create;

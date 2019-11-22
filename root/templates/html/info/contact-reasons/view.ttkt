@@ -4,13 +4,14 @@
 
 <div id="recipients">
 <h4>[% c.maketext("contact-reasons.recipients") %]</h4>
-
+<ul class="option-list">
 [%
 FOREACH recipient IN reason.contact_reason_recipients;
 -%]
-<div class="list-item">
-  <a href="[% c.uri_for_action("/people/view_current_season", [recipient.person.url_key]) %]">[% recipient.person.display_name | html %]</a> ([% recipient.person.email_address | html_entity %])
-</div>
+  <li>
+    <a href="[% c.uri_for_action("/people/view_current_season", [recipient.person.url_key]) %]">[% recipient.person.display_name | html %]</a> ([% recipient.person.email_address | html_entity %])
+  </li>
 [%
 END;
 -%]
+</ul>

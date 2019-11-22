@@ -75,105 +75,73 @@ IF season;
   <div id="[% person_team.team_membership_type.id %]">
 [%
       END;
+      
+      CALL c.log.debug( "TT - Display name: " _ team_season.display_name _ ", season ID: " _ team_season.season.id _ ", person ID: " _ team_season.person.id _ ", matches played: " _ team_season.matches_played _ ", matches won: " _ team_season.matches_won _ ", matches lost: " _ team_season.matches_lost _ "" );
 -%]
     <h4><a href="[% team_uri %]">[% team_season.club.short_name | html_entity %] [% team_season.name | html_entity %]</a> (<a href="[% averages_uri %]">[% team_season.division.name %]</a>)</h4>
     <div id="stats-left">
-      <h5>[% c.maketext("stats.heading.matches") %]</h5>
-      <table>
-        <tr>
-          <th>[% c.maketext("stats.label.played") %]</th>
-          <td>[% c.i18n_numberformat.format_number( person_team.matches_played ) %]</td>
-        </tr>
-        <tr>
-          <th>[% c.maketext("stats.label.won") %]</th>
-          <td>[% c.i18n_numberformat.format_number( person_team.matches_won ) %]</td>
-        </tr>
-        <tr>
-          <th>[% c.maketext("stats.label.drawn") %]</th>
-          <td>[% c.i18n_numberformat.format_number( person_team.matches_drawn ) %]</td>
-        </tr>
-        <tr>
-          <th>[% c.maketext("stats.label.lost") %]</th>
-          <td>[% c.i18n_numberformat.format_number( person_team.matches_lost ) %]</td>
-        </tr>
-      </table>
+      <div id="stats-matches">
+        <h5>[% c.maketext("stats.heading.matches") %]</h5>
+        <dl>
+          <dt>[% c.maketext("stats.label.played") %]</dt>
+          <dd>[% c.i18n_numberformat.format_number( person_team.matches_played ) %]</dd>
+          <dt>[% c.maketext("stats.label.won") %]</dt>
+          <dd>[% c.i18n_numberformat.format_number( person_team.matches_won ) %]</dd>
+          <dt>[% c.maketext("stats.label.drawn") %]</dt>
+          <dd>[% c.i18n_numberformat.format_number( person_team.matches_drawn ) %]</dd>
+          <dt>[% c.maketext("stats.label.lost") %]</dt>
+          <dd>[% c.i18n_numberformat.format_number( person_team.matches_lost ) %]</dd>
+        </dl>
+      </div>
       
-      <h5>[% c.maketext("stats.heading.games") %]</h5>
-      <table>
-        <tr>
-          <th>[% c.maketext("stats.label.played") %]</th>
-          <td>[% c.i18n_numberformat.format_number( person_team.games_played ) %]</td>
-        </tr>
-        <tr>
-          <th>[% c.maketext("stats.label.won") %]</th>
-          <td>[% c.i18n_numberformat.format_number( person_team.games_won ) %]</td>
-        </tr>
-        <tr>
-          <th>[% c.maketext("stats.label.lost") %]</th>
-          <td>[% c.i18n_numberformat.format_number( person_team.games_lost ) %]</td>
-        </tr>
-        <tr>
-          <th>[% c.maketext("stats.label.average") %]</th>
-          <td>[% c.i18n_numberformat.format_number( person_team.average_game_wins, 2, 1) %]</td>
-        </tr>
-      </table>
+      
+      <div id="stats-games">
+        <h5>[% c.maketext("stats.heading.games") %]</h5>
+        <dl>
+          <dt>[% c.maketext("stats.label.played") %]</dt>
+          <dd>[% c.i18n_numberformat.format_number( person_team.games_played ) %]</dd>
+          <dt>[% c.maketext("stats.label.won") %]</dt>
+          <dd>[% c.i18n_numberformat.format_number( person_team.games_won ) %]</dd>
+          <dt>[% c.maketext("stats.label.lost") %]</dt>
+          <dd>[% c.i18n_numberformat.format_number( person_team.games_lost ) %]</dd>
+          <dt>[% c.maketext("stats.label.average") %]</dt>
+          <dd>[% c.i18n_numberformat.format_number( person_team.average_game_wins, 2, 1) %]</dd>
+        </dl>
+      </div>
     </div>
     
     <div id="stats-right">
-      <h5>[% c.maketext("stats.heading.legs") %]</h5>
-      <table>
-        <tr>
-          <th>[% c.maketext("stats.label.played") %]</th>
-          <td>[% c.i18n_numberformat.format_number( person_team.legs_played ) %]</td>
-        </tr>
-        <tr>
-          <th>[% c.maketext("stats.label.won") %]</th>
-          <td>[% c.i18n_numberformat.format_number( person_team.legs_won ) %]</td>
-        </tr>
-        <tr>
-          <th>[% c.maketext("stats.label.lost") %]</th>
-          <td>[% c.i18n_numberformat.format_number( person_team.legs_lost ) %]</td>
-        </tr>
-        <tr>
-          <th>[% c.maketext("stats.label.average") %]</th>
-          <td>[% c.i18n_numberformat.format_number( person_team.average_leg_wins, 2, 1) %]</td>
-        </tr>
-      </table>
+      <div id="stats-legs">
+        <h5>[% c.maketext("stats.heading.legs") %]</h5>
+        <dl>
+          <dt>[% c.maketext("stats.label.played") %]</dt>
+          <dd>[% c.i18n_numberformat.format_number( person_team.legs_played ) %]</dd>
+          <dt>[% c.maketext("stats.label.won") %]</dt>
+          <dd>[% c.i18n_numberformat.format_number( person_team.legs_won ) %]</dd>
+          <dt>[% c.maketext("stats.label.lost") %]</dt>
+          <dd>[% c.i18n_numberformat.format_number( person_team.legs_lost ) %]</dd>
+          <dt>[% c.maketext("stats.label.average") %]</dt>
+          <dd>[% c.i18n_numberformat.format_number( person_team.average_leg_wins, 2, 1) %]</dd>
+        </dl>
+      </div>
       
-      <h5>[% c.maketext("stats.heading.points") %]</h5>
-      <table>
-        <tr>
-          <th>[% c.maketext("stats.label.played") %]</th>
-          <td>[% c.i18n_numberformat.format_number( person_team.points_played ) %]</td>
-        </tr>
-        <tr>
-          <th>[% c.maketext("stats.label.won") %]</th>
-          <td>[% c.i18n_numberformat.format_number( person_team.points_won ) %]</td>
-        </tr>
-        <tr>
-          <th>[% c.maketext("stats.label.lost") %]</th>
-          <td>[% c.i18n_numberformat.format_number( person_team.points_lost ) %]</td>
-        </tr>
-        <tr>
-          <th>[% c.maketext("stats.label.average") %]</th>
-          <td>[% c.i18n_numberformat.format_number( person_team.average_point_wins, 2, 1) %]</td>
-        </tr>
-      </table>
+      <div id="stats-points">
+        <h5>[% c.maketext("stats.heading.points") %]</h5>
+        <dl>
+          <dt>[% c.maketext("stats.label.played") %]</dt>
+          <dd>[% c.i18n_numberformat.format_number( person_team.points_played ) %]</dd>
+          <dt>[% c.maketext("stats.label.won") %]</dt>
+          <dd>[% c.i18n_numberformat.format_number( person_team.points_won ) %]</dd>
+          <dt>[% c.maketext("stats.label.lost") %]</dt>
+          <dd>[% c.i18n_numberformat.format_number( person_team.points_lost ) %]</dd>
+          <dt>[% c.maketext("stats.label.average") %]</dt>
+          <dd>[% c.i18n_numberformat.format_number( person_team.average_point_wins, 2, 1) %]</dd>
+        </dl>
+      </div>
     </div>
     <div class="clear-fix"></div>
 [%
       SET last_type = person_team.team_membership_type.id;
-      
-      IF person_team.team_membership_type.id == "active";
-        IF seasons == 1;
-          SET season_text = c.maketext("object.singular.seasons");
-        ELSE;
-          SET season_text = c.maketext("object.plural.seasons");
-        END;
--%]
-    <a href="[% c.uri_for_action("/people/view_seasons_first_page", [person.url_key]) %]">[% c.maketext("people.seasons.count-text", encoded_display_name, seasons, season_text) %]</a>
-[%
-      END;
     END;
 -%]
   </div>
@@ -181,9 +149,10 @@ IF season;
 [%
     IF games.count;
 -%]
-    <table class="responsive">
+    <table id="datatable" class="stripe hover order-column row-border" style="width: 100%;">
       <thead>
         <tr>
+          <th>[% c.maketext("people.opponents.date") %]</th>
           <th>[% c.maketext("people.opponents.date") %]</th>
           <th>[% c.maketext("people.opponents.playing-for") %]</th>
           <th>[% c.maketext("people.opponents.playing-against") %]</th>
@@ -256,6 +225,7 @@ IF season;
         END;
 -%]
         <tr>
+          <td data-label="[% c.maketext("people.opponents.date") %]">[% match.actual_date.ymd %]</td>
           <td data-label="[% c.maketext("people.opponents.date") %]"><a href="[% c.uri_for_action("/matches/team/view_by_url_keys", match.url_keys) %]">[% c.i18n_datetime_format_date.format_datetime( match.actual_date ) %]</a></td>
           <td data-label="[% c.maketext("people.opponents.playing-for") %]"><a href="[% for_team_uri %]">[% for_team_season.club.short_name | html_entity %] [% for_team_season.name | html_entity %]</a></td>
           <td data-label="[% c.maketext("people.opponents.playing-against") %]"><a href="[% against_team_uri %]">[% against_team_season.club.short_name | html_entity %] [% against_team_season.name | html_entity %]</a></td>
@@ -272,9 +242,11 @@ IF season;
 [%
     ELSE;
 -%]
-    <div class="list-item">
-      [% c.maketext("people.no-games-played", encoded_first_name) %]
-    </div>
+    <ul class="option-list">
+      <li>
+        [% c.maketext("people.no-games-played", encoded_first_name) %]
+      </li>
+    </ul>
 [%
     END;
 -%]
@@ -304,11 +276,18 @@ IF season;
   # Else for the check for a team season
   ELSE;
 %]
-  <div class="list-item">
-    [% c.maketext("people.message.did-not-enter", first_name_html, season_html) %].
-  </div>
+  <div class="no-entry">[% c.maketext("people.message.did-not-enter", first_name_html, season_html) %]</div>
 [% 
     # End for the check for a season
   END;
 END;
+
+IF seasons == 1;
+  SET season_text = c.maketext("object.singular.seasons");
+ELSE;
+  SET season_text = c.maketext("object.plural.seasons");
+END;
+-%]
+<div class="seasons-count"><a href="[% c.uri_for_action("/people/view_seasons_first_page", [person.url_key]) %]">[% c.maketext("people.seasons.count-text", encoded_display_name, seasons, season_text) %]</a></div>
+[%
 %]

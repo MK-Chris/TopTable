@@ -20,47 +20,48 @@ ELSE;
 END;
 -%]
 <h4>Fixtures &amp; Results</h4>
-<div class="list-item">
-  <a href="[% team_uri %]">By team</a>
+<ul class="option-list">
+  <li>
+    <a href="[% team_uri %]">By team</a>
+  </li>
+  <li>
+    <a href="[% month_uri %]">By month</a>
+  </li>
+  <li>
+    <a href="[% week_uri %]">By week</a>
+  </li>
+  <li>
+    <a href="[% day_uri %]">By day</a>
+  </li>
+  <li>
+    <a href="[% venue_uri %]">By venue</a>
+  </li>
+  <li>
+    <a href="[% division_uri %]">By division</a>
+  </li>
+</ul>
 </div>
-<div class="list-item">
-  <a href="[% month_uri %]">By month</a>
-</div>
-<div class="list-item">
-  <a href="[% week_uri %]">By week</a>
-</div>
-<div class="list-item">
-  <a href="[% day_uri %]">By day</a>
-</div>
-<div class="list-item">
-  <a href="[% venue_uri %]">By venue</a>
-</div>
-<div class="list-item">
-  <a href="[% division_uri %]">By division</a>
-</div>
-</div><br />
 
 <div id="season-dates">
 <h4>Dates</h4>
-<table class="responsive-vertical">
-  <tr>
-    <th>Start date</th>
-    <td>[% season.start_date_long %]</td>
-  </tr>
-  <tr>
-    <th>End date</th>
-    <td>[% season.end_date_long %]</td>
-  </tr>
-</table>
+<dl>
+  <dt>Start date</dt>
+  <dd>[% season.start_date_long %]</dd>
+  <dt>End date</dt>
+  <dd>[% season.end_date_long %]</dd>
+</dl>
 </div>
 
 <div id="season-divisions">
 <h4>Divisions</h4>
-<table class="responsive">
+<table id="datatable" class="stripe hover order-column row-border">
   <thead>
     <tr>
       <th>Division</th>
-      <th colspan="4">Statistics</th>
+      <th>Statistics</th>
+      <th>&nbsp;</th>
+      <th>&nbsp;</th>
+      <th>&nbsp;</th>
       <th>Fixtures Grid</th>
       <th>League Match Template</th>
       <th>League Table Ranking Template</th>
@@ -84,14 +85,14 @@ FOREACH division IN divisions;
   END;
 -%]
     <tr>
-      <td data-label="Division">[% division.name %]</td>
-      <td data-label="Statistics"><a href="[% tables_uri %]">Tables</a></td>
-      <td data-label="Statistics"><a href="[% singles_uri %]">Averages (Singles)</a></td>
-      <td data-label="Statistics"><a href="[% doubles_individuals_uri %]">Averages (Individuals)</a></td>
-      <td data-label="Statistics"><a href="[% doubles_pairs_uri %]">Averages (Doubles Pairs)</a></td>
-      <td data-label="Fixtures Grid"><a href="[% grid_uri %]">[% division.division_seasons.fixtures_grid.name | html_entity %]</a></td>
-      <td data-label="Match Template"><a href="[% c.uri_for_action("/templates/match/team/view", [division.division_seasons.league_match_template.url_key]) %]">[% division.division_seasons.league_match_template.name %]</a></td>
-      <td data-label="Ranking Template"><a href="[% c.uri_for_action("/templates/league-table-ranking/view", [division.division_seasons.league_table_ranking_template.url_key]) %]">[% division.division_seasons.league_table_ranking_template.name | html_entity %]</a></td>
+      <td>[% division.name %]</td>
+      <td><a href="[% tables_uri %]">Tables</a></td>
+      <td><a href="[% singles_uri %]">Averages (Singles)</a></td>
+      <td><a href="[% doubles_individuals_uri %]">Averages (Individuals)</a></td>
+      <td><a href="[% doubles_pairs_uri %]">Averages (Doubles Pairs)</a></td>
+      <td><a href="[% grid_uri %]">[% division.division_seasons.fixtures_grid.name | html_entity %]</a></td>
+      <td><a href="[% c.uri_for_action("/templates/match/team/view", [division.division_seasons.league_match_template.url_key]) %]">[% division.division_seasons.league_match_template.name %]</a></td>
+      <td><a href="[% c.uri_for_action("/templates/league-table-ranking/view", [division.division_seasons.league_table_ranking_template.url_key]) %]">[% division.division_seasons.league_table_ranking_template.name | html_entity %]</a></td>
     </tr>
 [%
 END;

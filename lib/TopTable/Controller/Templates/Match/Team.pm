@@ -82,6 +82,12 @@ sub base_list :Chained("/") :PathPart("templates/match/team") :CaptureArgs(0) {
   # Check the authorisation to edit clubs we can display the link if necessary
   $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( template_edit template_delete template_create) ], "", 0] );
   
+  $c->stash({
+    external_scripts  => [
+      $c->uri_for("/static/script/standard/option-list.js"),
+    ],
+  });
+  
   # Load the messages
   $c->load_status_msgs;
 }
@@ -188,6 +194,19 @@ sub view :Chained("base") :PathPart("") :Args(0) {
     view_online_display => sprintf( "Viewing match template: %s", $encoded_name ),
     view_online_link    => 0,
     tt_template_games   => [ $c->model("DB::TemplateMatchTeamGame")->individual_game_templates( $c->stash->{tt_template} ) ],
+    external_scripts    => [
+      $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
+      $c->uri_for("/static/script/templates/match/team/view.js"),
+    ],
+    external_styles     => [
+      $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/fixedColumns.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
+    ],
   });
 }
 

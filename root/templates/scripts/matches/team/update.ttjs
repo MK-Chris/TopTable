@@ -453,6 +453,59 @@ END;
                       position: "top-center",
                       type: "success"
                     });
+                    
+                    // Move on to the next one (if there is one)
+                    if ( game_number < total_games && t.data("player-location") == "away" ) {
+                      // Hide any fields from the next legs that may have been shown if the score has been edited to have less legs
+                      // Loop through all the next legs to hide and zero them
+                      leg_to_hide = loop_leg + 1;
+                      while( leg_to_hide <= legs_per_game ) {
+                        $("#game_" + game_number + "_leg_" + leg_to_hide + "_home").val(0);
+                        $("#game_" + game_number + "_leg_" + leg_to_hide + "_away").val(0);
+                        $("#game_" + game_number + "_leg_" + leg_to_hide + "_home").prop("disabled", true);
+                        $("#game_" + game_number + "_leg_" + leg_to_hide + "_away").prop("disabled", true);
+                        $("#game_" + game_number + "_leg_" + leg_to_hide + "_score").hide();
+                        leg_to_hide++;
+                      }
+                      
+                      if ( disable_accordion_change === false ) {
+                        // Get the currently active accordion and increase it
+                        active_accordion = $("#match-games").accordion("option", "active");
+                        active_accordion++;
+                        
+                        // Now set the new active accordion
+                        $("#match-games").accordion("option", "active", active_accordion);
+                      }
+                      
+                      // Focus on the home score for the first leg of the next game
+                      var next_games_index = games_index + 1;
+                      if ( typeof match_games[next_games_index] !== "undefined" ) {
+                        // Get the next game number
+                        next_game_number = game_number + 1;
+                        
+                        // There is another game after this
+                        if ( match_games[next_games_index].doubles_game ) {
+                          // Doubles game, check if either doubles pair is blank  
+                          if ( typeof match_games[next_games_index].home_doubles_pair === "undefined" ) {
+                            // No home doubles pair, focus on that
+                            $("#game_" + next_game_number + "_home_doubles_pairing").trigger("chosen:open");
+                          } else if ( typeof match_games[next_games_index].away_doubles_pair === "undefined" ) {
+                            // No away doubles pair, focus on that
+                            $("#game_" + next_game_number + "_away_doubles_pairing").trigger("chosen:open");
+                          } else {
+                            // If we have both doubles pairs, focus on the home score in leg 1
+                            $("#game_" + next_game_number + "_leg_1_home").focus();
+                          }
+                        } else {
+                          // Singles game, focus on the score
+                          $("#game_" + next_game_number + "_leg_1_home").focus();
+                        }
+                      }
+                      
+                      //if ( match_games[games_index + 1].doubles_game )
+                      next_game_number = game_number + 1;  
+                      $("#game_" + next_game_number + "_leg_1_home").focus();
+                    }
                   }
                 },
                 error: function(xhr, ajax_options, thrown_error) {
@@ -464,62 +517,9 @@ END;
                   });
                 }
               });
+              
+              break;
             }
-            
-            // Move on to the next one (if there is one)
-            if ( game_number < total_games && t.data("player-location") == "away" ) {
-              // Hide any fields from the next legs that may have been shown if the score has been edited to have less legs
-              // Loop through all the next legs to hide and zero them
-              leg_to_hide = loop_leg + 1;
-              while( leg_to_hide <= legs_per_game ) {
-                $("#game_" + game_number + "_leg_" + leg_to_hide + "_home").val(0);
-                $("#game_" + game_number + "_leg_" + leg_to_hide + "_away").val(0);
-                $("#game_" + game_number + "_leg_" + leg_to_hide + "_home").prop("disabled", true);
-                $("#game_" + game_number + "_leg_" + leg_to_hide + "_away").prop("disabled", true);
-                $("#game_" + game_number + "_leg_" + leg_to_hide + "_score").hide();
-                leg_to_hide++;
-              }
-              
-              if ( disable_accordion_change === false ) {
-                // Get the currently active accordion and increase it
-                active_accordion = $("#match-games").accordion("option", "active");
-                active_accordion++;
-                
-                // Now set the new active accordion
-                $("#match-games").accordion("option", "active", active_accordion);
-              }
-              
-              // Focus on the home score for the first leg of the next game
-              var next_games_index = games_index + 1;
-              if ( typeof match_games[next_games_index] !== "undefined" ) {
-                // Get the next game number
-                next_game_number = game_number + 1;
-                
-                // There is another game after this
-                if ( match_games[next_games_index].doubles_game ) {
-                  // Doubles game, check if either doubles pair is blank  
-                  if ( typeof match_games[next_games_index].home_doubles_pair === "undefined" ) {
-                    // No home doubles pair, focus on that
-                    $("#game_" + next_game_number + "_home_doubles_pairing").trigger("chosen:open");
-                  } else if ( typeof match_games[next_games_index].away_doubles_pair === "undefined" ) {
-                    // No away doubles pair, focus on that
-                    $("#game_" + next_game_number + "_away_doubles_pairing").trigger("chosen:open");
-                  } else {
-                    // If we have both doubles pairs, focus on the home score in leg 1
-                    $("#game_" + next_game_number + "_leg_1_home").focus();
-                  }
-                } else {
-                  // Singles game, focus on the score
-                  $("#game_" + next_game_number + "_leg_1_home").focus();
-                }
-              }
-              
-              //if ( match_games[games_index + 1].doubles_game )
-              next_game_number = game_number + 1;  
-              $("#game_" + next_game_number + "_leg_1_home").focus();
-            }
-            
-            break;
           } else {
             // Not yet won the game, enable and show the next game
             if ( next_leg !== undefined ) {

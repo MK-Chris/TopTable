@@ -108,11 +108,10 @@ sub match_counts_by_month {
       "season.id" => $season->id
     };
     $attributes = {
-      select      => [
-        {
-          count   => "me.scheduled_date"
-        },
-        "scheduled_date",
+      select      => [{
+        count   => "me.scheduled_date"
+      },
+      "scheduled_date",
       ],
       as          => [ qw(number_of_matches scheduled_date) ],
       join        => {
@@ -128,11 +127,10 @@ sub match_counts_by_month {
   } else {
     $where      = {};
     $attributes = {
-      select      => [
-        {
-          count   => "me.scheduled_date"
-        },
-        "scheduled_date",
+      select      => [{
+        count   => "me.scheduled_date"
+      },
+      "scheduled_date",
       ],
       as          => [ qw(number_of_matches scheduled_date) ],
       join        => {
@@ -422,16 +420,27 @@ sub incomplete_matches {
     $attributes->{rows} = $results_per_page;
   }
   
-  return $self->search({
+  return $self->search([{
     "scheduled_week.season"   => $season->id,
     "team_seasons.season"     => $season->id,
     "division_seasons.season" => $season->id,
     "me.complete"             => 0,
     "me.cancelled"            => 0,
+    played_date               => undef,
     scheduled_date => {
       "<=" => sprintf( "%s %s", $date_cutoff->ymd, $date_cutoff->hms ),
-    },
-  }, $attributes);
+    }}, {
+    "scheduled_week.season"   => $season->id,
+    "team_seasons.season"     => $season->id,
+    "division_seasons.season" => $season->id,
+    "me.complete"             => 0,
+    "me.cancelled"            => 0,
+    played_date               => {
+        "<>" => undef
+      },
+    played_date => {
+      "<=" => sprintf( "%s %s", $date_cutoff->ymd, $date_cutoff->hms ),
+    }}], $attributes);
 }
 
 =head2 matches_in_week
@@ -519,10 +528,13 @@ sub matches_on_date {
         }, {
           scheduled_week => "season"
         },
-        "venue"
+        "venue",
+        "division",
       ],
       order_by  => {
-        -asc => "division.rank"
+        -asc => [
+          qw( division.rank )
+        ]
       }
     };
   } else {
@@ -541,10 +553,13 @@ sub matches_on_date {
         }, {
           scheduled_week => "season"
         },
-        "venue"
+        "venue",
+        "division",
       ],
       order_by  => {
-        -asc => "division.rank"
+        -asc => [
+          qw( division.rank )
+        ]
       }
     };
   }
@@ -757,7 +772,7 @@ sub matches_involving_player_in_season {
 
 Checks the given parameters and if everything is okay, populates the league matches for the current season for any division using the given grid.
 
-=cut
+=c??    ???    }); _r???      }, |???   [Multi] ???B  ?       ???   [Macro] ???   =cut tch???       }]; ???       }; ,???       }; e???   =cut elf???     }, { u???     }); ( ???   =cut lue???       }, n???     }, { p???  
 
 sub check_and_populate {
   my ( $self, $parameters ) = @_;

@@ -83,6 +83,27 @@ msgstr "By venue"
 msgid "menu.text.fixtures-results-by-division"
 msgstr "By division"
 
+msgid "fixtures-results.heading.date"
+msgstr "Date"
+
+msgid "fixtures-results.heading.week-beginning"
+msgstr "Week beginning"
+
+msgid "fixtures-results.heading.home-team"
+msgstr "Home team"
+
+msgid "fixtures-results.heading.score-versus"
+msgstr "Score"
+
+msgid "fixtures-results.heading.away-team"
+msgstr "Away team"
+
+msgid "fixtures-results.heading.venue"
+msgstr "Venue"
+
+msgid "fixtures-results.heading.actions"
+msgstr "Actions"
+
 ## Matches
 msgid "menu.text.matches"
 msgstr "Matches"
@@ -239,7 +260,7 @@ msgid "menu.title.venues-where-to-play"
 msgstr "Where to Play"
 
 msgid "menu.text.venues-list"
-msgstr "Venue List"
+msgstr "Venues"
 
 msgid "menu.title.venues-list"
 msgstr "Venue List"
@@ -657,6 +678,9 @@ msgstr "Players"
 msgid "teams.field.division"
 msgstr "Division"
 
+msgid "teams.field.division-rank"
+msgstr "Division rank"
+
 msgid "teams.field.home-night"
 msgstr "Home night"
 
@@ -823,7 +847,7 @@ msgid "teams.heading.results"
 msgstr "Results"
 
 msgid "teams.message.did-not-enter"
-msgstr "%1 %2 did not enter %3"
+msgstr "%1 %2 did not enter %3."
 
 msgid "teams.fixtures.day"
 msgstr "Day"
@@ -1097,7 +1121,7 @@ msgid "people.no-games-played"
 msgstr "%1 has not played any games yet."
 
 msgid "people.message.did-not-enter"
-msgstr "%1 did not enter %2"
+msgstr "%1 did not enter %2."
 
 msgid "people.delete.error.not-allowed"
 msgstr "%1 cannot be deleted because they have been involved in matches."
@@ -1762,6 +1786,9 @@ msgstr "Download these events to your calendar"
 msgid "matches.versus-abbreviation"
 msgstr "v"
 
+msgid "matches.versus.not-yet-played"
+msgstr "Not yet played"
+
 msgid "matches.update-score"
 msgstr "Update score"
 
@@ -2230,7 +2257,7 @@ msgid "stats.no-divisions"
 msgstr "There are no divisions to display."
 
 msgid "stats.table-heading.position"
-msgstr "Position"
+msgstr "#"
 
 msgid "stats.table-heading.player"
 msgstr "Player"
@@ -2245,31 +2272,31 @@ msgid "stats.table-heading.team"
 msgstr "Team"
 
 msgid "stats.table-heading.matches-played"
-msgstr "Matches played"
+msgstr "Matches"
 
 msgid "stats.table-heading.matches-won"
-msgstr "Matches won"
+msgstr "W"
 
 msgid "stats.table-heading.matches-drawn"
-msgstr "Matches drawn"
+msgstr "D"
 
 msgid "stats.table-heading.matches-lost"
-msgstr "Matches lost"
+msgstr "L"
 
 msgid "stats.table-heading.for"
-msgstr "For"
+msgstr "F"
 
 msgid "stats.table-heading.against"
-msgstr "Against"
+msgstr "A"
 
 msgid "stats.table-heading.games-played"
-msgstr "Games played"
+msgstr "Games"
 
 msgid "stats.table-heading.games-won"
-msgstr "Games won"
+msgstr "W"
 
 msgid "stats.table-heading.games-lost"
-msgstr "Games lost"
+msgstr "L"
 
 msgid "stats.table-heading.legs-played"
 msgstr "Legs played"
@@ -2290,7 +2317,7 @@ msgid "stats.table-heading.points-lost"
 msgstr "Points lost"
 
 msgid "stats.table-heading.average"
-msgstr "Average (%)"
+msgstr "%"
 
 ### League Tables
 msgid "stats.no-teams"
@@ -3323,7 +3350,7 @@ msgid "user.auth.view-matches"
 msgstr "view matches"
 
 msgid "user.auth.update-matches"
-msgstr "update matches"
+msgstr "update match scorecards"
 
 msgid "user.auth.create-match-reports"
 msgstr "write a report for this match"
@@ -4045,6 +4072,18 @@ msgid "pagination.page-invalid-no-redirect"
 msgstr "Page %1 does not exist."
 
 ### System event log
+msgid "system-event-log.heading.user"
+msgstr "User"
+
+msgid "system-event-log.heading.timestamp"
+msgstr "Timestamp"
+
+msgid "system-event-log.heading.category"
+msgstr "Category"
+
+msgid "system-event-log.heading.description"
+msgstr "Description"
+
 msgid "system-event-log.description.create"
 msgstr "Created %1%2."
 

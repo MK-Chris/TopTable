@@ -5,7 +5,7 @@
 [%
 IF tables.size;
 -%]
-<table class="responsive">
+<table id="league-table" class="stripe hover row-border" style="width: 100%;">
   <thead>
     <tr>
       <th class="numeric">[% c.maketext("stats.table-heading.position") %]</th>
@@ -31,14 +31,14 @@ IF tables.size;
     END;
 -%]
     <tr>
-      <td class="numeric" data-label="[% c.maketext("stats.table-heading.position") %]">[% i %]</td>
-      <td data-label="[% c.maketext("stats.table-heading.team") %]"><a href="[% team_uri %]">[% table_team.club.short_name _ " " _ table_team.name %]</a></td>
-      <td class="numeric" data-label="[% c.maketext("stats.table-heading.matches-played") %]">[% table_team.matches_played %]</td>
-      <td class="numeric" data-label="[% c.maketext("stats.table-heading.matches-won") %]">[% table_team.matches_won %]</td>
-      <td class="numeric" data-label="[% c.maketext("stats.table-heading.matches-drawn") %]">[% table_team.matches_drawn %]</td>
-      <td class="numeric" data-label="[% c.maketext("stats.table-heading.matches-lost") %]">[% table_team.matches_lost %]</td>
-      <td class="numeric" data-label="[% c.maketext("stats.table-heading.for") %]">[% table_team.games_won %]</td>
-      <td class="numeric" data-label="[% c.maketext("stats.table-heading.against") %]">[% table_team.games_lost %]</td>
+      <td class="numeric">[% i %]</td>
+      <td><a href="[% team_uri %]">[% table_team.club.short_name %] [% table_team.name %]</a></td>
+      <td class="numeric">[% table_team.matches_played %]</td>
+      <td class="numeric">[% table_team.matches_won %]</td>
+      <td class="numeric">[% table_team.matches_drawn %]</td>
+      <td class="numeric">[% table_team.matches_lost %]</td>
+      <td class="numeric">[% table_team.games_won %]</td>
+      <td class="numeric">[% table_team.games_lost %]</td>
     </tr>
 [%
   END;

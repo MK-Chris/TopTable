@@ -8,19 +8,26 @@ IF divisions.count;
   # Use PROCESS instead of INCLUDE so that the page_links_text is defined in the current template thereafter
   PROCESS "html/generic/pagination.ttkt" OBJECT_PLURAL = c.maketext("object.plural.divisions");
   page_links_text;
-  
-  WHILE (division = divisions.next);
 -%]
 
-<div class="list-item">
-  <a href="[% c.uri_for_action("/divisions/view_current_season", [division.url_key]) %]">[% division.name | html_entity %]</a>
-</div>
+<ul class="option-list">
+[%
+  WHILE (division = divisions.next);
+-%]
+  <li>
+    <a href="[% c.uri_for_action("/divisions/view_current_season", [division.url_key]) %]">[% division.name | html_entity %]</a>
+  </li>
 [%
   END;
+-%]
+</ul>
+[%
   page_links_text;
 ELSE;
 -%]
-There are no divisions to display.
+<ul class="option-list">
+  <li>There are no divisions to display.</li>
+</ul>
 [%
 END;
 -%]

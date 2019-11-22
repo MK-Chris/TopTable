@@ -11,7 +11,7 @@ IF doubles_pair_averages.size;
     PROCESS "html/league-averages/filter-view-form.ttkt" COMPETITORS = c.maketext("averages.competitor-type.pairs");
   END;
 -%]
-<table class="responsive">
+<table id="averages-doubles-pairs" class="stripe hover row-border" style="width: 100%;">
   <thead>
     <tr>
       <th class="numeric">[% c.maketext("stats.table-heading.position") %]</th>

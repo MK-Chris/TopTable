@@ -85,6 +85,13 @@ sub base_list :Chained("/") :PathPart("info/contact-reasons") :CaptureArgs(0) {
   # Check the authorisation to edit clubs we can display the link if necessary
   $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( contact_reason_edit contact_reason_delete contact_reason_create) ], "", 0] );
   
+  # Page description
+  $c->stash({
+    external_scripts      => [
+      $c->uri_for("/static/script/standard/option-list.js"),
+    ],
+  });
+  
   # Load the messages
   $c->load_status_msgs;
 }
@@ -196,6 +203,9 @@ sub view :Chained("base") :PathPart("") :Args(0) {
     title_links         => \@title_links,
     view_online_display => sprintf( "Viewing contact reason: %s", $encoded_name ),
     view_online_link    => 0,
+    external_scripts      => [
+      $c->uri_for("/static/script/standard/option-list.js"),
+    ],
   });
 }
 
@@ -279,7 +289,7 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
   $c->response->header("Expires"        => 0);
   
   # Check that we are authorised to create clubs
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["reason_edit", $c->maketext("user.auth.edit-contact-reasons"), 1] );
+  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["contact_reason_edit", $c->maketext("user.auth.edit-contact-reasons"), 1] );
   
   my $recipient_tokeninput_options = {
     jsonContainer => "json_people",
@@ -292,7 +302,7 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
   my $recipients = ( defined( $c->flash->{recipients} ) and ref( $c->flash->{recipients} ) eq "ARRAY" ) ? $c->flash->{recipients} : [ $reason->recipients ];
   
   if ( defined( $recipients ) and ref( $recipients ) eq "ARRAY" ) {
-    foreach my $recipient ( $recipients ) {
+    foreach my $recipient ( @$recipients ) {
       # If this is flashed it will be the person directly referenced; if we've retrieved from the database it'll be the contact reason recipient,
       # from which we need to get the person.
       my $person = ( ref( $recipient ) eq "TopTable::DB::Model::Person" ) ? $recipient : $recipient->person;

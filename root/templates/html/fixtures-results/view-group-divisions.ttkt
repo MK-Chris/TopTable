@@ -10,7 +10,28 @@ IF matches.count;
   PROCESS "html/generic/pagination.ttkt" OBJECT_PLURAL = c.maketext("object.plural.matches");
   page_links_text;
 -%]
-<table class="responsive-no-headers">
+<table id="fixtures-table" class="stripe hover order-column row-border" style="width: 100%;">
+  <thead>
+    <tr>
+      <!--<th>[% c.maketext("teams.fixtures.day") %]</th>
+      <th>[% c.maketext("teams.fixtures.day") %]</th>-->
+      <th>[% c.maketext("teams.fixtures.date") %]</th>
+      <th>[% c.maketext("teams.fixtures.date") %]</th>
+      <th>[% c.maketext("teams.field.division") %]</th>
+      <th>[% c.maketext("teams.field.division-rank") %]</th>
+      <th>[% c.maketext("fixtures-results.heading.home-team") %]</th>
+      <th>[% c.maketext("fixtures-results.heading.away-team") %]</th>
+      <th>[% c.maketext("fixtures-results.heading.score-versus") %]</th>
+      <!--<th>[% c.maketext("fixtures-results.heading.venue") %]</th>-->
+[%
+    IF authorisation.match_update OR authorisation.match_cancel OR match.can_report( c.user );
+-%]
+      <th>[% c.maketext("fixtures-results.heading.actions") %]</th>
+[%
+    END;
+-%]
+    </tr>
+  </thead>
 [%
   USE zeroes = format("%02d");
   SET i = 0;
@@ -38,39 +59,43 @@ IF matches.count;
       SET score = match.home_team_match_score _ "-" _ match.away_team_match_score;
       SET score_class = ' class="match-score"';
     ELSE;
-      SET score = c.maketext("matches.versus-abbreviation");
-      SET score_class = ' class="match-versus"';
-    END;
-    
-    # Check if the division is different from last time round
-    IF match.home_team.team_seasons.division.id != last_division;
--%]
-  <tr>
-    <th class="odd" colspan="5">
-      <h4><a href="[% division_uri %]">[% match.home_team.team_seasons.division.name | ucfirst | html_entity %]</a></h4>
-    </th>
-  </tr>
-[%
+      SET score = c.maketext("matches.versus.not-yet-played");
+      SET score_class = '';
     END;
 -%]
   <tr>
+    <!--<td data-label="[% c.maketext("teams.fixtures.day") %]">
+      [% date.day_name | ucfirst | html_entity %]
+    </td>
+    <td data-label="[% c.maketext("teams.fixtures.day") %]">
+      [% date.day_of_week | ucfirst | html_entity %]
+    </td>-->
+    <td data-label="[% c.maketext("teams.fixtures.date") %]">
+      <a href="[% fixtures_day_uri %]">[% c.i18n_datetime_format_date.format_datetime(date) | html_entity %]</a>
+    </td>
+    <td data-label="[% c.maketext("teams.fixtures.date") %]">
+      [% date.ymd %]
+    </td>
     <td>
-      <a href="[% fixtures_day_uri %]">[% date.day_name %], [% date.day %] [% date.month_name %] [% date.year %]</a>
+      <a href="[% division_uri %]">[% match.home_team.team_seasons.division.name | ucfirst | html_entity %]</a>
+    </td>
+    <td>
+      [% match.home_team.team_seasons.division.rank %]
     </td>
     <td>
       <a href="[% home_team_uri %]">[% match.home_team.club.short_name %] [% match.home_team.name %]</a>
     </td>
-    <td[% score_class %]>
-      <a href="[% c.uri_for_action('/matches/team/view_by_url_keys', [match.home_team.club.url_key, match.home_team.url_key, match.away_team.club.url_key, match.away_team.url_key, year, month, day]) %]" title="[% c.maketext("fixtures-results.view-scorecard") %]">[% score %]</a>
-    </td>
     <td>
       <a href="[% away_team_uri %]">[% match.away_team.club.short_name %] [% match.away_team.name %]</a>
     </td>
-    <td>
-      <a href="[% c.uri_for_action('/venues/view', [match.venue.url_key]) %]">[% match.venue.name %]</a>
+    <td[% score_class %]>
+      <a href="[% c.uri_for_action('/matches/team/view_by_url_keys', [match.home_team.club.url_key, match.home_team.url_key, match.away_team.club.url_key, match.away_team.url_key, year, month, day]) %]" title="[% c.maketext("fixtures-results.view-scorecard") %]">[% score %]</a>
     </td>
+    <!--<td>
+      <a href="[% c.uri_for_action('/venues/view', [match.venue.url_key]) %]">[% match.venue.name %]</a>
+    </td>-->
 [%
-    IF authorisation.match_update OR authorisation.match_cancel;
+    IF authorisation.match_update OR authorisation.match_cancel OR match.can_report( c.user );
 -%]
     <td>
 [%
@@ -105,9 +130,11 @@ IF matches.count;
   page_links_text;
 ELSE;
 -%]
-<div class="list-item">
+<ul class="option-list">
+  <li>
   [% c.maketext("fixtures-results.no-matches") %]
-</div>
+  </li>
+</ul>
 [%
 END;
 -%]

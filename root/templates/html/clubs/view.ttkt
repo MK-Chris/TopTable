@@ -82,15 +82,18 @@ IF teams.size;
   END;
 -%]
 <h4>Teams</h4>
-<table class="responsive">
+<table id="datatable" class="stripe hover order-column row-border" style="width: 100%;">
   <thead>
     <tr>
-      <th><a href="[% sort_by_name_uri %]">[% c.maketext("teams.field.name") %]</a>[% IF sort == "name" AND order == "asc" %] <img src="[% c.uri_for("/static/images/icons/sort-up.png") %]" />[% ELSIF sort == "name" %] <img src="[% c.uri_for("/static/images/icons/sort-down.png") %]" />[% END %]</th>
-      <th><a href="[% sort_by_captain_uri %]">[% c.maketext("teams.field.captain") %]</a>[% IF sort == "captain" AND order == "asc" %] <img src="[% c.uri_for("/static/images/icons/sort-up.png") %]" />[% ELSIF sort == "captain" %] <img src="[% c.uri_for("/static/images/icons/sort-down.png") %]" />[% END %]</th>
-      <th><a href="[% sort_by_division_uri %]">[% c.maketext("teams.field.division") %]</a>[% IF sort == "division" AND order == "asc" %] <img src="[% c.uri_for("/static/images/icons/sort-up.png") %]" />[% ELSIF sort == "division" %] <img src="[% c.uri_for("/static/images/icons/sort-down.png") %]" />[% END %]</th>
-      <th><a href="[% sort_by_home_night_uri %]">[% c.maketext("teams.field.home-night") %]</a>[% IF sort == "home-night" AND order == "asc" %] <img src="[% c.uri_for("/static/images/icons/sort-up.png") %]" />[% ELSIF sort == "home-night" %] <img src="[% c.uri_for("/static/images/icons/sort-down.png") %]" />[% END %]</th>
+      <th>[% c.maketext("teams.field.name") %]</th>
+      <th>[% c.maketext("teams.field.captain") %]</th>
+      <th>[% c.maketext("teams.field.division") %]</th>
+      <th>[% c.maketext("teams.field.division") %]</th>
+      <th>[% c.maketext("teams.field.home-night") %]</th>
+      <th>[% c.maketext("teams.field.home-night") %]</th>
     </tr>
   </thead>
+  <tbody>
 [%
   SET i = 0;
   FOREACH team IN teams;
@@ -108,22 +111,23 @@ IF teams.size;
     # Just do this once so we don't keep having to go back to the DB (which is what first does)
     SET team_season = team.team_seasons.first;
 -%]
-  <tbody>
     <tr>
-      <td data-label="Name"><a href="[% team_uri %]">[% team.name %]</a></td>
+      <td><a href="[% team_uri %]">[% team.name %]</a></td>
 [%
       IF team.team_seasons.first.captain;
 -%]
-      <td data-label="Captain"><a href="[% person_uri %]">[% team_season.captain.display_name %]</a></td>
+      <td><a href="[% person_uri %]">[% team_season.captain.display_name %]</a></td>
 [%
       ELSE;
 -%]
-      <td data-label="Captain">None specified.</td>
+      <td>None specified.</td>
 [%
       END;
 -%]
-      <td data-label="Division"><a href="[% tables_uri %]">[% team_season.division.name %]</a></td>
-      <td data-label="Home Night">[% team_season.home_night.weekday_name %]</td>
+      <td><a href="[% tables_uri %]">[% team_season.division.name %]</a></td>
+      <td><a href="[% tables_uri %]">[% team_season.division.rank %]</a></td>
+      <td>[% team_season.home_night.weekday_name %]</td>
+      <td>[% team_season.home_night.weekday_number %]</td>
     </tr>
 [%
   END;

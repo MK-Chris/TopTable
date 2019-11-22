@@ -93,7 +93,12 @@ sub base_list :Chained("/") :PathPart("events") :CaptureArgs(0) {
   $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( event_edit event_delete event_create) ], "", 0] );
   
   # Page description
-  $c->stash({page_description => $c->maketext("description.events.list", $site_name)});
+  $c->stash({
+    page_description => $c->maketext("description.events.list", $site_name),
+    external_scripts      => [
+      $c->uri_for("/static/script/standard/option-list.js"),
+    ],
+  });
   
   # Load the messages
   $c->load_status_msgs;
@@ -348,6 +353,9 @@ sub view_seasons :Chained("view") :PathPart("seasons") :CaptureArgs(0) {
   $c->stash({
     template          => "html/events/list-seasons.ttkt",
     page_description  => $c->maketext("description.events.list-seasons", $event_name, $site_name),
+    external_scripts      => [
+      $c->uri_for("/static/script/standard/option-list.js"),
+    ],
   });
   
   # Push the current URI on to the breadcrumbs

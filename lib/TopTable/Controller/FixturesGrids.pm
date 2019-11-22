@@ -91,7 +91,12 @@ sub base_list :Chained("/") :PathPart("fixtures-grids") :CaptureArgs(0) {
   $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( fixtures_edit fixtures_delete fixtures_create) ], "", 0] );
   
   # Page description
-  $c->stash({page_description => $c->maketext("description.fixtures-grids.list", $site_name)});
+  $c->stash({
+    page_description => $c->maketext("description.fixtures-grids.list", $site_name),
+    external_scripts      => [
+      $c->uri_for("/static/script/standard/option-list.js"),
+    ],
+  });
   
   # Load the messages
   $c->load_status_msgs;
@@ -319,6 +324,9 @@ sub view_finalise :Private {
     view_online_display => sprintf( "Viewing %s", $grid->name ),
     view_online_link    => 1,
     canonical_uri       => $canonical_uri,
+    external_scripts      => [
+      $c->uri_for("/static/script/standard/option-list.js"),
+    ],
   });
 }
 
@@ -339,6 +347,9 @@ sub view_seasons :Chained("view") :PathPart("seasons") :CaptureArgs(0) {
   $c->stash({
     template          => "html/fixtures-grids/list-seasons.ttkt",
     page_description  => $c->maketext("description.fixtures-grids.list-seasons", $grid_name, $site_name),
+    external_scripts      => [
+      $c->uri_for("/static/script/standard/option-list.js"),
+    ],
   });
   
   # Push the current URI on to the breadcrumbs

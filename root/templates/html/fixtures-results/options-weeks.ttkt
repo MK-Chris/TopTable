@@ -4,7 +4,7 @@
 [% # "chomps" the whitespace/newline at that end of the    -%]
 [% # output (use View Source in browser to see the effect) -%]
 
-[% # Some basic HTML with a loop to display clubs -%]
+<ul class="option-list">
 [%
 USE zeroes = format("%02d");
 FOREACH week IN display_options;
@@ -15,7 +15,7 @@ FOREACH week IN display_options;
   SET month_number  = zeroes( date.month );
   SET day_number    = zeroes( date.day );
 -%]
-<div class="list-item">
+  <li>
 [%
   IF specific_season;
     SET uri = c.uri_for_action("/fixtures-results/view_week_specific_season_first_page", [season.url_key, date.year, month_number, day_number]);
@@ -23,8 +23,9 @@ FOREACH week IN display_options;
     SET uri = c.uri_for_action("/fixtures-results/view_week_current_season_first_page", [date.year, month_number, day_number]);
   END;
 -%]
-  <a href="[% uri %]">[% c.maketext("fixtures-results.view.week-beginning", day_html _ ", " _ date.day _ " " _ month_html _ " " _ date.year) %]</a> ([% c.maketext("fixtures-results.view.match-count", week.get_column("number_of_matches")) %])
-</div>
+    <a href="[% uri %]">[% c.maketext("fixtures-results.view.week-beginning", day_html _ ", " _ date.day _ " " _ month_html _ " " _ date.year) %]</a> ([% c.maketext("fixtures-results.view.match-count", week.get_column("number_of_matches")) %])
+  </li>
 [%
 END;
 -%]
+</ul>

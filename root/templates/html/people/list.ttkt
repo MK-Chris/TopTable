@@ -7,13 +7,15 @@ IF people.count;
   # Use PROCESS instead of INCLUDE so that the page_links_text is defined in the current template thereafter
   PROCESS "html/generic/pagination.ttkt" OBJECT_PLURAL = c.maketext("object.plural.people");
   page_links_text;
-  
+-%]
+<ul class="option-list">
+[%
   WHILE (person = people.next);
     name_html = FILTER html_entity; person.display_name; END;
 -%]
 
-<div class="list-item">
-  <a href="[% c.uri_for_action("/people/view_current_season", [person.url_key]) %]">[% name_html %]</a>
+  <li>
+    <a href="[% c.uri_for_action("/people/view_current_season", [person.url_key]) %]">[% name_html %]</a>
 [%
     IF authorisation.person_edit;
 -%]
@@ -22,19 +24,24 @@ IF people.count;
     END;
     IF authorisation.person_delete AND person.can_delete;
 -%]
-  <a href="[% c.uri_for_action("/people/delete", [person.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", name_html) %]" title="[% c.maketext("admin.delete-object", name_html) %]" /></a>
+    <a href="[% c.uri_for_action("/people/delete", [person.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", name_html) %]" title="[% c.maketext("admin.delete-object", name_html) %]" /></a>
 [%
     END;
 -%]
-</div>
+  </li>
 [%
   END;
+-%]
+</ul>
+[%
   page_links_text;
 ELSE;
 -%]
-<div class="list-item">
-  [% c.maketext("people.none") %]
-</div>
+<ul class="option-list">
+  <li>
+    [% c.maketext("people.none") %]
+  </li>
+</ul>
 [%
 END;
 -%]

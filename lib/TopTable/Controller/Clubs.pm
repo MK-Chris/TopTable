@@ -89,7 +89,12 @@ sub base_list :Chained("/") :PathPart("clubs") :CaptureArgs(0) {
   $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( club_edit club_delete club_create) ], "", 0] );
   
   # Page description
-  $c->stash({page_description => $c->maketext("description.clubs.list", $site_name)});
+  $c->stash({
+    page_description  => $c->maketext("description.clubs.list", $site_name),
+    external_scripts  => [
+      $c->uri_for("/static/script/standard/option-list.js"),
+    ],
+  });
   
   # Load the messages
   $c->load_status_msgs;
@@ -335,6 +340,17 @@ sub view_finalise :Private {
     view_online_display => sprintf( "Viewing %s", $club->full_name ),
     view_online_link    => 1,
     canonical_uri       => $canonical_uri,
+    external_scripts    => [
+      $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
+      $c->uri_for("/static/script/clubs/view.js"),
+    ],
+    external_styles     => [
+      $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
+    ],
   });
 }
 
@@ -354,6 +370,9 @@ sub view_seasons :Chained("view") :PathPart("seasons") :CaptureArgs(0) {
   $c->stash({
     template          => "html/clubs/list-seasons.ttkt",
     page_description  => $c->maketext("description.clubs.list-seasons", $club_name, $site_name),
+    external_scripts      => [
+      $c->uri_for("/static/script/standard/option-list.js"),
+    ],
   });
   
   # Push the current URI on to the breadcrumbs

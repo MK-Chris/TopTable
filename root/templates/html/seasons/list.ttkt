@@ -8,7 +8,9 @@ IF seasons.count;
   # Use PROCESS instead of INCLUDE so that the page_links_text is defined in the current template thereafter
   PROCESS "html/generic/pagination.ttkt" OBJECT_PLURAL = c.maketext("object.plural.seasons");
   page_links_text;
-  
+-%]
+<ul class="option-list">
+[%
   WHILE (season = seasons.next);
     IF season.complete;
       SET CURRENT_TEXT = "";
@@ -18,34 +20,39 @@ IF seasons.count;
     
     name_html = FILTER html_entity; season.name; END;
 -%]
-<div class="list-item">
-  <a href="[% c.uri_for_action("/seasons/view", [season.url_key]) %]">[% season.name | html_entity %]</a> [% CURRENT_TEXT %]
+  <li>
+    <a href="[% c.uri_for_action("/seasons/view", [season.url_key]) %]">[% season.name | html_entity %]</a> [% CURRENT_TEXT %]
 [%
     IF authorisation.season_edit;
 -%]
-  <a href="[% c.uri_for_action("/seasons/edit" [season.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", name_html) %]" title="[% c.maketext("admin.edit-object", name_html) %]" /></a>
+    <a href="[% c.uri_for_action("/seasons/edit" [season.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", name_html) %]" title="[% c.maketext("admin.edit-object", name_html) %]" /></a>
 [%
       IF season.can_complete;
 -%]
-  <a href="[% c.uri_for_action("/seasons/archive" [season.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0043-Safe-icon-16.png") %]" alt="[% c.maketext("admin.archive-object", name_html) %]" title="[% c.maketext("admin.archive-object", name_html) %]" /></a>
+    <a href="[% c.uri_for_action("/seasons/archive" [season.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0043-Safe-icon-16.png") %]" alt="[% c.maketext("admin.archive-object", name_html) %]" title="[% c.maketext("admin.archive-object", name_html) %]" /></a>
 [%
       END;
     END;
     IF authorisation.season_delete AND season.can_delete;
 -%]
-  <a href="[% c.uri_for_action("/seasons/delete" [season.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", name_html) %]" title="[% c.maketext("admin.delete-object", name_html) %]" /></a>
+    <a href="[% c.uri_for_action("/seasons/delete" [season.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", name_html) %]" title="[% c.maketext("admin.delete-object", name_html) %]" /></a>
 [%
     END;
 -%]
-</div>
+</li>
 [%
   END;
+-%]
+</ul>
+[%
   page_links_text;
 ELSE;
 -%]
-<div class="list-item">
-  [% c.maketext("seasons.none") %]
-</div>
+<ul class="option-list">
+  <li>
+    [% c.maketext("seasons.none") %]
+  </li>
+</ul>
 [%
 END;
 -%]
