@@ -154,6 +154,7 @@ sub list :Local {
     template            => "html/teams/list.ttkt",
     external_scripts    => [
       $c->uri_for("/static/script/standard/accordion.js"),
+      $c->uri_for("/static/script/standard/option-list.js"),
     ],
     view_online_display => "Viewing teams",
     view_online_link    => 1,
@@ -504,6 +505,8 @@ sub view_finalise :Private {
     season            => $season,
   });
   
+  my $team_view_js_suffix = ( $c->stash->{authorisation}{match_update} or $c->stash->{authorisation}{match_cancel} ) ? "-with-actions" : "";
+  
   # Set up the template to use
   $c->stash({
     template            => "html/teams/view.ttkt",
@@ -512,11 +515,19 @@ sub view_finalise :Private {
     canonical_uri       => $canonical_uri,
     external_scripts    => [
       $c->uri_for("/static/script/plugins/responsive-tabs/jquery.responsiveTabs.mod.js"),
-      $c->uri_for("/static/script/standard/responsive-tabs.js"),
+      $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
+      $c->uri_for( sprintf( "/static/script/teams/view%s.js", $team_view_js_suffix ) ),
     ],
     external_styles     => [
       $c->uri_for("/static/css/responsive-tabs/responsive-tabs.css"),
       $c->uri_for("/static/css/responsive-tabs/style-jqueryui.css"),
+      $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/fixedColumns.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
     ],
     view_online_display => sprintf( "Viewing %s", $encoded_name ),
     view_online_link    => 1,
@@ -564,7 +575,12 @@ sub view_seasons :Private {
   my $site_name = $c->stash->{encoded_site_name};
   my $team_name = $c->stash->{encoded_name};
   
-  $c->stash({page_description => $c->maketext("description.teams.list-seasons", $team_name, $site_name)});
+  $c->stash({
+    page_description  => $c->maketext("description.teams.list-seasons", $team_name, $site_name),
+    external_scripts  => [
+      $c->uri_for("/static/script/standard/option-list.js"),
+    ],
+  });
   
   # Push the current URI on to the breadcrumbs
   push( @{ $c->stash->{breadcrumbs} }, {

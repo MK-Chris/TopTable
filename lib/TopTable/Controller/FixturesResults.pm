@@ -222,6 +222,9 @@ sub retrieve_paged_seasons :Private {
     seasons             => $seasons,
     page_info           => $page_info,
     page_links          => $page_links,
+    external_scripts      => [
+      $c->uri_for("/static/script/standard/option-list.js"),
+    ],
   });
 }
 
@@ -269,6 +272,9 @@ sub root :Private {
     template            => "html/fixtures-results/root.ttkt",
     view_online_display => sprintf("Viewing fixtures & results for season %s", $season->name),
     view_online_link    => 1,
+    external_scripts      => [
+      $c->uri_for("/static/script/standard/option-list.js"),
+    ],
   });
 }
 
@@ -368,6 +374,7 @@ sub filter_view :Private {
     template            => "html/fixtures-results/options-$view_method.ttkt",
     external_scripts    => [
       $c->uri_for("/static/script/standard/accordion.js"),
+      $c->uri_for("/static/script/standard/option-list.js"),
     ],
     view_online_display => "Viewing fixtures & results for season " . $c->stash->{season}->name,
     view_online_link    => 1,
@@ -682,6 +689,17 @@ sub view_team :Private {
       text      => $c->maketext("calendar.download"),
       link_uri  => $c->uri_for_action("/fixtures-results/download_team_by_url_key_specific_season", [$season->url_key, $team->club->url_key, $team->url_key, "calendar"]),
     }],
+    external_scripts    => [
+      $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
+      $c->uri_for("/static/script/fixtures-results/view-no-grouping.js"),
+    ],
+    external_styles     => [
+      $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
+    ],
   });
   
   # Breadcrumbs links
@@ -989,7 +1007,7 @@ sub view_division :Private {
   my $encoded_old_division_name = encode_entities( $division_season->name );
   my $encoded_season_name       = $c->stash->{encoded_season_name};
   
-  $c->add_status_message( "info", $c->maketext("divisions.name.changed-notice", $encoded_old_division_name, $encoded_division_name) );
+  $c->add_status_message( "info", $c->maketext("divisions.name.changed-notice", $encoded_old_division_name, $encoded_division_name) ) if $division->name ne $division_season->name;
   
   my $online_display;
   if ( $specific_season ) {
@@ -1014,6 +1032,17 @@ sub view_division :Private {
       text      => $c->maketext("calendar.download"),
       link_uri  => $c->uri_for_action("/fixtures-results/download_division_specific_season", [$season->url_key, $division->url_key, "calendar"]),
     }],
+    external_scripts    => [
+      $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
+      $c->uri_for("/static/script/fixtures-results/view-no-grouping.js"),
+    ],
+    external_styles     => [
+      $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
+    ],
   });
   
   # Breadcrumbs links
@@ -1248,6 +1277,17 @@ sub view_venue :Private {
       text      => $c->maketext("calendar.download"),
       link_uri  => $c->uri_for_action("/fixtures-results/download_venue_specific_season", [$season->url_key, $venue->url_key, "calendar"]),
     }],
+    external_scripts    => [
+      $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
+      $c->uri_for("/static/script/fixtures-results/view-no-grouping-with-division-no-venue.js"),
+    ],
+    external_styles     => [
+      $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
+    ],
   });
   
   # Breadcrumbs links
@@ -1490,6 +1530,19 @@ sub view_outstanding :Private {
       text      => $c->maketext("fixtures-results.view.outstanding-scorecards"),
       link_uri  => $c->uri_for_action("/fixtures-results/view_outstanding_current_season_first_page"),
     }],
+    external_scripts    => [
+      $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
+      $c->uri_for("/static/script/fixtures-results/view-group-weeks.js"),
+    ],
+    external_styles     => [
+      $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/rowGroup.dataTables.min.css"),
+    ],
   });
   
   # Breadcrumbs links
@@ -1661,6 +1714,19 @@ sub view_month :Private {
       text      => $c->maketext("calendar.download"),
       link_uri  => $c->uri_for_action("/fixtures-results/download_month_specific_season", [$season->url_key, $start_date->year, sprintf("%02d", $start_date->month), "calendar"]),
     }],
+    external_scripts    => [
+      $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
+      $c->uri_for("/static/script/fixtures-results/view-group-divisions.js"),
+    ],
+    external_styles     => [
+      $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/rowGroup.dataTables.min.css"),
+    ],
   });
   
   # Breadcrumbs links
@@ -1908,6 +1974,19 @@ sub view_week :Private {
       text      => $c->maketext("calendar.download"),
       link_uri  => $c->uri_for_action("/fixtures-results/download_week_specific_season", [$season->url_key, $week_date->year, sprintf("%02d", $week_date->month), sprintf("%02d", $week_date->day), "calendar"]),
     }],
+    external_scripts    => [
+      $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
+      $c->uri_for("/static/script/fixtures-results/view-group-divisions.js"),
+    ],
+    external_styles     => [
+      $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/rowGroup.dataTables.min.css"),
+    ],
   });
   
   # Breadcrumbs links
@@ -1924,7 +2003,7 @@ sub view_week :Private {
       path  => $c->uri_for_action("/fixtures-results/filter_view_specific_season", ["weeks"]),
       label => $c->maketext("menu.text.fixtures-results-by-week"),
     }, {
-      path  => $c->uri_for_action("/fixtures-results/view_day_current_season", [$week_date->year, $week_date->month, $week_date->day]),
+      path  => $c->uri_for_action("/fixtures-results/view_day_current_season_first_page", [$week_date->year, $week_date->month, $week_date->day]),
       label => sprintf( "Week beginning %s, %d %s %d", $week_date->day_name, $week_date->day, $week_date->month_name, $week_date->year ),
     });
   }
@@ -2147,6 +2226,19 @@ sub view_day :Private {
       text      => $c->maketext("calendar.download"),
       link_uri  => $c->uri_for_action("/fixtures-results/download_day_specific_season", [$season->url_key, $date->year, sprintf("%02d", $date->month), sprintf("%02d", $date->day), "calendar"]),
     }],
+    external_scripts    => [
+      $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
+      $c->uri_for("/static/script/fixtures-results/view-group-divisions-no-date.js"),
+    ],
+    external_styles     => [
+      $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/rowGroup.dataTables.min.css"),
+    ],
   });
   
   # Breadcrumbs links

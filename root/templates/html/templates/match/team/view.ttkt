@@ -4,20 +4,16 @@
 
 <div id="template_rules">
   <h4>[% c.maketext("templates.form.legend.template-rules") %]</h4>
-  <table class="responsive-vertical">
-    <tr>
-      <th>[% c.maketext("templates.team-match.field.winner-type") %]</th>
-      <td>[% c.maketext("winner-type.description." _ tt_template.winner_type.id) %]</td>
-    </tr>
-    <tr>
-      <th>[% c.maketext("templates.team-match.field.singles-players-per-team") %]</th>
-      <td>[% tt_template.singles_players_per_team %]</td>
-    </tr>
-  </table>
+  <dl>
+      <dt>[% c.maketext("templates.team-match.field.winner-type") %]</dt>
+      <dd>[% c.maketext("winner-type.description." _ tt_template.winner_type.id) %]</dd>
+      <dt>[% c.maketext("templates.team-match.field.singles-players-per-team") %]</dt>
+      <dd>[% tt_template.singles_players_per_team %]</dd>
+  </dl>
 </div>
 
 <h4>Template Games</h4>
-<table class="responsive">
+<table id="datatable" class="stripe hover order-column row-border">
   <thead>
     <tr>
       <th>[% c.maketext("templates.team-match.games.field.game-number") %]</th>
@@ -36,7 +32,8 @@ FOREACH game IN tt_template_games;
 [%
   IF game.doubles_game == 1;
 -%]
-      <td colspan="2" data-label="[% c.maketext("templates.team-match.games.field.players") %]">[% c.maketext("templates.team-match.games.field.players") %]</td>
+      <td data-label="[% c.maketext("templates.team-match.games.field.players") %]">[% c.maketext("templates.team-match.games.field.players") %]</td>
+      <td data-label="[% c.maketext("templates.team-match.games.field.players") %]">&nbsp;</td>
 [%
   ELSE;
 -%]

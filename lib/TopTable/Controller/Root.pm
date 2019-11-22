@@ -122,10 +122,20 @@ sub index :Path :Args(0) {
   my $current_season                  = $c->model("DB::Season")->get_current;
   my $online_users_last_active_limit  = $c->datetime_tz({time_zone => "UTC"})->subtract(minutes => 15);
   my $online_user_count               = $c->model("DB::Session")->get_all_online_users( $online_users_last_active_limit )->count;
-  my $matches                         = $c->model("DB::TeamMatch")->matches_on_date({
-    season  => $current_season,
-    date    => $c->datetime,
-  }) if defined( $current_season );
+  
+  my ( $matches, $matches_today );
+  
+  if ( defined( $current_season ) ) {
+    $matches = $c->model("DB::TeamMatch")->matches_on_date({
+      season  => $current_season,
+      date    => $c->datetime,
+    });
+    
+    $matches_today = $matches->count;
+  } else {
+    $matches_today = 0;
+  }
+  
   my $articles = $c->model("DB::NewsArticle")->page_records({
     page_number       => 1,
     results_per_page  => 5,
@@ -141,9 +151,20 @@ sub index :Path :Args(0) {
     external_scripts      => [
       $c->uri_for("/static/script/plugins/qtip/jquery.qtip.min.js"),
       $c->uri_for("/static/script/standard/qtip.js"),
+      $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
+      $c->uri_for("/static/script/event-viewer/view-home.js"),
+      $c->uri_for("/static/script/fixtures-results/view-teams-and-divisions.js"),
+      $c->uri_for("/static/script/standard/option-list.js"),
     ],
     external_styles       => [
       $c->uri_for("/static/css/qtip/jquery.qtip.css"),
+      $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/fixedColumns.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
     ],
     subtitle1             => $c->maketext("home-page.welcome"),
     no_subtitles_in_title => 1,
@@ -152,6 +173,7 @@ sub index :Path :Args(0) {
     event_logs            => $event_logs,
     exclude_event_user    => 1,
     matches               => $matches,
+    matches_today         => $matches_today,
     articles              => $articles,
     online_user_count     => $online_user_count,
     hide_breadcrumbs      => 1, # Hide the breadcrumbs

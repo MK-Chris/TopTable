@@ -8,33 +8,40 @@ IF meeting_types.count;
   # Use PROCESS instead of INCLUDE so that the page_links_text is defined in the current template thereafter
   PROCESS "html/generic/pagination.ttkt" OBJECT_PLURAL = c.maketext("object.plural.meeting-types");
   page_links_text;
-  
+-%]
+<ul class="option-list">
+[%
   WHILE (meeting_type = meeting_types.next);
     name_html = FILTER html_entity; meeting_type.name; END;
 -%]
-<div class="list-item">
-  <a href="[% c.uri_for_action("/meeting-types/view_first_page", [meeting_type.url_key]) %]">[% name_html %]</a>
+  <li>
+    <a href="[% c.uri_for_action("/meeting-types/view_first_page", [meeting_type.url_key]) %]">[% name_html %]</a>
 [%
     IF authorisation.meeting_type_edit;
 -%]
-  <a href="[% c.uri_for_action("/meeting-types/edit" [meeting_type.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", name_html) %]" title="[% c.maketext("admin.edit-object", name_html) %]" /></a>
+    <a href="[% c.uri_for_action("/meeting-types/edit" [meeting_type.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", name_html) %]" title="[% c.maketext("admin.edit-object", name_html) %]" /></a>
 [%
     END;
     IF authorisation.meeting_type_delete AND meeting_type.can_delete;
 -%]
-  <a href="[% c.uri_for_action("/meeting-types/delete" [meeting_type.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", name_html) %]" title="[% c.maketext("admin.delete-object", name_html) %]" /></a>
+    <a href="[% c.uri_for_action("/meeting-types/delete" [meeting_type.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", name_html) %]" title="[% c.maketext("admin.delete-object", name_html) %]" /></a>
 [%
     END;
 -%]
-</div>
+  </li>
 [%
   END;
+-%]
+</ul>
+[%
   page_links_text;
 ELSE;
 -%]
-<div class="list-item">
-  [% c.maketext("meeting-types.none") %]
-</div>
+<ul class="option-list">
+  <li>
+    [% c.maketext("meeting-types.none") %]
+  </li>
+</ul>
 [%
 END;
 -%]

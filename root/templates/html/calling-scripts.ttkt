@@ -13,9 +13,6 @@ END;
 IF geocode;
   INCLUDE "scripts/google-geocode-standard.ttkt";
 END;
-IF directions;
-  INCLUDE "scripts/google-directions-standard.ttkt";
-END;
 -%]
 
   $(document).ready(function() {

@@ -127,7 +127,12 @@ sub base_list :Chained("/") :PathPart("news") :CaptureArgs(0) {
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["news_article_delete_own", "", 0] ) if $c->user_exists and !$c->stash->{authorisation}{news_article_delete_all}; # Only do this if the user is logged in and we can't delete all articles
   
   # Page description
-  $c->stash({page_description => $c->maketext("description.news.list", $site_name)});
+  $c->stash({
+    page_description => $c->maketext("description.news.list", $site_name),
+    external_scripts      => [
+      $c->uri_for("/static/script/standard/option-list.js"),
+    ],
+  });
   
   # Load the messages
   $c->load_status_msgs;

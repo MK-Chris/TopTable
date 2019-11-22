@@ -82,6 +82,12 @@ sub base_list :Chained("/") :PathPart("league-averages/filters") :CaptureArgs(0)
   # Check the authorisation to edit clubs we can display the link if necessary
   $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( average_filter_create_public average_filter_edit_public average_filter_delete_public average_filter_view_all average_filter_edit_all average_filter_delete_all ) ], "", 0] );
   
+  $c->stash({
+    external_scripts      => [
+      $c->uri_for("/static/script/standard/option-list.js"),
+    ],
+  });
+  
   # Load the messages
   $c->load_status_msgs;
 }

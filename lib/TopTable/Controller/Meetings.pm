@@ -133,7 +133,12 @@ sub base_list :Chained("/") :PathPart("meetings") :CaptureArgs(0) {
   $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( meeting_edit meeting_delete meeting_create) ], "", 0] );
   
   # Page description
-  $c->stash({page_description => $c->maketext("description.meetings.list", $site_name)});
+  $c->stash({
+    page_description  => $c->maketext("description.meetings.list", $site_name),
+    external_scripts  => [
+      $c->uri_for("/static/script/standard/option-list.js"),
+    ],
+  });
   
   # Load the messages
   $c->load_status_msgs;

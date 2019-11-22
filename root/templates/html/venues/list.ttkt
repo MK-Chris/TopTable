@@ -8,33 +8,40 @@ IF venues.count;
   # Use PROCESS instead of INCLUDE so that the page_links_text is defined in the current template thereafter
   PROCESS "html/generic/pagination.ttkt" OBJECT_PLURAL = c.maketext("object.plural.venues");
   page_links_text;
-  
+-%]
+<ul class="option-list">
+[%
   WHILE (venue = venues.next);
     venue_html = FILTER html_entity; venue.name; END;
 -%]
-<div class="list-item">
-  <a href="[% c.uri_for_action("/venues/view", [venue.url_key]) %]">[% venue.name | html_entity %]</a>
+  <li>
+    <a href="[% c.uri_for_action("/venues/view", [venue.url_key]) %]">[% venue.name | html_entity %]</a>
 [%
     IF authorisation.venue_edit;
 -%]
-  <a href="[% c.uri_for_action("/venues/edit", [venue.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", venue_html) %]" title="[% c.maketext("admin.edit-object", venue_html) %]" /></a>
+    <a href="[% c.uri_for_action("/venues/edit", [venue.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", venue_html) %]" title="[% c.maketext("admin.edit-object", venue_html) %]" /></a>
 [%
     END;
     IF authorisation.venue_delete AND venue.can_delete;
 -%]
-  <a href="[% c.uri_for_action("/venues/delete", [venue.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", venue.name) | html_entity %]" title="[% c.maketext("admin.delete-object", venue_html) %]" /></a>
+    <a href="[% c.uri_for_action("/venues/delete", [venue.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", venue.name) | html_entity %]" title="[% c.maketext("admin.delete-object", venue_html) %]" /></a>
 [%
     END;
 -%]
-</div>
+  </li>
 [%
   END;
+-%]
+</ul>
+[%
   page_links_text;
 ELSE;
 -%]
-<div class="list-item">
-  [% c.maketext("venues.none") %]
-</div>
+<ul class="option-list">
+  <li>
+    [% c.maketext("venues.none") %]
+  </li>
+</ul>
 [%
 END;
 IF authorisation.venue_create;

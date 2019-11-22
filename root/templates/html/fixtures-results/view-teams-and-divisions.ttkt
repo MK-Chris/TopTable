@@ -1,0 +1,67 @@
+[% # This is a TT comment. -%]
+
+[% # Note That the '-' at the beginning or end of TT code  -%]
+[% # "chomps" the whitespace/newline at that end of the    -%]
+[% # output (use View Source in browser to see the effect) -%]
+
+[% # Some basic HTML with a loop to display clubs -%]
+<div id="matches">
+[%
+IF matches.count;
+-%]
+<table id="fixtures-table" class="stripe hover order-column row-border" style="width: 100%;">
+  <thead>
+    <tr>
+      <th>[% c.maketext("teams.field.division-rank") %]</th>
+      <th>[% c.maketext("teams.field.division") %]</th>
+      <th>[% c.maketext("fixtures-results.heading.home-team") %]</th>
+      <th>[% c.maketext("fixtures-results.heading.away-team") %]</th>
+    </tr>
+  </thead>
+[%
+  USE zeroes = format("%02d");
+  WHILE (match = matches.next);
+    SET date = match.actual_date;
+    SET month = zeroes( match.actual_date.month );
+    SET day   = zeroes( match.actual_date.day );
+    
+    IF specific_season;
+      SET division_uri  = c.uri_for_action("/league-tables/view_specific_season", [match.division.url_key, season.url_key]);
+      SET home_team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [match.home_team.club.url_key, match.home_team.url_key, season.url_key]);
+      SET away_team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [match.away_team.club.url_key, match.away_team.url_key, season.url_key]);
+    ELSE;
+      SET division_uri  = c.uri_for_action("/league-tables/view_current_season", [match.division.url_key]);
+      SET home_team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [match.home_team.club.url_key, match.home_team.url_key]);
+      SET away_team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [match.away_team.club.url_key, match.away_team.url_key]);
+    END;
+-%]
+  <tr>
+    <td>
+      [% match.division.rank %]</a>
+    </td>
+    <td>
+      <a href="[% division_uri %]">[% match.division.name | html_entity %]</a>
+    </td>
+    <td>
+      <a href="[% home_team_uri %]">[% match.home_team.club.short_name | html_entity %] [% match.home_team.name | html_entity %]</a>
+    </td>
+    <td>
+      <a href="[% away_team_uri %]">[% match.away_team.club.short_name | html_entity %] [% match.away_team.name | html_entity %]</a>
+    </td>
+  </tr>
+[%
+  END;
+-%]
+</table>
+[%
+ELSE;
+-%]
+<ul class="option-list">
+  <li>
+  [% c.maketext("fixtures-results.no-matches") %]
+  </li>
+</ul>
+[%
+END;
+-%]
+</div>

@@ -16,6 +16,7 @@ FOREACH team IN teams;
   IF team.club.id != LAST_ID;
     IF i > 1;
 -%]
+  </ul>
   </div>
   <!-- END individual club container -->
 [%
@@ -25,11 +26,12 @@ FOREACH team IN teams;
   <h3>[% club_html %]</h3>
   <!-- START individual club container -->
   <div>
+  <ul class="option-list">
 [%
     SET LAST_ID = team.club.id;
   END;
 -%]
-    <div class="list-item">
+    <li>
       <a href="[% c.uri_for_action("/teams/view_current_season_by_url_key", [team.club.url_key, team.url_key]) %]">[% team_html %]</a>
 [%
   IF authorisation.team_edit;
@@ -43,7 +45,7 @@ FOREACH team IN teams;
 [%
   END;
 -%]
-    </div>
+    </li>
 [%
 END;
 -%]

@@ -312,10 +312,6 @@ sub can_delete_fixtures {
         ">" => 0,
       }
     }, {
-      home_team_games_drawn => {
-        ">" => 0,
-      }
-    }, {
       home_team_legs_won => {
         ">" => 0,
       }
@@ -328,15 +324,7 @@ sub can_delete_fixtures {
         ">" => 0,
       }
     }, {
-      away_team_games_won => {
-        ">" => 0,
-      }
-    }, {
       away_team_games_lost => {
-        ">" => 0,
-      }
-    }, {
-      away_team_games_drawn => {
         ">" => 0,
       }
     }, {
@@ -348,7 +336,7 @@ sub can_delete_fixtures {
         ">" => 0,
       }
     }, {
-      away_team_games_won => {
+      games_drawn => {
         ">" => 0,
       }
     }]

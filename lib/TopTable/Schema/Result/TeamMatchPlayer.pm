@@ -436,7 +436,8 @@ sub update_person {
   my $return_value      = {error => []};
   my $log               = $parameters->{logger};
   my ( $active_season, $loan_team );
-  my $originally_missing = 0;
+  my $originally_missing  = 0;
+  my $game_scores_deleted = 0;
   
   # First check the match wasn't cancelled; if it was, we return straight away
   if ( $match->cancelled ) {
@@ -524,6 +525,9 @@ sub update_person {
   
   # Check if we got an error
   if ( scalar( @{ $return_value->{error} } ) == 0 ) {
+    # Wrap all our database writing into a transaction
+    my $transaction = $self->result_source->schema->txn_scope_guard;
+    
     # Do the update here - if we get here, there are no errors, as we will have returned from the function after logging the error
     my $player_value = defined( $person ) ? $person->id : undef;
     
@@ -557,8 +561,14 @@ sub update_person {
       
       # If we're removing a player, we need to zero their score for each game, as we can't have
       # scores without players.
-      if ( ( !defined( $person ) and $action ne "set-missing" ) or $originally_missing ) {
+      # If we're adding a player where they were previously missing, we also call the delete routine
+      # to unvoid / award the game.
+      if ( ( !defined( $person ) and !$originally_missing ) or ( defined( $person ) and $originally_missing ) ) {
         my $delete_result = $player_game->update_score({delete => 1});
+        
+        # Game scores are deleted, so the update_score() routine for each game will udpate the player_season statistics - flag this,
+        # so we don't try and do it again.
+        $game_scores_deleted = 1;
       }
       
       # Now we ensure the person objects are correct or are cleared - we have to do this after the above delete,
@@ -586,11 +596,11 @@ sub update_person {
     }
     
     # We need to update the season statistics for both
+    my ( $new_player_season );
+    my $match_team_field = ( $location eq "home" ) ? "home_team" : "away_team";
     if ( defined( $person ) ) {
       # Look for a person_season row for this player, team and season; create one if it's not there.
-      my $match_team_field = ( $location eq "home" ) ? "home_team" : "away_team";
-      
-      my $new_player_season = $person->search_related("person_seasons", {
+      $new_player_season = $person->search_related("person_seasons", {
         season  => $match->season->id,
         team    => $match->$match_team_field->id,
       }, {
@@ -606,125 +616,151 @@ sub update_person {
         surname               => $person->surname,
         display_name          => $person->display_name,
       }) unless defined( $new_player_season );
-      
-      if ( defined( $self->player ) ) {
-        # We have a player already, so we're replacing
-        if ( $match->started ) {
-          # If the match has been started, we need to update the statistics
-          my $original_player_season = $self->player->search_related("person_seasons", {
-            season  => $match->season->id,
-            team    => $match->$match_team_field->id,
-          }, {
-            rows    => 1,
-          })->single;
-          
-          if ( $match->started ) {
-            # Add / take away a match played if the match has started
-            $original_player_season->matches_played( $original_player_season->matches_played - 1 );
-            $new_player_season->matches_played( $new_player_season->matches_played + 1 );
-          }
-          
-          if ( $match->complete ) {
-            # Matches won / lost / drawn need to be worked out if the match is complete
-            if ( $match->home_team_match_score > $match->away_team_match_score ) {
-              # Home win
-              if ( $location eq "home" ) {
-                # Home player, add a match won to new, remove from old
-                $original_player_season->matches_won( $original_player_season->matches_won - 1 );
-                $new_player_season->matches_won( $new_player_season->matches_won + 1 );
-              } else {
-                # Away player, add a match lost to new, remove from old
-                $original_player_season->matches_lost( $original_player_season->matches_lost - 1 );
-                $new_player_season->matches_lost( $new_player_season->matches_lost + 1 );
-              }
-            } elsif ( $match->home_team_match_score < $match->away_team_match_score ) {
-              # Away win
-              if ( $location eq "home" ) {
-                # Home player, add a match lost to new, remove from old
-                $original_player_season->matches_lost( $original_player_season->matches_lost - 1 );
-                $new_player_season->matches_lost( $new_player_season->matches_lost + 1 );
-              } else {
-                # Away player, add a match won to new, remove from old
-                $original_player_season->matches_won( $original_player_season->matches_won - 1 );
-                $new_player_season->matches_won( $new_player_season->matches_won + 1 );
-              }
-            } else {
-              # Draw, regardless of home or away, add a match drawn to new, remove from old
-              $original_player_season->matches_drawn( $original_player_season->matches_drawn - 1 );
-              $new_player_season->matches_drawn( $new_player_season->matches_drawn + 1 );
-            }
-          }
-          
-          # Transfer the games statistics
-          $original_player_season->games_played( $original_player_season->games_played - $self->games_played );
-          $new_player_season->games_played( $new_player_season->games_played + $self->games_played );
-          $original_player_season->games_won( $original_player_season->games_won - $self->games_won );
-          $new_player_season->games_won( $new_player_season->games_won + $self->games_won );
-          $original_player_season->games_lost( $original_player_season->games_lost - $self->games_lost );
-          $new_player_season->games_lost( $new_player_season->games_lost + $self->games_lost );
-          $original_player_season->games_drawn( $original_player_season->games_drawn - $self->games_drawn );
-          $new_player_season->games_drawn( $new_player_season->games_drawn + $self->games_drawn );
-          
-          # Transfer the legs statistics
-          $original_player_season->legs_played( $original_player_season->legs_played - $self->legs_played );
-          $new_player_season->legs_played( $new_player_season->legs_played + $self->legs_played );
-          $original_player_season->legs_won( $original_player_season->legs_won - $self->legs_won );
-          $new_player_season->legs_won( $new_player_season->legs_won + $self->legs_won );
-          $original_player_season->legs_lost( $original_player_season->legs_lost - $self->legs_lost );
-          $new_player_season->legs_lost( $new_player_season->legs_lost + $self->legs_lost );
-          
-          # Transfer the points statistics
-          $original_player_season->points_played( $original_player_season->points_played - $self->points_played );
-          $new_player_season->points_played( $new_player_season->points_played + $self->points_played );
-          $original_player_season->points_won( $original_player_season->points_won - $self->points_won );
-          $new_player_season->points_won( $new_player_season->points_won + $self->points_won );
-          $original_player_season->points_lost( $original_player_season->points_lost - $self->points_lost );
-          $new_player_season->points_lost( $new_player_season->points_lost + $self->points_lost );
-          
-          # Work out the averages
-          $original_player_season->games_played ? $original_player_season->average_game_wins( ( $original_player_season->games_won / $original_player_season->games_played ) * 100 )  : $original_player_season->average_game_wins( 0 );
-          $new_player_season->games_played      ? $new_player_season->average_game_wins( ( $new_player_season->games_won / $new_player_season->games_played ) * 100 )                 : $new_player_season->average_game_wins( 0 );
-          
-          $original_player_season->legs_played ? $original_player_season->average_leg_wins( ( $original_player_season->legs_won / $original_player_season->legs_played ) * 100 )  : $original_player_season->average_leg_wins( 0 );
-          $new_player_season->legs_played      ? $new_player_season->average_leg_wins( ( $new_player_season->legs_won / $new_player_season->legs_played ) * 100 )                 : $new_player_season->average_leg_wins( 0 );
-          
-          $original_player_season->points_played ? $original_player_season->average_point_wins( ( $original_player_season->points_won / $original_player_season->points_played ) * 100 )  : $original_player_season->average_point_wins( 0 );
-          $new_player_season->points_played      ? $new_player_season->average_point_wins( ( $new_player_season->points_won / $new_player_season->points_played ) * 100 )                 : $new_player_season->average_point_wins( 0 );
-          
-          # Now do the updates.  The exception is if the original player was a loan player and this is the only match
-          # they were down as playing for the team, their record for this team will be deleted, as it's blank anyway.
-          if ( $original_player_season->matches_played == 0 and $original_player_season->team_membership_type eq "loan" ) {
-            $original_player_season->delete;
-          } else {
-            $original_player_season->update;
-          }
-          
-          $new_player_season->update;
-        }
-      } elsif ( $match->started ) {
-        # We're adding a player where there wasn't previously one (we don't do this for the other way round - removing a player where
-        # there was previously one, as that's already handled above by the score deletion.  We don't need to check if the match was
-        # complete here, as it can't be - adding a player where there wasn't previously one means that there must be scores (in games
-        # involving this player) to be updated.
-        
-        # Search for the player's season object with this team and create it if it isn't there.
-        my $match_team_field = ( $location eq "home" ) ? "home_team" : "away_team";
-        
-        my $new_player_season = $person->search_related("person_seasons", {
+    }
+    
+    if ( defined( $self->player ) ) {
+      # We have a player already, so we're replacing (or removing)
+      if ( $match->started ) {
+        # If the match has been started, we need to update the statistics
+        my $original_player_season = $self->player->search_related("person_seasons", {
           season  => $match->season->id,
           team    => $match->$match_team_field->id,
         }, {
           rows    => 1,
         })->single;
         
-        # Create a new season object for the new person if there isn't one already
-        $new_player_season = $person->create_related("person_seasons", {
-          season                => $self->team_match->season->id,
-          team                  => $self->team_match->$match_team_field->id,
-          team_membership_type  => "loan"
-        }) unless defined( $new_player_season );
+        # Add a match played if the match has started
+        $new_player_season->matches_played( $new_player_season->matches_played + 1 ) if defined $new_player_season;
+        $original_player_season->matches_played( $original_player_season->matches_played - 1 );
         
-        $new_player_season->update({matches_played => $new_player_season->matches_played + 1});
+        if ( $match->complete and !$game_scores_deleted ) {
+          # Matches won / lost / drawn need to be worked out if the match is complete
+          if ( $match->home_team_match_score > $match->away_team_match_score ) {
+            # Home win
+            if ( $location eq "home" ) {
+              # Home player, add a match won to new, remove from old
+              $original_player_season->matches_won( $original_player_season->matches_won - 1 );
+              $new_player_season->matches_won( $new_player_season->matches_won + 1 ) if defined $new_player_season;
+            } else {
+              # Away player, add a match lost to new, remove from old
+              $original_player_season->matches_lost( $original_player_season->matches_lost - 1 );
+              $new_player_season->matches_lost( $new_player_season->matches_lost + 1 ) if defined $new_player_season;
+            }
+          } elsif ( $match->home_team_match_score < $match->away_team_match_score ) {
+            # Away win
+            if ( $location eq "home" ) {
+              # Home player, add a match lost to new, remove from old
+              $original_player_season->matches_lost( $original_player_season->matches_lost - 1 );
+              $new_player_season->matches_lost( $new_player_season->matches_lost + 1 ) if defined $new_player_season;
+            } else {
+              # Away player, add a match won to new, remove from old
+              $original_player_season->matches_won( $original_player_season->matches_won - 1 );
+              $new_player_season->matches_won( $new_player_season->matches_won + 1 ) if defined $new_player_season;
+            }
+          } else {
+            # Draw, regardless of home or away, add a match drawn to new, remove from old
+            $original_player_season->matches_drawn( $original_player_season->matches_drawn - 1 );
+            $new_player_season->matches_drawn( $new_player_season->matches_drawn + 1 ) if defined $new_player_season;
+          }
+        }
+        
+        if ( !$game_scores_deleted ) {
+          # Transfer the games statistics
+          $original_player_season->games_played( $original_player_season->games_played - $self->games_played );
+          $new_player_season->games_played( $new_player_season->games_played + $self->games_played ) if defined $new_player_season;
+          $original_player_season->games_won( $original_player_season->games_won - $self->games_won );
+          $new_player_season->games_won( $new_player_season->games_won + $self->games_won ) if defined $new_player_season;
+          $original_player_season->games_lost( $original_player_season->games_lost - $self->games_lost );
+          $new_player_season->games_lost( $new_player_season->games_lost + $self->games_lost ) if defined $new_player_season;
+          $original_player_season->games_drawn( $original_player_season->games_drawn - $self->games_drawn );
+          $new_player_season->games_drawn( $new_player_season->games_drawn + $self->games_drawn ) if defined $new_player_season;
+          
+          # Transfer the legs statistics
+          $original_player_season->legs_played( $original_player_season->legs_played - $self->legs_played );
+          $new_player_season->legs_played( $new_player_season->legs_played + $self->legs_played ) if defined $new_player_season;
+          $original_player_season->legs_won( $original_player_season->legs_won - $self->legs_won );
+          $new_player_season->legs_won( $new_player_season->legs_won + $self->legs_won ) if defined $new_player_season;
+          $original_player_season->legs_lost( $original_player_season->legs_lost - $self->legs_lost );
+          $new_player_season->legs_lost( $new_player_season->legs_lost + $self->legs_lost ) if defined $new_player_season;
+          
+          # Transfer the points statistics
+          $original_player_season->points_played( $original_player_season->points_played - $self->points_played );
+          $new_player_season->points_played( $new_player_season->points_played + $self->points_played ) if defined $new_player_season;
+          $original_player_season->points_won( $original_player_season->points_won - $self->points_won );
+          $new_player_season->points_won( $new_player_season->points_won + $self->points_won ) if defined $new_player_season;
+          $original_player_season->points_lost( $original_player_season->points_lost - $self->points_lost );
+          $new_player_season->points_lost( $new_player_season->points_lost + $self->points_lost ) if defined $new_player_season;
+          
+          # Work out the averages
+          $original_player_season->games_played ? $original_player_season->average_game_wins( ( $original_player_season->games_won / $original_player_season->games_played ) * 100 )  : $original_player_season->average_game_wins( 0 );
+          defined( $new_player_season ) and $new_player_season->games_played ? $new_player_season->average_game_wins( ( $new_player_season->games_won / $new_player_season->games_played ) * 100 ) : $new_player_season->average_game_wins( 0 );
+          
+          $original_player_season->legs_played ? $original_player_season->average_leg_wins( ( $original_player_season->legs_won / $original_player_season->legs_played ) * 100 )  : $original_player_season->average_leg_wins( 0 );
+          defined( $new_player_season ) and $new_player_season->legs_played ? $new_player_season->average_leg_wins( ( $new_player_season->legs_won / $new_player_season->legs_played ) * 100 ) : $new_player_season->average_leg_wins( 0 );
+          
+          $original_player_season->points_played ? $original_player_season->average_point_wins( ( $original_player_season->points_won / $original_player_season->points_played ) * 100 )  : $original_player_season->average_point_wins( 0 );
+          defined( $new_player_season ) and $new_player_season->points_played ? $new_player_season->average_point_wins( ( $new_player_season->points_won / $new_player_season->points_played ) * 100 ) : $new_player_season->average_point_wins( 0 );
+        }
+          
+        # Now do the updates.  The exception is if the original player was a loan player and this is the only match
+        # they were down as playing for the team, their record for this team will be deleted, as it's blank anyway.
+        
+        # These are updated regardless of whether or not the scores were deleted earlier, as we still may need to add / remove a match played from the players being swapped.
+        $new_player_season->update if defined $new_player_season;
+        
+        if ( $original_player_season->matches_played == 0 and $original_player_season->team_membership_type eq "loan" ) {
+          $original_player_season->delete;
+        } else {
+          $original_player_season->update;
+        }
+      }
+    } elsif ( $match->started ) {
+      # We're adding a player where there wasn't previously one (we don't do this for the other way round - removing a player where
+      # there was previously one - as that's already handled above by the score deletion).
+      
+      # Search for the player's season object with this team and create it if it isn't there.
+      my $match_team_field = ( $location eq "home" ) ? "home_team" : "away_team";
+      
+      my $new_player_season = $person->search_related("person_seasons", {
+        season  => $match->season->id,
+        team    => $match->$match_team_field->id,
+      }, {
+        rows    => 1,
+      })->single;
+      
+      # Create a new season object for the new person if there isn't one already
+      $new_player_season = $person->create_related("person_seasons", {
+        season                => $self->team_match->season->id,
+        team                  => $self->team_match->$match_team_field->id,
+        team_membership_type  => "loan"
+      }) unless defined( $new_player_season );
+      
+      $new_player_season->update({matches_played => $new_player_season->matches_played + 1});
+      
+      if ( $match->complete ) {
+        # Matches won / lost / drawn need to be worked out if the match is complete
+        if ( $match->home_team_match_score > $match->away_team_match_score ) {
+          # Home win
+          if ( $location eq "home" ) {
+            # Home player, add a match won to new, remove from old
+            $new_player_season->matches_won( $new_player_season->matches_won + 1 ) if defined $new_player_season;
+          } else {
+            # Away player, add a match lost to new, remove from old
+            $new_player_season->matches_lost( $new_player_season->matches_lost + 1 ) if defined $new_player_season;
+          }
+        } elsif ( $match->home_team_match_score < $match->away_team_match_score ) {
+          # Away win
+          if ( $location eq "home" ) {
+            # Home player, add a match lost to new, remove from old
+            $new_player_season->matches_lost( $new_player_season->matches_lost + 1 ) if defined $new_player_season;
+          } else {
+            # Away player, add a match won to new, remove from old
+            $new_player_season->matches_won( $new_player_season->matches_won + 1 ) if defined $new_player_season;
+          }
+        } else {
+          # Draw, regardless of home or away, add a match drawn to new, remove from old
+          $new_player_season->matches_drawn( $new_player_season->matches_drawn + 1 ) if defined $new_player_season;
+        }
       }
     }
     
@@ -791,6 +827,9 @@ sub update_person {
       
       $return_value->{player_games} = $return_player_games;
     }
+    
+    # Finally commit the transaction if there are no errors
+    $transaction->commit;
   }
   
   return $return_value;

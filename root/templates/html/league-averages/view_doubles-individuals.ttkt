@@ -12,7 +12,7 @@ IF doubles_individual_averages.size;
   END;
 -%]
 
-<table class="responsive">
+<table id="averages-doubles-individuals" class="stripe hover row-border" style="width: 100%;">
   <thead>
     <tr>
       <th class="numeric">[% c.maketext("stats.table-heading.position") %]</th>

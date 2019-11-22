@@ -98,7 +98,7 @@ sub list_specific_page :Chained("base") :PathPart("page") :Args(1) {
 
 =head2 retrieve_paged
 
-List the seasons and display links to view their fixtures and results for the specified page.
+List the events on the specified page.
 
 =cut
 
@@ -129,9 +129,16 @@ sub retrieve_paged :Private {
     external_scripts    => [
       $c->uri_for("/static/script/plugins/qtip/jquery.qtip.min.js"),
       $c->uri_for("/static/script/standard/qtip.js"),
+      $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
+      $c->uri_for("/static/script/event-viewer/view.js"),
     ],
     external_styles     => [
       $c->uri_for("/static/css/qtip/jquery.qtip.css"),
+      $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
     ],
     view_online_display => "Viewing event log",
     view_online_link    => 1,

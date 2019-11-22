@@ -11,6 +11,7 @@ FOREACH team IN display_options;
   IF team.club.id != LAST_ID;
     IF i > 1
 -%]
+  </ul>
   </div>
 <!-- END individual club container -->
 [%  END -%]
@@ -18,10 +19,11 @@ FOREACH team IN display_options;
   <h3>[% team.club.full_name %]</h3>
 <!-- START individual club container -->
   <div>
+  <ul class="option-list">
 [%
     SET LAST_ID = team.club.id;
   END -%]
-    <div class="list-item">
+    <li>
 [%
 IF specific_season;
   SET uri = c.uri_for_action("/fixtures-results/view_team_by_url_key_specific_season_first_page", [season.url_key, team.club.url_key, team.url_key]);
@@ -30,7 +32,7 @@ ELSE;
 END;
 -%]
       <a href="[% uri %]">[% team.name %]</a>
-    </div>
+    </li>
 [%
 END
 -%]

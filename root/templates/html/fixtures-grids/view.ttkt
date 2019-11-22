@@ -4,16 +4,12 @@
 
 <div id="grid_summary">
 <h4>Summary</h4>
-<table class="responsive-vertical">
-  <tr>
-    <th class="heading_column">[% c.maketext("fixtures-grids.field.maximum-teams-per-division") %]</th>
-    <td>[% grid.maximum_teams | html_entity %]</td>
-  </tr>
-  <tr>
-    <th>[% c.maketext("fixtures-grids.field.fixtures-repeated") %]</th>
-    <td>[% c.maketext("fixtures-grids.field.fixtures-repeated-times", grid.fixtures_repeated) %]</td>
-  </tr>
-</table>
+<dl>
+    <dt>[% c.maketext("fixtures-grids.field.maximum-teams-per-division") %]</dt>
+    <dd>[% grid.maximum_teams | html_entity %]</dd>
+    <dt>[% c.maketext("fixtures-grids.field.fixtures-repeated") %]</dt>
+    <dd>[% c.maketext("fixtures-grids.field.fixtures-repeated-times", grid.fixtures_repeated) %]</dd>
+</dl>
 </div>
 
 <div id="grid-positions">
@@ -28,11 +24,12 @@ IF season;
     END;
 -%]
 <h5><a href="[% division_uri %]">[% division.name | html_entity %]</a></h5>
+<ul class="option-list">
 [%
     SET LAST_GRID_POSITION = 0;
     FOREACH team_season = division.team_seasons;
 -%]
-  <div class="list-item">
+  <li>
 [%
       IF specific_season;
         SET team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [team_season.team.club.url_key, team_season.team.url_key, season.url_key]);
@@ -43,37 +40,41 @@ IF season;
       team_name = FILTER html_entity; team_season.club.short_name _ " " _ team_season.name; END;
       IF team_season.grid_position;
         IF team_season.grid_position - LAST_GRID_POSITION > 1 AND LAST_POSITION_SET == 1;
-          # We have a bye position
+          # We have a bye position, as the current grid position is more than one more than the previous one
           SET team_bye = c.maketext("fixtures-grids.form.teams.bye");
-          LAST_GRID_POSITION + 1 _ ". [" _ team_bye _ "]<br />";
+          "   " _ LAST_GRID_POSITION + 1 _ ". [" _ team_bye _ "]";
 -%]
-  </div>
-  <div class="list-item">
+  </li>
+  <li>
 [%
         END;
         
-        "   " _ team_season.grid_position _ ". <a href=" _ team_uri _ ">" _ team_name _ "</a> (" _ team_season.home_night.weekday_name _ ")<br />";
+        "   " _ team_season.grid_position _ ". <a href=" _ team_uri _ ">" _ team_name _ "</a> (" _ team_season.home_night.weekday_name _ ")";
         LAST_GRID_POSITION  = team_season.grid_position;
         LAST_POSITION_SET   = 1;
       ELSE;
-        "   <a href=" _ team_uri _ ">" _ team_name _ "</a> - division number not set<br />";
+        "   <a href=" _ team_uri _ ">" _ team_name _ "</a> - division number not set";
         LAST_POSITION_SET   = 0;
       END;
 -%]
-  </div>
+  </li>
 [%
     END;
+-%]
+</ul>
+[%
   END;
 ELSE;
 -%]
-<div class="list-item">
-  [% c.maketext("fixtures-grids.teams.view.no-season") %]
-</div>
+<ul class="option-list">
+  <li>
+    [% c.maketext("fixtures-grids.teams.view.no-season") %]
+  </li>
+</ul>
 [%
 END;
 -%]
 </div>
-
 
 <div id="grid-matches">
   <h4>[% c.maketext("fixtures-grids.matches") %]</h4>
@@ -83,31 +84,38 @@ FOREACH week IN weeks;
 -%]
   <h5>[% c.maketext("fixtures-grids.field.week", week.week) %]</h5>
   <div id="week[% week.week %]">
+  <ul class="option-list">
 [%
   # Loop through all the matches for each week
   FOREACH match = week.fixtures_grid_matches;
     IF match.home_team OR match.away_team;
 -%]
-<div class="list-item">
-  [% c.maketext("fixtures-grids.form.matches.field.team-number", match.home_team) %] <b>v</b> [% c.maketext("fixtures-grids.form.matches.field.team-number", match.away_team) %]
-</div>
+  <li>
+    [% c.maketext("fixtures-grids.form.matches.field.team-number", match.home_team) %] <b>v</b> [% c.maketext("fixtures-grids.form.matches.field.team-number", match.away_team) %]
+  </li>
 [%
       SET SET_MATCHES = SET_MATCHES + 1;
     ELSE;
 %]
-<div class="list-item">
-  <b>[% c.maketext("fixtures-grids.matches.view.match-not-set", match.match_number) %]</b>
-</div>
+  <li>
+    <b>[% c.maketext("fixtures-grids.matches.view.match-not-set", match.match_number) %]</b>
+  </li>
 [%
     END;
   END;
 -%]
-  <br />
+  </ul>
   </div>
 [%
 END;
 IF SET_MATCHES == 0;
+-%]
+<ul class="option-list">
+[%
   c.maketext("fixtures-grids.matches.view.matches-not-set");
+-%]
+</ul>
+[%
 END;
 -%]
 </div>

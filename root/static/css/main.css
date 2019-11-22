@@ -14,8 +14,18 @@ img.banner-logo {
 
 /* _Reset */
 /*dl,dt,dd,ol,ul,li,*/
-html,body,div,span,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,abbr,address,cite,code,del,dfn,em,img,ins,kbd,q,samp,small,strong,sub,sup,var,b,i,label,legend,table,caption,tbody,tfoot,thead,tr,th,td,article,aside,canvas,details,figcaption,figure,footer,header,hgroup,menu,nav,section,summary,time,mark,audio,video {
+html,body,h1,h2,div,span,object,iframe,p,blockquote,pre,abbr,address,cite,code,del,dfn,em,img,ins,kbd,q,samp,small,strong,sub,sup,var,b,i,label,legend,caption,table.no-script,tbody,tfoot,thead,tr,th,td,article,aside,canvas,details,figcaption,figure,footer,header,hgroup,menu,nav,section,summary,time,mark,audio,video {
   margin: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+}
+
+h3,h4,h5,h6, {
+  margin-top: 5px;
+  margin-bottom: 0;
+  margin-right: 0;
+  margin-left: 0;
   padding: 0;
   border: 0;
   outline: 0;
@@ -308,21 +318,27 @@ div.filter-defined {
   max-width: 400px;
 }
 
+div.seasons-count, div.no-entry {margin-top: 1.4em;}
+#stats-matches, #stats-games, #stats-legs, #stats-points {
+  border: 1px solid #6e6e6e;
+	border-top-left-radius: 5px;
+	border-top-right-radius: 5px;
+	border-bottom-left-radius: 5px;
+	border-bottom-right-radius: 5px;
+  margin: 1.4em;
+  padding: 1.4em;
+}
+
 /* Tables */
-table {
+table.no-script {
   border-collapse: collapse;
   border-spacing: 0;
   margin-bottom: 1.4em;
   width:100%;
 }
 
-th, td, caption {
-  padding: 4px 5px;
-}
-
-th.sort-asc, th.sort-desc {
-  background-image: url('../images/icons/sort-up.png');
-  background-repeat: no-repeat;
+table#datatable, table#games-table, table#teams-table, table#home-players-table, table#away-players-table, table#averages-singles, table#averages-doubles-individuals, table#averages-doubles-pairs, table#averages-doubles-teams, table#fixtures-table {
+  width: 100%;
 }
 
 caption {
@@ -335,15 +351,34 @@ th {
   text-align: left;
 }
 
-table.responsive td, table.responsive-no-headers td, table responsive-vertical td {  
+/*table.responsive td, table.responsive-no-headers td, table responsive-vertical td {  
 	min-height: 1.625em;
 	word-wrap: break-word;
-}
+}*/
 
 /* Lists of items */
-td, div.list-item, ul.object-list li {
+table.no-script td, div.list-item, ul.object-list li {
   background: #f5f5f5;
   border: 1px solid #ffffff;
+}
+
+ul.option-list li.odd {background-color: #f9f9f9;}
+ul.option-list li:hover {background-color: #f6f6f6;}
+
+ul.option-list li {
+  border-top: 1px solid #ddd;
+}
+
+ul.option-list li {
+  padding: 8px 10px;
+}
+
+ul.option-list > li:first-child {border-top: none;}
+
+ul.option-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
 ul.object-list {
@@ -352,13 +387,38 @@ ul.object-list {
   list-style: none;
 }
 
-div.list-item, ul.object-list li {
+div.list-item {
   padding: 4px;
   margin 2px;
 }
 
+ul.option-list {
+  border-top: 1px solid #111;
+  border-bottom: 1px solid #111;
+}
+
+dt:after {content: ":";}
+
+dl dd {
+  display: inline;
+  margin: 0;
+  width: 50%;
+  padding-top: 8px;
+}
+dl dd:after{
+  display: block;
+  content: '';
+}
+dl dt{
+  display: inline-block;
+  min-width: 100px;
+  width: 50%;
+  font-weight: bold;
+  padding-top: 8px;
+}
+
 /* Hovered-over list option */
-td.active-row, div.active-row, ul.object-list li.active-item {
+table.no-script td.active-row, div.active-row, ul.object-list li.active-item {
   background: #dcdcdc;
 }
 
@@ -573,8 +633,8 @@ input.active, textarea.active {
 input.menu-input {width: 150px;}
 .menu-margin {margin-left: 5px;}
 
-#stats-left > table th, #stats-right > table th {width: 50%;}
-#stats-left > table td, #stats-right > table td {text-align: right;}
+#stats-left > table.no-script th, #stats-right > table.no-script th {width: 50%;}
+#stats-left > table.no-script td, #stats-right > table.no-script td {text-align: right;}
 
 #club-secretary, #club-venue, #grid-positions, #grid-matches, #stats-left, #stats-right, #meeting-attendees, #meeting-apologies {
   min-width: 280px;
@@ -650,7 +710,7 @@ div.user-info-heading {font-weight: bold;}
 fieldset {min-width: 100%;}
 
 #index-news {
-  width: 60%;
+  width: 50%;
   min-width: 280px;
   float: left;
   padding-bottom: 20px;
@@ -658,7 +718,7 @@ fieldset {min-width: 100%;}
 }
 
 #index-matches-today {
-  width: 38%;
+  width: 48%;
   min-width: 280px;
   float: left;
   padding-bottom: 20px;
@@ -696,12 +756,11 @@ div.doubles_home_player_selection, div.doubles_away_player_selection {
   height: 100%;
 }
 
-#map-canvas, #directions-canvas, #map-canvas-form {
+#map-canvas, #map-canvas-form {
   padding-bottom: 20px;
   height: 100%;
+  float: left;
 }
-
-#map-canvas, #map-canvas-form {float: left;}
 
 #map-canvas-form {
   height: 100%;
@@ -739,7 +798,7 @@ div.doubles_home_player_selection, div.doubles_away_player_selection {
 #add_games_div, #add_divisions_div {display: none;}
 .team_inactive {display: none;}
 .nav_list {text-align: center;}
-td.numeric, th.numeric {text-align: right;}
+td.numeric, th.numeric, dd.numeric {text-align: right;}
 td.game-number, th.game-number {text-align: center;}
 .match_score {float: right;}
 span.game-result {font-weight: bold;}

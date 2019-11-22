@@ -221,14 +221,21 @@ sub view :Private {
   my $date = $match->actual_date->set_locale( $c->locale );
   
   # Set up the external scripts - if the match has a score, we'll use a different script - the plugin will always be there
-  my @external_scripts = ( $c->uri_for("/static/script/plugins/responsive-tabs/jquery.responsiveTabs.mod.js") );
+  my @external_scripts = (
+    $c->uri_for("/static/script/plugins/responsive-tabs/jquery.responsiveTabs.mod.js"),
+    $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
+    $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
+    $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
+    $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
+    #$c->uri_for("/static/script/matches/team/view-datatables.js"),
+  );
   
   if ( $match->started ) {
     # The match has started, we don't specify a tab and it will default to the first one (games)
-    push( @external_scripts, $c->uri_for("/static/script/standard/responsive-tabs.js") );
+    push( @external_scripts, $c->uri_for("/static/script/matches/team/view.js") );
   } else {
     # The match has not started, start on the match details tab
-    push( @external_scripts, $c->uri_for("/static/script/matches/team/view.js") );
+    push( @external_scripts, $c->uri_for("/static/script/matches/team/view-not-started.js") );
   }
   
   # Inform that the scorecard is not yet complete if it's started but not complete
@@ -257,6 +264,10 @@ sub view :Private {
     external_styles     => [
       $c->uri_for("/static/css/responsive-tabs/responsive-tabs.css"),
       $c->uri_for("/static/css/responsive-tabs/style-jqueryui.css"),
+      $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/fixedColumns.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
     ],
     title_links         => \@title_links,
     subtitle2           => sprintf( "%s, %d %s %d", ucfirst( $date->day_name ), $date->day, $date->month_name, $date->year ),

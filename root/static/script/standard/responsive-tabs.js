@@ -1,7 +1,8 @@
   
-  $(document).ready(function(){ 
+  $(document).ready(function(){
     $("div#tabs").responsiveTabs({
-      startCollapsed: false
+      startCollapsed: false,
+      setHash: false
     });
   });
   

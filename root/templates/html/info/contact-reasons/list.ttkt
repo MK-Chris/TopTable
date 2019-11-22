@@ -10,33 +10,40 @@ IF reasons.count;
   # Use PROCESS instead of INCLUDE so that the page_links_text is defined in the current template thereafter
   PROCESS "html/generic/pagination.ttkt" OBJECT_PLURAL = c.maketext("object.plural.contact-reasons");
   page_links_text;
-  
+-%]
+<ul class="option-list">
+[%
   WHILE (reason = reasons.next);
     name_html = FILTER html_entity; reason.name; END;
 -%]
-<div class="list-item">
-  <a href="[% c.uri_for_action("/info/contact-reasons/view", [reason.url_key]) %]">[% name_html | html_entity %]</a>
+  <li>
+    <a href="[% c.uri_for_action("/info/contact-reasons/view", [reason.url_key]) %]">[% name_html | html_entity %]</a>
 [%
     IF authorisation.contact_reason_edit;
 -%]
-  <a href="[% c.uri_for_action("/info/contact-reasons/edit", [reason.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", name_html) %]" title="[% c.maketext("admin.edit-object", name_html) %]" /></a>
+    <a href="[% c.uri_for_action("/info/contact-reasons/edit", [reason.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", name_html) %]" title="[% c.maketext("admin.edit-object", name_html) %]" /></a>
 [%
     END;
     IF authorisation.contact_reason_delete;
 -%]
-  <a href="[% c.uri_for_action("/info/contact-reasons/delete", [reason.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", name_html) %]" title="[% c.maketext("admin.delete-object", name_html) %]" /></a>
+    <a href="[% c.uri_for_action("/info/contact-reasons/delete", [reason.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", name_html) %]" title="[% c.maketext("admin.delete-object", name_html) %]" /></a>
 [%
     END;
 -%]
-</div>
+  </li>
 [%
   END;
+-%]
+</ul>
+[%
   page_links_text;
 ELSE;
 -%]
-<div class="list-item">
-  [% c.maketext("contact-reasons.none") %]
-</div>
+<ul class="option-list">
+  <li>
+    [% c.maketext("contact-reasons.none") %]
+  </li>
+</ul>
 [%
 END;
 -%]

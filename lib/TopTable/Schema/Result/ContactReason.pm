@@ -144,7 +144,7 @@ Get a list of recipients associated with this contact reason.
 sub recipients {
   my ( $self ) = @_;
   
-  return $self->search_related("contact_reason_recipients", {
+  return $self->search_related("contact_reason_recipients", undef, {
     prefetch => "person",
   });
 }

@@ -2,7 +2,7 @@ package TopTable::Controller::People;
 use Moose;
 use namespace::autoclean;
 use JSON;
-use Data::Dumper;
+use Data::Dumper::Concise;
 use MIME::Types;
 use Text::CSV;
 use HTML::Entities;
@@ -91,7 +91,12 @@ sub base_list :Chained("/") :PathPart("people") :CaptureArgs(0) {
   $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( person_edit person_delete person_create) ], "", 0] );
   
   # Page description
-  $c->stash({page_description => $c->maketext("description.people.list", $site_name)});
+  $c->stash({
+    page_description  => $c->maketext("description.people.list", $site_name),
+    external_scripts  => [
+      $c->uri_for("/static/script/standard/option-list.js"),
+    ],
+  });
   
   # Load the messages
   $c->load_status_msgs;
@@ -335,10 +340,20 @@ sub view_finalise :Private {
   my $external_styles   = [
     $c->uri_for("/static/css/responsive-tabs/responsive-tabs.css"),
     $c->uri_for("/static/css/responsive-tabs/style-jqueryui.css"),
+    $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
+    $c->uri_for("/static/css/datatables/fixedColumns.dataTables.min.css"),
+    $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
+    $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
   ];
   my $external_scripts  = [
     $c->uri_for("/static/script/plugins/responsive-tabs/jquery.responsiveTabs.mod.js"),
     $c->uri_for("/static/script/standard/responsive-tabs.js"),
+    $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
+    $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
+    $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
+    $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
+    $c->uri_for("/static/script/people/view.js"),
+    $c->uri_for("/static/script/standard/option-list.js"),
   ];
   
   if ( $c->stash->{authorisation}{person_edit} ) {
@@ -457,12 +472,15 @@ sub view_seasons :Chained("view") :PathPart("seasons") :CaptureArgs(0) {
   $c->stash({
     template          => "html/people/list-seasons.ttkt",
     page_description  => $c->maketext("description.people.list-seasons", $person_name, $site_name),
+    external_scripts  => [
+      $c->uri_for("/static/script/standard/option-list.js"),
+    ],
   });
   
   # Push the current URI on to the breadcrumbs
   push( @{ $c->stash->{breadcrumbs} }, {
-    path  => $c->uri_for_action("/people/view_seasons_first_page", [$person->url_key]),
-    label => $c->maketext("menu.text.seasons"),
+    path              => $c->uri_for_action("/people/view_seasons_first_page", [$person->url_key]),
+    label             => $c->maketext("menu.text.seasons"),
   });
 }
 
@@ -1278,6 +1296,19 @@ sub import_results :Path("import-results") {
         template  => "html/people/import-results.ttkt",
         subtitle2           => $c->maketext("people.form.import-results.title"),
         view_online_display => "Importing people",
+        external_scripts    => [
+          $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
+          $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
+          $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
+          $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
+          $c->uri_for("/static/script/people/import-results.js"),
+        ],
+        external_styles     => [
+          $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
+          $c->uri_for("/static/css/datatables/fixedColumns.dataTables.min.css"),
+          $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
+          $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
+        ],
       });
     } else {
       # File type not allowed

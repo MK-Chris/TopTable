@@ -7,15 +7,16 @@
 IF articles.count;
   PROCESS "html/generic/pagination.ttkt" OBJECT_PLURAL = c.maketext("object.plural.news-articles");
   page_links_text;
-  
+-%]
+<ul class="option-list">
+[%
   USE zeroes = format("%02d");
   WHILE (article = articles.next);
     SET current_details = article.current_details( timezone );
     SET month = zeroes( article.published_month );
     headline_html = FILTER html_entity; current_details.headline; END;
 -%]
-<div class="list-item">
-  <a href="[% c.uri_for_action("/news/view_by_url_key", [article.published_year, month, article.url_key]) %]">[% article.headline | html_entity %]</a>
+  <li><a href="[% c.uri_for_action("/news/view_by_url_key", [article.published_year, month, article.url_key]) %]">[% article.headline | html_entity %]</a>
 [%
     IF authorisation.news_article_edit_all OR ( authorisation.news_article_edit_own AND article.user.id == c.user.id )
 -%]
@@ -28,16 +29,18 @@ IF articles.count;
 [%
     END;
 -%]
-  <br /><span class="news-published">Published: [% article.date_updated.dmy("/") %] at [% article.date_updated.hms %]</span>
-</div>
+  <br /><span class="news-published">Published: [% article.date_updated.dmy("/") %] at [% article.date_updated.hms %]</span></li>
 [%
   END;
+-%]
+</ul>
+[%
   page_links_text;
 ELSE;
 -%]
-<div class="list-item">
-  [% c.maketext("news.no-articles") %]
-</div>
+<ul class="option-list">
+  <li>[% c.maketext("news.no-articles") %]</li>
+</ul>
 [%
 END;
 IF authorisation.news_article_create;

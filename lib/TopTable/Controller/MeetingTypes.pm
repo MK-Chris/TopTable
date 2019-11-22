@@ -87,7 +87,12 @@ sub base_list :Chained("/") :PathPart("meeting-types") :CaptureArgs(0) {
   $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( meeting_type_edit meeting_type_delete meeting_type_create) ], "", 0] );
   
   # Page description
-  $c->stash({page_description => $c->maketext("description.meeting-types.list", $site_name)});
+  $c->stash({
+    page_description => $c->maketext("description.meeting-types.list", $site_name),
+    external_scripts  => [
+      $c->uri_for("/static/script/standard/option-list.js"),
+    ],
+  });
   
   # Load the messages
   $c->load_status_msgs;
@@ -276,8 +281,7 @@ sub view_finalise :Private {
     subtitle1           => $meeting_type->name,
     view_online_display => sprintf( "Viewing %s", $encoded_type ),
     view_online_link    => 0,
-    canonical_uri       => $c->uri_for_action("/meeting-types/view", [$meeting_type->url_key]),
-    page_description    => $c->maketext("description.meeting-types.view", $encoded_type, $site_name)
+    page_description    => $c->maketext("description.meeting-types.view", $encoded_type, $site_name),
   });
 }
 

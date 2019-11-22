@@ -2,7 +2,7 @@
 IF c.flash.failed_rows.size;
 -%]
 <h4>[% c.maketext("people.form.import-results.heading-failed") %]</h4>
-<table class="responsive-wide">
+<table id="failed-imports" class="stripe hover order-column row-border">
   <thead>
     <tr>
       <th>[% c.maketext("people.form.field.first-name") %]</th>
@@ -23,6 +23,7 @@ IF c.flash.failed_rows.size;
       <th>[% c.maketext("people.form.button.captain-of-club") %]</th>
       <th>[% c.maketext("people.form.button.captain-of-team") %]</th>
       <th>[% c.maketext("people.form.button.secretary-for") %]</th>
+      <th>Error(s)</th>
     </tr>
   </thead>
   <tbody>
@@ -138,27 +139,25 @@ IF c.flash.failed_rows.size;
     END;
 -%]
     <tr>
-      <td data-label="[% c.maketext("people.form.field.first-name") %]">[% first_name %]</td>
-      <td data-label="[% c.maketext("people.form.field.surname") %]">[% surname %]</td>
-      <td data-label="[% c.maketext("people.form.field.club") %]">[% club_name %]</td>
-      <td data-label="[% c.maketext("people.form.field.team") %]">[% team_name %]</td>
-      <td data-label="[% c.maketext("people.form.field.gender") %]">[% gender_name %]</td>
-      <td data-label="[% c.maketext("people.form.field.address1") %]">[% address1 %]</td>
-      <td data-label="[% c.maketext("people.form.field.address2") %]">[% address2 %]</td>
-      <td data-label="[% c.maketext("people.form.field.address3") %]">[% address3 %]</td>
-      <td data-label="[% c.maketext("people.form.field.address4") %]">[% address4 %]</td>
-      <td data-label="[% c.maketext("people.form.field.address5") %]">[% address5 %]</td>
-      <td data-label="[% c.maketext("people.form.field.postcode") %]">[% postcode %]</td>
-      <td data-label="[% c.maketext("people.form.field.home-phone") %]">[% home_telephone %]</td>
-      <td data-label="[% c.maketext("people.form.field.mobile-phone") %]">[% mobile_telephone %]</td>
-      <td data-label="[% c.maketext("people.form.field.work-phone") %]">[% work_telephone %]</td>
-      <td data-label="[% c.maketext("people.form.field.email-address") %]">[% email_address %]</td>
-      <td data-label="[% c.maketext("people.form.button.captain-of-club") %]">[% captain_club_name %]</td>
-      <td data-label="[% c.maketext("people.form.button.captain-of-team") %]">[% captain_team_name %]</td>
-      <td data-label="[% c.maketext("people.form.button.secretary-for") %]">[% secretary_club_name %]</td>
-    </tr>
-    <tr>
-      <td data-label="Error(s)" colspan="18">[% row.error | html_line_break %]</td>
+      <td>[% first_name %]</td>
+      <td>[% surname %]</td>
+      <td>[% club_name %]</td>
+      <td>[% team_name %]</td>
+      <td>[% gender_name %]</td>
+      <td>[% address1 %]</td>
+      <td>[% address2 %]</td>
+      <td>[% address3 %]</td>
+      <td>[% address4 %]</td>
+      <td>[% address5 %]</td>
+      <td>[% postcode %]</td>
+      <td>[% home_telephone %]</td>
+      <td>[% mobile_telephone %]</td>
+      <td>[% work_telephone %]</td>
+      <td>[% email_address %]</td>
+      <td>[% captain_club_name %]</td>
+      <td>[% captain_team_name %]</td>
+      <td>[% secretary_club_name %]</td>
+      <td>[% row.error | html_line_break %]</td>
     </tr>
 [%
   END;
@@ -170,7 +169,7 @@ END;
 IF c.flash.successful_rows.size;
 -%]
 <h4>Successful imports</h4>
-<table class="responsive-wide">
+<table id="successful-imports" class="stripe hover order-column row-border">
   <thead>
     <tr>
       <th>[% c.maketext("people.form.field.first-name") %]</th>
@@ -277,24 +276,24 @@ IF c.flash.successful_rows.size;
     END;
 -%]
     <tr>
-      <td data-label="[% c.maketext("people.form.field.first-name") %]"><a href="[% c.uri_for_action("/people/view_current_season", [row.person.url_key]) %]">[% row.person.first_name %]</a></td>
-      <td data-label="[% c.maketext("people.form.field.surname") %]"><a href="[% c.uri_for_action("/people/view_current_season", [row.person.url_key]) %]">[% row.person.surname %]</a></td>
-      <td data-label="[% c.maketext("people.form.field.club") %]">[% club %]</td>
-      <td data-label="[% c.maketext("people.form.field.team") %]">[% team %]</td>
-      <td data-label="[% c.maketext("people.form.field.gender") %]">[% gender %]</td>
-      <td data-label="[% c.maketext("people.form.field.address1") %]">[% address1 %]</td>
-      <td data-label="[% c.maketext("people.form.field.address2") %]">[% address2 %]</td>
-      <td data-label="[% c.maketext("people.form.field.address3") %]">[% address3 %]</td>
-      <td data-label="[% c.maketext("people.form.field.address4") %]">[% address4 %]</td>
-      <td data-label="[% c.maketext("people.form.field.address5") %]">[% address5 %]</td>
-      <td data-label="[% c.maketext("people.form.field.postcode") %]">[% postcode %]</td>
-      <td data-label="[% c.maketext("people.form.field.home-phone") %]">[% home_telephone %]</td>
-      <td data-label="[% c.maketext("people.form.field.mobile-phone") %]">[% mobile_telephone %]</td>
-      <td data-label="[% c.maketext("people.form.field.work-phone") %]">[% work_telephone %]</td>
-      <td data-label="[% c.maketext("people.form.field.email-address") %]">[% email_address %]</td>
-      <td data-label="[% c.maketext("people.form.button.captain-of-club") %]">[% row.captain_club.short_name OR "&nbsp;" %]</td>
-      <td data-label="[% c.maketext("people.form.button.captain-of-team") %]">[% row.captain_team.name OR "&nbsp;" %]</td>
-      <td data-label="[% c.maketext("people.form.button.secretary-for") %]">[% row.secretary_club.full_name OR "&nbsp;" %]</td>
+      <td><a href="[% c.uri_for_action("/people/view_current_season", [row.person.url_key]) %]">[% row.person.first_name %]</a></td>
+      <td><a href="[% c.uri_for_action("/people/view_current_season", [row.person.url_key]) %]">[% row.person.surname %]</a></td>
+      <td>[% club %]</td>
+      <td>[% team %]</td>
+      <td>[% gender %]</td>
+      <td>[% address1 %]</td>
+      <td>[% address2 %]</td>
+      <td>[% address3 %]</td>
+      <td>[% address4 %]</td>
+      <td>[% address5 %]</td>
+      <td>[% postcode %]</td>
+      <td>[% home_telephone %]</td>
+      <td>[% mobile_telephone %]</td>
+      <td>[% work_telephone %]</td>
+      <td>[% email_address %]</td>
+      <td>[% row.captain_club.short_name OR "&nbsp;" %]</td>
+      <td>[% row.captain_team.name OR "&nbsp;" %]</td>
+      <td>[% row.secretary_club.full_name OR "&nbsp;" %]</td>
     </tr>
 [%
   END;

@@ -1,16 +1,17 @@
 [% # Note That the '-' at the beginning or end of TT code  -%]
 [% # "chomps" the whitespace/newline at that end of the    -%]
 [% # output (use View Source in browser to see the effect) -%]
-
-<div class="list-item">
-  <a href="[% c.uri_for_action('/league-averages/list_first_page', ['singles']) %]">Singles</a>
-</div>
-<div class="list-item">
-  <a href="[% c.uri_for_action('/league-averages/list_first_page', ['doubles-individuals']) %]">Doubles (Individuals)</a>
-</div>
-<div class="list-item">
-  <a href="[% c.uri_for_action('/league-averages/list_first_page', ['doubles-pairs']) %]">Doubles (Pairs)</a><br />
-</div>
-<div class="list-item">
-  <a href="[% c.uri_for_action('/league-averages/list_first_page', ['teams']) %]">Teams</a><br />
-</div>
+<ul class="option-list">
+  <li>
+    <a href="[% c.uri_for_action('/league-averages/list_first_page', ['singles']) %]">Singles</a>
+  </li>
+  <li>
+    <a href="[% c.uri_for_action('/league-averages/list_first_page', ['doubles-individuals']) %]">Doubles (Individuals)</a>
+  </li>
+  <li>
+    <a href="[% c.uri_for_action('/league-averages/list_first_page', ['doubles-pairs']) %]">Doubles (Pairs)</a><br />
+  </li>
+  <li>
+    <a href="[% c.uri_for_action('/league-averages/list_first_page', ['teams']) %]">Teams</a><br />
+  </li>
+</ul>

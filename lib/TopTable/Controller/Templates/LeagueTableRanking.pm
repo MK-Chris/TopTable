@@ -87,6 +87,12 @@ sub base_list :Chained("/") :PathPart("templates/league-table-ranking") :Capture
   # Check the authorisation to edit clubs we can display the link if necessary
   $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( template_edit template_delete template_create) ], "", 0] );
   
+  $c->stash({
+    external_scripts  => [
+      $c->uri_for("/static/script/standard/option-list.js"),
+    ],
+  });
+  
   # Load the messages
   $c->load_status_msgs;
 }

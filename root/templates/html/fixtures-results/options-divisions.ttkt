@@ -3,10 +3,11 @@
 [% # "chomps" the whitespace/newline at that end of the    -%]
 [% # output (use View Source in browser to see the effect) -%]
 [% # Some basic HTML with a loop to display clubs -%]
+<ul class="option-list">
 [%
 FOREACH division IN display_options;
 -%]
-<div class="list-item">
+  <li>
 [%
   IF specific_season;
     SET uri = c.uri_for_action("/fixtures-results/view_division_specific_season_first_page", [season.url_key, division.url_key]);
@@ -14,8 +15,9 @@ FOREACH division IN display_options;
     SET uri = c.uri_for_action("/fixtures-results/view_division_current_season_first_page", [division.url_key]);
   END;
 -%]
-  <a href="[% uri %]">[% division.name %]</a>
-</div>
+    <a href="[% uri %]">[% division.name %]</a>
+  </li>
 [%
 END;
 -%]
+</ul>

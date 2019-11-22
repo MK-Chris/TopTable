@@ -1,7 +1,7 @@
 [%
 IF officials.size;
 -%]
-<table class="responsive-vertical">
+<dl>
 [%
   FOREACH official = officials;
     IF specific_season;
@@ -10,9 +10,8 @@ IF officials.size;
       SET uri = c.uri_for_action("/people/view_current_season", [official.position_holder.url_key]);
     END;
 -%]
-  <tr>
-    <th>[% official.position %]</th>
-    <td>
+    <dt>[% official.position %]</dt>
+    <dd>
       <a href="[% uri %]">[% official.position_holder.display_name | html_entity %]</a>
 [%-
     IF official.position_holder.home_telephone;
@@ -34,12 +33,11 @@ IF officials.size;
 [%
     END;
 -%]
-    </td>
-  </tr>
+    </dd>
 [%
   END;
 -%]
-</table>
+</dl>
 [%
 ELSE;
   # No officials entered for this season yet.

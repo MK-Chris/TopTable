@@ -48,6 +48,9 @@ sub index :Path :Args(0) {
     template            => "html/info/options.ttkt",
     view_online_display => "Viewing league information",
     view_online_link    => 1,
+    external_scripts      => [
+      $c->uri_for("/static/script/standard/option-list.js"),
+    ],
   });
 }
 

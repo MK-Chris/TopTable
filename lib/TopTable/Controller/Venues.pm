@@ -89,7 +89,12 @@ sub base_list :Chained("/") :PathPart("venues") :CaptureArgs(0) {
   $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( venue_edit venue_delete venue_create) ], "", 0] );
   
   # Page description
-  $c->stash({page_description => $c->maketext("description.venues.list", $site_name)});
+  $c->stash({
+    page_description  => $c->maketext("description.venues.list", $site_name),
+    external_scripts  => [
+      $c->uri_for("/static/script/standard/option-list.js"),
+    ],
+  });
   
   # Load the messages
   $c->load_status_msgs;

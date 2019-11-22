@@ -5,12 +5,14 @@
 [% # output (use View Source in browser to see the effect) -%]
 
 [% # Some basic HTML with a loop to display match templates -%]
-<div class="list-item">
-  <a href="[% c.uri_for("/templates/match/individual") %]">[% c.maketext("menu.text.templates-invididual-match") %]</a>
-</div>
-<div class="list-item">
-  <a href="[% c.uri_for("/templates/match/team") %]">[% c.maketext("menu.text.templates-team-match") %]</a>
-</div>
-<div class="list-item">
-  <a href="[% c.uri_for("/templates/league-table-ranking") %]">[% c.maketext("menu.text.templates-league-table-ranking") %]</a>
-</div>
+<ul class="option-list">
+  <li>
+    <a href="[% c.uri_for("/templates/match/individual") %]">[% c.maketext("menu.text.templates-invididual-match") %]</a>
+  </li>
+  <li>
+    <a href="[% c.uri_for("/templates/match/team") %]">[% c.maketext("menu.text.templates-team-match") %]</a>
+  </li>
+  <li>
+    <a href="[% c.uri_for("/templates/league-table-ranking") %]">[% c.maketext("menu.text.templates-league-table-ranking") %]</a>
+  </li>
+</ul>

@@ -12,7 +12,23 @@ IF event_logs.count;
   page_links_text;
 -%]
 
-<table class="responsive-no-headers">
+<table id="datatable" class="stripe hover order-column row-border" style="width: 100%;">
+  <thead>
+    <tr>
+[%
+    UNLESS exclude_event_user;
+-%]
+    <th class="event-user">[% c.maketext("system-event-log.heading.user") %]</th>
+[%
+    END;
+-%]
+      <th class="event-datetime">[% c.maketext("system-event-log.heading.timestamp") %]</th>
+      <th class="event-datetime">[% c.maketext("system-event-log.heading.timestamp") %]</th>
+      <th class="event-type">[% c.maketext("system-event-log.heading.category") %]</th>
+      <th class="event-detail">[% c.maketext("system-event-log.heading.description") %]</th>
+    </tr>
+  </thead>
+  <tbody>
 [%
   WHILE (event = event_logs.next);
     # Work out what object type we have
@@ -77,21 +93,23 @@ IF event_logs.count;
       SET tooltip_link_text = "";
     END;
 -%]
-  <tr>
+    <tr>
 [%
-    IF !exclude_event_user;
+    UNLESS exclude_event_user;
 -%]
-    <td class="event-user">[% event.user.person.display_name OR event.user.username OR "Guest" %]</td>
+      <td class="event-user">[% event.user.person.display_name OR event.user.username OR "Guest" %]</td>
 [%
     END;
 -%]
-    <td class="event-datetime"><nobr>[% event.log_updated_tz(timezone).dmy("/") _ " " _ event.log_updated.hms %]</nobr></td>
-    <td class="event-type"><nobr>[% c.maketext("object.plural." _ event.system_event_log_type.plural_objects) | ucfirst %]</nobr></td>
-    <td class="event-detail">[% c.maketext(event.system_event_log_type.description, display_object_text, tooltip_link_text) %]</td>
-  </tr>
+      <td class="event-datetime"><nobr>[% event.log_updated_tz(timezone).ymd _ event.log_updated_tz(timezone).hms %]</nobr></td>
+      <td class="event-datetime"><nobr>[% event.log_updated_tz(timezone).dmy("/") _ " " _ event.log_updated_tz(timezone).hms %]</nobr></td>
+      <td class="event-type"><nobr>[% c.maketext("object.plural." _ event.system_event_log_type.plural_objects) | ucfirst %]</nobr></td>
+      <td class="event-detail">[% c.maketext(event.system_event_log_type.description, display_object_text, tooltip_link_text) %]</td>
+    </tr>
 [%
   END;
 -%]
+  </tbody>
 </table>
 [%
 page_links_text;

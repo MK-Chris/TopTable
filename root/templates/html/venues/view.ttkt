@@ -5,7 +5,6 @@
 <div id="tabs">
   <ul>
     <li><a href="#location">[% c.maketext("venues.location-contact") %]</a></li>
-    <li><a href="#directions">[% c.maketext("venues.directions") %]</a></li>
     <li><a href="#opening-hours">[% c.maketext("venues.opening-hours") %]</a></li>
   </ul>
   
@@ -39,11 +38,6 @@
     END;
     -%]
     </div>
-  </div>
-  <div id="directions">
-[%
-    INCLUDE "html/generic/directions-standard.ttkt"
--%]
   </div>
   <div id="opening-hours">
     Opening hours will go here.

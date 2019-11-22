@@ -84,7 +84,12 @@ sub base_list :Chained("/") :PathPart("seasons") :CaptureArgs(0) {
   $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( season_edit season_delete season_create) ], "", 0] );
   
   # Page description
-  $c->stash({page_description => $c->maketext("description.seasons.list", $site_name)});
+  $c->stash({
+    page_description  => $c->maketext("description.seasons.list", $site_name),
+    external_scripts  => [
+      $c->uri_for("/static/script/standard/option-list.js"),
+    ],
+  });
   
   # Load the messages
   $c->load_status_msgs;
@@ -218,6 +223,16 @@ sub view :Chained("base") :PathPart("") :Args(0) {
     edit_teams_allowed  => $edit_teams_allowed,
     canonical_uri       => $c->uri_for_action("/seasons/view", [$season->url_key]),
     page_description    => $c->maketext("description.seasons.view", $encoded_name, $site_name),
+    external_scripts    => [
+      $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
+      $c->uri_for("/static/script/seasons/view.js"),
+      $c->uri_for("/static/script/standard/option-list.js"),
+    ],
+    external_styles     => [
+      $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
+    ],
   });
 }
 
