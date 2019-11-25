@@ -5,7 +5,7 @@ use DateTime;
 use DateTime::TimeZone;
 use LWP::UserAgent;
 use JSON;
-use Data::Dumper;
+use Data::Dumper::Concise;
 use List::Util qw( min max );
 use Time::HiRes qw( gettimeofday tv_interval );
 use HTML::Entities;
@@ -97,6 +97,13 @@ sub begin :Private {
   } else {
     Log::Log4perl::MDC->put( "user", "(Guest)" );
   }
+  
+  # Get and stash cookie preferences
+  #my $cookie_settings = $c->request->cookie("cookieControlPrefs")->value =~ s/[|]/,/gr if defined( $c->request->cookie("cookieControlPrefs") );
+  my $cookie_settings = $c->request->cookie("cookieControlPrefs")->value if defined( $c->request->cookie("cookieControlPrefs") );
+  $cookie_settings = ( defined( $cookie_settings ) ) ? decode_json( $cookie_settings ) : [];
+  $c->log->debug( Dumper( { map{ $_ => 1 } @{ $cookie_settings } } ) );
+  $c->stash({cookie_settings => { map{ $_ => 1 } @{ $cookie_settings } },})
 }
 
 =head2 index

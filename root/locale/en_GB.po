@@ -3868,8 +3868,45 @@ msgstr "View contact details"
 msgid "msg.insecure-password-form"
 msgstr "This web site is not currently being served on a secure connection and you are about to fill in a form that has a password field; it&#39;s recommended that you use the <a href="%1">secure form</a> instead if possible, but bear in mind that the security certificate uses modern ciphers that are not compatible with Windows XP (which itself is no longer supported by Microsoft)."
 
-msgid "msg.cookie-notice"
-msgstr "We use cookies on this website to track user sessions and for Google Analytics. To use the website as intended, click &#39;accept&#39;.  Continued use of this website also implies acceptance."
+# Cookies
+msgid "cookie.title"
+msgstr "Accept cookies and privacy policy?"
+
+msgid "cookie.detail"
+msgstr "We use cookies on this website to track user sessions and for analytics.  Please select which cookies you're happy to accept.  Analytics are primarily used for ensuring new features will work for the browsers that visit the site."
+
+msgid "cookie.privacy-link.label"
+msgstr "View our privacy policy"
+
+msgid "cookie.accept-button.label"
+msgstr "Accept"
+
+msgid "cookie.select-cookies.label"
+msgstr "Select which cookies you want to accept"
+
+msgid "cookie.types.essential.label"
+msgstr "Essential"
+
+msgid "cookie.types.essential.description"
+msgstr "These are essential for the website to work correctly."
+
+msgid "cookie.types.preferences.id"
+msgstr "preferences"
+
+msgid "cookie.types.preferences.label"
+msgstr "Preferences"
+
+msgid "cookie.types.preferences.description"
+msgstr "These are cookies that are related to your site preferences, e.g. remembering your username."
+
+msgid "cookie.types.analytics.id"
+msgstr "analytics"
+
+msgid "cookie.types.analytics.label"
+msgstr "Analytics"
+
+msgid "cookie.types.analytics.description"
+msgstr "Cookies related to site visits, browser types, etc."
 
 ### Genders
 msgid "gender.male.gender"

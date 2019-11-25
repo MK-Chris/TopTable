@@ -18,7 +18,7 @@
     <div class="clear-fix"></div>
   </div>
 [%
-IF c.request.cookie("username").value;
+IF c.request.cookie("toptable_username").value;
   SET remember_checked = ' checked="checked"';
 ELSE;
   SET remember_checked = '';

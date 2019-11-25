@@ -5,6 +5,7 @@ use DateTime;
 use DateTime::TimeZone;
 use Try::Tiny;
 use HTML::Entities;
+use Data::Dumper::Concise;
 
 BEGIN { extends 'Catalyst::Controller'; }
 
@@ -862,10 +863,12 @@ sub do_login :Path("authenticate") {
   my $username      = $c->request->parameters->{username};
   my $password      = $c->request->parameters->{password};
   my $redirect_uri  = $c->request->parameters->{redirect_uri};
-  my $remember_user = $c->request->parameters->{remember_username};
+  my $remember_user = ( exists( $c->stash->{cookie_settings}{preferences} ) and $c->stash->{cookie_settings}{preferences} ) ? $c->request->parameters->{remember_username} : 0;
   my $from_menu     = $c->request->parameters->{from_menu};
   my ( $user );
   my $error = [];
+  
+  $c->log->debug( Dumper( $c->stash->{cookie_settings} ) );
   
   if ( $c->user_exists ) {
     # Logged in already

@@ -71,7 +71,7 @@ END;
 
 <title>[% page_title %]</title>
 
-<link rel="stylesheet" href="[% c.uri_for('/static/css/main.css') %]?v1.2" type="text/css" media="screen" />
+<link rel="stylesheet" href="[% c.uri_for('/static/css/main.css') %]?v1.3" type="text/css" media="screen" />
 <link rel="stylesheet" href="[% c.uri_for('/static/css/jqueryui/jquery-ui.structure.min.css') %]" type="text/css" media="screen" />
 <link rel="stylesheet" href="[% c.uri_for('/static/css/jqueryui/jquery-ui.theme.min.css') %]" type="text/css" media="screen" />
 <link rel="stylesheet" href="[% c.uri_for('/static/css/smartmenus/sm-core-css.css') %]" type="text/css" media="screen" />
@@ -80,7 +80,7 @@ END;
 # Cookie notice only if it's not a bot
 UNLESS c.request.browser_detect.robot;
 -%]
-<link rel="stylesheet" href="[% c.uri_for('/static/css/cookiecuttr/cookiecuttr.css') %]" type="text/css" media="screen" />
+
 [%
 END;
 
@@ -100,6 +100,7 @@ END;
 <script type="text/javascript" src="[% c.uri_for('/static/script/plugins/cookie/jquery.cookie.js') %]"></script>
 <script type="text/javascript" src="[% c.uri_for('/static/script/plugins/touch-punch/jquery.ui.touch-punch.min.js') %]"></script>
 <script type="text/javascript" src="[% c.uri_for('/static/plugins/jquery-scrollto/jquery-scrollto.js') %]"></script>
+<script type="text/javascript" src="[% c.uri_for('/static/script/plugins/ihavecookies/jquery.ihavecookies.min.js') %]"></script>
 
 <script type="text/javascript" src="[% c.uri_for("/static/script/standard/main.js") %]"></script>
 [%
@@ -111,7 +112,36 @@ IF external_scripts;
 [%
   END;
 END;
-IF c.config.Google.Analytics.tracking_id;
+-%]
+<script type="text/javascript">
+  $(document).ready(function() {
+    $("body").ihavecookies({
+      "title": "[% c.maketext("cookie.title") %]",
+      "message": "[% c.maketext("cookie.detail") %]",
+      "moreInfoLabel": "[% c.maketext("cookie.privacy-link.label") %]",
+      "link": "[% c.uri_for('/info/privacy') %]",
+      "delay": 600,
+      "expires": 30,
+      "uncheckBoxes": false,
+      "acceptBtnLabel": "[% c.maketext("cookie.accept-button.label") %]",
+      "cookieTypesTitle": "[% c.maketext("cookie.select-cookies.label") %]",
+      "fixedCookieTypeLabel": "[% c.maketext("cookie.types.essential.label") %]",
+      "fixedCookieTypeDesc": "[% c.maketext("cookie.types.essential.description") %]",
+      "cookieTypes": [{
+        "type": "[% c.maketext("cookie.types.preferences.label") %]",
+        "value": "[% c.maketext("cookie.types.preferences.id") %]",
+        "description": "[% c.maketext("cookie.types.preferences.description") %]"
+      }, {
+        "type": "[% c.maketext("cookie.types.analytics.label") %]",
+        "value": "[% c.maketext("cookie.types.analytics.id") %]",
+        "description": "[% c.maketext("cookie.types.analytics.description") %]"
+      }]
+    });
+  });
+</script>
+
+[%
+IF c.config.Google.Analytics.tracking_id AND cookie_settings.analytics;
 -%]
 <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
