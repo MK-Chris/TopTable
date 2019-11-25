@@ -15,10 +15,10 @@ $(document).ready(function() {
       {"responsivePriority": 2},
       {"responsivePriority": 8},
       {"responsivePriority": 5},
-      {"responsivePriority": 3},
+      {"responsivePriority": 4},
       {"responsivePriority": 6},
       {"responsivePriority": 7},
-      {"responsivePriority": 4}
+      {"responsivePriority": 3}
     ]
   });
 });

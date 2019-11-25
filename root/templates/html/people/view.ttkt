@@ -225,8 +225,8 @@ IF season;
         END;
 -%]
         <tr>
-          <td data-label="[% c.maketext("people.opponents.date") %]">[% match.actual_date.ymd %]</td>
           <td data-label="[% c.maketext("people.opponents.date") %]"><a href="[% c.uri_for_action("/matches/team/view_by_url_keys", match.url_keys) %]">[% c.i18n_datetime_format_date.format_datetime( match.actual_date ) %]</a></td>
+          <td data-label="[% c.maketext("people.opponents.date") %]">[% match.actual_date.ymd %]</td>
           <td data-label="[% c.maketext("people.opponents.playing-for") %]"><a href="[% for_team_uri %]">[% for_team_season.club.short_name | html_entity %] [% for_team_season.name | html_entity %]</a></td>
           <td data-label="[% c.maketext("people.opponents.playing-against") %]"><a href="[% against_team_uri %]">[% against_team_season.club.short_name | html_entity %] [% against_team_season.name | html_entity %]</a></td>
           <td data-label="[% c.maketext("people.opponents.opponent") %]"><a href="[% opponent_uri %]">[% opponent_season.display_name | html_entity %]</a></td>
