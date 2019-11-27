@@ -137,9 +137,11 @@ IF teams.size;
 [%
 ELSE;
 -%]
-<div class="list-item">
-  [% club.full_name %] has not got any teams.
-</div>
+<ul class="option-list">
+  <li>
+    [% club.full_name %] has not got any teams.
+  </li>
+</ul>
 [%
 END;
 -%]

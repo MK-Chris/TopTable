@@ -347,6 +347,13 @@ msgstr "Tournaments"
 msgid "menu.text.images"
 msgstr "Images"
 
+## Reports
+msgid "menu.text.reports"
+msgstr "Reports"
+
+msgid "menu.title.reports"
+msgstr "Reports"
+
 ### Home page
 msgid "home-page.welcome"
 msgstr "Welcome"
@@ -388,6 +395,9 @@ msgstr "%1 team listings (%2) in %3."
 
 msgid "description.clubs.list-seasons"
 msgstr "Seasons that %1 has entered teams into %2."
+
+msgid "description.reports.list-seasons"
+msgstr "Seasons that you can run the %1 report for."
 
 ## Divisions
 msgid "description.divisions.list"
@@ -553,6 +563,16 @@ msgstr "%1 results, player lists and statistics for %3 in %2."
 
 msgid "description.teams.list-seasons"
 msgstr "Seasons that %1 has entered teams into %2."
+
+## Reports
+msgid "description.reports.list"
+msgstr "A list of reports you can run."
+
+msgid "description.reports.view-current"
+msgstr "%1 report in %2."
+
+msgid "description.reports.view-specific"
+msgstr "%1 report for 2 in %3."
 
 ## Users
 msgid "description.users.list"
@@ -2688,6 +2708,53 @@ msgstr "The event type can&#39;t be edited because it has either been used in pr
 
 msgid "events.edit.error.no-current-season"
 msgstr "You can&#39;t edit events until there is a current season to edit them in."
+
+### Reports
+msgid "reports.name.loan-players"
+msgstr "Loan players"
+
+msgid "reports.control.loan-players.group"
+msgstr "Select a column to group data by"
+
+msgid "reports.no-data"
+msgstr "There is no data to show."
+
+## Loan players columns
+msgid "reports.columns.loan-players.name"
+msgstr "Player"
+
+msgid "reports.columns.loan-players.played-up-for"
+msgstr "Played up for"
+
+msgid "reports.columns.loan-players.played-up-against"
+msgstr "Played up against"
+
+msgid "reports.columns.loan-players.division"
+msgstr "Division"
+
+msgid "reports.columns.loan-players.division-rank"
+msgstr "Division rank"
+
+msgid "reports.columns.loan-players.date"
+msgstr "Date"
+
+msgid "reports.columns.loan-players.date-sortable"
+msgstr "Date (sortable)"
+
+msgid "reports.columns.loan-players.from-team"
+msgstr "On loan from (team)"
+
+msgid "reports.columns.loan-players.from-division"
+msgstr "On loan from (division)"
+
+msgid "reports.columns.loan-players.from-division-rank"
+msgstr "On loan from (division rank)"
+
+msgid "reports.columns.loan-players.games-played"
+msgstr "Played"
+
+msgid "reports.columns.loan-players.games-won"
+msgstr "Won"
 
 ### Meetings
 msgid "meetings.none"
