@@ -53,8 +53,8 @@ sub base :Chained("/") PathPart("people") CaptureArgs(1) {
   my $person = $c->model("DB::Person")->find_with_user( $id_or_url_key );
   
   if ( defined($person) ) {
-    my $encoded_first_name    = $person->first_name;
-    my $encoded_display_name  = $person->display_name;
+    my $encoded_first_name    = encode_entities( $person->first_name );
+    my $encoded_display_name  = encode_entities( $person->display_name );
     
     $c->stash({
       person                => $person,

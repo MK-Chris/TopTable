@@ -8,7 +8,7 @@ $(document).ready(function() {
     "paging": false,
     "info": false,
     "fixedHeader": true,
-    "order": [[2, "asc"]],
+    "order": [[2, "desc"]],
     "columns": [{
       "responsivePriority": 3
     }, {

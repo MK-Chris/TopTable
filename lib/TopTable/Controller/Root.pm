@@ -101,7 +101,6 @@ sub begin :Private {
   # Get and stash cookie preferences
   my $cookie_settings = "[]";
   $cookie_settings = $c->request->cookie("cookieControlPrefs")->value if defined( $c->request->cookie("cookieControlPrefs") );
-  
   $cookie_settings = ( defined( $cookie_settings ) ) ? decode_json( $cookie_settings ) : [];
   $c->stash({cookie_settings => { map{ $_ => 1 } @{ $cookie_settings } },});
 }

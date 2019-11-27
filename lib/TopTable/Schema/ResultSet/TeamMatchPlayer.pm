@@ -55,4 +55,45 @@ sub player_in_match_by_url_keys {
   });
 }
 
+=head2 loan_players
+
+Search loan players in a given season.
+
+=cut
+
+sub loan_players {
+  my ( $self, $parameters ) = @_;
+  my $season  = $parameters->{season};
+  
+  return $self->search({
+    loan_team => {
+      "<>" => undef,
+    },
+    "team_match.season"         => $season->id,
+    "team_seasons.season"       => $season->id,
+    "team_seasons_2.season"     => $season->id,
+    "team_seasons_3.season"     => $season->id,
+    "person_seasons.season"     => $season->id,
+    "division_seasons.season"   => $season->id,
+    "division_seasons_2.season" => $season->id,
+  }, {
+    prefetch  => ["location", {
+      loan_team   => {
+        team_seasons => {
+          division => "division_seasons",
+        },
+      },
+      team_match  => ["season", {
+        home_team => [ qw( club team_seasons ) ],
+      }, {
+        away_team => [ qw( club team_seasons ) ],
+      }, {
+        division  => "division_seasons",
+      }],
+    }, {
+      player  => "person_seasons",
+    }],
+  });
+}
+
 1;

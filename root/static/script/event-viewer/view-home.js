@@ -9,7 +9,7 @@ $(document).ready(function() {
     "info": false,
     "fixedHeader": true,
     "searching": false,
-    "order": [[1, "asc"]],
+    "order": [[1, "desc"]],
     "columns": [{
       "visible": false,
       "responsivePriority": 4

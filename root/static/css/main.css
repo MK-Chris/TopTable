@@ -330,13 +330,6 @@ div.seasons-count, div.no-entry {margin-top: 1.4em;}
 }
 
 /* Tables */
-table.no-script {
-  border-collapse: collapse;
-  border-spacing: 0;
-  margin-bottom: 1.4em;
-  width:100%;
-}
-
 table#datatable, table#games-table, table#teams-table, table#home-players-table, table#away-players-table, table#averages-singles, table#averages-doubles-individuals, table#averages-doubles-pairs, table#averages-doubles-teams, table#fixtures-table {
   width: 100%;
 }
@@ -357,7 +350,7 @@ th {
 }*/
 
 /* Lists of items */
-table.no-script td, div.list-item, ul.object-list li {
+ul.object-list li {
   background: #f5f5f5;
   border: 1px solid #ffffff;
 }
@@ -415,6 +408,11 @@ dl dt{
   width: 50%;
   font-weight: bold;
   padding-top: 8px;
+}
+
+#report-grouper {
+  float: left;
+  min-width: 200px;
 }
 
 /* Hovered-over list option */
