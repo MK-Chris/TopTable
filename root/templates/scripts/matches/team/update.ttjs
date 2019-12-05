@@ -71,8 +71,9 @@ END;
 ];
   
   // Disable changing the accordion and AJAX score changes
-  var disable_accordion_change = false;
-  var disable_ajax             = false;
+  var disable_accordion_change  = false;
+  var disable_ajax              = false;
+  var score_sent                = false;
   
   /**
    *  Set the focussed field / active accordion on page load
@@ -441,6 +442,17 @@ END;
                 type: "POST",
                 dataType: "json",
                 data: ajax_parameters,
+                beforeSend: function(jqXHR, settings) {
+                  if ( score_sent === true ) {
+                    // Score sent already, return false
+                    return false;
+                  } else {
+                    score_sent = true;
+                  }
+                },
+                complete: function(jqXHR, status) {
+                  score_sent = false;
+                },
                 success: function(response) {
                   var originally_complete = Boolean( response.match_originally_complete );
                   var complete            = Boolean( response.json_match_complete );
