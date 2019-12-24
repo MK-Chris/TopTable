@@ -59,12 +59,14 @@ __PACKAGE__->table("tournament_rounds");
 
   data_type: 'integer'
   extra: {unsigned => 1}
+  is_foreign_key: 1
   is_nullable: 0
 
 =head2 season
 
   data_type: 'integer'
   extra: {unsigned => 1}
+  is_foreign_key: 1
   is_nullable: 0
 
 =head2 round_number
@@ -84,6 +86,8 @@ __PACKAGE__->table("tournament_rounds");
   data_type: 'char'
   is_nullable: 0
   size: 1
+
+g = group; k = knockout
 
 =head2 team_match_template
 
@@ -105,11 +109,15 @@ __PACKAGE__->table("tournament_rounds");
   datetime_undef_if_invalid: 1
   is_nullable: 1
 
+If this is a team match, this can be null, which indicates that the matches are to be played on the home night of the home team.
+
 =head2 venue
 
   data_type: 'integer'
   extra: {unsigned => 1}
   is_nullable: 1
+
+If this is a team match, this can be null, which indicates the the matches are to be played at the venue the home team play at.
 
 =cut
 
@@ -124,9 +132,19 @@ __PACKAGE__->add_columns(
   "url_key",
   { data_type => "varchar", is_nullable => 0, size => 45 },
   "tournament",
-  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 0 },
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_foreign_key => 1,
+    is_nullable => 0,
+  },
   "season",
-  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 0 },
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_foreign_key => 1,
+    is_nullable => 0,
+  },
   "round_number",
   { data_type => "tinyint", extra => { unsigned => 1 }, is_nullable => 0 },
   "name",
@@ -264,8 +282,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2019-12-09 23:22:42
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:nFzJ79BUEPfbEssr2K7wyA
+# Created by DBIx::Class::Schema::Loader v0.07043 @ 2015-12-08 01:14:14
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:FnaCNkpKves3jtbdbinWzQ
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

@@ -4,6 +4,3 @@ bin/tests/set_hashed_passwords.pl
 root/maintenance.html
 root/logs/toptable.log
 *.pl
-!script/*.pl
-lib/TopTable/Schema/Result/DbixClassDeploymenthandlerVersion.pm
-toptable.db

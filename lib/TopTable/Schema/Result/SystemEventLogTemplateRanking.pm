@@ -1,12 +1,12 @@
 use utf8;
-package TopTable::Schema::Result::SystemEventLogTemplateMatchIndividual;
+package TopTable::Schema::Result::SystemEventLogTemplateRanking;
 
 # Created by DBIx::Class::Schema::Loader
 # DO NOT MODIFY THE FIRST PART OF THIS FILE
 
 =head1 NAME
 
-TopTable::Schema::Result::SystemEventLogTemplateMatchIndividual
+TopTable::Schema::Result::SystemEventLogTemplateRanking
 
 =cut
 
@@ -34,11 +34,11 @@ extends 'DBIx::Class::Core';
 
 __PACKAGE__->load_components("InflateColumn::DateTime", "TimeStamp", "PassphraseColumn");
 
-=head1 TABLE: C<system_event_log_template_match_individual>
+=head1 TABLE: C<system_event_log_template_ranking>
 
 =cut
 
-__PACKAGE__->table("system_event_log_template_match_individual");
+__PACKAGE__->table("system_event_log_template_ranking");
 
 =head1 ACCESSORS
 
@@ -139,13 +139,13 @@ __PACKAGE__->set_primary_key("id");
 
 Type: belongs_to
 
-Related object: L<TopTable::Schema::Result::TemplateMatchIndividual>
+Related object: L<TopTable::Schema::Result::TemplateRanking>
 
 =cut
 
 __PACKAGE__->belongs_to(
   "object",
-  "TopTable::Schema::Result::TemplateMatchIndividual",
+  "TopTable::Schema::Result::TemplateRanking",
   { id => "object_id" },
   {
     is_deferrable => 1,
@@ -172,7 +172,7 @@ __PACKAGE__->belongs_to(
 
 
 # Created by DBIx::Class::Schema::Loader v0.07043 @ 2015-09-04 12:04:56
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:ratsHWyVhUTZNd3gibzwwg
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:4tm3HWFNCJfXFDvlIc2wjA
 
 #
 # Enable automatic date handling

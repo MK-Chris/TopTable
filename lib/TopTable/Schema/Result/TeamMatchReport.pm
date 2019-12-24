@@ -74,7 +74,7 @@ __PACKAGE__->table("team_match_reports");
 
   data_type: 'datetime'
   datetime_undef_if_invalid: 1
-  is_nullable: 0
+  is_nullable: 1
 
 =head2 author
 
@@ -123,7 +123,7 @@ __PACKAGE__->add_columns(
   {
     data_type => "datetime",
     datetime_undef_if_invalid => 1,
-    is_nullable => 0,
+    is_nullable => 1,
   },
   "author",
   {
@@ -185,8 +185,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2019-12-09 23:22:42
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:IJpAuLZGU1K1KEc45l1cCQ
+# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-03-21 21:51:46
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:QmOnGzUeF0h2wSuAMae2DA
 
 #
 # Enable automatic date handling

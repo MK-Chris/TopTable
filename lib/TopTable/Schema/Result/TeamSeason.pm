@@ -318,7 +318,7 @@ __PACKAGE__->table("team_seasons");
 
   data_type: 'datetime'
   datetime_undef_if_invalid: 1
-  is_nullable: 0
+  is_nullable: 1
 
 =cut
 
@@ -591,7 +591,7 @@ __PACKAGE__->add_columns(
   {
     data_type => "datetime",
     datetime_undef_if_invalid => 1,
-    is_nullable => 0,
+    is_nullable => 1,
   },
 );
 
@@ -707,8 +707,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2019-12-09 23:22:42
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:XJm3Qsz+/5MswnkrFN52CQ
+# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-02-22 22:41:47
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:PtceRI9TaV1NMMPKNZ1U3w
 
 #
 # Enable automatic date handling

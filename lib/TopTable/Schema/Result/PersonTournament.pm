@@ -8,6 +8,10 @@ package TopTable::Schema::Result::PersonTournament;
 
 TopTable::Schema::Result::PersonTournament
 
+=head1 DESCRIPTION
+
+Register players (from the person table) with team links (in the team_links table).  Team links in turn link to a league season.  This table holds averages for that particular link
+
 =cut
 
 use strict;
@@ -53,12 +57,14 @@ __PACKAGE__->table("person_tournaments");
 
   data_type: 'integer'
   extra: {unsigned => 1}
+  is_foreign_key: 1
   is_nullable: 0
 
 =head2 season
 
   data_type: 'integer'
   extra: {unsigned => 1}
+  is_foreign_key: 1
   is_nullable: 0
 
 =head2 person1
@@ -127,6 +133,8 @@ __PACKAGE__->table("person_tournaments");
   extra: {unsigned => 1}
   is_nullable: 0
 
+Stores the number of matches the players has played in that the team has won.
+
 =head2 matches_drawn
 
   data_type: 'tinyint'
@@ -134,12 +142,16 @@ __PACKAGE__->table("person_tournaments");
   extra: {unsigned => 1}
   is_nullable: 0
 
+Stores the number of matches the players has played in that the team has drawn.
+
 =head2 matches_lost
 
   data_type: 'tinyint'
   default_value: 0
   extra: {unsigned => 1}
   is_nullable: 0
+
+Stores the number of matches the players has played in that the team has lost.
 
 =head2 games_played
 
@@ -256,9 +268,19 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
   },
   "tournament",
-  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 0 },
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_foreign_key => 1,
+    is_nullable => 0,
+  },
   "season",
-  { data_type => "integer", extra => { unsigned => 1 }, is_nullable => 0 },
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_foreign_key => 1,
+    is_nullable => 0,
+  },
   "person1",
   {
     data_type => "integer",
@@ -494,8 +516,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2019-12-09 23:22:41
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:u8b63YbPmCiHkJKG7vKz/Q
+# Created by DBIx::Class::Schema::Loader v0.07043 @ 2015-12-08 01:14:13
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:mIaunnYe/S7UJ3OWi2OugA
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

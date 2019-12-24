@@ -109,7 +109,7 @@ __PACKAGE__->table("users");
 
   data_type: 'datetime'
   datetime_undef_if_invalid: 1
-  is_nullable: 0
+  is_nullable: 1
 
 =head2 last_visit_ip
 
@@ -121,7 +121,7 @@ __PACKAGE__->table("users");
 
   data_type: 'datetime'
   datetime_undef_if_invalid: 1
-  is_nullable: 0
+  is_nullable: 1
 
 =head2 last_active_ip
 
@@ -146,6 +146,8 @@ __PACKAGE__->table("users");
   data_type: 'varchar'
   is_nullable: 1
   size: 500
+
+"Upload" = uploaded image (will be a pre-defined URI based on the user ID; anything else should be assumed to be a remotely linked web address
 
 =head2 posts
 
@@ -237,7 +239,7 @@ __PACKAGE__->table("users");
 
   data_type: 'datetime'
   datetime_undef_if_invalid: 1
-  is_nullable: 0
+  is_nullable: 1
 
 =head2 invalid_logins
 
@@ -256,7 +258,7 @@ __PACKAGE__->table("users");
 
   data_type: 'datetime'
   datetime_undef_if_invalid: 1
-  is_nullable: 0
+  is_nullable: 1
 
 =head2 last_invalid_login
 
@@ -315,7 +317,7 @@ __PACKAGE__->add_columns(
   {
     data_type => "datetime",
     datetime_undef_if_invalid => 1,
-    is_nullable => 0,
+    is_nullable => 1,
   },
   "last_visit_ip",
   { data_type => "varchar", is_nullable => 1, size => 45 },
@@ -323,7 +325,7 @@ __PACKAGE__->add_columns(
   {
     data_type => "datetime",
     datetime_undef_if_invalid => 1,
-    is_nullable => 0,
+    is_nullable => 1,
   },
   "last_active_ip",
   { data_type => "varchar", is_nullable => 1, size => 45 },
@@ -385,7 +387,7 @@ __PACKAGE__->add_columns(
   {
     data_type => "datetime",
     datetime_undef_if_invalid => 1,
-    is_nullable => 0,
+    is_nullable => 1,
   },
   "invalid_logins",
   {
@@ -400,7 +402,7 @@ __PACKAGE__->add_columns(
   {
     data_type => "datetime",
     datetime_undef_if_invalid => 1,
-    is_nullable => 0,
+    is_nullable => 1,
   },
   "last_invalid_login",
   {
@@ -601,8 +603,8 @@ Composing rels: L</user_roles> -> role
 __PACKAGE__->many_to_many("roles", "user_roles", "role");
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2019-12-09 23:22:42
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:gBoYZWYqESqil09+ROae6A
+# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-09-05 16:36:48
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:OLv252sxFjqv2GcwC4e1JA
 
 use Digest::SHA qw( sha256_hex );
 use Time::HiRes;
@@ -620,7 +622,6 @@ __PACKAGE__->add_columns(
 __PACKAGE__->add_columns(
     "password" => {
         passphrase        => "rfc2307",
-        data_type         => "text", 
         #passphrase_class  => "SaltedDigest",
         #passphrase_args   => {
         #    algorithm     => "SHA-1",

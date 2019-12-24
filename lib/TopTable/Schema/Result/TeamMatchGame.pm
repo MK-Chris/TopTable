@@ -216,6 +216,8 @@ __PACKAGE__->table("team_match_games");
   is_foreign_key: 1
   is_nullable: 1
 
+We need to distinguish the winner if the game has been awarded to either side.
+
 =cut
 
 __PACKAGE__->add_columns(
@@ -573,8 +575,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2019-12-09 23:22:42
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:U4l10jpqSAIgyV7EVGyXPA
+# Created by DBIx::Class::Schema::Loader v0.07043 @ 2015-11-03 22:41:03
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:SLJHHD/sShDf2zDYuPyxXg
 
 use Data::Dumper;
 

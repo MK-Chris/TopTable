@@ -186,7 +186,7 @@ __PACKAGE__->table("doubles_pairs");
 
   data_type: 'datetime'
   datetime_undef_if_invalid: 1
-  is_nullable: 0
+  is_nullable: 1
 
 =cut
 
@@ -335,7 +335,7 @@ __PACKAGE__->add_columns(
   {
     data_type => "datetime",
     datetime_undef_if_invalid => 1,
-    is_nullable => 0,
+    is_nullable => 1,
   },
 );
 
@@ -444,8 +444,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2019-12-09 23:22:41
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:8dPu6C+yiZY5QvTaQl789Q
+# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-02-15 20:58:42
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:irqWFXWfNextp2uRNAfylg
 
 #
 # Enable automatic date handling

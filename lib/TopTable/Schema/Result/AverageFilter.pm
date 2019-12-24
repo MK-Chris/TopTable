@@ -113,6 +113,8 @@ __PACKAGE__->table("average_filters");
   is_foreign_key: 1
   is_nullable: 1
 
+Ties the filter to a user so users can create their own; NULL = a system filter, appears for all users.
+
 =cut
 
 __PACKAGE__->add_columns(
@@ -243,8 +245,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2019-12-09 23:22:41
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:4zw0G7f1KOejpTuL7VJ+BA
+# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-01-27 11:59:56
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:W27QNH8tr2kmJWlcmFb4dw
 
 =head2 check_and_delete
 

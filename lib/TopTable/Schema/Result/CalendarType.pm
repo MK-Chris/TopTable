@@ -6,7 +6,7 @@ package TopTable::Schema::Result::CalendarType;
 
 =head1 NAME
 
-TopTable::Schema::Result::CalendarType
+TopTable::Schema::Result::CalendarType - Calendar types for importing fixtures / results into.
 
 =cut
 
@@ -61,17 +61,23 @@ __PACKAGE__->table("calendar_types");
   is_nullable: 0
   size: 50
 
+Name that appears in the select list.
+
 =head2 uri
 
   data_type: 'varchar'
   is_nullable: 0
   size: 500
 
+URI to redirect to.  Enter {cal-uri} to replace with the URI that generates the ICS file.
+
 =head2 calendar_scheme
 
   data_type: 'varchar'
   is_nullable: 1
   size: 10
+
+Enter a value, for example webcal, to change the calendar scheme URI to webcal://
 
 =head2 uri_escape_replacements
 
@@ -83,6 +89,8 @@ __PACKAGE__->table("calendar_types");
 
   data_type: 'smallint'
   is_nullable: 0
+
+The order that the item will be displayed in the select list.
 
 =cut
 
@@ -135,8 +143,8 @@ __PACKAGE__->set_primary_key("id");
 __PACKAGE__->add_unique_constraint("name", ["name"]);
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2019-12-09 23:22:41
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:m5Dn0U5QGU4Tf9wp9qtQtg
+# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-03-07 21:10:05
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:6FLyvfYwC5hXjHS3R2eUlg
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
