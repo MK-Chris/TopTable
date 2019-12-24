@@ -134,7 +134,7 @@ __PACKAGE__->table("sessions");
 
   data_type: 'datetime'
   datetime_undef_if_invalid: 1
-  is_nullable: 1
+  is_nullable: 0
 
 =head2 invalid_logins
 
@@ -196,7 +196,7 @@ __PACKAGE__->add_columns(
   {
     data_type => "datetime",
     datetime_undef_if_invalid => 1,
-    is_nullable => 1,
+    is_nullable => 0,
   },
   "invalid_logins",
   {
@@ -268,8 +268,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-06-20 11:58:16
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:7gOnrmmaFSV0a1GKRqFvZw
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2019-12-09 23:22:41
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:6kEFC2ucHCZdaJMv1LshGg
 
 use HTTP::BrowserDetect;
 

@@ -69,16 +69,12 @@ __PACKAGE__->table("team_match_players");
   extra: {unsigned => 1}
   is_nullable: 0
 
-Releates to the internal player number (1-6 if there are three players per team)
-
 =head2 location
 
   data_type: 'varchar'
   is_foreign_key: 1
   is_nullable: 0
   size: 10
-
-Home or away
 
 =head2 player
 
@@ -100,8 +96,6 @@ Home or away
   extra: {unsigned => 1}
   is_foreign_key: 1
   is_nullable: 1
-
-Team ID the player currently has active membership for so we know what was the active membership at the time of the match, even if that changes later on
 
 =head2 games_played
 
@@ -417,8 +411,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2015-11-05 21:08:52
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:O7YJrUD6Xkn7BaqE0NQsyQ
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2019-12-09 23:22:42
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:QornhOofqaQhtWh2RaMV5g
 
 =head2 update_person
 

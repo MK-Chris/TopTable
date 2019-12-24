@@ -6,7 +6,7 @@ package TopTable::Schema::Result::UploadedFile;
 
 =head1 NAME
 
-TopTable::Schema::Result::UploadedFile - Files uploaded for download by users.
+TopTable::Schema::Result::UploadedFile
 
 =cut
 
@@ -177,8 +177,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-07-01 16:13:30
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:DJuCpdGj0ajZbyYqxhZj9g
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2019-12-09 23:22:42
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:xJ1H+Xx45KnkOANdBg3AGg
 
 #
 # Enable automatic date handling

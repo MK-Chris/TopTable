@@ -70,8 +70,6 @@ __PACKAGE__->table("system_event_log_file");
   is_nullable: 0
   size: 300
 
-Only used if there is no ID (i.e., if the club was deleted and is not available).
-
 =head2 log_updated
 
   data_type: 'datetime'
@@ -83,8 +81,6 @@ Only used if there is no ID (i.e., if the club was deleted and is not available)
   data_type: 'tinyint'
   extra: {unsigned => 1}
   is_nullable: 0
-
-Used if the event is for an edit.
 
 =cut
 
@@ -173,8 +169,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2015-09-04 12:04:56
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:873ixjaBeC7FePKLV5GGuQ
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2019-12-09 23:22:41
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:XYjga8t8wBJGWeiddRoAvw
 
 #
 # Enable automatic date handling

@@ -8,10 +8,6 @@ package TopTable::Schema::Result::PersonSeason;
 
 TopTable::Schema::Result::PersonSeason
 
-=head1 DESCRIPTION
-
-Register players (from the person table) with team links (in the team_links table).  Team links in turn link to a league season.  This table holds averages for that particular link
-
 =cut
 
 use strict;
@@ -112,8 +108,6 @@ __PACKAGE__->table("person_seasons");
   extra: {unsigned => 1}
   is_nullable: 0
 
-Stores the number of matches the players has played in that the team has won.
-
 =head2 matches_drawn
 
   data_type: 'tinyint'
@@ -121,16 +115,12 @@ Stores the number of matches the players has played in that the team has won.
   extra: {unsigned => 1}
   is_nullable: 0
 
-Stores the number of matches the players has played in that the team has drawn.
-
 =head2 matches_lost
 
   data_type: 'tinyint'
   default_value: 0
   extra: {unsigned => 1}
   is_nullable: 0
-
-Stores the number of matches the players has played in that the team has lost.
 
 =head2 games_played
 
@@ -672,8 +662,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2015-11-07 08:45:15
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:ebXS+kxIScxTrCnr1wKoGg
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2019-12-09 23:22:41
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Bzb3YwE2du4LLUdLmw1Qkg
 
 #
 # Enable automatic date handling

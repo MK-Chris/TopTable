@@ -1,4 +1,4 @@
-#!D:\WAMP\Perl\bin\perl.exe
+#!/usr/local/bin/perl
 
 use Catalyst::ScriptRunner;
 Catalyst::ScriptRunner->run('TopTable', 'Test');

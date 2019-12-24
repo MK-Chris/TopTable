@@ -658,6 +658,51 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
+=head2 tournament_team_matches_away_teams_verified
+
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::TournamentTeamMatch>
+
+=cut
+
+__PACKAGE__->has_many(
+  "tournament_team_matches_away_teams_verified",
+  "TopTable::Schema::Result::TournamentTeamMatch",
+  { "foreign.away_team_verified" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+=head2 tournament_team_matches_home_teams_verified
+
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::TournamentTeamMatch>
+
+=cut
+
+__PACKAGE__->has_many(
+  "tournament_team_matches_home_teams_verified",
+  "TopTable::Schema::Result::TournamentTeamMatch",
+  { "foreign.home_team_verified" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+=head2 tournament_team_matches_league_officials_verified
+
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::TournamentTeamMatch>
+
+=cut
+
+__PACKAGE__->has_many(
+  "tournament_team_matches_league_officials_verified",
+  "TopTable::Schema::Result::TournamentTeamMatch",
+  { "foreign.league_official_verified" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
 =head2 user
 
 Type: might_have
@@ -688,8 +733,8 @@ __PACKAGE__->many_to_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-03-21 21:51:46
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:dMz4v08d1MvpmEX2IjAl3g
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2019-12-09 23:22:41
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:B1WkMyPqCSVx9HUP2+a61Q
 
 #
 # Row-level helper methods

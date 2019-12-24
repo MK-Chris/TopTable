@@ -1,4 +1,4 @@
-#!D:\WAMP\Perl\bin\perl.exe
+#!/usr/local/bin/perl
 
 BEGIN {
     $ENV{CATALYST_SCRIPT_GEN} = 40;
