@@ -615,6 +615,8 @@ use DateTime;
 # Also enable automatic date handling
 __PACKAGE__->add_columns(
     "password" => {
+        data_type         => "text",
+        is_nullable       => 0,
         passphrase        => "rfc2307",
         #passphrase_class  => "SaltedDigest",
         #passphrase_args   => {
