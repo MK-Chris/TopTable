@@ -193,7 +193,7 @@ __PACKAGE__->belongs_to(
 #
 __PACKAGE__->add_columns(
     "published",
-    { data_type => "datetime", timezone => "UTC", set_on_create => 1, set_on_update => 0, },
+    { data_type => "datetime", timezone => "UTC", set_on_create => 1, set_on_update => 0, datetime_undef_if_invalid => 1, is_nullable => 1, },
 );
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

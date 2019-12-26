@@ -452,7 +452,7 @@ __PACKAGE__->has_many(
 #
 __PACKAGE__->add_columns(
     "last_updated",
-    { data_type => "datetime", timezone => "UTC", set_on_create => 1, set_on_update => 1, },
+    { data_type => "datetime", timezone => "UTC", set_on_create => 1, set_on_update => 1, datetime_undef_if_invalid => 1, is_nullable => 1, },
 );
 
 

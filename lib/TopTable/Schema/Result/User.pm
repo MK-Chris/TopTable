@@ -610,12 +610,6 @@ use Digest::SHA qw( sha256_hex );
 use Time::HiRes;
 use DateTime;
 
-#
-# Enable automatic date handling
-#
-__PACKAGE__->add_columns(
-);
-
 # Have the 'password' column use a SHA-1 hash and 20-byte salt
 # with RFC 2307 encoding; Generate the 'check_password" method
 # Also enable automatic date handling
@@ -635,15 +629,15 @@ __PACKAGE__->add_columns(
         passphrase_check_method => "check_password",
     },
     "registered_date" =>
-    { data_type => "datetime", timezone => "UTC", set_on_create => 1, set_on_update => 0, },
+    { data_type => "datetime", timezone => "UTC", set_on_create => 1, set_on_update => 0, datetime_undef_if_invalid => 1, is_nullable => 0, },
     "last_visit_date" =>
-    { data_type => "datetime", timezone => "UTC", set_on_create => 1, set_on_update => 0, },
+    { data_type => "datetime", timezone => "UTC", set_on_create => 1, set_on_update => 0, datetime_undef_if_invalid => 1, is_nullable => 1, },
     "last_active_date" =>
-    { data_type => "datetime", timezone => "UTC", set_on_create => 1, set_on_update => 0, },
+    { data_type => "datetime", timezone => "UTC", set_on_create => 1, set_on_update => 0, datetime_undef_if_invalid => 1, is_nullable => 1, },
     "activation_expires" =>
-    { data_type => "datetime", timezone => "UTC", set_on_create => 0, set_on_update => 0, },
+    { data_type => "datetime", timezone => "UTC", set_on_create => 0, set_on_update => 0, datetime_undef_if_invalid => 1, is_nullable => 1, },
     "password_reset_expires" =>
-    { data_type => "datetime", timezone => "UTC", set_on_create => 0, set_on_update => 0, },
+    { data_type => "datetime", timezone => "UTC", set_on_create => 0, set_on_update => 0, datetime_undef_if_invalid => 1, is_nullable => 1, },
 );
 
 =head2 display_name

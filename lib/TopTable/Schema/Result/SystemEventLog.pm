@@ -520,9 +520,9 @@ __PACKAGE__->belongs_to(
 #
 __PACKAGE__->add_columns(
     "log_created",
-    { data_type => "datetime", timezone => "UTC", set_on_create => 1, set_on_update => 0, },
+    { data_type => "datetime", timezone => "UTC", set_on_create => 1, set_on_update => 0, datetime_undef_if_invalid => 1, is_nullable => 0, },
     "log_updated",
-    { data_type => "datetime", timezone => "UTC", set_on_create => 1, set_on_update => 1, },
+    { data_type => "datetime", timezone => "UTC", set_on_create => 1, set_on_update => 1, datetime_undef_if_invalid => 1, is_nullable => 0, },
 );
 
 =head2 log_created_tz

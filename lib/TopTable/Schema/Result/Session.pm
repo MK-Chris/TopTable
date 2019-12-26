@@ -278,7 +278,7 @@ use HTTP::BrowserDetect;
 #
 __PACKAGE__->add_columns(
     "last_active",
-    { data_type => "datetime", timezone => "UTC" },
+    { data_type => "datetime", timezone => "UTC", datetime_undef_if_invalid => 1, is_nullable => 1, },
 );
 
 # Return the browser string from the HTTP::BrowserDetect object

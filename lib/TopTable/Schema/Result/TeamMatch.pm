@@ -895,7 +895,7 @@ use Set::Object;
 #
 __PACKAGE__->add_columns(
     "updated_since",
-    { data_type => "datetime", timezone => "UTC", set_on_create => 0, set_on_update => 1, },
+    { data_type => "datetime", timezone => "UTC", set_on_create => 0, set_on_update => 1, datetime_undef_if_invalid => 1, is_nullable => 1, },
 );
 
 =head2 url_keys
