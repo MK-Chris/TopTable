@@ -131,8 +131,6 @@ __PACKAGE__->table("tournament_team_matches");
   is_foreign_key: 1
   is_nullable: 1
 
-References a person on the league committee who has verified the result.
-
 =head2 home_team_verified
 
   data_type: 'integer'
@@ -140,16 +138,12 @@ References a person on the league committee who has verified the result.
   is_foreign_key: 1
   is_nullable: 1
 
-References a person on the home team who has verified the result.
-
 =head2 away_team_verified
 
   data_type: 'integer'
   extra: {unsigned => 1}
   is_foreign_key: 1
   is_nullable: 1
-
-References a person on the away team who has verified the result.
 
 =cut
 
@@ -401,8 +395,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2015-09-04 12:04:57
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:j8HKcZc00IPvE9GAAKzTGg
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2019-12-26 23:42:05
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:P5VeaZhjslzFl5rUHggEXQ
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

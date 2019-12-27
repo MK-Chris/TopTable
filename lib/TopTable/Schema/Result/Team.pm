@@ -337,9 +337,39 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
+=head2 tournament_team_matches_away_teams
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2015-11-15 11:40:01
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:qm/SCpdK7HIW2SBdDff5/g
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::TournamentTeamMatch>
+
+=cut
+
+__PACKAGE__->has_many(
+  "tournament_team_matches_away_teams",
+  "TopTable::Schema::Result::TournamentTeamMatch",
+  { "foreign.away_team" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+=head2 tournament_team_matches_home_teams
+
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::TournamentTeamMatch>
+
+=cut
+
+__PACKAGE__->has_many(
+  "tournament_team_matches_home_teams",
+  "TopTable::Schema::Result::TournamentTeamMatch",
+  { "foreign.home_team" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2019-12-26 23:42:05
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:7xEW8y65UN/twvH1LfyXtw
 
 =head2 get_players
 

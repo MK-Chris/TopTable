@@ -7,3 +7,4 @@ root/logs/toptable.log
 !script/*.pl
 toptable.db
 /dbicdh
+lib/TopTable/Schema/Result/DbixClassDeploymenthandlerVersion.pm

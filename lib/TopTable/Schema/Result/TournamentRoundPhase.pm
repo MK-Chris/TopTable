@@ -128,9 +128,24 @@ __PACKAGE__->belongs_to(
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
 );
 
+=head2 tournament_team_matches
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2015-10-20 23:24:59
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:rXOw5ghL9VojS/jKvijk5g
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::TournamentTeamMatch>
+
+=cut
+
+__PACKAGE__->has_many(
+  "tournament_team_matches",
+  "TopTable::Schema::Result::TournamentTeamMatch",
+  { "foreign.tournament_round_phase" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2019-12-26 23:42:05
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:mMN1vPyzT6EYsOrjjy8WnA
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

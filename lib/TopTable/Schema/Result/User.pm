@@ -147,8 +147,6 @@ __PACKAGE__->table("users");
   is_nullable: 1
   size: 500
 
-"Upload" = uploaded image (will be a pre-defined URI based on the user ID; anything else should be assumed to be a remotely linked web address
-
 =head2 posts
 
   data_type: 'integer'
@@ -603,8 +601,8 @@ Composing rels: L</user_roles> -> role
 __PACKAGE__->many_to_many("roles", "user_roles", "role");
 
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-09-05 16:36:48
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:OLv252sxFjqv2GcwC4e1JA
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2019-12-26 23:42:05
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:nG3FbIxqry4npdSVsHRFog
 
 use Digest::SHA qw( sha256_hex );
 use Time::HiRes;

@@ -6,7 +6,7 @@ package TopTable::Schema::Result::LookupGender;
 
 =head1 NAME
 
-TopTable::Schema::Result::LookupGender - Reference table with two rows (home and away)
+TopTable::Schema::Result::LookupGender
 
 =cut
 
@@ -86,8 +86,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2015-09-10 15:34:05
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Xb6UGS4U4D+5ckomBk0WZQ
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2019-12-26 23:42:04
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Ue7Tq8R7gsyE5G5N236DUQ
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

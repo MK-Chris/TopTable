@@ -61,16 +61,12 @@ __PACKAGE__->table("roles");
   is_nullable: 0
   size: 100
 
-For system (built-in) roles, this will not be the actual name, but the key for the translation routine to get the actual name in the correct language; for user-defined roles, it will be the name itself as entered by the user.
-
 =head2 system
 
   data_type: 'tinyint'
   default_value: 0
   extra: {unsigned => 1}
   is_nullable: 0
-
-System (built-in) roles are built-in from installation; they can't be deleted or renamed; the permissions can be edited (except administrators; anyone in administrators can do anything - they are denoted by the sysadmin field being 1).
 
 =head2 sysadmin
 
@@ -79,8 +75,6 @@ System (built-in) roles are built-in from installation; they can't be deleted or
   extra: {unsigned => 1}
   is_nullable: 0
 
-Should only be applied to built-in "Administrators" role - permissions cannot be altered.
-
 =head2 anonymous
 
   data_type: 'tinyint'
@@ -88,16 +82,12 @@ Should only be applied to built-in "Administrators" role - permissions cannot be
   extra: {unsigned => 1}
   is_nullable: 0
 
-Should only be applied to built-in "anonymous" role - anyone not logged in gets these permissions.
-
 =head2 apply_on_registration
 
   data_type: 'tinyint'
   default_value: 0
   extra: {unsigned => 1}
   is_nullable: 0
-
-If this is 1, upon registration, users will get assigned to the role automatically.  This can be altered on user-defined roles, but not on built-in roles.
 
 =head2 average_filter_create_public
 
@@ -323,16 +313,12 @@ If this is 1, upon registration, users will get assigned to the role automatical
   extra: {unsigned => 1}
   is_nullable: 0
 
-If 1 the person can create match reports for any team.
-
 =head2 match_report_create_associated
 
   data_type: 'tinyint'
   default_value: 0
   extra: {unsigned => 1}
   is_nullable: 0
-
-If 1 the person can create match reports involving teams the user is associated with (by playing for or captaining the team or being secretary for the club)
 
 =head2 match_report_edit_own
 
@@ -1532,8 +1518,8 @@ Composing rels: L</user_roles> -> user
 __PACKAGE__->many_to_many("users", "user_roles", "user");
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2018-09-02 13:56:58
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:MX0cpn5xXu+jatU2DiwNMg
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2019-12-26 23:42:04
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:bhpVazb5LBFzReKF3yOQaw
 
 =head2 members
 

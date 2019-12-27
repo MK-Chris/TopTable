@@ -6,7 +6,7 @@ package TopTable::Schema::Result::LookupLocation;
 
 =head1 NAME
 
-TopTable::Schema::Result::LookupLocation - Reference table with two rows (home and away)
+TopTable::Schema::Result::LookupLocation
 
 =cut
 
@@ -108,8 +108,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2015-10-20 22:46:32
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:pGnUYtjAc38HqaQMyidEKw
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2019-12-26 23:42:04
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:xjVIsftys0BcHm1nSfVM+g
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
