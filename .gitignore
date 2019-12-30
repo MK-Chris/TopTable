@@ -1,4 +1,5 @@
 toptable_local.conf
+toptable.psgi
 bin/tests/set_hashed_passwords.pl
 root/maintenance.html
 root/logs/toptable.log
