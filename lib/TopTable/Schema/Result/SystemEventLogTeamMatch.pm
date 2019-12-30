@@ -83,8 +83,6 @@ __PACKAGE__->table("system_event_log_team_match");
   is_nullable: 0
   size: 620
 
-Only used if there is no ID (i.e., if the club was deleted and is not available).
-
 =head2 log_updated
 
   data_type: 'datetime'
@@ -96,8 +94,6 @@ Only used if there is no ID (i.e., if the club was deleted and is not available)
   data_type: 'tinyint'
   extra: {unsigned => 1}
   is_nullable: 0
-
-Used if the event is for an edit.
 
 =cut
 
@@ -203,15 +199,15 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2015-10-20 23:27:35
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:MJ2CSe1ppzUrs22o4bKk6Q
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2019-12-26 23:42:05
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:DdQnDp2cS5uqEy3f+RMzEw
 
 #
 # Enable automatic date handling
 #
 __PACKAGE__->add_columns(
     "log_updated",
-    { data_type => "datetime", timezone => "UTC", set_on_create => 1, set_on_update => 1, },
+    { data_type => "datetime", timezone => "UTC", set_on_create => 1, set_on_update => 1, datetime_undef_if_invalid => 1, is_nullable => 0, },
 );
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

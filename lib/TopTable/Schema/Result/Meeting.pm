@@ -56,16 +56,12 @@ __PACKAGE__->table("meetings");
   is_foreign_key: 1
   is_nullable: 1
 
-Only populated if the meeting is created out of an event - otherwise it will be a ENGINE selected below.
-
 =head2 season
 
   data_type: 'integer'
   extra: {unsigned => 1}
   is_foreign_key: 1
   is_nullable: 1
-
-Only populated if the meeting is created out of an event - otherwise it will be a ENGINE selected below.
 
 =head2 type
 
@@ -74,16 +70,12 @@ Only populated if the meeting is created out of an event - otherwise it will be 
   is_foreign_key: 1
   is_nullable: 1
 
-Only populated if the meeting is NOT created out of an event.
-
 =head2 organiser
 
   data_type: 'integer'
   extra: {unsigned => 1}
   is_foreign_key: 1
   is_nullable: 1
-
-Only populated if the meeting is NOT created out of an event - otherwise the venue will be specified in the event details.
 
 =head2 venue
 
@@ -92,15 +84,11 @@ Only populated if the meeting is NOT created out of an event - otherwise the ven
   is_foreign_key: 1
   is_nullable: 1
 
-Only populated if the meeting is NOT created out of an event - otherwise the location will be specified in the event details.
-
 =head2 date_and_start_time
 
   data_type: 'datetime'
   datetime_undef_if_invalid: 1
   is_nullable: 1
-
-Only populated if the meeting is NOT created out of an event - otherwise the date will be specified in the event details.
 
 =head2 all_day
 
@@ -309,8 +297,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-09-05 16:36:47
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:nb+KueaYJbUzZ7jsXTnFbw
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2019-12-26 23:42:04
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:9ZvQuMReyGB8bQ9yR6P1gA
 
 =head2 is_event
 

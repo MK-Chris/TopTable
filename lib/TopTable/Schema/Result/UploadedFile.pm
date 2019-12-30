@@ -6,7 +6,7 @@ package TopTable::Schema::Result::UploadedFile;
 
 =head1 NAME
 
-TopTable::Schema::Result::UploadedFile - Files uploaded for download by users.
+TopTable::Schema::Result::UploadedFile
 
 =cut
 
@@ -177,15 +177,15 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-07-01 16:13:30
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:DJuCpdGj0ajZbyYqxhZj9g
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2019-12-26 23:42:05
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:XzsSDavaqjc68VfuaBADAw
 
 #
 # Enable automatic date handling
 #
 __PACKAGE__->add_columns(
     "uploaded",
-    { data_type => "datetime", timezone => "UTC", set_on_create => 1, set_on_update => 0, },
+    { data_type => "datetime", timezone => "UTC", set_on_create => 1, set_on_update => 0, datetime_undef_if_invalid => 1, is_nullable => 0, },
 );
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

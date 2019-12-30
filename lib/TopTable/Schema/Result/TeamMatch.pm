@@ -81,8 +81,6 @@ __PACKAGE__->table("team_matches");
   is_foreign_key: 1
   is_nullable: 1
 
-If NULL, this is a league match.
-
 =head2 division
 
   data_type: 'integer'
@@ -135,8 +133,6 @@ If NULL, this is a league match.
   default_value: 0
   extra: {unsigned => 1}
   is_nullable: 0
-
-Denotes that the match has started (remains 1 after the match has started, even if its complete).
 
 =head2 updated_since
 
@@ -263,8 +259,6 @@ Denotes that the match has started (remains 1 after the match has started, even 
   is_foreign_key: 1
   is_nullable: 1
 
-References the fixtures grid that created this match, so we can determine if the matches for this grid have been created already.
-
 =head2 complete
 
   data_type: 'tinyint'
@@ -279,8 +273,6 @@ References the fixtures grid that created this match, so we can determine if the
   is_foreign_key: 1
   is_nullable: 1
 
-References a person on the league committee who has verified the result.
-
 =head2 home_team_verified
 
   data_type: 'integer'
@@ -288,16 +280,12 @@ References a person on the league committee who has verified the result.
   is_foreign_key: 1
   is_nullable: 1
 
-References a person on the home team who has verified the result.
-
 =head2 away_team_verified
 
   data_type: 'integer'
   extra: {unsigned => 1}
   is_foreign_key: 1
   is_nullable: 1
-
-References a person on the away team who has verified the result.
 
 =head2 cancelled
 
@@ -883,8 +871,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-03-15 21:13:22
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:8VXXWIQwO+CKZN/pK2gPVA
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2019-12-26 23:42:05
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:/DLC0MVk2bM9lV4f/SbzHg
 
 use Try::Tiny;
 use DateTime::Duration;
@@ -895,7 +883,7 @@ use Set::Object;
 #
 __PACKAGE__->add_columns(
     "updated_since",
-    { data_type => "datetime", timezone => "UTC", set_on_create => 0, set_on_update => 1, },
+    { data_type => "datetime", timezone => "UTC", set_on_create => 0, set_on_update => 1, datetime_undef_if_invalid => 1, is_nullable => 1, },
 );
 
 =head2 url_keys

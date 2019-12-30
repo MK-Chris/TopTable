@@ -147,8 +147,6 @@ __PACKAGE__->table("users");
   is_nullable: 1
   size: 500
 
-"Upload" = uploaded image (will be a pre-defined URI based on the user ID; anything else should be assumed to be a remotely linked web address
-
 =head2 posts
 
   data_type: 'integer'
@@ -603,24 +601,20 @@ Composing rels: L</user_roles> -> role
 __PACKAGE__->many_to_many("roles", "user_roles", "role");
 
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-09-05 16:36:48
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:OLv252sxFjqv2GcwC4e1JA
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2019-12-26 23:42:05
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:nG3FbIxqry4npdSVsHRFog
 
 use Digest::SHA qw( sha256_hex );
 use Time::HiRes;
 use DateTime;
-
-#
-# Enable automatic date handling
-#
-__PACKAGE__->add_columns(
-);
 
 # Have the 'password' column use a SHA-1 hash and 20-byte salt
 # with RFC 2307 encoding; Generate the 'check_password" method
 # Also enable automatic date handling
 __PACKAGE__->add_columns(
     "password" => {
+        data_type         => "text",
+        is_nullable       => 0,
         passphrase        => "rfc2307",
         #passphrase_class  => "SaltedDigest",
         #passphrase_args   => {
@@ -635,15 +629,15 @@ __PACKAGE__->add_columns(
         passphrase_check_method => "check_password",
     },
     "registered_date" =>
-    { data_type => "datetime", timezone => "UTC", set_on_create => 1, set_on_update => 0, },
+    { data_type => "datetime", timezone => "UTC", set_on_create => 1, set_on_update => 0, datetime_undef_if_invalid => 1, is_nullable => 0, },
     "last_visit_date" =>
-    { data_type => "datetime", timezone => "UTC", set_on_create => 1, set_on_update => 0, },
+    { data_type => "datetime", timezone => "UTC", set_on_create => 1, set_on_update => 0, datetime_undef_if_invalid => 1, is_nullable => 1, },
     "last_active_date" =>
-    { data_type => "datetime", timezone => "UTC", set_on_create => 1, set_on_update => 0, },
+    { data_type => "datetime", timezone => "UTC", set_on_create => 1, set_on_update => 0, datetime_undef_if_invalid => 1, is_nullable => 1, },
     "activation_expires" =>
-    { data_type => "datetime", timezone => "UTC", set_on_create => 0, set_on_update => 0, },
+    { data_type => "datetime", timezone => "UTC", set_on_create => 0, set_on_update => 0, datetime_undef_if_invalid => 1, is_nullable => 1, },
     "password_reset_expires" =>
-    { data_type => "datetime", timezone => "UTC", set_on_create => 0, set_on_update => 0, },
+    { data_type => "datetime", timezone => "UTC", set_on_create => 0, set_on_update => 0, datetime_undef_if_invalid => 1, is_nullable => 1, },
 );
 
 =head2 display_name

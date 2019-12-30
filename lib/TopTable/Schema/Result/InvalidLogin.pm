@@ -96,7 +96,7 @@ __PACKAGE__->set_primary_key("ip_address");
 #
 __PACKAGE__->add_columns(
     "last_invalid_login",
-    { data_type => "datetime", timezone => "UTC", set_on_create => 1, set_on_update => 1, },
+    { data_type => "datetime", timezone => "UTC", set_on_create => 1, set_on_update => 1, datetime_undef_if_invalid => 1, is_nullable => 0,},
 );
 
 

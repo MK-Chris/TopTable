@@ -8,10 +8,6 @@ package TopTable::Schema::Result::TemplateMatchTeam;
 
 TopTable::Schema::Result::TemplateMatchTeam
 
-=head1 DESCRIPTION
-
-Team match templates - holds the main configuration for a team match; individual games within a team match are set within the match_templates_individual table.
-
 =cut
 
 use strict;
@@ -216,6 +212,21 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
+=head2 tournament_team_matches
+
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::TournamentTeamMatch>
+
+=cut
+
+__PACKAGE__->has_many(
+  "tournament_team_matches",
+  "TopTable::Schema::Result::TournamentTeamMatch",
+  { "foreign.match_template" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
 =head2 winner_type
 
 Type: belongs_to
@@ -232,8 +243,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2015-11-14 12:15:45
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:t4MotacgPHXorBtoLZHd8w
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2019-12-26 23:42:05
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:2Sc3MAEUofXbaMG1CZDHaA
 
 =head2 can_edit_or_delete
 

@@ -63,8 +63,6 @@ __PACKAGE__->table("meeting_attendees");
   extra: {unsigned => 1}
   is_nullable: 0
 
-If 1, this person sent their apologies rather than attended.
-
 =cut
 
 __PACKAGE__->add_columns(
@@ -138,8 +136,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2015-11-14 14:14:50
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:FWWcEZCdrIpLqotvt28lUQ
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2019-12-26 23:42:04
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:BhUqpVxKIGyjGOcME0Rz3A
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
