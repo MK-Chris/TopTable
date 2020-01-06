@@ -6,7 +6,7 @@ $(document).ready(function(){
   $("#datatable").DataTable({
     "responsive": true,
     "paging": false,
-    "info": false,
+    "info": true,
     "fixedHeader": true,
     "columnDefs": [{
       "visible": false,

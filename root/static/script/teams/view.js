@@ -61,7 +61,7 @@ $(document).ready(function() {
   var fixtures_table = $("#fixtures-table").DataTable({
     "responsive": true,
     "paging": false,
-    "info": false,
+    "info": true,
     "fixedHeader": true,
     "order": [[3, "asc"]],
     "columnDefs": [{
