@@ -2289,7 +2289,7 @@ sub download_team :Private {
       $c->stash({
         matches       => $matches,
         file_name     => sprintf( "fixtures_team_%s-%s_%s", $team->club->url_key, $team->url_key, $season->url_key ),
-        calendar_name => sprintf( "%s | %s %s | %s", $c->config->{"Model::ICal"}{calname}, $team->club->short_name, $team->name, $season->name ),
+        calendar_name => sprintf( "%s | %s %s | %s", $c->config->{"Model::ICal"}{args}{calname}, $team->club->short_name, $team->name, $season->name ),
       });
     }
   }
@@ -2331,7 +2331,7 @@ sub download_division :Private {
       $c->stash({
         matches       => $matches,
         file_name     => sprintf( "fixtures_division_%s_%s", $division->url_key, $season->url_key ),
-        calendar_name => sprintf( "%s | %s | %s", $c->config->{"Model::ICal"}{calname}, $division->name, $season->name ),
+        calendar_name => sprintf( "%s | %s | %s", $c->config->{"Model::ICal"}{args}{calname}, $division->name, $season->name ),
       });
     }
   }
@@ -2373,7 +2373,7 @@ sub download_venue :Private {
       $c->stash({
         matches       => $matches,
         file_name     => sprintf( "fixtures_venue_%s_%s", $venue->url_key, $season->url_key ),
-        calendar_name => sprintf( "%s | %s | %s", $c->config->{"Model::ICal"}{calname}, $venue->name, $season->name ),
+        calendar_name => sprintf( "%s | %s | %s", $c->config->{"Model::ICal"}{args}{calname}, $venue->name, $season->name ),
       });
     }
   }
@@ -2417,7 +2417,7 @@ sub download_month :Private {
       $c->stash({
         matches       => $matches,
         file_name     => sprintf( "fixtures_month_%s-%s", $start_date->year, sprintf("%02d", $start_date->month) ),
-        calendar_name => sprintf( "%s | %s | %s", $c->config->{"Model::ICal"}{calname}, ucfirst( $start_date->month_name ), $season->name ),
+        calendar_name => sprintf( "%s | %s | %s", $c->config->{"Model::ICal"}{args}{calname}, ucfirst( $start_date->month_name ), $season->name ),
       });
     }
   }
@@ -2462,7 +2462,7 @@ sub download_week :Private {
       $c->stash({
         matches       => $matches,
         file_name     => sprintf( "fixtures_week_%s-%s-%s", $week_date->year, sprintf("%02d", $week_date->month), sprintf("%02d", $week_date->day) ),
-        calendar_name => sprintf( "%s | %s %d %s %d | %s", $c->config->{"Model::ICal"}{calname}, $week_date->day_name, $week_date->day, $week_date->month_name, $week_date->year, $season->name ),
+        calendar_name => sprintf( "%s | %s %d %s %d | %s", $c->config->{"Model::ICal"}{args}{calname}, $week_date->day_name, $week_date->day, $week_date->month_name, $week_date->year, $season->name ),
       });
     }
   }
@@ -2508,7 +2508,7 @@ sub download_day :Private {
       $c->stash({
         matches       => $matches,
         file_name     => sprintf( "fixtures_day_%s-%s-%s", $date->year, sprintf("%02d", $date->month), sprintf("%02d", $date->day) ),
-        calendar_name => sprintf( "%s | %s, %d %s %d | %s", $c->config->{"Model::ICal"}{calname}, ucfirst( $date->day_name ), $date->day, $date->month_name, $date->year, $season->name ),
+        calendar_name => sprintf( "%s | %s, %d %s %d | %s", $c->config->{"Model::ICal"}{args}{calname}, ucfirst( $date->day_name ), $date->day, $date->month_name, $date->year, $season->name ),
       });
     }
   }
@@ -2565,7 +2565,8 @@ sub download :Private {
       }
       
       # Now push the events into a calendar
-      my $calendar = $c->model("ICal", $calendar_name)->add_events( \@events, {timezone => $c->stash->{timezone}} );
+      $c->log->debug( "Passing in calendar name $calendar_name" );
+      my $calendar = $c->model("ICal", {calname => $calendar_name})->add_entries( @events );
       
       # Content type is text/calendar
       $c->response->header("Content-type" => "text/calendar");

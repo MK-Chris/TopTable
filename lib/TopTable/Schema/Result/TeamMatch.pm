@@ -877,6 +877,10 @@ __PACKAGE__->belongs_to(
 use Try::Tiny;
 use DateTime::Duration;
 use Set::Object;
+use Data::ICal::Entry::Event;
+use Data::ICal::TimeZone;
+use DateTime;
+use DateTime::Format::ICal;
 
 #
 # Enable automatic date handling
@@ -1755,17 +1759,30 @@ sub generate_ical_data {
     ? undef
     : sprintf( "%s: %s\n%s: %s\n%s: %s\n%s", $lang->{competition_heading}, $lang->{competition_league}, $lang->{division_heading}, $self->division->name, $lang->{season_heading}, $self->season->name, $uri );
   
-  return {
+  my $timezone  = $self->season->timezone;
+  my $now_tz    = DateTime->now( time_zone => $timezone );
+  
+  # Current date / time in UTC
+  my $now_utc = DateTime->now( time_zone => "UTC" );
+  
+  my $event           = Data::ICal::Entry::Event->new;
+  #my $event_timezone  = Data::ICal::TimeZone->new( timezone => $timezone );
+  $event->add_properties(
     uid             => sprintf( "matches.team.%s-%s.%s-%s.%s@%s", $self->home_team->club->url_key, $self->home_team->url_key, $self->away_team->club->url_key, $self->away_team->url_key, $self->actual_date->ymd("-"), &{ $parameters{get_host} } ),
     summary         => sprintf( "%s %s %s %s %s", $self->home_team->club->short_name, $self->home_team->name, $lang->{versus}, $self->away_team->club->short_name, $self->away_team->name ),
     status          => ( $self->cancelled ) ? "CANCELLED" : "CONFIRMED",
     description     => $description,
-    date_start_time => $self->actual_date->set( hour => $start_hour, minute => $start_minute ),
-    duration        => DateTime::Duration->new( minutes => &{ $parameters{get_duration} } ),
-    venue           => $self->venue,
+    dtstart         => DateTime::Format::ICal->format_datetime( $self->actual_date->set( hour => $start_hour, minute => $start_minute ) ),
+    duration        => DateTime::Format::ICal->format_duration( DateTime::Duration->new( minutes => &{ $parameters{get_duration} } ) ),
+    location        => $self->venue->full_address(", "),
+    geo             => sprintf( "%s;%s", $self->venue->coordinates_latitude, $self->venue->coordinates_longitude ),
     url             => $uri,
-    timezone        => $self->season->timezone,
-  };
+    created         => DateTime::Format::ICal->format_datetime( $now_utc ),
+    "last-modified" => DateTime::Format::ICal->format_datetime( $now_utc ),
+    dtstamp         => DateTime::Format::ICal->format_datetime( $now_utc ),
+  );
+  
+  return $event;
 }
 
 =head2 get_reports
