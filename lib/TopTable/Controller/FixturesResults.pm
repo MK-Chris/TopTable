@@ -2565,7 +2565,6 @@ sub download :Private {
       }
       
       # Now push the events into a calendar
-      $c->log->debug( "Passing in calendar name $calendar_name" );
       my $calendar = $c->model("ICal", {calname => $calendar_name})->add_entries( @events );
       
       # Content type is text/calendar
@@ -2580,14 +2579,13 @@ sub download :Private {
       my $uri           = $calendar_type->uri;
       my $download_uri  = $c->stash->{calendar_download_uri};
       my $scheme        = $calendar_type->calendar_scheme;
-      my $calendar_name = $c->config->{name};
       
       # Alter the scheme if required
       $download_uri->scheme( $scheme ) if defined( $scheme ) and $download_uri->scheme ne $scheme;
       
       # URI escape if we need to
       if ( $calendar_type->uri_escape_replacements ) {
-        $calendar_name = uri_escape( $c->config->{name} );
+        $calendar_name = uri_escape( $calendar_name );
         $download_uri = uri_escape( $download_uri );
       }
       
@@ -2601,6 +2599,11 @@ sub download :Private {
       return;
     } else {
       # Invalid calendar type or none specified, or not chosen yet - display the form
+      my $webcal_uri      = $c->stash->{calendar_download_uri}->clone;
+      my $original_scheme = $webcal_uri->scheme( "webcal" );
+      $c->stash->{calendar_download_uri}->scheme( $original_scheme );
+      $c->log->debug( sprintf( "Download: %s, webcal: %s", $c->stash->{calendar_download_uri}, $webcal_uri ) );
+      
       $c->stash({
         template          => "html/fixtures-results/calendar-types.ttkt",
         external_scripts  => [
@@ -2612,6 +2615,7 @@ sub download :Private {
           $c->uri_for("/static/css/chosen/chosen.min.css"),
         ],
         calendar_types    => [ $c->model("DB::CalendarType")->all_types ],
+        webcal_uri        => $webcal_uri,
       });
     }
   } else {

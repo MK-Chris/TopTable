@@ -1798,6 +1798,9 @@ msgstr "View scorecard"
 msgid "calendar-types.form.calendar-type"
 msgstr "Calendar type"
 
+msgid "calendar-types.download-webcal"
+msgstr "Alternatively you can <a href="%1">download the ICS file</a> to import into your calendar, or copy the webcal link below and paste it into your calendar in order to subscribe.<br /><br />%2"
+
 ### iCal downloads
 msgid "calendar.download"
 msgstr "Download these events to your calendar"

@@ -24,5 +24,7 @@ END;
     </div>
     <div class="clear-fix"></div>
   </div>
+  
+  [% c.maketext("calendar-types.download-webcal", calendar_download_uri, webcal_uri) %]
 </fieldset>
 <input type="submit" name="Submit" value="[% c.maketext("form.button.submit") %]" />
