@@ -8,6 +8,10 @@ package TopTable::Schema::Result::TemplateMatchTeam;
 
 TopTable::Schema::Result::TemplateMatchTeam
 
+=head1 DESCRIPTION
+
+Team match templates - holds the main configuration for a team match; individual games within a team match are set within the match_templates_individual table.
+
 =cut
 
 use strict;
@@ -243,8 +247,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2019-12-26 23:42:05
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:2Sc3MAEUofXbaMG1CZDHaA
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-01-08 00:07:05
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Txn+BNEyuqFlu+r3lf7Eng
 
 =head2 can_edit_or_delete
 

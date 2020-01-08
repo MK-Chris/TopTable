@@ -81,6 +81,8 @@ __PACKAGE__->table("team_matches");
   is_foreign_key: 1
   is_nullable: 1
 
+If NULL, this is a league match.
+
 =head2 division
 
   data_type: 'integer'
@@ -133,6 +135,8 @@ __PACKAGE__->table("team_matches");
   default_value: 0
   extra: {unsigned => 1}
   is_nullable: 0
+
+Denotes that the match has started (remains 1 after the match has started, even if its complete).
 
 =head2 updated_since
 
@@ -259,6 +263,8 @@ __PACKAGE__->table("team_matches");
   is_foreign_key: 1
   is_nullable: 1
 
+References the fixtures grid that created this match, so we can determine if the matches for this grid have been created already.
+
 =head2 complete
 
   data_type: 'tinyint'
@@ -273,6 +279,8 @@ __PACKAGE__->table("team_matches");
   is_foreign_key: 1
   is_nullable: 1
 
+References a person on the league committee who has verified the result.
+
 =head2 home_team_verified
 
   data_type: 'integer'
@@ -280,12 +288,16 @@ __PACKAGE__->table("team_matches");
   is_foreign_key: 1
   is_nullable: 1
 
+References a person on the home team who has verified the result.
+
 =head2 away_team_verified
 
   data_type: 'integer'
   extra: {unsigned => 1}
   is_foreign_key: 1
   is_nullable: 1
+
+References a person on the away team who has verified the result.
 
 =head2 cancelled
 
@@ -871,8 +883,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2019-12-26 23:42:05
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:/DLC0MVk2bM9lV4f/SbzHg
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-01-08 00:07:05
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:nVqjCnQHw4LkMDiZzf3wrA
 
 use Try::Tiny;
 use DateTime::Duration;
@@ -1769,7 +1781,7 @@ sub generate_ical_data {
   #my $event_timezone  = Data::ICal::TimeZone->new( timezone => $timezone );
   $event->add_properties(
     uid             => sprintf( "matches.team.%s-%s.%s-%s.%s@%s", $self->home_team->club->url_key, $self->home_team->url_key, $self->away_team->club->url_key, $self->away_team->url_key, $self->actual_date->ymd("-"), &{ $parameters{get_host} } ),
-    summary         => sprintf( "%s %s %s %s %s", $self->home_team->club->short_name, $self->home_team->name, $lang->{versus}, $self->away_team->club->short_name, $self->away_team->name ),
+    summary         => sprintf( "%s %s %s %s %s", $self->home_team->club->abbreviated_name, $self->home_team->name, $lang->{versus}, $self->away_team->club->abbreviated_name, $self->away_team->name ),
     status          => ( $self->cancelled ) ? "CANCELLED" : "CONFIRMED",
     description     => $description,
     dtstart         => DateTime::Format::ICal->format_datetime( $self->actual_date->set( hour => $start_hour, minute => $start_minute ) ),

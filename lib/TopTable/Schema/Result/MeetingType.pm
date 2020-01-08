@@ -8,6 +8,10 @@ package TopTable::Schema::Result::MeetingType;
 
 TopTable::Schema::Result::MeetingType
 
+=head1 DESCRIPTION
+
+This is only used for non-event meetings (that is meetings that are not listed from the events page - this could be regular committee meetings, for example).
+
 =cut
 
 use strict;
@@ -136,8 +140,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2019-12-26 23:42:04
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:IWTHOtYjWVcAB3hdS+37FQ
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-01-08 00:07:04
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:+7yMIn5ozaeFjUgFDezmnw
 
 =head2 can_delete
 

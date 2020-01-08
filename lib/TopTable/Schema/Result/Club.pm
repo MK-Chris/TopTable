@@ -122,6 +122,12 @@ __PACKAGE__->table("clubs");
   data_type: 'time'
   is_nullable: 1
 
+=head2 abbreviated_name
+
+  data_type: 'varchar'
+  is_nullable: 1
+  size: 20
+
 =cut
 
 __PACKAGE__->add_columns(
@@ -166,6 +172,8 @@ __PACKAGE__->add_columns(
   { data_type => "varchar", is_nullable => 1, size => 2083 },
   "default_match_start",
   { data_type => "time", is_nullable => 1 },
+  "abbreviated_name",
+  { data_type => "varchar", is_nullable => 1, size => 20 },
 );
 
 =head1 PRIMARY KEY
@@ -181,6 +189,18 @@ __PACKAGE__->add_columns(
 __PACKAGE__->set_primary_key("id");
 
 =head1 UNIQUE CONSTRAINTS
+
+=head2 C<abbreviated_name>
+
+=over 4
+
+=item * L</abbreviated_name>
+
+=back
+
+=cut
+
+__PACKAGE__->add_unique_constraint("abbreviated_name", ["abbreviated_name"]);
 
 =head2 C<url_key>
 
@@ -277,8 +297,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07046 @ 2018-09-01 15:43:01
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:28iSHygWiCX5oeqwO1u2Wg
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-01-08 00:26:55
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Y8c+Rk0Pvi311TQWFOiK0A
 
 =head2 can_delete
 

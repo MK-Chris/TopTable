@@ -38,7 +38,7 @@ if ( $schema->storage->sqlt_type eq "MySQL" ) {
 my $dh = DH->new({
   schema              => $schema,
   script_directory    => "$FindBin::Bin/../dbicdh",
-  databases           => [ qw( MySQL PostgreSQL SQLite Oracle SQLServer ) ],
+  databases           => $schema->storage->sqlt_type,
   sql_translator_args => {
     add_drop_table    => 0,
     quote_identifiers => 1,

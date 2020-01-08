@@ -85,6 +85,8 @@ __PACKAGE__->table("event_seasons");
   data_type: 'time'
   is_nullable: 1
 
+An approximate value in minutes; the value can then be converted in the script to hours / an end time.
+
 =head2 organiser
 
   data_type: 'integer'
@@ -270,8 +272,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2019-12-26 23:42:04
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:wg1SezM31AR7gYsUEJt2AA
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-01-08 00:07:04
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:GI8P/tdfX36e4arJbprg6w
 
 =head2 event_detail
 

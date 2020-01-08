@@ -604,6 +604,9 @@ msgstr "Full name"
 msgid "clubs.field.short_name"
 msgstr "Short name"
 
+msgid "clubs.field.abbreviated-name"
+msgstr "Abbreviated name"
+
 msgid "clubs.field.email-address"
 msgstr "Email address"
 
@@ -646,8 +649,14 @@ msgstr "The full name field is blank."
 msgid "clubs.form.error.short-name-exists"
 msgstr "A club with the short name &#39;%1&#39; already exists."
 
+msgid "clubs.form.error.abbreviated-name-exists"
+msgstr "A club with the abbreviated name &#39;%1&#39; already exists."
+
 msgid "clubs.form.error.short-name-blank"
 msgstr "The short name field is blank."
+
+msgid "clubs.form.error.abbreviated-name-blank"
+msgstr "The abbreviated name field is blank."
 
 msgid "clubs.form.error.email-invalid"
 msgstr "The email address is invalid."

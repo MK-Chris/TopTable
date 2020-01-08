@@ -267,15 +267,16 @@ sub create_or_edit {
   my ( $club_name_check );
   my $return_value = {error => []};
   
-  my $club          = $parameters->{club}           || undef;
-  my $full_name     = $parameters->{full_name}      || undef;
-  my $short_name    = $parameters->{short_name}     || undef;
-  my $email_address = $parameters->{email_address}  || undef;
-  my $website       = $parameters->{website}        || undef;
-  my $start_hour    = $parameters->{start_hour}     || undef;
-  my $start_minute  = $parameters->{start_minute}   || undef;
-  my $venue         = $parameters->{venue}          || undef;
-  my $secretary     = $parameters->{secretary}      || undef;
+  my $club              = $parameters->{club}             || undef;
+  my $full_name         = $parameters->{full_name}        || undef;
+  my $short_name        = $parameters->{short_name}       || undef;
+  my $abbreviated_name  = $parameters->{abbreviated_name} || undef;
+  my $email_address     = $parameters->{email_address}    || undef;
+  my $website           = $parameters->{website}          || undef;
+  my $start_hour        = $parameters->{start_hour}       || undef;
+  my $start_minute      = $parameters->{start_minute}     || undef;
+  my $venue             = $parameters->{venue}            || undef;
+  my $secretary         = $parameters->{secretary}        || undef;
   
   if ($action ne "create" and $action ne "edit") {
     # Invalid action passed
@@ -345,6 +346,30 @@ sub create_or_edit {
     push(@{ $return_value->{error} }, {id => "clubs.form.error.short-name-blank"});
   }
   
+  if ( defined($abbreviated_name) ) {
+    # Abbreviated name entered, check it.
+    if ($action eq "edit") {
+      $club_name_check = $self->find({}, {
+        where => {
+          abbreviated_name  => $abbreviated_name,
+          id        => {
+            "!=" => $club->id
+          }
+        }
+      });
+    } else {
+      $club_name_check = $self->find({abbreviated_name => $abbreviated_name});
+    }
+    
+    push(@{ $return_value->{error} }, {
+      id          => "clubs.form.error.abbreviated-name-exists",
+      parameters  => [$abbreviated_name],
+    }) if defined( $club_name_check );
+  } else {
+    # Full name omitted.
+    push(@{ $return_value->{error} }, {id => "clubs.form.error.abbreviated-name-blank"});
+  }
+  
   # Email address entered but invalid
   push(@{ $return_value->{error} }, {id => "clubs.form.error.email-invalid"}) if $email_address and $email_address !~ m/^[-!#$%&\'*+\\.\/0-9=?A-Z^_`{|}~]+@([-0-9A-Z]+\.)+([0-9A-Z]){2,4}$/i;
   
@@ -382,6 +407,7 @@ sub create_or_edit {
         url_key             => $url_key,
         full_name           => $full_name,
         short_name          => $short_name,
+        abbreviated_name    => $abbreviated_name,
         email_address       => $email_address,
         website             => $website,
         default_match_start => $default_match_start,
@@ -393,6 +419,7 @@ sub create_or_edit {
         url_key             => $url_key,
         full_name           => $full_name,
         short_name          => $short_name,
+        abbreviated_name    => $abbreviated_name,
         email_address       => $email_address,
         website             => $website,
         default_match_start => $default_match_start,

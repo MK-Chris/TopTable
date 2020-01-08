@@ -8,6 +8,10 @@ package TopTable::Schema::Result::FixturesGrid;
 
 TopTable::Schema::Result::FixturesGrid
 
+=head1 DESCRIPTION
+
+There is not a lot to put in this table, its just something for other tables (i.e., grid cells) to link back to...
+
 =cut
 
 use strict;
@@ -182,8 +186,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2019-12-26 23:42:04
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:i+qnhoVt9zr29cSYJJBk0g
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-01-08 00:07:04
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:OqXSR9xArT9LLH+t1V2YIg
 
 =head2 can_delete
 

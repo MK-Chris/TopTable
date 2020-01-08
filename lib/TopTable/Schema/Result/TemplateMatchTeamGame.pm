@@ -81,11 +81,15 @@ __PACKAGE__->table("template_match_team_games");
   extra: {unsigned => 1}
   is_nullable: 1
 
+Only used for singles
+
 =head2 singles_away_player_number
 
   data_type: 'tinyint'
   extra: {unsigned => 1}
   is_nullable: 1
+
+Only used for singles
 
 =cut
 
@@ -171,8 +175,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2019-12-26 23:42:05
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:gH2MqEm7GK2DzqLQmWqVUg
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-01-08 00:07:05
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:S87dI4UgbfMxtvfKtLD8VA
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
