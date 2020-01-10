@@ -2626,7 +2626,7 @@ sub download :Private {
             $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
             $c->uri_for("/static/script/standard/chosen.js"),
             $c->uri_for("/static/script/standard/prettycheckable.js"),
-            $c->uri_for("/static/script/fixtures-results/calendar-types.js"),
+            $c->uri_for("/static/script/fixtures-results/calendar-types.js?v=1.1"),
           ],
           external_styles   => [
             $c->uri_for("/static/css/chosen/chosen.min.css"),
