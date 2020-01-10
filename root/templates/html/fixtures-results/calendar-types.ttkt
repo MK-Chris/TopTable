@@ -1,6 +1,6 @@
 <form method="post" action="[% form_action %]" id="form">
 <fieldset>
-  <legend>[% c.maketext("calendar-types.form.calendar-type") %]</legend>
+  <legend>[% c.maketext("calendar-types.form.calendar-type.options") %]</legend>
   
   <div class="label-field-container">
     <label for="type">[% c.maketext("calendar-types.form.calendar-type") %]</label>
@@ -9,22 +9,27 @@
         <option value=""></option>
 [%
 FOREACH calendar_type IN calendar_types;
-  # Set selected text if needed;
-  IF c.flash.type == calendar_type.id;
-    SET SELECTED = ' selected="selected"';
-  ELSE;
-    SET SELECTED = '';
-  END;
 -%]
-        <option value="[% calendar_type.id %]"[% SELECTED %]>[% calendar_type.name | html_entity %]</option>
+        <option value="[% calendar_type.id %]">[% calendar_type.name | html_entity %]</option>
 [%
 END;
 -%]
+        <option value="-1">[% c.maketext("calendar-types.other") | html_entity %]</option>
       </select>
     </div>
     <div class="clear-fix"></div>
   </div>
   
-  [% c.maketext("calendar-types.download-webcal", calendar_download_uri, webcal_uri) %]
+  <div class="label-field-container">
+    <label for="summary_prefix">[% c.maketext("calendar-types.form.summary-prefix") %]</label>
+    <div class="field-container">
+      <input type="text" id="summary_prefix" name="summary-prefix" placeholder="[% c.maketext("calendar-types.form.placeholder.summary-prefix") %]" value="" />
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+  
+  <input type="checkbox" id="use_abbreviated_club_names" name="abbreviated-club-names" data-label="[% c.maketext("calendar-types.form.abbreviated-club-names") | html_entity %]" value="1" />
+  <div class="clear-fix"></div>
 </fieldset>
 <input type="submit" name="Submit" value="[% c.maketext("form.button.submit") %]" />
+</form>

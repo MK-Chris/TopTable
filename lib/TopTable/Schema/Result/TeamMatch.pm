@@ -1755,17 +1755,16 @@ Generate a hashref of data that can be easily manipulated into iCal format.  Tak
 =cut
 
 sub generate_ical_data {
-  my $self = shift;
-  my %parameters = @_;
+  my ( $self, $parameters ) = @_;
   
   # Get the versus abbreviation
-  my $lang = &{ $parameters{get_language_components} };
+  my $lang = &{ $parameters->{get_language_components} };
   
   # Split the start time for setting the hour and minute
   my ( $start_hour, $start_minute ) = split( ":", $self->actual_start_time );
   
   # Get the URI
-  my $uri = $parameters{get_uri}->($self->url_keys);
+  my $uri = $parameters->{get_uri}($self->url_keys);
   
   my $description = ( defined( $self->tournament_round ) )
     ? undef
@@ -1777,15 +1776,25 @@ sub generate_ical_data {
   # Current date / time in UTC
   my $now_utc = DateTime->now( time_zone => "UTC" );
   
+  my ( $home_club_name, $away_club_name ) = ( defined( $parameters->{abbreviated_club_names} ) and $parameters->{abbreviated_club_names} )
+    ? ( $self->home_team->club->abbreviated_name, $self->away_team->club->abbreviated_name )
+    : ( $self->home_team->club->short_name, $self->away_team->club->short_name );
+  
+  # Add a colon and space to the end of the prefix if the user didn't provide either a colon or hyphen after it (followed by optional space)
+  $parameters->{summary_prefix} .= ": " if exists( $parameters->{summary_prefix} ) and defined( $parameters->{summary_prefix} ) and $parameters->{summary_prefix} ne "" and $parameters->{summary_prefix} !~ m/[-:]\s?$/;
+  
+  # Set the prefix to a blank space if it doesn't exist or is undef
+  $parameters->{summary_prefix} = "" unless exists( $parameters->{summary_prefix} ) and defined( $parameters->{summary_prefix} );
+  
   my $event           = Data::ICal::Entry::Event->new;
   #my $event_timezone  = Data::ICal::TimeZone->new( timezone => $timezone );
   $event->add_properties(
-    uid             => sprintf( "matches.team.%s-%s.%s-%s.%s@%s", $self->home_team->club->url_key, $self->home_team->url_key, $self->away_team->club->url_key, $self->away_team->url_key, $self->actual_date->ymd("-"), &{ $parameters{get_host} } ),
-    summary         => sprintf( "%s %s %s %s %s", $self->home_team->club->abbreviated_name, $self->home_team->name, $lang->{versus}, $self->away_team->club->abbreviated_name, $self->away_team->name ),
+    uid             => sprintf( "matches.team.%s-%s.%s-%s.%s@%s", $self->home_team->club->url_key, $self->home_team->url_key, $self->away_team->club->url_key, $self->away_team->url_key, $self->actual_date->ymd("-"), &{ $parameters->{get_host} } ),
+    summary         => sprintf( "%s%s %s %s %s %s", $parameters->{summary_prefix}, $home_club_name, $self->home_team->name, $lang->{versus}, $away_club_name, $self->away_team->name ),
     status          => ( $self->cancelled ) ? "CANCELLED" : "CONFIRMED",
     description     => $description,
     dtstart         => DateTime::Format::ICal->format_datetime( $self->actual_date->set( hour => $start_hour, minute => $start_minute ) ),
-    duration        => DateTime::Format::ICal->format_duration( DateTime::Duration->new( minutes => &{ $parameters{get_duration} } ) ),
+    duration        => DateTime::Format::ICal->format_duration( DateTime::Duration->new( minutes => &{ $parameters->{get_duration} } ) ),
     location        => $self->venue->full_address(", "),
     geo             => sprintf( "%s;%s", $self->venue->coordinates_latitude, $self->venue->coordinates_longitude ),
     url             => $uri,
