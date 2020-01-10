@@ -3,9 +3,9 @@ use Moose;
 use namespace::autoclean;
 use DateTime;
 use Try::Tiny;
-use Data::Dumper;
+use Data::Dumper::Concise;
 use HTML::Entities;
-use URI::Escape;
+use URI::QueryParam;
 
 BEGIN { extends 'Catalyst::Controller'; }
 
@@ -738,7 +738,8 @@ sub download_team_by_id_current_season :Chained("view_team_by_id_current_season"
     download_type         => $download_type,
     
     # Calendar download link is required so we know in the generic function what to replace {cal-uri} with
-    calendar_download_uri => $c->uri_for_action("/fixtures-results/download_team_by_url_key_current_season", [$team->club->url_key, $team->url_key, $download_type], {type => "download"}),
+    #calendar_download_uri => $c->uri_for_action("/fixtures-results/download_team_by_url_key_current_season", [$team->club->url_key, $team->url_key, $download_type], {type => "download"}),
+    calendar_download_uri => $c->forward("generate_calendar_download_uri", ["/fixtures-results/download_team_by_url_key_current_season", [$team->club->url_key, $team->url_key, $download_type]]),
   });
   
   $c->detach( "download_team" );
@@ -761,7 +762,8 @@ sub download_team_by_id_specific_season :Chained("view_team_by_id_specific_seaso
     download_type         => $download_type,
     
     # Calendar download link is required so we know in the generic function what to replace {cal-uri} with
-    calendar_download_uri => $c->uri_for_action("/fixtures-results/download_team_by_url_key_specific_season", [$season->url_key, $team->club->url_key, $team->url_key, $download_type], {type => "download"}),
+    #calendar_download_uri => $c->uri_for_action("/fixtures-results/download_team_by_url_key_specific_season", [$season->url_key, $team->club->url_key, $team->url_key, $download_type], {type => "download"}),
+    calendar_download_uri => $c->forward("generate_calendar_download_uri", ["/fixtures-results/download_team_by_url_key_specific_season", [$season->url_key, $team->club->url_key, $team->url_key, $download_type]]),
   });
   
   $c->detach( "download_team" );
@@ -783,7 +785,8 @@ sub download_team_by_url_key_current_season :Chained("view_team_by_url_key_curre
     download_type         => $download_type,
     
     # Calendar download link is required so we know in the generic function what to replace {cal-uri} with
-    calendar_download_uri => $c->uri_for_action("/fixtures-results/download_team_by_url_key_current_season", [$team->club->url_key, $team->url_key, $download_type], {type => "download"}),
+    #calendar_download_uri => $c->uri_for_action("/fixtures-results/download_team_by_url_key_current_season", [$team->club->url_key, $team->url_key, $download_type], {type => "download"}),
+    calendar_download_uri => $c->forward("generate_calendar_download_uri", ["/fixtures-results/download_team_by_url_key_current_season", [$team->club->url_key, $team->url_key, $download_type]]),
   });
   
   $c->detach( "download_team" );
@@ -806,7 +809,8 @@ sub download_team_by_url_key_specific_season :Chained("view_team_by_url_key_spec
     download_type         => $download_type,
     
     # Calendar download link is required so we know in the generic function what to replace {cal-uri} with
-    calendar_download_uri => $c->uri_for_action("/fixtures-results/download_team_by_url_key_specific_season", [$season->url_key, $team->club->url_key, $team->url_key, $download_type], {type => "download"}),
+    #calendar_download_uri => $c->uri_for_action("/fixtures-results/download_team_by_url_key_specific_season", [$season->url_key, $team->club->url_key, $team->url_key, $download_type], {type => "download"}),
+    calendar_download_uri => $c->forward("generate_calendar_download_uri", ["/fixtures-results/download_team_by_url_key_specific_season", [$season->url_key, $team->club->url_key, $team->url_key, $download_type]]),
   });
   
   $c->detach( "download_team" );
@@ -854,7 +858,8 @@ sub download_division_current_season :Chained("view_division_current_season") :P
     download_type         => $download_type,
     
     # Calendar download link is required so we know in the generic function what to replace {cal-uri} with
-    calendar_download_uri => $c->uri_for_action("/fixtures-results/download_division_current_season", [$division->url_key, $download_type], {type => "download"}),
+    #calendar_download_uri => $c->uri_for_action("/fixtures-results/download_division_current_season", [$division->url_key, $download_type], {type => "download"}),
+    calendar_download_uri => $c->uri_for_action("generate_calendar_download_uri", ["/fixtures-results/download_division_current_season", [$division->url_key, $download_type]]),
   });
   
   $c->detach( "download_division" );
@@ -877,7 +882,8 @@ sub download_division_specific_season :Chained("view_division_specific_season") 
     download_type         => $download_type,
     
     # Calendar download link is required so we know in the generic function what to replace {cal-uri} with
-    calendar_download_uri => $c->uri_for_action("/fixtures-results/download_division_specific_season", [$season->url_key, $division->url_key, $download_type], {type => "download"}),
+    #calendar_download_uri => $c->uri_for_action("/fixtures-results/download_division_specific_season", [$season->url_key, $division->url_key, $download_type], {type => "download"}),
+    calendar_download_uri => $c->uri_for_action("generate_calendar_download_uri", ["/fixtures-results/download_division_specific_season", [$season->url_key, $division->url_key, $download_type]]),
   });
   
   $c->detach( "download_division" );
@@ -1107,7 +1113,8 @@ sub download_venue_current_season :Chained("view_venue_current_season") :PathPar
     download_type         => $download_type,
     
     # Calendar download link is required so we know in the generic function what to replace {cal-uri} with
-    calendar_download_uri => $c->uri_for_action("/fixtures-results/download_venue_current_season", [$venue->url_key, $download_type], {type => "download"}),
+    #calendar_download_uri => $c->uri_for_action("/fixtures-results/download_venue_current_season", [$venue->url_key, $download_type], {type => "download"}),
+    calendar_download_uri => $c->uri_for_action("generate_calendar_download_uri", ["/fixtures-results/download_venue_current_season", [$venue->url_key, $download_type]]),
   });
   
   $c->detach( "download_venue" );
@@ -1130,7 +1137,8 @@ sub download_venue_specific_season :Chained("view_venue_specific_season") :PathP
     download_type         => $download_type,
     
     # Calendar download link is required so we know in the generic function what to replace {cal-uri} with
-    calendar_download_uri => $c->uri_for_action("/fixtures-results/download_venue_specific_season", [$season->url_key, $venue->url_key, $download_type], {type => "download"}),
+    #calendar_download_uri => $c->uri_for_action("/fixtures-results/download_venue_specific_season", [$season->url_key, $venue->url_key, $download_type], {type => "download"}),
+    calendar_download_uri => $c->uri_for_action("generate_calendar_download_uri", ["/fixtures-results/download_venue_specific_season", [$season->url_key, $venue->url_key, $download_type]]),
   });
   
   $c->detach( "download_venue" );
@@ -1352,7 +1360,8 @@ sub download_month_current_season :Chained("view_month_current_season") :PathPar
     download_type         => $download_type,
     
     # Calendar download link is required so we know in the generic function what to replace {cal-uri} with
-    calendar_download_uri => $c->uri_for_action("/fixtures-results/download_month_current_season", [$date->year, sprintf("%02d", $date->month), $download_type], {type => "download"}),
+    #calendar_download_uri => $c->uri_for_action("/fixtures-results/download_month_current_season", [$date->year, sprintf("%02d", $date->month), $download_type], {type => "download"}),
+    calendar_download_uri => $c->uri_for_action("generate_calendar_download_uri", ["/fixtures-results/download_month_current_season", [$date->year, sprintf("%02d", $date->month), $download_type]]),
   });
   
   $c->detach( "download_month" );
@@ -1375,7 +1384,8 @@ sub download_month_specific_season :Chained("view_month_specific_season") :PathP
     download_type         => $download_type,
     
     # Calendar download link is required so we know in the generic function what to replace {cal-uri} with
-    calendar_download_uri => $c->uri_for_action("/fixtures-results/download_month_specific_season", [$season->url_key, $date->year, sprintf("%02d", $date->month), $download_type], {type => "download"}),
+    #calendar_download_uri => $c->uri_for_action("/fixtures-results/download_month_specific_season", [$season->url_key, $date->year, sprintf("%02d", $date->month), $download_type], {type => "download"}),
+    calendar_download_uri => $c->uri_for_action("generate_calendar_download_uri", ["/fixtures-results/download_month_specific_season", [$season->url_key, $date->year, sprintf("%02d", $date->month), $download_type]]),
   });
   
   $c->detach( "download_month" );
@@ -1791,7 +1801,8 @@ sub download_week_current_season :Chained("view_week_current_season") :PathPart(
     download_type         => $download_type,
     
     # Calendar download link is required so we know in the generic function what to replace {cal-uri} with
-    calendar_download_uri => $c->uri_for_action("/fixtures-results/download_week_current_season", [$week_date->year, sprintf("%02d", $week_date->month), sprintf("%02d", $week_date->day), $download_type], {type => "download"}),
+    #calendar_download_uri => $c->uri_for_action("/fixtures-results/download_week_current_season", [$week_date->year, sprintf("%02d", $week_date->month), sprintf("%02d", $week_date->day), $download_type], {type => "download"}),
+    calendar_download_uri => $c->uri_for_action("generate_calendar_download_uri", ["/fixtures-results/download_week_current_season", [$week_date->year, sprintf("%02d", $week_date->month), sprintf("%02d", $week_date->day), $download_type]]),
   });
   
   $c->detach( "download_week" );
@@ -1814,7 +1825,8 @@ sub download_week_specific_season :Chained("view_week_specific_season") :PathPar
     download_type         => $download_type,
     
     # Calendar download link is required so we know in the generic function what to replace {cal-uri} with
-    calendar_download_uri => $c->uri_for_action("/fixtures-results/download_week_specific_season", [$season->url_key, $week_date->year, sprintf("%02d", $week_date->month), sprintf("%02d", $week_date->day), $download_type], {type => "download"}),
+    #calendar_download_uri => $c->uri_for_action("/fixtures-results/download_week_specific_season", [$season->url_key, $week_date->year, sprintf("%02d", $week_date->month), sprintf("%02d", $week_date->day), $download_type], {type => "download"}),
+    calendar_download_uri => $c->uri_for_action("generate_calendar_download_uri", ["/fixtures-results/download_week_specific_season", [$season->url_key, $week_date->year, sprintf("%02d", $week_date->month), sprintf("%02d", $week_date->day), $download_type]]),
   });
   
   $c->detach( "download_week" );
@@ -2051,7 +2063,8 @@ sub download_day_current_season :Chained("view_day_current_season") :PathPart(""
     download_type         => $download_type,
     
     # Calendar download link is required so we know in the generic function what to replace {cal-uri} with
-    calendar_download_uri => $c->uri_for_action("/fixtures-results/download_day_current_season", [$date->year, sprintf("%02d", $date->month), sprintf("%02d", $date->day), $download_type], {type => "download"}),
+    #calendar_download_uri => $c->uri_for_action("/fixtures-results/download_day_current_season", [$date->year, sprintf("%02d", $date->month), sprintf("%02d", $date->day), $download_type], {type => "download"}),
+    calendar_download_uri => $c->uri_for_action("generate_calendar_download_uri", ["/fixtures-results/download_day_current_season", [$date->year, sprintf("%02d", $date->month), sprintf("%02d", $date->day), $download_type]]),
   });
   
   $c->detach( "download_day" );
@@ -2074,7 +2087,8 @@ sub download_day_specific_season :Chained("view_week_specific_season") :PathPart
     download_type         => $download_type,
     
     # Calendar download link is required so we know in the generic function what to replace {cal-uri} with
-    calendar_download_uri => $c->uri_for_action("/fixtures-results/download_day_specific_season", [$season->url_key, $date->year, sprintf("%02d", $date->month), sprintf("%02d", $date->day), $download_type], {type => "download"}),
+    #calendar_download_uri => $c->uri_for_action("/fixtures-results/download_day_specific_season", [$season->url_key, $date->year, sprintf("%02d", $date->month), sprintf("%02d", $date->day), $download_type], {type => "download"}),
+    calendar_download_uri => $c->uri_for_action("generate_calendar_download_uri", ["/fixtures-results/download_day_specific_season", [$season->url_key, $date->year, sprintf("%02d", $date->month), sprintf("%02d", $date->day), $download_type]]),
   });
   
   $c->detach( "download_day" );
@@ -2276,7 +2290,7 @@ sub download_team :Private {
   
   if ( $download_type eq "calendar" ) {
     # Look up the calendar type, unless it's "download", which is a special case to tell us to actually download the file
-    $calendar_type = $c->model("DB::CalendarType")->find( $calendar_type ) unless !defined( $calendar_type ) or $calendar_type eq "download";
+    $calendar_type = $c->model("DB::CalendarType")->find( $calendar_type ) unless !defined( $calendar_type ) or $calendar_type eq "download" or $calendar_type == -1;
     
     # If we're downloading, stash the matches for the generic download routine to loop through.  Stash the download file name as well,
     # which is generated without an extension (the download routine will add this on to the end, depending on the download type).
@@ -2318,7 +2332,7 @@ sub download_division :Private {
   
   if ( $download_type eq "calendar" ) {
     # Look up the calendar type, unless it's "download", which is a special case to tell us to actually download the file
-    $calendar_type = $c->model("DB::CalendarType")->find( $calendar_type ) unless !defined( $calendar_type ) or $calendar_type eq "download";
+    $calendar_type = $c->model("DB::CalendarType")->find( $calendar_type ) unless !defined( $calendar_type ) or $calendar_type eq "download" or $calendar_type == -1;
     
     # If we're downloading, stash the matches for the generic download routine to loop through.  Stash the download file name as well,
     # which is generated without an extension (the download routine will add this on to the end, depending on the download type).
@@ -2360,7 +2374,7 @@ sub download_venue :Private {
   
   if ( $download_type eq "calendar" ) {
     # Look up the calendar type, unless it's "download", which is a special case to tell us to actually download the file
-    $calendar_type = $c->model("DB::CalendarType")->find( $calendar_type ) unless !defined( $calendar_type ) or $calendar_type eq "download";
+    $calendar_type = $c->model("DB::CalendarType")->find( $calendar_type ) unless !defined( $calendar_type ) or $calendar_type eq "download" or $calendar_type == -1;
     
     # If we're downloading, stash the matches for the generic download routine to loop through.  Stash the download file name as well,
     # which is generated without an extension (the download routine will add this on to the end, depending on the download type).
@@ -2403,7 +2417,7 @@ sub download_month :Private {
   
   if ( $download_type eq "calendar" ) {
     # Look up the calendar type, unless it's "download", which is a special case to tell us to actually download the file
-    $calendar_type = $c->model("DB::CalendarType")->find( $calendar_type ) unless !defined( $calendar_type ) or $calendar_type eq "download";
+    $calendar_type = $c->model("DB::CalendarType")->find( $calendar_type ) unless !defined( $calendar_type ) or $calendar_type eq "download" or $calendar_type == -1;
     
     # If we're downloading, stash the matches for the generic download routine to loop through.  Stash the download file name as well,
     # which is generated without an extension (the download routine will add this on to the end, depending on the download type).
@@ -2449,7 +2463,7 @@ sub download_week :Private {
   
   if ( $download_type eq "calendar" ) {
     # Look up the calendar type, unless it's "download", which is a special case to tell us to actually download the file
-    $calendar_type = $c->model("DB::CalendarType")->find( $calendar_type ) unless !defined( $calendar_type ) or $calendar_type eq "download";
+    $calendar_type = $c->model("DB::CalendarType")->find( $calendar_type ) unless !defined( $calendar_type ) or $calendar_type eq "download" or $calendar_type == -1;
     
     # If we're downloading, stash the matches for the generic download routine to loop through.  Stash the download file name as well,
     # which is generated without an extension (the download routine will add this on to the end, depending on the download type).
@@ -2495,7 +2509,7 @@ sub download_day :Private {
   
   if ( $download_type eq "calendar" ) {
     # Look up the calendar type, unless it's "download", which is a special case to tell us to actually download the file
-    $calendar_type = $c->model("DB::CalendarType")->find( $calendar_type ) unless !defined( $calendar_type ) or $calendar_type eq "download";
+    $calendar_type = $c->model("DB::CalendarType")->find( $calendar_type ) unless !defined( $calendar_type ) or $calendar_type eq "download" or $calendar_type == -1;
     
     # If we're downloading, stash the matches for the generic download routine to loop through.  Stash the download file name as well,
     # which is generated without an extension (the download routine will add this on to the end, depending on the download type).
@@ -2532,23 +2546,25 @@ Private action that handles the downloading of fixtures after the file format ha
 
 sub download :Private {
   my ( $self, $c ) = @_;
-  my $season        = $c->stash->{season};
-  my $team          = $c->stash->{team};
-  my $download_type = $c->stash->{download_type};
-  my $calendar_type = $c->stash->{calendar_type};
-  my $matches       = $c->stash->{matches};
-  my $file_name     = $c->stash->{file_name};
-  my $calendar_name = $c->stash->{calendar_name};
+  my $season                    = $c->stash->{season};
+  my $team                      = $c->stash->{team};
+  my $download_type             = $c->stash->{download_type};
+  my $calendar_type             = $c->stash->{calendar_type};
+  my $matches                   = $c->stash->{matches};
+  my $file_name                 = $c->stash->{file_name};
+  my $calendar_name             = $c->stash->{calendar_name};
+  my $abbreviated_club_names    = $c->stash->{abbreviated_club_names};
+  my $summary_prefix            = $c->stash->{summary_prefix};
   
   if ( $download_type eq "calendar" ) {
-    if ( defined( $calendar_type) and $calendar_type eq "download" ) {
+    if ( defined( $calendar_type ) and $calendar_type eq "download" ) {
       # Valid calendar type
       my @events = ();
       
       # Loop through matches
       while ( my $match = $matches->next ) {
-        my $event = $match->generate_ical_data(
-          get_language_components => sub{{
+        my $event = $match->generate_ical_data({
+          get_language_components   => sub{{
             versus                  => $c->maketext("matches.versus-abbreviation"),
             competition_heading     => $c->maketext("matches.field.competition"),
             competition_league      => $c->maketext("matches.field.competition.value.league"),
@@ -2559,7 +2575,9 @@ sub download :Private {
           get_host                  => sub{ $c->request->uri->host },
           get_uri                   => sub{ $c->uri_for_action("/matches/team/view_by_url_keys", $_[0]) },
           get_duration              => sub{ $c->config->{Matches}{Team}{duration} },
-        );
+          abbreviated_club_names    => $abbreviated_club_names,
+          summary_prefix            => $summary_prefix,
+        });
         
         push( @events, $event );
       }
@@ -2576,47 +2594,48 @@ sub download :Private {
       $c->detach;
     } elsif ( ref( $calendar_type ) eq "TopTable::Model::DB::CalendarType" ) {
       # Calendar type exists, redirect to the URI
-      my $uri           = $calendar_type->uri;
-      my $download_uri  = $c->stash->{calendar_download_uri};
-      my $scheme        = $calendar_type->calendar_scheme;
-      
-      # Alter the scheme if required
-      $download_uri->scheme( $scheme ) if defined( $scheme ) and $download_uri->scheme ne $scheme;
-      
-      # URI escape if we need to
-      if ( $calendar_type->uri_escape_replacements ) {
-        $calendar_name = uri_escape( $calendar_name );
-        $download_uri = uri_escape( $download_uri );
-      }
-      
-      # Now put it in the redirect URI
-      $uri =~ s/{cal-uri}/$download_uri/g;
-      $uri =~ s/{cal-name}/$calendar_name/g;
+      my $uri = $calendar_type->generate_uri({
+        download_uri              => $c->stash->{calendar_download_uri},
+        calendar_name             => $calendar_name,
+      });
       
       # Finally, redirect to the URI
       $c->response->redirect( $uri );
       $c->detach;
       return;
     } else {
-      # Invalid calendar type or none specified, or not chosen yet - display the form
-      my $webcal_uri      = $c->stash->{calendar_download_uri}->clone;
-      my $original_scheme = $webcal_uri->scheme( "webcal" );
-      $c->stash->{calendar_download_uri}->scheme( $original_scheme );
-      $c->log->debug( sprintf( "Download: %s, webcal: %s", $c->stash->{calendar_download_uri}, $webcal_uri ) );
-      
-      $c->stash({
-        template          => "html/fixtures-results/calendar-types.ttkt",
-        external_scripts  => [
-          $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
-          $c->uri_for("/static/script/standard/chosen.js"),
-          $c->uri_for("/static/script/fixtures-results/calendar-types.js"),
-        ],
-        external_styles   => [
-          $c->uri_for("/static/css/chosen/chosen.min.css"),
-        ],
-        calendar_types    => [ $c->model("DB::CalendarType")->all_types ],
-        webcal_uri        => $webcal_uri,
-      });
+      if ( defined( $calendar_type ) and $calendar_type == -1 ) {
+        # Special calendar type "0" - form was submitted, so display links for manual import / subscription
+        # Invalid calendar type or none specified, or not chosen yet - display the form
+        my $webcal_uri = $c->stash->{calendar_download_uri}->clone;
+        $webcal_uri->scheme( "webcal" );
+        
+        $c->stash({
+          template          => "html/fixtures-results/calendar-type-other.ttkt",
+          external_scripts  => [
+            $c->uri_for("/static/script/fixtures-results/calendar-type-other.js"),
+          ],
+          webcal_uri        => $webcal_uri,
+          form_action       => $c->uri_for_action( $c->action, $c->request->captures, $download_type ),
+        });
+      } else {
+        $c->stash({
+          template          => "html/fixtures-results/calendar-types.ttkt",
+          external_scripts  => [
+            $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
+            $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
+            $c->uri_for("/static/script/standard/chosen.js"),
+            $c->uri_for("/static/script/standard/prettycheckable.js"),
+            $c->uri_for("/static/script/fixtures-results/calendar-types.js"),
+          ],
+          external_styles   => [
+            $c->uri_for("/static/css/chosen/chosen.min.css"),
+            $c->uri_for("/static/css/prettycheckable/prettyCheckable.css"),
+          ],
+          calendar_types    => [ $c->model("DB::CalendarType")->all_types ],
+          form_action       => $c->uri_for_action( $c->action, $c->request->captures, $download_type ),
+        });
+      }
     }
   } else {
     # Unknown download type, 404
@@ -2636,6 +2655,36 @@ sub clean_page_number :Private {
   # If the page number is less then 1, not defined, false, or not a number, set it to 1
   $page_number = 1 if !defined( $page_number ) or !$page_number or $page_number !~ /^\d+$/ or $page_number < 1;
   $c->detach( $detach_action, [$page_number] );
+}
+
+=head2 generate_calendar_download_uri
+
+Generate the calendar download URI with the correct parameters for description prefixes and using abbreviated club names.
+
+=cut
+
+sub generate_calendar_download_uri :Private {
+  my ( $self, $c, $action, $arguments ) = @_;
+  my $summary_prefix          = $c->request->parameters->{"summary-prefix"} || undef;
+  my $abbreviated_club_names  = $c->request->parameters->{"abbreviated-club-names"} || 0;
+  
+  # Stash the values for later on
+  $c->stash({
+    summary_prefix          => $summary_prefix,
+    abbreviated_club_names  => $abbreviated_club_names,
+  });
+  
+  # Always set abbreviated-club-names and type (type is always "download" and abbreviated-club-names is boolean)
+  my $query_params = {
+    type                      => "download",
+    "abbreviated-club-names"  => $abbreviated_club_names,
+  };
+  
+  # Set summary prefix if it's set
+  $query_params->{"summary-prefix"} = $summary_prefix;
+  
+  # Return the URI we need
+  return $c->uri_for_action($action, $arguments, $query_params);
 }
 
 

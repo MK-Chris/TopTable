@@ -794,31 +794,34 @@ sub setup_club :Private {
   
   # The rest of the error checking is done in the Club model
   my $actioned = $c->model("DB::Club")->create_or_edit($action, {
-    club          => $club,
-    full_name     => $c->request->parameters->{full_name},
-    short_name    => $c->request->parameters->{short_name},
-    email_address => $c->request->parameters->{email_address},
-    website       => $c->request->parameters->{website},
-    start_hour    => $c->request->parameters->{start_hour},
-    start_minute  => $c->request->parameters->{start_minute},
-    venue         => $venue,
-    secretary     => $secretary,
+    club              => $club,
+    full_name         => $c->request->parameters->{full_name},
+    short_name        => $c->request->parameters->{short_name},
+    abbreviated_name  => $c->request->parameters->{abbreviated_name},
+    email_address     => $c->request->parameters->{email_address},
+    website           => $c->request->parameters->{website},
+    start_hour        => $c->request->parameters->{start_hour},
+    start_minute      => $c->request->parameters->{start_minute},
+    venue             => $venue,
+    secretary         => $secretary,
   });
   
   if ( scalar( @{ $actioned->{error} } ) > 0 ) {
     my $error = $c->build_message( $actioned->{error} );
     
     # Flash the entered values we've got so we can set them into the form
-    $c->flash->{name}           = $c->request->parameters->{name};
-    $c->flash->{address1}       = $c->request->parameters->{address1};
-    $c->flash->{address2}       = $c->request->parameters->{address2};
-    $c->flash->{address3}       = $c->request->parameters->{address3};
-    $c->flash->{address4}       = $c->request->parameters->{address4};
-    $c->flash->{address5}       = $c->request->parameters->{address5};
-    $c->flash->{postcode}       = $c->request->parameters->{postcode};
-    $c->flash->{telephone}      = $c->request->parameters->{telephone};
-    $c->flash->{email_address}  = $c->request->parameters->{email_address};
-    $c->flash->{secretary}      = $secretary;
+    $c->flash->{full_name}        = $c->request->parameters->{full_name};
+    $c->flash->{short_name}       = $c->request->parameters->{short_name};
+    $c->flash->{abbreviated_name} = $c->request->parameters->{abbreviated_name};
+    $c->flash->{address1}         = $c->request->parameters->{address1};
+    $c->flash->{address2}         = $c->request->parameters->{address2};
+    $c->flash->{address3}         = $c->request->parameters->{address3};
+    $c->flash->{address4}         = $c->request->parameters->{address4};
+    $c->flash->{address5}         = $c->request->parameters->{address5};
+    $c->flash->{postcode}         = $c->request->parameters->{postcode};
+    $c->flash->{telephone}        = $c->request->parameters->{telephone};
+    $c->flash->{email_address}    = $c->request->parameters->{email_address};
+    $c->flash->{secretary}        = $secretary;
     
     my $redirect_uri;
     if ( $action eq "create" ) {

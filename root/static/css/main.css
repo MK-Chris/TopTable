@@ -1099,6 +1099,13 @@ html[xmlns] .clearfix, html[xmlns] .clear-fix {display: block;}
   	float: left;
   }
   
+  div.field-container-wide {
+    margin-left: 5px;
+    width: 100%;
+    max-width: 1000px;
+  	float: left;
+  }
+  
   div.label-field-container, div.label-field-container-checkradio, div.label-field-container-weekday {width:100%;}
   
   div.label-field-container > label, div.label-field-container-checkradio > label, div.label-field-container-weekday > label, div.label-field-container > div.label-placeholder, div.label-field-container > div.label-placeholder-always-show {

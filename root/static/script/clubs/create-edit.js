@@ -10,6 +10,8 @@ $(document).ready(function() {
     $("#full_name").focus();
   } else if ( $("#short_name").val() === "" ) {
     $("#short_name").focus();
+  } else if ( $("#abbreviated_name").val() === "" ) {
+    $("#abbreviated_name").focus();
   } else if ( $("#email_address").val() === "" ) {
     $("#email_address").focus();
   } else if ( $("#website").val() === "http://www." ) {

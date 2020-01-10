@@ -18,6 +18,14 @@
   </div>
   
   <div class="label-field-container">
+    <label for="short_name">[% c.maketext("clubs.field.abbreviated-name") %]</label>
+    <div class="field-container">
+      <input type="text" id="abbreviated_name" name="abbreviated_name" value="[% c.flash.abbreviated_name OR club.abbreviated_name %]" />
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+  
+  <div class="label-field-container">
     <label for="email_address">[% c.maketext("clubs.field.email-address") %]</label>
     <div class="field-container">
       <input type="email" id="email_address" name="email_address" value="[% c.flash.email_address OR club.email_address %]" />

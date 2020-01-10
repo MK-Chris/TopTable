@@ -55,6 +55,8 @@ __PACKAGE__->table("fixtures_grid_weeks");
   extra: {unsigned => 1}
   is_nullable: 0
 
+The week does not relate to the fixtures_weeks week ID, but is a numeric value in order to order how the grid will create its fixtures.  The first week will be 1 and the last week may be 21, for example.  This is reused year-on-year, so cannot relate to an individual week ID.
+
 =cut
 
 __PACKAGE__->add_columns(
@@ -141,8 +143,8 @@ Composing rels: L</fixtures_season_weeks> -> fixtures_week
 __PACKAGE__->many_to_many("fixtures_weeks", "fixtures_season_weeks", "fixtures_week");
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2019-12-26 23:42:04
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:CwjEWYes7STbefSFLTNaPw
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-01-08 00:07:04
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:BwBplSIyWVc2yHOqBSfLuQ
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

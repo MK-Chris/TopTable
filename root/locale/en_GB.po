@@ -604,6 +604,9 @@ msgstr "Full name"
 msgid "clubs.field.short_name"
 msgstr "Short name"
 
+msgid "clubs.field.abbreviated-name"
+msgstr "Abbreviated name"
+
 msgid "clubs.field.email-address"
 msgstr "Email address"
 
@@ -646,8 +649,14 @@ msgstr "The full name field is blank."
 msgid "clubs.form.error.short-name-exists"
 msgstr "A club with the short name &#39;%1&#39; already exists."
 
+msgid "clubs.form.error.abbreviated-name-exists"
+msgstr "A club with the abbreviated name &#39;%1&#39; already exists."
+
 msgid "clubs.form.error.short-name-blank"
 msgstr "The short name field is blank."
+
+msgid "clubs.form.error.abbreviated-name-blank"
+msgstr "The abbreviated name field is blank."
 
 msgid "clubs.form.error.email-invalid"
 msgstr "The email address is invalid."
@@ -1798,8 +1807,35 @@ msgstr "View scorecard"
 msgid "calendar-types.form.calendar-type"
 msgstr "Calendar type"
 
-msgid "calendar-types.download-webcal"
-msgstr "Alternatively you can <a href="%1">download the ICS file</a> to import into your calendar, or copy the webcal link below and paste it into your calendar in order to subscribe.<br /><br />%2"
+msgid "calendar-types.form.calendar-type.options"
+msgstr "Calendar options"
+
+msgid "calendar-types.form.summary-prefix"
+msgstr "Summary prefix (optional)"
+
+msgid "calendar-types.form.placeholder.summary-prefix"
+msgstr "Example: &quot;TT&quot;"
+
+msgid "calendar-types.other"
+msgstr "Other (manual import / subscription)"
+
+msgid "calendar-types.form.abbreviated-club-names"
+msgstr "Use abbreviated club names"
+
+msgid "calendar-types.form.download-links"
+msgstr "Calendar download / subscription links"
+
+msgid "calendar-types.form.download-links.text"
+msgstr "You can download the calendar (ICS) file <a href=\"%1\">here</a> for import into your calendar, or copy the values below for pasting.  The import link is a one-time import that doesn't change after.  If you use the link to subscribe, changes to the calendar will be reflected in your calendar."
+
+msgid "calendar-types.link.import"
+msgstr "Link for importing the calendar"
+
+msgid "calendar-types.link.subscribe"
+msgstr "Webcal link for subscribing to the calendar"
+
+msgid "calendar-types.link.copy"
+msgstr "Copy"
 
 ### iCal downloads
 msgid "calendar.download"

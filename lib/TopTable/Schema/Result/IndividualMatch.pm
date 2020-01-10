@@ -153,6 +153,8 @@ __PACKAGE__->table("individual_matches");
   extra: {unsigned => 1}
   is_nullable: 1
 
+We need to distinguish the winner if the game has been awarded to either side.
+
 =cut
 
 __PACKAGE__->add_columns(
@@ -317,8 +319,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2019-12-26 23:42:04
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:zj7CJ1eHQyCJ+wPVRykFkw
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-01-08 00:07:04
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:EuuJBHHv4cXOYGtwiHo3jA
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
