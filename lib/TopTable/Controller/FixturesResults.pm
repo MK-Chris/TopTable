@@ -859,7 +859,7 @@ sub download_division_current_season :Chained("view_division_current_season") :P
     
     # Calendar download link is required so we know in the generic function what to replace {cal-uri} with
     #calendar_download_uri => $c->uri_for_action("/fixtures-results/download_division_current_season", [$division->url_key, $download_type], {type => "download"}),
-    calendar_download_uri => $c->uri_for_action("generate_calendar_download_uri", ["/fixtures-results/download_division_current_season", [$division->url_key, $download_type]]),
+    calendar_download_uri => $c->forward("generate_calendar_download_uri", ["/fixtures-results/download_division_current_season", [$division->url_key, $download_type]]),
   });
   
   $c->detach( "download_division" );
@@ -883,7 +883,7 @@ sub download_division_specific_season :Chained("view_division_specific_season") 
     
     # Calendar download link is required so we know in the generic function what to replace {cal-uri} with
     #calendar_download_uri => $c->uri_for_action("/fixtures-results/download_division_specific_season", [$season->url_key, $division->url_key, $download_type], {type => "download"}),
-    calendar_download_uri => $c->uri_for_action("generate_calendar_download_uri", ["/fixtures-results/download_division_specific_season", [$season->url_key, $division->url_key, $download_type]]),
+    calendar_download_uri => $c->forward("generate_calendar_download_uri", ["/fixtures-results/download_division_specific_season", [$season->url_key, $division->url_key, $download_type]]),
   });
   
   $c->detach( "download_division" );
@@ -1114,7 +1114,7 @@ sub download_venue_current_season :Chained("view_venue_current_season") :PathPar
     
     # Calendar download link is required so we know in the generic function what to replace {cal-uri} with
     #calendar_download_uri => $c->uri_for_action("/fixtures-results/download_venue_current_season", [$venue->url_key, $download_type], {type => "download"}),
-    calendar_download_uri => $c->uri_for_action("generate_calendar_download_uri", ["/fixtures-results/download_venue_current_season", [$venue->url_key, $download_type]]),
+    calendar_download_uri => $c->forward("generate_calendar_download_uri", ["/fixtures-results/download_venue_current_season", [$venue->url_key, $download_type]]),
   });
   
   $c->detach( "download_venue" );
@@ -1138,7 +1138,7 @@ sub download_venue_specific_season :Chained("view_venue_specific_season") :PathP
     
     # Calendar download link is required so we know in the generic function what to replace {cal-uri} with
     #calendar_download_uri => $c->uri_for_action("/fixtures-results/download_venue_specific_season", [$season->url_key, $venue->url_key, $download_type], {type => "download"}),
-    calendar_download_uri => $c->uri_for_action("generate_calendar_download_uri", ["/fixtures-results/download_venue_specific_season", [$season->url_key, $venue->url_key, $download_type]]),
+    calendar_download_uri => $c->forward("generate_calendar_download_uri", ["/fixtures-results/download_venue_specific_season", [$season->url_key, $venue->url_key, $download_type]]),
   });
   
   $c->detach( "download_venue" );
@@ -1361,7 +1361,7 @@ sub download_month_current_season :Chained("view_month_current_season") :PathPar
     
     # Calendar download link is required so we know in the generic function what to replace {cal-uri} with
     #calendar_download_uri => $c->uri_for_action("/fixtures-results/download_month_current_season", [$date->year, sprintf("%02d", $date->month), $download_type], {type => "download"}),
-    calendar_download_uri => $c->uri_for_action("generate_calendar_download_uri", ["/fixtures-results/download_month_current_season", [$date->year, sprintf("%02d", $date->month), $download_type]]),
+    calendar_download_uri => $c->forward("generate_calendar_download_uri", ["/fixtures-results/download_month_current_season", [$date->year, sprintf("%02d", $date->month), $download_type]]),
   });
   
   $c->detach( "download_month" );
@@ -1385,7 +1385,7 @@ sub download_month_specific_season :Chained("view_month_specific_season") :PathP
     
     # Calendar download link is required so we know in the generic function what to replace {cal-uri} with
     #calendar_download_uri => $c->uri_for_action("/fixtures-results/download_month_specific_season", [$season->url_key, $date->year, sprintf("%02d", $date->month), $download_type], {type => "download"}),
-    calendar_download_uri => $c->uri_for_action("generate_calendar_download_uri", ["/fixtures-results/download_month_specific_season", [$season->url_key, $date->year, sprintf("%02d", $date->month), $download_type]]),
+    calendar_download_uri => $c->forward("generate_calendar_download_uri", ["/fixtures-results/download_month_specific_season", [$season->url_key, $date->year, sprintf("%02d", $date->month), $download_type]]),
   });
   
   $c->detach( "download_month" );
@@ -1802,7 +1802,7 @@ sub download_week_current_season :Chained("view_week_current_season") :PathPart(
     
     # Calendar download link is required so we know in the generic function what to replace {cal-uri} with
     #calendar_download_uri => $c->uri_for_action("/fixtures-results/download_week_current_season", [$week_date->year, sprintf("%02d", $week_date->month), sprintf("%02d", $week_date->day), $download_type], {type => "download"}),
-    calendar_download_uri => $c->uri_for_action("generate_calendar_download_uri", ["/fixtures-results/download_week_current_season", [$week_date->year, sprintf("%02d", $week_date->month), sprintf("%02d", $week_date->day), $download_type]]),
+    calendar_download_uri => $c->forward("generate_calendar_download_uri", ["/fixtures-results/download_week_current_season", [$week_date->year, sprintf("%02d", $week_date->month), sprintf("%02d", $week_date->day), $download_type]]),
   });
   
   $c->detach( "download_week" );
@@ -1826,7 +1826,7 @@ sub download_week_specific_season :Chained("view_week_specific_season") :PathPar
     
     # Calendar download link is required so we know in the generic function what to replace {cal-uri} with
     #calendar_download_uri => $c->uri_for_action("/fixtures-results/download_week_specific_season", [$season->url_key, $week_date->year, sprintf("%02d", $week_date->month), sprintf("%02d", $week_date->day), $download_type], {type => "download"}),
-    calendar_download_uri => $c->uri_for_action("generate_calendar_download_uri", ["/fixtures-results/download_week_specific_season", [$season->url_key, $week_date->year, sprintf("%02d", $week_date->month), sprintf("%02d", $week_date->day), $download_type]]),
+    calendar_download_uri => $c->forward("generate_calendar_download_uri", ["/fixtures-results/download_week_specific_season", [$season->url_key, $week_date->year, sprintf("%02d", $week_date->month), sprintf("%02d", $week_date->day), $download_type]]),
   });
   
   $c->detach( "download_week" );
@@ -2064,7 +2064,7 @@ sub download_day_current_season :Chained("view_day_current_season") :PathPart(""
     
     # Calendar download link is required so we know in the generic function what to replace {cal-uri} with
     #calendar_download_uri => $c->uri_for_action("/fixtures-results/download_day_current_season", [$date->year, sprintf("%02d", $date->month), sprintf("%02d", $date->day), $download_type], {type => "download"}),
-    calendar_download_uri => $c->uri_for_action("generate_calendar_download_uri", ["/fixtures-results/download_day_current_season", [$date->year, sprintf("%02d", $date->month), sprintf("%02d", $date->day), $download_type]]),
+    calendar_download_uri => $c->forward("generate_calendar_download_uri", ["/fixtures-results/download_day_current_season", [$date->year, sprintf("%02d", $date->month), sprintf("%02d", $date->day), $download_type]]),
   });
   
   $c->detach( "download_day" );
@@ -2078,7 +2078,7 @@ Matches "/fixtures-results/seasons/*/days/*/*/*" (end of chain).
 
 =cut
 
-sub download_day_specific_season :Chained("view_week_specific_season") :PathPart("") :Args(1) {
+sub download_day_specific_season :Chained("view_day_specific_season") :PathPart("") :Args(1) {
   my ( $self, $c, $download_type ) = @_;
   my $date    = $c->stash->{date};
   my $season  = $c->stash->{season};
@@ -2088,7 +2088,7 @@ sub download_day_specific_season :Chained("view_week_specific_season") :PathPart
     
     # Calendar download link is required so we know in the generic function what to replace {cal-uri} with
     #calendar_download_uri => $c->uri_for_action("/fixtures-results/download_day_specific_season", [$season->url_key, $date->year, sprintf("%02d", $date->month), sprintf("%02d", $date->day), $download_type], {type => "download"}),
-    calendar_download_uri => $c->uri_for_action("generate_calendar_download_uri", ["/fixtures-results/download_day_specific_season", [$season->url_key, $date->year, sprintf("%02d", $date->month), sprintf("%02d", $date->day), $download_type]]),
+    calendar_download_uri => $c->forward("generate_calendar_download_uri", ["/fixtures-results/download_day_specific_season", [$season->url_key, $date->year, sprintf("%02d", $date->month), sprintf("%02d", $date->day), $download_type]]),
   });
   
   $c->detach( "download_day" );
