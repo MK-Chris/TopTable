@@ -49,13 +49,11 @@ IF matches.count;
       SET division_uri  = c.uri_for_action("/league-tables/view_current_season", [match.division.url_key]);
     END;
     
-    # Display the score or 'v'?
+    # Display the score or 'Not yet played'?
     IF match.home_team_match_score OR match.away_team_match_score;
       SET score = match.home_team_match_score _ "-" _ match.away_team_match_score;
-      SET score_class = ' class="match-score"';
     ELSE;
       SET score = c.maketext("matches.versus.not-yet-played");
-      SET score_class = '';
     END;
 -%]
     <tr>
@@ -71,7 +69,7 @@ IF matches.count;
       <td>
         <a href="[% away_team_uri %]">[% match.away_team.club.short_name | html_entity %] [% match.away_team.name %]</a>
       </td>
-      <td[% score_class %]>
+      <td>
         <a href="[% c.uri_for_action('/matches/team/view_by_url_keys', [match.home_team.club.url_key, match.home_team.url_key, match.away_team.club.url_key, match.away_team.url_key, year, month, day]) %]" title="[% c.maketext("fixtures-results.view-scorecard") %]">[% score %]</a>
       </td>
       <td>

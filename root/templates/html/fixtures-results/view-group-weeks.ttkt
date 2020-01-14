@@ -59,13 +59,11 @@ IF matches.count;
       SET fixtures_week_uri = c.uri_for_action("/fixtures-results/view_week_current_season_first_page", [week_year, week_month, week_day]);
     END;
     
-    # Display the score or 'v'?
+    # Display the score or 'Not yet played'?
     IF match.home_team_match_score OR match.away_team_match_score;
       SET score = match.home_team_match_score _ "-" _ match.away_team_match_score;
-      SET score_class = ' class="match-score"';
     ELSE;
-      SET score = c.maketext("matches.versus-abbreviation");
-      SET score_class = '';
+      SET score = c.maketext("matches.versus.not-yet-played");
     END;
 -%]
   <tr>

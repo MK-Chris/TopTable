@@ -48,7 +48,7 @@ IF matches.count;
       SET fixtures_day_uri  = c.uri_for_action("/fixtures-results/view_day_current_season_first_page", [date.year, month, day]);
     END;
     
-    # Display the score or 'v'?
+    # Display the score or 'Not yet played'?
     IF match.home_team_match_score OR match.away_team_match_score;
       SET score = match.home_team_match_score _ "-" _ match.away_team_match_score;
       #SET scorecard_uri = c.uri_for_action('/matches/team/view_by_url_keys', [match.home_team.club.url_key, match.home_team.url_key, match.away_team.club.url_key, match.away_team.url_key, date.year, month, day]);
