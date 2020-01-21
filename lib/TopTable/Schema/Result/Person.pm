@@ -218,6 +218,21 @@ __PACKAGE__->add_unique_constraint("url_key", ["url_key"]);
 
 =head1 RELATIONS
 
+=head2 club_seasons
+
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::ClubSeason>
+
+=cut
+
+__PACKAGE__->has_many(
+  "club_seasons",
+  "TopTable::Schema::Result::ClubSeason",
+  { "foreign.secretary" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
 =head2 clubs
 
 Type: has_many
@@ -733,8 +748,8 @@ __PACKAGE__->many_to_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2019-12-26 23:42:04
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:IQbSl9lW3DRzGaxG1JRkhA
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-01-15 14:32:42
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:B0U4NS1K2kJUQl87efv+LA
 
 #
 # Row-level helper methods

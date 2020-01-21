@@ -145,32 +145,13 @@ ELSE;
 [%
 END;
 -%]
-</div><br /><br />
-
-<div id="nav_list" class="nav_list">
-[%
-SET i = 0;
-FOREACH nav_club IN clubs;
-  SET i = i + 1;
-  IF i > 1;
--%]
- | 
-[%
-  END;
-  
-  IF nav_club.id == club.id;
--%]
-
-[% nav_club.full_name %]
+</div>
 
 [%
-  ELSE;
--%]
-
-<a href="[% c.uri_for_action('/clubs/view_current_season', [nav_club.url_key]) %]">[% nav_club.full_name %]</a>
-
-[%
-  END;
+IF seasons == 1;
+  SET season_text = c.maketext("object.singular.seasons");
+ELSE;
+  SET season_text = c.maketext("object.plural.seasons");
 END;
 -%]
-</div>
+<div class="seasons-count"><a href="[% c.uri_for_action("/clubs/view_seasons_first_page", [club.url_key]) %]">[% c.maketext("clubs.seasons.count-text", encoded_club_full_name, seasons_count, season_text) %]</a></div>

@@ -685,6 +685,21 @@ msgstr "A person can be secretary for multiple clubs - select as many as you nee
 msgid "clubs.delete.error.cannot-delete"
 msgstr "You cannot delete %1, as it has teams assigned either in this season or in historical seasons."
 
+msgid "clubs.history.error.seasons-exist"
+msgstr "Club seasons already exist, history doesn't need to be created."
+
+msgid "clubs.history.error.no-seasons-required"
+msgstr "No club seasons required."
+
+msgid "clubs.history.error.failed"
+msgstr "Failed to create club seasons."
+
+msgid "clubs.history.success"
+msgstr "Club seasons history created."
+
+msgid "clubs.seasons.count-text"
+msgstr "There is a record of %1 in %2 %3."
+
 ### Teams
 msgid "teams.create"
 msgstr "Create a new team"
