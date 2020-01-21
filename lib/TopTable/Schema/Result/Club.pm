@@ -216,6 +216,21 @@ __PACKAGE__->add_unique_constraint("url_key", ["url_key"]);
 
 =head1 RELATIONS
 
+=head2 club_seasons
+
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::ClubSeason>
+
+=cut
+
+__PACKAGE__->has_many(
+  "club_seasons",
+  "TopTable::Schema::Result::ClubSeason",
+  { "foreign.club" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
 =head2 secretary
 
 Type: belongs_to
@@ -297,8 +312,101 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-01-08 00:26:55
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Y8c+Rk0Pvi311TQWFOiK0A
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-01-15 14:32:42
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:kElVModMFmN3QIeHtUQSsg
+
+=head2 get_season
+
+Get a club_season object for this club with the specified season.
+
+=cut
+
+sub get_season {
+  my ( $self, $parameters ) = @_;
+  my $season = $parameters->{season} || undef;
+  
+  return undef unless defined ( $season );
+  
+  return $self->find_related("club_seasons", {
+    season => $season->id,
+  });
+}
+
+=head2 get_seasons
+
+Get club_seasons for this club (all seasons this club has entered).
+
+=cut
+
+sub get_seasons {
+  my ( $self, $parameters ) = @_;
+  
+  return $self->search_related("club_seasons", undef, {
+    prefetch => "season",
+    order_by => [{
+      -asc => [
+        qw( season.complete )
+      ]}, {
+      -desc => [
+        qw( season.start_date season.end_date )
+      ]}
+    ],
+  });
+}
+
+=head2 get_team_seasons
+
+Retrieve team_seasons related to this club.
+
+=cut
+
+sub get_team_seasons {
+  my ( $self ) = @_;
+  
+  return $self->search_related("team_seasons", undef, {
+    prefetch  => "season",
+    group_by  => [qw/ season /],
+  });
+}
+
+=head2 create_history
+
+Create club_seasons history for club if it should have it.
+
+=cut
+
+sub create_history {
+  my ( $self, $parameters ) = @_;
+  my $error;
+  
+  my $club_seasons      = $self->get_seasons->count;
+  
+  if ( $club_seasons == 0 ) {
+    my $seasons_required  = $self->get_team_seasons;
+    
+    if ( $seasons_required->count ) {
+      my @populate = ();
+      while ( my $season_required = $seasons_required->next ) {
+        $self->create_related("club_seasons", {
+          season            => $season_required->season->id,
+          full_name         => $self->full_name,
+          short_name        => $self->short_name,
+          venue             => $self->venue->id,
+          secretary         => $self->secretary->id,
+          abbreviated_name  => $self->abbreviated_name,
+        });
+      }
+    } else {
+      return "clubs.history.error.no-seasons-required";
+    }
+  } else {
+    # We have the seasons already
+    return "clubs.history.error.seasons-exist";
+  }
+  
+  return undef;
+}
+
 
 =head2 can_delete
 

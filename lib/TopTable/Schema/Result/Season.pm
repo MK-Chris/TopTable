@@ -263,6 +263,21 @@ __PACKAGE__->add_unique_constraint("url_key", ["url_key"]);
 
 =head1 RELATIONS
 
+=head2 club_seasons
+
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::ClubSeason>
+
+=cut
+
+__PACKAGE__->has_many(
+  "club_seasons",
+  "TopTable::Schema::Result::ClubSeason",
+  { "foreign.season" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
 =head2 division_seasons
 
 Type: has_many
@@ -414,8 +429,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-02-02 09:27:06
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:cbMCrtdx2rfZrrj/BSbikg
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-01-15 14:32:43
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Ejhr9hvuzGOGC0koHXipJQ
 
 use HTML::Entities;
 
