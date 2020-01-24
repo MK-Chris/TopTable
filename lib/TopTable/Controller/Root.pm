@@ -118,10 +118,13 @@ sub index :Path :Args(0) {
   $c->load_status_msgs;
   
   # Recent events
+  my $events_to_show = $c->config->{Index}{recent_updates_visible};
+  $events_to_show = 5 if !defined( $events_to_show ) or $events_to_show !~ m/^\d+$/;
+  
   my $event_logs = $c->model("DB::SystemEventLog")->page_records({
     public_events_only  => 1,
     page_number         => 1,
-    results_per_page    => 5,
+    results_per_page    => $events_to_show,
   });
   
   # Today's matches (if there's a current season)
@@ -142,9 +145,12 @@ sub index :Path :Args(0) {
     $matches_today = 0;
   }
   
+  my $news_articles_to_show = $c->config->{Index}{news_articles_visible};
+  $news_articles_to_show = 10 if !defined( $news_articles_to_show ) or $news_articles_to_show !~ m/^\d+$/;
+  
   my $articles = $c->model("DB::NewsArticle")->page_records({
     page_number       => 1,
-    results_per_page  => 5,
+    results_per_page  => $news_articles_to_show,
   });
   
   # A 0 online user count is nonsensical to the user, as they are on the website, so there must be at least one; this can happen, however, if this is the first page view for them
