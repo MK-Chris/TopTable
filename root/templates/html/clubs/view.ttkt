@@ -1,13 +1,13 @@
 [% # Note That the '-' at the beginning or end of TT code  -%]
 [% # "chomps" the whitespace/newline at that end of the    -%]
 [% # output (use View Source in browser to see the effect) -%]
-[% club_name_html = FILTER html_entity; club.full_name; END; -%]
+[% club_name_html = FILTER html_entity; club_season.full_name; END; -%]
 
 <div id="club-venue">
 <h4>[% c.maketext("clubs.field.venue") %]</h4>
-<a href="[% c.uri_for_action("/venues/view", [club.venue.url_key]) %]">[% club.venue.name %]</a><br />
+<a href="[% c.uri_for_action("/venues/view", [club_season.venue.url_key]) %]">[% club_season.venue.name %]</a><br />
 <address>[% FILTER html_line_break;
-club.venue.full_address;
+club_season.venue.full_address;
 END;
 %]</address><br /><br />
 [%
@@ -27,17 +27,17 @@ END;
 <div id="club-secretary">
 <h4>[% c.maketext("clubs.field.secretary") %]</h4>
 [%
-IF club.secretary;
+IF club_season.secretary;
   IF specific_season;
-    SET person_url = c.uri_for_action("/people/view_specific_season", [club.secretary.url_key, season.url_key]);
+    SET person_url = c.uri_for_action("/people/view_specific_season", [club_season.secretary.url_key, season.url_key]);
   ELSE;
-    SET person_url = c.uri_for_action("/people/view_current_season", [club.secretary.url_key]);
+    SET person_url = c.uri_for_action("/people/view_current_season", [club_season.secretary.url_key]);
   END;
 -%]
-<a href="[% person_url %]">[% club.secretary.display_name | html_entity %]</a><br />
+<a href="[% person_url %]">[% club_season.secretary.display_name | html_entity %]</a><br />
 <address>[%
 FILTER html_line_break;
-club.secretary.full_address;
+club_season.secretary.full_address;
 END;
 %]</address><br /><br />
 [%
@@ -51,7 +51,7 @@ END;
 [%
 IF authorisation.team_create;
 -%]
-<a href="[% c.uri_for_action("/teams/create_with_club", [club.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0009-Add-icon-32.png") %]" alt="[% c.maketext("teams.create-for", club.full_name) | html_entity %]" title="[% c.maketext("teams.create-for", club_name_html) %]" /></a>
+<a href="[% c.uri_for_action("/teams/create_with_club", [club.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0009-Add-icon-32.png") %]" alt="[% c.maketext("teams.create-for", club_season.full_name) | html_entity %]" title="[% c.maketext("teams.create-for", club_name_html) %]" /></a>
 [%
 END;
 IF teams.size;
@@ -67,18 +67,6 @@ IF teams.size;
   # If the current sort order is ascending, then the sort order on the column we're sorting needs to be "desc"
   IF order == "asc";
     SET sort_order_uris.$sort = "desc";
-  END;
-  
-  IF specific_season;
-    SET sort_by_name_uri        = c.uri_for_action("/clubs/view_specific_season", [club.url_key, season.url_key], {sort => "name", order => sort_order_uris.name});
-    SET sort_by_captain_uri     = c.uri_for_action("/clubs/view_specific_season", [club.url_key, season.url_key], {sort => "captain", order => sort_order_uris.captain});
-    SET sort_by_division_uri    = c.uri_for_action("/clubs/view_specific_season", [club.url_key, season.url_key], {sort => "division", order => sort_order_uris.division});
-    SET sort_by_home_night_uri  = c.uri_for_action("/clubs/view_specific_season", [club.url_key, season.url_key], {sort => "home-night", order => sort_order_uris.item("home-night")});
-  ELSE;
-    SET sort_by_name_uri        = c.uri_for_action("/clubs/view_current_season", [club.url_key], {sort => "name", order => sort_order_uris.name});
-    SET sort_by_captain_uri     = c.uri_for_action("/clubs/view_current_season", [club.url_key], {sort => "captain", order => sort_order_uris.captain});
-    SET sort_by_division_uri    = c.uri_for_action("/clubs/view_current_season", [club.url_key], {sort => "division", order => sort_order_uris.division});
-    SET sort_by_home_night_uri  = c.uri_for_action("/clubs/view_current_season", [club.url_key], {sort => "home-night", order => sort_order_uris.item("home-night")});
   END;
 -%]
 <h4>Teams</h4>
@@ -139,7 +127,7 @@ ELSE;
 -%]
 <ul class="option-list">
   <li>
-    [% club.full_name %] has not got any teams.
+    [% club_season.full_name %] has not got any teams.
   </li>
 </ul>
 [%

@@ -1,6 +1,7 @@
 package TopTable::View::HTML;
 use Moose;
 use namespace::autoclean;
+#use Template::Stash;
 
 extends 'Catalyst::View::TT';
 #with qw(CatalystX::I18N::TraitFor::ViewTT);
@@ -19,7 +20,6 @@ __PACKAGE__->config(
   # Wrapper template
   WRAPPER   => "html/wrappers/wraparoundthewrapper.ttkt",
 );
-
 
 =head1 NAME
 

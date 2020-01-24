@@ -499,24 +499,33 @@ Checks we can delete the team (via can_delete) and then performs the deletion.
 =cut
 
 sub check_and_delete {
-  my ( $self ) = @_;
+  my ( $self, $parameters ) = @_;
+  my $lang = $parameters->{language};
   my $error = [];
-  my $club = $self->find_related("club");
+  my $club = $self->club;
+  my $schema = $self->result_source->schema;
+  
+  # Get the current season if there is one.
+  my $season = $schema->resultset("Season")->get_current;
   
   # Check we can delete
-  push(@{ $error }, {
-    id          => "seasons.delete.error.matches-exist",
-    parameters  => [$club->short_name, $self->name],
-  }) unless $self->can_delete;
+  push(@{ $error }, $lang->("seasons.delete.error.matches-exist", $club->short_name, $self->name)) unless $self->can_delete;
+  
+  # Start a transaction
+  my $transaction = $schema->txn_scope_guard;
   
   # Delete
-  my $ok = $self->delete if !$error;
+  $self->delete_related("team_seasons");
+  my $ok = $self->delete if !scalar @{ $error };
+  
+  # Delete the related club season if there's a current season and no teams assigned to this club for it any more.
+  $club->delete_related("club_seasons", {season => $season->id}) if defined( $season ) and $club->get_team_seasons({season => $season})->count == 0;
+  
+  # Commit
+  $transaction->commit;
   
   # Error if the delete was unsuccessful
-  push(@{ $error }, {
-    id          => "admin.delete.error.database",
-    parameters  => $self->name
-  }) unless $ok;
+  push(@{ $error }, $lang->("admin.delete.error.database", $self->name, $ok)) unless $ok;
   
   return $error;
 }

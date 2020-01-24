@@ -171,7 +171,7 @@ sub add_event :Private {
     user          => $c->user,
     ip_address    => $c->request->address,
     current_time  => $current_datetime,
-  }, $c);
+  });
   
   return $details;
 }

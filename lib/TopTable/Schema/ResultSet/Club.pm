@@ -401,7 +401,8 @@ sub create_or_edit {
       $url_key = $self->generate_url_key( $short_name );
     }
     
-    # Success, we need to create / edit the club
+    # Success, we need to create / edit the club.  We don't create any club_seasons here, as they may not
+    # be entering teams into this season.  This will be done when teams are entered for the club.
     if ( $action eq "create" ) {
       $club = $self->create({
         url_key             => $url_key,

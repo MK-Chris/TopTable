@@ -173,7 +173,7 @@ sub build_message {
     } else {
       # Not a hashref, just do a 'maketext' on the value
       # Escape javascript if necessary
-      $message = javascript_value_escape( $message ) if $c->request->headers->header("X-Requested-With") eq "XMLHttpRequest";
+      $message = javascript_value_escape( $message ) if defined( $c->request->headers->header("X-Requested-With") ) and $c->request->headers->header("X-Requested-With") eq "XMLHttpRequest";
       
       $return_message .= sprintf( "  <li>%s</li>", $message );
     }

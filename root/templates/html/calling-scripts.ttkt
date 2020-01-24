@@ -35,10 +35,5 @@ IF scripts;
   END;
 END;
 -%]
-    
-    
-    if (jQuery.cookie("cc_cookie_accept") == "cc_cookie_accept") {
-      // insert the code you do not want to run UNTIL cookies are accepted here
-    } 
   });
 </script>

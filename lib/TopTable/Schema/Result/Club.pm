@@ -322,8 +322,7 @@ Get a club_season object for this club with the specified season.
 =cut
 
 sub get_season {
-  my ( $self, $parameters ) = @_;
-  my $season = $parameters->{season} || undef;
+  my ( $self, $season ) = @_;
   
   return undef unless defined ( $season );
   
@@ -361,50 +360,15 @@ Retrieve team_seasons related to this club.
 =cut
 
 sub get_team_seasons {
-  my ( $self ) = @_;
+  my ( $self, $parameters ) = @_;
+  my $season = $parameters->{season} || undef;
   
-  return $self->search_related("team_seasons", undef, {
+  my $query = ( defined( $season ) ) ? {season => $season->id} : undef;
+  
+  return $self->search_related("team_seasons", $query, {
     prefetch  => "season",
     group_by  => [qw/ season /],
   });
-}
-
-=head2 create_history
-
-Create club_seasons history for club if it should have it.
-
-=cut
-
-sub create_history {
-  my ( $self, $parameters ) = @_;
-  my $error;
-  
-  my $club_seasons      = $self->get_seasons->count;
-  
-  if ( $club_seasons == 0 ) {
-    my $seasons_required  = $self->get_team_seasons;
-    
-    if ( $seasons_required->count ) {
-      my @populate = ();
-      while ( my $season_required = $seasons_required->next ) {
-        $self->create_related("club_seasons", {
-          season            => $season_required->season->id,
-          full_name         => $self->full_name,
-          short_name        => $self->short_name,
-          venue             => $self->venue->id,
-          secretary         => $self->secretary->id,
-          abbreviated_name  => $self->abbreviated_name,
-        });
-      }
-    } else {
-      return "clubs.history.error.no-seasons-required";
-    }
-  } else {
-    # We have the seasons already
-    return "clubs.history.error.seasons-exist";
-  }
-  
-  return undef;
 }
 
 

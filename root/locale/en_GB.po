@@ -637,6 +637,9 @@ msgstr "Venue"
 msgid "clubs.none"
 msgstr "There are no clubs to view."
 
+msgid "clubs.form.error.club-not-chosen"
+msgstr "Please specify a club for the team to belong to."
+
 msgid "clubs.form.error.club-invalid"
 msgstr "The club specified is invalid."
 
@@ -685,20 +688,11 @@ msgstr "A person can be secretary for multiple clubs - select as many as you nee
 msgid "clubs.delete.error.cannot-delete"
 msgstr "You cannot delete %1, as it has teams assigned either in this season or in historical seasons."
 
-msgid "clubs.history.error.seasons-exist"
-msgstr "Club seasons already exist, history doesn't need to be created."
-
-msgid "clubs.history.error.no-seasons-required"
-msgstr "No club seasons required."
-
-msgid "clubs.history.error.failed"
-msgstr "Failed to create club seasons."
-
-msgid "clubs.history.success"
-msgstr "Club seasons history created."
-
 msgid "clubs.seasons.count-text"
 msgstr "There is a record of %1 in %2 %3."
+
+msgid "clubs.name.changed-notice"
+msgstr "%1 (%2) is now known as %3 (%4)"
 
 ### Teams
 msgid "teams.create"
@@ -810,7 +804,7 @@ msgid "teams.form.error.matches-exist"
 msgstr "There are already matches set for the current season, so new teams cannot be created."
 
 msgid "teams.form.error.no-current-season"
-msgstr "There is no current season, so new teams cannot be %1 - create a new season first."
+msgstr "There is no current season, so teams cannot be created or edited - create a new season first."
 
 msgid "teams.form.error.season-not-current"
 msgstr "You can only add players for the current season."
@@ -824,8 +818,20 @@ msgstr "%1 %2 can&#39;t be edited, because they have not entered this season and
 msgid "teams.form.error.club-change-not-allowed"
 msgstr "The team&#39;s club cannot be changed after matches in the current season have been created."
 
+msgid "teams.form.error.club-invalid"
+msgstr "The club specified is not valid."
+
+msgid "teams.form.error.club-not-chosen"
+msgstr "You must select a club."
+
 msgid "teams.form.error.division-change-not-allowed"
 msgstr "The team&#39;s division cannot be changed after matches in the current season have been created."
+
+msgid "teams.form.error.division-invalid"
+msgstr "The division specified is not valid."
+
+msgid "teams.form.error.division-not-chosen"
+msgstr "You must select a division."
 
 msgid "teams.form.error.create-not-allowed"
 msgstr "Teams cannot be created after matches in the current season have been created."
@@ -844,6 +850,9 @@ msgstr "The captain is invalid."
 
 msgid "teams.form.error.home-night-invalid"
 msgstr "The home night is invalid."
+
+msgid "teams.form.error.home-night-not-chosen"
+msgstr "You must specify a home night."
 
 msgid "teams.form.error.start-hour-invalid"
 msgstr "The default match start hour value is invalid; it must be selected from the list (&#39;00&#39; to &#39;23&#39;).  You may leave this value blank and the team&#39;s home matches will default to the club&#39;s match start time; if this is blank, the season&#39;s default match start time will be used."
@@ -864,10 +873,10 @@ msgid "teams.form.warning.player-not-reassigned"
 msgstr "%1 already has an active membership for %2 %3 in %4; if you wish to reassign %5 to this team, you will need to edit their team membership in their edit page."
 
 msgid "teams.form.warning.player-invalid-singular"
-msgstr "There was 1 invalid player submitted for %1 %2; check the team&#39;s players list after to see if you need to add anyone else to the team."
+msgstr "There was 1 invalid player submitted; check the team&#39;s players list after to see if you need to add anyone else to the team."
 
 msgid "teams.form.warning.players-invalid-multiple"
-msgstr "There were %1 invalid players submitted for %2 %3; check the team&#39;s players list after to see if you need to add anyone else to the team."
+msgstr "There were %1 invalid players submitted; check the team&#39;s players list after to see if you need to add anyone else to the team."
 
 msgid "teams.delete.error.cannot-delete"
 msgstr "You cannot delete %1 %2, as it has people and / or matches assigned either in this season or in historical seasons."
@@ -3280,7 +3289,7 @@ msgid "admin.forms.success-with-warnings"
 msgstr "%1 has been successfully %2, but the warnings below were encountered."
 
 msgid "admin.delete.error.database"
-msgstr "There was an error deleting %1 from the database; please try again and contact the system administrator if the problem persists."
+msgstr "There was an error deleting %1 from the database; please try again and contact the system administrator if the problem persists.  %2"
 
 msgid "admin.edit.privacy"
 msgstr "Edit privacy policy"

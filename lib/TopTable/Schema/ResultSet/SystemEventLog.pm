@@ -71,7 +71,7 @@ Provides the logic for setting the event log entry - either creating a new one o
 =cut
 
 sub set_event_log {
-  my ( $self, $params, $c ) = @_;
+  my ( $self, $params ) = @_;
   
   my $object_type       = $params->{object_type} || undef;
   my $event_type        = $params->{event_type} || undef;

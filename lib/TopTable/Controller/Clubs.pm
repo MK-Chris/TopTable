@@ -277,14 +277,22 @@ Obtain a club's details for a given season.
 
 sub get_club_season :Private {
   my ( $self, $c ) = @_;
-  my ( $club, $season ) = ( $c->stash->{club}, $c->stash->{season} );
+  my ( $club, $season, $specific_season ) = ( $c->stash->{club}, $c->stash->{season}, $c->stash->{specific_season} );
   my $sort_column = $c->request->parameters->{sort};
   my $order       = $c->request->parameters->{order};
   $sort_column    = "name" unless defined( $sort_column ) and ( $sort_column eq "name" or $sort_column eq "captain" or $sort_column eq "division" or $sort_column eq "home-night" );
   $order          = "asc" unless defined( $order ) and ( $order eq "asc" or $order eq "desc" );
   
-  my $club_seasons = $club->get_seasons;
-  $c->log->debug( sprintf( "Seasons: %s, ref %s, count: %s", $club_seasons, ref( $club_seasons ), $club_seasons->count ) );
+  my $club_seasons  = $club->get_seasons;
+  my $club_season   = $club->get_season( $season );
+  
+  # Check if the name has changed since the season we're viewing
+  if ( $specific_season and defined( $club_season ) ) {
+    $c->add_status_message( "info", $c->maketext( "clubs.name.changed-notice", $club_season->full_name, $club_season->short_name, $club->full_name, $club->short_name ) ) if $club_season->full_name ne $club->full_name or $club_season->short_name ne $club->short_name;
+    
+    # Restash the club name with the season
+    $c->stash({encoded_club_full_name => encode_entities( $club_season->full_name )});
+  }
   
   # If we've found a season, try and find the team's statistics and players from it
   my $teams = [ $c->model("DB::Team")->teams_in_club({
@@ -299,7 +307,7 @@ sub get_club_season :Private {
     season        => $season,
     sort          => $sort_column,
     order         => $order,
-    club_season   => $club->get_season({season => $season}),
+    club_season   => $club_season,
     club_seasons  => $club_seasons,
     seasons_count => $club_seasons->count,
   });
@@ -859,38 +867,6 @@ sub setup_club :Private {
     $c->detach;
     return;
   }
-}
-
-=head2 history
-
-Create historical club_seasons records for clubs if they don't exist.
-
-=cut
-
-sub history :Chained("base") :PathPart("history") :Args(0) {
-  my ( $self, $c ) = @_;
-  my $club = $c->stash->{club};
-  
-  # Check that we are authorised to edit clubs
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["club_edit", $c->maketext("user.auth.edit-clubs"), 1] );
-  
-  # Create history if the club needs it
-  my $error = $club->create_history;
-  
-  if ( defined( $error ) and $error ) {
-    # Errored
-    $c->response->redirect( $c->uri_for_action("/clubs/view_current_season", [ $club->url_key ],
-      {mid => $c->set_status_msg({error => $c->maketext($error)})} ) );
-  } else {
-    
-    $c->response->redirect( $c->uri_for_action("/clubs/view_current_season", [ $club->url_key ],
-      {mid => $c->set_status_msg({success => $c->maketext("clubs.history.success")})} ) );
-  }
-  
-  # Detach / return here, as we are definitely redirecting
-  $c->detach;
-  return;
-  
 }
 
 

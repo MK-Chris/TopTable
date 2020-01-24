@@ -3,6 +3,7 @@ use Moose;
 use namespace::autoclean;
 use JSON;
 use HTML::Entities;
+use Data::Dumper::Concise;
 
 BEGIN { extends 'Catalyst::Controller'; }
 
@@ -390,18 +391,24 @@ sub get_team_season :Private {
   my $specific_season = $c->stash->{specific_season};
   
   # If we've found a season, try and find the team's statistics and players from it
-  #my $team_season = $c->model("DB::TeamSeason")->find({
   my $team_season = $team->get_season( $season );
+  my $club_season;
   
   # Check if we have a team season - if so, the team has entered this season
   my $entered = ( defined( $team_season ) ) ? 1 : 0;
   
   # Check if the name has changed since the season we're viewing
-  if ( $specific_season and ( $team_season->club->id != $team->club->id or $team_season->name ne $team->name ) ) {
-    $c->add_status_message( "info", $c->maketext( "teams.club.changed-notice", $team_season->club->short_name, $team_season->name, $c->uri_for_action("/clubs/view_current_season", [$team->club->url_key]), $team->club->full_name ) ) if $specific_season and $team_season->club->id != $team->club->id;
-    $c->add_status_message( "info", $c->maketext( "teams.name.changed-notice", $team_season->club->short_name, $team_season->name, $team->club->short_name, $team->name ) ) if $specific_season and $team_season->name ne $team->name;
+  if ( $specific_season and defined( $team_season ) ) {
+    # Get the club_season too
+    $club_season = $team_season->club->get_season( $season );
+    $c->log->debug( sprintf( "Club season: %s, %s", $club_season, ref( $club_season ) ) );
+    $c->log->debug( sprintf( "Club: %s, %s", $team_season->club, ref( $team_season->club ) ) );
+     
+    $c->add_status_message( "info", $c->maketext( "teams.club.changed-notice", $team_season->club->short_name, $team_season->name, $c->uri_for_action("/clubs/view_current_season", [$team->club->url_key]), $team->club->full_name ) ) if $team_season->club->id != $team->club->id;
+    $c->add_status_message( "info", $c->maketext( "teams.name.changed-notice", $team_season->club->short_name, $team_season->name, $team->club->short_name, $team->name ) ) if $team_season->name ne $team->name;
+    $c->add_status_message( "info", $c->maketext( "clubs.name.changed-notice", $club_season->full_name, $club_season->short_name, $team_season->club->full_name, $team_season->club->short_name ) ) if $club_season->full_name ne $team_season->club->full_name or $club_season->short_name ne $team_season->club->short_name;
     
-    $c->stash({subtitle1 => encode_entities( sprintf( "%s %s", $team_season->club->short_name, $team_season->name ) )});
+    $c->stash({subtitle1 => encode_entities( sprintf( "%s %s", $club_season->short_name, $team_season->name ) )});
   }
   
   my $league_position = 0;
@@ -742,7 +749,7 @@ sub create :Chained("base_no_object_specified") :PathPart("create") :CaptureArgs
   } else {
     # Redirect and show the error
     $c->response->redirect( $c->uri_for("/",
-                                {mid => $c->set_status_msg( {error => $c->maketext("teams.form.error.no-current-season", $c->maketext("admin.message.created"))} ) }) );
+                                {mid => $c->set_status_msg( {error => $c->maketext("teams.form.error.no-current-season")} ) }) );
     $c->detach;
     return;
   }
@@ -755,30 +762,28 @@ sub create :Chained("base_no_object_specified") :PathPart("create") :CaptureArgs
     my $captain_tokeninput_options = {
       jsonContainer => "json_people",
       tokenLimit    => 1,
-      hintText      => encode_entities( $c->maketext("person.tokeninput.type") ),
-      noResultsText => encode_entities( $c->maketext("tokeninput.text.no-results") ),
-      searchingText => encode_entities( $c->maketext("tokeninput.text.searching") ),
+      hintText      => $c->maketext("person.tokeninput.type"),
+      noResultsText => $c->maketext("tokeninput.text.no-results"),
+      searchingText => $c->maketext("tokeninput.text.searching"),
     };
     
     # Add the pre-population if needed
-    $captain_tokeninput_options->{prePopulate} = [{id => $c->flash->{captain}->id, name => $c->flash->{captain}->display_name}] if defined( $c->flash->{captain} );
+    my $captain = $c->flash->{captain} || undef;
+    $captain_tokeninput_options->{prePopulate} = [{id => $captain->id, name => encode_entities( $captain->display_name )}] if defined( $captain );
     
     my $players_tokeninput_options = {
       jsonContainer => "json_people",
-      hintText      => encode_entities( $c->maketext("person.tokeninput.type") ),
-      noResultsText => encode_entities( $c->maketext("tokeninput.text.no-results") ),
-      searchingText => encode_entities( $c->maketext("tokeninput.text.searching") ),
+      hintText      => $c->maketext("person.tokeninput.type"),
+      noResultsText => $c->maketext("tokeninput.text.no-results"),
+      searchingText => $c->maketext("tokeninput.text.searching"),
     };
     
-    # Add pre-population if we need it
-    if ( exists( $c->flash->{players} ) and ref( $c->flash->{players} ) eq "ARRAY" ) {
-      foreach my $player ( @{ $c->flash->{players} } ) {
-        push(@{ $players_tokeninput_options->{prePopulate} }, {
-          id    => $player->id,
-          name  => $player->display_name,
-        });
-      }
-    }
+    my $players = $c->flash->{players};
+    
+    $players_tokeninput_options->{prePopulate} = [map({
+      id    => $_->id,
+      name  => encode_entities( $_->display_name ),
+    }, @{ $players })] if ref( $players ) eq "ARRAY" and scalar( @{ $players } );
     
     my $tokeninput_confs = [{
       script    => $c->uri_for("/people/ajax-search"),
@@ -839,7 +844,7 @@ sub create_with_club :Chained("create") :PathPart("club") :Args(1) {
   
   # Flash the club with what's provided in the params if needed
   if ( defined ( my $club = $c->model("DB::Club")->find_id_or_url_key( $id_or_url_key ) ) ) {
-    $c->flash->{club} = $club->id;
+    $c->flash->{club} = $club;
   } else {
     $c->detach( "TopTable::Controller::Root", "default" );
   }
@@ -940,9 +945,9 @@ sub edit :Private {
     my $captain_tokeninput_options = {
       jsonContainer => "json_people",
       tokenLimit    => 1,
-      hintText      => encode_entities( $c->maketext("person.tokeninput.type") ),
-      noResultsText => encode_entities( $c->maketext("tokeninput.text.no-results") ),
-      searchingText => encode_entities( $c->maketext("tokeninput.text.searching") ),
+      hintText      =>  $c->maketext("person.tokeninput.type"),
+      noResultsText =>  $c->maketext("tokeninput.text.no-results"),
+      searchingText =>  $c->maketext("tokeninput.text.searching"),
     };
     
     # Add the pre-population if needed - prioritise flashed values
@@ -959,33 +964,32 @@ sub edit :Private {
       }
     }
     
-    $captain_tokeninput_options->{prePopulate} = [{id => $captain->id, name => $captain->display_name}] if defined( $captain );
+    # Add the pre-population if needed
+    $captain_tokeninput_options->{prePopulate} = [{id => $captain->id, name => encode_entities( $captain->display_name )}] if defined( $captain );
     
     # Players
     my $players_tokeninput_options = {
       jsonContainer => "json_people",
-      hintText      => encode_entities( $c->maketext("person.tokeninput.type") ),
-      noResultsText => encode_entities( $c->maketext("tokeninput.text.no-results") ),
-      searchingText => encode_entities( $c->maketext("tokeninput.text.searching") ),
+      hintText      => $c->maketext("person.tokeninput.type"),
+      noResultsText => $c->maketext("tokeninput.text.no-results"),
+      searchingText => $c->maketext("tokeninput.text.searching"),
     };
     
-    my $players = [];
-    if ( defined( $c->flash->{players} ) and ref( $c->flash->{players} ) eq "ARRAY" ) {
-      @{ $players } = map({
-        id    => $_->id,
-        name  => encode_entities( $_->display_name ),
-      }, @{ $c->flash->{players} });
+    my $players;
+    if ( exists( $c->flash->{players} ) and ref( $c->flash->{players} ) eq "ARRAY" ) {
+      $players = $c->flash->{players};
     } else {
       my $team_players = $team->get_players({season => $current_season});
+      
       while ( my $player = $team_players->next ) {
-        push(@{ $players }, {
-          id    => $player->person->id,
-          name  => encode_entities( $player->person->display_name ),
-        });
+        push(@{ $players }, $player->person);
       }
     }
     
-    $players_tokeninput_options->{prePopulate} = $players if scalar( @{ $players } );
+    $players_tokeninput_options->{prePopulate} = [map({
+      id    => $_->id,
+      name  => encode_entities( $_->display_name ),
+    }, @{ $players })] if ref( $players ) eq "ARRAY" and scalar( @{ $players } );
     
     my $tokeninput_confs = [{
       script    => $c->uri_for("/people/ajax-search"),
@@ -1210,7 +1214,11 @@ sub do_delete :Private {
   # Check that we are authorised to delete clubs
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["team_delete", $c->maketext("user.auth.delete-teams"), 1] );
   
-  my $error = $team->check_and_delete;
+  my $error = $team->check_and_delete({
+    language => sub{ $c->maketext( @_ ); },
+  });
+  
+  $c->log->debug( Dumper( $error ) );
   
   if ( scalar( @{ $error } ) ) {
     # Error deleting
@@ -1237,50 +1245,26 @@ A private routine forwarded from the docreate and doedit routines to set up the 
 sub setup_team :Private {
   my ( $self, $c, $action ) = @_;
   my $team = $c->stash->{team};
+  my @field_names = qw( name club division start_hour start_minute captain home_night players );
   
-  # Foreign key checks
-  my $club        = $c->model("DB::Club")->find( $c->request->parameters->{club} ) if $c->request->parameters->{club};
-  my $division    = $c->model("DB::Division")->find( $c->request->parameters->{division} ) if $c->request->parameters->{division};
-  my $captain     = $c->model("DB::Person")->find( $c->request->parameters->{captain} ) if $c->request->parameters->{captain};
-  my $home_night  = $c->model("DB::LookupWeekday")->find( $c->request->parameters->{home_night} ) if $c->request->parameters->{home_night};
-  
-  # Look up all the players first; these are submitted in a single field, comma separated
-  my @player_ids = split( ",", $c->request->parameters->{players} );
-  
-  # Set up the arrayref that will hold the DB object for each player, then push the result of a find() on to it for each ID
-  my $players = [];
-  push( @{ $players }, $c->model("DB::Person")->find( $_ ) ) foreach ( @player_ids );
-  
-  # Get the current season
-  my $current_season = $c->model("DB::Season")->get_current;
-  
-  # Forward to the model to do the rest of the error checking
-  my $details = $c->model("DB::Team")->create_or_edit($action, {
-    team                    => $team,
-    name                    => $c->request->parameters->{name},
-    club                    => $club,
-    division                => $division,
-    start_hour              => $c->request->parameters->{start_hour},
-    start_minute            => $c->request->parameters->{start_minute},
-    captain                 => $captain,
-    home_night              => $home_night,
-    players                 => $players,
-    season                  => $current_season,
-    reassign_active_players => $c->config->{Players}{reassign_active_on_team_season_create},
+  # Forward to the model to do the rest of the error checking.  The map MUST come last in this
+  my $returned = $c->model("DB::Team")->create_or_edit($action, {
+    team                      => $team,
+    reassign_active_players   => $c->config->{Players}{reassign_active_on_team_season_create},
+    language                  => sub{ $c->maketext( @_ ); },
+    logger                    => sub{ my $level = shift; $c->log->$level( @_ ); },
+    map {$_ => $c->request->parameters->{$_} } @field_names,
   });
   
-  if ( scalar( @{ $details->{error} } ) ) {
-    my $error = $c->build_message( $details->{error} );
+  if ( scalar( @{ $returned->{fatal} } ) ) {
+    # A fatal error means we can't return to the form, so we go home instead,
+    $c->response->redirect( $c->uri_for("/",
+                              {mid => $c->set_status_msg( {error => $c->build_message( $returned->{fatal} )} )}));
+  } elsif ( scalar( @{ $returned->{error} } ) ) {
+    my $error = $c->build_message( $returned->{error} );
     # Flash the entered values we've got so we can set them into the form
-    # Stash the values we've got so we can set them
-    $c->flash->{name}         = $c->request->parameters->{name};
-    $c->flash->{club}         = $c->request->parameters->{club};
-    $c->flash->{division}     = $c->request->parameters->{division};
-    $c->flash->{start_hour}   = $c->request->parameters->{start_hour};
-    $c->flash->{start_minute} = $c->request->parameters->{start_minute};
-    $c->flash->{home_night}   = $c->request->parameters->{home_night};
-    $c->flash->{captain}      = $captain;
-    $c->flash->{players}      = $players;
+    map {$c->flash->{$_} = $returned->{sanitised_fields}{$_} } @field_names;
+    
     
     my $redirect_uri;
     if ( $action eq "create" ) {
@@ -1288,9 +1272,9 @@ sub setup_team :Private {
       $redirect_uri = $c->uri_for_action("/teams/create_no_club",
                             {mid => $c->set_status_msg( {error => $error} ) });
     } else {
-      if ( defined( $details->{team} ) ) {
+      if ( defined( $returned->{team} ) ) {
         # If we're editing and we found an object to edit, we'll redirect to the edit form for that object
-        $redirect_uri = $c->uri_for_action("/teams/edit_by_url_key", [ $details->{team}->club->url_key, $details->{team}->url_key ],
+        $redirect_uri = $c->uri_for_action("/teams/edit_by_url_key", [ $returned->{team}->club->url_key, $returned->{team}->url_key ],
                             {mid => $c->set_status_msg( {error => $error} ) });
       } else {
         # If we're editing and we didn't an object to edit, we'll redirect to the list of objects
@@ -1303,7 +1287,7 @@ sub setup_team :Private {
     $c->detach;
     return;
   } else {
-    my $team = $details->{team};
+    my $team = $returned->{team};
     my $encoded_name = encode_entities( sprintf( "%s %s", $team->club->short_name, $team->name ) );
     my $action_description;
     
@@ -1316,11 +1300,11 @@ sub setup_team :Private {
     $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["team", $action, {id => $team->id}, $encoded_name ] );
     
     # Log the home night's changed if necessary
-    $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["team", "update-home-night", {id => $team->id}, $encoded_name ] ) if exists( $details->{home_night_changed} );
+    $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["team", "update-home-night", {id => $team->id}, $encoded_name ] ) if exists( $returned->{home_night_changed} );
     
     # Check if we have warnings to support
-    if ( scalar( @{ $details->{warning} } ) ) {
-      my $warning = $c->build_message( $details->{warning} );
+    if ( scalar( @{ $returned->{warning} } ) ) {
+      my $warning = $c->build_message( $returned->{warning} );
       $c->response->redirect( $c->uri_for_action("/teams/view_current_season_by_url_key", [$team->club->url_key, $team->url_key],
                                 {mid => $c->set_status_msg( { success => $c->maketext( "admin.forms.success-with-warnings", $encoded_name, $action_description ),
                                                               warning => $warning} ) }) );

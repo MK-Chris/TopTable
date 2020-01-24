@@ -860,6 +860,17 @@ sub edit_teams_list {
           });
         }
         
+        unless( my $club_season = $new_club->find_related("club_seasons", {season => $season->id}) ) {
+          $club_season = $new_club->create_related("club_seasons", {
+            season            => $season->id,
+            full_name         => $new_club->full_name,
+            short_name        => $new_club->short_name,
+            abbreviated_name  => $new_club->abbreviated_name,
+            venue             => $new_club->venue->id,
+            secretary         => $new_club->secretary->id,
+          });
+        }
+        
         # Validate and create the players' seasons - these are validated here because any invalid ones will just create warnings, as they're not essential at this point and can be entered later if needed
         # Check the players (if entered) are valid
         # Just keep count of the number of invalid players, as if there's more than one, the same message multiple times will be annoying

@@ -6,9 +6,6 @@ IF mid_season;
   CLUB_TOOLTIP = ' title="The club cannot be edited after matches have been created in the current season."';
   DIVISION_TOOLTIP = ' title="The division cannot be edited after matches have been created in the current season."';
   LOG_OLD_DETAILS_TOOLTIP = ' title="The old details cannot be saved against last season after matches have been created in the current season."';
-ELSIF !current_season;
-  DIVISION_DISABLED = ' disabled="disabled"';
-  DIVISION_TOOLTIP = ' title="The division cannot be edited until a new season has been created."';
 END;
 
 team_name = c.flash.name OR team.name;
@@ -32,9 +29,15 @@ team_name_html = FILTER html_entity; team_name; END;
     <select id="club" name="club"[% CLUB_DISABLED _ CLUB_TOOLTIP %] data-placeholder="[% c.maketext("teams.field.club") %]" autocomplete="off">
       <option value=""></option>
 [%
+IF c.flash.club.id;
+  preset_club = c.flash.club.id;
+ELSE;
+  preset_club = team.club.id;
+END;
+
 FOREACH club IN clubs;
   # Now set selected text if needed;
-  IF c.flash.club == club.id;
+  IF preset_club == club.id;
     SET SELECTED = ' selected="selected"';
   ELSE;
     SET SELECTED = '';
@@ -55,9 +58,17 @@ END;
     <select id="division" name="division"[% DIVISION_DISABLED _ DIVISION_TOOLTIP %] data-placeholder="[% c.maketext("teams.field.division") %]">
       <option value=""></option>
 [%
+IF c.flash.division.id;
+  preset_division = c.flash.division.id;
+ELSIF team_season.division.id;
+  preset_division = team_season.division.id;
+ELSIF last_team_season.division.id;
+  preset_division = last_team_season.division.id;
+END;
+
 FOREACH division IN divisions;
   # Now set selected text if needed;
-  IF c.flash.division == division.id;
+  IF preset_division == division.division.id;
     SET SELECTED = ' selected="selected"';
   ELSE;
     SET SELECTED = '';
@@ -78,8 +89,14 @@ END;
     <select id="home_night" name="home_night" data-placeholder="[% c.maketext("teams.field.home-night") %]">
       <option value=""></option>
 [%
+IF c.flash.home_night.weekday_number;
+  preset_home_night = c.flash.home_night.weekday_number;
+ELSE;
+  preset_home_night = team.home_night.weekday_number;
+END;
+
 FOREACH night IN home_nights;
-  IF c.flash.home_night == night.weekday_number;
+  IF preset_home_night == night.weekday_number;
     SET SELECTED = ' selected="selected"';
   ELSE;
     SET SELECTED = '';
@@ -100,6 +117,9 @@ END;
     <select class="time" id="start_hour" name="start_hour" data-placeholder="[% c.maketext("teams.field.start-hour") %]">
       <option value=""></option>
 [%
+
+
+
 SET counter = 0;
 WHILE counter <= 23;
   IF counter < 10;

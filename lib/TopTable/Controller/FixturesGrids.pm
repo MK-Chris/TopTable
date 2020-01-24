@@ -1164,7 +1164,7 @@ sub do_delete_fixtures :Chained("base") :PathPart("do-delete-fixtures") :Args(0)
     $c->detach;
     return;
   } else {
-    $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["league-team-match", "delete", $actioned->{match_ids}, $actioned->{match_names}] );
+    $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["team-match", "delete", $actioned->{match_ids}, $actioned->{match_names}] );
     $c->response->redirect( $c->uri_for_action("/fixtures-grids/view_current_season", [$grid->url_key],
                                 {mid => $c->set_status_msg( {success => $c->maketext( "fixture-grids.form.delete-fixtures.success", $actioned->{rows}, $encoded_name )} ) }) );
     $c->detach;
