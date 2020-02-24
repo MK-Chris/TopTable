@@ -232,9 +232,45 @@ __PACKAGE__->belongs_to(
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
 );
 
+=head2 team_matches
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2015-09-13 08:59:33
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:crLEypOX+hIKK1peQtq69w
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::TeamMatch>
+
+=cut
+
+__PACKAGE__->has_many(
+  "team_matches",
+  "TopTable::Schema::Result::TeamMatch",
+  {
+    "foreign.division" => "self.division",
+    "foreign.season"   => "self.season",
+  },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+=head2 team_seasons
+
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::TeamSeason>
+
+=cut
+
+__PACKAGE__->has_many(
+  "team_seasons",
+  "TopTable::Schema::Result::TeamSeason",
+  {
+    "foreign.division" => "self.division",
+    "foreign.season"   => "self.season",
+  },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-02-03 10:04:05
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:XP6XPWCZnyfGiG3Hu+HsmA
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

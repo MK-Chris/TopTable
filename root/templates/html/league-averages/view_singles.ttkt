@@ -24,6 +24,7 @@ IF singles_averages.size;
   END;
 -%]
       <th class="numeric">[% c.maketext("stats.table-heading.matches-played") %]</th>
+      <th class="numeric">[% c.maketext("stats.table-heading.matches-available") %]</th>
       <th class="numeric">[% c.maketext("stats.table-heading.games-played") %]</th>
       <th class="numeric">[% c.maketext("stats.table-heading.games-won") %]</th>
       <th class="numeric">[% c.maketext("stats.table-heading.games-lost") %]</th>
@@ -37,10 +38,10 @@ IF singles_averages.size;
   FOREACH average IN singles_averages;
     i = i + 1;
     IF specific_season;
-      SET team_uri        = c.uri_for_action("/teams/view_specific_season_by_url_key", [average.team.club.url_key, average.person.person_seasons.team.url_key, average.season.url_key]);
+      SET team_uri        = c.uri_for_action("/teams/view_specific_season_by_url_key", [average.team_season.club_season.club.url_key, average.team_season.team.url_key, average.season.url_key]);
       SET person_uri      = c.uri_for_action("/people/view_specific_season", [average.person.url_key, average.season.url_key]);
     ELSE;
-      SET team_uri    = c.uri_for_action("/teams/view_current_season_by_url_key", [average.team.club.url_key, average.team.url_key]);
+      SET team_uri    = c.uri_for_action("/teams/view_current_season_by_url_key", [average.team_season.club_season.club.url_key, average.team_season.team.url_key]);
       SET person_uri  = c.uri_for_action("/people/view_current_season", [average.person.url_key]);
     END;
     
@@ -62,17 +63,14 @@ IF singles_averages.size;
       <td[% player_class %]><a href="[% person_uri %]"[% player_class %]>[% average.display_name | html_entity %]</a></td>
 [%
     UNLESS averages_team_page;
-      IF specific_season;
-        team_name = FILTER html_entity; average.team.team_seasons.first.team.club.short_name _ " " _ average.team.team_seasons.first.team.name; END;
-      ELSE;
-        team_name = FILTER html_entity; average.team.club.short_name _ " " _ average.team.name; END;
-      END;
+      team_name = FILTER html_entity; average.team_season.club_season.short_name _ " " _ average.team_season.team.name; END;
 -%]
       <td[% player_class %]><a href="[% team_uri %]"[% player_class %]>[% team_name %]</a></td>
 [%
     END;
 -%]
       <td class="numeric[% add_player_class %]"><span[% player_class %]>[% average.matches_played %]</span></td>
+      <td class="numeric[% add_player_class %]"><span[% player_class %]>[% average.available_matches %]</span></td>
       <td class="numeric[% add_player_class %]"><span[% player_class %]>[% average.games_played %]</span></td>
       <td class="numeric[% add_player_class %]"><span[% player_class %]>[% average.games_won %]</span></td>
       <td class="numeric[% add_player_class %]"><span[% player_class %]>[% average.games_lost %]</span></td>
@@ -106,6 +104,14 @@ IF singles_averages.size;
 [%
   END;
 ELSE;
+  IF filtered;
+    # Set a count so when we process the form include, the variable is incremented and we get unique field IDs
+    SET filter_forms = 1;
+    
+    UNLESS no_filter;
+      PROCESS "html/league-averages/filter-view-form.ttkt" COMPETITORS = c.maketext("averages.competitor-type.players");
+    END;
+  END;
 -%]
 <div class="list-item">
   [% c.maketext("averages.no-players") %]

@@ -278,6 +278,9 @@ sub create_or_edit {
   my $venue             = $parameters->{venue}            || undef;
   my $secretary         = $parameters->{secretary}        || undef;
   
+  # Schema for looking up from other tables
+  my $schema = $self->result_source->schema;
+  
   if ($action ne "create" and $action ne "edit") {
     # Invalid action passed
     push(@{ $return_value->{error} }, {
@@ -427,6 +430,17 @@ sub create_or_edit {
         venue               => $venue,
         secretary           => $secretary,
       });
+      
+      my $season = $schema->resultset("Season")->get_current;
+      my $club_season = $club->get_season( $season ) if defined( $season );
+      
+      $club_season->update({
+        full_name           => $full_name,
+        short_name          => $short_name,
+        abbreviated_name    => $abbreviated_name,
+        venue               => $venue,
+        secretary           => $secretary,
+      }) if defined $club_season;
     }
     
     $return_value->{club} = $club;

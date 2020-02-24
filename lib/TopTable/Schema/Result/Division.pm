@@ -143,36 +143,6 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
-=head2 team_matches
-
-Type: has_many
-
-Related object: L<TopTable::Schema::Result::TeamMatch>
-
-=cut
-
-__PACKAGE__->has_many(
-  "team_matches",
-  "TopTable::Schema::Result::TeamMatch",
-  { "foreign.division" => "self.id" },
-  { cascade_copy => 0, cascade_delete => 0 },
-);
-
-=head2 team_seasons
-
-Type: has_many
-
-Related object: L<TopTable::Schema::Result::TeamSeason>
-
-=cut
-
-__PACKAGE__->has_many(
-  "team_seasons",
-  "TopTable::Schema::Result::TeamSeason",
-  { "foreign.division" => "self.id" },
-  { cascade_copy => 0, cascade_delete => 0 },
-);
-
 =head2 team_seasons_intervals
 
 Type: has_many
@@ -189,8 +159,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2015-10-20 22:46:32
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:ZsIfCi9jJpFv6CybJMDrpQ
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-02-03 10:04:05
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:LDGauLeNZKMTw8uNt3m44A
 
 =head2 get_season
 

@@ -244,7 +244,7 @@ ELSE;
 END;
 -%]
   <div class="form-column-single">
-    <input type="checkbox" id="allow_loan_players" name="allow_loan_players" data-label="[% c.maketext("seasons.form.field.allow-loan_players") %]" value="1"[% DISABLED _ SUBS_CHECKED %] />
+    <input type="checkbox" id="allow_loan_players" name="allow_loan_players" data-label="[% c.maketext("seasons.form.field.allow-loan-players") %]" value="1"[% DISABLED _ SUBS_CHECKED %] />
   </div>
   
   <div id="loan-players-nested-fields"[% NESTED_FIELDS_VISIBLE %]>
@@ -293,13 +293,13 @@ END;
 <div id="divisions">
 [%
 SET i = 0;
-IF c.flash.division_name;
-  # Loop through all the division_name elements; the other elements will have the same number of elements
-  divisions = c.flash.division_name;
-END;
 FOREACH division IN divisions;
   SET i = i + 1;
   SET array_index = i - 1;
+  
+  IF action == "edit";
+    SET division_season = division.division_seasons.first;
+  END;
   
   # Check the checked value of the 'use' tickbox
   IF i == 1 AND !restricted_edit;
@@ -307,10 +307,10 @@ FOREACH division IN divisions;
     CHECKED_TEXT = ' checked="checked"';
     DISABLED_TEXT = ' disabled="disabled"';
   ELSE;
-    IF c.flash.use_division.item(array_index) == 0;
+    IF c.flash.divisions.item(array_index).use_division == 0;
       CHECKED_TEXT = '';
       DISABLED_TEXT = '';
-    ELSIF form_action == "doedit" AND division.division_seasons.season == undef;
+    ELSIF action == "edit" AND division_season == undef;
       CHECKED_TEXT = '';
       DISABLED_TEXT = '';
     ELSE;
@@ -320,36 +320,36 @@ FOREACH division IN divisions;
   END;
   
   # Check which value we need to set selected on the fixtures grid
-  IF c.flash.fixtures_grid.item(array_index) == "";
-    SET GRID_SELECT_CHECK = division.division_seasons.fixtures_grid.id;
-  ELSE;
-    SET GRID_SELECT_CHECK = c.flash.fixtures_grid.item(array_index);
+  IF c.flash.divisions.item(array_index).fixtures_grid == "" AND division_season.defined;
+    SET GRID_SELECT_CHECK = division_season.fixtures_grid.id;
+  ELSIF c.flash.divisions.item(array_index).fixtures_grid.id;
+    SET GRID_SELECT_CHECK = c.flash.divisions.item(array_index).fixtures_grid.id;
   END;
   
   # Check the value we need to set on the league match template
-  IF c.flash.league_match_template.item(array_index) == "";
-    SET MATCH_TEMPLATE_SELECT_CHECK = division.division_seasons.league_match_template.id;
-  ELSE;
-    SET MATCH_TEMPLATE_SELECT_CHECK = c.flash.league_match_template.item(array_index);
+  IF c.flash.divisions.item(array_index).league_match_template == "" AND division_season.defined;
+    SET MATCH_TEMPLATE_SELECT_CHECK = division_season.league_match_template.id;
+  ELSIF c.flash.divisions.item(array_index).league_match_template.id;
+    SET MATCH_TEMPLATE_SELECT_CHECK = c.flash.divisions.item(array_index).league_match_template.id;
   END;
   
   # Check the value we need to set on the league ranking template
-  IF c.flash.league_match_template.item(array_index) == "";
-    SET RANKING_TEMPLATE_SELECT_CHECK = division.division_seasons.league_table_ranking_template.id;
-  ELSE;
-    SET RANKING_TEMPLATE_SELECT_CHECK = c.flash.league_table_ranking_template.item(array_index);
+  IF c.flash.divisions.item(array_index).league_table_ranking_template == "" AND division_season.defined;
+    SET RANKING_TEMPLATE_SELECT_CHECK = division_season.league_table_ranking_template.id;
+  ELSIF c.flash.divisions.item(array_index).league_table_ranking_template.id;
+    SET RANKING_TEMPLATE_SELECT_CHECK = c.flash.divisions.item(array_index).league_table_ranking_template.id;
   END;
   
-  name = c.flash.division_name.item(array_index) OR division.name.item(array_index);
+  name = c.flash.divisions.item(array_index).name OR division.name.item(array_index);
   name_html = FILTER html_entity; name; END;
 -%]
 
 <fieldset>
   <legend>[% c.maketext("divisions.form.legend.division-rank") %] [% i %]</legend>
-  <input type="hidden" id="division_id[% i %]" name="division_id[% i %]" value="[% c.flash.division_id.item(array_index) OR division.id OR 'new' %]" />
+  <input type="hidden" id="division_id[% i %]" name="division_id" value="[% c.flash.divisions.item(array_index).db.id OR division.id OR 'new' %]" />
   
   <div class="form-column-single">
-    <input type="checkbox" id="use_division[% i %]" name="use_division[% i %]" class="use-division" data-rank="[% i %]" data-label="[% c.maketext("divisions.form.field.use") %]"[% CHECKED_TEXT _ DISABLED_TEXT _ DISABLED %] />
+    <input type="checkbox" id="use_division[% i %]" name="use_division[% i %]" class="use-division" value="1" data-rank="[% i %]" data-label="[% c.maketext("divisions.form.field.use") %]"[% CHECKED_TEXT _ DISABLED_TEXT _ DISABLED %] />
   </div>
   
   <div class="division" id="division-[% i %]">

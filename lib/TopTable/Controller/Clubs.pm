@@ -178,7 +178,7 @@ sub view :Chained("base") :PathPart("") :CaptureArgs(0) {
   
   # Check that we are authorised to view clubs
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["club_view", $c->maketext("user.auth.view-clubs"), 1] );
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( club_edit club_delete team_view team_create ) ], "", 0] );
+  $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( club_edit club_delete team_view team_create team_edit team_delete ) ], "", 0] );
 }
 
 =head2 view_current_season
@@ -444,8 +444,7 @@ sub retrieve_paged_seasons :Private {
   my $club = $c->stash->{club};
   my $encoded_club_full_name = $c->stash->{encoded_club_full_name};
   
-  my $seasons = $c->model("DB::Season")->page_records({
-    club              => $club,
+  my $seasons = $club->get_seasons({
     page_number       => $page_number,
     results_per_page  => $c->config->{Pagination}{default_page_size},
   });

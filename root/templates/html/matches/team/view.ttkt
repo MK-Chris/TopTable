@@ -14,15 +14,15 @@ ELSE;
 END;
 
 IF match.season.complete;
-  table_uri = c.uri_for_action("/league-tables/view_specific_season", [match.division.url_key, match.season.url_key]);
+  table_uri = c.uri_for_action("/league-tables/view_specific_season", [match.division_season.division.url_key, match.season.url_key]);
 ELSE;
-  table_uri = c.uri_for_action("/league-tables/view_current_season", [match.division.url_key]);
+  table_uri = c.uri_for_action("/league-tables/view_current_season", [match.division_season.division.url_key]);
 END;
 
-IF division_season.name == match.division.name;
-  SET division_text = division_season.name;
+IF division_season.name == match.division_season.division.name;
+  SET division_text = match.division_season.name;
 ELSE;
-  SET division_text = c.maketext("divisions.name-changed.both-names", division_season.name, match.division.name);
+  SET division_text = c.maketext("divisions.name-changed.both-names", division_season.name, match.division_season.division.name);
 END;
 -%]
 <div id="tabs">
@@ -211,14 +211,16 @@ END;
   </div>
   <div id="teams">
 [%
+SET home_team = match.team_season_home_team_season;
+SET away_team = match.team_season_away_team_season;
 IF match.season.complete;
   # Specific season player links
-  SET home_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [match.home_team.club.url_key, match.home_team.url_key, match.season.url_key]);
-  SET away_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [match.away_team.club.url_key, match.away_team.url_key, match.season.url_key]);
+  SET home_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [home_team.club_season.club.url_key, home_team.team.url_key, match.season.url_key]);
+  SET away_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [away_team.club_season.club.url_key, away_team.team.url_key, match.season.url_key]);
 ELSE;
   # Current season player links
-  SET home_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [match.home_team.club.url_key, match.home_team.url_key]);
-  SET away_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [match.away_team.club.url_key, match.away_team.url_key]);
+  SET home_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [home_team.club_season.club.url_key, home_team.team.url_key]);
+  SET away_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [away_team.club_season.club.url_key, away_team.team.url_key]);
 END;
 -%]
     <table id="teams-table" class="stripe hover order-column row-border" style="width: 100%;">
@@ -233,14 +235,14 @@ END;
       </thead>
       <tbody>
         <tr>
-          <td data-label="[% c.maketext("matches.summaries.heading.team") %]"><a href="[% home_uri %]">[% match.home_team.club.short_name | html_entity %] [% match.home_team.name | html_entity %]</a></td>
+          <td data-label="[% c.maketext("matches.summaries.heading.team") %]"><a href="[% home_uri %]">[% home_team.club_season.short_name | html_entity %] [% home_team.name | html_entity %]</a></td>
           <td class="numeric">[% match.home_team_legs_won %]</td>
           <td class="numeric">[% match.home_team_average_leg_wins | format('%.2f') %]</td>
           <td class="numeric">[% match.home_team_points_won %]</td>
           <td class="numeric">[% match.home_team_average_point_wins | format('%.2f') %]</td>
         </tr>
         <tr>
-          <td data-label="[% c.maketext("matches.summaries.heading.team") %]"><a href="[% away_uri %]">[% match.away_team.club.short_name | html_entity %] [% match.away_team.name | html_entity %]</a></td>
+          <td data-label="[% c.maketext("matches.summaries.heading.team") %]"><a href="[% away_uri %]">[% away_team.club_season.short_name | html_entity %] [% away_team.name | html_entity %]</a></td>
           <td class="numeric">[% match.away_team_legs_won %]</td>
           <td class="numeric">[% match.away_team_average_leg_wins | format('%.2f') %]</td>
           <td class="numeric">[% match.away_team_points_won %]</td>
@@ -289,16 +291,16 @@ IF home_players.count;
 [%-
 IF player.loan_team.id;
   SET loaning_team = player.loan_team_season;
-  SET loaning_division = loaning_team.division.division_seasons.first;
+  SET loaning_division = loaning_team.division_season.division;
   
   IF match.season.complete;
-    SET loaning_team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [loaning_team.club.url_key, player.loan_team.url_key, match.season.url_key]);
-    SET loaning_division_uri = c.uri_for_action("/league-tables/view_specific_season", [loaning_team.division.division.url_key, match.season.url_key]);
+    SET loaning_team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [loaning_team.club_season.club.url_key, player.loan_team.url_key, match.season.url_key]);
+    SET loaning_division_uri = c.uri_for_action("/league-tables/view_specific_season", [loaning_division.url_key, match.season.url_key]);
   ELSE;
-    SET loaning_team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [loaning_team.club.url_key, player.loan_team.url_key]);
-    SET loaning_division_uri = c.uri_for_action("/league-tables/view_current_season", [loaning_team.division.url_key]);
+    SET loaning_team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [loaning_team.club_season.club.url_key, player.loan_team.url_key]);
+    SET loaning_division_uri = c.uri_for_action("/league-tables/view_current_season", [loaning_division.url_key]);
   END;
-  "<br />" _ c.maketext("matches.text.loan-player-team", loaning_team.club.short_name, loaning_team.name, loaning_division.name, loaning_team_uri, loaning_division_uri);
+  "<br />" _ c.maketext("matches.text.loan-player-team", loaning_team.club_season.short_name, loaning_team.name, loaning_division.name, loaning_team_uri, loaning_division_uri);
 END;
 -%]</td>
           <td class="numeric">[% player.games_played %]</td>
@@ -366,16 +368,16 @@ IF away_players.count;
 [%-
 IF player.loan_team.id;
   SET loaning_team = player.loan_team_season;
-  SET loaning_division = loaning_team.division.division_seasons.first;
+  SET loaning_division = loaning_team.division_season.division;
   
   IF match.season.complete;
-    SET loaning_team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [loaning_team.club.url_key, player.loan_team.url_key, match.season.url_key]);
-    SET loaning_division_uri = c.uri_for_action("/league-tables/view_specific_season", [loaning_team.division.division.url_key, match.season.url_key]);
+    SET loaning_team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [loaning_team.club_season.club.url_key, player.loan_team.url_key, match.season.url_key]);
+    SET loaning_division_uri = c.uri_for_action("/league-tables/view_specific_season", [loaning_division.url_key, match.season.url_key]);
   ELSE;
-    SET loaning_team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [loaning_team.club.url_key, player.loan_team.url_key]);
-    SET loaning_division_uri = c.uri_for_action("/league-tables/view_current_season", [loaning_team.division.url_key]);
+    SET loaning_team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [loaning_team.club_season.club.url_key, player.loan_team.url_key]);
+    SET loaning_division_uri = c.uri_for_action("/league-tables/view_current_season", [loaning_division.url_key]);
   END;
-  "<br />" _ c.maketext("matches.text.loan-player-team", loaning_team.club.short_name, loaning_team.name, loaning_division.name, loaning_team_uri, loaning_division_uri);
+  "<br />" _ c.maketext("matches.text.loan-player-team", loaning_team.club_season.short_name, loaning_team.name, loaning_division.name, loaning_team_uri, loaning_division_uri);
 END;
 -%]</td>
           <td class="numeric">[% player.games_played %]</td>
@@ -411,35 +413,51 @@ END;
   </div>
   
   <div id="match-details">
-    <dl>
-      <dt>[% c.maketext("matches.field.date") %]</dt>
-      <dd>[% date_display | ucfirst | html_entity %]</dd>
+  <table class="vertical">
+    <tr>
+      <th scope="row">[% c.maketext("matches.field.date") %]</th>
+      <td>[% date_display | ucfirst | html_entity %]</td>
 [%
 IF match.tournament_round;
   # Tournament
 -%]
-      <dt>[% c.maketext("matches.field.competition") %]</dt>
-      <dd><a href="[% # Tournament URI %]">[% match.tournament_round.tournament.name | html_entity %]</a></dd>
+    </tr>
+    <tr>
+      <th scope="row">[% c.maketext("matches.field.competition") %]</th>
+      <td><a href="[% # Tournament URI %]">[% match.tournament_round.tournament.name | html_entity %]</a></td>
 [%
 ELSE;
   # League
 -%]
-      <dt>[% c.maketext("matches.field.competition") %]</dt>
-      <dd>[% c.maketext("matches.field.competition.value.league") %]</dd>
-      <dt>[% c.maketext("matches.field.division") %]</dt>
-      <dd><a href="[% table_uri %]">[% division_text | html_entity %]</a></dd>
+    </tr>
+    <tr>
+      <th scope="row">[% c.maketext("matches.field.competition") %]</th>
+      <td>[% c.maketext("matches.field.competition.value.league") %]</td>
+    </tr>
+    <tr>
+      <th scope="row">[% c.maketext("matches.field.division") %]</th>
+      <td><a href="[% table_uri %]">[% division_text | html_entity %]</a></td>
 [%
 END;
 -%]
-      <dt>[% c.maketext("matches.field.venue") %]</dt>
-      <dd><a href="[% c.uri_for_action("/venues/view", [match.venue.url_key]) %]">[% match.venue.name | html_entity %]</a></dd>
-      <dt>[% c.maketext("matches.field.season") %]</dt>
-      <dd><a href="[% c.uri_for_action("/seasons/view", [match.season.url_key]) %]">[% match.season.name | html_entity %]</a></dd>
-      <dt>[% c.maketext("matches.summaries.heading.legs-played") %]</dt>
-      <dd>[% ( match.home_team_legs_won + match.away_team_legs_won ) %]</dd>
-      <dt>[% c.maketext("matches.summaries.heading.points-played") %]</dt>
-      <dd>[% ( match.home_team_points_won + match.away_team_points_won ) %]</dd>
-    </dl>
+    </tr>
+    <tr>
+      <th scope="row">[% c.maketext("matches.field.venue") %]</th>
+      <td><a href="[% c.uri_for_action("/venues/view", [match.venue.url_key]) %]">[% match.venue.name | html_entity %]</a></td>
+    </tr>
+    <tr>
+      <th scope="row">[% c.maketext("matches.field.season") %]</th>
+      <td><a href="[% c.uri_for_action("/seasons/view", [match.season.url_key]) %]">[% match.season.name | html_entity %]</a></td>
+    </tr>
+    <tr>
+      <th scope="row">[% c.maketext("matches.summaries.heading.legs-played") %]</th>
+      <td>[% ( match.home_team_legs_won + match.away_team_legs_won ) %]</td>
+    </tr>
+    <tr>
+      <th scope="row">[% c.maketext("matches.summaries.heading.points-played") %]</th>
+      <td>[% ( match.home_team_points_won + match.away_team_points_won ) %]</td>
+    </tr>
+  </table>
   </div>
   
 [%

@@ -75,7 +75,7 @@ sub base :Chained("/") :PathPart("reports") :CaptureArgs(1) {
 
 =head2 base_list
 
-Chain base for the list of clubs.  Matches /reports
+Chain base for the list of reports.  Matches /reports
 
 =cut
 
@@ -203,8 +203,6 @@ sub view_finalise :Private {
   if ( $report_id eq "loan-players" ) {
     $report_data = $c->model("DB::TeamMatchPlayer")->loan_players({season => $season});
   }
-  
-  #$c->log->debug( Dumper( $loan_players->as_query ) );
   
   my $canonical_uri = ( $season->complete )
     ? $c->uri_for_action("/reports/view_specific_season", [$report_id, $season->url_key])

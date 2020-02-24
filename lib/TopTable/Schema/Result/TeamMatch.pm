@@ -561,21 +561,6 @@ __PACKAGE__->set_primary_key("home_team", "away_team", "scheduled_date");
 
 =head1 RELATIONS
 
-=head2 away_team
-
-Type: belongs_to
-
-Related object: L<TopTable::Schema::Result::Team>
-
-=cut
-
-__PACKAGE__->belongs_to(
-  "away_team",
-  "TopTable::Schema::Result::Team",
-  { id => "away_team" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
-);
-
 =head2 away_team_verified
 
 Type: belongs_to
@@ -596,18 +581,18 @@ __PACKAGE__->belongs_to(
   },
 );
 
-=head2 division
+=head2 division_season
 
 Type: belongs_to
 
-Related object: L<TopTable::Schema::Result::Division>
+Related object: L<TopTable::Schema::Result::DivisionSeason>
 
 =cut
 
 __PACKAGE__->belongs_to(
-  "division",
-  "TopTable::Schema::Result::Division",
-  { id => "division" },
+  "division_season",
+  "TopTable::Schema::Result::DivisionSeason",
+  { division => "division", season => "season" },
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
 );
 
@@ -629,21 +614,6 @@ __PACKAGE__->belongs_to(
     on_delete     => "RESTRICT",
     on_update     => "RESTRICT",
   },
-);
-
-=head2 home_team
-
-Type: belongs_to
-
-Related object: L<TopTable::Schema::Result::Team>
-
-=cut
-
-__PACKAGE__->belongs_to(
-  "home_team",
-  "TopTable::Schema::Result::Team",
-  { id => "home_team" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
 );
 
 =head2 home_team_verified
@@ -847,6 +817,36 @@ __PACKAGE__->belongs_to(
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
 );
 
+=head2 team_season_away_team_season
+
+Type: belongs_to
+
+Related object: L<TopTable::Schema::Result::TeamSeason>
+
+=cut
+
+__PACKAGE__->belongs_to(
+  "team_season_away_team_season",
+  "TopTable::Schema::Result::TeamSeason",
+  { season => "season", team => "away_team" },
+  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+);
+
+=head2 team_season_home_team_season
+
+Type: belongs_to
+
+Related object: L<TopTable::Schema::Result::TeamSeason>
+
+=cut
+
+__PACKAGE__->belongs_to(
+  "team_season_home_team_season",
+  "TopTable::Schema::Result::TeamSeason",
+  { season => "season", team => "home_team" },
+  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+);
+
 =head2 tournament_round
 
 Type: belongs_to
@@ -883,8 +883,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-01-08 00:07:05
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:nVqjCnQHw4LkMDiZzf3wrA
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-02-03 10:04:06
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:jJ6MFf45ebvoa/5XEyFUVQ
 
 use Try::Tiny;
 use DateTime::Duration;
@@ -910,7 +910,7 @@ Returns a hashref with the URL keys in the order we need to use them to generate
 
 sub url_keys {
   my ( $self ) = @_;
-  return [ $self->home_team->club->url_key, $self->home_team->url_key, $self->away_team->club->url_key, $self->away_team->url_key, $self->scheduled_date->year, sprintf("%02d", $self->scheduled_date->month), sprintf("%02d", $self->scheduled_date->day) ];
+  return [ $self->team_season_home_team_season->club_season->club->url_key, $self->team_season_home_team_season->team->url_key, $self->team_season_away_team_season->club_season->club->url_key, $self->team_season_away_team_season->team->url_key, $self->scheduled_date->year, sprintf("%02d", $self->scheduled_date->month), sprintf("%02d", $self->scheduled_date->day) ];
 }
 
 =head2 actual_start_time
@@ -980,36 +980,12 @@ Retrieve the team season objects for the home and away teams in the season that 
 sub get_team_seasons {
   my ( $self ) = @_;
   my $season = $self->season;
-  my %team_seasons = ();
+  my $team_seasons = {
+    home  => $self->team_season_home_team_season,
+    away  => $self->team_season_home_team_season,
+  };
   
-  $team_seasons{home} = $self->home_team->search_related("team_seasons", {
-    season => $season->id,
-  }, {
-    rows => 1,
-  })->single;
-  
-  $team_seasons{away} = $self->away_team->search_related("team_seasons", {
-    season => $season->id,
-  }, {
-    rows => 1,
-  })->single;
-  
-  return \%team_seasons;
-}
-
-=head2 get_division_season
-
-Retrieve the division season object for the division and season that this match takes place in.
-
-=cut
-
-sub get_division_season {
-  my ( $self ) = @_;
-  return $self->division->search_related("division_seasons", {
-    season => $self->season->id,
-  }, {
-    rows => 1
-  })->single;
+  return $team_seasons;
 }
 
 =head2 update_played_date
@@ -1137,8 +1113,8 @@ sub calculate_match_score {
   my $winner_type = $self->team_match_template->winner_type->id;
   
   # Home and away teams to check the winner against in the even of walkovers
-  my $home_team = $self->home_team;
-  my $away_team = $self->away_team;
+  my $home_team = $self->team_season_home_team_season;
+  my $away_team = $self->team_season_away_team_season;
   
   # Get the games for the given match
   my @games = $self->search_related("team_match_games", undef, {
@@ -1155,7 +1131,7 @@ sub calculate_match_score {
       if ( $game->complete ) {
         # If the game is complete, but wasn't started, it must be a walkover - check the winner field.
         if ( defined( $game->winner ) ) {
-          if ( $game->winner->id == $home_team->id ) {
+          if ( $game->winner->id == $home_team->team->id ) {
             # Awarded to the home team
             $_home_won++;
           } else {
@@ -1310,15 +1286,14 @@ sub eligible_players {
   my $location = $parameters->{location} || undef;
   undef( $location ) if defined( $location ) and $location ne "home" and $location ne "away";
   my ( @home_players, @away_players );
+  my ( $home_team, $away_team ) = ( $self->team_season_home_team_season, $self->team_season_away_team_season );
   
   # Check whether we need to get the home players
   if ( !defined( $location ) or $location eq "home" ) {
     # Get the registered home players
-    @home_players = $self->home_team->search_related("person_seasons", {
-      season => $self->season->id,
-    }, {
+    @home_players = $self->team_season_home_team_season->search_related("person_seasons", undef, {
       order_by => {
-        -asc => [ qw/surname first_name/ ],
+        -asc => [ qw/ surname first_name/ ],
       }
     })->all;
     
@@ -1341,11 +1316,9 @@ sub eligible_players {
   # Check whether we need to get the home players
   if ( !defined( $location ) or $location eq "away" ) {
     # Get the registered away players
-    @away_players = $self->away_team->search_related("person_seasons", {
-      season => $self->season->id,
-    }, {
+    @away_players = $self->team_season_away_team_season->search_related("person_seasons", undef, {
       order_by => {
-        -asc => [ qw/surname first_name/ ],
+        -asc => [ qw/ surname first_name/ ],
       }
     })->all;
     
@@ -1490,24 +1463,64 @@ sub cancel {
   # Return with errors if we have them
   return $return_value if scalar( @{ $return_value->{error} } );
   
+  # Transaction so if we fail, nothing is updated
+  my $transaction = $self->result_source->schema->txn_scope_guard;
+  
   # Loop through all the games and delete the scores
   my $games = $self->team_match_games;
   while ( my $game = $games->next ) {
     my $game_result = $game->update_score({delete => 1}) if $game->complete;
   }
   
+  # Fields to update the points values for - depends on whether we assign points for win / loss / draw or
+  my $league_table_ranking_template = $self->division_season->league_table_ranking_template;
+  
+  my ( $points_field, $points_against_field );
+  if ( $league_table_ranking_template->assign_points ) {
+    $points_field         = "table_points";
+  } else {
+    $points_field         = "games_won";
+    $points_against_field = "games_lost";
+  }
+  
+  # Get and update the team season objects
+  my $season    = $self->season;
+  my ( $home_team, $away_team ) = ( $self->team_season_home_team_season, $self->team_season_away_team_season );
   
   # If the match was previously cancelled and we're just changing the values, we need to alter the awarded points
   if ( $self->cancelled ) {
-    $home_points_awarded -= $self->home_team_match_score;
-    $away_points_awarded -= $self->away_team_match_score;
+    # Remove played / won / lost counts (they'll be added to again further down)
+    # To be removed in a future update when we don't update matches played / won / lost / drawn for cancellations
+    $home_team->matches_played( $home_team->matches_played - 1 );
+    $away_team->matches_played( $away_team->matches_played - 1 );
+    
+    if ( $self->home_team_match_score > $self->away_team_match_score ) {
+      # Home points awarded are more than away points awarded, so the home team has "won"
+      $home_team->matches_won( $home_team->matches_won - 1 );
+      $away_team->matches_lost( $away_team->matches_lost - 1 );
+    } elsif ( $self->home_team_match_score < $self->away_team_match_score ) {
+      # Away points awarded are more than home points awarded, so the away team has "won"
+      $away_team->matches_won( $away_team->matches_won - 1 );
+      $home_team->matches_lost( $home_team->matches_lost  -1 );
+    } else {
+      # Points awarded are equal, so this is a draw
+      $away_team->matches_drawn( $away_team->matches_drawn - 1 );
+      $home_team->matches_drawn( $home_team->matches_drawn - 1 );
+    }
+    
+    # Update the awarded points in the relevant field - also points against if required - the points against should be awarded what the opposite team have been awarded
+    # i.e., the away team's points against will be $home_points_awarded
+    $home_team->$points_field( $home_team->$points_field - $self->home_team_match_score );
+    $away_team->$points_field( $away_team->$points_field - $self->away_team_match_score );
+    
+    if ( defined( $points_against_field ) ) {
+      $home_team->$points_against_field( $home_team->$points_against_field - $self->away_team_match_score );
+      $away_team->$points_against_field( $away_team->$points_against_field - $self->home_team_match_score );
+    }
   }
     
   # Get a list of the players in this match and remove them; this includes the action of removing the score as well.
   my $players = $self->search_related("team_match_players");
-  
-  # Transaction so if we fail, nothing is updated
-  my $transaction = $self->result_source->schema->txn_scope_guard;
   
   while ( my $player = $players->next ) {
     $player->update_person({action => "remove"});
@@ -1520,26 +1533,6 @@ sub cancel {
     cancelled             => 1,
   });
   
-  # Get and update the team season objects
-  my $season    = $self->season;
-  my $home_team = $self->home_team->find_related("team_seasons", {season => $season->id});
-  my $away_team = $self->away_team->find_related("team_seasons", {season => $season->id});
-  
-  my $league_table_ranking_template = $self->division->find_related("division_seasons", {
-    season => $season->id,
-  }, {
-    prefetch => "league_table_ranking_template",
-  })->league_table_ranking_template;
-  
-  # Fields to update the points values for - depends on whether we assign points for win / loss / draw or
-  my ( $points_field, $points_against_field );
-  if ( $league_table_ranking_template->assign_points ) {
-    $points_field         = "table_points";
-  } else {
-    $points_field         = "games_won";
-    $points_against_field = "games_lost";
-  }
-  
   # Update the awarded points in the relevant field - also points against if required - the points against should be awarded what the opposite team have been awarded
   # i.e., the away team's points against will be $home_points_awarded
   $home_team->$points_field( $home_team->$points_field + $home_points_awarded );
@@ -1551,6 +1544,7 @@ sub cancel {
   }
   
   # Update the values we know what to update straight off
+  # To be removed in a future update when we don't update matches played / won / lost / drawn for cancellations
   $home_team->matches_played( $home_team->matches_played + 1 );
   $away_team->matches_played( $away_team->matches_played + 1 );
   
@@ -1614,14 +1608,9 @@ sub uncancel {
   
   # Get and update the team season objects
   my $season    = $self->season;
-  my $home_team = $self->home_team->find_related("team_seasons", {season => $season->id});
-  my $away_team = $self->away_team->find_related("team_seasons", {season => $season->id});
+  my ( $home_team, $away_team ) = ( $self->team_season_home_team_season, $self->team_season_away_team_season );
   
-  my $league_table_ranking_template = $self->division->find_related("division_seasons", {
-    season => $season->id,
-  }, {
-    prefetch => "league_table_ranking_template",
-  })->league_table_ranking_template;
+  my $league_table_ranking_template = $self->division_season->league_table_ranking_template;
   
   # Fields to update the points values for - depends on whether we assign points for win / loss / draw or
   my ( $points_field, $points_against_field );
@@ -1756,6 +1745,7 @@ Generate a hashref of data that can be easily manipulated into iCal format.  Tak
 
 sub generate_ical_data {
   my ( $self, $parameters ) = @_;
+  my ( $home_team, $away_team ) = ( $self->team_season_home_team_season, $self->team_season_away_team_season );
   
   # Get the versus abbreviation
   my $lang = &{ $parameters->{get_language_components} };
@@ -1768,7 +1758,7 @@ sub generate_ical_data {
   
   my $description = ( defined( $self->tournament_round ) )
     ? undef
-    : sprintf( "%s: %s\n%s: %s\n%s: %s\n%s", $lang->{competition_heading}, $lang->{competition_league}, $lang->{division_heading}, $self->division->name, $lang->{season_heading}, $self->season->name, $uri );
+    : sprintf( "%s: %s\n%s: %s\n%s: %s\n%s", $lang->{competition_heading}, $lang->{competition_league}, $lang->{division_heading}, $self->division_season->name, $lang->{season_heading}, $self->season->name, $uri );
   
   my $timezone  = $self->season->timezone;
   my $now_tz    = DateTime->now( time_zone => $timezone );
@@ -1777,8 +1767,8 @@ sub generate_ical_data {
   my $now_utc = DateTime->now( time_zone => "UTC" );
   
   my ( $home_club_name, $away_club_name ) = ( defined( $parameters->{abbreviated_club_names} ) and $parameters->{abbreviated_club_names} )
-    ? ( $self->home_team->club->abbreviated_name, $self->away_team->club->abbreviated_name )
-    : ( $self->home_team->club->short_name, $self->away_team->club->short_name );
+    ? ( $home_team->club_season->abbreviated_name, $away_team->club_season->abbreviated_name )
+    : ( $home_team->club_season->short_name, $away_team->club_season->short_name );
   
   # Add a colon and space to the end of the prefix if the user didn't provide either a colon or hyphen after it (followed by optional space)
   $parameters->{summary_prefix} .= ": " if exists( $parameters->{summary_prefix} ) and defined( $parameters->{summary_prefix} ) and $parameters->{summary_prefix} ne "" and $parameters->{summary_prefix} !~ m/[-:]\s?$/;
@@ -1789,8 +1779,8 @@ sub generate_ical_data {
   my $event           = Data::ICal::Entry::Event->new;
   #my $event_timezone  = Data::ICal::TimeZone->new( timezone => $timezone );
   $event->add_properties(
-    uid             => sprintf( "matches.team.%s-%s.%s-%s.%s@%s", $self->home_team->club->url_key, $self->home_team->url_key, $self->away_team->club->url_key, $self->away_team->url_key, $self->actual_date->ymd("-"), &{ $parameters->{get_host} } ),
-    summary         => sprintf( "%s%s %s %s %s %s", $parameters->{summary_prefix}, $home_club_name, $self->home_team->name, $lang->{versus}, $away_club_name, $self->away_team->name ),
+    uid             => sprintf( "matches.team.%s-%s.%s-%s.%s@%s", $home_team->club_season->club->url_key, $home_team->team->url_key, $away_team->club_season->club->url_key, $away_team->team->url_key, $self->actual_date->ymd("-"), &{ $parameters->{get_host} } ),
+    summary         => sprintf( "%s%s %s %s %s %s", $parameters->{summary_prefix}, $home_club_name, $home_team->name, $lang->{versus}, $away_club_name, $away_team->name ),
     status          => ( $self->cancelled ) ? "CANCELLED" : "CONFIRMED",
     description     => $description,
     dtstart         => DateTime::Format::ICal->format_datetime( $self->actual_date->set( hour => $start_hour, minute => $start_minute ) ),
@@ -1896,13 +1886,13 @@ sub can_report {
   } else {
     # There is no report yet, so we need to check if the user is associated with any clubs or teams before we can get the
     # roles that will be allowed to edit.
-    my $home_team = $self->home_team;
-    my $away_team = $self->away_team;
-    my $home_club = $self->home_team->club;
-    my $away_club = $self->away_team->club;
+    my $home_team = $self->team_season_home_team_season;
+    my $away_team = $self->team_season_away_team_season;
+    my $home_club = $self->team_season_home_team_season->club_season->club;
+    my $away_club = $self->team_season_away_team_season->club_season->club;
     
     my $auth_column = ( $user->plays_for({team => $home_team, season => $season}) or
-      $user->captain_for({team => $home_team, season => $season}) or
+      $user->captain_for({team => $home_team}) or
       $user->plays_for({team => $away_team, season => $season}) or
       $user->captain_for({team => $away_team, season => $season}) or
       $user->secretary_for({club => $home_club}) or

@@ -1,6 +1,7 @@
 package TopTable::Controller::SystemEventLog;
 use Moose;
 use namespace::autoclean;
+use Data::Dumper::Concise;
 
 BEGIN { extends 'Catalyst::Controller'; }
 
@@ -171,6 +172,7 @@ sub add_event :Private {
     user          => $c->user,
     ip_address    => $c->request->address,
     current_time  => $current_datetime,
+    logger        => sub{ my $level = shift; $c->log->$level( @_ ) },
   });
   
   return $details;

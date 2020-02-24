@@ -14,31 +14,21 @@ sub get_teams_in_division_in_league_table_order {
   my ( $self, $season, $division ) = @_;
   
   return $self->search({
-    season    => $season->id,
-    division  => $division->id,
+    "me.season" => $season->id,
+    division    => $division->id,
   }, {
-    prefetch  => {
-      "team" => "club",
-    },
-    order_by  => [
-      {
-        -desc => [
-          qw( games_won matches_won matches_drawn matches_played )
-        ],
-      }, {
-        -asc  => [
-          qw( games_lost matches_lost )
-        ],
-      }, {
-        -desc => [
-          qw( games_won )
-        ],
-      }, {
-        -asc  => [
-          qw( club.short_name team.name )
-        ],
-      },
-    ],
+    prefetch  => ["team", {
+      club_season => "club",
+    }],
+    order_by  => [{
+      -desc => [ qw( games_won matches_won matches_drawn matches_played ) ]
+    }, {
+      -asc  => [ qw( games_lost matches_lost ) ]
+    }, {
+      -desc => [ qw( games_won ) ]
+    }, {
+      -asc  => [ qw( club.short_name team.name ) ]
+    }],
   });
 }
 
@@ -68,7 +58,9 @@ sub get_doubles_teams_in_division_in_averages_order {
   }
   
   return $self->search($where, {
-    prefetch  => [ qw( team club ) ],
+    prefetch  => ["team", {
+      club_season => "club",
+    }],
     order_by  => [{
       -desc => [ qw( doubles_average_game_wins games_played doubles_games_won ) ],
     }, {

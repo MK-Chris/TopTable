@@ -32,7 +32,7 @@ IF tables.size;
 -%]
     <tr>
       <td class="numeric">[% i %]</td>
-      <td><a href="[% team_uri %]">[% table_team.club.short_name %] [% table_team.name %]</a></td>
+      <td><a href="[% team_uri %]">[% table_team.club_season.short_name %] [% table_team.name %]</a></td>
       <td class="numeric">[% table_team.matches_played %]</td>
       <td class="numeric">[% table_team.matches_won %]</td>
       <td class="numeric">[% table_team.matches_drawn %]</td>

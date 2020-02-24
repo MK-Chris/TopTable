@@ -22,31 +22,34 @@ IF matches.count;
   USE zeroes = format("%02d");
   WHILE (match = matches.next);
     SET date = match.actual_date;
+    CALL date.set_locale( c.locale );
     SET month = zeroes( match.actual_date.month );
     SET day   = zeroes( match.actual_date.day );
+    SET home_team = match.team_season_home_team_season;
+    SET away_team = match.team_season_away_team_season;
     
     IF specific_season;
-      SET division_uri  = c.uri_for_action("/league-tables/view_specific_season", [match.division.url_key, season.url_key]);
-      SET home_team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [match.home_team.club.url_key, match.home_team.url_key, season.url_key]);
-      SET away_team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [match.away_team.club.url_key, match.away_team.url_key, season.url_key]);
+      SET division_uri  = c.uri_for_action("/league-tables/view_specific_season", [match.division_season.division.url_key, season.url_key]);
+      SET home_team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [home_team.club_season.club.url_key, home_team.team.url_key, season.url_key]);
+      SET away_team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [away_team.club_season.club.url_key, away_team.team.url_key, season.url_key]);
     ELSE;
-      SET division_uri  = c.uri_for_action("/league-tables/view_current_season", [match.division.url_key]);
-      SET home_team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [match.home_team.club.url_key, match.home_team.url_key]);
-      SET away_team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [match.away_team.club.url_key, match.away_team.url_key]);
+      SET division_uri  = c.uri_for_action("/league-tables/view_current_season", [match.division_season.division.url_key]);
+      SET home_team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [home_team.club_season.club.url_key, home_team.team.url_key]);
+      SET away_team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [away_team.club_season.club.url_key, away_team.team.url_key]);
     END;
 -%]
   <tr>
     <td>
-      [% match.division.rank %]</a>
+      [% match.division_season.division.rank %]</a>
     </td>
     <td>
-      <a href="[% division_uri %]">[% match.division.name | html_entity %]</a>
+      <a href="[% division_uri %]">[% match.division_season.name | html_entity %]</a>
     </td>
     <td>
-      <a href="[% home_team_uri %]">[% match.home_team.club.short_name | html_entity %] [% match.home_team.name | html_entity %]</a>
+      <a href="[% home_team_uri %]">[% home_team.club_season.short_name | html_entity %] [% home_team.name | html_entity %]</a>
     </td>
     <td>
-      <a href="[% away_team_uri %]">[% match.away_team.club.short_name | html_entity %] [% match.away_team.name | html_entity %]</a>
+      <a href="[% away_team_uri %]">[% away_team.club_season.short_name | html_entity %] [% away_team.name | html_entity %]</a>
     </td>
   </tr>
 [%

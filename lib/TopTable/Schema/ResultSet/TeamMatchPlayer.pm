@@ -69,26 +69,30 @@ sub loan_players {
     loan_team => {
       "<>" => undef,
     },
-    "team_match.season"         => $season->id,
-    "team_seasons.season"       => $season->id,
-    "team_seasons_2.season"     => $season->id,
-    "team_seasons_3.season"     => $season->id,
-    "person_seasons.season"     => $season->id,
-    "division_seasons.season"   => $season->id,
-    "division_seasons_2.season" => $season->id,
+    "team_match.season"                   => $season->id,
+    "club_season.season"                  => $season->id,
+    "team_seasons.season"                 => $season->id,
+    "division_season.season"              => $season->id,
+    "team_season_home_team_season.season" => $season->id,
+    "club_season_2.season"                => $season->id,
+    "team_season_away_team_season.season" => $season->id,
+    "club_season_3.season"                => $season->id,
+    "division_season_2.season"            => $season->id,
+    "person_seasons.season"               => $season->id,
   }, {
     prefetch  => ["location", {
       loan_team   => {
-        team_seasons => {
-          division => "division_seasons",
-        },
+        team_seasons => ["team", {
+          club_season     => "club",
+          division_season => "division",
+        }],
       },
       team_match  => ["season", {
-        home_team => [ qw( club team_seasons ) ],
+        team_season_home_team_season  => ["team", {club_season => "club"}],
       }, {
-        away_team => [ qw( club team_seasons ) ],
+        team_season_away_team_season => ["team", {club_season => "club"}],
       }, {
-        division  => "division_seasons",
+        division_season  => "division",
       }],
     }, {
       player  => "person_seasons",

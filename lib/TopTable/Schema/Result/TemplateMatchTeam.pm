@@ -216,21 +216,6 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
-=head2 tournament_team_matches
-
-Type: has_many
-
-Related object: L<TopTable::Schema::Result::TournamentTeamMatch>
-
-=cut
-
-__PACKAGE__->has_many(
-  "tournament_team_matches",
-  "TopTable::Schema::Result::TournamentTeamMatch",
-  { "foreign.match_template" => "self.id" },
-  { cascade_copy => 0, cascade_delete => 0 },
-);
-
 =head2 winner_type
 
 Type: belongs_to
@@ -247,8 +232,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-01-08 00:07:05
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Txn+BNEyuqFlu+r3lf7Eng
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-01-27 15:12:25
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:2JV7LWlLxPYFkJsh8BKttg
 
 =head2 can_edit_or_delete
 

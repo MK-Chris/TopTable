@@ -641,21 +641,6 @@ __PACKAGE__->belongs_to(
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
 );
 
-=head2 team
-
-Type: belongs_to
-
-Related object: L<TopTable::Schema::Result::Team>
-
-=cut
-
-__PACKAGE__->belongs_to(
-  "team",
-  "TopTable::Schema::Result::Team",
-  { id => "team" },
-  { is_deferrable => 1, on_delete => "CASCADE", on_update => "RESTRICT" },
-);
-
 =head2 team_membership_type
 
 Type: belongs_to
@@ -671,9 +656,24 @@ __PACKAGE__->belongs_to(
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
 );
 
+=head2 team_season
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-01-08 00:07:05
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:4lmPLQt7RKX+Rmmn9sgcBw
+Type: belongs_to
+
+Related object: L<TopTable::Schema::Result::TeamSeason>
+
+=cut
+
+__PACKAGE__->belongs_to(
+  "team_season",
+  "TopTable::Schema::Result::TeamSeason",
+  { season => "season", team => "team" },
+  { is_deferrable => 1, on_delete => "CASCADE", on_update => "RESTRICT" },
+);
+
+
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-01-27 15:12:25
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:2fp2C+KiDNOvNtRg+NeETg
 
 #
 # Enable automatic date handling
@@ -714,6 +714,24 @@ sub averages_position {
   
   # Return the position we found
   return $i;
+}
+
+=head2 available_matches
+
+Return the number of available matches (matches the person's team has played for active memberships; for loan / inactive memberships it's the number of matches played).
+
+=cut
+
+sub available_matches {
+  my ( $self ) = @_;
+  
+  if ( $self->team_membership_type->id eq "active" ) {
+    # Active - return the number of matches the person's team has played.
+    return $self->team_season->matches_played;
+  } else {
+    # Loan / inactive, return matches played
+    return $self->matches_played;
+  }
 }
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

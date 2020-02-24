@@ -3,9 +3,9 @@
 [% # output (use View Source in browser to see the effect) -%]
 
 <h4>[% c.maketext("average.filters.settings") %]</h4>
-
-<dl>
-    <dt>[% c.maketext("average.filters.show-active-players") %]</dt>
+<table class="vertical">
+  <tr>
+    <th scope="row">[% c.maketext("average.filters.show-active-players") %]</th>
 [%
 IF filter.show_active;
   SET yes_no = c.maketext("msg.yes");
@@ -13,8 +13,10 @@ ELSE;
   SET yes_no = c.maketext("msg.no");
 END;
 -%]
-    <dd>[% yes_no %]</dd>
-    <dt>[% c.maketext("average.filters.show-loan-players") %]</dt>
+    <td>[% yes_no %]</td>
+  </tr>
+  <tr>
+    <th scope="row">[% c.maketext("average.filters.show-loan-players") %]</th>
 [%
 IF filter.show_loan;
   SET yes_no = c.maketext("msg.yes");
@@ -22,8 +24,10 @@ ELSE;
   SET yes_no = c.maketext("msg.no");
 END;
 -%]
-    <dd>[% yes_no %]</dd>
-    <dt>[% c.maketext("average.filters.show-inactive-players") %]</dt>
+    <td>[% yes_no %]</td>
+  </tr>
+  <tr>
+    <th scope="row">[% c.maketext("average.filters.show-inactive-players") %]</th>
 [%
 IF filter.show_inactive;
   SET yes_no = c.maketext("msg.yes");
@@ -31,7 +35,10 @@ ELSE;
   SET yes_no = c.maketext("msg.no");
 END;
 -%]
-    <dd>[% yes_no %]</dd>
-    <dt>[% c.maketext("average.filters.settings") %]</dt>
-    <dd>[% c.maketext("average.filters.settings-data", filter.criteria_field, c.maketext("averages.filter-form.operator." _ filter.operator), filter.criteria, filter.criteria_type) %]</dd>
-</dl>
+    <td>[% yes_no %]</td>
+  </tr>
+  <tr>
+    <th scope="row">[% c.maketext("average.filters.settings") %]</th>
+    <td>[% c.maketext("average.filters.settings-data", filter.criteria_field, c.maketext("averages.filter-form.operator." _ filter.operator), filter.criteria, filter.criteria_type) %]</td>
+  </tr>
+</table>

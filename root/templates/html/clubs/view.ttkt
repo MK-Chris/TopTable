@@ -3,71 +3,48 @@
 [% # output (use View Source in browser to see the effect) -%]
 [% club_name_html = FILTER html_entity; club_season.full_name; END; -%]
 
+[%
+IF club_season;
+%]
 <div id="club-venue">
 <h4>[% c.maketext("clubs.field.venue") %]</h4>
 <a href="[% c.uri_for_action("/venues/view", [club_season.venue.url_key]) %]">[% club_season.venue.name %]</a><br />
-<address>[% FILTER html_line_break;
-club_season.venue.full_address;
-END;
-%]</address><br /><br />
+<address>[% FILTER html_line_break; club_season.venue.full_address; END; %]</address><br /><br />
 [%
-IF club.email_address;
+  IF club.email_address;
 -%]
 <b>[% c.maketext("clubs.field.email-address") %]:</b> <a href="mailto:[% club.email_address %]">[% club.email_address %]</a><br />
 [%
-END;
-IF club.website;
+  END;
+  IF club.website;
 -%]
 <b><a href="[% club.website %]">[% c.maketext("clubs.field.website") %]</a></b><br />
 [%
-END;
+  END;
 -%]
 </div>
 
 <div id="club-secretary">
 <h4>[% c.maketext("clubs.field.secretary") %]</h4>
 [%
-IF club_season.secretary;
-  IF specific_season;
-    SET person_url = c.uri_for_action("/people/view_specific_season", [club_season.secretary.url_key, season.url_key]);
-  ELSE;
-    SET person_url = c.uri_for_action("/people/view_current_season", [club_season.secretary.url_key]);
-  END;
+  IF club_season.secretary;
+    IF specific_season;
+      SET person_url = c.uri_for_action("/people/view_specific_season", [club_season.secretary.url_key, season.url_key]);
+    ELSE;
+      SET person_url = c.uri_for_action("/people/view_current_season", [club_season.secretary.url_key]);
+    END;
 -%]
 <a href="[% person_url %]">[% club_season.secretary.display_name | html_entity %]</a><br />
-<address>[%
-FILTER html_line_break;
-club_season.secretary.full_address;
-END;
-%]</address><br /><br />
+<address>[% FILTER html_line_break; club_season.secretary.full_address; END; %]</address><br /><br />
 [%
-ELSE;
-c.maketext("clubs.secretary.none");
-END;
+  ELSE;
+  c.maketext("clubs.secretary.none");
+  END;
 -%]
 </div>
-
 <div id="club-teams">
 [%
-IF authorisation.team_create;
--%]
-<a href="[% c.uri_for_action("/teams/create_with_club", [club.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0009-Add-icon-32.png") %]" alt="[% c.maketext("teams.create-for", club_season.full_name) | html_entity %]" title="[% c.maketext("teams.create-for", club_name_html) %]" /></a>
-[%
-END;
-IF teams.size;
-  # Build the table heading URIs
-  # Sort orders are ascending by default
-  sort_order_uris = {
-    name          => "asc",
-    captain       => "asc",
-    division      => "asc",
-    "home-night"  => "asc",
-  };
-  
-  # If the current sort order is ascending, then the sort order on the column we're sorting needs to be "desc"
-  IF order == "asc";
-    SET sort_order_uris.$sort = "desc";
-  END;
+  IF teams.size;
 -%]
 <h4>Teams</h4>
 <table id="datatable" class="stripe hover order-column row-border" style="width: 100%;">
@@ -83,47 +60,66 @@ IF teams.size;
   </thead>
   <tbody>
 [%
-  SET i = 0;
-  FOREACH team IN teams;
-    SET i = i + 1;
-    IF specific_season;
-      SET team_uri    = c.uri_for_action("/teams/view_specific_season_by_url_key", [club.url_key, team.url_key, season.url_key]);
-      SET person_uri  = c.uri_for_action("/people/view_specific_season", [team.team_seasons.first.captain.url_key, season.url_key]);
-      SET tables_uri  = c.uri_for_action("/league-tables/view_specific_season", [team.team_seasons.first.division.url_key, season.url_key]);
-    ELSE;
-      SET team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [club.url_key, team.url_key]);
-      SET person_uri  = c.uri_for_action("/people/view_current_season", [team.team_seasons.first.captain.url_key]);
-      SET tables_uri  = c.uri_for_action("/league-tables/view_current_season", [team.team_seasons.first.division.url_key]);
-    END;
-    
-    # Just do this once so we don't keep having to go back to the DB (which is what first does)
-    SET team_season = team.team_seasons.first;
+    SET i = 0;
+    FOREACH team IN teams;
+      SET i = i + 1;
+      IF specific_season;
+        SET team_uri    = c.uri_for_action("/teams/view_specific_season_by_url_key", [club_season.club.url_key, team.url_key, season.url_key]);
+        SET person_uri  = c.uri_for_action("/people/view_specific_season", [team.team_seasons.first.captain.url_key, season.url_key]);
+        SET tables_uri  = c.uri_for_action("/league-tables/view_specific_season", [team.team_season.division_season.division.url_key, season.url_key]);
+      ELSE;
+        SET team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [club_season.club.url_key, team.url_key]);
+        SET person_uri  = c.uri_for_action("/people/view_current_season", [team.team_seasons.first.captain.url_key]);
+        SET tables_uri  = c.uri_for_action("/league-tables/view_current_season", [team.team_seasons.first.division_season.division.url_key]);
+      END;
+      
+      # Just do this once so we don't keep having to go back to the DB (which is what first does)
+      SET team_season = team.team_seasons.first;
+      
+      SET team_html = team_season.name | html_entity;
+      SET club_html = club_season.short_name | html_entity;
 -%]
     <tr>
-      <td><a href="[% team_uri %]">[% team.name %]</a></td>
+      <td>
+        <a href="[% team_uri %]">[% team_html %]</a>
 [%
-      IF team.team_seasons.first.captain;
+        IF authorisation.team_edit;
 -%]
-      <td><a href="[% person_uri %]">[% team_season.captain.display_name %]</a></td>
+        <a href="[% c.uri_for_action("/teams/edit_by_url_key", [club_season.club.url_key, team.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", club_html _ " " _ team_html) %]" title="[% c.maketext("admin.edit-object", club_html _ " " _ team_html) %]" /></a>
 [%
-      ELSE;
+        END;
+-%]
+[%
+        IF authorisation.team_delete AND team.can_delete;
+-%]
+        <a href="[% c.uri_for_action("/teams/delete_by_url_key", [club_season.club.url_key, team.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", club_html _ " " _ team_html) %]" title="[% c.maketext("admin.delete-object", club_html _ " " _ team_html) %]" /></a>
+[%
+        END;
+-%]
+      </td>
+[%
+        IF team.team_seasons.first.captain;
+-%]
+      <td><a href="[% person_uri %]">[% team.team_seasons.first.captain.display_name %]</a></td>
+[%
+        ELSE;
 -%]
       <td>None specified.</td>
 [%
-      END;
+        END;
 -%]
-      <td><a href="[% tables_uri %]">[% team_season.division.name %]</a></td>
-      <td><a href="[% tables_uri %]">[% team_season.division.rank %]</a></td>
+      <td><a href="[% tables_uri %]">[% team_season.division_season.name %]</a></td>
+      <td><a href="[% tables_uri %]">[% team_season.division_season.division.rank %]</a></td>
       <td>[% team_season.home_night.weekday_name %]</td>
       <td>[% team_season.home_night.weekday_number %]</td>
     </tr>
 [%
-  END;
+    END;
 -%]
   </tbody>
 </table>
 [%
-ELSE;
+  ELSE;
 -%]
 <ul class="option-list">
   <li>
@@ -131,11 +127,25 @@ ELSE;
   </li>
 </ul>
 [%
-END;
+  END;
 -%]
 </div>
-
 [%
+# Else for if club_season
+ELSE;
+  season_html = FILTER html_entity; season.name; END;
+  club_html   = FILTER html_entity; club.full_name; END;
+-%]
+<div class="no-entry">[% c.maketext("clubs.message.did-not-enter", club_html, season_html) %]</div>
+[%
+# End for if club_season
+END;
+
+IF authorisation.team_create;
+-%]
+<a href="[% c.uri_for_action("/teams/create_with_club", [club.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0009-Add-icon-32.png") %]" alt="[% c.maketext("teams.create-for", club_season.full_name) | html_entity %]" title="[% c.maketext("teams.create-for", club_name_html) %]" /></a>
+[%
+END;
 IF seasons == 1;
   SET season_text = c.maketext("object.singular.seasons");
 ELSE;

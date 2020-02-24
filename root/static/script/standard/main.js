@@ -32,41 +32,6 @@ $(document).ready(function(){
   $( "input[type=submit], input[type=button], button" ).button();
   
   /*
-    Table row - highlight whole row on cell hover
-  */
-  $("td").hover(function() {
-      var t = $(this);
-      t.parent("tr").children("td").each(function() {
-        $(this).addClass("active-row");
-      });
-      $(this).addClass("active-row");
-    }, function() {
-      var t = $(this);
-      t.parent("tr").children("td").each(function() {
-        $(this).removeClass("active-row");
-      });
-    }
-  );
-  
-  /*
-    Div lists - highlight on hover
-  */
-  $("div.list-item").hover(function() {
-    $(this).addClass("active-row");
-  }, function() {
-    $(this).removeClass("active-row");
-  });
-  
-  /*
-    Object lists - highlight on hover
-  */
-  $("ul.object-list > li").hover(function() {
-    $(this).removeClass("active-item");
-  }, function() {
-    $(this).removeClass("active-item");
-  });
-  
-  /*
    Active / inactive input fields
   */
   $("form").on("focus", "input, textarea", function() {

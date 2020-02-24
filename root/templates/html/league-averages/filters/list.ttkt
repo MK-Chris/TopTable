@@ -6,7 +6,7 @@
 
 [% # Some basic HTML with a loop to display match templates -%]
 [%
-IF reasons.count;
+IF filters.count;
   # Use PROCESS instead of INCLUDE so that the page_links_text is defined in the current template thereafter
   PROCESS "html/generic/pagination.ttkt" OBJECT_PLURAL = c.maketext("object.plural.average-filters");
   page_links_text;
@@ -17,14 +17,27 @@ IF reasons.count;
     name_html = FILTER html_entity; filter.name; END;
 -%]
   <li>
+[%
+    IF filter.user.id;
+      user_html = FILTER html_entity; filter.user.display_name; END;
+-%]
+    <img src="[% c.uri_for("/static/images/icons/0046-User-icon-16.png") %]" alt="[% c.maketext("average-filter.user-defined", filter.user.display_name) %]" title="[% c.maketext("average-filter.user-defined", user_html) %]" />
+[%
+    END;
+-%]
     <a href="[% c.uri_for_action("/league-averages/filters/view", [filter.url_key]) %]">[% name_html | html_entity %]</a>
 [%
-    IF authorisation.contact_reason_edit;
+    IF filter.user.id AND view_all;
+-%]
+    ([% user_html %])
+[%
+    END;
+    IF (authorisation.average_filter_edit_all) OR (authorisation.average_filter_edit_public AND !filter.user.defined) OR (c.user.id == filter.user.id);
 -%]
     <a href="[% c.uri_for_action("/league-averages/filters/edit", [filter.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", name_html) %]" title="[% c.maketext("admin.edit-object", name_html) %]" /></a>
 [%
     END;
-    IF authorisation.contact_reason_delete;
+    IF (authorisation.average_filter_delete_all) OR (authorisation.average_filter_delete_public AND !filter.user.defined) OR (c.user.id == filter.user.id);
 -%]
     <a href="[% c.uri_for_action("/league-averages/filters/delete", [filter.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", name_html) %]" title="[% c.maketext("admin.delete-object", name_html) %]" /></a>
 [%

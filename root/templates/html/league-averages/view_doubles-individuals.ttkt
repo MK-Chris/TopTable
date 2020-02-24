@@ -37,10 +37,10 @@ IF doubles_individual_averages.size;
   FOREACH average IN doubles_individual_averages;
     i = i + 1;
     IF specific_season;
-      SET team_uri    = c.uri_for_action("/teams/view_specific_season_by_url_key", [average.team.club.url_key, average.team.url_key, average.season.url_key]);
+      SET team_uri    = c.uri_for_action("/teams/view_specific_season_by_url_key", [average.team_season.club_season.club.url_key, average.team_season.team.url_key, average.season.url_key]);
       SET person_uri  = c.uri_for_action("/people/view_specific_season", [average.person.url_key, average.season.url_key]);
     ELSE;
-      SET team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [average.team.club.url_key, average.team.url_key]);
+      SET team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [average.team_season.club_season.club.url_key, average.team_season.team.url_key]);
       SET person_uri  = c.uri_for_action("/people/view_current_season", [average.person.url_key]);
     END;
     
@@ -62,11 +62,7 @@ IF doubles_individual_averages.size;
       <td data-label="[% c.maketext("stats.table-heading.player") %]"[% player_class %]><a href="[% person_uri %]"[% player_class %]>[% average.person.display_name | html_entity %]</a></td>
 [%
     UNLESS averages_team_page;
-      IF specific_season;
-        SET team_name = average.team.team_seasons.first.team.club.short_name _ " " _ average.team.team_seasons.first.team.name;
-      ELSE;
-        SET team_name = average.team.club.short_name _ " " _ average.team.name;
-      END;
+      team_name = FILTER html_entity; average.team_season.club_season.short_name _ " " _ average.team_season.team.name; END;
 -%]
       <td data-label="[% c.maketext("stats.table-heading.team") %]"[% player_class %]><a href="[% team_uri %]"[% player_class %]>[% team_name %]</a></td>
 [%

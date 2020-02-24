@@ -11,8 +11,8 @@ IF seasons.size;
 -%]
 <ul class="option-list">
 [%
-  WHILE (season = seasons.next);
-    IF season.complete;
+  WHILE (club_season = seasons.next);
+    IF club_season.season.complete;
       SET CURRENT_TEXT = "";
     ELSE;
       SET CURRENT_TEXT = " (" _ c.maketext("seasons.text.current") _ ")";
@@ -20,7 +20,7 @@ IF seasons.size;
 -%]
 
   <li>
-    <a href="[% c.uri_for_action("/clubs/view_specific_season", [club.url_key, season.url_key]) %]">[% season.name | html_entity %]</a>[% CURRENT_TEXT %]
+    <a href="[% c.uri_for_action("/clubs/view_specific_season", [club.url_key, club_season.season.url_key]) %]">[% club_season.season.name | html_entity %]</a>[% CURRENT_TEXT %]
   </li>
 [%
   END;

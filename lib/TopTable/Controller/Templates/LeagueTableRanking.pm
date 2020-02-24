@@ -199,6 +199,9 @@ sub view :Chained("base") :PathPart("") :Args(0) {
     subtitle1           => $tt_template->name,
     view_online_display => sprintf( "Viewing ranking template: %s", $tt_template->name ),
     view_online_link    => 0,
+    external_scripts    => [
+      $c->uri_for("/static/script/standard/vertical-table.js"),
+    ],
   });
 }
 

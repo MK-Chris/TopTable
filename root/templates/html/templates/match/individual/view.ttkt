@@ -10,24 +10,36 @@ IF tt_template.game_type.id == "best-of";
 ELSE;
   SET NUMBER_OF_LEGS_TEXT = "Static: " _ tt_template.legs_per_game _ " legs are played regardless of the score.";
 END %]
-<dl>
-  <dt>[% c.maketext("templates.individual-match.field.legs-per-game") %]</dt>
-  <dd>[% NUMBER_OF_LEGS_TEXT %]</dd>
-  <dt>[% c.maketext("templates.individual-match.field.minimum-points-win") %]</dt>
-  <dd>[% tt_template.minimum_points_win %]</dd>
-  <dt>[% c.maketext("templates.individual-match.field.clear-points-win") %]</dt>
-  <dd>[% tt_template.clear_points_win %]</dd>
-  <dt>[% c.maketext("templates.individual-match.field.serve-type") %]</dt>
-  <dd>[% c.maketext("serve-type.name." _ tt_template.serve_type.id) %]</dd>
+<table class="vertical">
+  <tr>
+    <th>[% c.maketext("templates.individual-match.field.legs-per-game") %]</th>
+    <td>[% NUMBER_OF_LEGS_TEXT %]</td>
+  </tr>
+  <tr>
+    <th>[% c.maketext("templates.individual-match.field.minimum-points-win") %]</th>
+    <td>[% tt_template.minimum_points_win %]</td>
+  </tr>
+  <tr>
+    <th>[% c.maketext("templates.individual-match.field.clear-points-win") %]</th>
+    <td>[% tt_template.clear_points_win %]</td>
+  </tr>
+  <tr>
+    <th>[% c.maketext("templates.individual-match.field.serve-type") %]</th>
+    <td>[% c.maketext("serve-type.name." _ tt_template.serve_type.id) %]</td>
+  </tr>
 [%
 IF tt_template.serve_type.id == "static";
 -%]
-  <dt>[% c.maketext("templates.individual-match.field.serves") %]</dt>
-  <dd>[% tt_template.serves %]</dd>
-  <dt>[% c.maketext("templates.individual-match.field.serves-deuce") %]</dt>
-  <dd>[% tt_template.serves_deuce %]</dd>
+  <tr>
+    <th>[% c.maketext("templates.individual-match.field.serves") %]</th>
+    <td>[% tt_template.serves %]</td>
+  </tr>
+  <tr>
+    <th>[% c.maketext("templates.individual-match.field.serves-deuce") %]</th>
+    <td>[% tt_template.serves_deuce %]</td>
+  </tr>
 [%
 END;
 -%]
-</dl>
+</table>
 </div>
