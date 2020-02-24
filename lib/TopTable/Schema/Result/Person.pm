@@ -673,51 +673,6 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
-=head2 tournament_team_matches_away_teams_verified
-
-Type: has_many
-
-Related object: L<TopTable::Schema::Result::TournamentTeamMatch>
-
-=cut
-
-__PACKAGE__->has_many(
-  "tournament_team_matches_away_teams_verified",
-  "TopTable::Schema::Result::TournamentTeamMatch",
-  { "foreign.away_team_verified" => "self.id" },
-  { cascade_copy => 0, cascade_delete => 0 },
-);
-
-=head2 tournament_team_matches_home_teams_verified
-
-Type: has_many
-
-Related object: L<TopTable::Schema::Result::TournamentTeamMatch>
-
-=cut
-
-__PACKAGE__->has_many(
-  "tournament_team_matches_home_teams_verified",
-  "TopTable::Schema::Result::TournamentTeamMatch",
-  { "foreign.home_team_verified" => "self.id" },
-  { cascade_copy => 0, cascade_delete => 0 },
-);
-
-=head2 tournament_team_matches_league_officials_verified
-
-Type: has_many
-
-Related object: L<TopTable::Schema::Result::TournamentTeamMatch>
-
-=cut
-
-__PACKAGE__->has_many(
-  "tournament_team_matches_league_officials_verified",
-  "TopTable::Schema::Result::TournamentTeamMatch",
-  { "foreign.league_official_verified" => "self.id" },
-  { cascade_copy => 0, cascade_delete => 0 },
-);
-
 =head2 user
 
 Type: might_have
@@ -748,8 +703,8 @@ __PACKAGE__->many_to_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-01-15 14:32:42
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:B0U4NS1K2kJUQl87efv+LA
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-01-27 15:12:25
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:iJI8bHKysqSBtwf8KNpzAw
 
 #
 # Row-level helper methods
@@ -885,29 +840,21 @@ sub games_played_in_season {
   return $self->result_source->schema->resultset("TeamMatchGame")->search([{
     home_player               => $self->id,
     "team_match.season"       => $season->id,
-    "team_seasons.season"     => $season->id,
-    "team_seasons_2.season"   => $season->id,
     "person_seasons.season"   => $season->id,
     "person_seasons_2.season" => $season->id,
   }, {
     away_player               => $self->id,
     "team_match.season"       => $season->id,
-    "team_seasons.season"     => $season->id,
-    "team_seasons_2.season"   => $season->id,
     "person_seasons.season"   => $season->id,
     "person_seasons_2.season" => $season->id,
   }], {
-    prefetch  => ["winner", {
+    prefetch  => [ qw( winner ), {
       home_player => "person_seasons",
       away_player => "person_seasons",
       team_match  => [{
-        home_team => {
-          team_seasons => "club"
-        },
+        team_season_home_team_season => [qw( team ), {club_season => "club"}],
       }, {
-        away_team => {
-          team_seasons => "club"
-        },
+        team_season_away_team_season => [qw( team ), {club_season => "club"}],
       }],
     }],
     order_by  => {
@@ -954,11 +901,10 @@ Returns true if the person is captain for the specified team in the specified se
 
 sub captain_for {
   my ( $self, $parameters ) = @_;
-  my $team    = $parameters->{team};
-  my $season  = $parameters->{season};
+  my $team_season = $parameters->{team};
   
   # Get the team's captain
-  my $captain = $team->get_captain({season => $season});
+  my $captain = $team_season->captain;
   $captain = $captain->id if defined( $captain );
   
   # Return true if the IDs match or false if not

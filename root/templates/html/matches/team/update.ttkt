@@ -3,8 +3,8 @@
 [% # output (use View Source in browser to see the effect) -%]
 [% USE Math; -%]
 [%-
-home_team_html = FILTER html_entity; match.home_team.club.short_name _ " " _ match.home_team.name; END;
-away_team_html = FILTER html_entity; match.away_team.club.short_name _ " " _ match.away_team.name; END;
+home_team_html = FILTER html_entity; match.team_season_home_team_season.club_season.short_name _ " " _ match.team_season_home_team_season.name; END;
+away_team_html = FILTER html_entity; match.team_season_away_team_season.club_season.short_name _ " " _ match.team_season_away_team_season.name; END;
 -%]
 
 <form method="post" action="[% form_action %]">

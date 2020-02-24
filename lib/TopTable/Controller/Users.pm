@@ -208,6 +208,9 @@ sub view :Chained("base") :PathPart("") :Args(0) {
     title_links       => \@title_links,
     canonical_uri     => $c->uri_for_action("/users/view", [$user->url_key]),
     page_description  => $c->maketext("description.users.view", $encoded_username, $site_name),
+    external_scripts    => [
+      $c->uri_for("/static/script/standard/vertical-table.js"),
+    ],
   });
 }
 
@@ -868,8 +871,6 @@ sub do_login :Path("authenticate") {
   my ( $user );
   my $error = [];
   
-  $c->log->debug( Dumper( $c->stash->{cookie_settings} ) );
-  
   if ( $c->user_exists ) {
     # Logged in already
     $c->response->redirect( $c->uri_for("/",
@@ -1432,9 +1433,6 @@ sub current_activity :Path("/users-online") {
     # Can only view people who aren't hiding themselves
     $online_users = [ $c->model("DB::Session")->get_non_hidden_online_users( $online_users_last_active_limit ) ];
   }
-  
-  
-  $c->log->debug( sprintf( "View IP: %d, view user agent: %d", $c->stash->{authorisation}{view_users_ip}, $c->stash->{authorisation}{view_users_user_agent} ) );
   
   $c->stash({
     template            => "html/users/online.ttkt",

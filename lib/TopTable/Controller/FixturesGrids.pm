@@ -326,6 +326,7 @@ sub view_finalise :Private {
     canonical_uri       => $canonical_uri,
     external_scripts      => [
       $c->uri_for("/static/script/standard/option-list.js"),
+      $c->uri_for("/static/script/standard/vertical-table.js"),
     ],
   });
 }
@@ -739,10 +740,10 @@ sub set_matches :Chained("base") :PathPart("set-matches") :Args(0) {
     $match_teams{$1}{$2}{$3} = $c->request->parameters->{$key} if $key =~ /^week_(\d{1,2})_match_(\d{1,2})_(home|away)$/;
   }
   
-  my $actioned = $c->model("DB::FixturesGrid")->set_grid_matches({
-    grid            => $grid,
+  my $actioned = $grid->set_matches({
     repeat_fixtures => $c->request->parameters->{repeat_fixtures},
     match_teams     => \%match_teams,
+    language        => sub{ $c->maketext( @_ ); },
   });
   
   $grid = $actioned->{grid} if exists( $actioned->{grid} );
@@ -772,7 +773,7 @@ sub set_matches :Chained("base") :PathPart("set-matches") :Args(0) {
     
     $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["fixtures-grid", "matches", {id => $grid->id}, $grid->name] );
     $c->response->redirect( $c->uri_for_action("/fixtures-grids/view_current_season", [ $grid->url_key ],
-                              {mid => $c->set_status_msg( $c->maketext("fixtures-grids.form.matches.success") ) }) );
+                              {mid => $c->set_status_msg( {success => $c->maketext("fixtures-grids.form.matches.success")} ) }) );
     $c->detach;
     return;
   }
@@ -810,9 +811,9 @@ sub teams :Chained("base") :PathPart("teams") :Args(0) {
   }
   
   # Check the season hasn't had matches created already
-  if ( $c->model("DB::TeamMatch")->season_matches($current_season)->count > 0 ) {
+  if ( $c->model("DB::TeamMatch")->season_matches($current_season, {grid => $grid})->count > 0 ) {
     # Error, matches set already
-    $c->response->redirect( $c->uri_for("/",
+    $c->response->redirect( $c->uri_for_action("/fixtures-grids/view_current_season", [$grid->url_key],
                                 {mid => $c->set_status_msg( {error => $c->maketext("fixtures-grids.teams.error.matches-already-set") } ) }) );
     $c->detach;
     return;
@@ -828,7 +829,7 @@ sub teams :Chained("base") :PathPart("teams") :Args(0) {
     form_action         => $c->uri_for_action("/fixtures-grids/set_teams", [$grid->url_key]),
     view_online_display => "Allocating teams for fixtures grid " . $grid->name,
     view_online_link    => 0,
-    divisions           => [ $c->model("DB::Division")->divisions_and_teams_in_season_by_grid_position($current_season, $grid) ],
+    divisions           => [ $c->model("DB::DivisionSeason")->divisions_and_teams_in_season_by_grid_position($current_season, $grid) ],
   });
   
   # Push the breadcrumbs links
@@ -864,9 +865,9 @@ sub set_teams :Chained("base") :PathPart("set-teams") :Args(0) {
   }
   
   # Check the season hasn't had matches created already
-  if ( $c->model("DB::TeamMatch")->season_matches($current_season)->count > 0 ) {
+  if ( $c->model("DB::TeamMatch")->season_matches($current_season, {grid => $grid})->count > 0 ) {
     # Error, matches set already
-    $c->response->redirect( $c->uri_for("/",
+    $c->response->redirect( $c->uri_for_action("/fixtures_grids/view_current_season", [$grid->url_key],
                                 {mid => $c->set_status_msg( {error => $c->maketext("fixtures-grids.teams.error.matches-already-set") } ) }) );
     $c->detach;
     return;
@@ -878,21 +879,21 @@ sub set_teams :Chained("base") :PathPart("set-teams") :Args(0) {
     $divisions{$key} = $c->request->parameters->{$key} if $key =~ /division-positions-\d+/;
   }
   
-  my $actioned = $c->model("DB::FixturesGrid")->set_grid_teams({
-    grid      => $grid,
+  my $returned = $grid->set_teams({
     season    => $current_season,
     divisions => \%divisions,
+    language  => sub{ $c->maketext( @_ ); },
   });
   
-  $grid = $actioned->{grid} if exists( $actioned->{grid} );
-  if ( $actioned->{error} ) {
-    my $error = $c->build_message( $actioned->{error} );
+  $grid = $returned->{grid} if exists( $returned->{grid} );
+  if ( scalar( @{ $returned->{error} } ) ) {
+    my $error = $c->build_message( $returned->{error} );
     
     # If we've errored, we need to flash all the values.
-    $c->flash->{divisions} = $actioned->{submitted_data};
+    $c->flash->{divisions} = $returned->{submitted_data};
     
     my $redirect_uri;
-    if ( $actioned->{grid} ) {
+    if ( $returned->{grid} ) {
       $redirect_uri = $c->uri_for_action("/fixtures-grids/teams", [$grid->url_key],
                                 {mid => $c->set_status_msg( {error => $error} ) } );
     } else {

@@ -26,20 +26,22 @@ username_html = FILTER html_entity; user.username; END;
     </div>
   </div>
   <div id="user-info">
-    <dl>
-      <dt>[% c.maketext("user.person.name") %]</dt>
+    <table class="vertical">
+      <tr>
+        <th>[% c.maketext("user.person.name") %]</th>
 [%
 IF user.person.id;
 -%]
-      <dd><a href="[% c.uri_for_action("/people/view_current_season", [user.person.url_key]) %]">[% user.person.display_name %]</a></dd>
+        <td><a href="[% c.uri_for_action("/people/view_current_season", [user.person.url_key]) %]">[% user.person.display_name %]</a></td>
 [%
 ELSE;
 -%]
-      <dd>[% c.maketext("user.person.not-associated", username_html) %]</dd>
+        <td>[% c.maketext("user.person.not-associated", username_html) %]</td>
 [%
 END;
 -%]
-    </dl>
+      </tr>
+    </table>
   </div>
 <!--</div>-->
 <div class="clear-fix"></div>

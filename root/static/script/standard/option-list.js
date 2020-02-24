@@ -6,5 +6,5 @@ $(document).ready(function() {
   /*
     Stripe li items.
   */
-  $("ul.option-list li:nth-child(odd)").addClass("odd");
+  $("ul.option-list li:nth-child(even)").addClass("odd");
 });

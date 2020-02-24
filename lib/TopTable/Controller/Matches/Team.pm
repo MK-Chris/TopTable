@@ -2,7 +2,7 @@ package TopTable::Controller::Matches::Team;
 use Moose;
 use namespace::autoclean;
 use JSON;
-use Data::Dumper;
+use Data::Dumper::Concise;
 use Try::Tiny;
 use HTML::Entities;
 
@@ -130,13 +130,14 @@ sub base :Private {
   my ( $self, $c ) = @_;
   my $match   = $c->stash->{match};
   my $season  = $match->season;
+  my ( $home_team, $away_team ) = ( $match->team_season_home_team_season, $match->team_season_away_team_season );
   my $score = ( $match->home_team_match_score or $match->away_team_match_score ) ? sprintf( "%d-%d", $match->home_team_match_score, $match->away_team_match_score ) : $c->maketext("matches.versus-abbreviation");
-  my $encoded_name    = sprintf( "%s %s %s %s %s", encode_entities( $match->home_team->club->short_name ), encode_entities( $match->home_team->name ), $score, encode_entities( $match->away_team->club->short_name ), encode_entities( $match->away_team->name ) );
-  my $scoreless_name  = sprintf( "%s %s %s %s %s", encode_entities( $match->home_team->club->short_name ), encode_entities( $match->home_team->name ), $c->maketext("matches.versus-abbreviation"), encode_entities( $match->away_team->club->short_name ), encode_entities( $match->away_team->name ) );
+  my $encoded_name    = sprintf( "%s %s %s %s %s", encode_entities( $home_team->club_season->short_name ), encode_entities( $home_team->name ), $score, encode_entities( $away_team->club_season->short_name ), encode_entities( $away_team->name ) );
+  my $scoreless_name  = sprintf( "%s %s %s %s %s", encode_entities( $home_team->club_season->short_name ), encode_entities( $home_team->name ), $c->maketext("matches.versus-abbreviation"), encode_entities( $away_team->club_season->short_name ), encode_entities( $away_team->name ) );
   
   # Breadcrumbs
   push(@{ $c->stash->{breadcrumbs} }, {
-    path  => $c->uri_for_action("/matches/team/view_by_url_keys", [$match->home_team->club->url_key, $match->home_team->url_key, $match->away_team->club->url_key, $match->away_team->url_key, $match->scheduled_date->year, $match->scheduled_date->month, $match->scheduled_date->day]),
+    path  => $c->uri_for_action("/matches/team/view_by_url_keys", $match->url_keys),
     label => $encoded_name,
   });
   
@@ -150,7 +151,7 @@ sub base :Private {
     score           => $score,
     subtitle1       => $encoded_name,
     team_seasons    => $match->get_team_seasons,
-    division_season => $match->get_division_season,
+    division_season => $match->division_season,
     home_players    => $home_players,
     away_players    => $away_players,
   });
@@ -227,7 +228,7 @@ sub view :Private {
     $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
     $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
     $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
-    #$c->uri_for("/static/script/matches/team/view-datatables.js"),
+    $c->uri_for("/static/script/standard/vertical-table.js"),
   );
   
   if ( $match->started ) {
@@ -355,7 +356,7 @@ sub update :Private {
   # Stash the template values
   $c->stash({
     template            => "html/matches/team/update.ttkt",
-    form_action         => $c->uri_for_action("/matches/team/do_update_by_ids", [$match->home_team->id, $match->away_team->id, $match->scheduled_date->year, $match->scheduled_date->month, $match->scheduled_date->day]),
+    form_action         => $c->uri_for_action("/matches/team/do_update_by_ids", [$match->team_season_home_team_season->team->id, $match->team_season_away_team_season->team->id, $match->scheduled_date->year, $match->scheduled_date->month, $match->scheduled_date->day]),
     scripts             => [
       "tokeninput-standard",
     ],
@@ -368,7 +369,7 @@ sub update :Private {
       $c->uri_for("/static/script/standard/prettycheckable.js"),
       $c->uri_for("/static/script/standard/datepicker.js"),
       $c->uri_for("/static/script/standard/button-toggle.js"),
-      $c->uri_for_action("/matches/team/update_js_by_ids", [$match->home_team->id, $match->away_team->id, $match->scheduled_date->year, $match->scheduled_date->month, $match->scheduled_date->day]),
+      $c->uri_for_action("/matches/team/update_js_by_ids", [$match->team_season_home_team_season->team->id, $match->team_season_away_team_season->team->id, $match->scheduled_date->year, $match->scheduled_date->month, $match->scheduled_date->day]),
     ],
     external_styles     => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
@@ -376,9 +377,9 @@ sub update :Private {
       $c->uri_for("/static/css/tokeninput/token-input-tt.css"),
       $c->uri_for("/static/css/toastmessage/jquery.toastmessage.css"),
     ],
-    subtitle2           => encode_entities( $match->division->name ),
+    subtitle2           => encode_entities( $match->division_season->name ),
     subtitle3           => sprintf( "%s, %d %s %d", ucfirst( $date->day_name ), $date->day, $date->month_name, $date->year ),
-    view_online_display => sprintf( "Updating match %s %s v %s %s", $match->home_team->club->short_name, $match->home_team->name, $match->away_team->club->short_name, $match->away_team->name ),
+    view_online_display => sprintf( "Updating match %s %s v %s %s", $match->team_season_home_team_season->club_season->short_name, $match->team_season_home_team_season->name, $match->team_season_away_team_season->club_season->short_name, $match->team_season_away_team_season->name ),
     view_online_link    => 0,
     total_players       => $players_count * 2, # $players_count is the number of players per team
     venues              => [ $c->model("DB::Venue")->all_venues ],
@@ -500,7 +501,7 @@ sub update_game_score :Private {
   }
   
   # Log an update
-  $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["team-match", "update", {home_team => $match->home_team->id, away_team => $match->away_team->id, scheduled_date => $match->scheduled_date->ymd}, sprintf("%s %s %s %s", $match->home_team->club->short_name, $match->home_team->name, $match->away_team->club->short_name, $match->away_team->name) ] );
+  $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["team-match", "update", {home_team => $match->team_season_home_team_season->team->id, away_team => $match->team_season_away_team_season->team->id, scheduled_date => $match->scheduled_date->ymd}, sprintf("%s %s %s %s", $match->team_season_home_team_season->club_season->short_name, $match->team_season_home_team_season->name, $match->team_season_away_team_season->club_season->short_name, $match->team_season_away_team_season->name) ] );
   
   # Stash something to say the request was okay
   if ( $c->is_ajax ) {
@@ -722,8 +723,8 @@ sub get_player_lists :Private {
   my ( $self, $c ) = @_;
   my $content_type  = $c->request->parameters->{"content-type"} || "html";
   my $match         = $c->stash->{match};
-  my @home_player_list = $c->model("DB::PersonSeason")->get_people_in_team_in_name_order( $match->scheduled_week->season, $match->home_team );
-  my @away_player_list = $c->model("DB::PersonSeason")->get_people_in_team_in_name_order( $match->scheduled_week->season, $match->away_team );
+  my @home_player_list = $c->model("DB::PersonSeason")->get_people_in_team_in_name_order( $match->season, $match->team_season_home_team_season->team );
+  my @away_player_list = $c->model("DB::PersonSeason")->get_people_in_team_in_name_order( $match->season, $match->team_season_away_team_season->team );
   my $home_doubles_list = [];
   my $away_doubles_list = [];
   
@@ -872,7 +873,7 @@ sub cancel :Private {
   # Stash the template values
   $c->stash({
     template            => "html/matches/team/cancel.ttkt",
-    form_action         => $c->uri_for_action("/matches/team/do_cancel_by_ids", [$match->home_team->id, $match->away_team->id, $match->scheduled_date->year, $match->scheduled_date->month, $match->scheduled_date->day]),
+    form_action         => $c->uri_for_action("/matches/team/do_cancel_by_ids", [$match->team_season_home_team_season->team->id, $match->team_season_away_team_season->team->id, $match->scheduled_date->year, $match->scheduled_date->month, $match->scheduled_date->day]),
     external_scripts    => [
       $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
       $c->uri_for("/static/script/standard/prettycheckable.js"),
@@ -881,9 +882,9 @@ sub cancel :Private {
     external_styles     => [
       $c->uri_for("/static/css/prettycheckable/prettyCheckable.css"),
     ],
-    subtitle2           => encode_entities( $match->division->name ),
+    subtitle2           => encode_entities( $match->division_season->name ),
     subtitle3           => sprintf( "%s, %d %s %d", ucfirst( $date->day_name ), $date->day, $date->month_name, $date->year ),
-    view_online_display => sprintf( "Cancelling match %s %s v %s %s", $match->home_team->club->short_name, $match->home_team->name, $match->away_team->club->short_name, $match->away_team->name ),
+    view_online_display => sprintf( "Cancelling match %s %s v %s %s", $match->team_season_home_team_season->club_season->short_name, $match->team_season_home_team_season->name, $match->team_season_away_team_season->club_season->short_name, $match->team_season_away_team_season->name ),
     view_online_link    => 0,
   });
   
@@ -971,7 +972,7 @@ sub do_cancel :Private {
     my $action = ( $cancel ) ? "cancel" : "uncancel";
     my $message = sprintf( "matches.%s.success", $action );
     
-    $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["team-match", $action, {home_team => $match->home_team->id, away_team => $match->away_team->id, scheduled_date => $match->scheduled_date->ymd}, sprintf("%s %s %s %s", $match->home_team->club->short_name, $match->home_team->name, $match->away_team->club->short_name, $match->away_team->name)] );
+    $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["team-match", $action, {home_team => $match->team_season_home_team_season->team->id, away_team => $match->team_season_away_team_season->team->id, scheduled_date => $match->scheduled_date->ymd}, sprintf("%s %s %s %s", $match->team_season_home_team_season->club_season->short_name, $match->team_season_home_team_season->name, $match->team_season_away_team_season->club_season->short_name, $match->team_season_away_team_season->name)] );
     $c->response->redirect( $c->uri_for_action("/matches/team/view_by_url_keys", $match->url_keys,
                                 {mid => $c->set_status_msg( {success => $c->maketext( $message )} ) }) );
     $c->detach;
@@ -1074,6 +1075,7 @@ Process the form for publishing a match report.
 sub publish_report :Private {
   my ( $self, $c ) = @_;
   my $match   = $c->stash->{match};
+  my ( $home_team, $away_team ) = ( $match->team_season_home_team_season, $match->team_season_away_team_season );
   my $report  = $c->request->body_parameters->{report};
   
   # Check we're authorised
@@ -1098,7 +1100,7 @@ sub publish_report :Private {
     
     my $action_description = ( $action eq "create" ) ? "created" : "edited";
     
-    $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["team-match", "report-$action", {home_team => $match->home_team->id, away_team => $match->away_team->id, scheduled_date => $match->scheduled_date->ymd}, sprintf("%s %s %s %s", $match->home_team->club->short_name, $match->home_team->name, $match->away_team->club->short_name, $match->away_team->name)] );
+    $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["team-match", "report-$action", {home_team => $home_team->team->id, away_team => $away_team->team->id, scheduled_date => $match->scheduled_date->ymd}, sprintf("%s %s %s %s", $home_team->club_season->short_name, $home_team->name, $away_team->club_season->short_name, $away_team->name)] );
     $c->response->redirect( $c->uri_for_action("/matches/team/view_by_url_keys", $match->url_keys,
                               {mid => $c->set_status_msg( {success =>  $c->maketext("matches.report.success", $c->maketext("admin.message.$action_description"))} ) }) );
     $c->detach;
@@ -1116,10 +1118,10 @@ sub check_report_create_edit_authorisation :Private {
   my ( $self, $c ) = @_;
   my $match     = $c->stash->{match};
   my $season    = $match->season;
-  my $home_team = $match->home_team;
-  my $away_team = $match->away_team;
-  my $home_club = $match->home_team->club;
-  my $away_club = $match->away_team->club;
+  my $home_team = $match->team_season_home_team_season;
+  my $away_team = $match->team_season_away_team_season;
+  my $home_club = $match->team_season_home_team_season->club_season;
+  my $away_club = $match->team_season_away_team_season->club_season;
   
   if ( $season->complete ) {
     # Season is not current, so we can't submit or edit a match report
@@ -1148,7 +1150,7 @@ sub check_report_create_edit_authorisation :Private {
     my $redirect_on_fail = (
       $c->user_exists and (
         $c->user->plays_for({team => $home_team, season => $season}) or
-        $c->user->captain_for({team => $home_team, season => $season}) or
+        $c->user->captain_for({team => $home_team}) or
         $c->user->plays_for({team => $away_team, season => $season}) or
         $c->user->captain_for({team => $away_team, season => $season}) or
         $c->user->secretary_for({club => $home_club}) or

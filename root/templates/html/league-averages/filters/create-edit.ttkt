@@ -71,6 +71,8 @@ END;
 SWITCH criteria_type;
   CASE "matches";
     SET MATCHES_SELECTED = ' selected="selected"';
+  CASE "matches-pc";
+    SET MATCHES_PERCENTAGE_SELECTED = ' selected="selected"';
   CASE "games";
     SET GAMES_SELECTED = ' selected="selected"';
 END;
@@ -149,6 +151,7 @@ END;
       <select name="criteria_type" id="criteria_type" data-placeholder="[% c.maketext("average-filters.criteria-type") %]">
         <option value=""></option>
         <option value="matches"[% MATCHES_SELECTED %]>[% c.maketext("average-filters.criteria-type.matches") %]</option>
+        <option value="matches-pc"[% MATCHES_PERCENTAGE_SELECTED %]>[% c.maketext("average-filters.criteria-type.matches-percentage") %]</option>
         <option value="games"[% GAMES_SELECTED %]>[% c.maketext("average-filters.criteria-type.games") %]</option>
       </select>
     </div>

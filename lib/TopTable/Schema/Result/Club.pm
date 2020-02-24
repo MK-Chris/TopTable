@@ -266,21 +266,6 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
-=head2 team_seasons
-
-Type: has_many
-
-Related object: L<TopTable::Schema::Result::TeamSeason>
-
-=cut
-
-__PACKAGE__->has_many(
-  "team_seasons",
-  "TopTable::Schema::Result::TeamSeason",
-  { "foreign.club" => "self.id" },
-  { cascade_copy => 0, cascade_delete => 0 },
-);
-
 =head2 teams
 
 Type: has_many
@@ -312,8 +297,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-01-15 14:32:42
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:kElVModMFmN3QIeHtUQSsg
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-01-27 15:19:04
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:N/8DqTFiZ6BA/RK0oO+V2g
 
 =head2 get_season
 
@@ -339,9 +324,13 @@ Get club_seasons for this club (all seasons this club has entered).
 
 sub get_seasons {
   my ( $self, $parameters ) = @_;
+  my $page_number       = $parameters->{page_number}      || undef;
+  my $results_per_page  = $parameters->{results_per_page} || undef;
   
-  return $self->search_related("club_seasons", undef, {
+  my $attributes = {
     prefetch => "season",
+    page      => $page_number,
+    rows      => $results_per_page,
     order_by => [{
       -asc => [
         qw( season.complete )
@@ -350,7 +339,18 @@ sub get_seasons {
         qw( season.start_date season.end_date )
       ]}
     ],
-  });
+  };
+  
+  if ( defined( $page_number ) or defined( $results_per_page ) ) {
+    # If either page number of results per page is defined, set the other to a default (page 1, 25 results).  Also sanitise if they're not numeric
+    $page_number      = 1 unless defined( $page_number ) or $page_number !~ /^\d+$/;
+    $results_per_page = 25 unless defined( $results_per_page ) or $results_per_page !~ /^\d+$/;
+    
+    $attributes->{page} = $page_number;
+    $attributes->{rows} = $results_per_page;
+  }
+  
+  return $self->search_related("club_seasons", undef, $attributes);
 }
 
 =head2 get_team_seasons
@@ -363,11 +363,14 @@ sub get_team_seasons {
   my ( $self, $parameters ) = @_;
   my $season = $parameters->{season} || undef;
   
-  my $query = ( defined( $season ) ) ? {season => $season->id} : undef;
+  my $query = ( defined( $season ) ) ? {"me.season" => $season->id} : undef;
   
-  return $self->search_related("team_seasons", $query, {
+  return $self->search_related("club_seasons", $query, {
     prefetch  => "season",
-    group_by  => [qw/ season /],
+    group_by  => [qw( season )],
+  })->search_related("team_seasons", $query, {
+    prefetch  => "season",
+    group_by  => [qw( season )],
   });
 }
 
@@ -381,7 +384,7 @@ Performs the checks we need to ensure the club is deletable (i.e., has no teams)
 sub can_delete {
   my ( $self ) = @_;
   
-  my $teams = $self->search_related("team_seasons")->count;
+  my $teams = $self->search_related("club_seasons")->search_related("team_seasons")->count;
   
   # Return true if the number of teams is zero, otherwise false.
   return ( $teams == 0 ) ? 1 : 0;

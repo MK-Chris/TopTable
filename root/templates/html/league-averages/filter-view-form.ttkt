@@ -80,12 +80,14 @@ END;
 SWITCH criteria_type;
   CASE "matches";
     SET MATCHES_SELECTED = ' selected="selected"';
+  CASE "matches-pc";
+    SET MATCHES_PERCENTAGE_SELECTED = ' selected="selected"';
   CASE "games";
     SET GAMES_SELECTED = ' selected="selected"';
 END;
 -%]
   <div class="filter-custom"[% CUSTOM_VISIBLE %]>
-    [% c.maketext("averages.filter-form.custom-options-" _ averages_type, COMPETITORS, ACTIVE_SELECTED, LOAN_SELECTED, INACTIVE_SELECTED, PLAYED_SELECTED, WON_SELECTED, LOST_SELECTED, GT_SELECTED, GE_SELECTED, EQ_SELECTED, LE_SELECTED, LT_SELECTED, criteria, MATCHES_SELECTED, GAMES_SELECTED) %]
+    [% c.maketext("averages.filter-form.custom-options-" _ averages_type, COMPETITORS, ACTIVE_SELECTED, LOAN_SELECTED, INACTIVE_SELECTED, PLAYED_SELECTED, WON_SELECTED, LOST_SELECTED, GT_SELECTED, GE_SELECTED, EQ_SELECTED, LE_SELECTED, LT_SELECTED, criteria, MATCHES_SELECTED, MATCHES_PERCENTAGE_SELECTED, GAMES_SELECTED) %]
     <input type="submit" name="filter-custom" value="[% c.maketext("averages.filter-form.filter") %]" />
   </div>
 [%

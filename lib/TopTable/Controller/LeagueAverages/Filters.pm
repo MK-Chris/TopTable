@@ -2,6 +2,7 @@ package TopTable::Controller::LeagueAverages::Filters;
 use Moose;
 use namespace::autoclean;
 use HTML::Entities;
+use Data::Dumper::Concise;
 
 BEGIN { extends 'Catalyst::Controller'; }
 
@@ -143,6 +144,7 @@ sub retrieve_paged :Private {
   if ( $c->stash->{authorisation}{average_filter_view_all} and $c->request->parameters->{view} eq "all" ) {
     # If we've requested to view all and we're authorised to do so, show all
     $page_config->{view_all} = 1;
+    $c->stash({view_all => 1});
   } elsif ( $c->user_exists ) {
     $page_config->{user} = $c->user;
   }
@@ -468,47 +470,28 @@ Forwarded from docreate and doedit to do the filter creation / edit.
 sub setup_template :Private {
   my ( $self, $c, $action ) = @_;
   my $filter = $c->stash->{filter};
-  
-  my $create_edit_criteria = {
-    filter          => $filter,
-    name            => $c->request->parameters->{name},
-    player_types    => $c->request->parameters->{player_type},
-    criteria_field  => $c->request->parameters->{criteria_field},
-    operator        => $c->request->parameters->{operator},
-    criteria        => $c->request->parameters->{criteria},
-    criteria_type   => $c->request->parameters->{criteria_type},
-  };
-  
-  # If we're creating a non-public filter, we need to pass the user in.
-  # This is only done at creation; the 'public' status of the filter cannot be altered.
-  $create_edit_criteria->{user} = $c->user if $action eq "create" and $c->user_exists and !$c->request->parameters->{public};
+  my $user = $c->user if $action eq "create" and $c->user_exists and !$c->request->parameters->{public};
+  my @field_names = qw( name player_type criteria_field operator criteria criteria_type );
+  my @processed_field_names = qw( name show_active show_loan show_inactive criteria_field operator criteria criteria_type );
   
   # The error checking and creation is done in the TemplateLeagueTableRanking model
-  my $details = $c->model("DB::AverageFilter")->create_or_edit($action, $create_edit_criteria, $c);
+  my $returned = $c->model("DB::AverageFilter")->create_or_edit($action, {
+    filter    => $filter,
+    language  => sub{ $c->maketext( @_ ); },
+    logger    => sub{ my $level = shift; $c->log->$level( @_ ); },
+    user      => $user,
+    map {$_ => $c->request->parameters->{$_} } @field_names,
+  });
   
-  if ( scalar( @{ $details->{error} } ) ) {
-    my $error = $c->build_message( $details->{error} );
+  if ( scalar( @{ $returned->{fatal} } ) ) {
+    # A fatal error means we can't return to the form, so we go home instead,
+    $c->response->redirect( $c->uri_for("/",
+                              {mid => $c->set_status_msg( {error => $c->build_message( $returned->{fatal} )} )}));
+  } elsif ( scalar( @{ $returned->{error} } ) ) {
+    my $error = $c->build_message( $returned->{error} );
     
     # Flash the entered values we've got so we can set them into the form
-    $c->flash->{name}           = $c->request->parameters->{name};
-    $c->flash->{criteria_field} = $c->request->parameters->{criteria_field};
-    $c->flash->{operator}       = $c->request->parameters->{operator};
-    $c->flash->{criteria}       = $c->request->parameters->{criteria};
-    $c->flash->{criteria_type}  = $c->request->parameters->{criteria_type};
-    
-    # Get the player types, turn it into an array if it's not already
-    my $player_types = $c->request->parameters->{player_type};
-    $player_types = [$player_types] unless ref( $player_types ) eq "ARRAY";
-    
-    foreach my $player_type ( @{ $player_types } ) {
-      if ( $player_type eq "active" ) {
-        $c->flash->{show_active} = 1;
-      } elsif ( $player_type eq "loan" ) {
-        $c->flash->{show_loan} = 1;
-      } elsif ( $player_type eq "inactive" ) {
-        $c->flash->{show_inactive} = 1;
-      }
-    }
+    map {$c->flash->{$_} = $returned->{sanitised_fields}{$_} } @processed_field_names;
     
     my $redirect_uri;
     if ( $action eq "create" ) {
@@ -523,7 +506,7 @@ sub setup_template :Private {
     $c->detach;
     return;
   } else {
-    my $filter = $details->{filter};
+    my $filter = $returned->{filter};
     my $encoded_name = encode_entities( $filter->name );
     my $action_description = ( $action eq "create" ) ? $c->maketext("admin.message.created") : $c->maketext("admin.message.edited");
     

@@ -275,21 +275,6 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
-=head2 tournament_team_matches
-
-Type: has_many
-
-Related object: L<TopTable::Schema::Result::TournamentTeamMatch>
-
-=cut
-
-__PACKAGE__->has_many(
-  "tournament_team_matches",
-  "TopTable::Schema::Result::TournamentTeamMatch",
-  { "foreign.venue" => "self.id" },
-  { cascade_copy => 0, cascade_delete => 0 },
-);
-
 =head2 venue_timetables
 
 Type: has_many
@@ -306,8 +291,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-01-15 14:32:43
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:lrjQxlbcbmzn62yIj7eNtQ
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-01-27 15:12:25
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:yslnt/QIuWO5lz61uCJY5w
 
 
 #

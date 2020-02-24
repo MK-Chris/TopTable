@@ -42,9 +42,12 @@ sub all_teams_by_club_by_team_name_with_season {
   }
   
   return $self->search($where, {
-    prefetch  => ["club", {
-      team_seasons    => [qw( season division captain home_night )],
-      person_seasons  => "person",
+    prefetch  => [{
+      club            => "club_seasons",
+      team_seasons    => ["season", "captain", "home_night", {
+        division_season => "division",
+        person_seasons  => "person",
+      }],
     }],
     order_by => [{
       -asc => [qw( club.full_name me.name season.complete )]
@@ -110,7 +113,7 @@ sub teams_in_club {
     
     $attributes = {
       prefetch  => {
-        "team_seasons" => [ qw( season division captain home_night ) ]
+        "team_seasons" => ["season", "captain", "home_night", {division_season => "division"}],
       },
       order_by  => $sort_instruction,
     };
@@ -121,7 +124,7 @@ sub teams_in_club {
     
     $attributes = {
       prefetch  => {
-        "team_seasons" => [ qw( season division captain home_night ) ]
+        "team_seasons" => ["season", "captain", "home_night", {division_season => "division", club_season => "club"}],
       },
       order_by  => [{
         -asc   => ["me.name"]
@@ -163,54 +166,12 @@ sub teams_in_season_by_club_by_team_name {
   return $self->search({
     "team_seasons.season"  => $season->id,
   }, {
-    prefetch  => [
-      "club", {
-        "team_seasons" => [ qw( season division ) ]
-      }
-    ],
-    order_by  => {
-      -asc => [ qw( club.short_name me.name) ]
-    }
-  });
-}
-
-=head2 teams_in_season
-
-Gets teams (without prefetching the club) that have entered a given season
-
-=cut
-
-sub teams_in_season {
-  my ( $self, $season ) = @_;
-  
-  return $self->search({
-    "team_seasons.season"  => $season->id,
-  }, {
     prefetch  => {
-      "team_seasons" => [ qw( season ) ]
+      "club"          => "club_seasons",
+      "team_seasons"  => ["season", {division_season => "division"}],
     },
     order_by  => {
-      -asc => [ qw( me.name ) ]
-    }
-  });
-}
-
-=head2 all_teams_by_club_by_division
-
-A predefined search for all teams ordered by club (alphabetically by club full name), then division.  Requires a season to be passed so that we know which season data we are taking the division for each team from.
-
-=cut
-
-sub all_teams_by_club_by_division {
-  my ( $self, $season ) = @_;
-  
-  return $self->search({
-    "team_seasons.season"  => $season->id
-  }, {
-    prefetch  => "club",
-    prefetch  => "team_seasons",
-    order_by  => {
-      -asc => [ qw( club.full_name team_seasons.division.rank ) ]
+      -asc => [ qw( club.short_name me.name) ]
     }
   });
 }
@@ -255,9 +216,9 @@ sub find_with_prefetches {
       "team_seasons.season" => $season->id,
     };
     $attributes       = {
-      prefetch        => ["club", {
-        team_seasons  => [ qw( club home_night ) ],
-      }],
+      prefetch        => {
+        team_seasons  => [{club_season => "club"}, "home_night"],
+      },
     };
   } else {
     $where  = {
@@ -330,9 +291,9 @@ sub search_by_name {
   return $self->search( $where, $attributes );
 }
 
-=head2 find_key
+=head2 find_url_key
 
-Same as find(), but uses the key column instead of the id.  So we can use human-readable URLs.
+Same as find(), but uses the url_key column instead of the id.  So we can use human-readable URLs.
 
 =cut
 
@@ -348,9 +309,9 @@ sub find_url_key {
       "team_seasons.season" => $season->id,
     };
     $attributes = {
-      prefetch  => ["club", {
-        team_seasons => [ qw( club home_night ) ],
-      }],
+      prefetch  => {
+        team_seasons => [{club_season => "club"}, "home_night",],
+      },
     };
   } else {
     $where = {
@@ -358,9 +319,7 @@ sub find_url_key {
       "club.id" => $club->id,
     };
     $attributes = {
-      prefetch  => [
-        qw( club )
-      ],
+      prefetch  => [ qw( club ) ],
     };
   }
   
@@ -514,7 +473,7 @@ sub create_or_edit {
       # If this team hasn't entered this season yet and the matches have already been created, we can't edit them now
       push(@{ $return->{error} }, $lang->("teams.form.error.matches-exist-team-not-entered", $team->club->short_name, $team->name));
     } elsif ( defined( $team_season ) ) {
-      $old_division = $team_season->division;
+      $old_division = $team_season->division_season->division;
     }
     
     # Club checks; fairly complex due to changes that may or may not be allowed.  The HTML form may have disabled the field,
@@ -558,9 +517,7 @@ sub create_or_edit {
       })->single;
       
       my $maximum_teams = $division_season->fixtures_grid->maximum_teams;
-      my $current_teams = $division->search_related("team_seasons", {
-        season => $season->id,
-      })->count;
+      my $current_teams = $division_season->search_related("team_seasons")->count;
       
       push(@{ $return->{error} }, $lang->("teams.form.error.division-full", $division->name, $maximum_teams, $current_teams)) if $current_teams >= $maximum_teams;
     }
@@ -659,17 +616,18 @@ sub create_or_edit {
     if ( defined( $player ) ) {
       # Check if this player is active already
       my $active_membership = $player->search_related("person_seasons", {
-        season => $season->id,
-        team_membership_type => "active",
+        "me.season"           => $season->id,
+        "team_season.season"  => $season->id,
+        team_membership_type  => "active",
       }, {
         rows      => 1,
         prefetch  => {
-          team    => "club",
+          team_season => "club_season",
         }
       })->single;
       
       if ( defined( $active_membership ) ) {
-        if ( $action eq "edit" and $active_membership->team->id == $team->id ) {
+        if ( $action eq "edit" and $active_membership->team_season->team->id == $team->id ) {
           # Splice the player out, since their active membership is already for this team.
           push(@existing_ids, $player->id);
           splice(@{ $players }, $i, 1);
@@ -679,16 +637,16 @@ sub create_or_edit {
             # Reassign and warn that we've reassigned; the membership needs either deleting or setting to inactive, depending on whether or not they've played any games yet
             if ( $active_membership->matches_played > 0 ) {
               $active_membership->update({team_membership_type => "inactive"});
-              push(@{ $return->{warning} }, $lang->("teams.form.warning.player-reassigned", $player->display_name, $active_membership->team->club->short_name, $active_membership->team->name, $season->name, $player->first_name));
+              push(@{ $return->{warning} }, $lang->("teams.form.warning.player-reassigned", $player->display_name, $active_membership->team_season->club_season->short_name, $active_membership->team_season->name, $season->name, $player->first_name));
             } else {
               # No matches played, delete
               $active_membership->delete;
-              push(@{ $return->{warning} }, $lang->("teams.form.warning.player-reassigned-old-membership-removed", $player->display_name, $active_membership->team->club->short_name, $active_membership->team->name, $season->name, $player->first_name));
+              push(@{ $return->{warning} }, $lang->("teams.form.warning.player-reassigned-old-membership-removed", $player->display_name, $active_membership->team_season->club_season->short_name, $active_membership->team_season->name, $season->name, $player->first_name));
             }
           } else {
             # Do not reassign, just warn and splice the value from the array.
             splice(@{ $players }, $i, 1);
-            push(@{ $return->{warning} }, $lang->("teams.form.warning.player-not-reassigned", $player->display_name, $active_membership->team->club->short_name, $active_membership->team->name, $season->name, $player->first_name));
+            push(@{ $return->{warning} }, $lang->("teams.form.warning.player-not-reassigned", $player->display_name, $active_membership->team_season->club_season->short_name, $active_membership->team_season->name, $season->name, $player->first_name));
           }
         }
       }
@@ -727,6 +685,20 @@ sub create_or_edit {
     
     # Transaction so if we fail, nothing is updated
     my $transaction = $self->result_source->schema->txn_scope_guard;
+    
+    # Check if we need to create a new club season
+    unless ( defined( my $club_season = $club->get_season( $season ) ) ) {
+      my $club_secretary_id = $club->secretary->id if defined( $club->secretary );
+      
+      $club_season = $club->create_related("club_seasons", {
+        season            => $season->id,
+        full_name         => $club->full_name,
+        short_name        => $club->short_name,
+        abbreviated_name  => $club->abbreviated_name,
+        venue             => $club->venue->id,
+        secretary         => $club_secretary_id,
+      });
+    }
     
     # Success, we need to create / edit the team
     if ( $action eq "create" ) {
@@ -832,25 +804,12 @@ sub create_or_edit {
       $old_club->delete_related("club_seasons", {season => $season->id}) if $club->id != $old_club->id and $old_club->get_team_seasons({season => $season})->count == 0;
     }
     
-    # Check if we need to create a new club season
-    unless ( defined( my $club_season = $club->get_season( $season ) ) ) {
-      $club_season = $club->create_related("club_seasons", {
-        season            => $season->id,
-        full_name         => $club->full_name,
-        short_name        => $club->short_name,
-        abbreviated_name  => $club->abbreviated_name,
-        venue             => $club->venue->id,
-        secretary         => $club->secretary->id,
-      });
-    }
-    
     # Commit the database transactions
     $transaction->commit;
     
     # Now we need to work out who's been removed - check the current list of players for that team
     # who are not in the list of submitted players
-    my @players_to_remove = $team->search_related("person_seasons", {
-      season => $season->id,
+    my @players_to_remove = $team->find_related("team_seasons", {season => $season->id})->search_related("person_seasons", {
       team_membership_type => "active",
       person  => {
         -not_in => \@existing_ids,

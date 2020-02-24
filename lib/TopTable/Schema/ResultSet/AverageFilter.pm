@@ -52,7 +52,7 @@ sub page_records {
   my $page_number       = $parameters->{page_number} || 1;
   my $results_per_page  = $parameters->{results_per_page} || 25;
   my $user              = $parameters->{user} || undef;
-  my $all               = $parameters->{all} || 0;
+  my $all               = $parameters->{view_all} || 0;
   
   if ( $all ) {
     # Return everything
@@ -168,7 +168,6 @@ Provides the wrapper (including error checking) for adding / editing a meeting t
 sub create_or_edit {
   my ( $self, $action, $parameters ) = @_;
   my ( $filter_name_check, $user_invalid );
-  my $return_value = {error => []};
   
   # Defaults
   my $show_active   = 0;
@@ -177,29 +176,36 @@ sub create_or_edit {
   
   my $filter          = $parameters->{filter};
   my $name            = $parameters->{name};
-  my $player_types    = $parameters->{player_types};
-  my $criteria_field  = $parameters->{criteria_field};
-  my $operator        = $parameters->{operator};
-  my $criteria_type   = $parameters->{criteria_type};
-  my $criteria        = $parameters->{criteria};
+  my $player_types    = $parameters->{player_type} || [];
+  my $criteria_field  = $parameters->{criteria_field} || undef;
+  my $operator        = $parameters->{operator} || undef;
+  my $criteria_type   = $parameters->{criteria_type} || undef;
+  my $criteria        = $parameters->{criteria} || undef;
   my $user            = $parameters->{user} || undef;
+  my $log             = $parameters->{logger};
+  my $lang            = $parameters->{language};
+  my $return          = {
+    fatal             => [],
+    error             => [],
+    warning           => [],
+    sanitised_fields  => {
+      name  => $name, # Don't need to do anything to sanitise the name, so just pass it back in
+    },
+  };
   
   if ( $action ne "create" and $action ne "edit" ) {
     # Invalid action passed
-    push(@{ $return_value->{error} }, {
-      id          => "admin.form.invalid-action",
-      parameters  => [$action],
-    });
+    push(@{ $return->{fatal} }, $lang->("admin.form.invalid-action", $action));
     
     # This error is fatal, so we return straight away
-    return $return_value;
+    return $return;
   } elsif ( $action eq "edit" ) {
     unless ( defined( $filter ) and ref( $filter ) eq "TopTable::Model::DB::AverageFilter" ) {
       # Editing a meeting type that doesn't exist.
-      push(@{ $return_value->{error} }, {id => "average-filter.form.error.filter-invalid"});
+      push(@{ $return->{fatal} }, $lang->("average-filter.form.error.filter-invalid"));
       
       # Another fatal error
-      return $return_value;
+      return $return;
     }
     
     # The user is the one already in the database if we're editing
@@ -207,9 +213,10 @@ sub create_or_edit {
   } else {
     # Creating - make sure we have a valid user (if defined).  We should never set this error, as the currently
     # logged in user should get passed in. 
-    if ( defined( $user ) and ref( $user ) ne "TopTable::Model::DB::User" ) {
-      push(@{ $return_value->{error} }, {id => "average-filter.form.error.user-invalid"});
-      return $return_value;
+    if ( defined( $user ) and ref( $user ) ne "Catalyst::Authentication::Store::DBIx::Class::User" ) {
+      push(@{ $return->{error} }, $lang->("average-filter.form.error.user-invalid"));
+      $log->("debug", sprintf("Invalid user: %s (%s)", $user, ref($user)) );
+      return $return;
     }
   }
   
@@ -240,10 +247,10 @@ sub create_or_edit {
     
     # The message is slightly different for public and user filters
     my $message_id = ( defined( $user ) ) ? "average-filter.form.error.name-exists-user" : "average-filter.form.error.name-exists-public";
-    push(@{ $return_value->{error} }, {id => $message_id}) if defined( $filter_name_check );
+    push(@{ $return->{error} }, $lang->($message_id)) if defined( $filter_name_check );
   } else {
     # Name omitted.
-    push(@{ $return_value->{error} }, {id => "average-filter.form.error.name-blank"});
+    push(@{ $return->{error} }, {id => "average-filter.form.error.name-blank"});
   }
   
   # Check player types - first set to an arrayref if it's not already, so we know we can loop
@@ -264,19 +271,45 @@ sub create_or_edit {
     }
     
     # No valid types selected
-    push(@{ $return_value->{error} }, {id => "average-filter.form.error.no-player-types"}) unless $show_active or $show_loan or $show_inactive;
+    push(@{ $return->{error} }, $lang->("average-filter.form.error.no-player-types")) unless $show_active or $show_loan or $show_inactive;
   } else {
     # No recipients, error
-    push(@{ $return_value->{error} }, {id => "average-filter.form.error.no-player-types"});
+    push(@{ $return->{error} }, $lang->("average-filter.form.error.no-player-types"));
   }
   
-  # Check the criteria field
-  push(@{ $return_value->{error} }, {id => "average-filter.form.error.criteria-field-invalid"}) unless $criteria_field eq "played" or $criteria_field eq "won" or $criteria_field eq "lost";
-  push(@{ $return_value->{error} }, {id => "average-filter.form.error.operator-invalid"}) unless $operator eq ">" or $operator eq ">=" or $operator eq "=" or $operator eq "<=" or $operator eq "<";
-  push(@{ $return_value->{error} }, {id => "average-filter.form.error.criteria-invalid"}) unless !defined( $criteria ) or $criteria =~ /^\d+$/;
-  push(@{ $return_value->{error} }, {id => "average-filter.form.error.criteria-type-invalid"}) unless $criteria_type eq "matches" or $criteria_type eq "games";
+  $return->{sanitised_fields}{show_active}    = $show_active;
+  $return->{sanitised_fields}{show_loan}      = $show_loan;
+  $return->{sanitised_fields}{show_inactive}  = $show_inactive;
   
-  if ( scalar( @{ $return_value->{error} } ) == 0 ) {
+  # Check the criteria fields as long as at least one is filled out
+  if ( defined( $criteria_field ) or defined( $operator ) or defined( $criteria ) or defined( $criteria_type ) ) {
+    unless ( $criteria_field eq "played" or $criteria_field eq "won" or $criteria_field eq "lost" ) {
+      push(@{ $return->{error} }, $lang->("average-filter.form.error.criteria-field-invalid"));
+      $criteria_field = "";
+    }
+    
+    unless ( $operator eq ">" or $operator eq ">=" or $operator eq "=" or $operator eq "<=" or $operator eq "<" ) {
+      push(@{ $return->{error} }, $lang->("average-filter.form.error.operator-invalid"));
+      $operator = "";    
+    }
+    
+    unless ( !defined( $criteria ) or $criteria =~ /^\d+$/ ) {
+      push(@{ $return->{error} }, $lang->("average-filter.form.error.criteria-invalid"));
+      $criteria = "";
+    }
+    
+    unless ( $criteria_type eq "matches" or $criteria_type eq "matches-pc" or $criteria_type eq "games" ) {
+      push(@{ $return->{error} }, $lang->("average-filter.form.error.criteria-type-invalid"));
+      $criteria_type = "";
+    }
+  }
+  
+  $return->{sanitised_fields}{criteria_field} = $criteria_field;
+  $return->{sanitised_fields}{operator}       = $operator;
+  $return->{sanitised_fields}{criteria}       = $criteria;
+  $return->{sanitised_fields}{criteria_type}  = $criteria_type;
+  
+  if ( scalar( @{ $return->{error} } ) == 0 ) {
     # Generate a new URL key
     my $url_key;
     if ( $action eq "edit" ) {
@@ -316,10 +349,10 @@ sub create_or_edit {
       });
     }
     
-    $return_value->{filter} = $filter;
+    $return->{filter} = $filter;
   }
   
-  return $return_value;
+  return $return;
 }
 
 1;

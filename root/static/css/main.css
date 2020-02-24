@@ -40,7 +40,7 @@ nav {
 }
 
 /* _Typography */
-h1,h2,h3,h4,h5,h6 {font-weight: normal;}
+h1, h2, h3, h4, h5 {font-weight: normal;}
 
 h1 {
   font-size: 3em;
@@ -320,19 +320,13 @@ div.filter-defined {
 
 div.seasons-count, div.no-entry {margin-top: 1.4em;}
 #stats-matches, #stats-games, #stats-legs, #stats-points {
-  border: 1px solid #6e6e6e;
-	border-top-left-radius: 5px;
-	border-top-right-radius: 5px;
-	border-bottom-left-radius: 5px;
-	border-bottom-right-radius: 5px;
   margin: 1.4em;
   padding: 1.4em;
 }
 
 /* Tables */
-table#datatable, table#games-table, table#teams-table, table#home-players-table, table#away-players-table, table#averages-singles, table#averages-doubles-individuals, table#averages-doubles-pairs, table#averages-doubles-teams, table#fixtures-table {
-  width: 100%;
-}
+table#datatable, table#games-table, table#teams-table, table#home-players-table, table#away-players-table, table#averages-singles, table#averages-doubles-individuals, table#averages-doubles-pairs, table#averages-doubles-teams, table#fixtures-table {width: 100%;}
+th {text-align: left;}
 
 caption {
   background: #eee;
@@ -340,17 +334,8 @@ caption {
   color:#555;
 }
 
-th {
-  text-align: left;
-}
-
-/*table.responsive td, table.responsive-no-headers td, table responsive-vertical td {  
-	min-height: 1.625em;
-	word-wrap: break-word;
-}*/
-
 /* Lists of items */
-ul.object-list li {
+ul.option-list li {
   background: #f5f5f5;
   border: 1px solid #ffffff;
 }
@@ -374,12 +359,6 @@ ul.option-list {
   padding: 0;
 }
 
-ul.object-list {
-  margin: 0 0 5px;
-  padding: 0;
-  list-style: none;
-}
-
 div.list-item {
   padding: 4px;
   margin 2px;
@@ -390,34 +369,46 @@ ul.option-list {
   border-bottom: 1px solid #111;
 }
 
-dt:after {content: ":";}
-
-dl dd {
-  display: inline;
+/* Vertical tables */
+table.vertical {
+  border-top: 1px solid #111;
+  border-bottom: 1px solid #111;
   margin: 0;
-  width: 50%;
-  padding-top: 8px;
+  padding: 0;
+  width: 100%;
+  border-collapse: collapse;
 }
-dl dd:after{
-  display: block;
-  content: '';
+
+table.vertical tr td, table.vertical tr th {
+  background: #f5f5f5;
+  border: 1px solid #ffffff;
+  border-top: 1px solid #ddd;
+  border-bottom: none;
 }
-dl dt{
-  display: inline-block;
-  min-width: 100px;
-  width: 50%;
+
+table.vertical tr th {
   font-weight: bold;
-  padding-top: 8px;
+  width: 50%;
+  padding: 8px 10px;
+  border-right: none;
+  /*width: 1%;*/
+  white-space: nowrap;
 }
+
+table.vertical tr td {
+  padding: 8px 10px;
+  border-left: none;
+}
+
+table.vertical tr:first-child td, table.vertical tr:first-child th {border-top: none;}
+table.vertical tr td.odd, table.vertical tr th.odd {background-color: #f9f9f9;}
+table.vertical tr:first-child {border-top: none;}
+table.vertical tr:hover td, table.vertical tr:hover th {background-color: #f6f6f6;}
+table.vertical tr th:after {content: ":";}
 
 #report-grouper {
   float: left;
   min-width: 200px;
-}
-
-/* Hovered-over list option */
-table.no-script td.active-row, div.active-row, ul.object-list li.active-item {
-  background: #dcdcdc;
 }
 
 /* Pagination */
@@ -546,9 +537,7 @@ input::-moz-focus-inner, button::-moz-focus-inner {
   padding:0;
 }
 
-.no-boxshadow .blurred:invalid{
-  background-color:#f0dddd;
-}
+.no-boxshadow .blurred:invalid {background-color:#f0dddd;}
 
 /* Responsive images */
 img {
@@ -599,9 +588,7 @@ input[disabled="disabled"], div.chosen-disabled, div.chosen-disabled a, div.chos
 }
 
 /* jQuery iHaveCookies */
-button#ihavecookiesBtn {
-  margin-left: 0px !important;
-}
+button#ihavecookiesBtn {margin-left: 0px !important;}
 
 #gdpr-cookie-message {
   position: fixed;
@@ -615,31 +602,37 @@ button#ihavecookiesBtn {
   margin-left: 30px;
   font-family: system-ui;
 }
+
 #gdpr-cookie-message h4 {
   color: #EE4B5A;
   font-size: 18px;
   font-weight: 500;
   margin-bottom: 10px;
 }
+
 #gdpr-cookie-message h5 {
   color: #EE4B5A;
   font-size: 15px;
   font-weight: 500;
   margin-bottom: 10px;
 }
+
 #gdpr-cookie-message p, #gdpr-cookie-message ul {
   color: white;
   font-size: 15px;
   line-height: 1.5em;
 }
+
 #gdpr-cookie-message p:last-child {
   margin-bottom: 0;
   text-align: right;
 }
+
 #gdpr-cookie-message li {
   width: 49%;
   display: inline-block;
 }
+
 #gdpr-cookie-message a {
   color: #EE4B5A;
   text-decoration: none;
@@ -648,13 +641,14 @@ button#ihavecookiesBtn {
   border-bottom: 1px dotted rgba(255,255,255,0.75);
   transition: all 0.3s ease-in;
 }
+
 #gdpr-cookie-message a:hover {
   color: white;
   border-bottom-color: #EE4B5A;
   transition: all 0.3s ease-in;
 }
-#gdpr-cookie-message button,
-button#ihavecookiesBtn {
+
+#gdpr-cookie-message button, button#ihavecookiesBtn {
   border: none;
   background: #EE4B5A;
   color: white;
@@ -665,24 +659,25 @@ button#ihavecookiesBtn {
   cursor: pointer;
   transition: all 0.3s ease-in;
 }
+
 #gdpr-cookie-message button:hover {
   background: white;
   color: #EE4B5A;
   transition: all 0.3s ease-in;
 }
+
 button#gdpr-cookie-advanced {
   background: white;
   color: #EE4B5A;
 }
-#gdpr-cookie-message button:disabled {
-  opacity: 0.3;
-}
+
+#gdpr-cookie-message button:disabled {opacity: 0.3;}
+
 #gdpr-cookie-message input[type="checkbox"] {
   float: none;
   margin-top: 0;
   margin-right: 5px;
 }
-
 
 select.time, select.player-number {width: 70px;}
 
@@ -716,9 +711,6 @@ input.active, textarea.active {
 .chosen-container {padding-bottom: 5px;}
 input.menu-input {width: 150px;}
 .menu-margin {margin-left: 5px;}
-
-#stats-left > table.no-script th, #stats-right > table.no-script th {width: 50%;}
-#stats-left > table.no-script td, #stats-right > table.no-script td {text-align: right;}
 
 #club-secretary, #club-venue, #grid-positions, #grid-matches, #stats-left, #stats-right, #meeting-attendees, #meeting-apologies {
   min-width: 280px;
@@ -779,12 +771,7 @@ div.user-info-heading {font-weight: bold;}
   padding-bottom: 20px;
 }
 
-#directions-container, #directions-canvas {
-  display: inline-block;
-  vertical-align: top;
-}
-
-#directions-input, .season-team, fieldset {
+.season-team, fieldset {
 	border: 1px solid #a6c9e2;
 	border-radius: 5px;
   padding: 5px;
@@ -793,19 +780,33 @@ div.user-info-heading {font-weight: bold;}
 
 fieldset {min-width: 100%;}
 
-#index-news {
-  width: 50%;
-  min-width: 280px;
-  float: left;
-  padding-bottom: 20px;
-  margin-right: 2%;
+/* Create two equal columns that floats next to each other */
+.column {
+  width: 49%;
+  padding: 0px;
 }
 
-#index-matches-today {
-  width: 48%;
-  min-width: 280px;
+.left {
   float: left;
-  padding-bottom: 20px;
+  padding-right: 4px;
+}
+.right {
+  float: right;
+  padding-left: 4px;
+}
+
+/* Clear floats after the columns */
+.row:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+/* Responsive layout - makes the two columns stack on top of each other instead of next to each other */
+@media screen and (max-width: 900px) {
+  .column {
+    width: 100%;
+  }
 }
 
 span.player_total {
@@ -975,46 +976,15 @@ html[xmlns] .clearfix, html[xmlns] .clear-fix {display: block;}
   Responsive
 */
 @media only screen and (max-width: 768px)  {
-	/* generic responsive table */
-	table.responsive, table.responsive thead, table.responsive tbody, table.responsive th, table.responsive td, table.responsive tr {display: block;}
+  #index-news, #season-statistics {
+    float: none;
+    padding-bottom: 20px;
+  }
   
-	table.responsive thead tr { 
-		position: absolute;
-		top: -9999px;
-		left: -9999px;
-	}
-  
-	table.responsive td, table.responsive th {padding: .25em;}
-	table.responsive tr {border: 1px solid #ccc;}
-  
-	table.responsive td { 
-		border: none;
-		border-bottom: 1px solid #eee; 
-		position: relative;
-		padding-left: 50%;
-	}
-  
-	table.responsive td:before { 
-		position: absolute;
-		top: .375em;
-		left: .375em;
-		width: 45%; 
-		padding-right: .625em; 
-		white-space: nowrap;
-		font-weight: 700;
-		content: attr(data-label);
-    text-align: left;
-	}
-  
-	table.responsive-no-headers, table.responsive-vertical {border-bottom: 1px solid #ccc;}
-	table.responsive-no-headers thead, table.responsive-vertical thead {display:none;}
-	table.responsive-no-headers td, table.responsive-vertical td {display: block;}
-	table.responsive-no-headers tbody > tr:first-child > th + td, table.responsive-vertical tbody > tr:first-child > th + td {border-top: 1px solid #e2e2e2;}
-
-	table.responsive-no-headers td:first-child, table.responsive-vertical td:first-child {
-		border-top: 3px solid #ccc;
-		text-align:left;
-	}
+  #index-matches-today, #season-fixtures-results {
+    float: none;
+    padding-bottom: 20px;
+  }
   
   /* Hide label placeholders so we don't get an odd gap between one field and another in say a collection of address fields */
   div.label-field-container > div.label-placeholder {display: none;}

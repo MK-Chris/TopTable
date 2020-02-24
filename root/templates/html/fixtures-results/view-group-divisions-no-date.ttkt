@@ -35,18 +35,19 @@ IF matches.count;
   WHILE (match = matches.next);
     SET date = match.actual_date;
     CALL date.set_locale( c.locale );
-    SET year = match.scheduled_date.year;
-    SET month = zeroes( match.scheduled_date.month );
-    SET day   = zeroes( match.scheduled_date.day );
+    SET month = zeroes( match.actual_date.month );
+    SET day   = zeroes( match.actual_date.day );
+    SET home_team = match.team_season_home_team_season;
+    SET away_team = match.team_season_away_team_season;
     
     IF specific_season;
-      SET home_team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [match.home_team.club.url_key, match.home_team.url_key, season.url_key]);
-      SET away_team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [match.away_team.club.url_key, match.away_team.url_key, season.url_key]);
-      SET division_uri  = c.uri_for_action("/league-tables/view_specific_season", [match.division.url_key, season.url_key]);
+      SET division_uri      = c.uri_for_action("/league-tables/view_specific_season", [match.division_season.division.url_key, season.url_key]);
+      SET home_team_uri     = c.uri_for_action("/teams/view_specific_season_by_url_key", [home_team.club_season.club.url_key, home_team.team.url_key, season.url_key]);
+      SET away_team_uri     = c.uri_for_action("/teams/view_specific_season_by_url_key", [away_team.club_season.club.url_key, away_team.team.url_key, season.url_key]);
     ELSE;
-      SET home_team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [match.home_team.club.url_key, match.home_team.url_key]);
-      SET away_team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [match.away_team.club.url_key, match.away_team.url_key]);
-      SET division_uri  = c.uri_for_action("/league-tables/view_current_season", [match.division.url_key]);
+      SET division_uri      = c.uri_for_action("/league-tables/view_current_season", [match.division_season.division.url_key]);
+      SET home_team_uri     = c.uri_for_action("/teams/view_current_season_by_url_key", [home_team.club_season.club.url_key, home_team.team.url_key]);
+      SET away_team_uri     = c.uri_for_action("/teams/view_current_season_by_url_key", [away_team.club_season.club.url_key, away_team.team.url_key]);
     END;
     
     # Display the score or 'Not yet played'?
@@ -58,19 +59,19 @@ IF matches.count;
 -%]
     <tr>
       <td>
-        <a href="[% division_uri %]">[% match.home_team.team_seasons.division.name | html_entity %]</a>
+        <a href="[% division_uri %]">[% match.division_season.name | html_entity %]</a>
       </td>
       <td>
-        [% match.home_team.team_seasons.division.rank %]</a>
+        [% match.division_season.division.rank %]</a>
       </td>
       <td>
-        <a href="[% home_team_uri %]">[% match.home_team.club.short_name | html_entity %] [% match.home_team.name | html_entity %]</a>
+        <a href="[% home_team_uri %]">[% home_team.club_season.short_name | html_entity %] [% home_team.name | html_entity %]</a>
       </td>
       <td>
-        <a href="[% away_team_uri %]">[% match.away_team.club.short_name | html_entity %] [% match.away_team.name %]</a>
+        <a href="[% away_team_uri %]">[% away_team.club_season.short_name | html_entity %] [% away_team.name %]</a>
       </td>
       <td>
-        <a href="[% c.uri_for_action('/matches/team/view_by_url_keys', [match.home_team.club.url_key, match.home_team.url_key, match.away_team.club.url_key, match.away_team.url_key, year, month, day]) %]" title="[% c.maketext("fixtures-results.view-scorecard") %]">[% score %]</a>
+        <a href="[% c.uri_for_action('/matches/team/view_by_url_keys', match.url_keys) %]" title="[% c.maketext("fixtures-results.view-scorecard") %]">[% score %]</a>
       </td>
       <td>
         <a href="[% c.uri_for_action('/venues/view', [match.venue.url_key]) %]">[% match.venue.name | html_entity %]</a>
@@ -82,17 +83,17 @@ IF matches.count;
 [%
       IF authorisation.match_update;
 -%]
-        <a href="[% c.uri_for_action("/matches/team/update_by_url_keys", [match.home_team.club.url_key, match.home_team.url_key, match.away_team.club.url_key, match.away_team.url_key, year, month, day]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" width="16" height="16" title="[% c.maketext("matches.update-score") %]" /></a>
+        <a href="[% c.uri_for_action("/matches/team/update_by_url_keys", match.url_keys) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" width="16" height="16" title="[% c.maketext("matches.update-score") %]" /></a>
 [%
       END;
       IF authorisation.match_cancel;
 -%]
-        <a href="[% c.uri_for_action("/matches/team/cancel_by_url_keys", [match.home_team.club.url_key, match.home_team.url_key, match.away_team.club.url_key, match.away_team.url_key, year, month, day]) %]"><img src="[% c.uri_for("/static/images/icons/0006-Cross-icon-16.png") %]" width="16" height="16" title="[% c.maketext("matches.cancel") %]" /></a>
+        <a href="[% c.uri_for_action("/matches/team/cancel_by_url_keys", match.url_keys) %]"><img src="[% c.uri_for("/static/images/icons/0006-Cross-icon-16.png") %]" width="16" height="16" title="[% c.maketext("matches.cancel") %]" /></a>
 [%
       END;
       IF match.can_report( c.user );
 -%]
-        <a href="[% c.uri_for_action("/matches/team/report_by_url_keys", [match.home_team.club.url_key, match.home_team.url_key, match.away_team.club.url_key, match.away_team.url_key, year, month, day]) %]"><img src="[% c.uri_for("/static/images/icons/0037-Notepad-icon-16.png") %]" width="16" height="16" title="[% c.maketext("matches.report") %]" /></a>
+        <a href="[% c.uri_for_action("/matches/team/report_by_url_keys", match.url_keys) %]"><img src="[% c.uri_for("/static/images/icons/0037-Notepad-icon-16.png") %]" width="16" height="16" title="[% c.maketext("matches.report") %]" /></a>
 [%
       END;
 -%]

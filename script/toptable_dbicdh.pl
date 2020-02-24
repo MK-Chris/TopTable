@@ -13,10 +13,12 @@ use Config::ZOMG;
 use Data::Dumper::Concise;
 
 my $config = Config::ZOMG->new( name => 'TopTable' );
-my $config_hash  = $config->load;
-my $connect_info = $config_hash->{"Model::DB"}{"connect_info"};
-my $schema       = TopTable::Schema->connect($connect_info);
-my $mysql_version = "";
+my $config_hash     = $config->load;
+my $connect_info    = $config_hash->{"Model::DB"}{"connect_info"};
+my $schema          = TopTable::Schema->connect($connect_info);
+my $mysql_version   = "";
+my $force_overwrite = 1;
+
 
 if ( $schema->storage->sqlt_type eq "MySQL" ) {
   $mysql_version = $schema->storage->dbh_do( sub {
@@ -46,21 +48,23 @@ my $dh = DH->new({
       mysql_version   => $mysql_version,
     },
   },
+  force_overwrite     => $force_overwrite,
+});
+
+
+# Set "longtext" ddl / upgrade_sql columns for if we're using a MySQL database
+# If we're not, they'll be converted anyway.
+$dh->version_storage->version_rs->result_source->add_columns(
+ddl => {
+  data_type         => "longtext",
+  is_nullable       => 1,
+},
+upgrade_sql => {
+  data_type         => "longtext",
+  is_nullable       => 1,
 });
  
 sub install {
-  # Set "longtext" ddl / upgrade_sql columns for if we're using a MySQL database
-  # If we're not, they'll be converted anyway.
-  $dh->version_storage->version_rs->result_source->add_columns(
-  ddl => {
-    data_type         => "longtext",
-    is_nullable       => 1,
-  },
-  upgrade_sql => {
-    data_type         => "longtext",
-    is_nullable       => 1,
-  });
-  
   $dh->prepare_install;
   $dh->install;
 }
@@ -80,6 +84,11 @@ sub upgrade {
 sub current_version {
   say $dh->database_version;
 }
+
+sub install_version_storage {
+  $dh->prepare_version_storage_install;
+  $dh->install_version_storage;
+}
  
 sub help {
 say <<'OUT';
@@ -87,6 +96,7 @@ usage:
   install
   upgrade
   current-version
+  install-version-storage
 OUT
 }
  
@@ -98,6 +108,8 @@ if ( defined( $ARGV[0] ) and $ARGV[0] eq 'install' ) {
   upgrade();
 } elsif ( defined( $ARGV[0] ) and $ARGV[0] eq 'current-version' ) {
   current_version();
+} elsif ( defined( $ARGV[0] ) and $ARGV[0] eq 'install-version-storage' ) {
+  install_version_storage();
 } else {
   help();
 }

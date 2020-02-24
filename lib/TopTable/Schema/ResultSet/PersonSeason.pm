@@ -3,7 +3,7 @@ package TopTable::Schema::ResultSet::PersonSeason;
 use strict;
 use warnings;
 use base 'DBIx::Class::ResultSet';
-use Data::Dumper;
+use Data::Dumper::Concise;
 
 =head2 get_active_person_season_and_team
 
@@ -20,7 +20,9 @@ sub get_active_person_season_and_team {
     team_membership_type  => "active",
   }, {
     prefetch => {
-      team => "club"
+      team_season => ["team", {
+        club_season => "club",
+      }],
     },
   });
 }
@@ -93,15 +95,13 @@ sub get_person_season_and_teams_and_divisions {
     return $self->search({
       person                => $person->id,
       "me.season"           => $season->id,
-      "team_seasons.season" => $season->id,
+      "team_season.season"  => $season->id,
     }, {
       prefetch => ["team_membership_type", {
-        team => {
-          team_seasons => [ qw( division club ) ],
-        }
+        team_season => ["team", {division_season => "division", club_season => "club"}],
       }],
       order_by => {
-        -asc => [ qw( team_membership_type.display_order division.rank club.short_name team.name ) ],
+        -asc => [ qw( team_membership_type.display_order division.rank club_season.short_name team_season.name ) ],
       },
     });
   }
@@ -164,17 +164,16 @@ sub get_people_in_division_in_singles_averages_order {
   my $operator        = $parameters->{operator} || undef;
   my $criteria        = $parameters->{criteria} || undef;
   my $criteria_type   = $parameters->{criteria_type} || undef;
+  my $log             = $parameters->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   
   my $where = {
     "me.season"             => $season->id,
-    "team_seasons.division" => $division->id,
-    "team_seasons.season"   => $season->id,
+    "team_season.division"  => $division->id,
+    "team_season.season"    => $season->id,
   };
   
   # Set up the team if there is one
-  if ( defined( $team ) ) {
-    $where->{"team_seasons.team"} = $team->id;
-  }
+  $where->{"team_season.team"} = $team->id if defined( $team );
   
   # Set up the player type if there is one
   if ( defined( $player_type ) ) {
@@ -183,25 +182,25 @@ sub get_people_in_division_in_singles_averages_order {
   }
   
   if ( defined( $criteria_field ) and defined( $operator ) and defined( $criteria ) and defined( $criteria_type ) and ( $operator eq "<" or $operator eq "<=" or $operator eq "=" or $operator eq ">=" or $operator eq ">" ) and $criteria =~ /^\d+$/ ) {
-    $where->{ sprintf( "me.%s_%s", $criteria_type, $criteria_field ) } = {
-      $operator => $criteria,
-    };
+    if ( $criteria_type eq "matches-pc" ) {
+      # We need to work out a percentage of the available matches, which means we need to work out the percentage from the criteria, rather than use it directly
+      $where->{ sprintf( "me.matches_played" ) } = {
+        $operator => \sprintf( "(team_season.matches_played / 100) * %d", $criteria ),
+      };
+    } else {
+      $where->{ sprintf( "me.%s_%s", $criteria_type, $criteria_field ) } = {
+        $operator => $criteria,
+      };
+    }
   }
   
   return $self->search( $where, {
-    prefetch  => [{
-      person => {
-        person_seasons => {
-          team => "club",
-        },
-      },
+    prefetch  => ["person", {
+      team_season => ["team", {club_season => "club"}],
     }],
-    join => {
-      "team" => "team_seasons"
-    },
     order_by  => [{
       -desc =>  [ qw( me.average_game_wins me.games_played me.games_won me.matches_played) ]}, {
-      -asc  => [ qw( person.surname person.first_name) ]}
+      -asc  => [ qw( me.surname me.first_name) ]}
     ],
   });
 }
@@ -224,14 +223,12 @@ sub get_people_in_division_in_doubles_individual_averages_order {
   
   my $where = {
     "me.season"             => $season->id,
-    "team_seasons.division" => $division->id,
-    "team_seasons.season"   => $season->id,
+    "team_season.division"  => $division->id,
+    "team_season.season"    => $season->id,
   };
   
   # Set up the team if there is one
-  if ( defined( $team ) ) {
-    $where->{"team_seasons.team"} = $team->id;
-  }
+  $where->{"team_season.team"} = $team->id if defined( $team );
   
   # Set up the player type if there is one
   if ( defined( $player_type ) ) {
@@ -246,18 +243,13 @@ sub get_people_in_division_in_doubles_individual_averages_order {
   }
   
   return $self->search($where, {
-    prefetch  => [
-      "person", {
-        "team" => "club",
-      }
-    ],
-    join => {
-      "team" => "team_seasons"
-    },
+    prefetch  => ["person", {
+      team_season => ["team", {club_season => "club"}],
+    }],
     order_by => [{
-      -desc => [ qw( doubles_average_game_wins doubles_games_played doubles_games_won ) ],
+      -desc => [ qw( me.doubles_average_game_wins me.doubles_games_played me.doubles_games_won ) ],
     }, {
-      -asc  => [ qw( person.surname person.first_name ) ],
+      -asc  => [ qw( me.surname me.first_name ) ],
     }],
   });
 }

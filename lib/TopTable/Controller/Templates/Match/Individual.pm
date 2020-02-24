@@ -201,6 +201,9 @@ sub view :Chained("base") :PathPart("") :Args(0) {
     title_links         => \@title_links,
     view_online_display => sprintf( "Viewing match template: %s", $encoded_name ),
     view_online_link    => 0,
+    external_scripts    => [
+      $c->uri_for("/static/script/standard/vertical-table.js"),
+    ],
   });
 }
 

@@ -24,9 +24,9 @@ FOREACH division IN divisions;
     SET bye_required = 0;
   END;
 -%]
-<div id="division-container-[% division.id %]">
+<div id="division-container-[% division.division.id %]">
 <h5>[% division.name %]</h5>
-<ul class="sortable" id="division-list-[% division.id %]" data-division="[% division.id %]">
+<ul class="sortable" id="division-list-[% division.division.id %]" data-division="[% division.division.id %]">
 [%
   SET position_number = 0;
   FOREACH team_season = division.team_seasons;
@@ -44,7 +44,7 @@ FOREACH division IN divisions;
         SET team_ids = team_ids _ ",0";
       END;
 -%]
-  <li class="ui-state-default grid-team" data-team-id="0"><span class="ui-icon ui-icon-arrowthick-2-n-s"></span> <span class="team-position-number" id="division-[% division.id %]-team-0-position">[% position_number %]</span> <span class="team-position-name">[[% c.maketext("fixtures-grids.form.teams.bye") %]]</span></li>
+  <li class="ui-state-default grid-team" data-team-id="0"><span class="ui-icon ui-icon-arrowthick-2-n-s"></span> <span class="team-position-number" id="division-[% division.division.id %]-team-0-position">[% position_number %]</span> <span class="team-position-name">[[% c.maketext("fixtures-grids.form.teams.bye") %]]</span></li>
 [%
     END;
     
@@ -58,7 +58,7 @@ FOREACH division IN divisions;
     # Increment the position number
     SET position_number = position_number + 1;
 -%]
-  <li class="ui-state-default grid-team" data-team-id="[% team_season.team.id %]"><span class="ui-icon ui-icon-arrowthick-2-n-s"></span> <span class="team-position-number" id="division-[% division.id %]-team-[% team_season.team.id %]-position">[% position_number %]</span> <span class="team-position-name">[% team_season.team.club.short_name | html_entity %] [% team_season.team.name | html_entity %]</span></li>
+  <li class="ui-state-default grid-team" data-team-id="[% team_season.team.id %]"><span class="ui-icon ui-icon-arrowthick-2-n-s"></span> <span class="team-position-number" id="division-[% division.division.id %]-team-[% team_season.team.id %]-position">[% position_number %]</span> <span class="team-position-name">[% team_season.club_season.short_name | html_entity %] [% team_season.name | html_entity %]</span></li>
 [%
   END;
   
@@ -74,12 +74,12 @@ FOREACH division IN divisions;
     # Increment the position number
     SET position_number = position_number + 1;
 -%]
-  <li class="ui-state-default grid-team" data-team-id="0"><span class="ui-icon ui-icon-arrowthick-2-n-s"></span> <span class="team-position-number" id="division-[% division.id %]-team-0-position">[% position_number %]</span> <span class="team-position-name">[[% c.maketext("fixtures-grids.form.teams.bye") %]]</span></li>
+  <li class="ui-state-default grid-team" data-team-id="0"><span class="ui-icon ui-icon-arrowthick-2-n-s"></span> <span class="team-position-number" id="division-[% division.division.id %]-team-0-position">[% position_number %]</span> <span class="team-position-name">[[% c.maketext("fixtures-grids.form.teams.bye") %]]</span></li>
 [%
   END;
 -%]
 </ul><br />
-<input type="hidden" id="division-positions-[% division.id %]" name="division-positions-[% division.id %]" value="[% team_ids %]" />
+<input type="hidden" id="division-positions-[% division.division.id %]" name="division-positions-[% division.division.id %]" value="[% team_ids %]" />
 </div>
 
 [%

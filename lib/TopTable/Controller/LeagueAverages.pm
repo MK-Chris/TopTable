@@ -1,7 +1,7 @@
 package TopTable::Controller::LeagueAverages;
 use Moose;
 use namespace::autoclean;
-use Data::Dumper;
+use Data::Dumper::Concise;
 use HTML::Entities;
 
 BEGIN { extends 'Catalyst::Controller'; }
@@ -365,9 +365,13 @@ sub view_finalise :Private {
     }
   }
   
+  $config->{logger} = sub{ my $level = shift; $c->log->$level( @_ ); };
+  
   if ( defined( $averages_type ) and $averages_type eq "singles" ) {
     # Singles averages
     $c->stash({ singles_averages => [ $c->model("DB::PersonSeason")->get_people_in_division_in_singles_averages_order( $config ) ], });
+    
+    my $people = $c->model("DB::PersonSeason")->get_people_in_division_in_singles_averages_order( $config );
   } elsif ( defined( $averages_type ) and $averages_type eq "doubles-individuals" ) {
     # Doubles averages
     $c->stash({ doubles_individual_averages => [ $c->model("DB::PersonSeason")->get_people_in_division_in_doubles_individual_averages_order( $config ) ], });

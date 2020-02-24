@@ -376,7 +376,7 @@ sub delete_fixtures {
           scheduled_date  => undef,
         });
         
-        push( @match_names, sprintf( "%s %s v %s %s (%s)", $match->home_team->club->short_name, $match->home_team->name, $match->away_team->club->short_name, $match->away_team->name, $match->scheduled_date->dmy("/") ) );
+        push( @match_names, sprintf( "%s %s v %s %s (%s)", $match->team_season_home_team_season->club_season->short_name, $match->team_season_home_team_season->name, $match->team_season_away_team_season->club_season->short_name, $match->team_season_away_team_season->name, $match->scheduled_date->dmy("/") ) );
       }
       
       my $ok = $self->search_related("team_matches", {
@@ -421,6 +421,319 @@ sub matches_in_current_season {
   }, {
     join => "season",
   })->count;
+}
+
+
+
+=head2 set_teams
+
+Set the teams to their grid numbers for the current season.
+
+=cut
+
+sub set_teams {
+  my ( $self, $parameters ) = @_;
+  my $divisions = delete $parameters->{divisions};
+  my $lang      = delete $parameters->{language};
+  
+  my $return          = {
+    grid              => $self,
+    fatal             => [],
+    error             => [],
+    warning           => [],
+    sanitised_fields  => {},
+  };
+  
+  # Get the current season, as we can only change this for the current season
+  my $season = $self->result_source->schema->resultset("Season")->get_current;
+  
+  unless ( defined( $season ) ) {
+    # No current season, fatal error
+    push( @{ $return->{error} }, $lang->("fixtures-grids.teams.error.no-current-season") );
+    return $return;
+  }
+    
+  # If we have a grid and a season, we need to see if matches have already been set for that grid
+  my $matches_set_already = $self->search_related("team_matches", {
+    season => $season->id,
+  })->count;
+  
+  if ( $matches_set_already > 0 ) {
+    push( @{ $return->{error} }, $lang->("fixtures-grids.teams.error.matches-set") );
+    return $return;
+  }
+  
+  # Get the list of teams who've entered in divisions assigned to the grid
+  my $division_seasons = $self->search_related("division_seasons", {
+    "me.season"           => $season->id,
+    "team_seasons.season" => $season->id,
+  }, {
+    prefetch  => [ qw( division ), { 
+      team_seasons => [ qw( team ), {
+        club_season => "club",
+      }],
+    }],
+    order_by  => {
+      -asc => [ qw( division.rank team_seasons.grid_position ) ]
+    },
+  });
+  
+  # This hash will hold divisions and their teams and their positions as well as
+  # some other name data so that we can use it in error messages.
+  my %submitted_data = ();
+  
+  # This will hold the values we've seen for each division so we can make sure we've not seen any
+  # position more than once for any divisioon
+  my %used_values = ();
+  
+  # The error message to build up
+  my $error;
+  
+  while ( my $division_season = $division_seasons->next ) {
+    # Store the name for purposes of error messages
+    $submitted_data{ $division_season->division->url_key } = {
+      id      => $division_season->division->id,
+      rank    => $division_season->division->rank,
+      name    => $division_season->name,
+      object  => $division_season,
+      teams   => {},
+    };
+    
+    # Get the submitted value for this division
+    my @team_ids = split( ",", $divisions->{"division-positions-" . $division_season->division->id} );
+    
+    # Loop through the team IDs; make sure each team belongs to this division and is only itemised once and that no teams are missing.
+    my $position = 1;
+    foreach my $id ( @team_ids ) {
+      if ( $id ) {
+        # If we have an ID, make sure it's in the resultset for this division
+        my $team_season = $division_season->team_seasons->find({
+          team    => $id,
+          season  => $season->id,
+        }, {
+          prefetch => [ qw( team ), {
+            club_season => "club",
+          }],
+        });
+        
+        if ( defined( $team_season ) ) {
+          $submitted_data{ $division_season->division->url_key }{teams}{$team_season->team->id} = {
+            name      => sprintf( "%s %s", $team_season->club_season->short_name, $team_season->name ),
+            position  => $position,
+          };
+          
+          if ( defined( $used_values{ $division_season->name }{$position} ) ) {
+            # Already exists, push it on to the arrayref
+            push( @{ $used_values{ $division_season->name }{$position} } , sprintf( "%s %s", $team_season->club_season->short_name, $team_season->name ) );
+          } else {
+            # Doesn't exist, create a new arrayref
+            $used_values{ $division_season->name }{$position} = [sprintf( "%s %s", $team_season->club_season->short_name, $team_season->name )];
+          }
+        } else {
+          push( @{ $return->{error} }, $lang->("fixtures-grids.teams.error.wrong-team-id", $id) );
+        }
+      } else {
+        # No ID, push undefined values for the bye
+        $submitted_data{ $division_season->division->url_key }{teams}{0} = {
+          id        => 0,
+          name      => "[Bye]",
+          position  => $position,
+        };
+      }
+      $position++;
+    }
+    
+    # After we loop through the IDs, make sure we have each team in there
+    my $team_seasons = $division_season->team_seasons;
+    while ( my $team_season = $team_seasons->next ) {
+      push( @{ $return->{error} }, $lang->("fixtures-grids.teams.error.no-position-for-team", $team_season->club_season->short_name, $team_season->name, $submitted_data{ $division_season->division->url_key }{name}) )  if !exists( $submitted_data{ $division_season->division->url_key }{teams}{ $team_season->team->id } );
+    }
+  }
+  
+  # Now loop through our %used_values hash and make sure we haven't used any position more than once for each division.
+  foreach my $division ( keys(%used_values) ) {
+    foreach my $position ( keys( %{ $used_values{$division} } ) ) {
+      push( @{ $return->{error} }, $lang->("fixtures-grids.teams.error.position-used-more-than-once", $division, $position, join(", ", @{ $used_values{$division}{$position} } ) ) ) if scalar(@{ $used_values{$division}{$position} }) > 1;
+    }
+  }
+  
+  # Check for errors
+  if ( @{ $return->{error} } ) {
+    $return->{submitted_data} = \%submitted_data;
+  } else {
+    # Finally we need to loop through again updating the home / away teams for each match
+    foreach my $division_key ( keys %submitted_data ) {
+      # Get the division DB object, then the team seasons object
+      my $division_season = $submitted_data{ $division_key }{object};
+      my $team_seasons    = $division_season->team_seasons;
+      foreach my $team_id ( keys %{ $submitted_data{ $division_key }{teams} } ) {
+        $team_seasons->find({
+          team    => $team_id,
+          season  => $season->id
+        })->update({
+          grid_position => $submitted_data{ $division_key }{teams}{ $team_id }{position},
+        }) if $team_id;
+      }
+    }
+  }
+  
+  return $return;
+}
+
+=head2 set_matches
+
+Performs error checking and updates the grid matches for each week.
+
+=cut
+
+sub set_matches {
+  my ( $self, $parameters ) = @_;
+  my $repeat_fixtures = delete $parameters->{repeat_fixtures};
+  my %match_teams     = %{ delete $parameters->{match_teams} };
+  my $lang            = delete $parameters->{language};
+  
+  my $return          = {
+    grid              => $self,
+    fatal             => [],
+    error             => [],
+    warning           => [],
+    sanitised_fields  => {},
+  };
+  
+  # Get the grid settings
+  my $maximum_teams_per_division = $self->maximum_teams;
+  my $fixtures_repeated_count    = $self->fixtures_repeated;
+  
+  # The number of weeks required to complete a set of fixtures (i.e., everybody playing everybody) will always be the number of teams minus 1 (as everybody plays everybody but themselves)
+  my $first_pass_fixtures_weeks  = $maximum_teams_per_division - 1;
+  
+  my $weeks = $self->fixtures_grid_weeks;
+  
+  # This array will hold the match number / week number information from the database as well as the submitted form information (home / away teams for each match) 
+  my @fixtures_grid_weeks = ();
+  # Loop through all weeks
+  while ( my $week = $weeks->next ) {
+    # Push this week on to the array, with an empty arrayref for matches
+    push(@fixtures_grid_weeks, {week => $week->week, matches => []});
+    
+    my $matches = $week->fixtures_grid_matches;
+    while ( my $match = $matches->next ) {
+      # Create the arrayref of matches within this week
+      push ( @ { $fixtures_grid_weeks[$#fixtures_grid_weeks]{matches} }, {
+        match_number  => $match->match_number,
+        home_team     => $match_teams{$week->week}{$match->match_number}{home},
+        away_team     => $match_teams{$week->week}{$match->match_number}{away},
+      });
+    }
+    
+    # Break out of the loop if we are repeating and we have reached the end of the first pass of fixtures
+    last if $repeat_fixtures and $week->week == $first_pass_fixtures_weeks;
+  }
+  
+  # These will hold the details of any selects that are blank / invalid in a text form so that they can be 'join'ed in a final error message
+  my (@blank_teams, @invalid_teams);
+  
+  # This hash will hold a hashref of weeks and the keys to each week will be a team number; keys will be added as teams are used so that we can check
+  # if a key exists when validating the teams selected
+  my %used_teams = ();
+  
+  # Now loop through the data structure we've created and make sure everything is valid.
+  foreach my $week ( @fixtures_grid_weeks ) {
+    foreach my $match ( @{ $week->{matches} } ) {
+      if ( !$match->{home_team} ) {
+        push( @{ $return->{error} }, $lang->("fixtures-grids.form.matches.home-team-blank", $week->{week}, $match->{match_number}) );
+      } elsif ( $match->{home_team} !~ m/^\d{1,2}$/ or $match->{home_team} > $maximum_teams_per_division ) {
+        push( @{ $return->{error} }, $lang->("fixtures-grids.form.matches.home-number-invalid", $week->{week}, $match->{match_number}, $maximum_teams_per_division) );
+      } else {
+        # The value is valid, but has it been entered in a previous match for this week?
+        if ( ref( $used_teams{$week->{week}}{$match->{home_team}} ) eq "ARRAY" ) {
+          # Already exists, push it on to the arrayref
+          push( @{ $used_teams{$week->{week}}{$match->{home_team}} } , "match " . $match->{match_number} . " (home)");
+        } else {
+          # Doesn't exist, create a new arrayref
+          $used_teams{$week->{week}}{$match->{home_team}} = ["match " . $match->{match_number} . " (home)"];
+        }
+      }
+      
+      if ( !$match->{away_team} ) {
+        push(@{ $return->{error} }, $lang->("fixtures-grids.form.matches.away-team-blank", $week->{week}, $match->{match_number}) );
+      } elsif ( $match->{away_team} !~ m/^\d{1,2}$/ or $match->{home_team} > $maximum_teams_per_division ) {
+        push(@{ $return->{error} }, $lang->("fixtures-grids.form.matches.away-number-invalid", $week->{week}, $match->{match_number}, $maximum_teams_per_division) );
+      } else {
+        # The value is valid, but has it been entered in a previous match for this week?
+        if ( ref( $used_teams{$week->{week}}{$match->{away_team}} ) eq "ARRAY" ) {
+          # Already exists, push it on to the arrayref
+          push( @{ $used_teams{$week->{week}}{$match->{away_team}} } , "match " . $match->{match_number} . " (away)");
+        } else {
+          # Doesn't exist, create a new arrayref
+          $used_teams{$week->{week}}{$match->{away_team}} = ["match " . $match->{match_number} . " (away)"];
+        }
+      }
+    }
+  }
+  
+  # Now loop through our %used_teams hash and make sure we haven't used any team more than once.
+  foreach my $week ( keys(%used_teams) ) {
+    foreach my $team ( keys( %{ $used_teams{$week} } ) ) {
+      push(@{ $return->{error} }, $lang->("fixtures-grids.form.matches.team-overused", $week, $team, join(", ", @{ $used_teams{$week}{$team} } )) ) if scalar(@{ $used_teams{$week}{$team} }) > 1;
+    }
+  }
+  
+  # If we've errored, we need to return all the values so - for example - a web application can set them back into the form - we didn't do this originally, as we didn't know if there was an error or not.
+  if ( scalar( @{ $return->{error} } ) ) {
+    $return->{weeks}            = \@fixtures_grid_weeks;
+    $return->{repeat_fixtures}  = $repeat_fixtures;
+  } else {
+    # Finally we need to loop through again updating the home / away teams for each match
+    # If we're repeating, we need to do multiple loops through
+    my $loop_end;
+    if ( $repeat_fixtures ) {
+      # Loop through as many times as fixtures are repeated
+      $loop_end = $fixtures_repeated_count;
+    } else {
+      # Loop through just once (this saves an if statement deciding whether to create a loop within a loop or not, which would duplicate code)
+      $loop_end = 1;
+    }
+    
+    # Loop through as many times as we need to repeat the fixtures
+    # The week number is counted manually, as we only have the first pass of fixtures in the array, so we need to keep our own count
+    my $week_number;
+    foreach my $i ( 1 .. $loop_end ) {
+      # Now loop through the array we build up
+      foreach my $week ( @fixtures_grid_weeks ) {
+        # Increment the week number
+        $week_number++;
+        
+        # ... and within that, loop through the matches in that array
+        foreach my $match ( @{ $week->{matches} } ) {
+          # The home / away teams will be swapped if the first loop counter ($1) is an EVEN number.
+          my ( $home_team, $away_team );
+          
+          if ( $i % 2 ) {
+            # Odd number (no remainder), don't swap home and away teams
+            $home_team = $match->{home_team};
+            $away_team = $match->{away_team};
+          } else {
+            # Even number (remainder 1), swap home and away teams
+            $home_team = $match->{away_team};
+            $away_team = $match->{home_team};
+          }
+          
+          $weeks->find({
+            grid          => $self->id,
+            week          => $week_number,
+          })->fixtures_grid_matches->find({
+            match_number  => $match->{match_number},
+          })->update({
+            home_team => $home_team,
+            away_team => $away_team,
+          });
+        }
+      }
+    }
+  }
+  
+  return $return;
 }
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

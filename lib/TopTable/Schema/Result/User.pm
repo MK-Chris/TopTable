@@ -809,8 +809,7 @@ Returns true if the user is captain for the specified team in the specified seas
 
 sub captain_for {
   my ( $self, $parameters ) = @_;
-  my $team    = $parameters->{team};
-  my $season  = $parameters->{season};
+  my $team_season = $parameters->{team};
   
   # Get the person associated with this user
   my $person = $self->person;
@@ -819,10 +818,7 @@ sub captain_for {
   return 0 unless defined( $person );
   
   # Otherwise return the value of the same routine in the Person model
-  return $person->captain_for({
-    team    => $team,
-    season  => $season,
-  });
+  return $person->captain_for({team => $team_season});
 }
 
 =head2 secretary_for

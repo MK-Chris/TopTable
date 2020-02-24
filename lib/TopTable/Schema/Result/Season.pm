@@ -473,6 +473,85 @@ sub end_date_long {
   return sprintf( "%s, %s %s %s", ucfirst( $self->end_date->day_name ), $self->end_date->day, $self->end_date->month_name, $self->end_date->year );
 }
 
+=head2 all_clubs
+
+Return a list of teams who have entered this season.
+
+=cut
+
+sub all_clubs {
+  my ( $self ) = @_;
+  
+  return $self->search_related("club_seasons", undef, {
+    order_by  => {
+      -asc    => [ qw( full_name ) ],
+    },
+  });
+}
+
+=head2 all_teams
+
+Return a list of teams who have entered this season.
+
+=cut
+
+sub all_teams {
+  my ( $self ) = @_;
+  
+  return $self->search_related("team_seasons", undef, {
+    join      => "club_season",
+    order_by  => {
+      -asc    => [ qw( club_season.short_name me.name ) ],
+    },
+  });
+}
+
+=head2 all_players
+
+Return a list of players who have entered this season.
+
+=cut
+
+sub all_players {
+  my ( $self ) = @_;
+  
+  # There will be a better way of doing this, as this could count an inactive player without an active counterpart, but this will do for now.  
+  return $self->search_related("person_seasons", {
+    team_membership_type => "active",
+  });
+}
+
+=head2 league_matches
+
+Return a list of teams who have entered this season.
+
+=cut
+
+sub league_matches {
+  my ( $self, $parameters ) = @_;
+  my $mode = delete $parameters->{mode} || undef;
+  my $where       = {};
+  my $attributes  = {};
+  
+  if ( defined( $mode ) ) {
+    if ( $mode eq "cancelled" ) {
+      $where->{cancelled} = 1;
+    } elsif ( $mode eq "rearranged" ) {
+      my $compare_field = "played_date";
+      $where->{scheduled_date} = {"!=" => \$compare_field};
+    } elsif ( $mode eq "incomplete-teams" ) {
+      $where->{"team_match_players.player_missing"} = 1;
+      $attributes->{join} = "team_match_players";
+    } elsif ( $mode eq "loan-players" ) {
+      $where->{"team_match_players.loan_team"} = {"!=" => undef};
+      $attributes->{join} = "team_match_players";
+    } 
+  }
+  
+  
+  return $self->search_related("team_matches", $where, $attributes);
+}
+
 =head2 divisions
 
 Return the divisions that have an association with the season.
@@ -590,14 +669,32 @@ sub check_and_delete {
     parameters  => [$self->name],
   }) unless $self->can_delete;
   
+  # Order of the first three is important; person seasons must come before team seasons, which must come before club seasons
+  my @relations = qw( person_seasons team_seasons club_seasons division_seasons doubles_pairs event_seasons fixtures_weeks );
+  
+  my $transaction = $self->result_source->schema->txn_scope_guard;
+  
+  my $ok;
+  foreach my $relation ( @relations ) {
+    $ok = $self->delete_related( $relation );
+    
+    # Error if the delete was unsuccessful
+    push(@{ $error }, {
+      id          => "admin.delete.error.database",
+      parameters  => [$self->name, ref( $relation )],
+    }) unless $ok;
+  }
+  
   # Delete
-  my $ok = $self->delete if !$error;
+  $ok = $self->delete;
   
   # Error if the delete was unsuccessful
   push(@{ $error }, {
     id          => "admin.delete.error.database",
-    parameters  => $self->name
+    parameters  => [$self->name, ref( $self )],
   }) unless $ok;
+  
+  $transaction->commit;
   
   return $error;
 }

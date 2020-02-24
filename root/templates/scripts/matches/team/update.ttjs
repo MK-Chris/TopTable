@@ -191,7 +191,7 @@ END;
       });
       
       $.ajax({
-        url: "[% c.uri_for_action('/matches/team/update_playing_order_by_ids', [match.home_team.id, match.away_team.id, match.scheduled_date.year, match_month, match_day]) %]",
+        url: "[% c.uri_for_action('/matches/team/update_playing_order_by_ids', [match.team_season_home_team_season.team.id, match.team_season_away_team_season.team.id, match.scheduled_date.year, match_month, match_day]) %]",
         type: "POST",
         dataType: "json",
         data: post_request,
@@ -438,7 +438,7 @@ END;
               }
               
               $.ajax({
-                url: "[% c.uri_for_action("/matches/team/update_game_score_by_ids", [match.home_team.id, match.away_team.id, match.scheduled_date.year, match_month, match_day]) %]",
+                url: "[% c.uri_for_action("/matches/team/update_game_score_by_ids", [match.team_season_home_team_season.team.id, match.team_season_away_team_season.team.id, match.scheduled_date.year, match_month, match_day]) %]",
                 type: "POST",
                 dataType: "json",
                 data: ajax_parameters,
@@ -457,7 +457,7 @@ END;
                   var originally_complete = Boolean( response.match_originally_complete );
                   var complete            = Boolean( response.json_match_complete );
                   if ( originally_complete === false && complete ) {
-                    window.location.href = "[% c.uri_for_action("/matches/team/view_by_url_keys", [match.home_team.club.url_key, match.home_team.url_key, match.away_team.club.url_key, match.away_team.url_key, match.scheduled_date.year, match_month, match_day], {mid => c.set_status_msg({success => c.maketext("matches.game.update-score.success-match-complete") }) }) %]";
+                    window.location.href = "[% c.uri_for_action("/matches/team/view_by_url_keys", [match.team_season_home_team_season.club_season.club.url_key, match.team_season_home_team_season.team.url_key, match.team_season_away_team_season.club_season.club.url_key, match.team_season_away_team_season.team.url_key, match.scheduled_date.year, match_month, match_day], {mid => c.set_status_msg({success => c.maketext("matches.game.update-score.success-match-complete") }) }) %]";
                   } else {
                     $().toastmessage("showToast", {
                       text: "[% c.maketext("matches.game.update-score.success-game-complete") %]",
@@ -845,7 +845,7 @@ FOREACH player = match.team_match_players;
       if ( !disable_callback ) {
         // Add the player to the database for this match
         $.ajax({
-          url: "[% c.uri_for_action('/matches/team/player/update_by_ids', [match.home_team.id, match.away_team.id, match.scheduled_date.year, match_month, match_day, player.player_number]) %]",
+          url: "[% c.uri_for_action('/matches/team/player/update_by_ids', [match.team_season_home_team_season.team.id, match.team_season_away_team_season.team.id, match.scheduled_date.year, match_month, match_day, player.player_number]) %]",
           type: "POST",
           dataType: "json",
           data: {loan_player: 1, person: item.id},
@@ -862,7 +862,7 @@ FOREACH player = match.team_match_players;
             
             // Another jQuery to get the player lists
             $.ajax({
-              url: "[% c.uri_for_action('/matches/team/get_player_lists_by_ids', [match.home_team.id, match.away_team.id, match.scheduled_date.year, match_month, match_day]) %]",
+              url: "[% c.uri_for_action('/matches/team/get_player_lists_by_ids', [match.team_season_home_team_season.team.id, match.team_season_away_team_season.team.id, match.scheduled_date.year, match_month, match_day]) %]",
               type: "POST",
               dataType: "json",
               success: function( list_response ) {
@@ -1000,7 +1000,7 @@ FOREACH player = match.team_match_players;
       if ( !disable_callback ) {
         // Remove the player from the database for this match
         $.ajax({
-          url: "[% c.uri_for_action('/matches/team/player/update_by_ids', [match.home_team.id, match.away_team.id, match.scheduled_date.year, match_month, match_day, player.player_number]) %]",
+          url: "[% c.uri_for_action('/matches/team/player/update_by_ids', [match.team_season_home_team_season.team.id, match.team_season_away_team_season.team.id, match.scheduled_date.year, match_month, match_day, player.player_number]) %]",
           type: "POST",
           dataType: "json",
           data: {loan_player: 0, person: "", location: "[% player.location.location | lower %]"},
@@ -1014,7 +1014,7 @@ FOREACH player = match.team_match_players;
             
             // Another jQuery to get the player lists
             $.ajax({
-              url: "[% c.uri_for_action('/matches/team/get_player_lists_by_ids', [match.home_team.id, match.away_team.id, match.scheduled_date.year, match_month, match_day]) %]",
+              url: "[% c.uri_for_action('/matches/team/get_player_lists_by_ids', [match.team_season_home_team_season.team.id, match.team_season_away_team_season.team.id, match.scheduled_date.year, match_month, match_day]) %]",
               type: "POST",
               dataType: "json",
               data: {},
@@ -1155,7 +1155,7 @@ FOREACH player = match.team_match_players;
     // Trigger the AJAX call
     if ( !disable_callback ) {
       $.ajax({
-        url: "[% c.uri_for_action('/matches/team/player/update_by_ids', [match.home_team.id, match.away_team.id, match.scheduled_date.year, match_month, match_day, player.player_number]) %]",
+        url: "[% c.uri_for_action('/matches/team/player/update_by_ids', [match.team_season_home_team_season.team.id, match.team_season_away_team_season.team.id, match.scheduled_date.year, match_month, match_day, player.player_number]) %]",
         type: "POST",
         dataType: "json",
         data: {loan: 0, person: $this.val()},
@@ -1270,7 +1270,7 @@ END;
     onAdd: function (item) {
       // Add the player to the database for this match
       $.ajax({
-        url: "[% c.uri_for_action('/matches/team/game/update_umpire_by_ids', [match.home_team.id, match.away_team.id, match.scheduled_date.year, match_month, match_day, game.scheduled_game_number]) %]",
+        url: "[% c.uri_for_action('/matches/team/game/update_umpire_by_ids', [match.team_season_home_team_season.team.id, match.team_season_away_team_season.team.id, match.scheduled_date.year, match_month, match_day, game.scheduled_game_number]) %]",
         type: "POST",
         dataType: "json",
         data: {person: item.id},
@@ -1304,7 +1304,7 @@ END;
       if ( !disable_callback ) {
         // Remove the player from the database for this match
         $.ajax({
-          url: "[% c.uri_for_action('/matches/team/game/update_umpire_by_ids', [match.home_team.id, match.away_team.id, match.scheduled_date.year, match_month, match_day, game.scheduled_game_number]) %]",
+          url: "[% c.uri_for_action('/matches/team/game/update_umpire_by_ids', [match.team_season_home_team_season.team.id, match.team_season_away_team_season.team.id, match.scheduled_date.year, match_month, match_day, game.scheduled_game_number]) %]",
           type: "POST",
           dataType: "json",
           success: function(response) {
@@ -1375,7 +1375,7 @@ FOREACH game = match.team_match_games;
       $.ajaxSettings.traditional = true;
       
       $.ajax({
-        url: "[% c.uri_for_action('/matches/team/game/doubles_pair_by_ids', [match.home_team.id, match.away_team.id, match.scheduled_date.year, match_month, match_day, game.scheduled_game_number]) %]",
+        url: "[% c.uri_for_action('/matches/team/game/doubles_pair_by_ids', [match.team_season_home_team_season.team.id, match.team_season_away_team_season.team.id, match.scheduled_date.year, match_month, match_day, game.scheduled_game_number]) %]",
         type: "POST",
         dataType: "json",
         data: send_data,

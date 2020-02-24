@@ -30,7 +30,7 @@ IF doubles_team_averages.size;
 -%]
     <tr>
       <td class="numeric">[% i %]</td>
-      <td><a href="[% team_uri %]">[% table_team.club.short_name | html_entity %] [% table_team.name | html_entity %]</a></td>
+      <td><a href="[% team_uri %]">[% table_team.club_season.short_name | html_entity %] [% table_team.name | html_entity %]</a></td>
       <td class="numeric">[% table_team.doubles_games_played %]</td>
       <td class="numeric">[% table_team.doubles_games_won %]</td>
       <td class="numeric">[% table_team.doubles_games_lost %]</td>

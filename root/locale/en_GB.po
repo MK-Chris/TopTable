@@ -694,6 +694,9 @@ msgstr "There is a record of %1 in %2 %3."
 msgid "clubs.name.changed-notice"
 msgstr "%1 (%2) is now known as %3 (%4)"
 
+msgid "clubs.message.did-not-enter"
+msgstr "%1 did not enter %2."
+
 ### Teams
 msgid "teams.create"
 msgstr "Create a new team"
@@ -1554,6 +1557,69 @@ msgstr "The box to archive the season was not ticked, so the season has not been
 msgid "seasons.complete.success"
 msgstr "%1 was successfully marked as completed."
 
+msgid "seasons.statistics"
+msgstr "Statistics"
+
+msgid "seasons.statistics.start-date"
+msgstr "First week"
+
+msgid "seasons.statistics.end-date"
+msgstr "Last week"
+
+msgid "seasons.statistics.season-dates"
+msgstr "Dates"
+
+msgid "seasons.statistics.season-dates.range-data"
+msgstr "<b>%1</b> to <b>%2</b>"
+
+msgid "seasons.statistics.clubs"
+msgstr "Clubs"
+
+msgid "seasons.statistics.teams"
+msgstr "Teams"
+
+msgid "seasons.statistics.players"
+msgstr "Players"
+
+msgid "seasons.statistics.league-matches"
+msgstr "League matches"
+
+msgid "seasons.statistics.rearranged-matches"
+msgstr "Rearranged matches"
+
+msgid "seasons.statistics.cancelled-matches"
+msgstr "Cancelled matches"
+
+msgid "seasons.statistics.matches-with-incomplete-teams"
+msgstr "Matches with players missing"
+
+msgid "seasons.statistics.matches-with-loan-players"
+msgstr "Matches using at least one loan player"
+
+msgid "seasons.view.dates"
+msgstr "Dates"
+
+msgid "seasons.divisions"
+msgstr "Divisions"
+
+msgid "seasons.division"
+msgstr "Division"
+
+msgid "seasons.division.statistics"
+msgstr "Statistics"
+
+msgid "seasons.division.fixtures-grid"
+msgstr "Fixtures grid"
+
+msgid "seasons.league-match-template"
+msgstr "League match templates"
+
+msgid "seasons.league-ranking-template"
+msgstr "League ranking template"
+
+msgid "seasons.events"
+msgstr "Events"
+
 ### Divisions
 msgid "divisions.option.league-tables"
 msgstr "League Tables"
@@ -1633,6 +1699,12 @@ msgstr "%1 (now known as %2)"
 msgid "divisions.name.changed-notice"
 msgstr "%1 is now known as %2."
 
+msgid "divisions.form.error.no-current-season"
+msgstr "There is no current season, so divisions cannot be created or edited - create a new season first."
+
+msgid "divisions.form.error.matches-created-cant-create-or-edit"
+msgstr "The current season already has matches; therefore the divisions can't be edited and new divisions cannot be created."
+
 ### Fixtures grids
 msgid "fixtures-grids.matches"
 msgstr "Matches"
@@ -1648,6 +1720,12 @@ msgstr "You cannot set the teams to their grid numbers as there is no current se
 
 msgid "fixtures-grids.teams.error.matches-already-set"
 msgstr "You cannot set the teams to their grid numbers as the fixtures for the current season have already been created."
+
+msgid "fixtures-grids.teams.error.no-position-for-team"
+msgstr "%1 %2 has been entered into %3 but has not been listed in a position for the fixtures grid."
+
+msgid "fixtures-grids.teams.error.position-used-more-than-once"
+msgstr "In %1, %2 is used more than once: %3.  Please ensure each position is used only once in a given division."
 
 msgid "fixtures-grids.create-fixtures"
 msgstr "Create fixtures"
@@ -1807,6 +1885,15 @@ msgstr "Delete fixtures"
 
 msgid "fixtures-grids.delete.error.cant-delete"
 msgstr "You cannot delete %1, as it has teams assigned either in this season or in historical seasons."
+
+msgid "fixtures-grids.teams.error.no-current-season"
+msgstr "There is no current season, so teams cannot be set to fixtures grids - create a new season first."
+
+msgid "fixtures-grids.teams.error.matches-set"
+msgstr "There are already matches set from this grid in the current season.  If they are incorrect, delete them and then reset the team positions."
+
+msgid "fixtures-grids.teams.error.wrong-team-id"
+msgstr "%s is not a valid team identifier or is in the wrong division."
 
 ### Fixtures and results
 msgid "fixtures-results.view.match-count"
@@ -2357,6 +2444,9 @@ msgstr "Team"
 msgid "stats.table-heading.matches-played"
 msgstr "Matches"
 
+msgid "stats.table-heading.matches-available"
+msgstr "Matches available"
+
 msgid "stats.table-heading.matches-won"
 msgstr "W"
 
@@ -2365,6 +2455,9 @@ msgstr "D"
 
 msgid "stats.table-heading.matches-lost"
 msgstr "L"
+
+msgid "stats.table-heading.matches-available"
+msgstr "Matches available"
 
 msgid "stats.table-heading.for"
 msgstr "F"
@@ -2452,7 +2545,8 @@ msgstr "Only show \n"
 "<select class="average-filter" name="criteria_type" data-placeholder="field">\n"
 " <option value=""></option>\n"
 " <option value="matches"%14>matches</option>\n"
-" <option value="games"%15>games</option>\n"
+" <option value="matches-pc"%15>% of available matches</option>\n"
+" <option value="games"%16>games</option>\n"
 "</select> \n"
 
 msgid "averages.filter-form.custom-options-doubles-individuals"
@@ -2630,6 +2724,9 @@ msgstr "Criteria type"
 msgid "average-filters.criteria-type.matches"
 msgstr "Matches"
 
+msgid "average-filters.criteria-type.matches-percentage"
+msgstr "% of available matches"
+
 msgid "average-filters.criteria-type.games"
 msgstr "Games"
 
@@ -2665,6 +2762,9 @@ msgstr "Settings"
 
 msgid "average.filters.settings-data"
 msgstr "Only show players who have %1 %2 %3 %4."
+
+msgid "average-filter.user-defined"
+msgstr "This is a user-defined average filter, created by %1"
 
 ### Events
 msgid "events.create"

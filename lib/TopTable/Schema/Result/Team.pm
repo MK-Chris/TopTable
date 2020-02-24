@@ -172,21 +172,6 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
-=head2 person_seasons
-
-Type: has_many
-
-Related object: L<TopTable::Schema::Result::PersonSeason>
-
-=cut
-
-__PACKAGE__->has_many(
-  "person_seasons",
-  "TopTable::Schema::Result::PersonSeason",
-  { "foreign.team" => "self.id" },
-  { cascade_copy => 0, cascade_delete => 0 },
-);
-
 =head2 person_tournaments
 
 Type: has_many
@@ -262,36 +247,6 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
-=head2 team_matches_away_teams
-
-Type: has_many
-
-Related object: L<TopTable::Schema::Result::TeamMatch>
-
-=cut
-
-__PACKAGE__->has_many(
-  "team_matches_away_teams",
-  "TopTable::Schema::Result::TeamMatch",
-  { "foreign.away_team" => "self.id" },
-  { cascade_copy => 0, cascade_delete => 0 },
-);
-
-=head2 team_matches_home_teams
-
-Type: has_many
-
-Related object: L<TopTable::Schema::Result::TeamMatch>
-
-=cut
-
-__PACKAGE__->has_many(
-  "team_matches_home_teams",
-  "TopTable::Schema::Result::TeamMatch",
-  { "foreign.home_team" => "self.id" },
-  { cascade_copy => 0, cascade_delete => 0 },
-);
-
 =head2 team_seasons
 
 Type: has_many
@@ -337,39 +292,9 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
-=head2 tournament_team_matches_away_teams
 
-Type: has_many
-
-Related object: L<TopTable::Schema::Result::TournamentTeamMatch>
-
-=cut
-
-__PACKAGE__->has_many(
-  "tournament_team_matches_away_teams",
-  "TopTable::Schema::Result::TournamentTeamMatch",
-  { "foreign.away_team" => "self.id" },
-  { cascade_copy => 0, cascade_delete => 0 },
-);
-
-=head2 tournament_team_matches_home_teams
-
-Type: has_many
-
-Related object: L<TopTable::Schema::Result::TournamentTeamMatch>
-
-=cut
-
-__PACKAGE__->has_many(
-  "tournament_team_matches_home_teams",
-  "TopTable::Schema::Result::TournamentTeamMatch",
-  { "foreign.home_team" => "self.id" },
-  { cascade_copy => 0, cascade_delete => 0 },
-);
-
-
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2019-12-26 23:42:05
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:7xEW8y65UN/twvH1LfyXtw
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-02-03 10:04:06
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:O5mKU1PMG1tz5nJz4TYQbA
 
 =head2 get_players
 
@@ -381,8 +306,8 @@ sub get_players {
   my ( $self, $parameters ) = @_;
   my $season = $parameters->{season};
   
-  return $self->search_related("person_seasons", {
-    season => $season->id,
+  return $self->search_related("team_seasons")->search_related("person_seasons", {
+    "me.season" => $season->id,
   }, {
     prefetch => "person",
     order_by => {
@@ -419,10 +344,36 @@ sub get_season {
   my ( $self, $season ) = @_;
   
   return $self->search_related("team_seasons", {
-    season    => $season->id,
+    "me.season" => $season->id,
   }, {
-    prefetch  => [qw( captain division club )],
+    prefetch  => ["captain", {
+      division_season => "division",
+      club_season     => "club"
+    }],
     rows      => 1,
+  })->single;
+}
+
+=head2 last_competed_season
+
+Get the last season that a team competed in.
+
+=cut
+
+sub last_competed_season {
+  my ( $self, $parameters ) = @_;
+  my $complete_only = delete $parameters->{complete_only} || 0;
+  
+  my $where = {complete => 1} if $complete_only;
+  
+  $self->search_related("team_seasons", $where, {
+    rows => 1,
+    prefetch => [ qw( season home_night ), {
+      division_season => "division",
+    }],
+    order_by => {
+      -desc => [ qw( start_date end_date ) ]
+    }
   })->single;
 }
 
@@ -449,7 +400,7 @@ Performs checks to ensure the team can be deleted.  The team cannot be deleted i
 sub can_delete {
   my ( $self ) = @_;
   
-  my $players = $self->search_related("person_seasons")->count;
+  my $players = $self->search_related("team_seasons")->search_related("person_seasons")->count;
   
   # If we have players, we can return false straight away - we can't delete if there are players associated in any season.
   return 0 if $players;
@@ -519,7 +470,7 @@ sub check_and_delete {
   my $ok = $self->delete if !scalar @{ $error };
   
   # Delete the related club season if there's a current season and no teams assigned to this club for it any more.
-  $club->delete_related("club_seasons", {season => $season->id}) if defined( $season ) and $club->get_team_seasons({season => $season})->count == 0;
+  $club->delete_related("club_seasons", {"me.season" => $season->id}) if defined( $season ) and $club->get_team_seasons({season => $season})->count == 0;
   
   # Commit
   $transaction->commit;

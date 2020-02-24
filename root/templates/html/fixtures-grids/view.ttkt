@@ -4,12 +4,16 @@
 
 <div id="grid_summary">
 <h4>Summary</h4>
-<dl>
-    <dt>[% c.maketext("fixtures-grids.field.maximum-teams-per-division") %]</dt>
-    <dd>[% grid.maximum_teams | html_entity %]</dd>
-    <dt>[% c.maketext("fixtures-grids.field.fixtures-repeated") %]</dt>
-    <dd>[% c.maketext("fixtures-grids.field.fixtures-repeated-times", grid.fixtures_repeated) %]</dd>
-</dl>
+<table class="vertical">
+  <tr>
+    <th scope="row">[% c.maketext("fixtures-grids.field.maximum-teams-per-division") %]</th>
+    <td>[% grid.maximum_teams | html_entity %]</td>
+  </tr>
+  <tr>
+    <th scope="row">[% c.maketext("fixtures-grids.field.fixtures-repeated") %]</th>
+    <td>[% c.maketext("fixtures-grids.field.fixtures-repeated-times", grid.fixtures_repeated) %]</td>
+  </tr>
+</table>
 </div>
 
 <div id="grid-positions">
@@ -27,17 +31,18 @@ IF season;
 <ul class="option-list">
 [%
     SET LAST_GRID_POSITION = 0;
-    FOREACH team_season = division.team_seasons;
+    SET division_season = division.division_seasons.first;
+    FOREACH team_season = division_season.team_seasons;
 -%]
   <li>
 [%
       IF specific_season;
-        SET team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [team_season.team.club.url_key, team_season.team.url_key, season.url_key]);
+        SET team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [team_season.team.club_season.club.url_key, team_season.team.url_key, season.url_key]);
       ELSE;
-        SET team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [team_season.team.club.url_key, team_season.team.url_key]);
+        SET team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [team_season.team.club_season.club.url_key, team_season.team.url_key]);
       END;
       
-      team_name = FILTER html_entity; team_season.club.short_name _ " " _ team_season.name; END;
+      team_name = FILTER html_entity; team_season.club_season.club.short_name _ " " _ team_season.name; END;
       IF team_season.grid_position;
         IF team_season.grid_position - LAST_GRID_POSITION > 1 AND LAST_POSITION_SET == 1;
           # We have a bye position, as the current grid position is more than one more than the previous one

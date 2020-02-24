@@ -2,7 +2,7 @@ package TopTable::Controller::Seasons;
 use Moose;
 use namespace::autoclean;
 use JSON;
-use Data::Dumper;
+use Data::Dumper::Concise;
 use DateTime::TimeZone;
 use HTML::Entities;
 
@@ -228,11 +228,22 @@ sub view :Chained("base") :PathPart("") :Args(0) {
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/seasons/view.js"),
       $c->uri_for("/static/script/standard/option-list.js"),
+      $c->uri_for("/static/script/standard/vertical-table.js"),
     ],
     external_styles     => [
       $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
     ],
+    
+    # Statistics
+    clubs                         => $season->all_clubs->count,
+    teams                         => $season->all_teams->count,
+    players                       => $season->all_players->count,
+    league_matches                => $season->league_matches->count,
+    rearranged_matches            => $season->league_matches({mode => "rearranged"})->count,
+    cancelled_matches             => $season->league_matches({mode => "cancelled"})->count,
+    matches_with_incomplete_teams => $season->league_matches({mode => "incomplete-teams"})->count,
+    matches_with_loan_players     => $season->league_matches({mode => "loan-players"})->count,
   });
 }
 
@@ -324,6 +335,7 @@ sub create :Local {
       fixtures_grids      => $fixtures_grids,
       divisions           => $divisions,
       form_action         => $c->uri_for("do-create"),
+      action              => "create",
       subtitle2           => "Create",
       view_online_display => "Creating seasons",
       view_online_link    => 0,
@@ -372,7 +384,7 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
     $restricted_edit = 1 if $league_matches > 0;
     
     # Find all the divisions to list in select boxes
-    my $divisions = [ $c->model("DB::Division")->all_divisions( $season ) ];
+    my $divisions = [ $c->model("DB::Division")->all_divisions ];
     
     # Create an empty division if there are none, with a display order of 1
     $divisions = [{rank  => 1,}] if scalar @{ $divisions } == 0;
@@ -403,10 +415,12 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
       divisions           => $divisions,
       fixtures_grids      => [$c->model("DB::FixturesGrid")->all_grids],
       form_action         => $c->uri_for_action("/seasons/do_edit", [$season->url_key]),
+      action              => "edit",
       view_online_display => "Editing " . $c->stash->{season}->name,
       view_online_link    => 0,
       restricted_edit     => $restricted_edit,
       timezones           => $timezones,
+      subtitle2           => $c->maketext("admin.edit")
     });
     
     # Flash the current club's data to display
@@ -419,26 +433,27 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
     $c->flash->{start_minute}             = $time_bits[1]                 unless $c->flash->{start_minute};
     
     # Flash all the division fields unless we've flashed it all already
-    unless ( $c->flash->{use_division} ) {
+    if ( scalar( @{ $divisions } ) and !exists( $c->flash->{divisions} ) ) {
+      $c->flash->{divisions} = [];
       foreach my $division ( @{ $divisions } ) {
-        my $division_season = $division->division_seasons->first;
+        my $division_season = $division->find_related("division_seasons", {season => $season->id}) if defined( $division ) and ref( $division ) ne "HASH";
         
         # Flash the divisions
         # Make sure we set up a blank flashed value if the grid wasn't specified, otherwise we'll have the wrong
         # number of elements in that array
-        my $flash_grid              = ( defined( $division_season ) and defined( $division_season->fixtures_grid ) ) ? $division_season->fixtures_grid->id : "";
-        my $flash_match_template    = ( defined( $division_season ) and defined( $division_season->league_match_template ) ) ? $division_season->league_match_template->id : "";
-        my $flash_ranking_template  = ( defined( $division_season ) and defined( $division_season->league_table_ranking_template ) ) ? $division_season->league_table_ranking_template->id : "";
-        push( @{ $c->flash->{use_division}            }, 1 ) if defined( $division_season );
-        push( @{ $c->flash->{division_name}           }, $division->name );
-        push( @{ $c->flash->{division_id}             }, $division->id );
-        push( @{ $c->flash->{fixtures_grid}           }, $flash_grid );
-        push( @{ $c->flash->{league_match_template}   }, $flash_match_template );
-        push( @{ $c->flash->{league_ranking_template} }, $flash_ranking_template );
+        my $use_division            = ( defined( $division_season ) ) ? 1 : 0;
+        my $flash_grid              = ( defined( $division_season ) ) ? $division_season->fixtures_grid : undef;
+        my $flash_match_template    = ( defined( $division_season ) ) ? $division_season->league_match_template : undef;
+        my $flash_ranking_template  = ( defined( $division_season ) ) ? $division_season->league_table_ranking_template : undef;
+        
+        push( @{ $c->flash->{divisions} }, {
+          use_division                  => $use_division,
+          fixtures_grid                 => $flash_grid,
+          league_match_template         => $flash_match_template,
+          league_table_ranking_template => $flash_ranking_template,
+        });
       }
     }
-    
-    $c->stash({subtitle2 => $c->maketext("admin.edit")});
   }
   
   # Breadcrumbs
@@ -587,137 +602,38 @@ Take the entered season / division data from the create / edit form and put them
 
 sub setup_season_and_divisions :Private {
   my ( $self, $c, $action ) = @_;
-  my $divisions = [];
   my $season = $c->stash->{season};
   
-  # Find out if we can edit the dates for this season; otherwise we'll have to disable the date inputs
-  my $league_matches = ( defined( $season ) ) ? $c->model("DB::TeamMatch")->season_matches( $season )->count : 0;
-  
-  # Check if we have any rows
-  my $restricted_edit = ( $league_matches ) ? 1 : 0;
-  
-  # Process the divisions - do that here so that we can flash them back if there are any errors doing the season creation.
-  my ( $loop_end, $number_of_divisions );
-  # Check if we have an array of values (multiple games) or not (just a single game).
-  if ( ref($c->request->parameters->{division_name}) eq "ARRAY" ) {
-    # Store the number of games we're trying to create
-    $number_of_divisions = scalar @{ $c->request->parameters->{division_name} };
-    $loop_end = $number_of_divisions - 1;
-  } else {
-    $number_of_divisions  = 1;
-    $loop_end             = 0;
-  }
-  
-  # Now loop through our divisions
-  for my $i (0 .. $loop_end) {
-    my $rank = $i + 1;
-    
-    # The first bit is easy; just take the entry from the original parameters
-    # and assign it to the new destination.
-    if ( $number_of_divisions == 1 ) {
-      $divisions->[$i]{name}                    = $c->request->parameters->{division_name};
-      
-      # Check the external things are okay; templates, grids, etc.
-      $divisions->[$i]{league_match_template}         = $c->model("DB::TemplateMatchTeam")->find( $c->request->parameters->{league_match_template} ) if $c->request->parameters->{league_match_template};
-      $divisions->[$i]{league_table_ranking_template} = $c->model("DB::TemplateLeagueTableRanking")->find( $c->request->parameters->{league_table_ranking_template} ) if $c->request->parameters->{league_table_ranking_template};
-      $divisions->[$i]{fixtures_grid}                 = $c->model("DB::FixturesGrid")->find_with_weeks( $c->request->parameters->{fixtures_grid} ) if $c->request->parameters->{fixtures_grid};
-    } else {
-      $divisions->[$i]{name}                          = $c->request->parameters->{division_name}[$i];
-      $divisions->[$i]{league_match_template}         = $c->model("DB::TemplateMatchTeam")->find( $c->request->parameters->{league_match_template}[$i] ) if $c->request->parameters->{league_match_template}[$i];
-      $divisions->[$i]{league_table_ranking_template} = $c->model("DB::TemplateLeagueTableRanking")->find( $c->request->parameters->{league_table_ranking_template}[$i] ) if $c->request->parameters->{league_table_ranking_template}[$i];
-      $divisions->[$i]{fixtures_grid}                 = $c->model("DB::FixturesGrid")->find_with_weeks( $c->request->parameters->{fixtures_grid}[$i] ) if $c->request->parameters->{fixtures_grid}[$i];
-    }
-    
-    # Store the ID if it's numeric and the database object that corresponds to that
-    $divisions->[$i]{id} = $c->request->parameters->{"division_id" . $rank} if $c->request->parameters->{"division_id" . $rank} =~ m/\d+/;
-    
-    # The next bit is more tricky, because if it's not ticked to be 'used' this season,
-    # the checkbox is not sent at all.
-    if ( $c->request->parameters->{"use_division" . $rank} ) {
-      # It's a doubles game, set that key to 1 and the home / away players to undef
-      $divisions->[$i]{use_division} = 1;
-    } else {
-      # It's not a doubles game, set that key to 0 and the home / away players to the
-      # submitted values
-      $divisions->[$i]{use_division} = 0;
-    }
-  }
-  
   # Call the create / edit routine, which also does the error checking
-  my $season_details = $c->model("DB::Season")->create_or_edit($action, {
-    season                                          => $season,
-    name                                            => $c->request->parameters->{name},
-    start_date                                      => $c->request->parameters->{start_date},
-    end_date                                        => $c->request->parameters->{end_date},
-    start_hour                                      => $c->request->parameters->{start_hour},
-    start_minute                                    => $c->request->parameters->{start_minute},
-    timezone                                        => $c->request->parameters->{timezone},
-    allow_loan_players                              => $c->request->parameters->{allow_loan_players},
-    allow_loan_players_above                        => $c->request->parameters->{allow_loan_players_above},
-    allow_loan_players_below                        => $c->request->parameters->{allow_loan_players_below},
-    allow_loan_players_across                       => $c->request->parameters->{allow_loan_players_across},
-    allow_loan_players_same_club_only               => $c->request->parameters->{allow_loan_players_same_club_only},
-    allow_loan_players_multiple_teams_per_division  => $c->request->parameters->{allow_loan_players_multiple_teams_per_division},
-    loan_players_limit_per_player                   => $c->request->parameters->{loan_players_limit_per_player},
-    loan_players_limit_per_player_per_team          => $c->request->parameters->{loan_players_limit_per_player_per_team},
-    loan_players_limit_per_team                     => $c->request->parameters->{loan_players_limit_per_team},
-    rules                                           => $c->request->parameters->{rules},
+  my $returned = $c->model("DB::Season")->create_or_edit($action, {
+    season    => $season,
+    language  => sub{ $c->maketext( @_ ); },
+    logger    => sub{ my $level = shift; $c->log->$level( @_ ); },
+    %{ $c->request->parameters },
   });
   
-  if ( scalar( @{ $season_details->{error} } ) ) {
-    my $error = $c->build_message( $season_details->{error} );
+  my $warning = $c->build_message( $returned->{warning} ) if scalar( @{ $returned->{warning} } );
+  if ( scalar( @{ $returned->{error} } ) ) {
+    my $error   = $c->build_message( $returned->{error} );
     
-    # We're checking this a few times, so save it away for easy access
-    my $allow_loan_players = $c->request->parameters->{allow_loan_players};
+    # Flash the entered values we've got so we can set them into the form
+    map {$c->flash->{$_} = $returned->{sanitised_fields}{$_} } %{ $returned->{sanitised_fields} };
+    $c->flash->{divisions} = $returned->{divisions_sanitised_fields};
     
-    # Stash the values we've got so we can set them
-    $c->flash->{season_errored_form}                    = 1; # Flash this value so we know to check flashed values for checkboxes, not DB values
-    $c->flash->{name}                                   = $c->request->parameters->{name};
-    $c->flash->{start_date}                             = $c->request->parameters->{start_date};
-    $c->flash->{end_date}                               = $c->request->parameters->{end_date};
-    $c->flash->{start_hour}                             = $c->request->parameters->{start_hour};
-    $c->flash->{start_minute}                           = $c->request->parameters->{start_minute};
-    $c->flash->{league_match_template}                  = $c->request->parameters->{league_match_template};
-    $c->flash->{league_ranking_template}                = $c->request->parameters->{league_ranking_template};
-    $c->flash->{allow_loan_players}                     = $c->request->parameters->{allow_loan_players};
-    $c->flash->{rules}                                  = $c->request->parameters->{rules};
-    
-    # The below settings rely on 'allow loan players' having been ticked; if it wasn't, we'll untick / blank regardless of their value
-    $c->flash->{allow_loan_players_above}               = $allow_loan_players ? $c->request->parameters->{allow_loan_players_above} : "0";
-    $c->flash->{allow_loan_players_below}               = $allow_loan_players ? $c->request->parameters->{allow_loan_players_below} : "0";
-    $c->flash->{allow_loan_players_across}              = $allow_loan_players ? $c->request->parameters->{allow_loan_players_across} : "0";
-    $c->flash->{allow_loan_players_same_club_only}      = $allow_loan_players ? $c->request->parameters->{allow_loan_players_same_club_only} : "0";
-    $c->flash->{loan_players_limit_per_player}          = $allow_loan_players ? $c->request->parameters->{loan_players_limit_per_player} : "0";
-    $c->flash->{loan_players_limit_per_player_per_team} = $allow_loan_players ? $c->request->parameters->{loan_players_limit_per_player_per_team} : "0";
-    $c->flash->{loan_players_limit_per_team}            = $allow_loan_players ? $c->request->parameters->{loan_players_limit_per_team} : "0";
-    
-    foreach my $division ( @{ $divisions } ) {
-      # Flash the divisions
-      # Make sure we set up a blank flashed value if the grid wasn't specified, otherwise we'll have the wrong
-      # number of elements in that array
-      my $flash_grid              = ( defined( $division->{fixtures_grid} ) ) ? $division->{fixtures_grid}->id : "";
-      my $flash_match_template    = ( defined( $division->{league_match_template} ) ) ? $division->{league_match_template}->id : "";
-      my $flash_ranking_template  = ( defined( $division->{league_ranking_template} ) ) ? $division->{league_ranking_template}->id : "";
-      
-      push( @{ $c->flash->{use_division}            }, $division->{use_division} );
-      push( @{ $c->flash->{division_name}           }, $division->{name} );
-      push( @{ $c->flash->{division_id}             }, $division->{id} );
-      push( @{ $c->flash->{fixtures_grid}           }, $flash_grid );
-      push( @{ $c->flash->{league_match_template}   }, $flash_match_template );
-      push( @{ $c->flash->{league_ranking_template} }, $flash_ranking_template );
-    }
+    my $message_texts = {error => $error};
+    $message_texts->{warning} = $warning if defined( $warning );
     
     my $redirect_uri;
     if ( $action eq "create" ) {
       $redirect_uri = $c->uri_for("/seasons/create",
-                                  {mid => $c->set_status_msg( {error => $error} ) });
+                                  {mid => $c->set_status_msg( $message_texts ) });
     } else {
-      if ( defined( $season_details->{season} ) ) {
-        $redirect_uri = $c->uri_for_action("/seasons/edit", [ $season_details->{season}->url_key ],
-                                  {mid => $c->set_status_msg( {error => $error} ) });
+      if ( defined( $returned->{season} ) ) {
+        $redirect_uri = $c->uri_for_action("/seasons/edit", [ $returned->{season}->url_key ],
+                                  {mid => $c->set_status_msg( $message_texts ) });
       } else {
         $redirect_uri = $c->uri_for("/seasons",
-                                  {mid => $c->set_status_msg( {error => $error} ) });
+                                  {mid => $c->set_status_msg( $message_texts ) });
       }
     }
     
@@ -726,66 +642,40 @@ sub setup_season_and_divisions :Private {
     return;
   } else {
     # Log an event because the season has been created
-    $season = $season_details->{season} if exists( $season_details->{season} );
+    $season = $returned->{season} if exists( $returned->{season} );
+    my $season_name = encode_entities( $season->name );
     
     # Prefix an explanation to the error message
-    my $action_text = ( $action eq "edit" ) ? $c->maketext("admin.message.edited") : $c->maketext("admin.message.created");
-    $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["season", $action, {id => $season->id}, $season->name] );
+    my $action_text = ( $action eq "edit" ) ? $c->maketext("admin.message.edited", $season->name) : $c->maketext("admin.message.created", $season_name);
+    $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["season", $action, {id => $season->id}, $season_name] );
     
-    if ( $restricted_edit ) {
-      # Redirect to the season view page
-      $c->response->redirect( $c->uri_for_action("/seasons/view", [ $season->url_key ],
-                                  {mid => $c->set_status_msg( {success => $c->maketext( "admin.forms.success", $season->name, $action_text )} ) }) );
-      $c->detach;
-      return;
+    my $message_texts = {};
+    my $redirect_action;
+    
+    if ( defined( $warning ) ) {
+      # Warnings, so redirect to the error page
+      $message_texts->{warning} = sprintf( "%s\n\n%s", $c->maketext("seasons.form.success-divisions-errored", $season_name, $action_text), $warning );
+      $redirect_action = "edit";
     } else {
-      # Do the division creation
-      my $division_details = $c->model("DB::Division")->check_and_create({
-        divisions => $divisions,
-        season    => $season_details->{season},
-      });
+      # No warnings, go to view page
+      $message_texts->{success} = $c->maketext( "admin.forms.success", $season->name, $action_text );
+      $redirect_action = "view";
       
-      my $encoded_name = $c->stash->{encoded_name};
-      
-      if ( scalar( @{ $division_details->{error} } ) ) {
-        # Error creating / editing divisions; we have created the season by now, but we can redirect to the edit page so they can be re-tried from there
-        # Flash the entered values
-        foreach my $division ( @{ $divisions } ) {
-          # Flash the divisions
-          # Make sure we set up a blank flashed value if the grid wasn't specified, otherwise we'll have the wrong
-          # number of elements in that array
-          my $flash_grid              = ( defined( $division->{fixtures_grid} ) ) ? $division->{fixtures_grid}->id : "";
-          my $flash_match_template    = ( defined( $division->{league_match_template} ) ) ? $division->{league_match_template}->id : "";
-          my $flash_ranking_template  = ( defined( $division->{league_ranking_template} ) ) ? $division->{league_ranking_template}->id : "";
-          
-          push( @{ $c->flash->{use_division}            }, $division->{use_division} );
-          push( @{ $c->flash->{division_name}           }, $division->{name} );
-          push( @{ $c->flash->{division_id}             }, $division->{id} );
-          push( @{ $c->flash->{fixtures_grid}           }, $flash_grid );
-          push( @{ $c->flash->{league_match_template}   }, $flash_match_template );
-          push( @{ $c->flash->{league_ranking_template} }, $flash_ranking_template );
-        }
-        
-        $division_details->{error} = sprintf( "%s\n\n%s", $c->maketext("seasons.form.success-divisions-errored", $encoded_name, $action_text), $c->build_message( $division_details->{error} ) );
-        
-        $c->response->redirect( $c->uri_for_action("/seasons/edit", [ $season->url_key ],
-                                    {mid => $c->set_status_msg( {warning => $division_details->{error}} ) }) );
-        $c->detach;
-        return;
-      } else {
+      unless ( $returned->{restricted_edit} ) {
         # Loop through collecting the names and IDs for the event log
         my ( @division_ids, @division_names );
-        foreach my $division_data ( @{ $division_details->{divisions} } ) {
+        
+        foreach my $division_data ( @{ $returned->{divisions} } ) {
           $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["division", $division_data->{action}, {id => $division_data->{db}->id}, $division_data->{db}->name] );
         }
-        
-        # Redirect to the season view page
-        $c->response->redirect( $c->uri_for_action("/seasons/view", [ $season->url_key ],
-                                    {mid => $c->set_status_msg( {success => $c->maketext( "admin.forms.success", $encoded_name, $action_text )} ) }) );
-        $c->detach;
-        return;
       }
     }
+    
+    # Redirect to the season view or edit page
+    $c->response->redirect( $c->uri_for_action("/seasons/$redirect_action", [ $season->url_key ],
+                                {mid => $c->set_status_msg( $message_texts ) }) );
+    $c->detach;
+    return;
   }
 }
 
@@ -875,272 +765,6 @@ sub do_archive :Chained("base") :PathPart("do-archive") :Args(0) {
     $c->detach;
     return;
   }
-}
-
-=head2 teams
-
-Add or remove teams from the current season.
-
-=cut
-
-sub teams :Local {
-  my ( $self, $c ) = @_;
-  
-  $c->load_status_msgs;
-  
-  # Don't cache this page.
-  $c->response->header("Cache-Control"  => "no-cache, no-store, must-revalidate");
-  $c->response->header("Pragma"         => "no-cache");
-  $c->response->header("Expires"        => 0);
-  
-  # Check that we are authorised to edit seasons
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["season_edit", $c->maketext("user.auth.edit-seasons"), 1] );
-    
-  # Make sure there's a current season
-  my $current_season  = $c->model("DB::Season")->get_current;
-  
-  if ( defined( $current_season ) ) {
-    my $league_matches = $c->model("DB::TeamMatch")->season_matches($current_season)->count;
-    
-    if ( $league_matches > 0 ) {
-      $c->response->redirect( $c->uri_for_action("/seasons/view", [$current_season->url_key],
-                                {mid => $c->set_status_msg( {error => $c->maketext("seasons.form.teams.error.matches-exist")} ) }) );
-      $c->detach;
-      return;
-    }
-  } else {
-    $c->response->redirect( $c->uri_for("/seasons",
-                                {mid => $c->set_status_msg( {error => $c->maketext("seasons.form.teams.error.no-current-season")} ) }) );
-    $c->detach;
-    return;
-  }
-  
-  # Get the season we need to check
-  my $check_season    = $c->model("DB::Season")->last_season_with_team_entries;
-  my @teams           = $c->model("DB::Team")->all_teams_by_club_by_team_name_with_season({season => $check_season});
-  my @clubs           = $c->model("DB::Club")->all_clubs_by_name;
-  my @divisions       = $c->model("DB::Division")->divisions_in_season($current_season);
-  
-  if ( scalar(@teams) == 0 ) {
-    # We need to redirect to the create teams page; check we're authorised to do so first
-    $c->forward( "TopTable::Controller::Users", "check_authorisation", ["team_create", "", 0] );
-    
-    if ( $c->stash->{authorisation}{team_create} ) {
-      $c->response->redirect( $c->uri_for("/teams/create",
-                                {mid => $c->set_status_msg( {error => $c->maketext("seasons.form.teams.no-teams-create-yes")} ) }) );
-    } else {
-      $c->response->redirect( $c->uri_for("/",
-                                {mid => $c->set_status_msg( {error => $c->maketext("seasons.form.teams.no-teams-create-no")} ) }) );
-    }
-    $c->detach;
-    return;
-  }
-  
-  # Set up the arrayref for the tokeninput field configurations
-  my $tokeninput_confs = [];
-  
-  # Set up the players / captains for each team
-  foreach my $team ( @teams ) {
-    # First setup the function arguments
-    my $captain_tokeninput_options = {
-      jsonContainer => "json_people",
-      tokenLimit    => 1,
-      hintText      => "Start typing a person's name",
-    };
-    
-    # Add the pre-population if needed
-    if ( $c->flash->{errored_form} ) {
-      $captain_tokeninput_options->{prePopulate} = [{
-        id    => $c->flash->{teams}{$team->id}{new_captain}->id,
-        name  => encode_entities( $c->flash->{teams}{$team->id}{new_captain}->display_name ),
-      }] if ( defined( $c->flash->{teams}{$team->id}{new_captain} ) and ref( $c->flash->{teams}{$team->id}{new_captain} ) eq "TopTable::Model::DB::Person" );
-    } else {
-      # Form hasn't errored, 
-      $captain_tokeninput_options->{prePopulate} = [{
-        id    => $team->team_seasons->first->captain->id,
-        name  => encode_entities( $team->team_seasons->first->captain->display_name ),
-      }] if defined( $team->team_seasons->first ) and defined( $team->team_seasons->first->captain );
-    }
-    
-    # Now do the players
-    my $players_tokeninput_options = {
-      jsonContainer => "json_people",
-      hintText      => $c->maketext("person.tokeninput.type"),
-    };
-    
-    # Set up the arrayref for the pre-population
-    $players_tokeninput_options->{prePopulate} = [];
-    if ( $c->flash->{errored_form} ) {
-      # Form has errored, use the flashed values
-      if ( exists( $c->flash->{teams}{$team->id}{new_players} ) and ref( $c->flash->{teams}{$team->id}{new_players} ) eq "ARRAY" ) {
-        foreach my $player ( @{ $c->flash->{teams}{$team->id}{new_players} } ) {
-          push(@{ $players_tokeninput_options->{prePopulate} }, {
-            id    => $player->id,
-            name  => encode_entities( $player->display_name ),
-          });
-        }
-      }
-    } else {
-      # Form hasn't errored, use the DB values
-      if ( defined( $team->team_seasons->first ) and defined( $team->person_seasons ) ) {
-        # Loop through the players for this person and add them into the pre-population
-        $team->person_seasons->reset;
-        my $person_seasons = $team->person_seasons;
-        while ( my $person_season = $person_seasons->next ) {
-          push(@{ $players_tokeninput_options->{prePopulate} }, {
-            id    => $person_season->person->id,
-            name  => encode_entities( $person_season->person->display_name ),
-          });
-        }
-      }
-    }
-    
-    # Push the players and captain tokeninputs on to the configurations
-    push( @{ $tokeninput_confs }, {
-      script    => $c->uri_for("/people/ajax-search"),
-      options   => encode_json( $captain_tokeninput_options ),
-      selector  => "captain_" . $team->id,
-    }, {
-      script    => $c->uri_for("/people/ajax-search"),
-      options   => encode_json( $players_tokeninput_options ),
-      selector  => "players_" . $team->id,
-    });
-  }
-  
-  $c->stash({
-    template            => "html/seasons/teams.ttkt",
-    scripts             => [
-      "tokeninput-standard",
-    ],
-    external_scripts    => [
-      $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
-      $c->uri_for("/static/script/standard/chosen.js"),
-      $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
-      $c->uri_for("/static/script/standard/prettycheckable.js"),
-      $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js"),
-      $c->uri_for("/static/script/seasons/teams.js"),
-    ],
-    external_styles     => [
-      $c->uri_for("/static/css/chosen/chosen.min.css"),
-      $c->uri_for("/static/css/prettycheckable/prettyCheckable.css"),
-      $c->uri_for("/static/css/tokeninput/token-input-tt.css"),
-    ],
-    view_online_display => sprintf( "Selecting teams for %s", $current_season->name ),
-    view_online_link    => 0,
-    subtitle2           => $c->maketext( "seasons.set-teams.heading", $current_season->name ),
-    divisions           => \@divisions,
-    teams               => \@teams,
-    clubs               => \@clubs,
-    home_nights         => [ $c->model("DB::LookupWeekday")->all_days ],
-    # The last season with any teams in will be the one we need to check against for active / inactive
-    check_season        => $check_season,
-    tokeninput_confs    => $tokeninput_confs,
-  });
-  
-  if ( $c->stash->{status_msg}{info} ) {
-    # Append the message
-    $c->stash->{status_msg}{info} .= $c->maketext("seasons.set-teams.notice.name-changes");
-  } else {
-    $c->stash->{status_msg}{info} = $c->maketext("seasons.set-teams.notice.name-changes");
-  }
-  
-  # Breadcrumbs
-  push(@{ $c->stash->{breadcrumbs} }, {
-    path  => $c->uri_for("/seasons/teams"),
-    label => $c->maketext("menu.text.teams"),
-  });
-}
-
-=head2 set_teams
-
-Add or remove teams from the current season.
-
-=cut
-
-sub set_teams :Path("set-teams") {
-  my ( $self, $c ) = @_;
-  
-  # Check that we are authorised to edit seasons
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["season_edit", $c->maketext("user.auth.edit-seasons"), 1] );
-  
-  # Checked that we are okay to process the form; now process all the team data into a hashref
-  my $teams = [];
-  
-  if ( exists( $c->request->parameters->{id} ) ) {
-    if ( ref( $c->request->parameters->{id} ) ne "ARRAY" ) {
-      # Turn it into an arrayref if it's not already, so we don't have to do lots of if statements checking in the next bit
-      $c->request->parameters->{id} = [ $c->request->parameters->{id} ];
-    }
-  } else {
-    $c->response->redirect( $c->uri_for("/seasons/teams",
-                              {mid => $c->set_status_msg( {error => $c->maketext("seasons.form.teams.error.no-teams-submitted")} ) }) );
-    $c->detach;
-    return;
-  }
-  
-  # Now prepare the data to send to the model for processing
-  foreach my $team_id ( @{ $c->request->parameters->{id} } ) {
-    # The captain will be blank if we don't have one specified (rather than undef); this is important, as undef will signify an unrecognised captain
-    my $captain = "";
-    $captain = $c->model("DB::Person")->find( $c->request->parameters->{"captain_" . $team_id} ) if $c->request->parameters->{"captain_" . $team_id};
-    
-    # Look up all the players first; these are submitted in a single field, comma separated
-    my @player_ids = split( ",", $c->request->parameters->{"players_" . $team_id} );
-    
-    # Set up the arrayref that will hold the DB object for each player, then push the result of a find() on to it for each ID
-    my $players = [];
-    push( @{ $players }, $c->model("DB::Person")->find( $_ ) ) foreach ( @player_ids );
-    
-    # Set up the teams array
-    push( @{ $teams }, {
-      db              => $c->model("DB::Team")->find_with_prefetches( $team_id ), # Find the current team object
-      id              => $team_id, # Pass the ID in
-      entered         => $c->request->parameters->{$team_id . "_entered"},
-      
-      # Pass in the 'new' details for the team
-      new_division    => $c->model("DB::Division")->find( $c->request->parameters->{"division_" . $team_id} ),
-      new_club        => $c->model("DB::Club")->find( $c->request->parameters->{"club_" . $team_id} ),
-      new_home_night  => $c->model("DB::LookupWeekday")->find( $c->request->parameters->{"home_night_" . $team_id} ),
-      
-      # Captain and players
-      new_captain     => $captain,
-      new_players     => $players,
-    });
-  }
-  
-  my $team_results = $c->model("DB::Season")->edit_teams_list({
-    teams                   => $teams,
-    reassign_active_players => $c->config->{Players}{reassign_active_on_team_season_create},
-  });
-  
-  my ( $error, $warning, $current_season ) = ( $team_results->{error}, $team_results->{warning}, $team_results->{current_season} );
-  
-  if ( scalar( @{ $error } ) ) {
-    $error = $c->build_message( $error );
-    
-    # If we've reached an error, flash the values...
-    $c->flash->{teams}        = $team_results->{teams};
-    $c->flash->{errored_form} = 1;
-    
-    # ...and redirect with an error message
-    $c->response->redirect( $c->uri_for("/seasons/teams",
-                              {mid => $c->set_status_msg( {error => $error} ) }) );
-  } elsif ( scalar( @{ $warning } ) ) {
-    $warning = $c->build_message( $warning );
-    
-    # Warnings, but we've done what we can; redirect to season view with the warnings.
-    $c->response->redirect( $c->uri_for_action("/seasons/view", [$current_season->url_key],
-                              {mid => $c->set_status_msg( { success => $c->maketext("seasons.form.teams.success-with-warnings", $current_season->name),
-                                                            warning => $warning } ) }) );
-  } else {
-    # No errors or warnings, back to the season view
-    $c->response->redirect( $c->uri_for_action("/seasons/view", [$current_season->url_key],
-                              {mid => $c->set_status_msg( {success => $c->maketext("seasons.form.teams.success", $current_season->name)} ) }) );
-  }
-  
-  # We will have redirected in some way, so detach and return
-  $c->detach;
-  return;
 }
 
 =encoding utf8

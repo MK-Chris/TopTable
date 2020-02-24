@@ -1,70 +1,109 @@
 [% # Note That the '-' at the beginning or end of TT code  -%]
 [% # "chomps" the whitespace/newline at that end of the    -%]
 [% # output (use View Source in browser to see the effect) -%]
-<div id="season-fixtures-results">
-[%
-IF season.complete;
-  SET team_uri      = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "teams"]);
-  SET month_uri     = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "months"]);
-  SET week_uri      = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "weeks"]);
-  SET day_uri       = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "days"]);
-  SET venue_uri     = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "venues"]);
-  SET division_uri  = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "divisions"]);
-ELSE;
-  SET team_uri      = c.uri_for_action("/fixtures-results/filter_view_current_season", ["teams"]);
-  SET month_uri     = c.uri_for_action("/fixtures-results/filter_view_current_season", ["months"]);
-  SET week_uri      = c.uri_for_action("/fixtures-results/filter_view_current_season", ["weeks"]);
-  SET day_uri       = c.uri_for_action("/fixtures-results/filter_view_current_season", ["days"]);
-  SET venue_uri     = c.uri_for_action("/fixtures-results/filter_view_current_season", ["venues"]);
-  SET division_uri  = c.uri_for_action("/fixtures-results/filter_view_current_season", ["divisions"]);
-END;
--%]
-<h4>Fixtures &amp; Results</h4>
-<ul class="option-list">
-  <li>
-    <a href="[% team_uri %]">By team</a>
-  </li>
-  <li>
-    <a href="[% month_uri %]">By month</a>
-  </li>
-  <li>
-    <a href="[% week_uri %]">By week</a>
-  </li>
-  <li>
-    <a href="[% day_uri %]">By day</a>
-  </li>
-  <li>
-    <a href="[% venue_uri %]">By venue</a>
-  </li>
-  <li>
-    <a href="[% division_uri %]">By division</a>
-  </li>
-</ul>
+<div class="row">
+  <div class="column left">
+    <h4>[% c.maketext("seasons.statistics") %]</h4>
+    <table class="vertical">
+      <tr>
+        <th scope="row">[% c.maketext("seasons.statistics.start-date") %]</th>
+        <td>[% season.start_date_long %]</td>
+      </tr>
+      <tr>
+        <th scope="row">[% c.maketext("seasons.statistics.end-date") %]</th>
+        <td>[% season.end_date_long %]</td>
+      </tr>
+      <tr>
+        <th scope="row">[% c.maketext("seasons.statistics.clubs") %]</th>
+        <td>[% clubs %]</td>
+      </tr>
+      <tr>
+        <th scope="row">[% c.maketext("seasons.statistics.teams") %]</th>
+        <td>[% teams %]</td>
+      </tr>
+      <tr>
+        <th scope="row">[% c.maketext("seasons.statistics.players") %]</th>
+        <td>[% players %]</td>
+      </tr>
+      <tr>
+        <th scope="row">[% c.maketext("seasons.statistics.league-matches") %]</th>
+        <td>[% league_matches %]</td>
+      </tr>
+      <tr>
+        <th scope="row">[% c.maketext("seasons.statistics.rearranged-matches") %]</th>
+        <td>[% rearranged_matches %]</td>
+      </tr>
+      <tr>
+        <th scope="row">[% c.maketext("seasons.statistics.cancelled-matches") %]</th>
+        <td>[% cancelled_matches %]</td>
+      </tr>
+      <tr>
+        <th scope="row">[% c.maketext("seasons.statistics.matches-with-incomplete-teams") %]</th>
+        <td>[% matches_with_incomplete_teams %]</td>
+      </tr>
+      <tr>
+        <th scope="row">[% c.maketext("seasons.statistics.matches-with-loan-players") %]</th>
+        <td>[% matches_with_loan_players %]</td>
+      </tr>
+    </table>
+  </div>
+  
+  <div class="column right">
+  [%
+  IF season.complete;
+    SET team_uri      = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "teams"]);
+    SET month_uri     = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "months"]);
+    SET week_uri      = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "weeks"]);
+    SET day_uri       = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "days"]);
+    SET venue_uri     = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "venues"]);
+    SET division_uri  = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "divisions"]);
+  ELSE;
+    SET team_uri      = c.uri_for_action("/fixtures-results/filter_view_current_season", ["teams"]);
+    SET month_uri     = c.uri_for_action("/fixtures-results/filter_view_current_season", ["months"]);
+    SET week_uri      = c.uri_for_action("/fixtures-results/filter_view_current_season", ["weeks"]);
+    SET day_uri       = c.uri_for_action("/fixtures-results/filter_view_current_season", ["days"]);
+    SET venue_uri     = c.uri_for_action("/fixtures-results/filter_view_current_season", ["venues"]);
+    SET division_uri  = c.uri_for_action("/fixtures-results/filter_view_current_season", ["divisions"]);
+  END;
+  -%]
+    <h4>[% c.maketext("menu.text.fixtures-results") %]</h4>
+    <ul class="option-list">
+      <li>
+        <a href="[% team_uri %]">[% c.maketext("menu.text.fixtures-results-by-team") %]</a>
+      </li>
+      <li>
+        <a href="[% month_uri %]">[% c.maketext("menu.text.fixtures-results-by-month") %]</a>
+      </li>
+      <li>
+        <a href="[% week_uri %]">[% c.maketext("menu.text.fixtures-results-by-week") %]</a>
+      </li>
+      <li>
+        <a href="[% day_uri %]">[% c.maketext("menu.text.fixtures-results-by-day") %]</a>
+      </li>
+      <li>
+        <a href="[% venue_uri %]">[% c.maketext("menu.text.fixtures-results-by-venue") %]</a>
+      </li>
+      <li>
+        <a href="[% division_uri %]">[% c.maketext("menu.text.fixtures-results-by-division") %]</a>
+      </li>
+    </ul>
+  </div>
 </div>
-
-<div id="season-dates">
-<h4>Dates</h4>
-<dl>
-  <dt>Start date</dt>
-  <dd>[% season.start_date_long %]</dd>
-  <dt>End date</dt>
-  <dd>[% season.end_date_long %]</dd>
-</dl>
-</div>
+<!--<div class="clear-fix"></div>-->
 
 <div id="season-divisions">
-<h4>Divisions</h4>
+<h4>[% c.maketext("seasons.divisions") %]</h4>
 <table id="datatable" class="stripe hover order-column row-border">
   <thead>
     <tr>
-      <th>Division</th>
-      <th>Statistics</th>
+      <th>[% c.maketext("seasons.division") %]</th>
+      <th>[% c.maketext("seasons.division.statistics") %]</th>
       <th>&nbsp;</th>
       <th>&nbsp;</th>
       <th>&nbsp;</th>
-      <th>Fixtures Grid</th>
-      <th>League Match Template</th>
-      <th>League Table Ranking Template</th>
+      <th>[% c.maketext("seasons.division.fixtures-grid") %]</th>
+      <th>[% c.maketext("seasons.league-match-template") %]</th>
+      <th>[% c.maketext("seasons.league-ranking-template") %]</th>
     </tr>
   </thead>
   <tbody>
@@ -102,6 +141,6 @@ END;
 </div><br />
 
 <div id="season-events">
-<h4>Events</h4>
+<h4>[% c.maketext("seasons.events") %]</h4>
 </div><br />
 

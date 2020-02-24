@@ -354,6 +354,7 @@ sub view_finalise :Private {
     $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
     $c->uri_for("/static/script/people/view.js"),
     $c->uri_for("/static/script/standard/option-list.js"),
+    $c->uri_for("/static/script/standard/vertical-table.js"),
   ];
   
   if ( $c->stash->{authorisation}{person_edit} ) {
@@ -822,7 +823,7 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
   if ( defined( $c->flash->{team} ) ) {
     $pre_populate_team = $c->flash->{team};
   } else {
-    $pre_populate_team = $person_season->team if defined( $person_season );
+    $pre_populate_team = $person_season->team_season->team if defined( $person_season );
   }
   
   $tokeninput_team_options->{prePopulate} = [{id => $pre_populate_team->id, name => encode_entities( sprintf( "%s %s", $pre_populate_team->club->short_name, $pre_populate_team->name ) )}] if defined( $pre_populate_team );

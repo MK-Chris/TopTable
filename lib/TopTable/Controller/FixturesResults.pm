@@ -656,7 +656,7 @@ sub view_team :Private {
   
   # Team info is in the team season object if we're using a specific season
   my $team_info = $team->team_seasons->first;
-  my $encoded_old_club_short_name = encode_entities( $team_info->club->short_name );
+  my $encoded_old_club_short_name = encode_entities( $team_info->club_season->short_name );
   my $encoded_club_short_name     = encode_entities( $team->club->short_name );
   my $encoded_club_full_name      = encode_entities( $team->club->full_name );
   my $encoded_old_team_name       = encode_entities( $team_info->name );
@@ -668,10 +668,10 @@ sub view_team :Private {
   
   my $online_display;
   if ( $specific_season ) {
-    $online_display = sprintf( "Viewing fixtures & results for %s %s in %s", $encoded_club_short_name, $team_info->name, $season->name );
+    $online_display = sprintf( "Viewing fixtures & results for %s %s in %s", $encoded_club_short_name, $encoded_old_team_name, $season->name );
     $subtitle_field = "subtitle3";
   } else {
-    $online_display = sprintf( "Viewing fixtures & results for %s %s", $team_info->club->short_name, $team_info->name );
+    $online_display = sprintf( "Viewing fixtures & results for %s %s", $encoded_club_short_name, $encoded_old_team_name );
     $subtitle_field = "subtitle2";
   }
   
@@ -681,7 +681,7 @@ sub view_team :Private {
     view_online_display => $online_display,
     view_online_link    => 1,
     matches             => $matches,
-    $subtitle_field     => sprintf( "%s %s", $team_info->club->short_name, $team_info->name ),
+    $subtitle_field     => sprintf( "%s %s", $encoded_club_short_name, $encoded_old_team_name ),
     page_info           => $page_info,
     page_links          => $page_links,
     title_links         => [{
@@ -1656,7 +1656,7 @@ Private routine that all of the view_month_* functions end up at.  This does the
 
 sub view_month :Private {
   my ( $self, $c, $page_number ) = @_;
-  my ( $subtitle_field, $matches );
+  my ( $subtitle_field );
   my $start_date      = $c->stash->{start_date};
   my $end_date        = $c->stash->{end_date};
   my $season          = $c->stash->{season};
@@ -1666,13 +1666,15 @@ sub view_month :Private {
   $c->forward( "TopTable::Controller::Users", "check_authorisation", [[ qw( match_update match_cancel ) ], "", 0] );
   
   # Retrieve the matches for display
-  $matches    = $c->model("DB::TeamMatch")->matches_in_date_range({
+  my $matches    = $c->model("DB::TeamMatch")->matches_in_date_range({
     season            => $season,
     start_date        => $start_date,
     end_date          => $end_date,
     page_number       => $page_number,
     results_per_page  => $c->config->{Pagination}{default_page_size},
   });
+  
+  #$c->log->debug( Dumper( $matches->as_query ) );
   
   # Work out the arguments and actions based on whether or not we've specified the season or just using the current one
   my ( $page1_action, $specific_page_action, $page1_arguments, $specific_page_arguments );

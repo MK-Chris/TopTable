@@ -22,51 +22,6 @@ sub get_person_and_gender {
   });
 }
 
-=head2 team_averages_list
-
-A predefined search to find and return the players within a team in the order in which they would appear in the full league averages.
-
-=cut
-
-sub team_averages_list {
-  my ( $self, $season, $team ) = @_;
-  
-  return $self->search({
-    "person_seasons.team"   => $team->id,
-    "person_seasons.season" => $season->id,
-  }, {
-    join      => "person_seasons",
-    order_by  => {
-      -desc => [ qw( person_seasons.average_game_wins person_seasons.matches_played person_seasons.games_won person_seasons.games_played person_seasons.average_point_wins person_seasons.points_played person_seasons.points_won )]
-    },
-  });
-}
-
-=head2 division_averages_list
-
-A predefined search to find and return the players within a division in the order in which they should appear in the full league averages.
-
-=cut
-
-sub division_averages_list {
-  my ( $self, $season, $division, $minimum_matches_played ) = @_;
-  
-  $minimum_matches_played = 0 if !$minimum_matches_played;
-  
-  return $self->search({
-    "person_seasons.matches_played" => {
-      ">="  => $minimum_matches_played
-    },
-    "person_seasons.division" => $division,
-    "person_seasons.season"   => $season,
-  }, {
-    join      => "person_seasons",
-    order_by  => {
-      -desc => [ qw( person_seasons.average_game_wins person_seasons.matches_played person_seasons.games_won person_seasons.games_played person_seasons.average_point_wins person_seasons.points_played person_seasons.points_won ) ]
-    },
-  });
-}
-
 =head2 all_people
 
 Return a list of all people sorted by surname then first name.  If a season is specified, only the people playing in that season will be returned.
@@ -372,9 +327,10 @@ sub create_or_edit {
     if ( defined( $person ) and ref( $person ) eq "TopTable::Model::DB::Person" ) {
       # Search for the person season - membership type 1 just searches for the active one
       $person_seasons = $person->search_related("person_seasons", {
-        season => $season->id,
+        "me.season"           => $season->id,
+        "team_season.season"  => $season->id,
       }, {
-        prefetch => "team",
+        prefetch => {team_season => "team"},
       });
       
       $active_person_season = $person_seasons->find({
@@ -679,9 +635,9 @@ sub create_or_edit {
     # If we have a team, make sure the possible doubles combinations exist.  To do this, we need to get all the players already playing for the team
     if ( defined( $team ) ) {
       # Get a list of team-mates
-      my $teammates = $team->search_related("person_seasons", undef, {
+      my $teammates = $team->search_related("team_seasons")->search_related("person_seasons", undef, {
         where => {
-          season                => $season->id,
+          "me.season"           => $season->id,
           team_membership_type  => "active",
           person                => {
             "!="                => $person->id,
@@ -737,10 +693,10 @@ sub create_or_edit {
     
     # Update the user if required
     $user->update({person => $person->id}) if defined( $user );
-    
-    # Add the person to our return value
-    $return_value->{person} = $person;
   }
+  
+  # Add the person to our return value
+  $return_value->{person} = $person;
   
   # Finally return with everything we need
   return $return_value;

@@ -17,6 +17,7 @@ $(document).ready(function() {
       {"responsivePriority": 1},
       {"responsivePriority": 2},
       {"responsivePriority": 5},
+      {"responsivePriority": 8},
       {"responsivePriority": 3},
       {"responsivePriority": 6},
       {"responsivePriority": 7},

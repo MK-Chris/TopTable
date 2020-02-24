@@ -4,12 +4,16 @@
 
 <div id="template_rules">
   <h4>[% c.maketext("templates.form.legend.template-rules") %]</h4>
-  <dl>
-      <dt>[% c.maketext("templates.team-match.field.winner-type") %]</dt>
-      <dd>[% c.maketext("winner-type.description." _ tt_template.winner_type.id) %]</dd>
-      <dt>[% c.maketext("templates.team-match.field.singles-players-per-team") %]</dt>
-      <dd>[% tt_template.singles_players_per_team %]</dd>
-  </dl>
+  <table class="vertical">
+    <tr>
+      <th>[% c.maketext("templates.team-match.field.winner-type") %]</th>
+      <td>[% c.maketext("winner-type.description." _ tt_template.winner_type.id) %]</td>
+    </tr>
+    <tr>
+      <th>[% c.maketext("templates.team-match.field.singles-players-per-team") %]</th>
+      <td>[% tt_template.singles_players_per_team %]</td>
+    </tr>
+  </table>
 </div>
 
 <h4>Template Games</h4>

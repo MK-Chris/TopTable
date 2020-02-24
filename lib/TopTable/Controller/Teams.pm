@@ -400,13 +400,11 @@ sub get_team_season :Private {
   # Check if the name has changed since the season we're viewing
   if ( $specific_season and defined( $team_season ) ) {
     # Get the club_season too
-    $club_season = $team_season->club->get_season( $season );
-    $c->log->debug( sprintf( "Club season: %s, %s", $club_season, ref( $club_season ) ) );
-    $c->log->debug( sprintf( "Club: %s, %s", $team_season->club, ref( $team_season->club ) ) );
+    $club_season = $team_season->club_season;
      
-    $c->add_status_message( "info", $c->maketext( "teams.club.changed-notice", $team_season->club->short_name, $team_season->name, $c->uri_for_action("/clubs/view_current_season", [$team->club->url_key]), $team->club->full_name ) ) if $team_season->club->id != $team->club->id;
-    $c->add_status_message( "info", $c->maketext( "teams.name.changed-notice", $team_season->club->short_name, $team_season->name, $team->club->short_name, $team->name ) ) if $team_season->name ne $team->name;
-    $c->add_status_message( "info", $c->maketext( "clubs.name.changed-notice", $club_season->full_name, $club_season->short_name, $team_season->club->full_name, $team_season->club->short_name ) ) if $club_season->full_name ne $team_season->club->full_name or $club_season->short_name ne $team_season->club->short_name;
+    $c->add_status_message( "info", $c->maketext( "teams.club.changed-notice", $club_season->short_name, $team_season->name, $c->uri_for_action("/clubs/view_current_season", [$team->club->url_key]), $team->club->full_name ) ) if $club_season->club->id != $team->club->id;
+    $c->add_status_message( "info", $c->maketext( "teams.name.changed-notice", $club_season->short_name, $team_season->name, $club_season->club->short_name, $team->name ) ) if $team_season->name ne $team->name;
+    $c->add_status_message( "info", $c->maketext( "clubs.name.changed-notice", $club_season->full_name, $club_season->short_name, $club_season->club->full_name, $club_season->club->short_name ) ) if $club_season->full_name ne $club_season->club->full_name or $club_season->short_name ne $club_season->club->short_name;
     
     $c->stash({subtitle1 => encode_entities( sprintf( "%s %s", $club_season->short_name, $team_season->name ) )});
   }
@@ -417,7 +415,7 @@ sub get_team_season :Private {
   my $doubles_pair_averages = [];
     if ( $entered ) {
     # Get the team's position - we need to get all teams in the division in an array ordered properly first
-    my @teams_in_division = $c->model("DB::TeamSeason")->get_teams_in_division_in_league_table_order( $season, $team_season->division );
+    my @teams_in_division = $c->model("DB::TeamSeason")->get_teams_in_division_in_league_table_order( $season, $team_season->division_season->division );
     
     # Now we need to loop throug the array, counting up as we go
     foreach my $division_team ( @teams_in_division ) {
@@ -430,13 +428,13 @@ sub get_team_season :Private {
     
     $singles_averages = [ $c->model("DB::PersonSeason")->get_people_in_division_in_singles_averages_order({
       season    => $season,
-      division  => $team_season->division,
+      division  => $team_season->division_season->division,
       team      => $team,
     } ) ];
     
     $doubles_individual_averages = [ $c->model("DB::PersonSeason")->get_people_in_division_in_doubles_individual_averages_order({
       season          => $season,
-      division        => $team_season->division,
+      division        => $team_season->division_season->division,
       team            => $team,
       criteria_field  => "played",
       operator        => ">=",
@@ -445,7 +443,7 @@ sub get_team_season :Private {
     
     $doubles_pair_averages = [ $c->model("DB::DoublesPair")->get_doubles_pairs_in_division_in_averages_order({
       season          => $season,
-      division        => $team_season->division,
+      division        => $team_season->division_season->division,
       team            => $team,
       criteria_field  => "played",
       operator        => ">=",
@@ -526,6 +524,7 @@ sub view_finalise :Private {
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
+      $c->uri_for("/static/script/standard/vertical-table.js"),
       $c->uri_for( sprintf( "/static/script/teams/view%s.js", $team_view_js_suffix ) ),
     ],
     external_styles     => [
@@ -540,7 +539,7 @@ sub view_finalise :Private {
     view_online_link    => 1,
     no_filter           => 1, # Don't include the averages filter form on a team averages view
     matches             => $matches,
-    seasons             => $team->seasons->count,
+    seasons             => $team->team_seasons->count,
   });
 }
 
@@ -890,7 +889,8 @@ Display a form to with the existing information for editing a club
 
 sub edit :Private {
   my ( $self, $c ) = @_;
-  my ( $current_season, $mid_season, $team_season, $divisions, $last_team_season, $last_team_season_changes );
+  my ( $current_season, $team_season, $divisions, $last_team_season_changes );
+  my $mid_season = 0;
   my $team = $c->stash->{team};
   my $encoded_name = $c->stash->{encoded_name};
   
@@ -927,8 +927,7 @@ sub edit :Private {
   }
   
   # Get the last team season
-  $last_team_season = $c->model("DB::Season")->last_complete_season( $team );
-  $last_team_season = $last_team_season->team_seasons->first if defined( $last_team_season );
+  my $last_team_season = $team->last_competed_season;
   
   my $home_night;
   if ( defined( $team_season ) ) {
@@ -1044,10 +1043,10 @@ sub edit :Private {
   $c->flash->{log_old_details}  = $c->stash->{log_old_details}  if !$c->flash->{log_old_details};
   
   if ( defined( $team_season ) ) {
-    $c->flash->{division}       = $team_season->division->id    if !$c->flash->{division};
+    $c->flash->{division}       = $team_season->division_season->division->id   if !$c->flash->{division};
     $c->flash->{captain}        = $team_season->captain         if !$c->flash->{captain} and defined( $team_season->captain );
   } elsif ( defined( $last_team_season ) ) {
-    $c->flash->{division}       = $last_team_season->division->id if !$c->flash->{division};
+    $c->flash->{division}       = $last_team_season->division_season->division->id if !$c->flash->{division};
     $c->flash->{captain}        = $last_team_season->captain      if !$c->flash->{captain} and defined( $last_team_season->captain );
   }
   
@@ -1217,8 +1216,6 @@ sub do_delete :Private {
   my $error = $team->check_and_delete({
     language => sub{ $c->maketext( @_ ); },
   });
-  
-  $c->log->debug( Dumper( $error ) );
   
   if ( scalar( @{ $error } ) ) {
     # Error deleting

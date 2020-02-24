@@ -200,6 +200,7 @@ sub view :Chained("base") :PathPart("") :Args(0) {
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/templates/match/team/view.js"),
+      $c->uri_for("/static/script/standard/vertical-table.js"),
     ],
     external_styles     => [
       $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),

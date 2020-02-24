@@ -35,21 +35,26 @@ END;
 -%]
 <div id="meeting-details">
   <h4>[% c.maketext("meetings.heading.details") %]</h4>
-  
-  <dl>
-      <dt>[% c.maketext("meetings.field.date") %]</dt>
-      <dd>[% date_display %]</dd>
-      <dt>[% c.maketext("meetings.field.venue") %]</dt>
-      <dd><a href="[% c.uri_for_action("/venues/view", [venue.url_key]) %]">[% venue.name | html_entity %]</a></dd>
+  <table class="vertical">
+    <tr>
+      <th scope="row">[% c.maketext("meetings.field.date") %]</th>
+      <td>[% date_display %]</td>
+    </tr>
+    <tr>
+      <th scope="row">[% c.maketext("meetings.field.venue") %]</th>
+      <td><a href="[% c.uri_for_action("/venues/view", [venue.url_key]) %]">[% venue.name | html_entity %]</a></td>
 [%
 IF organiser;
 -%]
-      <dt>[% c.maketext("meetings.field.organiser") %]</dt>
-      <dd><a href="[% c.uri_for_action("/people/view_current_season", [organiser.url_key]) %]">[% organiser.display_name | html_entity %]</a></dd>
+    </tr>
+    <tr>
+      <th scope="row">[% c.maketext("meetings.field.organiser") %]</th>
+      <td><a href="[% c.uri_for_action("/people/view_current_season", [organiser.url_key]) %]">[% organiser.display_name | html_entity %]</a></td>
 [%
 END;
 -%]
-  </dl>
+    </tr>
+  </table>
 </div>
 
 <div id="tabs">

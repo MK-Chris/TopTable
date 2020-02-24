@@ -469,11 +469,10 @@ sub update_person {
       team_membership_type  => "active",
     }, {
       prefetch => {
-        team => [
-          "club", {
-            "team_seasons" => "division"
-          }
-        ]
+        team_season => [{
+          division_season => "division",
+          club_season     => "club",
+        }]
       },
       join => "team_membership_type",
       order_by => {
@@ -483,11 +482,11 @@ sub update_person {
     
     if ( defined( $active_season ) ) {
       # Check it's active to be safe
-      if ( $loan_player and ( $active_season->team->id == $self->team_match->home_team->id or $active_season->team->id == $self->team_match->away_team->id ) ) {
+      if ( $loan_player and ( $active_season->team_season->team->id == $self->team_match->team_season_home_team_season->team->id or $active_season->team_season->team->id == $self->team_match->team_season_away_team_season->team->id ) ) {
         # Can't use this person as a sub in a match involving their active team
         push(@{ $return_value->{error} }, {
           id          => "matches.loan-player.add.error.player-active-for-team",
-          parameters  => [$person->display_name, $active_season->team->club->short_name, $active_season->team->name],
+          parameters  => [$person->display_name, $active_season->team_season->club_season->short_name, $active_season->team_season->name],
         });
       } else {
         # Check that we have not got this person set in a position for this match already
@@ -507,7 +506,7 @@ sub update_person {
       }
       
       # Get the loan player's active team if indeed it's a loan player
-      $loan_team = $active_season->team if $loan_player;
+      $loan_team = $active_season->team_season->team if $loan_player;
     } else {
       # No teams for this person this season
       push(@{ $return_value->{error} }, {
@@ -597,12 +596,12 @@ sub update_person {
     
     # We need to update the season statistics for both
     my ( $new_player_season );
-    my $match_team_field = ( $location eq "home" ) ? "home_team" : "away_team";
+    my $match_team_field = ( $location eq "home" ) ? "team_season_home_team_season" : "team_season_away_team_season";
     if ( defined( $person ) ) {
       # Look for a person_season row for this player, team and season; create one if it's not there.
       $new_player_season = $person->search_related("person_seasons", {
         season  => $match->season->id,
-        team    => $match->$match_team_field->id,
+        team    => $match->$match_team_field->team->id,
       }, {
         rows    => 1,
       })->single;
@@ -610,7 +609,7 @@ sub update_person {
       # Create a new season object for the new person if there isn't one already
       $new_player_season = $person->create_related("person_seasons", {
         season                => $self->team_match->season->id,
-        team                  => $self->team_match->$match_team_field->id,
+        team                  => $self->team_match->$match_team_field->team->id,
         team_membership_type  => "loan",
         first_name            => $person->first_name,
         surname               => $person->surname,
@@ -624,7 +623,7 @@ sub update_person {
         # If the match has been started, we need to update the statistics
         my $original_player_season = $self->player->search_related("person_seasons", {
           season  => $match->season->id,
-          team    => $match->$match_team_field->id,
+          team    => $match->$match_team_field->team->id,
         }, {
           rows    => 1,
         })->single;
@@ -714,16 +713,16 @@ sub update_person {
           $original_player_season->update;
         }
       }
-    } elsif ( $match->started ) {
+    } elsif ( $match->started and $action ne "set-missing" ) {
       # We're adding a player where there wasn't previously one (we don't do this for the other way round - removing a player where
       # there was previously one - as that's already handled above by the score deletion).
       
       # Search for the player's season object with this team and create it if it isn't there.
-      my $match_team_field = ( $location eq "home" ) ? "home_team" : "away_team";
+      my $match_team_field = ( $location eq "home" ) ? "team_season_home_team_season" : "team_season_away_team_season";
       
       my $new_player_season = $person->search_related("person_seasons", {
         season  => $match->season->id,
-        team    => $match->$match_team_field->id,
+        team    => $match->$match_team_field->team->id,
       }, {
         rows    => 1,
       })->single;
@@ -731,7 +730,7 @@ sub update_person {
       # Create a new season object for the new person if there isn't one already
       $new_player_season = $person->create_related("person_seasons", {
         season                => $self->team_match->season->id,
-        team                  => $self->team_match->$match_team_field->id,
+        team                  => $self->team_match->$match_team_field->team->id,
         team_membership_type  => "loan"
       }) unless defined( $new_player_season );
       
@@ -852,11 +851,11 @@ sub loan_team_season {
   # Otherwise, retrieve the season 
   return $self->loan_team->find_related("team_seasons", {
     season => $match->season->id,
-    "division_seasons.season" => $match->season->id,
+    "division_season.season" => $match->season->id,
   }, {
-    prefetch => [
-      "club", {
-      division => "division_seasons",
+    prefetch => [qw( team ), {
+      club_season => {"club"},
+      division_season => "division",
     }],
   });
 }

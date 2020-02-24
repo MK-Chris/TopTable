@@ -60,10 +60,10 @@ END;
 [%
 IF c.flash.division.id;
   preset_division = c.flash.division.id;
-ELSIF team_season.division.id;
-  preset_division = team_season.division.id;
-ELSIF last_team_season.division.id;
-  preset_division = last_team_season.division.id;
+ELSIF team_season.division_season.division.id;
+  preset_division = team_season.division_season.division.id;
+ELSIF last_team_season.division_season.division.id;
+  preset_division = last_team_season.division_season.division.id;
 END;
 
 FOREACH division IN divisions;
@@ -91,8 +91,10 @@ END;
 [%
 IF c.flash.home_night.weekday_number;
   preset_home_night = c.flash.home_night.weekday_number;
-ELSE;
-  preset_home_night = team.home_night.weekday_number;
+ELSIF team_season.home_night.weekday_number;
+  preset_home_night = team_season.home_night.weekday_number;
+ELSIF last_team_season.home_night.weekday_number;
+  preset_home_night = last_team_season.home_night.weekday_number;
 END;
 
 FOREACH night IN home_nights;

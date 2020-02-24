@@ -188,6 +188,21 @@ __PACKAGE__->belongs_to(
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
 );
 
+=head2 team_seasons
+
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::TeamSeason>
+
+=cut
+
+__PACKAGE__->has_many(
+  "team_seasons",
+  "TopTable::Schema::Result::TeamSeason",
+  { "foreign.club" => "self.club", "foreign.season" => "self.season" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
 =head2 venue
 
 Type: belongs_to
@@ -204,8 +219,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-01-15 14:32:42
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:dGjDnLik5GZP6HMeYlc8Hg
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-01-27 15:19:04
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:IwqVKNtZ5w2BLOPvow1Tkg
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

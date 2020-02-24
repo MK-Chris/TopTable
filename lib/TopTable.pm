@@ -3,7 +3,7 @@ use Moose;
 use namespace::autoclean;
 use DateTime;
 use DateTime::TimeZone;
-use Data::Dumper;
+use Data::Dumper::Concise;
 use Log::Log4perl::Catalyst;
 
 use Catalyst::Runtime 5.80;
@@ -191,11 +191,18 @@ Adds a status message of type info, success, warning or error to the current pag
 
 sub add_status_message {
   my ( $c, $type, $message ) = @_;
+  $type = "info" if !defined( $type ) or $type eq "";
   
-  if ( exists( $c->stash->{status_msg} ) and exists( $c->stash->{status_msg}{$type} ) ) {
+  if ( exists( $c->stash->{status_msg} ) and ref( $c->stash->{status_msg} ) eq "HASH" and exists( $c->stash->{status_msg}{$type} ) ) {
     $c->stash->{status_msg}{$type} .= sprintf( "\n\n%s", $message );
   } else {
-    $c->stash->{status_msg}{$type} = $message;
+    if ( ref( $c->stash->{status_msg} ) eq "HASH" ) {
+      $c->stash->{status_msg}{$type} = $message;
+    } else {
+      $c->stash->{status_msg} = {
+        $type => $message,
+      };
+    }
   }
 }
 

@@ -631,33 +631,33 @@ __PACKAGE__->belongs_to(
   },
 );
 
-=head2 club
+=head2 club_season
 
 Type: belongs_to
 
-Related object: L<TopTable::Schema::Result::Club>
+Related object: L<TopTable::Schema::Result::ClubSeason>
 
 =cut
 
 __PACKAGE__->belongs_to(
-  "club",
-  "TopTable::Schema::Result::Club",
-  { id => "club" },
+  "club_season",
+  "TopTable::Schema::Result::ClubSeason",
+  { club => "club", season => "season" },
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
 );
 
-=head2 division
+=head2 division_season
 
 Type: belongs_to
 
-Related object: L<TopTable::Schema::Result::Division>
+Related object: L<TopTable::Schema::Result::DivisionSeason>
 
 =cut
 
 __PACKAGE__->belongs_to(
-  "division",
-  "TopTable::Schema::Result::Division",
-  { id => "division" },
+  "division_season",
+  "TopTable::Schema::Result::DivisionSeason",
+  { division => "division", season => "season" },
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
 );
 
@@ -674,6 +674,21 @@ __PACKAGE__->belongs_to(
   "TopTable::Schema::Result::LookupWeekday",
   { weekday_number => "home_night" },
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+);
+
+=head2 person_seasons
+
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::PersonSeason>
+
+=cut
+
+__PACKAGE__->has_many(
+  "person_seasons",
+  "TopTable::Schema::Result::PersonSeason",
+  { "foreign.season" => "self.season", "foreign.team" => "self.team" },
+  { cascade_copy => 0, cascade_delete => 0 },
 );
 
 =head2 season
@@ -706,9 +721,45 @@ __PACKAGE__->belongs_to(
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
 );
 
+=head2 team_matches_away_team_seasons
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-02-22 22:41:47
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:PtceRI9TaV1NMMPKNZ1U3w
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::TeamMatch>
+
+=cut
+
+__PACKAGE__->has_many(
+  "team_matches_away_team_seasons",
+  "TopTable::Schema::Result::TeamMatch",
+  {
+    "foreign.away_team" => "self.team",
+    "foreign.season"    => "self.season",
+  },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+=head2 team_matches_home_team_seasons
+
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::TeamMatch>
+
+=cut
+
+__PACKAGE__->has_many(
+  "team_matches_home_team_seasons",
+  "TopTable::Schema::Result::TeamMatch",
+  {
+    "foreign.home_team" => "self.team",
+    "foreign.season"    => "self.season",
+  },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-02-03 10:04:06
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:pXMiaof1uIZUjIpxmPo3cA
 
 #
 # Enable automatic date handling
@@ -717,6 +768,23 @@ __PACKAGE__->add_columns(
     "last_updated",
     { data_type => "datetime", timezone => "UTC", set_on_create => 1, set_on_update => 1, datetime_undef_if_invalid => 1, is_nullable => 1, },
 );
+
+=head2 get_players
+
+Retrieve an arrayref of players registered for this team season.
+
+=cut
+
+sub get_players {
+  my ( $self, $parameters ) = @_;
+  
+  return $self->search_related("person_seasons", undef, {
+    prefetch => "person",
+    order_by => {
+      -asc => [ qw( person.surname person.first_name ) ],
+    }
+  });
+}
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 __PACKAGE__->meta->make_immutable;

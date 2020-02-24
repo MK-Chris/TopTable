@@ -4,18 +4,26 @@
 
 <div id="template_rules">
 <h4>Template Rules</h4>
-<dl>
+<table class="vertical">
 [% # Match score type: use the number of games or points won / lost as the match score?
 IF tt_template.assign_points == 1;
 -%]
-    <dt>[% c.maketext("templates.league-table-ranking.field.points-per-win") %]</dt>
-    <dd>[% tt_template.points_per_win %]</dd>
-    <dt>[% c.maketext("templates.league-table-ranking.field.points-per-draw") %]</dt>
-    <dd>[% tt_template.points_per_draw %]</dd>
-    <dt>[% c.maketext("templates.league-table-ranking.field.points-per-loss") %]</dt>
-    <dd>[% tt_template.points_per_loss %]</dd>
+  <tr>
+    <th>[% c.maketext("templates.league-table-ranking.field.points-per-win") %]</th>
+    <td>[% tt_template.points_per_win %]</td>
+  </tr>
+  <tr>
+    <th>[% c.maketext("templates.league-table-ranking.field.points-per-draw") %]</th>
+    <td>[% tt_template.points_per_draw %]</td>
+  </tr>
+  <tr>
+    <th>[% c.maketext("templates.league-table-ranking.field.points-per-loss") %]</th>
+    <td>[% tt_template.points_per_loss %]</td>
 [% ELSE -%]
-    <dt>[% c.maketext("templates.league-table-ranking.field.points-per-win-draw-loss") %]</dt>
-    <dd>Determined by match score</dd>
+  </tr>
+  <tr>
+    <th>[% c.maketext("templates.league-table-ranking.field.points-per-win-draw-loss") %]</th>
+    <td>Determined by match score</td>
+  </tr>
 [% END -%]
-</dl>
+</table>

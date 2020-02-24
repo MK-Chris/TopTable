@@ -592,15 +592,17 @@ sub update_score {
   my $return_value = {error => []};
   
   # Convenience: get objects related to the game / match
-  my $match           = $self->team_match;
-  my $home_team       = $match->home_team;
-  my $away_team       = $match->away_team;
-  my $season          = $match->season;
-  my $home_player     = ( $self->doubles_game ) ? $self->home_doubles_pair : $self->home_player;
-  my $away_player     = ( $self->doubles_game ) ? $self->away_doubles_pair : $self->away_player;
-  my $awarded         = $parameters->{awarded}  || 0;
-  my $awarded_winner  = $parameters->{winner}   || undef; # Only used if it's been awarded
-  my $delete          = $parameters->{delete}   || 0;
+  my $match             = $self->team_match;
+  my $season_home_team  = $match->team_season_home_team_season;
+  my $season_away_team  = $match->team_season_away_team_season;
+  my $home_team         = $season_home_team->team;
+  my $away_team         = $season_away_team->team;
+  my $season            = $match->season;
+  my $home_player       = ( $self->doubles_game ) ? $self->home_doubles_pair : $self->home_player;
+  my $away_player       = ( $self->doubles_game ) ? $self->away_doubles_pair : $self->away_player;
+  my $awarded           = $parameters->{awarded}  || 0;
+  my $awarded_winner    = $parameters->{winner}   || undef; # Only used if it's been awarded
+  my $delete            = $parameters->{delete}   || 0;
   my ( $home_player_missing, $away_player_missing ) = qw( 0 0 );
   
   # First check the match wasn't cancelled; if it was, we return straight away
@@ -978,12 +980,7 @@ sub update_score {
   my $match_away_team_points_won  = ( $match->away_team_points_won  - $game_original_away_team_points ) + $away_team_points;
   
   # Get the ranking rules
-  my $ranking_template = $match->division->search_related("division_seasons", {
-    season  => $season->id,
-  }, {
-    rows      => 1,
-    prefetch  => "league_table_ranking_template",
-  })->single->league_table_ranking_template;
+  my $ranking_template = $match->division_season->league_table_ranking_template;
   
   my $assign_points   = $ranking_template->assign_points;
   my $points_per_win  = $ranking_template->points_per_win;
@@ -1239,9 +1236,6 @@ sub update_score {
   # Team match statistics were updated during the match update routine, so we just need to do the season statistics
   unless ( defined( $match->tournament_round ) ) {
     # Team season statistics
-    my $season_home_team = $home_team->find_related("team_seasons", {season => $season->id});
-    my $season_away_team = $away_team->find_related("team_seasons", {season => $season->id});
-    
     $season_home_team->legs_played( $season_home_team->legs_played - ( $game_original_home_team_score + $game_original_away_team_score ) + ( $home_legs + $away_legs ) );
     $season_home_team->legs_won( $season_home_team->legs_won - $game_original_home_team_score + $home_legs );
     $season_home_team->legs_lost( $season_home_team->legs_lost - $game_original_away_team_score + $away_legs );
@@ -1287,11 +1281,11 @@ sub update_score {
         $season_away_team->games_played( $season_away_team->games_played - 1 );
         
         # Remove one from the original winner's total if we're deleting
-        if ( defined( $game_original_winner ) and $game_original_winner == $match->home_team->id ) {
+        if ( defined( $game_original_winner ) and $game_original_winner == $home_team->id ) {
           # Remove a game won from home and a game lost from away
           $season_home_team->games_won( $season_home_team->games_won - 1 );
           $season_away_team->games_lost( $season_away_team->games_lost - 1 );
-        } elsif ( defined( $game_original_winner ) and $game_original_winner == $match->away_team->id ) {
+        } elsif ( defined( $game_original_winner ) and $game_original_winner == $away_team->id ) {
           # Remove a game won from away and a game lost from home
           $season_home_team->games_lost( $season_home_team->games_lost - 1 );
           $season_away_team->games_won( $season_away_team->games_won - 1 );
@@ -1303,13 +1297,13 @@ sub update_score {
       } else {
         if ( $game_original_winner != $game_winner ) {
           # The winner has changed since the last score was entered.
-          if ( defined( $game_winner ) and $game_winner == $match->home_team->id ) {
+          if ( defined( $game_winner ) and $game_winner == $home_team->id ) {
             # Home player has won
             # Regardless, we need to add one to the home player's games won total / the away player's games lost total
             $season_home_team->games_won( $season_home_team->games_won + 1 );
             $season_away_team->games_lost( $season_away_team->games_lost + 1 );
             
-            if ( $game_original_winner == $match->away_team->id ) {
+            if ( $game_original_winner == $away_team->id ) {
               # Away player previously won; remove one from the respective won / lost totals
               $season_home_team->games_lost( $season_home_team->games_lost - 1 );
               $season_away_team->games_won( $season_away_team->games_won - 1 );
@@ -1318,13 +1312,13 @@ sub update_score {
               $season_home_team->games_drawn( $season_home_team->games_drawn - 1 );
               $season_away_team->games_drawn( $season_away_team->games_drawn - 1 );
             }
-          } elsif ( defined( $game_winner ) and $game_winner == $match->away_team->id ) {
+          } elsif ( defined( $game_winner ) and $game_winner == $away_team->id ) {
             # Away player has won
             # Regardless, we need to add one to the home player's games won total / the away player's games lost total
             $season_home_team->games_lost( $season_home_team->games_lost + 1 );
             $season_away_team->games_won( $season_away_team->games_won + 1 );
             
-            if ( $game_original_winner == $match->home_team->id ) {
+            if ( $game_original_winner == $home_team->id ) {
               # Home player previously won; remove one from the respective won / lost totals
               $season_home_team->games_won( $season_home_team->games_won - 1 );
               $season_away_team->games_lost( $season_away_team->games_lost - 1 );
@@ -1338,7 +1332,7 @@ sub update_score {
             $season_home_team->games_drawn( $season_home_team->games_drawn + 1 );
             $season_away_team->games_drawn( $season_away_team->games_drawn + 1 );
             
-            if ( $game_original_winner == $match->home_team->id ) {
+            if ( $game_original_winner == $home_team->id ) {
               # Home player won originally; remove one from the respective won / lost totals
               $season_home_team->games_won( $season_home_team->games_won - 1 );
               $season_away_team->games_lost( $season_away_team->games_lost - 1 );
@@ -1428,7 +1422,7 @@ sub update_score {
           if ( $original_winner != $game_winner ) {
             #print "The winner has changed.\n";
             # The winner has changed since the last score was entered.
-            if ( $game_winner == $match->home_team->id ) {
+            if ( $game_winner == $home_team->id ) {
               # Home player has won
               # Regardless, we need to add one to the home players' games won total / the away players' games lost total
               $season_home_team->doubles_games_won( $season_home_team->doubles_games_won + 1 );
@@ -1453,7 +1447,7 @@ sub update_score {
               $season_away_team->doubles_games_won( $season_away_team->doubles_games_won + 1 );
               #print "Away pair has won: add one to their games won and to the home pair's games lost.\n";
               
-              if ( $original_winner == $match->home_team->id ) {
+              if ( $original_winner == $home_team->id ) {
                 # Home player previously won; remove one from the respective won / lost totals
                 $season_home_team->doubles_games_won( $season_home_team->doubles_games_won - 1 );
                 $season_away_team->doubles_games_lost( $season_away_team->doubles_games_lost - 1 );
@@ -1496,7 +1490,7 @@ sub update_score {
           $season_home_team->doubles_games_won( $season_home_team->doubles_games_won + 1 );
           $season_away_team->doubles_games_lost( $season_away_team->doubles_games_lost + 1 );
           #print "Home team won, add one to their games won and one to the away team's games lost.\n";
-        } elsif ( $game_winner == $match->away_team->id ) {
+        } elsif ( $game_winner == $away_team->id ) {
           $season_home_team->doubles_games_lost( $season_home_team->doubles_games_lost + 1 );
           $season_away_team->doubles_games_won( $season_away_team->doubles_games_won + 1 );
           #print "Away team won, add one to their games won and one to the home team's games lost.\n";
@@ -1529,9 +1523,6 @@ sub update_score {
       $season_away_team->doubles_games_played  ? $season_away_team->doubles_average_game_wins( ( $season_away_team->doubles_games_won / $season_away_team->doubles_games_played ) * 100 )     : $season_away_team->doubles_average_game_wins( 0 );
       $season_away_team->doubles_legs_played   ? $season_away_team->doubles_average_leg_wins( ( $season_away_team->doubles_legs_won / $season_away_team->doubles_legs_played ) * 100 )        : $season_away_team->doubles_average_leg_wins( 0 );
       $season_away_team->doubles_points_played ? $season_away_team->doubles_average_point_wins( ( $season_away_team->doubles_points_won / $season_away_team->doubles_points_played ) * 100 )  : $season_away_team->doubles_average_point_wins( 0 );
-      
-      $season_home_team->update;
-      $season_away_team->update;
     }
     
     $season_home_team->update;
@@ -1596,7 +1587,7 @@ sub update_score {
         # The score is NOT being deleted AND it HAS started (whether being awarded or not), so we increase games won
         if ( $original_winner != $game_winner ) {
           # The winner has changed since the last score was entered.
-          if ( $game_winner == $match->home_team->id ) {
+          if ( $game_winner == $home_team->id ) {
             # Home player has won
             # Regardless, we need to add one to the home player's games won total / the away player's games lost total
             $game_home_player->games_won( $game_home_player->games_won + 1 );
@@ -1749,7 +1740,7 @@ sub update_score {
           if ( $original_winner != $game_winner ) {
             #print "The winner has changed.\n";
             # The winner has changed since the last score was entered.
-            if ( $game_winner == $match->home_team->id ) {
+            if ( $game_winner == $home_team->id ) {
               # Home player has won
               # Regardless, we need to add one to the home players' games won total / the away players' games lost total
               $home_player->games_won( $home_player->games_won + 1 );
@@ -1790,7 +1781,7 @@ sub update_score {
               $away_doubles2->doubles_games_won( $away_doubles2->doubles_games_won + 1 );
               #print "Away pair has won: add one to their games won and to the home pair's games lost.\n";
               
-              if ( $original_winner == $match->home_team->id ) {
+              if ( $original_winner == $home_team->id ) {
                 # Home player previously won; remove one from the respective won / lost totals
                 $home_player->games_won( $home_player->games_won - 1 );
                 $away_player->games_lost( $away_player->games_lost - 1 );
@@ -1861,7 +1852,7 @@ sub update_score {
           $away_doubles1->doubles_games_lost( $away_doubles1->doubles_games_lost + 1 );
           $away_doubles2->doubles_games_lost( $away_doubles2->doubles_games_lost + 1 );
           #print "Home team won, add one to their games won and one to the away team's games lost.\n";
-        } elsif ( $game_winner == $match->away_team->id ) {
+        } elsif ( $game_winner == $away_team->id ) {
           $home_player->games_lost( $home_player->games_lost + 1 );
           $away_player->games_won( $away_player->games_won + 1 );
           $home_doubles1->doubles_games_lost( $home_doubles1->doubles_games_lost + 1 );
@@ -2331,13 +2322,13 @@ sub update_doubles_pair {
       # Check we have a location
       if ( defined( $location ) and ( $location eq "home" or $location eq "away" ) ) {
         # Get the team and relevant DB fields for updating
-        my $location_team         = ( $location eq "home" ) ? "home_team"             : "away_team";
-        my $location_doubles_pair = ( $location eq "home" ) ? "home_doubles_pair"     : "away_doubles_pair";
-        my $team_legs_won         = ( $location eq "home" ) ? "home_team_legs_won"    : "away_team_legs_won";
-        my $opposition_legs_won   = ( $location eq "home" ) ? "away_team_legs_won"    : "home_team_legs_won";
-        my $team_points_won       = ( $location eq "home" ) ? "home_team_points_won"  : "away_team_points_won";
-        my $opposition_points_won = ( $location eq "home" ) ? "away_team_points_won"  : "home_team_points_won";
-        my $team = $match->$location_team;
+        my $location_team         = ( $location eq "home" ) ? "team_season_home_team_season"  : "team_season_away_team_season";
+        my $location_doubles_pair = ( $location eq "home" ) ? "home_doubles_pair"             : "away_doubles_pair";
+        my $team_legs_won         = ( $location eq "home" ) ? "home_team_legs_won"            : "away_team_legs_won";
+        my $opposition_legs_won   = ( $location eq "home" ) ? "away_team_legs_won"            : "home_team_legs_won";
+        my $team_points_won       = ( $location eq "home" ) ? "home_team_points_won"          : "away_team_points_won";
+        my $opposition_points_won = ( $location eq "home" ) ? "away_team_points_won"          : "home_team_points_won";
+        my $team = $match->$location_team->team;
         my $original_doubles_pair = $self->$location_doubles_pair;
         
         # Check if we are adding or removing - if $player_ids is undefined, we'll remove
@@ -2655,6 +2646,7 @@ sub result {
   my ( $self ) = @_;
   my $return_value = {};
   my $match = $self->team_match;
+  my ( $home_team, $away_team ) = ( $match->team_season_home_team_season, $match->team_season_away_team_season );
   
   # Game is complete, select the correct winner, home and away players and game type based on whether it's singles or doubles
   #my ( $winner, $home_player, $away_player, $game_type, $match_home_player, $match_away_player, $home_player_missing, $away_player_missing );
@@ -2677,7 +2669,7 @@ sub result {
     if ( defined( $winner ) and !$self->awarded ) {
       # There is a winner
       # Check if the winner is home or away
-      if ( $winner == $match->home_team->id ) {
+      if ( $winner == $home_team->team->id ) {
         # Home winner
         $return_value->{message} = {id => sprintf("matches.game.result.home-%s-win", $game_type)};
       } else {
@@ -2705,7 +2697,7 @@ sub result {
       my $leg1 = $self->find_related("team_match_legs", {leg_number => 1});
       
       if ( $leg1->started ) {
-        if ( $winner == $match->home_team->id ) {
+        if ( $winner == $home_team->id ) {
           # Home won, away player retired
           $return_value->{message} = {id => sprintf("matches.game.result.away-%s-player-retired", $game_type)};
         } else {
@@ -2721,7 +2713,7 @@ sub result {
         } elsif ( $away_player_missing ) {
           $return_value->{message} = {id => "matches.game.result.away-player-missing"};
         } else {
-          if ( $winner == $match->home_team->id ) {
+          if ( $winner == $home_team->id ) {
             # Home won, away player retired
             $return_value->{message} = {id => sprintf("matches.game.result.away-%s-player-forefeited", $game_type)};
           } else {
@@ -2823,7 +2815,7 @@ sub home_player_season {
   
   return $self->home_player->find_related("person_seasons", {
     season  => $match->season->id,
-    team    => $match->home_team->id,
+    team    => $match->team_season_home_team_season->team->id,
   }) if defined( $self->home_player );
 }
 
@@ -2842,7 +2834,7 @@ sub away_player_season {
   
   return $self->away_player->find_related("person_seasons", {
     season  => $match->season->id,
-    team    => $match->away_team->id,
+    team    => $match->team_season_away_team_season->team->id,
   }) if defined( $self->away_player );
 }
 

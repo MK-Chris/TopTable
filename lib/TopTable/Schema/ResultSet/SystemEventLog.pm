@@ -3,8 +3,7 @@ package TopTable::Schema::ResultSet::SystemEventLog;
 use strict;
 use warnings;
 use base 'DBIx::Class::ResultSet';
-use Data::Dumper;
-
+use Data::Dumper::Concise;
 
 =head2 page_records
 
@@ -81,6 +80,7 @@ sub set_event_log {
   my $ip_address        = $params->{ip_address} || undef;
   my $current_datetime  = $params->{current_time} || undef;
   my $return_value      = {};
+  my $logger            = $params->{logger};
   
   # Do some initial error checking / prep on names and IDs
   if ( ref($object_ids) eq "HASH" ) {
