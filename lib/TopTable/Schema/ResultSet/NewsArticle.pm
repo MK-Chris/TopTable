@@ -4,6 +4,8 @@ use strict;
 use warnings;
 use base 'DBIx::Class::ResultSet';
 use DateTime;
+use DateTime::TimeZone;
+use Try::Tiny;
 
 =head2 page_records
 
@@ -30,10 +32,29 @@ sub page_records {
   }, {
     order_by  => {
       # ID is in there in case we do any multiple updates together, which may appear in the same second.
-      -desc => [ qw(date_updated) ],
+      -desc => [ qw( pinned date_updated ) ],
     },
     page => $page_number,
     rows => $results_per_page,
+  });
+}
+
+=head2 unpin_expired_pins
+
+Searches for pinned articles whose expiry date has been reached and sets the pinned flag to 0.
+
+=cut
+
+sub unpin_expired_pins {
+  my ( $self ) = @_;
+  my $current_time = DateTime->now( time_zone => "UTC" );
+  
+  # Search for pinned articles (pinned = 1) where the pinned_expires value is in the past (or right now) and set the pinned flag to 0
+  return $self->search({
+    pinned          => 1,
+    pinned_expires  => {"<=" => sprintf( "%s %s", $current_time->ymd, $current_time->hms )},
+  })->update({
+    pinned  => 0,
   });
 }
 
@@ -127,43 +148,119 @@ sub create_or_edit {
   my ( $self, $action, $parameters ) = @_;
   my $return_value = {};
   
-  my $article         = $parameters->{article};
-  my $headline        = $parameters->{headline};
-  my $article_content = $parameters->{article_content};
-  my $user            = $parameters->{user};
-  my $ip_address      = $parameters->{ip_address};
+  my $headline          = $parameters->{headline} || undef;
+  my $article           = $parameters->{article} || undef;
+  my $article_content   = $parameters->{article_content} || undef;
+  my $pin_article       = $parameters->{pinned_article} || 0;
+  my $pin_expiry_date   = $parameters->{pin_expiry_date}    || undef;
+  my $pin_expiry_hour   = $parameters->{pin_expiry_hour}    || undef;
+  my $pin_expiry_minute = $parameters->{pin_expiry_minute}  || undef;
+  my $user              = $parameters->{user};
+  my $ip_address        = $parameters->{ip_address};
+  my $log               = $parameters->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $lang              = $parameters->{language} || sub { return wantarray ? @_ : "@_"; }; # Default to a sub that just returns everything, as we don't want errors if we haven't passed in a language sub.
+  my $timezone          = $user->timezone if defined( $user ) and defined( $user->timezone );
+  $timezone             = "UTC" if !defined( $timezone ) or ( defined( $timezone ) and DateTime::TimeZone->is_valid_name( $timezone ) );
+  my $pinned_expires;
+  
+  # Sanitise the pinned flag
+  $pin_article = 1 if $pin_article;
+  
+  my $return            = {
+    fatal             => [],
+    error             => [],
+    warning           => [],
+    sanitised_fields  => {
+      headline        => $headline, # Don't need to do anything to sanitise the headline, so just pass it back in
+      pinned_article  => $pin_article,
+    },
+  };
   
   if ( $action ne "create" and $action ne "edit" ) {
     # Invalid action passed
-    $return_value->{error} .= "An invalid action of '$action' was passed to the create / update routine; the action must be 'create' or 'edit'.\n";
-    return $return_value;
+    push( @{ $return->{fatal} }, $lang->("admin.form.invalid-action", $action));
+    return $return;
   } elsif ( $action eq "edit" ) {
     if ( defined( $article ) ) {
       # If we're editing, we need to make sure we've got an ID
       if ( ref( $article ) ne "TopTable::Model::DB::NewsArticle" ) {
         # Editing a venue that doesn't exist.
-        $return_value->{error} .= sprintf( "Invalid news article specified: %s; %s.\n", $article, ref( $article ) );
-        return $return_value;
+        push( @{ $return->{fatal} }, $lang->("news.form.error.invalid-news-article"));
+        return $return;
       }
     } else {
-        $return_value->{error} .= "No news article was specified to edit\n.";
-        return $return_value;
+        push( @{ $return->{error} }, $lang->("news.form.error.no-news-article-specified"));
+        return $return;
     }
   }
   
   # Error checking
   # Check we have a headline and some article text
-  $return_value->{error} .= "The headline has not been filled out.\n" if !$headline;
+  push( @{ $return->{error} }, $lang->("news.form.error.no-headline")) unless defined( $headline );
+  
+  # Check pinned details
+  if ( $pin_article == 1 ) {
+    my ($day, $month, $year)  = split("/", $pin_expiry_date) if defined( $pin_expiry_date );
+    
+    if ( defined( $pin_expiry_date ) ) {
+      try {
+        $pinned_expires = DateTime->new(
+          year        => $year,
+          month       => $month,
+          day         => $day,
+          time_zone   => $timezone,
+        );
+      } catch {
+        push(@{ $return->{error} }, $lang->("news.form.error.pin-expiry-date-invalid"));
+        $pin_expiry_date = undef;
+      };
+      
+      # Only check the time if we have a date
+      if ( defined( $pinned_expires ) and defined( $pin_expiry_hour ) and defined( $pin_expiry_minute ) ) {
+        if ( $pin_expiry_hour and $pin_expiry_hour !~ m/^(?:0[0-9]|1[0-9]|2[0-3])$/ ) {
+          push(@{ $return->{error} }, $lang->("news.form.error.pin-expiry-hour-invalid"));
+          $pin_expiry_hour = undef;
+        }
+        
+        if ( defined( $pin_expiry_minute ) and $pin_expiry_minute !~ m/^(?:[0-5][0-9])$/ ) {
+          push(@{ $return->{error} }, $lang->("news.form.error.pin-expiry-minute-invalid"));
+          $pin_expiry_minute = undef;
+        }
+        
+        if ( defined( $pin_expiry_hour ) and defined( $pin_expiry_minute ) ) {
+          $pinned_expires->set_hour( $pin_expiry_hour );
+          $pinned_expires->set_minute( $pin_expiry_minute );
+        }
+      }
+    }
+    
+    if ( defined( $pinned_expires ) ) {
+      my $now = DateTime->now(time_zone => $timezone);
+      push( @{ $return->{error} }, $lang->("news.form.error.pin-expires-in-past") ) if $pinned_expires->ymd("") . $pinned_expires->hms("") < $now->ymd("") . $now->hms("");
+    }
+  } elsif ( defined( $pinned_expires ) and ( defined( $pin_expiry_hour ) or defined( $pin_expiry_minute ) ) ) {
+    # Either hour or minute is specified, but not both, error
+    push(@{ $return->{error} }, $lang->("news.form.error.pin-expiry-time-incomplete"));
+  } else {
+    # Not pinning, ensure expiry date is undef.  Time already will be, since we build that up from the hour and minute as necessary
+    $pinned_expires = undef;
+  }
+  
+  # Add hour / minute fields to the sanitised group
+  $return->{sanitised_fields}{pin_expiry_date}   = $pinned_expires->dmy("/") if defined( $pinned_expires );
+  $return->{sanitised_fields}{pin_expiry_hour}   = $pin_expiry_hour;
+  $return->{sanitised_fields}{pin_expiry_minute} = $pin_expiry_minute;
   
   # To check the content we need tor strip out the HTML first, then strip leading and trailing whitespace (trim)
   my $raw_article_content = TopTable->model("FilterHTML")->filter( $article_content );
   $raw_article_content =~ s/^\s+|\s+$//g;
-  $return_value->{error} .= "The article content has not been filled out.\n" if !$raw_article_content;
+  push( @{ $return->{error} }, $lang->("news.form.error.no-article-content")) unless $raw_article_content;
   
-  if ( !$return_value->{error} ) {
-    # Filter the HTML
-    $article_content = TopTable->model("FilterHTML")->filter( $article_content, "textarea" );
-    
+  # Filter the HTML.  Do this before we check if we have any errors so we can feed back into the sanitised fields
+  $article_content = TopTable->model("FilterHTML")->filter( $article_content, "textarea" );
+  $return->{sanitised_fields}{article} = $article_content;
+  
+  unless ( scalar @{ $return->{error} } ) {
     # Get the current year and month
     my $today = DateTime->today( time_zone => "UTC" );
     my ( $published_year, $published_month ) = ( $today->year, $today->month );
@@ -176,6 +273,12 @@ sub create_or_edit {
       $url_key = $self->generate_url_key( $headline, $published_year, $published_month );
     }
     
+    # Store timezone as UTC
+    if ( defined( $pinned_expires ) ) {
+      $pinned_expires->set_time_zone( "UTC" );
+      $pinned_expires = sprintf( "%s %s", $pinned_expires->ymd, $pinned_expires->hms );
+    }
+    
     # Success, we need to create the venue
     if ( $action eq "create" ) {
        $article = $self->create({
@@ -186,12 +289,16 @@ sub create_or_edit {
         ip_address            => $ip_address,
         headline              => $headline,
         article_content       => $article_content,
+        pinned                => $pin_article,
+        pinned_expires        => $pinned_expires,
       });
     } else {
       # If we're editing, we need to create a new article related to this one
       # Update the URL key in the original article
       $article->update({
-        url_key => $url_key,
+        url_key         => $url_key,
+        pinned          => $pin_article,
+        pinned_expires  => $pinned_expires,
       });
       
       $article->create_related("news_articles", {
@@ -201,13 +308,15 @@ sub create_or_edit {
         ip_address            => $ip_address,
         headline              => $headline,
         article_content       => $article_content,
+        pinned                => $pin_article,
+        pinned_expires        => $pinned_expires,
       });
     }
     
-    $return_value->{article} = $article;
+    $return->{article} = $article;
   }
   
-  return $return_value;
+  return $return;
 }
 
 1;

@@ -125,7 +125,7 @@ __PACKAGE__->table("clubs");
 =head2 abbreviated_name
 
   data_type: 'varchar'
-  is_nullable: 1
+  is_nullable: 0
   size: 20
 
 =cut
@@ -173,7 +173,7 @@ __PACKAGE__->add_columns(
   "default_match_start",
   { data_type => "time", is_nullable => 1 },
   "abbreviated_name",
-  { data_type => "varchar", is_nullable => 1, size => 20 },
+  { data_type => "varchar", is_nullable => 0, size => 20 },
 );
 
 =head1 PRIMARY KEY
@@ -297,8 +297,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-01-27 15:19:04
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:N/8DqTFiZ6BA/RK0oO+V2g
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-02-25 14:03:10
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:+Yc7CDZg1S/4z4MftGCdJw
 
 =head2 get_season
 

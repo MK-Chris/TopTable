@@ -4,6 +4,11 @@
 [% # output (use View Source in browser to see the effect) -%]
 [% # Some basic HTML with a loop to display clubs -%]
 [%
+IF authorisation.news_article_create;
+-%]
+<a href="[% c.uri_for("/news/create") %]"><img src="[% c.uri_for("/static/images/icons/0009-Add-icon-48.png") %]" title="[% c.maketext("admin.create-object", c.maketext("object.singular.news-articles")) %]" /></a>
+[%
+END;
 IF articles.count;
   PROCESS "html/generic/pagination.ttkt" OBJECT_PLURAL = c.maketext("object.plural.news-articles");
   page_links_text;
@@ -15,9 +20,15 @@ IF articles.count;
     SET current_details = article.current_details( timezone );
     SET month = zeroes( article.published_month );
     headline_html = FILTER html_entity; current_details.headline; END;
+    
+    IF article.pinned;
+      SET pinned_text = c.maketext("news.pinned") _ ": ";
+    ELSE;
+      SET pinned_text = "";
+    END;
 -%]
   <li>
-    <a href="[% c.uri_for_action("/news/view_by_url_key", [article.published_year, month, article.url_key]) %]">[% article.headline | html_entity %]</a>
+    [% pinned_text %]<a href="[% c.uri_for_action("/news/view_by_url_key", [article.published_year, month, article.url_key]) %]">[% article.headline | html_entity %]</a>
 [%
     IF authorisation.news_article_edit_all OR ( authorisation.news_article_edit_own AND article.user.id == c.user.id )
 -%]

@@ -9,9 +9,6 @@
     </div>
     <div class="clear-fix"></div>
   </div>
-<<<<<<< Updated upstream
-  <!--<label for="article">Article content</label>--><textarea id="article" name="article" rows="25" cols="100">[% c.flash.article_content OR article.current_details.article_content %]</textarea><br />
-=======
 [%
 IF authorisation.news_article_pin;
   USE zeroes = format("%02d");
@@ -116,7 +113,6 @@ IF authorisation.news_article_pin;
 END;
 -%]
   <!--<label for="article">Article content</label>--><textarea id="article" name="article_content" rows="25" cols="100">[% c.flash.article_content OR article.current_details.article_content %]</textarea><br />
->>>>>>> Stashed changes
 </fieldset>
 <input type="hidden" name="file_upload_type" id="file_upload_type" value="news" />
 <input type="submit" name="Submit" value="[% c.maketext("form.button.save") %]" />

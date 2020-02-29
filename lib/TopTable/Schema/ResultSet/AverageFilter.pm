@@ -182,8 +182,8 @@ sub create_or_edit {
   my $criteria_type   = $parameters->{criteria_type} || undef;
   my $criteria        = $parameters->{criteria} || undef;
   my $user            = $parameters->{user} || undef;
-  my $log             = $parameters->{logger};
-  my $lang            = $parameters->{language};
+  my $log             = $parameters->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $lang            = $parameters->{language} || sub { return wantarray ? @_ : "@_"; }; # Default to a sub that just returns everything, as we don't want errors if we haven't passed in a language sub.
   my $return          = {
     fatal             => [],
     error             => [],

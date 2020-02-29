@@ -103,6 +103,9 @@ sub begin :Private {
   $cookie_settings = $c->request->cookie("cookieControlPrefs")->value if defined( $c->request->cookie("cookieControlPrefs") );
   $cookie_settings = ( defined( $cookie_settings ) ) ? decode_json( $cookie_settings ) : [];
   $c->stash({cookie_settings => { map{ $_ => 1 } @{ $cookie_settings } },});
+  
+  # Housekeeping - unpin news articles where the pin expiry has passed
+  $c->model("DB::NewsArticle")->unpin_expired_pins;
 }
 
 =head2 index
