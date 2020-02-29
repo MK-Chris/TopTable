@@ -103,6 +103,24 @@ __PACKAGE__->table("news_articles");
   is_foreign_key: 1
   is_nullable: 1
 
+=head2 pinned
+
+  data_type: 'tinyint'
+  default_value: 0
+  is_nullable: 0
+
+=head2 pinned_expires
+
+  data_type: 'datetime'
+  datetime_undef_if_invalid: 1
+  is_nullable: 1
+
+=head2 published_date
+
+  data_type: 'datetime'
+  datetime_undef_if_invalid: 1
+  is_nullable: 1
+
 =cut
 
 __PACKAGE__->add_columns(
@@ -143,6 +161,20 @@ __PACKAGE__->add_columns(
     data_type => "integer",
     extra => { unsigned => 1 },
     is_foreign_key => 1,
+    is_nullable => 1,
+  },
+  "pinned",
+  { data_type => "tinyint", default_value => 0, is_nullable => 0 },
+  "pinned_expires",
+  {
+    data_type => "datetime",
+    datetime_undef_if_invalid => 1,
+    is_nullable => 1,
+  },
+  "published_date",
+  {
+    data_type => "datetime",
+    datetime_undef_if_invalid => 1,
     is_nullable => 1,
   },
 );
@@ -245,8 +277,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-02-02 11:28:09
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:0Ss6JPuW3pRVZnZLwtrJRg
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-02-25 13:33:57
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:8zisShUlpf2+Ioaw+UDikw
 
 =head2 date_updated_tz
 

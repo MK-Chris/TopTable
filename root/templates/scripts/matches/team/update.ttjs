@@ -728,7 +728,7 @@ END;
    */
   $("form").on("change", "input.date_picker", function() {
     $.ajax({
-      url: "[% c.uri_for_action("/matches/team/change_played_date_by_ids", [match.home_team.id, match.away_team.id, match.scheduled_date.year, match_month, match_day]) %]",
+      url: "[% c.uri_for_action("/matches/team/change_played_date_by_ids", [match.team_season_home_team_season.team.id, match.team_season_away_team_season.team.id, match.scheduled_date.year, match_month, match_day]) %]",
       type: "POST",
       dataType: "json",
       data: {date: $(this).val()},
@@ -757,7 +757,7 @@ END;
    */
   $("#venue").on("change", function() {
     $.ajax({
-      url: "[% c.uri_for_action("/matches/team/change_venue_by_ids", [match.home_team.id, match.away_team.id, match.scheduled_date.year, match_month, match_day]) %]",
+      url: "[% c.uri_for_action("/matches/team/change_venue_by_ids", [match.team_season_home_team_season.team.id, match.team_season_away_team_season.team.id, match.scheduled_date.year, match_month, match_day]) %]",
       type: "POST",
       dataType: "json",
       data: {venue: $(this).val()},

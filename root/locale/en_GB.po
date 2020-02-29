@@ -3072,8 +3072,53 @@ msgstr "Article Details"
 msgid "news.form.field.headline"
 msgstr "Headline"
 
+msgid "news.form.field.pin-article"
+msgstr "Pin article to the top"
+
+msgid "news.form.field.pin-article-expiry-date"
+msgstr "Pin expiry date (optional)"
+
+msgid "news.form.field.pin-expiry-time"
+msgstr "Pin expiry time (optional)"
+
+msgid "news.form.field.hour"
+msgstr "Hour"
+
+msgid "news.form.field.minute"
+msgstr "Minute"
+
 msgid "news.no-articles"
 msgstr "There are no news articles to view."
+
+msgid "news.form.error.invalid-news-article"
+msgstr "An invalid news article was specified."
+
+msgid "news.form.error.no-news-article-specified"
+msgstr "No news article was specified to edit."
+
+msgid "news.form.error.no-headline"
+msgstr "You must provide a headline."
+
+msgid "news.form.error.pin-expiry-date-invalid"
+msgstr "The pin expiry date is invalid."
+
+msgid "news.form.error.pin-expiry-hour-invalid"
+msgstr "The pin expiry hour is invalid."
+
+msgid "news.form.error.pin-expiry-minute-invalid"
+msgstr "The pin expiry minute is invalid."
+
+msgid "news.form.error.pin-expires-in-past"
+msgstr "The pin expiry date / time must not be in the past."
+
+msgid "news.form.error.pin-expiry-time-incomplete"
+msgstr "You must either fill out a pin expiry hour and minute, or leave both blank (in which case the pin will expire at midnight on the date specified)."
+
+msgid "news.form.error.no-article-content"
+msgstr "You must fill out some content for this article."
+
+msgid "news.pinned"
+msgstr "PINNED"
 
 ### Templates
 msgid "templates.form.legend.template-rules"

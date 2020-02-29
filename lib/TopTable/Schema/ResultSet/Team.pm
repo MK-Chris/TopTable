@@ -371,7 +371,6 @@ Provides the wrapper (including error checking) for adding / editing a team.
 
 sub create_or_edit {
   my ( $self, $action, $parameters ) = @_;
-  my $log             = $parameters->{logger};
   my $team            = $parameters->{team};
   my $name            = $parameters->{name};
   my $club_id         = $parameters->{club}         || undef;
@@ -382,7 +381,8 @@ sub create_or_edit {
   my $start_minute    = $parameters->{start_minute} || undef;
   my $player_ids      = $parameters->{players};
   my $reassign_active = $parameters->{reassign_active_players};
-  my $lang            = $parameters->{language};
+  my $log             = $parameters->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $lang            = $parameters->{language} || sub { return wantarray ? @_ : "@_"; }; # Default to a sub that just returns everything, as we don't want errors if we haven't passed in a language sub.
   my $return          = {
     fatal             => [],
     error             => [],
