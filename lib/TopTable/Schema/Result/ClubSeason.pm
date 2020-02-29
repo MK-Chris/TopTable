@@ -80,7 +80,7 @@ __PACKAGE__->table("club_seasons");
   data_type: 'integer'
   extra: {unsigned => 1}
   is_foreign_key: 1
-  is_nullable: 0
+  is_nullable: 1
 
 =head2 abbreviated_name
 
@@ -121,7 +121,7 @@ __PACKAGE__->add_columns(
     data_type => "integer",
     extra => { unsigned => 1 },
     is_foreign_key => 1,
-    is_nullable => 0,
+    is_nullable => 1,
   },
   "abbreviated_name",
   { data_type => "varchar", is_nullable => 0, size => 20 },
@@ -185,7 +185,12 @@ __PACKAGE__->belongs_to(
   "secretary",
   "TopTable::Schema::Result::Person",
   { id => "secretary" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+  {
+    is_deferrable => 1,
+    join_type     => "LEFT",
+    on_delete     => "RESTRICT",
+    on_update     => "RESTRICT",
+  },
 );
 
 =head2 team_seasons
@@ -219,8 +224,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-01-27 15:19:04
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:IwqVKNtZ5w2BLOPvow1Tkg
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-02-25 14:03:10
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Sr1gA4A+E3jsvTGMjKAl6w
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

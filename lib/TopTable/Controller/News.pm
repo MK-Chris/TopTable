@@ -295,9 +295,19 @@ sub create :Local {
   $c->stash({
     template            => "html/news/create-edit.ttkt",
     external_scripts    => [
+      $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
+      $c->uri_for("/static/script/standard/prettycheckable.js"),
+      $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
+      $c->uri_for("/static/script/standard/chosen.js"),
+      $c->uri_for("/static/script/standard/datepicker.js"),
       $c->uri_for("/static/script/plugins/ckeditor/ckeditor.js"),
       $c->uri_for("/static/script/plugins/ckeditor/adapters/jquery.js"),
       $c->uri_for("/static/script/standard/ckeditor.js"),
+      $c->uri_for("/static/script/news/create-edit.js"),
+    ],
+    external_styles     => [
+      $c->uri_for("/static/css/prettycheckable/prettyCheckable.css"),
+      $c->uri_for("/static/css/chosen/chosen.min.css"),
     ],
     form_action         => $c->uri_for("do-create"),
     subtitle2           => $c->maketext("admin.create"),
@@ -354,9 +364,19 @@ sub edit :Private {
   $c->stash({
     template            => "html/news/create-edit.ttkt",
     external_scripts    => [
+      $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
+      $c->uri_for("/static/script/standard/prettycheckable.js"),
+      $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
+      $c->uri_for("/static/script/standard/chosen.js"),
+      $c->uri_for("/static/script/standard/datepicker.js"),
       $c->uri_for("/static/script/plugins/ckeditor/ckeditor.js"),
       $c->uri_for("/static/script/plugins/ckeditor/adapters/jquery.js"),
       $c->uri_for("/static/script/standard/ckeditor.js"),
+      $c->uri_for("/static/script/news/create-edit.js"),
+    ],
+    external_styles     => [
+      $c->uri_for("/static/css/prettycheckable/prettyCheckable.css"),
+      $c->uri_for("/static/css/chosen/chosen.min.css"),
     ],
     form_action         => $c->uri_for_action("/news/do_edit_by_url_key", [$article->published_year, $article->published_month, $article->url_key]),
     subtitle2           => "Create",
@@ -554,34 +574,59 @@ Process the create / edit form for the news article.
 sub setup_article :Private {
   my ( $self, $c, $action ) = @_;
   my $article = $c->stash->{article};
+  my @field_names = qw( headline article_content pinned_article pin_expiry_date pin_expiry_hour pin_expiry_minute );
   
-  my $details = $c->model("DB::NewsArticle")->create_or_edit($action, {
+  # See if we have permissions to pin articles
+  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["news_article_pin", "", 0] );
+  
+  unless ( $c->stash->{authorisation}{news_article_pin} ) {
+    # If we can't pin, delete the fields related to pinning
+    delete $c->request->parameters->{pinned_article};
+    delete $c->request->parameters->{pin_expiry_date};
+    delete $c->request->parameters->{pin_expiry_hour};
+    delete $c->request->parameters->{pin_expiry_minute};
+  }
+  
+  my $returned = $c->model("DB::NewsArticle")->create_or_edit($action, {
     article         => $article,
-    headline        => $c->request->parameters->{headline},
-    article_content => $c->request->parameters->{article},
     ip_address      => $c->request->address,
     user            => $c->user,
+    language        => sub{ $c->maketext( @_ ); },
+    logger          => sub{ my $level = shift; $c->log->$level( @_ ); },
+    map {$_ => $c->request->parameters->{$_} } @field_names,
   });
   
-  if ( $details->{error} ) {
+  if ( scalar( @{ $returned->{fatal} } ) ) {
+    # A fatal error means we can't return to the form, so we go home instead,
+    $c->response->redirect( $c->uri_for("/",
+                              {mid => $c->set_status_msg( {error => $c->build_message( $returned->{fatal} )} )}));
+  } elsif ( scalar( @{ $returned->{error} } ) ) {
     # Flash the entered values we've got so we can set them into the form
-    $c->flash->{headline} = $c->request->parameters->{headline};
-    $c->flash->{article}  = $c->request->parameters->{article};
+    map {$c->flash->{$_} = $returned->{sanitised_fields}{$_} } @field_names;
+    $c->flash->{errored_form} = 1;
+    
+    foreach my $key ( sort keys %{ $returned->{sanitised_fields} } ) {
+      $c->log->debug( sprintf( "Sanitised-%s: %s", $key, $returned->{sanitised_fields}{$key} ) );
+    }
+    
+    foreach my $key ( sort keys %{ $c->flash } ) {
+      $c->log->debug( sprintf( "Flash-%s: %s", $key, $c->flash->{$key} ) );
+    }
     
     my $redirect_uri;
     if ( $action eq "create" ) {
       # If we're creating, we'll just redirect straight back to the create form
       $redirect_uri = $c->uri_for("/news/create",
-                            {mid => $c->set_status_msg( {error => $details->{error}} ) });
+                            {mid => $c->set_status_msg( {error => $c->build_message( $returned->{error} )} ) });
     } else {
       if ( defined( $article ) ) {
         # If we're editing and we found an object to edit, we'll redirect to the edit form for that object
         $redirect_uri = $c->uri_for_action("/news/edit", [ $article->published_year, sprintf( "%02d", $article->published_month ), $article->url_key ],
-                              {mid => $c->set_status_msg( {error => $details->{error}} ) });
+                              {mid => $c->set_status_msg( {error => $c->build_message( $returned->{error} )} ) });
       } else {
         # If we're editing and we didn't an object to edit, we'll redirect to the list of objects
         $redirect_uri = $c->uri_for("/news",
-                              {mid => $c->set_status_msg( {error => $details->{error}} ) });
+                              {mid => $c->set_status_msg( {error => $c->build_message( $returned->{error} )} ) });
       }
     }
     
@@ -593,7 +638,7 @@ sub setup_article :Private {
     
     if ( $action eq "create" ) {
       # Ensure the article is defined even if creating by assigning it to the returned article in $details
-      $article = $details->{article};
+      $article = $returned->{article};
       $action_description = $c->maketext("admin.message.created");
     } else {
       $action_description = $c->maketext("admin.message.edited");

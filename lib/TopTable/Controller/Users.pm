@@ -1501,7 +1501,7 @@ sub check_authorisation :Private {
     if ( $redirect ) {
       # Redirection is on - turn it off and log an error
       $redirect = 0;
-      $c->log->error( "Can't call check_authorisation with \$redirect turned on when \$action is passed as an arrayref.  \$redirect will be turned off." );
+      $c->log->warning( "Can't call check_authorisation with \$redirect turned on when \$action is passed as an arrayref.  \$redirect will be turned off." );
     }
   } else {
     # If it's not an array, turn it into one so we can avoid if statements with branches that essentially do the same thing
@@ -1515,7 +1515,7 @@ sub check_authorisation :Private {
     # First find out if we can do this anonymously
     $anonymous_permission = $c->model("DB::Role")->find({
       anonymous => 1,
-      $action   => 1
+      $action   => 1,
     });
     
     if ( defined( $anonymous_permission ) ) {
@@ -1525,7 +1525,7 @@ sub check_authorisation :Private {
     } elsif ( $c->user_exists ) {
       # We are logged in, so need to check we're in a user group that can view
       @roles = $c->model("DB::Role")->search({
-        $action => 1
+        $action => 1,
       }, {
         order_by => {
           -asc => [ qw( name ) ],

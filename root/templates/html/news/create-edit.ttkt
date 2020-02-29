@@ -9,7 +9,104 @@
     </div>
     <div class="clear-fix"></div>
   </div>
-  <!--<label for="article">Article content</label>--><textarea id="article" name="article" rows="25" cols="100">[% c.flash.article_content OR article.current_details.article_content %]</textarea><br />
+[%
+USE zeroes = format("%02d");
+IF c.flash.errored_form;
+  pinned_article    = c.flash.pinned_article;
+  pin_expiry_date   = c.flash.pin_expiry_date;
+  pin_expiry_hour   = c.flash.pin_expiry_hour;
+  pin_expiry_minute = c.flash.pin_expiry_minute;
+ELSE;
+  pinned_article    = article.pinned;
+  
+  IF article.current_details.pinned_expires.defined;
+    pin_expiry_date   = article.current_details.pinned_expires.dmy("/");
+    pin_expiry_hour   = zeroes( article.current_details.pinned_expires.hour );
+    pin_expiry_minute = zeroes( article.current_details.pinned_expires.minute );
+  END;
+END;
+
+IF pinned_article;
+  CHECKED_TEXT  = ' checked="checked"';
+  DISABLED_TEXT = '';
+  DISPLAY_TEXT  = '';
+ELSE;
+  CHECKED_TEXT  = '';
+  DISABLED_TEXT = ' disabled="disabled"';
+  DISPLAY_TEXT  = ' style="display: none;"';
+END;
+-%]
+  <div class="form-column-single">
+    <input type="checkbox" id="pinned_article" name="pinned_article" class="pin-article" value="1" data-label="[% c.maketext("news.form.field.pin-article") %]" data-labelPosition="right"[% CHECKED_TEXT %] />
+  </div>
+  
+  <div id="pin-article-details"[% DISPLAY_TEXT %]>
+    <div class="label-field-container">
+      <label for="pin_expiry_date">[% c.maketext("news.form.field.pin-article-expiry-date") %]</label>
+      <div class="field-container">
+        <input type="text" id="pin_expiry_date" name="pin_expiry_date" class="date_picker pin_expiry" autocomplete="off" value="[% pin_expiry_date | html_entity %]"[% DISABLED_TEXT %] />
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+    
+    <div class="label-field-container">
+      <label for="pin_expiry_hour">[% c.maketext("news.form.field.pin-expiry-time") %]</label>
+      <div class="field-container">
+        <select class="time pin_expiry" id="pin_expiry_hour" name="pin_expiry_hour" data-placeholder="[% c.maketext("news.form.field.hour") %]"[% DISABLED_TEXT %]>
+          <option value=""></option>
+[%
+SET counter = 0;
+WHILE counter <= 23;
+  IF counter < 10;
+    SET counter_display = "0" _ counter;
+  ELSE;
+    SET counter_display = counter;
+  END;
+  
+  # Now set selected text if needed;
+  IF counter_display == pin_expiry_hour;
+    SET SELECTED = ' selected="selected"';
+  ELSE;
+    SET SELECTED = '';
+  END;
+-%]
+          <option value="[% counter_display %]"[% SELECTED %]>[% counter_display %]</option>
+[%
+  SET counter = counter + 1;
+END;
+-%]
+        </select>
+        :
+        <select class="time pin_expiry" id="pin_expiry_minute" name="pin_expiry_minute" data-placeholder="[% c.maketext("news.form.field.minute") %]"[% DISABLED_TEXT %]>
+          <option value=""></option>
+[%
+SET counter = 0;
+WHILE counter <= 59;
+  IF counter < 10;
+    # Set leading zeroes if needed;
+    SET counter_display = "0" _ counter;
+  ELSE;
+    SET counter_display = counter;
+  END;
+  # Now set selected text if needed;
+  IF counter_display == pin_expiry_minute;
+    SET SELECTED = ' selected="selected"';
+  ELSE;
+    SET SELECTED = '';
+  END;
+-%]
+          <option value="[% counter_display %]"[% SELECTED %]>[% counter_display %]</option>
+[%
+  SET counter = counter + 1;
+END;
+-%]
+        </select>
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+  </div>
+  
+  <!--<label for="article">Article content</label>--><textarea id="article" name="article_content" rows="25" cols="100">[% c.flash.article_content OR article.current_details.article_content %]</textarea><br />
 </fieldset>
 <input type="hidden" name="file_upload_type" id="file_upload_type" value="news" />
 <input type="submit" name="Submit" value="[% c.maketext("form.button.save") %]" />
