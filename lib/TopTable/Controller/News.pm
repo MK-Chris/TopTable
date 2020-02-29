@@ -291,6 +291,9 @@ sub create :Local {
   # Check that we are authorised to create venues
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["news_article_create", $c->maketext("user.auth.create-news"), 1] );
   
+  # See if we have permissions to pin articles
+  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["news_article_pin", "", 0] );
+  
   # Get venues and people to list
   $c->stash({
     template            => "html/news/create-edit.ttkt",
@@ -349,6 +352,9 @@ sub edit :Private {
   my $redirect_on_fail = 1 if !$c->user_exists or ( $c->user_exists and $c->user->id != $article->updated_by_user->id );
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["news_article_edit_all", $c->maketext("user.auth.edit-news"), $redirect_on_fail] );
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["news_article_edit_own", $c->maketext("user.auth.edit-news"), 1] ) if !$c->stash->{authorisation}{news_article_edit_all} and $c->user_exists and $c->user->id == $article->updated_by_user->id;
+  
+  # See if we have permissions to pin articles
+  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["news_article_pin", "", 0] );
   
   # Get venues and people to list
   $c->stash({
