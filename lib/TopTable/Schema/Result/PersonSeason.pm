@@ -726,8 +726,9 @@ sub available_matches {
   my ( $self ) = @_;
   
   if ( $self->team_membership_type->id eq "active" ) {
-    # Active - return the number of matches the person's team has played.
-    return $self->team_season->matches_played;
+    # Active - return the number of matches the person's team has played minus the number of cancelled matches
+    # (because a cancelled match still goes on the matches_played).
+    return $self->team_season->matches_played - $self->team_season->cancelled_matches->count;
   } else {
     # Loan / inactive, return matches played
     return $self->matches_played;

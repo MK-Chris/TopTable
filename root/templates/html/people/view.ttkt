@@ -79,8 +79,8 @@ IF season;
       CALL c.log.debug( "TT - Display name: " _ team_season.display_name _ ", season ID: " _ team_season.season.id _ ", person ID: " _ team_season.person.id _ ", matches played: " _ team_season.matches_played _ ", matches won: " _ team_season.matches_won _ ", matches lost: " _ team_season.matches_lost _ "" );
 -%]
     <h4><a href="[% team_uri %]">[% team_season.club_season.club.short_name | html_entity %] [% team_season.name | html_entity %]</a> (<a href="[% averages_uri %]">[% team_season.division_season.division.name %]</a>)</h4>
-    <div id="stats-left">
-      <div id="stats-matches">
+    <div class="row">
+      <div class="column left">
         <h5>[% c.maketext("stats.heading.matches") %]</h5>
         <table class="vertical">
           <tr>
@@ -102,8 +102,7 @@ IF season;
         </table>
       </div>
       
-      
-      <div id="stats-games">
+      <div class="column right">
         <h5>[% c.maketext("stats.heading.games") %]</h5>
         <table class="vertical">
           <tr>
@@ -126,8 +125,8 @@ IF season;
       </div>
     </div>
     
-    <div id="stats-right">
-      <div id="stats-legs">
+    <div class="row">
+      <div class="column left">
         <h5>[% c.maketext("stats.heading.legs") %]</h5>
         <table class="vertical">
           <tr>
@@ -149,7 +148,7 @@ IF season;
         </table>
       </div>
       
-      <div id="stats-points">
+      <div class="column right">
         <h5>[% c.maketext("stats.heading.points") %]</h5>
         <table class="vertical">
           <tr>
@@ -171,7 +170,6 @@ IF season;
         </table>
       </div>
     </div>
-    <div class="clear-fix"></div>
 [%
       SET last_type = person_team.team_membership_type.id;
     END;

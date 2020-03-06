@@ -14,7 +14,7 @@ $(document).ready(function() {
       "visible": false,
       "responsivePriority": 4
     }, {
-      "orderData": 1,
+      "orderData": 0,
       "responsivePriority": 1
     }, {
       "responsivePriority": 2

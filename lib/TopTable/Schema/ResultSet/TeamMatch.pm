@@ -5,6 +5,8 @@ use warnings;
 use base 'DBIx::Class::ResultSet';
 use Data::Dumper;
 
+__PACKAGE__->load_components(qw{Helper::ResultSet::SetOperations});
+
 =head2 season_matches
 
 A predefined search to find and return the matches created with a season (optionally for a specific team).

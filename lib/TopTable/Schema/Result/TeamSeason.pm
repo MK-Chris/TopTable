@@ -786,6 +786,21 @@ sub get_players {
   });
 }
 
+=head2 cancelled_matches
+
+Return the matches involving this team which have been cancelled.
+
+=cut
+
+sub cancelled_matches {
+  my ( $self ) = @_;
+  
+  my $home_matches = $self->search_related("team_matches_home_team_seasons", {cancelled => 1});
+  my $away_matches = $self->search_related("team_matches_away_team_seasons", {cancelled => 1});
+  
+  return $home_matches->union( $away_matches );
+}
+
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 __PACKAGE__->meta->make_immutable;
 1;
