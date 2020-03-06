@@ -460,13 +460,6 @@ If 1 the person can create match reports involving teams the user is associated 
   extra: {unsigned => 1}
   is_nullable: 0
 
-=head2 news_article_pin
-
-  data_type: 'tinyint'
-  default_value: 0
-  extra: {unsigned => 1}
-  is_nullable: 0
-
 =head2 online_users_view
 
   data_type: 'tinyint'
@@ -762,6 +755,13 @@ If 1 the person can create match reports involving teams the user is associated 
   is_nullable: 0
 
 =head2 venue_delete
+
+  data_type: 'tinyint'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 0
+
+=head2 news_article_pin
 
   data_type: 'tinyint'
   default_value: 0
@@ -1167,13 +1167,6 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
-  "news_article_pin",
-  {
-    data_type => "tinyint",
-    default_value => 0,
-    extra => { unsigned => 1 },
-    is_nullable => 0,
-  },
   "online_users_view",
   {
     data_type => "tinyint",
@@ -1475,6 +1468,13 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
+  "news_article_pin",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
 );
 
 =head1 PRIMARY KEY
@@ -1546,8 +1546,8 @@ Composing rels: L</user_roles> -> user
 __PACKAGE__->many_to_many("users", "user_roles", "user");
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-02-28 21:50:41
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:AiyGbBnGo68new2QyaH47Q
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-03-06 21:55:14
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:9s+H1qYFaIRHn/a7xxRmzw
 
 =head2 members
 

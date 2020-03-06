@@ -124,6 +124,10 @@ END;
             <th scope="row">[% c.maketext("stats.label.lost") %]</th>
             <td class="numeric">[% c.i18n_numberformat.format_number( team_season.matches_lost ) %]</td>
           </tr>
+          <tr>
+            <th scope="row">[% c.maketext("stats.label.cancelled") %]</th>
+            <td class="numeric">[% c.i18n_numberformat.format_number( team_season.matches_cancelled ) %]</td>
+          </tr>
         </table>
       </div>
       

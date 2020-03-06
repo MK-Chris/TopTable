@@ -663,7 +663,7 @@ sub view_team :Private {
   my $encoded_team_name           = encode_entities( $team->name );
   
   # New name info message
-  $c->add_status_message( "info", $c->maketext( "teams.club.changed-notice", $encoded_old_club_short_name, $encoded_old_team_name, $c->uri_for_action("/clubs/view_current_season", [$team->club->url_key]), $encoded_club_full_name ) ) if $specific_season and $team_info->club->id != $team->club->id;
+  $c->add_status_message( "info", $c->maketext( "teams.club.changed-notice", $encoded_old_club_short_name, $encoded_old_team_name, $c->uri_for_action("/clubs/view_current_season", [$team_info->club_season->url_key]), $encoded_club_full_name ) ) if $specific_season and $team_info->club_season->club->id != $team->club->id;
   $c->add_status_message( "info", $c->maketext( "teams.name.changed-notice", $encoded_old_club_short_name, $encoded_old_team_name, $encoded_club_short_name, $encoded_team_name ) ) if $team_info->name ne $team->name;
   
   my $online_display;

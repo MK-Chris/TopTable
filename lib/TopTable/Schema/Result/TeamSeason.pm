@@ -90,6 +90,13 @@ __PACKAGE__->table("team_seasons");
   extra: {unsigned => 1}
   is_nullable: 0
 
+=head2 matches_cancelled
+
+  data_type: 'tinyint'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 0
+
 =head2 matches_won
 
   data_type: 'tinyint'
@@ -361,6 +368,13 @@ __PACKAGE__->add_columns(
     is_nullable => 1,
   },
   "matches_played",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
+  "matches_cancelled",
   {
     data_type => "tinyint",
     default_value => 0,
@@ -758,8 +772,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-02-03 10:04:06
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:pXMiaof1uIZUjIpxmPo3cA
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-03-06 21:55:14
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:PjSQbO0SnOnNuK8QPdEWgg
 
 #
 # Enable automatic date handling

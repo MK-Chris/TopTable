@@ -1517,6 +1517,10 @@ sub cancel {
       $home_team->$points_against_field( $home_team->$points_against_field - $self->away_team_match_score );
       $away_team->$points_against_field( $away_team->$points_against_field - $self->home_team_match_score );
     }
+  } else {
+    # It wasn't previously cancelled, so we need to add one to the matches_cancelled count
+    $home_team->matches_cancelled( $home_team->matches_cancelled + 1 );
+    $away_team->matches_cancelled( $away_team->matches_cancelled + 1 );
   }
     
   # Get a list of the players in this match and remove them; this includes the action of removing the score as well.
@@ -1592,6 +1596,13 @@ sub uncancel {
     return $return_value;
   }
   
+  # Can't cancel a completed match
+  unless ( $self->cancelled ) {
+    push(@{ $return_value->{error} }, {id => "matches.uncancel.error.not-cancelled"});
+    $return_value->{cancellation_allowed} = 0;
+    return $return_value;
+  }
+  
   # Grab the points that were previously awarded so we can remove them from the home team / away team season totals
   my $home_points_awarded = $self->home_team_match_score;
   my $away_points_awarded = $self->away_team_match_score;
@@ -1634,6 +1645,8 @@ sub uncancel {
   # Update the values we know what to update straight off
   $home_team->matches_played( $home_team->matches_played - 1 );
   $away_team->matches_played( $away_team->matches_played - 1 );
+  $home_team->matches_cancelled( $home_team->matches_cancelled - 1 );
+  $away_team->matches_cancelled( $away_team->matches_cancelled - 1 );
   
   if ( $home_points_awarded > $away_points_awarded ) {
     # Home points awarded are more than away points awarded, so the home team has "won"

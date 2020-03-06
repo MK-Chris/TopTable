@@ -1249,6 +1249,9 @@ msgstr "Drawn"
 msgid "stats.label.lost"
 msgstr "Lost"
 
+msgid "stats.label.cancelled"
+msgstr "Cancelled"
+
 msgid "stats.label.average"
 msgstr "Won (%)"
 
@@ -2388,6 +2391,9 @@ msgstr "The match was successfully cancelled."
 
 msgid "matches.uncancel.error.season-complete"
 msgstr "You cannot undo a match cancellation in a season that&#39;s been marked as complete."
+
+msgid "matches.uncancel.error.not-cancelled"
+msgstr "You cannot undo this match cancellation because the match is not marked as cancelled."
 
 msgid "matches.uncancel.success"
 msgstr "The match was cancellation was successfully undone; the scorecard may now be updated."

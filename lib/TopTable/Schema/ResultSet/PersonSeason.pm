@@ -185,7 +185,7 @@ sub get_people_in_division_in_singles_averages_order {
     if ( $criteria_type eq "matches-pc" ) {
       # We need to work out a percentage of the available matches, which means we need to work out the percentage from the criteria, rather than use it directly
       $where->{ sprintf( "me.matches_played" ) } = {
-        $operator => \sprintf( "(team_season.matches_played / 100) * %d", $criteria ),
+        $operator => \sprintf( "((team_season.matches_played - team_season.matches_cancelled) / 100) * %d", $criteria ),
       };
     } else {
       $where->{ sprintf( "me.%s_%s", $criteria_type, $criteria_field ) } = {
