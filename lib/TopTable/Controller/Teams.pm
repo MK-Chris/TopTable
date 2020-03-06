@@ -1315,19 +1315,6 @@ sub setup_team :Private {
   }
 }
 
-sub calculate_cancelled_matches :Path("calculate-cancelled-matches") {
-  my ( $self, $c ) = @_;
-  
-  my $team_seasons = $c->model("DB::TeamSeason")->search;
-  
-  while ( my $team = $team_seasons->next ) {
-    my $cancelled_count = $team->cancelled_matches->count;
-    $team->update({matches_cancelled => $cancelled_count}) if $team->matches_cancelled == 0 and $cancelled_count > 0;
-  }
-  
-  $c->response->redirect( $c->uri_for("/") );
-}
-
 
 
 =encoding utf8
