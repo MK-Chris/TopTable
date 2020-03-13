@@ -90,13 +90,6 @@ __PACKAGE__->table("team_seasons");
   extra: {unsigned => 1}
   is_nullable: 0
 
-=head2 matches_cancelled
-
-  data_type: 'tinyint'
-  default_value: 0
-  extra: {unsigned => 1}
-  is_nullable: 0
-
 =head2 matches_won
 
   data_type: 'tinyint'
@@ -327,6 +320,13 @@ __PACKAGE__->table("team_seasons");
   datetime_undef_if_invalid: 1
   is_nullable: 1
 
+=head2 matches_cancelled
+
+  data_type: 'tinyint'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 0
+
 =cut
 
 __PACKAGE__->add_columns(
@@ -368,13 +368,6 @@ __PACKAGE__->add_columns(
     is_nullable => 1,
   },
   "matches_played",
-  {
-    data_type => "tinyint",
-    default_value => 0,
-    extra => { unsigned => 1 },
-    is_nullable => 0,
-  },
-  "matches_cancelled",
   {
     data_type => "tinyint",
     default_value => 0,
@@ -607,6 +600,13 @@ __PACKAGE__->add_columns(
     datetime_undef_if_invalid => 1,
     is_nullable => 1,
   },
+  "matches_cancelled",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
 );
 
 =head1 PRIMARY KEY
@@ -772,8 +772,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-03-06 21:55:14
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:PjSQbO0SnOnNuK8QPdEWgg
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-03-13 09:25:49
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:mnt1JV1v8hSvpN7bDNMXXA
 
 #
 # Enable automatic date handling

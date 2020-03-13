@@ -237,6 +237,9 @@ msgstr "Privacy"
 msgid "menu.title.privacy"
 msgstr "Privacy policy"
 
+msgid "menu.text.index"
+msgstr "Index page"
+
 msgid "menu.text.contact"
 msgstr "Contact"
 
@@ -357,6 +360,9 @@ msgstr "Reports"
 ### Home page
 msgid "home-page.welcome"
 msgstr "Welcome"
+
+msgid "home-page.default-index-text"
+msgstr "Use the menu above to view clubs, teams, players and statistics for the current and previous seasons.<br /><br />If you wish to submit your own match reports, please register for an account and use the contact page to request permissions."
 
 msgid "home-page.updates.recent"
 msgstr "Recent updates"
@@ -3445,6 +3451,9 @@ msgstr "There was an error deleting %1 from the database; please try again and c
 msgid "admin.edit.privacy"
 msgstr "Edit privacy policy"
 
+msgid "admin.edit.index"
+msgstr "Edit the index page"
+
 ### Users
 msgid "user.login"
 msgstr "Log in"
@@ -3754,7 +3763,10 @@ msgid "user.auth.view-privacy"
 msgstr "view the privacy policy"
 
 msgid "user.auth.edit-privacy"
-msgid "edit the privacy policy"
+msgstr "edit the privacy policy"
+
+msgid "user.auth.edit-index"
+msgstr "edit the index page"
 
 msgid "user.auth.upload-images"
 msgstr "upload images"

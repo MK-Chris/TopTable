@@ -1,6 +1,4 @@
-This is the brand new website for [% name %].  Please use the menu above to navigate.<br /><br />
-
-If you register an account, you will be able to comment on matches.<br /><br />
+<div class="index-text">[% index_text.page_text OR c.maketext("home-page.default-index-text") %]<br /><br />
 
 <h4>[% c.maketext("home-page.updates.recent") %]</h4>
 [%

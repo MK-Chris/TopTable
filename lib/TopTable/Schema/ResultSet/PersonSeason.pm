@@ -195,8 +195,8 @@ sub get_people_in_division_in_singles_averages_order {
   }
   
   return $self->search( $where, {
-    prefetch  => ["person", {
-      team_season => ["team", {club_season => "club"}],
+    prefetch  => [qw( person team_membership_type ), {
+      team_season => [qw( team ), {club_season => "club"}],
     }],
     order_by  => [{
       -desc =>  [ qw( me.average_game_wins me.games_played me.games_won me.matches_played) ]}, {

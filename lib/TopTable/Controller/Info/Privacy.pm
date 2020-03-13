@@ -86,17 +86,15 @@ sub edit :Local :Args(0) {
   
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["privacy_edit", $c->maketext("user.auth.edit-privacy"), 1] );
   
-  my $privacy = $c->model("DB::PageText")->get_text("privacy");
-  
   $c->stash({
-    template    => "html/info/privacy/edit.ttkt",
+    template    => "html/page-text/edit.ttkt",
     external_scripts    => [
       $c->uri_for("/static/script/plugins/ckeditor/ckeditor.js"),
       $c->uri_for("/static/script/plugins/ckeditor/adapters/jquery.js"),
       $c->uri_for("/static/script/page_text/edit.js"),
     ],
     subtitle1   => $c->maketext("menu.text.privacy"),
-    privacy     => $privacy,
+    edit_text   => $c->model("DB::PageText")->get_text("privacy"),
     form_action => $c->uri_for_action("/info/privacy/do_edit"),
   });
 }

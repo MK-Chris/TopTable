@@ -768,6 +768,13 @@ If 1 the person can create match reports involving teams the user is associated 
   extra: {unsigned => 1}
   is_nullable: 0
 
+=head2 index_edit
+
+  data_type: 'tinyint'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 0
+
 =cut
 
 __PACKAGE__->add_columns(
@@ -1475,6 +1482,13 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
+  "index_edit",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
 );
 
 =head1 PRIMARY KEY
@@ -1546,8 +1560,8 @@ Composing rels: L</user_roles> -> user
 __PACKAGE__->many_to_many("users", "user_roles", "user");
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-03-06 21:55:14
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:9s+H1qYFaIRHn/a7xxRmzw
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-03-13 09:25:49
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:LJ+0upt+WJhWGWQR1l/wkw
 
 =head2 members
 

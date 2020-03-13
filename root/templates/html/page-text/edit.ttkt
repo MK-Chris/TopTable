@@ -1,8 +1,8 @@
 <form method="post" action="[% form_action %]">
 <div id="rules">
   <fieldset>
-    <legend>[% c.maketext("menu.text.privacy") %]</legend>
-    <textarea id="page_text" name="page_text">[% c.flash.page_text OR privacy.page_text %]</textarea><br />
+    <legend>[% subtitle1 %]</legend>
+    <textarea id="page_text" name="page_text">[% c.flash.edit_text OR edit_text.page_text %]</textarea><br />
   </fieldset>
 </div>
 <input type="submit" name="Submit" value="[% c.maketext("form.button.save") %]" />

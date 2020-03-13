@@ -120,6 +120,17 @@ sub index :Path :Args(0) {
   # Load the messages
   $c->load_status_msgs;
   
+  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["index_edit", $c->maketext("user.auth.edit-index"), 0] );
+  
+  # Set up the title links if we need them
+  my @title_links = ();
+  
+  push(@title_links, {
+    image_uri => $c->uri_for("/static/images/icons/0018-Pencil-icon-32.png"),
+    text      => $c->maketext("admin.edit.index"),
+    link_uri  => $c->uri_for_action("/index_edit"),
+  }) if $c->stash->{authorisation}{index_edit};
+  
   # Recent events
   my $events_to_show = $c->config->{Index}{recent_updates_visible};
   $events_to_show = 5 if !defined( $events_to_show ) or $events_to_show !~ m/^\d+$/;
@@ -182,6 +193,7 @@ sub index :Path :Args(0) {
       $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
     ],
     subtitle1             => $c->maketext("home-page.welcome"),
+    title_links           => \@title_links,
     no_subtitles_in_title => 1,
     view_online_display   => "Home Page",
     view_online_link      => 1,
@@ -191,8 +203,67 @@ sub index :Path :Args(0) {
     matches_today         => $matches_today,
     articles              => $articles,
     online_user_count     => $online_user_count,
+    index_text            => $c->model("DB::PageText")->get_text("index"),
     hide_breadcrumbs      => 1, # Hide the breadcrumbs
   });
+}
+
+sub index_edit :Path("index-edit") {
+  my ( $self, $c ) = @_;
+  
+  # Load the messages
+  $c->load_status_msgs;
+  
+  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["index_edit", $c->maketext("user.auth.edit-index"), 1] );
+  
+  $c->stash({
+    template    => "html/page-text/edit.ttkt",
+    external_scripts    => [
+      $c->uri_for("/static/script/plugins/ckeditor/ckeditor.js"),
+      $c->uri_for("/static/script/plugins/ckeditor/adapters/jquery.js"),
+      $c->uri_for("/static/script/page_text/edit.js"),
+    ],
+    subtitle1   => $c->maketext("menu.text.index"),
+    edit_text   => $c->model("DB::PageText")->get_text("index"),
+    form_action => $c->uri_for_action("/do_index_edit"),
+  });
+}
+
+=head2 do_index_edit
+
+Process the privacy policy edit form.
+
+=cut
+
+sub do_index_edit :Path("do-index-edit") :Args(0) {
+  my ( $self, $c ) = @_;
+  
+  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["index_edit", $c->maketext("user.auth.edit-index"), 1] );
+  
+  # The error checking and creation is done in the TemplateLeagueTableRanking model
+  my $details = $c->model("DB::PageText")->edit({
+    page_key    => "index",
+    page_text   => $c->request->parameters->{page_text},
+  });
+  
+  if ( scalar( @{ $details->{error} } ) ) {
+    my $error = $c->build_message( $details->{error} );
+    
+    # Flash the entered values we've got so we can set them into the form
+    $c->flash->{page_text}  = $c->request->parameters->{page_text};
+    
+    $c->response->redirect( $c->uri_for("/",
+                          {mid => $c->set_status_msg( {error => $error} ) }) );
+    $c->detach;
+    return;
+  } else {
+    
+    $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["index", "edit"] );
+    $c->response->redirect( $c->uri_for("/",
+                                {mid => $c->set_status_msg( {success => $c->maketext( "admin.forms.success", $c->maketext("menu.text.privacy"), $c->maketext("admin.message.edited") )}  ) }) );
+    $c->detach;
+    return;
+  }
 }
 
 =head2 default
