@@ -32,6 +32,7 @@ sub edit {
   if ( defined( $page_key ) ) {
     # Filter the HTML from the page text
     $page_text = TopTable->model("FilterHTML")->filter( $page_text, "textarea" );
+    $page_text = "" unless defined( $page_text );
     
     my $page = $self->update_or_create({
       page_key  => $page_key,
