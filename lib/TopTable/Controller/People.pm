@@ -347,7 +347,7 @@ sub view_finalise :Private {
   ];
   my $external_scripts  = [
     $c->uri_for("/static/script/plugins/responsive-tabs/jquery.responsiveTabs.mod.js"),
-    $c->uri_for("/static/script/standard/responsive-tabs.js"),
+    #$c->uri_for("/static/script/standard/responsive-tabs.js"),
     $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
     $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
     $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),

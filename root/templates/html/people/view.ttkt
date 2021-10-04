@@ -56,7 +56,7 @@ IF season;
       SET team_season = person_team.team_season;
       
       IF specific_season;
-        SET team_uri      = c.uri_for_action("/teams/view_specific_season_by_url_key", [team_season.club_season.club.url_key, team_season.url_key, season.url_key]);
+        SET team_uri      = c.uri_for_action("/teams/view_specific_season_by_url_key", [team_season.club_season.club.url_key, team_season.team.url_key, season.url_key]);
         SET averages_uri  = c.uri_for_action("/league-averages/view_specific_season", ["singles", team_season.division_season.division.url_key, season.url_key]);
       ELSE;
         SET team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [team_season.club_season.club.url_key, team_season.team.url_key]);
