@@ -3,7 +3,7 @@
  *
  */
 $(document).ready(function() {
-  $("#datatable").DataTable({
+  var games = $("#datatable").DataTable({
     "responsive": true,
     "paging": false,
     "info": true,
@@ -36,5 +36,19 @@ $(document).ready(function() {
       "responsivePriority": 2,
       "targets": 6
     }]
+  });
+  
+  /*
+    Responsive tabs
+  */
+  $("div#tabs").responsiveTabs({
+    startCollapsed: false,
+    setHash: false,
+    activate: function(event, tab) {
+      if (tab.selector == "#games") {
+        // Redraw the averages tables
+        games.responsive.recalc();
+      }
+    }
   });
 });
