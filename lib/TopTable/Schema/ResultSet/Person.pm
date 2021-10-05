@@ -297,6 +297,7 @@ sub create_or_edit {
   my $fees_paid         = $parameters->{fees_paid};
   my $user              = $parameters->{user};
   my $season            = $parameters->{season};
+  my $log               = $parameters->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.    
   
   my ($dob_day, $dob_month, $dob_year)                            = split("/", $date_of_birth) if defined( $date_of_birth );
   my ($registration_day, $registration_month, $registration_year) = split("/", $registration_date) if defined( $registration_date );
@@ -570,11 +571,11 @@ sub create_or_edit {
         #  * If there's no active team association and no inactive team association with the team selected in this edit, we'll create it.
         if ( defined( $active_person_season ) ) {
           # We have an active association - check if the team has changed in this edit
-          if ( $active_person_season->team->id != $team->id ) {
+          if ( $active_person_season->team != $team->id ) {
             # The team has changed; see if there's an inactive association with this team
             my $association_to_activate = $person_seasons->find({}, {
               where => {
-                team => $team->id,
+                "me.team" => $team->id,
                 team_membership_type => {
                   "!=" => "active",
                 }

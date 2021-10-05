@@ -1133,6 +1133,7 @@ sub setup_person :Private {
     fees_paid         => $c->request->parameters->{fees_paid},
     user              => $user,
     season            => $current_season,
+    logger            => sub{ my $level = shift; $c->log->$level( @_ ); },
   });
   
   if ( scalar( @{ $details->{error} } ) ) {
