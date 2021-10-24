@@ -371,16 +371,28 @@ sub view_finalise :Private {
     # Singles averages
     $c->stash({ singles_averages => [ $c->model("DB::PersonSeason")->get_people_in_division_in_singles_averages_order( $config ) ], });
     
+    # Check if we're authorised to display edit / delete links next to names
+    $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( person_edit person_delete team_edit team_delete ) ], "", 0] );
+    
     my $people = $c->model("DB::PersonSeason")->get_people_in_division_in_singles_averages_order( $config );
   } elsif ( defined( $averages_type ) and $averages_type eq "doubles-individuals" ) {
-    # Doubles averages
+    # Doubles averages (invidual)
     $c->stash({ doubles_individual_averages => [ $c->model("DB::PersonSeason")->get_people_in_division_in_doubles_individual_averages_order( $config ) ], });
+    
+    # Check if we're authorised to display edit / delete links next to names
+    $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( person_edit person_delete team_edit team_delete ) ], "", 0] );
   } elsif ( defined( $averages_type ) and $averages_type eq "doubles-pairs" ) {
-    # Doubles pairs
+    # Doubles averages (pairs)
     $c->stash({ doubles_pair_averages => [ $c->model("DB::DoublesPair")->get_doubles_pairs_in_division_in_averages_order( $config ) ], });
+    
+    # Check if we're authorised to display edit / delete links next to names
+    $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( person_edit person_delete team_edit team_delete ) ], "", 0] );
   } elsif ( defined( $averages_type ) and $averages_type eq "doubles-teams" ) {
     # Team doubles records
     $c->stash({ doubles_team_averages => [ $c->model("DB::TeamSeason")->get_doubles_teams_in_division_in_averages_order( $config ) ], });
+    
+    # Check if we're authorised to display edit / delete links next to names
+    $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( team_edit team_delete ) ], "", 0] );
   }
   
   my $canonical_uri = ( $season->complete )

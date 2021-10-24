@@ -5,7 +5,11 @@
 $(document).ready(function() {
   var games = $("#datatable").DataTable({
     "responsive": true,
-    "paging": false,
+    "paging": true,
+    "pageLength": 25,
+    //pagingType: "full_numbers",
+    "lengthChange": true,
+    "lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
     "info": true,
     "fixedHeader": true,
     "columnDefs": [{
@@ -36,6 +40,12 @@ $(document).ready(function() {
       "responsivePriority": 2,
       "targets": 6
     }]
+  });
+  
+  $("select[name=datatable_length]").chosen({
+    disable_search: true,
+    single_backstroke_delete: false,
+    allow_single_deselect: true
   });
   
   /*

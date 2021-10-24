@@ -18,9 +18,9 @@ FOREACH week IN display_options;
   <li>
 [%
   IF specific_season;
-    SET uri = c.uri_for_action("/fixtures-results/view_week_specific_season_first_page", [season.url_key, date.year, month_number, day_number]);
+    SET uri = c.uri_for_action("/fixtures-results/view_week_specific_season_end", [season.url_key, date.year, month_number, day_number]);
   ELSE;
-    SET uri = c.uri_for_action("/fixtures-results/view_week_current_season_first_page", [date.year, month_number, day_number]);
+    SET uri = c.uri_for_action("/fixtures-results/view_week_current_season_end", [date.year, month_number, day_number]);
   END;
 -%]
     <a href="[% uri %]">[% c.maketext("fixtures-results.view.week-beginning", day_html _ ", " _ date.day _ " " _ month_html _ " " _ date.year) %]</a> ([% c.maketext("fixtures-results.view.match-count", week.get_column("number_of_matches")) %])

@@ -29,10 +29,25 @@ IF tables.size;
     ELSE;
       SET team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [table_team.team.club.url_key, table_team.team.url_key]);
     END;
+    
+    SET team_name = table_team.club_season.short_name _ " " _ table_team.name | html_entity;
 -%]
     <tr>
       <td class="numeric">[% i %]</td>
-      <td><a href="[% team_uri %]">[% table_team.club_season.short_name %] [% table_team.name %]</a></td>
+      <td><a href="[% team_uri %]">[% team_name %]</a>
+[%-
+IF authorisation.team_edit;
+-%]
+ <a href="[% c.uri_for_action("/teams/edit_by_url_key", [table_team.team.club.url_key, table_team.team.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", team_name) %]" title="[% c.maketext("admin.edit-object", team_name) %]" /></a>
+[%-
+END;
+IF authorisation.team_delete AND average.team_season.team.can_delete;
+-%]
+ <a href="[% c.uri_for_action("/teams/delete_by_url_key", [table_team.team.club.url_key, table_team.team.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", team_name) %]" title="[% c.maketext("admin.delete-object", team_name) %]" /></a>
+[%-
+END;
+-%]
+</td>
       <td class="numeric">[% table_team.matches_played %]</td>
       <td class="numeric">[% table_team.matches_won %]</td>
       <td class="numeric">[% table_team.matches_drawn %]</td>

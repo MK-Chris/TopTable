@@ -26,9 +26,9 @@ FOREACH team IN display_options;
     <li>
 [%
 IF specific_season;
-  SET uri = c.uri_for_action("/fixtures-results/view_team_by_url_key_specific_season_first_page", [season.url_key, team.club.url_key, team.url_key]);
+  SET uri = c.uri_for_action("/fixtures-results/view_team_by_url_key_specific_season_end", [season.url_key, team.club.url_key, team.url_key]);
 ELSE;
-  SET uri = c.uri_for_action("/fixtures-results/view_team_by_url_key_current_season_first_page", [team.club.url_key, team.url_key]);
+  SET uri = c.uri_for_action("/fixtures-results/view_team_by_url_key_current_season_end", [team.club.url_key, team.url_key]);
 END;
 -%]
       <a href="[% uri %]">[% team.name %]</a>

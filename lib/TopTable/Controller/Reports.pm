@@ -217,9 +217,8 @@ sub view_finalise :Private {
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
-      $c->uri_for( sprintf( "/static/script/reports/%s.js", $report_id ) ),
+      $c->uri_for( sprintf( "/static/script/reports/%s.js", $report_id ), {v => 2} ),
       $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
-      $c->uri_for("/static/script/standard/chosen.js"),
       $c->uri_for("/static/script/standard/option-list.js"),
     ],
     external_styles     => [

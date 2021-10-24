@@ -276,6 +276,9 @@ sub view_finalise :Private {
   my $encoded_division_name = $c->stash->{encoded_division_name};
   my $encoded_season_name   = $c->stash->{encoded_season_name};
   
+  # See if we are authorised to edit / delete so we can display the relevant links
+  $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( team_edit team_delete ) ], "", 0] );
+  
   my $canonical_uri = ( $season->complete )
     ? $c->uri_for_action("league-tables/view_specific_season", [$division->url_key, $season->url_key])
     : $c->uri_for_action("league-tables/view_current_season", [$division->url_key]);

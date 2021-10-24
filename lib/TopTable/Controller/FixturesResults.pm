@@ -440,59 +440,60 @@ sub view_team_by_id :Private {
   
   # Grab the team
   $c->stash({team => $team});
+  $c->forward( "view_team" );
 }
 
-=head2 view_team_by_id_current_season_first_page
-
-Shows the first page of a given team's fixtures in the current season.
-
-Matches "/fixtures-results/teams/*" (end of chain).
-
-=cut
-
-sub view_team_by_id_current_season_first_page :Chained("view_team_by_id_current_season") :PathPart("") :Args(0) {
-  my ( $self, $c ) = @_;
-  $c->forward( "view_team", [1] );
-}
-
-=head2 view_team_by_id_specific_season_first_page
-
-Shows the first page of a given team's fixtures in the current season.
-
-Matches "/fixtures-results/seasons/*/teams/*" (end of chain).
-
-=cut
-
-sub view_team_by_id_specific_season_first_page :Chained("view_team_by_id_specific_season") :PathPart("") :Args(0) {
-  my ( $self, $c ) = @_;
-  $c->forward( "view_team", [1] );
-}
-
-=head2 view_team_by_id_current_season_specific_page
-
-Shows the specified page of a given team's fixtures in the current season.
-
-Matches "/fixtures-results/teams/*/page/*" (end of chain).
-
-=cut
-
-sub view_team_by_id_current_season_specific_page :Chained("view_team_by_id_current_season") :PathPart("page") :Args(1) {
-  my ( $self, $c, $page_number ) = @_;
-  $c->detach( "view_team_specific_page", [$page_number] )
-}
-
-=head2 view_team_by_id_specific_season_specific_page
-
-Shows the specified page of a given team's fixtures in the specified season.
-
-Matches "/fixtures-results/seasons/*/teams/*/page/*" (end of chain).
-
-=cut
-
-sub view_team_by_id_specific_season_specific_page :Chained("view_team_by_id_specific_season") :PathPart("page") :Args(1) {
-  my ( $self, $c, $page_number ) = @_;
-  $c->forward( "view_team_specific_page", [$page_number] );
-}
+# =head2 view_team_by_id_current_season_first_page
+# 
+# Shows the first page of a given team's fixtures in the current season.
+# 
+# Matches "/fixtures-results/teams/*" (end of chain).
+# 
+# =cut
+# 
+# sub view_team_by_id_current_season_first_page :Chained("view_team_by_id_current_season") :PathPart("") :Args(0) {
+#   my ( $self, $c ) = @_;
+#   $c->forward( "view_team", [1] );
+# }
+# 
+# =head2 view_team_by_id_specific_season_first_page
+# 
+# Shows the first page of a given team's fixtures in the current season.
+# 
+# Matches "/fixtures-results/seasons/*/teams/*" (end of chain).
+# 
+# =cut
+# 
+# sub view_team_by_id_specific_season_first_page :Chained("view_team_by_id_specific_season") :PathPart("") :Args(0) {
+#   my ( $self, $c ) = @_;
+#   $c->forward( "view_team", [1] );
+# }
+# 
+# =head2 view_team_by_id_current_season_specific_page
+# 
+# Shows the specified page of a given team's fixtures in the current season.
+# 
+# Matches "/fixtures-results/teams/*/page/*" (end of chain).
+# 
+# =cut
+# 
+# sub view_team_by_id_current_season_specific_page :Chained("view_team_by_id_current_season") :PathPart("page") :Args(1) {
+#   my ( $self, $c, $page_number ) = @_;
+#   $c->detach( "view_team_specific_page", [$page_number] )
+# }
+# 
+# =head2 view_team_by_id_specific_season_specific_page
+# 
+# Shows the specified page of a given team's fixtures in the specified season.
+# 
+# Matches "/fixtures-results/seasons/*/teams/*/page/*" (end of chain).
+# 
+# =cut
+# 
+# sub view_team_by_id_specific_season_specific_page :Chained("view_team_by_id_specific_season") :PathPart("page") :Args(1) {
+#   my ( $self, $c, $page_number ) = @_;
+#   $c->forward( "view_team_specific_page", [$page_number] );
+# }
 
 =head2 view_team_by_url_key_current_season
 
@@ -535,59 +536,60 @@ sub view_team_by_url_key :Private {
   
   # Grab the team
   $c->stash({team => $team});
+  $c->forward( "view_team" );
 }
 
-=head2 view_team_by_url_key_current_season_first_page
-
-Shows the first page of a given team's fixtures in the current season when the team has been specified by URL key.
-
-Matches "/fixtures-results/teams/*/*" (end of chain).
-
-=cut
-
-sub view_team_by_url_key_current_season_first_page :Chained("view_team_by_url_key_current_season") :PathPart("") :Args(0) {
-  my ( $self, $c ) = @_;
-  $c->forward( "view_team", [1] );
-}
-
-=head2 view_team_by_url_key_specific_season_first_page
-
-Shows the first page of a given team's fixtures in the specified season when the team has been specified by URL key.
-
-Matches "/fixtures-results/seasons/*/teams/*/*" (end of chain).
-
-=cut
-
-sub view_team_by_url_key_specific_season_first_page :Chained("view_team_by_url_key_specific_season") :PathPart("") :Args(0) {
-  my ( $self, $c, $page_number ) = @_;
-  $c->forward( "view_team", [1] );
-}
-
-=head2 view_team_by_url_key_current_season_specific_page
-
-Shows the specified page of a given team's fixtures in the current season when the team has been specified by URL key.
-
-Matches "/fixtures-results/teams/*/*/page/*" (end of chain).
-
-=cut
-
-sub view_team_by_url_key_current_season_specific_page :Chained("view_team_by_url_key_current_season") :PathPart("page") :Args(1) {
-  my ( $self, $c, $page_number ) = @_;
-  $c->forward( "clean_page_number", [$page_number, "view_team"] );
-}
-
-=head2 view_team_by_url_key_specific_season_specific_page
-
-Shows the specified page of a given team's fixtures in the specified season when the team has been specified by URL key.
-
-Matches "/fixtures-results/seasons/*/teams/*/*/page/*" (end of chain).
-
-=cut
-
-sub view_team_by_url_key_specific_season_specific_page :Chained("view_team_by_url_key_specific_season") :PathPart("page") :Args(1) {
-  my ( $self, $c, $page_number ) = @_;
-  $c->forward( "clean_page_number", [$page_number, "view_team"] );
-}
+# =head2 view_team_by_url_key_current_season_first_page
+# 
+# Shows the first page of a given team's fixtures in the current season when the team has been specified by URL key.
+# 
+# Matches "/fixtures-results/teams/*/*" (end of chain).
+# 
+# =cut
+# 
+# sub view_team_by_url_key_current_season_first_page :Chained("view_team_by_url_key_current_season") :PathPart("") :Args(0) {
+#   my ( $self, $c ) = @_;
+#   $c->forward( "view_team", [1] );
+# }
+# 
+# =head2 view_team_by_url_key_specific_season_first_page
+# 
+# Shows the first page of a given team's fixtures in the specified season when the team has been specified by URL key.
+# 
+# Matches "/fixtures-results/seasons/*/teams/*/*" (end of chain).
+# 
+# =cut
+# 
+# sub view_team_by_url_key_specific_season_first_page :Chained("view_team_by_url_key_specific_season") :PathPart("") :Args(0) {
+#   my ( $self, $c, $page_number ) = @_;
+#   $c->forward( "view_team", [1] );
+# }
+# 
+# =head2 view_team_by_url_key_current_season_specific_page
+# 
+# Shows the specified page of a given team's fixtures in the current season when the team has been specified by URL key.
+# 
+# Matches "/fixtures-results/teams/*/*/page/*" (end of chain).
+# 
+# =cut
+# 
+# sub view_team_by_url_key_current_season_specific_page :Chained("view_team_by_url_key_current_season") :PathPart("page") :Args(1) {
+#   my ( $self, $c, $page_number ) = @_;
+#   $c->forward( "clean_page_number", [$page_number, "view_team"] );
+# }
+# 
+# =head2 view_team_by_url_key_specific_season_specific_page
+# 
+# Shows the specified page of a given team's fixtures in the specified season when the team has been specified by URL key.
+# 
+# Matches "/fixtures-results/seasons/*/teams/*/*/page/*" (end of chain).
+# 
+# =cut
+# 
+# sub view_team_by_url_key_specific_season_specific_page :Chained("view_team_by_url_key_specific_season") :PathPart("page") :Args(1) {
+#   my ( $self, $c, $page_number ) = @_;
+#   $c->forward( "clean_page_number", [$page_number, "view_team"] );
+# }
 
 =head2 view_team
 
@@ -596,7 +598,7 @@ Private function that ALL of the view_team_* functions end up at that retrieves 
 =cut
 
 sub view_team :Private {
-  my ( $self, $c, $page_number ) = @_;
+  my ( $self, $c ) = @_;
   my $specific_season   = $c->stash->{specific_season};
   my $season            = $c->stash->{season};
   my $team              = $c->stash->{team};
@@ -609,50 +611,38 @@ sub view_team :Private {
   $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( match_update match_cancel ) ], "", 0] );
   
   if ( $specific_season ) {
-    if ( $page_number == 1 ) {
-      $c->stash({canonical_uri => $c->uri_for_action("/fixtures-results/view_team_by_url_key_specific_season_first_page", [$season->url_key, $team->club->url_key, $team->url_key])});
-    } else {
-      $c->stash({canonical_uri => $c->uri_for_action("/fixtures-results/view_team_by_url_key_specific_season_specific_page", [$season->url_key, $team->club->url_key, $team->url_key, $page_number])});
-    }
+    $c->stash({canonical_uri => $c->uri_for_action("/fixtures-results/view_team_by_url_key_specific_season", [$season->url_key, $team->club->url_key, $team->url_key])});
   } else {
-    if ( $page_number == 1 ) {
-      $c->stash({canonical_uri => $c->uri_for_action("/fixtures-results/view_team_by_url_key_current_season_first_page", [$team->club->url_key, $team->url_key])});
-    } else {
-      $c->stash({canonical_uri => $c->uri_for_action("/fixtures-results/view_team_by_url_key_current_season_specific_page", [$team->club->url_key, $team->url_key, $page_number])});
-    }
+    $c->stash({canonical_uri => $c->uri_for_action("/fixtures-results/view_team_by_url_key_current_season", [$team->club->url_key, $team->url_key])});
   }
   
   # Get the matches on this page
   $matches = $c->model("DB::TeamMatch")->matches_for_team({
     team              => $team,
     season            => $season,
-    page_number       => $page_number,
-    results_per_page  => $c->config->{Pagination}{default_page_size},
+    #page_number       => $page_number,
+    #results_per_page  => $c->config->{Pagination}{default_page_size},
   });
   
   # Work out the arguments and actions based on whether or not we've specified the season or just using the current one
-  my ( $page1_action, $specific_page_action, $page1_arguments, $specific_page_arguments );
-  if ( $specific_season ) {
-    $page1_action             = "/fixtures-results/view_team_by_url_key_specific_season_first_page";
-    $page1_arguments          = [ $season->url_key, $team->club->url_key, $team->url_key ];
-    $specific_page_action     = "/fixtures-results/view_team_by_url_key_specific_season_specific_page";
-    $specific_page_arguments  = [ $season->url_key, $team->club->url_key, $team->url_key ];
-  } else {
-    $page1_action             = "/fixtures-results/view_team_by_url_key_current_season_first_page";
-    $page1_arguments          = [ $team->club->url_key, $team->url_key ];
-    $specific_page_action     = "/fixtures-results/view_team_by_url_key_current_season_specific_page";
-    $specific_page_arguments  = [ $team->club->url_key, $team->url_key ];
-  }
+#   my ( $action, $arguments );
+#   if ( $specific_season ) {
+#     $action     = "/fixtures-results/view_team_by_url_key_specific_season";
+#     $arguments  = [ $season->url_key, $team->club->url_key, $team->url_key ];
+#   } else {
+#     $action     = "/fixtures-results/view_team_by_url_key_current_season";
+#     $arguments  = [ $team->club->url_key, $team->url_key ];
+#   }
   
-  my $page_info   = $matches->pager;
-  my $page_links  = $c->forward( "TopTable::Controller::Root", "generate_pagination_links", [{
-    page_info                       => $page_info,
-    page1_action                    => $page1_action,
-    page1_action_arguments          => $page1_arguments,
-    specific_page_action            => $specific_page_action,
-    specific_page_action_arguments  => $specific_page_arguments,
-    current_page                    => $page_number,
-  }] );
+#   my $page_info   = $matches->pager;
+#   my $page_links  = $c->forward( "TopTable::Controller::Root", "generate_pagination_links", [{
+#     page_info                       => $page_info,
+#     page1_action                    => $page1_action,
+#     page1_action_arguments          => $page1_arguments,
+#     specific_page_action            => $specific_page_action,
+#     specific_page_action_arguments  => $specific_page_arguments,
+#     current_page                    => $page_number,
+#   }] );
   
   # Team info is in the team season object if we're using a specific season
   my $team_info = $team->team_seasons->first;
@@ -682,20 +672,22 @@ sub view_team :Private {
     view_online_link    => 1,
     matches             => $matches,
     $subtitle_field     => sprintf( "%s %s", $encoded_club_short_name, $encoded_old_team_name ),
-    page_info           => $page_info,
-    page_links          => $page_links,
+    #page_info           => $page_info,
+    #page_links          => $page_links,
     title_links         => [{
       image_uri => $c->uri_for("/static/images/icons/0038-Calender-icon-32.png"),
       text      => $c->maketext("calendar.download"),
       link_uri  => $c->uri_for_action("/fixtures-results/download_team_by_url_key_specific_season", [$season->url_key, $team->club->url_key, $team->url_key, "calendar"]),
     }],
     external_scripts    => [
+      $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
       $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
-      $c->uri_for("/static/script/fixtures-results/view-no-grouping.js"),
+      $c->uri_for("/static/script/fixtures-results/view-no-grouping.js", {v => 2}),
     ],
     external_styles     => [
+      $c->uri_for("/static/css/chosen/chosen.min.css"),
       $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
@@ -708,7 +700,7 @@ sub view_team :Private {
       path  => $c->uri_for_action("/fixtures-results/filter_view_specific_season", [$season->url_key, "teams"]),
       label => $c->maketext("menu.text.fixtures-results-by-team"),
     }, {
-      path  => $c->uri_for_action("/fixtures-results/view_team_by_url_key_specific_season_first_page", [$season->url_key, $team->club->url_key, $team->url_key]),
+      path  => $c->uri_for_action("/fixtures-results/view_team_by_url_key_specific_season", [$season->url_key, $team->club->url_key, $team->url_key]),
       label => sprintf( "%s %s", $encoded_old_club_short_name, $encoded_old_team_name ),
     });
   } else {
@@ -716,11 +708,22 @@ sub view_team :Private {
       path  => $c->uri_for_action("/fixtures-results/filter_view_current_season", ["teams"]),
       label => $c->maketext("menu.text.fixtures-results-by-team"),
     }, {
-      path  => $c->uri_for_action("/fixtures-results/view_team_by_url_key_current_season_first_page", [$team->club->url_key, $team->url_key]),
+      path  => $c->uri_for_action("/fixtures-results/view_team_by_url_key_current_season", [$team->club->url_key, $team->url_key]),
       label => sprintf( "%s %s", $encoded_club_short_name, $encoded_team_name ),
     });
   }
 }
+
+=head2 view_team_by_url_key_current_season_end, view_team_by_url_key_specific_season_end
+
+End point for view_team various functions (current / specific season by id / url_key) without extra options
+
+=cut
+
+sub view_team_by_url_key_current_season_end :Chained("view_team_by_url_key_current_season") :PathPart("") :Args(0) {}
+sub view_team_by_url_key_specific_season_end :Chained("view_team_by_url_key_specific_season") :PathPart("") :Args(0) {}
+sub view_team_by_id_current_season_end :Chained("view_team_by_id_current_season") :PathPart("") :Args(0) {}
+sub view_team_by_id_specific_season_end :Chained("view_team_by_id_specific_season") :PathPart("") :Args(0) {}
 
 =head2 download_team_by_id_current_season
 
@@ -827,6 +830,7 @@ Matches "/fixtures-results/divisions/*".
 sub view_division_current_season :Chained("load_current_season") :PathPart("divisions") :CaptureArgs(1) {
   my ( $self, $c, $division_id_or_url_key ) = @_;
   $c->forward( "get_division", [$division_id_or_url_key] );
+  $c->forward( "view_division", [1] );
 }
 
 =head2 view_division_specific_season
@@ -840,6 +844,7 @@ Matches "/fixtures-results/seasons/*/divisions/*"
 sub view_division_specific_season :Chained("load_specific_season") :PathPart("divisions") :CaptureArgs(1) {
   my ( $self, $c, $division_id_or_url_key ) = @_;
   $c->forward( "get_division", [$division_id_or_url_key] );
+  $c->forward( "view_division", [1] );
 }
 
 =head2 download_division_current_season
@@ -902,57 +907,57 @@ sub get_division :Private {
   $c->stash({division => $division});
 }
 
-=head2 view_division_current_season_first_page
-
-Shows the first page of a given division's fixtures in the current season.
-
-Matches "/fixtures-results/divisions/*" (end of chain).
-
-=cut
-
-sub view_division_current_season_first_page :Chained("view_division_current_season") :PathPart("") :Args(0) {
-  my ( $self, $c ) = @_;
-  $c->forward( "view_division", [1] );
-}
-
-=head2 view_team_by_url_key_specific_season_first_page
-
-Shows the first page of a given division's fixtures in the specified season.
-
-Matches "/fixtures-results/seasons/*/divisions/*" (end of chain).
-
-=cut
-
-sub view_division_specific_season_first_page :Chained("view_division_specific_season") :PathPart("") :Args(0) {
-  my ( $self, $c, $page_number ) = @_;
-  $c->forward( "view_division", [1] );
-}
-
-=head2 view_division_current_season_specific_page
-
-Shows the specified page of a given division's fixtures in the current season.
-
-Matches "/fixtures-results/divisions/*/page/*" (end of chain).
-
-=cut
-
-sub view_division_current_season_specific_page :Chained("view_division_current_season") :PathPart("page") :Args(1) {
-  my ( $self, $c, $page_number ) = @_;
-  $c->forward( "clean_page_number", [$page_number, "view_division"] );
-}
-
-=head2 view_division_specific_season_specific_page
-
-Shows the specified page of a given division's fixtures in the specified season.
-
-Matches "/fixtures-results/seasons/*/divisions/*/page/*" (end of chain).
-
-=cut
-
-sub view_division_specific_season_specific_page :Chained("view_division_specific_season") :PathPart("page") :Args(1) {
-  my ( $self, $c, $page_number ) = @_;
-  $c->forward( "clean_page_number", [$page_number, "view_division"] );
-}
+# =head2 view_division_current_season_first_page
+# 
+# Shows the first page of a given division's fixtures in the current season.
+# 
+# Matches "/fixtures-results/divisions/*" (end of chain).
+# 
+# =cut
+# 
+# sub view_division_current_season_first_page :Chained("view_division_current_season") :PathPart("") :Args(0) {
+#   my ( $self, $c ) = @_;
+#   $c->forward( "view_division", [1] );
+# }
+# 
+# =head2 view_division_specific_season_first_page
+# 
+# Shows the first page of a given division's fixtures in the specified season.
+# 
+# Matches "/fixtures-results/seasons/*/divisions/*" (end of chain).
+# 
+# =cut
+# 
+# sub view_division_specific_season_first_page :Chained("view_division_specific_season") :PathPart("") :Args(0) {
+#   my ( $self, $c, $page_number ) = @_;
+#   $c->forward( "view_division", [1] );
+# }
+# 
+# =head2 view_division_current_season_specific_page
+# 
+# Shows the specified page of a given division's fixtures in the current season.
+# 
+# Matches "/fixtures-results/divisions/*/page/*" (end of chain).
+# 
+# =cut
+# 
+# sub view_division_current_season_specific_page :Chained("view_division_current_season") :PathPart("page") :Args(1) {
+#   my ( $self, $c, $page_number ) = @_;
+#   $c->forward( "clean_page_number", [$page_number, "view_division"] );
+# }
+# 
+# =head2 view_division_specific_season_specific_page
+# 
+# Shows the specified page of a given division's fixtures in the specified season.
+# 
+# Matches "/fixtures-results/seasons/*/divisions/*/page/*" (end of chain).
+# 
+# =cut
+# 
+# sub view_division_specific_season_specific_page :Chained("view_division_specific_season") :PathPart("page") :Args(1) {
+#   my ( $self, $c, $page_number ) = @_;
+#   $c->forward( "clean_page_number", [$page_number, "view_division"] );
+# }
 
 =head2 view_division
 
@@ -961,7 +966,7 @@ Private function that ALL view_division_* functions end up at; this does the act
 =cut
 
 sub view_division :Private {
-  my ( $self, $c, $page_number ) = @_;
+  my ( $self, $c ) = @_;
   my $division        = $c->stash->{division};
   my $season          = $c->stash->{season};
   my $specific_season = $c->stash->{specific_season};
@@ -976,33 +981,29 @@ sub view_division :Private {
   $matches = $c->model("DB::TeamMatch")->matches_in_division({
     division          => $division,
     season            => $season,
-    page_number       => $page_number,
-    results_per_page  => $c->config->{Pagination}{default_page_size},
+    #page_number       => $page_number,
+    #results_per_page  => $c->config->{Pagination}{default_page_size},
   });
   
   # Work out the arguments and actions based on whether or not we've specified the season or just using the current one
-  my ( $page1_action, $specific_page_action, $page1_arguments, $specific_page_arguments );
-  if ( $specific_season ) {
-    $page1_action             = "/fixtures-results/view_division_specific_season_first_page";
-    $page1_arguments          = [ $season->url_key, $division->url_key ];
-    $specific_page_action     = "/fixtures-results/view_division_specific_season_specific_page";
-    $specific_page_arguments  = [ $season->url_key, $division->url_key ];
-  } else {
-    $page1_action             = "/fixtures-results/view_division_current_season_first_page";
-    $page1_arguments          = [ $division->url_key ];
-    $specific_page_action     = "/fixtures-results/view_division_current_season_specific_page";
-    $specific_page_arguments  = [ $division->url_key ];
-  }
-  
-  my $page_info   = $matches->pager;
-  my $page_links  = $c->forward( "TopTable::Controller::Root", "generate_pagination_links", [{
-    page_info                       => $page_info,
-    page1_action                    => $page1_action,
-    page1_action_arguments          => $page1_arguments,
-    specific_page_action            => $specific_page_action,
-    specific_page_action_arguments  => $specific_page_arguments,
-    current_page                    => $page_number,
-  }] );
+#   my ( $action, $arguments );
+#   if ( $specific_season ) {
+#     $action     = "/fixtures-results/view_division_specific_season_first_page";
+#     $arguments  = [ $season->url_key, $division->url_key ];
+#   } else {
+#     $action     = "/fixtures-results/view_division_current_season_first_page";
+#     $arguments  = [ $division->url_key ];
+#   }
+#   
+#   my $page_info   = $matches->pager;
+#   my $page_links  = $c->forward( "TopTable::Controller::Root", "generate_pagination_links", [{
+#     #page_info                       => $page_info,
+#     page1_action                    => $page1_action,
+#     page1_action_arguments          => $page1_arguments,
+#     #specific_page_action            => $specific_page_action,
+#     #specific_page_action_arguments  => $specific_page_arguments,
+#     current_page                    => $page_number,
+#   }] );
   
   # Make sure this division has an association with the given season
   my $division_season = $division->get_season( $season );
@@ -1031,20 +1032,22 @@ sub view_division :Private {
     view_online_link    => 1,
     matches             => $matches,
     $subtitle_field     => $encoded_old_division_name,
-    page_info           => $page_info,
-    page_links          => $page_links,
+    #page_info           => $page_info,
+    #page_links          => $page_links,
     title_links         => [{
       image_uri => $c->uri_for("/static/images/icons/0038-Calender-icon-32.png"),
       text      => $c->maketext("calendar.download"),
       link_uri  => $c->uri_for_action("/fixtures-results/download_division_specific_season", [$season->url_key, $division->url_key, "calendar"]),
     }],
     external_scripts    => [
+      $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
       $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
-      $c->uri_for("/static/script/fixtures-results/view-no-grouping.js"),
+      $c->uri_for("/static/script/fixtures-results/view-no-grouping.js", {v => 2}),
     ],
     external_styles     => [
+      $c->uri_for("/static/css/chosen/chosen.min.css"),
       $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
@@ -1071,6 +1074,15 @@ sub view_division :Private {
   }
 }
 
+=head2 view_division_current_season_end, view_division_specific_season_end
+
+Provide an end point for viewing a division without download options.
+
+=cut
+
+sub view_division_current_season_end :Chained("view_division_current_season") :PathPart("") :Args(0) {}
+sub view_division_specific_season_end :Chained("view_division_specific_season") :PathPart("") :Args(0) {}
+
 =head2 view_venue_current_season
 
 Display the fixtures for the given venue in the current season.
@@ -1082,6 +1094,7 @@ Matches "/fixtures-results/venues/*".
 sub view_venue_current_season :Chained("load_current_season") :PathPart("venues") :CaptureArgs(1) {
   my ( $self, $c, $venue_id_or_url_key ) = @_;
   $c->forward( "get_venue", [ $venue_id_or_url_key ] );
+  $c->detach( "view_venue" );
 }
 
 =head2 view_venue_specific_season
@@ -1095,6 +1108,7 @@ Matches "/fixtures-results/seasons/*/venues/*".
 sub view_venue_specific_season :Chained("load_specific_season") :PathPart("venues") :CaptureArgs(1) {
   my ( $self, $c, $venue_id_or_url_key ) = @_;
   $c->forward( "get_venue", [ $venue_id_or_url_key ] );
+  $c->detach( "view_venue" );
 }
 
 =head2 download_venue_current_season
@@ -1157,57 +1171,57 @@ sub get_venue :Private {
   $c->stash({venue => $venue});
 }
 
-=head2 view_venue_current_season_first_page
-
-Shows the first page of a given venue's fixtures in the current season.
-
-Matches "/fixtures-results/venues/*" (end of chain).
-
-=cut
-
-sub view_venue_current_season_first_page :Chained("view_venue_current_season") :PathPart("") :Args(0) {
-  my ( $self, $c ) = @_;
-  $c->detach( "view_venue", [1] );
-}
-
-=head2 view_venue_by_url_key_specific_season_first_page
-
-Shows the first page of a given venue's fixtures in the specified season.
-
-Matches "/fixtures-results/season/*/venues/*" (end of chain).
-
-=cut
-
-sub view_venue_specific_season_first_page :Chained("view_venue_specific_season") :PathPart("") :Args(0) {
-  my ( $self, $c, $page_number ) = @_;
-  $c->detach( "view_venue", [1] );
-}
-
-=head2 view_venue_current_season_specific_page
-
-Shows the specified page of a given venue's fixtures in the current season.
-
-Matches "/fixtures-results/venues/*/page/*" (end of chain).
-
-=cut
-
-sub view_venue_current_season_specific_page :Chained("view_venue_current_season") :PathPart("page") :Args(1) {
-  my ( $self, $c, $page_number ) = @_;
-  $c->detach( "clean_page_number", [$page_number, "view_venue"] );
-}
-
-=head2 view_division_specific_season_specific_page
-
-Shows the specified page of a given venue's fixtures in the specified season.
-
-Matches "/fixtures-results/season/*/venues/*/page/*" (end of chain).
-
-=cut
-
-sub view_venue_specific_season_specific_page :Chained("view_venue_specific_season") :PathPart("page") :Args(1) {
-  my ( $self, $c, $page_number ) = @_;
-  $c->detach( "clean_page_number", [$page_number, "view_venue"] );
-}
+# =head2 view_venue_current_season_first_page
+# 
+# Shows the first page of a given venue's fixtures in the current season.
+# 
+# Matches "/fixtures-results/venues/*" (end of chain).
+# 
+# =cut
+# 
+# sub view_venue_current_season_first_page :Chained("view_venue_current_season") :PathPart("") :Args(0) {
+#   my ( $self, $c ) = @_;
+#   $c->detach( "view_venue", [1] );
+# }
+# 
+# =head2 view_venue_by_url_key_specific_season_first_page
+# 
+# Shows the first page of a given venue's fixtures in the specified season.
+# 
+# Matches "/fixtures-results/season/*/venues/*" (end of chain).
+# 
+# =cut
+# 
+# sub view_venue_specific_season_first_page :Chained("view_venue_specific_season") :PathPart("") :Args(0) {
+#   my ( $self, $c, $page_number ) = @_;
+#   $c->detach( "view_venue", [1] );
+# }
+# 
+# =head2 view_venue_current_season_specific_page
+# 
+# Shows the specified page of a given venue's fixtures in the current season.
+# 
+# Matches "/fixtures-results/venues/*/page/*" (end of chain).
+# 
+# =cut
+# 
+# sub view_venue_current_season_specific_page :Chained("view_venue_current_season") :PathPart("page") :Args(1) {
+#   my ( $self, $c, $page_number ) = @_;
+#   $c->detach( "clean_page_number", [$page_number, "view_venue"] );
+# }
+# 
+# =head2 view_division_specific_season_specific_page
+# 
+# Shows the specified page of a given venue's fixtures in the specified season.
+# 
+# Matches "/fixtures-results/season/*/venues/*/page/*" (end of chain).
+# 
+# =cut
+# 
+# sub view_venue_specific_season_specific_page :Chained("view_venue_specific_season") :PathPart("page") :Args(1) {
+#   my ( $self, $c, $page_number ) = @_;
+#   $c->detach( "clean_page_number", [$page_number, "view_venue"] );
+# }
 
 =head2 view_venue
 
@@ -1216,7 +1230,7 @@ Private routine that all of the view_venue_* functions end up at.  This does the
 =cut
 
 sub view_venue :Private {
-  my ( $self, $c, $page_number ) = @_;
+  my ( $self, $c ) = @_;
   my $venue           = $c->stash->{venue};
   my $specific_season = $c->stash->{specific_season};
   my $season          = $c->stash->{season};
@@ -1231,33 +1245,33 @@ sub view_venue :Private {
   $matches = $c->model("DB::TeamMatch")->matches_at_venue({
     venue             => $venue,
     season            => $season,
-    page_number       => $page_number,
-    results_per_page  => $c->config->{Pagination}{default_page_size},
+    #page_number       => $page_number,
+    #results_per_page  => $c->config->{Pagination}{default_page_size},
   });
   
   # Work out the arguments and actions based on whether or not we've specified the season or just using the current one
-  my ( $page1_action, $specific_page_action, $page1_arguments, $specific_page_arguments );
-  if ( $specific_season ) {
-    $page1_action             = "/fixtures-results/view_venue_specific_season_first_page";
-    $page1_arguments          = [ $season->url_key, $venue->url_key ];
-    $specific_page_action     = "/fixtures-results/view_venue_specific_season_specific_page";
-    $specific_page_arguments  = [ $season->url_key, $venue->url_key ];
-  } else {
-    $page1_action             = "/fixtures-results/view_venue_current_season_first_page";
-    $page1_arguments          = [ $venue->url_key ];
-    $specific_page_action     = "/fixtures-results/view_venue_current_season_specific_page";
-    $specific_page_arguments  = [ $venue->url_key ];
-  }
-  
-  my $page_info   = $matches->pager;
-  my $page_links  = $c->forward( "TopTable::Controller::Root", "generate_pagination_links", [{
-    page_info                       => $page_info,
-    page1_action                    => $page1_action,
-    page1_action_arguments          => $page1_arguments,
-    specific_page_action            => $specific_page_action,
-    specific_page_action_arguments  => $specific_page_arguments,
-    current_page                    => $page_number,
-  }] );
+#   my ( $page1_action, $specific_page_action, $page1_arguments, $specific_page_arguments );
+#   if ( $specific_season ) {
+#     $page1_action             = "/fixtures-results/view_venue_specific_season_first_page";
+#     $page1_arguments          = [ $season->url_key, $venue->url_key ];
+#     $specific_page_action     = "/fixtures-results/view_venue_specific_season_specific_page";
+#     $specific_page_arguments  = [ $season->url_key, $venue->url_key ];
+#   } else {
+#     $page1_action             = "/fixtures-results/view_venue_current_season_first_page";
+#     $page1_arguments          = [ $venue->url_key ];
+#     $specific_page_action     = "/fixtures-results/view_venue_current_season_specific_page";
+#     $specific_page_arguments  = [ $venue->url_key ];
+#   }
+#   
+#   my $page_info   = $matches->pager;
+#   my $page_links  = $c->forward( "TopTable::Controller::Root", "generate_pagination_links", [{
+#     page_info                       => $page_info,
+#     page1_action                    => $page1_action,
+#     page1_action_arguments          => $page1_arguments,
+#     specific_page_action            => $specific_page_action,
+#     specific_page_action_arguments  => $specific_page_arguments,
+#     current_page                    => $page_number,
+#   }] );
   
   my $online_display;
   if ( $specific_season ) {
@@ -1278,20 +1292,22 @@ sub view_venue :Private {
     view_online_display => sprintf( "Viewing fixtures & results taking place at %s in %s", $venue->name, $season->name ),
     view_online_link    => 1,
     view_online_display => $online_display,
-    page_info           => $page_info,
-    page_links          => $page_links,
+    #page_info           => $page_info,
+    #page_links          => $page_links,
     title_links         => [{
       image_uri => $c->uri_for("/static/images/icons/0038-Calender-icon-32.png"),
       text      => $c->maketext("calendar.download"),
       link_uri  => $c->uri_for_action("/fixtures-results/download_venue_specific_season", [$season->url_key, $venue->url_key, "calendar"]),
     }],
     external_scripts    => [
+      $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
       $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
-      $c->uri_for("/static/script/fixtures-results/view-no-grouping-with-division-no-venue.js"),
+      $c->uri_for("/static/script/fixtures-results/view-no-grouping-with-division-no-venue.js", {v => 2}),
     ],
     external_styles     => [
+      $c->uri_for("/static/css/chosen/chosen.min.css"),
       $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
@@ -1304,7 +1320,7 @@ sub view_venue :Private {
       path  => $c->uri_for_action("/fixtures-results/filter_view_specific_season", [$season->url_key, "venues"]),
       label => $c->maketext("menu.text.fixtures-results-by-venue"),
     }, {
-      path  => $c->uri_for_action("/fixtures-results/view_venue_specific_season_first_page", [$season->url_key, $venue->url_key]),
+      path  => $c->uri_for_action("/fixtures-results/view_venue_specific_season_end", [$season->url_key, $venue->url_key]),
       label => $encoded_venue_name,
     });
   } else {
@@ -1312,11 +1328,20 @@ sub view_venue :Private {
       path  => $c->uri_for_action("/fixtures-results/filter_view_current_season", ["venues"]),
       label => $c->maketext("menu.text.fixtures-results-by-venue"),
     }, {
-      path  => $c->uri_for_action("/fixtures-results/view_venue_current_season_first_page", [$venue->url_key]),
+      path  => $c->uri_for_action("/fixtures-results/view_venue_current_season_end", [$venue->url_key]),
       label => $encoded_venue_name,
     });
   }
 }
+
+=head2 view_venue_current_season_end, view_venue_specific_season_end
+
+End point for venue view without options for downloading, etc.
+
+=cut
+
+sub view_venue_current_season_end :Chained("view_venue_current_season") :PathPart("") :Args(0) {}
+sub view_venue_specific_season_end :Chained("view_venue_specific_season") :PathPart("") :Args(0) {}
 
 =head2 view_month_current_season
 
@@ -1329,6 +1354,7 @@ Matches "/fixtures-results/months/*/*" (last */* is [year]/[month]).
 sub view_month_current_season :Chained("load_current_season") :PathPart("months") :CaptureArgs(2) {
   my ( $self, $c, $year, $month ) = @_;
   $c->forward( "get_month", [$year, $month] );
+  $c->forward( "view_month" );
 }
 
 =head2 view_month_specific_season
@@ -1342,6 +1368,7 @@ Matches "/fixtures-results/seasons/*/months/*/*" (last */* is [year]/[month]).
 sub view_month_specific_season :Chained("load_specific_season") :PathPart("months") :CaptureArgs(2) {
   my ( $self, $c, $year, $month ) = @_;
   $c->forward( "get_month", [$year, $month] );
+  $c->forward( "view_month" );
 }
 
 =head2 download_month_current_season
@@ -1391,184 +1418,6 @@ sub download_month_specific_season :Chained("view_month_specific_season") :PathP
   $c->detach( "download_month" );
 }
 
-=head2 view_outstanding_current_season
-
-Display the outstanding scorecards in the current season.
-
-Matches "/fixtures-results/outstanding-scorecards".
-
-=cut
-
-sub view_outstanding_current_season :Chained("load_current_season") :PathPart("outstanding-scorecards") :CaptureArgs(0) {
-  my ( $self, $c ) = @_;
-}
-
-=head2 view_outstanding_specific_season
-
-Display the outstanding scorecards in a specific season.
-
-Matches "/fixtures-results/seasons/*/outstanding-scorecards".
-
-=cut
-
-sub view_outstanding_specific_season :Chained("load_specific_season") :PathPart("outstanding-scorecards") :CaptureArgs(0) {
-  my ( $self, $c ) = @_;
-}
-
-=head2 view_outstanding_current_season_first_page
-
-Shows the first page of outstanding scorecards in the current season.
-
-Matches "/fixtures-results/outstanding-scorecards" (end of chain).
-
-=cut
-
-sub view_outstanding_current_season_first_page :Chained("view_outstanding_current_season") :PathPart("") :Args(0) {
-  my ( $self, $c ) = @_;
-  $c->detach( "view_outstanding", [1] );
-}
-
-=head2 view_outstanding_specific_season_first_page
-
-Shows the first page of a given day's fixtures in the specified season.
-
-Matches "/fixtures-results/seasons/*/outstanding-scorecards" (end of chain).
-
-=cut
-
-sub view_outstanding_specific_season_first_page :Chained("view_outstanding_specific_season") :PathPart("") :Args(0) {
-  my ( $self, $c ) = @_;
-  $c->detach( "view_outstanding", [1] );
-}
-
-=head2 view_outstanding_current_season_specific_page
-
-Shows the specified page of a given day's fixtures in the current season.
-
-Matches "/fixtures-results/outstanding-scorecards/page/*" (end of chain).
-
-=cut
-
-sub view_outstanding_current_season_specific_page :Chained("view_outstanding_current_season") :PathPart("page") :Args(1) {
-  my ( $self, $c, $page_number ) = @_;
-  $c->detach( "clean_page_number", [$page_number, "view_outstanding"] );
-}
-
-=head2 view_day_specific_season_specific_page
-
-Shows the specified page of a given day's fixtures in the specified season.
-
-Matches "/fixtures-results/seasons/*/outstanding-scorecards/page/*" (end of chain).
-
-=cut
-
-sub view_outstanding_specific_season_specific_page :Chained("view_outstanding_specific_season") :PathPart("page") :Args(1) {
-  my ( $self, $c, $page_number ) = @_;
-  $c->detach( "clean_page_number", [$page_number, "view_outstanding"] );
-}
-
-=head2 view_outstanding
-
-Private routine that all of the view_day_* functions end up at.  Does the match lookup and pagination with links to other pages if necessary.
-
-=cut
-
-sub view_outstanding :Private {
-  my ( $self, $c, $page_number ) = @_;
-  my ( $subtitle_field, $matches );
-  my $season                      = $c->stash->{season};
-  my $specific_season             = $c->stash->{specific_season};
-  my $outstanding_scorecard_hours = $c->config->{Matches}{Team}{outstanding_scorecard_hours};
-  $outstanding_scorecard_hours    = 72 if !defined( $outstanding_scorecard_hours ) or !$outstanding_scorecard_hours or $outstanding_scorecard_hours !~ /^\d+$/ or $outstanding_scorecard_hours < 1;
-  my $date_cutoff                 = DateTime->now->subtract(hours => $outstanding_scorecard_hours);
-  
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["fixtures_view", $c->maketext("user.auth.view-fixtures"), 1] );
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", [[ qw( match_update match_cancel ) ], "", 0] );
-  
-  # Get the start / end date to look for matches; the start date will always be 1 and the end date will always be the last date of that particular month.
-  $matches = $c->model("DB::TeamMatch")->incomplete_matches({
-    season            => $season,
-    date_cutoff       => $date_cutoff,
-    page_number       => $page_number,
-    results_per_page  => $c->config->{Pagination}{default_page_size},
-  });
-  
-  # Work out the arguments and actions based on whether or not we've specified the season or just using the current one
-  my ( $page1_action, $specific_page_action, $page1_arguments, $specific_page_arguments );
-  if ( $specific_season ) {
-    $page1_action             = "/fixtures-results/view_outstanding_specific_season_first_page";
-    $page1_arguments          = [ $season->url_key ];
-    $specific_page_action     = "/fixtures-results/view_outstanding_specific_season_specific_page";
-    $specific_page_arguments  = [ $season->url_key ];
-  } else {
-    $page1_action             = "/fixtures-results/view_outstanding_current_season_first_page";
-    $page1_arguments          = [];
-    $specific_page_action     = "/fixtures-results/view_outstanding_current_season_specific_page";
-    $specific_page_arguments  = [];
-  }
-  
-  my $page_info   = $matches->pager;
-  my $page_links  = $c->forward( "TopTable::Controller::Root", "generate_pagination_links", [{
-    page_info                       => $page_info,
-    page1_action                    => $page1_action,
-    page1_action_arguments          => $page1_arguments,
-    specific_page_action            => $specific_page_action,
-    specific_page_action_arguments  => $specific_page_arguments,
-    current_page                    => $page_number,
-  }] );
-  
-  my $online_display;
-  if ( $specific_season ) {
-    $online_display = "Viewing outstanding scorecards";
-    $subtitle_field = "subtitle3";
-  } else {
-    $online_display = "Viewing outstanding scorecards";
-    $subtitle_field = "subtitle2";
-  }
-  
-  # Set up the template to use
-  $c->stash({
-    template            => "html/fixtures-results/view-group-weeks.ttkt",
-    view_online_display => $online_display,
-    view_online_link    => 1,
-    matches             => $matches,
-    $subtitle_field     => $c->maketext("fixtures-results.view.outstanding-scorecards"),
-    page_info           => $page_info,
-    page_links          => $page_links,
-    title_links         => [{
-      image_uri => $c->uri_for("/static/images/icons/0038-Calender-icon-32.png"),
-      text      => $c->maketext("fixtures-results.view.outstanding-scorecards"),
-      link_uri  => $c->uri_for_action("/fixtures-results/view_outstanding_current_season_first_page"),
-    }],
-    external_scripts    => [
-      $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
-      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
-      $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
-      $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
-      $c->uri_for("/static/script/fixtures-results/view-group-weeks.js"),
-    ],
-    external_styles     => [
-      $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
-      $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
-      $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
-      $c->uri_for("/static/css/datatables/rowGroup.dataTables.min.css"),
-    ],
-  });
-  
-  # Breadcrumbs links
-  if ( $specific_season ) {
-    push( @{ $c->stash->{breadcrumbs} }, {
-      path  => $c->uri_for_action("/fixtures-results/view_outstanding_specific_season_first_page", [$season->url_key]),
-      label => $c->maketext("fixtures-results.view.outstanding-scorecards"),
-    });
-  } else {
-    push( @{ $c->stash->{breadcrumbs} }, {
-      path  => $c->uri_for_action("/fixtures-results/view_outstanding_current_season_first_page"),
-      label => $c->maketext("fixtures-results.view.outstanding-scorecards"),
-    });
-  }
-}
-
 =head2 get_month
 
 Get and stash the month from the given year and month numbers.
@@ -1596,57 +1445,57 @@ sub get_month :Private {
   });
 }
 
-=head2 view_month_current_season_first_page
-
-Shows the first page of a given month's fixtures in the current season.
-
-Matches "/fixtures-results/months/*/*" (end of chain).
-
-=cut
-
-sub view_month_current_season_first_page :Chained("view_month_current_season") :PathPart("") :Args(0) {
-  my ( $self, $c ) = @_;
-  $c->detach( "view_month", [1] );
-}
-
-=head2 view_month_by_url_key_specific_season_first_page
-
-Shows the first page of a given month's fixtures in the specified season.
-
-Matches "/fixtures-results/seasons/*/months/*/*" (end of chain).
-
-=cut
-
-sub view_month_specific_season_first_page :Chained("view_month_specific_season") :PathPart("") :Args(0) {
-  my ( $self, $c, $page_number ) = @_;
-  $c->detach( "view_month", [1] );
-}
-
-=head2 view_venue_current_season_specific_page
-
-Shows the specified page of a given month's fixtures in the current season.
-
-Matches "/fixtures-results/months/*/*/page/*" (end of chain).
-
-=cut
-
-sub view_month_current_season_specific_page :Chained("view_month_current_season") :PathPart("page") :Args(1) {
-  my ( $self, $c, $page_number ) = @_;
-  $c->detach( "clean_page_number", [$page_number, "view_month"] );
-}
-
-=head2 view_month_specific_season_specific_page
-
-Shows the specified page of a given month's fixtures in the specified season.
-
-Matches "/fixtures-results/seasons/*/months/*/*/page/*" (end of chain).
-
-=cut
-
-sub view_month_specific_season_specific_page :Chained("view_month_specific_season") :PathPart("page") :Args(1) {
-  my ( $self, $c, $page_number ) = @_;
-  $c->detach( "clean_page_number", [$page_number, "view_month"] );
-}
+# =head2 view_month_current_season_first_page
+# 
+# Shows the first page of a given month's fixtures in the current season.
+# 
+# Matches "/fixtures-results/months/*/*" (end of chain).
+# 
+# =cut
+# 
+# sub view_month_current_season_first_page :Chained("view_month_current_season") :PathPart("") :Args(0) {
+#   my ( $self, $c ) = @_;
+#   $c->detach( "view_month", [1] );
+# }
+# 
+# =head2 view_month_by_url_key_specific_season_first_page
+# 
+# Shows the first page of a given month's fixtures in the specified season.
+# 
+# Matches "/fixtures-results/seasons/*/months/*/*" (end of chain).
+# 
+# =cut
+# 
+# sub view_month_specific_season_first_page :Chained("view_month_specific_season") :PathPart("") :Args(0) {
+#   my ( $self, $c, $page_number ) = @_;
+#   $c->detach( "view_month", [1] );
+# }
+# 
+# =head2 view_venue_current_season_specific_page
+# 
+# Shows the specified page of a given month's fixtures in the current season.
+# 
+# Matches "/fixtures-results/months/*/*/page/*" (end of chain).
+# 
+# =cut
+# 
+# sub view_month_current_season_specific_page :Chained("view_month_current_season") :PathPart("page") :Args(1) {
+#   my ( $self, $c, $page_number ) = @_;
+#   $c->detach( "clean_page_number", [$page_number, "view_month"] );
+# }
+# 
+# =head2 view_month_specific_season_specific_page
+# 
+# Shows the specified page of a given month's fixtures in the specified season.
+# 
+# Matches "/fixtures-results/seasons/*/months/*/*/page/*" (end of chain).
+# 
+# =cut
+# 
+# sub view_month_specific_season_specific_page :Chained("view_month_specific_season") :PathPart("page") :Args(1) {
+#   my ( $self, $c, $page_number ) = @_;
+#   $c->detach( "clean_page_number", [$page_number, "view_month"] );
+# }
 
 =head2 view_month
 
@@ -1655,7 +1504,7 @@ Private routine that all of the view_month_* functions end up at.  This does the
 =cut
 
 sub view_month :Private {
-  my ( $self, $c, $page_number ) = @_;
+  my ( $self, $c ) = @_;
   my ( $subtitle_field );
   my $start_date      = $c->stash->{start_date};
   my $end_date        = $c->stash->{end_date};
@@ -1670,35 +1519,35 @@ sub view_month :Private {
     season            => $season,
     start_date        => $start_date,
     end_date          => $end_date,
-    page_number       => $page_number,
-    results_per_page  => $c->config->{Pagination}{default_page_size},
+    #page_number       => $page_number,
+    #results_per_page  => $c->config->{Pagination}{default_page_size},
   });
-  
-  #$c->log->debug( Dumper( $matches->as_query ) );
-  
-  # Work out the arguments and actions based on whether or not we've specified the season or just using the current one
-  my ( $page1_action, $specific_page_action, $page1_arguments, $specific_page_arguments );
-  if ( $specific_season ) {
-    $page1_action             = "/fixtures-results/view_month_specific_season_first_page";
-    $page1_arguments          = [ $season->url_key, $start_date->year, $start_date->month ];
-    $specific_page_action     = "/fixtures-results/view_month_specific_season_specific_page";
-    $specific_page_arguments  = [ $season->url_key, $start_date->year, $start_date->month ];
-  } else {
-    $page1_action             = "/fixtures-results/view_month_current_season_first_page";
-    $page1_arguments          = [ $start_date->year, $start_date->month ];
-    $specific_page_action     = "/fixtures-results/view_month_current_season_specific_page";
-    $specific_page_arguments  = [ $start_date->year, $start_date->month ];
-  }
-  
-  my $page_info   = $matches->pager;
-  my $page_links  = $c->forward( "TopTable::Controller::Root", "generate_pagination_links", [{
-    page_info                       => $page_info,
-    page1_action                    => $page1_action,
-    page1_action_arguments          => $page1_arguments,
-    specific_page_action            => $specific_page_action,
-    specific_page_action_arguments  => $specific_page_arguments,
-    current_page                    => $page_number,
-  }] );
+
+#   #$c->log->debug( Dumper( $matches->as_query ) );
+#   
+#   # Work out the arguments and actions based on whether or not we've specified the season or just using the current one
+#   my ( $page1_action, $specific_page_action, $page1_arguments, $specific_page_arguments );
+#   if ( $specific_season ) {
+#     $page1_action             = "/fixtures-results/view_month_specific_season_first_page";
+#     $page1_arguments          = [ $season->url_key, $start_date->year, $start_date->month ];
+#     $specific_page_action     = "/fixtures-results/view_month_specific_season_specific_page";
+#     $specific_page_arguments  = [ $season->url_key, $start_date->year, $start_date->month ];
+#   } else {
+#     $page1_action             = "/fixtures-results/view_month_current_season_first_page";
+#     $page1_arguments          = [ $start_date->year, $start_date->month ];
+#     $specific_page_action     = "/fixtures-results/view_month_current_season_specific_page";
+#     $specific_page_arguments  = [ $start_date->year, $start_date->month ];
+#   }
+#   
+#   my $page_info   = $matches->pager;
+#   my $page_links  = $c->forward( "TopTable::Controller::Root", "generate_pagination_links", [{
+#     page_info                       => $page_info,
+#     page1_action                    => $page1_action,
+#     page1_action_arguments          => $page1_arguments,
+#     specific_page_action            => $specific_page_action,
+#     specific_page_action_arguments  => $specific_page_arguments,
+#     current_page                    => $page_number,
+#   }] );
   
   my $online_display;
   if ( $specific_season ) {
@@ -1719,21 +1568,23 @@ sub view_month :Private {
     view_online_link    => 1,
     matches             => $matches,
     $subtitle_field     => $encoded_month,
-    page_info           => $page_info,
-    page_links          => $page_links,
+    #page_info           => $page_info,
+    #page_links          => $page_links,
     title_links         => [{
       image_uri => $c->uri_for("/static/images/icons/0038-Calender-icon-32.png"),
       text      => $c->maketext("calendar.download"),
       link_uri  => $c->uri_for_action("/fixtures-results/download_month_specific_season", [$season->url_key, $start_date->year, sprintf("%02d", $start_date->month), "calendar"]),
     }],
     external_scripts    => [
+      $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
       $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
-      $c->uri_for("/static/script/fixtures-results/view-group-divisions.js"),
+      $c->uri_for("/static/script/fixtures-results/view-group-divisions.js", {v => 2}),
     ],
     external_styles     => [
+      $c->uri_for("/static/css/chosen/chosen.min.css"),
       $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
@@ -1747,7 +1598,7 @@ sub view_month :Private {
       path  => $c->uri_for_action("/fixtures-results/filter_view_specific_season", [$season->url_key, "months"]),
       label => $c->maketext("menu.text.fixtures-results-by-month"),
     }, {
-      path  => $c->uri_for_action("/fixtures-results/view_month_specific_season", [$season->url_key, $start_date->year, $start_date->month]),
+      path  => $c->uri_for_action("/fixtures-results/view_month_specific_season_end", [$season->url_key, $start_date->year, $start_date->month]),
       label => $encoded_month,
     });
   } else {
@@ -1755,10 +1606,150 @@ sub view_month :Private {
       path  => $c->uri_for_action("/fixtures-results/filter_view_specific_season", ["months"]),
       label => $c->maketext("menu.text.fixtures-results-by-month"),
     }, {
-      path  => $c->uri_for_action("/fixtures-results/view_month_current_season", [$start_date->year, $start_date->month]),
+      path  => $c->uri_for_action("/fixtures-results/view_month_current_season_end", [$start_date->year, $start_date->month]),
       label => $encoded_month,
     });
   }
+}
+
+=head2 view_month_current_season_end, view_month_specific_season_end
+
+End point for viewing months without download options.
+
+=cut
+
+sub view_month_current_season_end :Chained("view_month_current_season") :PathPart("") :Args(0) {}
+sub view_month_specific_season_end :Chained("view_month_specific_season") :PathPart("") :Args(0) {}
+
+=head2 view_outstanding_current_season
+
+Display the outstanding scorecards in the current season.
+
+Matches "/fixtures-results/outstanding-scorecards".
+
+=cut
+
+sub view_outstanding_current_season :Chained("load_current_season") :PathPart("outstanding-scorecards") :Args(0) {
+  my ( $self, $c ) = @_;
+  $c->forward( "view_outstanding" );
+}
+
+# =head2 view_outstanding_current_season_first_page
+# 
+# Shows the first page of outstanding scorecards in the current season.
+# 
+# Matches "/fixtures-results/outstanding-scorecards" (end of chain).
+# 
+# =cut
+# 
+# sub view_outstanding_current_season_first_page :Chained("view_outstanding_current_season") :PathPart("") :Args(0) {
+#   my ( $self, $c ) = @_;
+#   $c->detach( "view_outstanding", [1] );
+# }
+# 
+# =head2 view_outstanding_current_season_specific_page
+# 
+# Shows the specified page of a given day's fixtures in the current season.
+# 
+# Matches "/fixtures-results/outstanding-scorecards/page/*" (end of chain).
+# 
+# =cut
+# 
+# sub view_outstanding_current_season_specific_page :Chained("view_outstanding_current_season") :PathPart("page") :Args(1) {
+#   my ( $self, $c, $page_number ) = @_;
+#   $c->detach( "clean_page_number", [$page_number, "view_outstanding"] );
+# }
+
+=head2 view_outstanding
+
+Private routine that all of the view_day_* functions end up at.  Does the match lookup and pagination with links to other pages if necessary.
+
+=cut
+
+sub view_outstanding :Private {
+  my ( $self, $c, $page_number ) = @_;
+  my ( $subtitle_field, $matches );
+  my $season                      = $c->stash->{season};
+  my $specific_season             = $c->stash->{specific_season};
+  my $outstanding_scorecard_hours = $c->config->{Matches}{Team}{outstanding_scorecard_hours};
+  $outstanding_scorecard_hours    = 72 if !defined( $outstanding_scorecard_hours ) or !$outstanding_scorecard_hours or $outstanding_scorecard_hours !~ /^\d+$/ or $outstanding_scorecard_hours < 1;
+  my $date_cutoff                 = DateTime->now->subtract(hours => $outstanding_scorecard_hours);
+  
+  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["fixtures_view", $c->maketext("user.auth.view-fixtures"), 1] );
+  $c->forward( "TopTable::Controller::Users", "check_authorisation", [[ qw( match_update match_cancel ) ], "", 0] );
+  
+  # Get the start / end date to look for matches; the start date will always be 1 and the end date will always be the last date of that particular month.
+  $matches = $c->model("DB::TeamMatch")->incomplete_matches({
+    season            => $season,
+    date_cutoff       => $date_cutoff,
+    #page_number       => $page_number,
+    #results_per_page  => $c->config->{Pagination}{default_page_size},
+  });
+  
+  # Work out the arguments and actions based on whether or not we've specified the season or just using the current one
+#   my ( $page1_action, $specific_page_action, $page1_arguments, $specific_page_arguments );
+#   if ( $specific_season ) {
+#     $page1_action             = "/fixtures-results/view_outstanding_specific_season_first_page";
+#     $page1_arguments          = [ $season->url_key ];
+#     $specific_page_action     = "/fixtures-results/view_outstanding_specific_season_specific_page";
+#     $specific_page_arguments  = [ $season->url_key ];
+#   } else {
+#     $page1_action             = "/fixtures-results/view_outstanding_current_season_first_page";
+#     $page1_arguments          = [];
+#     $specific_page_action     = "/fixtures-results/view_outstanding_current_season_specific_page";
+#     $specific_page_arguments  = [];
+#   }
+#   
+#   my $page_info   = $matches->pager;
+#   my $page_links  = $c->forward( "TopTable::Controller::Root", "generate_pagination_links", [{
+#     page_info                       => $page_info,
+#     page1_action                    => $page1_action,
+#     page1_action_arguments          => $page1_arguments,
+#     specific_page_action            => $specific_page_action,
+#     specific_page_action_arguments  => $specific_page_arguments,
+#     current_page                    => $page_number,
+#   }] );
+  
+  my $online_display;
+  if ( $specific_season ) {
+    $online_display = "Viewing outstanding scorecards";
+    $subtitle_field = "subtitle3";
+  } else {
+    $online_display = "Viewing outstanding scorecards";
+    $subtitle_field = "subtitle2";
+  }
+  
+  # Set up the template to use
+  $c->stash({
+    template            => "html/fixtures-results/view-group-weeks.ttkt",
+    view_online_display => $online_display,
+    view_online_link    => 1,
+    matches             => $matches,
+    $subtitle_field     => $c->maketext("fixtures-results.view.outstanding-scorecards"),
+    #page_info           => $page_info,
+    #page_links          => $page_links,
+    external_scripts    => [
+      $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
+      $c->uri_for("/static/script/fixtures-results/view-group-weeks.js", {v => 2}),
+    ],
+    external_styles     => [
+      $c->uri_for("/static/css/chosen/chosen.min.css"),
+      $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/rowGroup.dataTables.min.css"),
+    ],
+  });
+  
+  # Breadcrumbs links
+  push( @{ $c->stash->{breadcrumbs} }, {
+    path  => $c->uri_for_action("/fixtures-results/view_outstanding_current_season"),
+    label => $c->maketext("fixtures-results.view.outstanding-scorecards"),
+  });
 }
 
 =head2 view_week_current_season
@@ -1772,6 +1763,7 @@ Matches "/fixtures-results/weeks/*/*/*" (last */*/* is [year]/[month]/[day]).
 sub view_week_current_season :Chained("load_current_season") :PathPart("weeks") :CaptureArgs(3) {
   my ( $self, $c, $year, $month, $day ) = @_;
   $c->forward( "get_week", [$year, $month, $day] );
+  $c->forward( "view_week" );
 }
 
 =head2 view_week_specific_season
@@ -1785,6 +1777,7 @@ Matches "/fixtures-results/seasons/*/weeks/*/*/*" (last */*/* is [year]/[month]/
 sub view_week_specific_season :Chained("load_specific_season") :PathPart("weeks") :CaptureArgs(3) {
   my ( $self, $c, $year, $month, $day ) = @_;
   $c->forward( "get_week", [$year, $month, $day] );
+  $c->forward( "view_week" );
 }
 
 =head2 download_week_current_season
@@ -1861,57 +1854,57 @@ sub get_week :Private {
   });
 }
 
-=head2 view_week_current_season_first_page
-
-Shows the first page of a given week's fixtures in the current season.
-
-Matches "/fixtures-results/weeks/*/*/*" (end of chain).
-
-=cut
-
-sub view_week_current_season_first_page :Chained("view_week_current_season") :PathPart("") :Args(0) {
-  my ( $self, $c ) = @_;
-  $c->detach( "view_week", [1] );
-}
-
-=head2 view_week_specific_season_first_page
-
-Shows the first page of a given week's fixtures in the specified season.
-
-Matches "/fixtures-results/season/*/weeks/*/*/*" (end of chain).
-
-=cut
-
-sub view_week_specific_season_first_page :Chained("view_week_specific_season") :PathPart("") :Args(0) {
-  my ( $self, $c, $page_number ) = @_;
-  $c->detach( "view_week", [1] );
-}
-
-=head2 view_week_current_season_specific_page
-
-Shows the specified page of a given week's fixtures in the current season.
-
-Matches "/fixtures-results/weeks/*/*/*/page/*" (end of chain).
-
-=cut
-
-sub view_week_current_season_specific_page :Chained("view_week_current_season") :PathPart("page") :Args(1) {
-  my ( $self, $c, $page_number ) = @_;
-  $c->detach( "clean_page_number", [$page_number, "view_week"] );
-}
-
-=head2 view_week_specific_season_specific_page
-
-Shows the specified page of a given week's fixtures in the specified season.
-
-Matches "/fixtures-results/seasons/*/weeks/*/*/*/page/*" (end of chain).
-
-=cut
-
-sub view_week_specific_season_specific_page :Chained("view_week_specific_season") :PathPart("page") :Args(1) {
-  my ( $self, $c, $page_number ) = @_;
-  $c->detach( "clean_page_number", [$page_number, "view_week"] );
-}
+# =head2 view_week_current_season_first_page
+# 
+# Shows the first page of a given week's fixtures in the current season.
+# 
+# Matches "/fixtures-results/weeks/*/*/*" (end of chain).
+# 
+# =cut
+# 
+# sub view_week_current_season_first_page :Chained("view_week_current_season") :PathPart("") :Args(0) {
+#   my ( $self, $c ) = @_;
+#   $c->detach( "view_week", [1] );
+# }
+# 
+# =head2 view_week_specific_season_first_page
+# 
+# Shows the first page of a given week's fixtures in the specified season.
+# 
+# Matches "/fixtures-results/season/*/weeks/*/*/*" (end of chain).
+# 
+# =cut
+# 
+# sub view_week_specific_season_first_page :Chained("view_week_specific_season") :PathPart("") :Args(0) {
+#   my ( $self, $c, $page_number ) = @_;
+#   $c->detach( "view_week", [1] );
+# }
+# 
+# =head2 view_week_current_season_specific_page
+# 
+# Shows the specified page of a given week's fixtures in the current season.
+# 
+# Matches "/fixtures-results/weeks/*/*/*/page/*" (end of chain).
+# 
+# =cut
+# 
+# sub view_week_current_season_specific_page :Chained("view_week_current_season") :PathPart("page") :Args(1) {
+#   my ( $self, $c, $page_number ) = @_;
+#   $c->detach( "clean_page_number", [$page_number, "view_week"] );
+# }
+# 
+# =head2 view_week_specific_season_specific_page
+# 
+# Shows the specified page of a given week's fixtures in the specified season.
+# 
+# Matches "/fixtures-results/seasons/*/weeks/*/*/*/page/*" (end of chain).
+# 
+# =cut
+# 
+# sub view_week_specific_season_specific_page :Chained("view_week_specific_season") :PathPart("page") :Args(1) {
+#   my ( $self, $c, $page_number ) = @_;
+#   $c->detach( "clean_page_number", [$page_number, "view_week"] );
+# }
 
 =head2 view_week
 
@@ -1920,7 +1913,7 @@ Private routine that all of the view_week_* functions end up at.  This does the 
 =cut
 
 sub view_week :Private {
-  my ( $self, $c, $page_number ) = @_;
+  my ( $self, $c ) = @_;
   my ( $subtitle_field, $matches );
   my $fixtures_week   = $c->stash->{fixtures_week};
   my $week_date       = $c->stash->{week_date};
@@ -1934,33 +1927,33 @@ sub view_week :Private {
   $matches = $c->model("DB::TeamMatch")->matches_in_week({
     season            => $season,
     week              => $fixtures_week,
-    page_number       => $page_number,
-    results_per_page  => $c->config->{Pagination}{default_page_size},
+    #page_number       => $page_number,
+    #results_per_page  => $c->config->{Pagination}{default_page_size},
   });
   
   # Work out the arguments and actions based on whether or not we've specified the season or just using the current one
-  my ( $page1_action, $specific_page_action, $page1_arguments, $specific_page_arguments );
-  if ( $specific_season ) {
-    $page1_action             = "/fixtures-results/view_week_specific_season_first_page";
-    $page1_arguments          = [ $season->url_key, $week_date->year, $week_date->month, $week_date->day ];
-    $specific_page_action     = "/fixtures-results/view_week_specific_season_specific_page";
-    $specific_page_arguments  = [ $season->url_key, $week_date->year, $week_date->month, $week_date->day ];
-  } else {
-    $page1_action             = "/fixtures-results/view_week_current_season_first_page";
-    $page1_arguments          = [ $week_date->year, $week_date->month, $week_date->day ];
-    $specific_page_action     = "/fixtures-results/view_week_current_season_specific_page";
-    $specific_page_arguments  = [ $week_date->year, $week_date->month, $week_date->day ];
-  }
-  
-  my $page_info   = $matches->pager;
-  my $page_links  = $c->forward( "TopTable::Controller::Root", "generate_pagination_links", [{
-    page_info                       => $page_info,
-    page1_action                    => $page1_action,
-    page1_action_arguments          => $page1_arguments,
-    specific_page_action            => $specific_page_action,
-    specific_page_action_arguments  => $specific_page_arguments,
-    current_page                    => $page_number,
-  }] );
+#   my ( $page1_action, $specific_page_action, $page1_arguments, $specific_page_arguments );
+#   if ( $specific_season ) {
+#     $page1_action             = "/fixtures-results/view_week_specific_season_first_page";
+#     $page1_arguments          = [ $season->url_key, $week_date->year, $week_date->month, $week_date->day ];
+#     $specific_page_action     = "/fixtures-results/view_week_specific_season_specific_page";
+#     $specific_page_arguments  = [ $season->url_key, $week_date->year, $week_date->month, $week_date->day ];
+#   } else {
+#     $page1_action             = "/fixtures-results/view_week_current_season_first_page";
+#     $page1_arguments          = [ $week_date->year, $week_date->month, $week_date->day ];
+#     $specific_page_action     = "/fixtures-results/view_week_current_season_specific_page";
+#     $specific_page_arguments  = [ $week_date->year, $week_date->month, $week_date->day ];
+#   }
+#   
+#   my $page_info   = $matches->pager;
+#   my $page_links  = $c->forward( "TopTable::Controller::Root", "generate_pagination_links", [{
+#     page_info                       => $page_info,
+#     page1_action                    => $page1_action,
+#     page1_action_arguments          => $page1_arguments,
+#     specific_page_action            => $specific_page_action,
+#     specific_page_action_arguments  => $specific_page_arguments,
+#     current_page                    => $page_number,
+#   }] );
   
   my $online_display;
   if ( $specific_season ) {
@@ -1981,21 +1974,23 @@ sub view_week :Private {
     view_online_link    => 1,
     matches             => $matches,
     $subtitle_field     => $c->maketext( "fixtures-results.view-week.week-beginning", sprintf( "%s %d %s %d", $week_date->day_name, $week_date->day, $week_date->month_name, $week_date->year ) ),
-    page_info           => $page_info,
-    page_links          => $page_links,
+    #page_info           => $page_info,
+    #page_links          => $page_links,
     title_links         => [{
       image_uri => $c->uri_for("/static/images/icons/0038-Calender-icon-32.png"),
       text      => $c->maketext("calendar.download"),
       link_uri  => $c->uri_for_action("/fixtures-results/download_week_specific_season", [$season->url_key, $week_date->year, sprintf("%02d", $week_date->month), sprintf("%02d", $week_date->day), "calendar"]),
     }],
     external_scripts    => [
+      $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
       $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
-      $c->uri_for("/static/script/fixtures-results/view-group-divisions.js"),
+      $c->uri_for("/static/script/fixtures-results/view-group-divisions.js", {v => 2}),
     ],
     external_styles     => [
+      $c->uri_for("/static/css/chosen/chosen.min.css"),
       $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
@@ -2009,7 +2004,7 @@ sub view_week :Private {
       path  => $c->uri_for_action("/fixtures-results/filter_view_specific_season", [$season->url_key, "weeks"]),
       label => $c->maketext("menu.text.fixtures-results-by-week"),
     }, {
-      path  => $c->uri_for_action("/fixtures-results/view_day_specific_season", [$season->url_key, $week_date->year, $week_date->month, $week_date->day]),
+      path  => $c->uri_for_action("/fixtures-results/view_week_specific_season", [$season->url_key, $week_date->year, $week_date->month, $week_date->day]),
       label => sprintf( "Week beginning %s, %d %s %d", $week_date->day_name, $week_date->day, $week_date->month_name, $week_date->year ),
     });
   } else {
@@ -2017,11 +2012,20 @@ sub view_week :Private {
       path  => $c->uri_for_action("/fixtures-results/filter_view_specific_season", ["weeks"]),
       label => $c->maketext("menu.text.fixtures-results-by-week"),
     }, {
-      path  => $c->uri_for_action("/fixtures-results/view_day_current_season_first_page", [$week_date->year, $week_date->month, $week_date->day]),
+      path  => $c->uri_for_action("/fixtures-results/view_week_current_season_end", [$week_date->year, $week_date->month, $week_date->day]),
       label => sprintf( "Week beginning %s, %d %s %d", $week_date->day_name, $week_date->day, $week_date->month_name, $week_date->year ),
     });
   }
 }
+
+=head2 view_week_current_season_end, view_week_specific_season_end
+
+End points for view_week_current_season and view_week_specific_season without using download / calendar options.
+
+=cut
+
+sub view_week_current_season_end :Chained("view_week_current_season") :PathPart("") :Args(0) {}
+sub view_week_specific_season_end :Chained("view_week_specific_season") :PathPart("") :Args(0) {}
 
 =head2 view_day_current_season
 
@@ -2034,6 +2038,7 @@ Matches "/fixtures-results/days/*/*/*" (last */*/* is [year]/[month]/[day]).
 sub view_day_current_season :Chained("load_current_season") :PathPart("days") :CaptureArgs(3) {
   my ( $self, $c, $year, $month, $day ) = @_;
   $c->forward( "get_day", [$year, $month, $day] );
+  $c->forward( "view_day" );
 }
 
 =head2 view_day_specific_season
@@ -2047,6 +2052,7 @@ Matches "/fixtures-results/seasons/*/days/*/*/*" (last */*/* is [year]/[month]/[
 sub view_day_specific_season :Chained("load_specific_season") :PathPart("days") :CaptureArgs(3) {
   my ( $self, $c, $year, $month, $day ) = @_;
   $c->forward( "get_day", [$year, $month, $day] );
+  $c->forward( "view_day" );
 }
 
 =head2 download_day_current_season
@@ -2116,57 +2122,57 @@ sub get_day :Private {
   $c->stash({date => $date});
 }
 
-=head2 view_day_current_season_first_page
-
-Shows the first page of a given day's fixtures in the current season.
-
-Matches "/fixtures-results/days/*/*/*" (end of chain).
-
-=cut
-
-sub view_day_current_season_first_page :Chained("view_day_current_season") :PathPart("") :Args(0) {
-  my ( $self, $c ) = @_;
-  $c->detach( "view_day", [1] );
-}
-
-=head2 view_day_specific_season_first_page
-
-Shows the first page of a given day's fixtures in the specified season.
-
-Matches "/fixtures-results/seasons/*/days/*/*/*" (end of chain).
-
-=cut
-
-sub view_day_specific_season_first_page :Chained("view_day_specific_season") :PathPart("") :Args(0) {
-  my ( $self, $c ) = @_;
-  $c->detach( "view_day", [1] );
-}
-
-=head2 view_day_current_season_specific_page
-
-Shows the specified page of a given day's fixtures in the current season.
-
-Matches "/fixtures-results/days/*/*/*/page/*" (end of chain).
-
-=cut
-
-sub view_day_current_season_specific_page :Chained("view_day_current_season") :PathPart("page") :Args(1) {
-  my ( $self, $c, $page_number ) = @_;
-  $c->detach( "clean_page_number", [$page_number, "view_day"] );
-}
-
-=head2 view_day_specific_season_specific_page
-
-Shows the specified page of a given day's fixtures in the specified season.
-
-Matches "/fixtures-results/seasons/*/days/*/*/*/page/*" (end of chain).
-
-=cut
-
-sub view_day_specific_season_specific_page :Chained("view_day_specific_season") :PathPart("page") :Args(1) {
-  my ( $self, $c, $page_number ) = @_;
-  $c->detach( "clean_page_number", [$page_number, "view_day"] );
-}
+# =head2 view_day_current_season_first_page
+# 
+# Shows the first page of a given day's fixtures in the current season.
+# 
+# Matches "/fixtures-results/days/*/*/*" (end of chain).
+# 
+# =cut
+# 
+# sub view_day_current_season_first_page :Chained("view_day_current_season") :PathPart("") :Args(0) {
+#   my ( $self, $c ) = @_;
+#   $c->detach( "view_day", [1] );
+# }
+# 
+# =head2 view_day_specific_season_first_page
+# 
+# Shows the first page of a given day's fixtures in the specified season.
+# 
+# Matches "/fixtures-results/seasons/*/days/*/*/*" (end of chain).
+# 
+# =cut
+# 
+# sub view_day_specific_season_first_page :Chained("view_day_specific_season") :PathPart("") :Args(0) {
+#   my ( $self, $c ) = @_;
+#   $c->detach( "view_day", [1] );
+# }
+# 
+# =head2 view_day_current_season_specific_page
+# 
+# Shows the specified page of a given day's fixtures in the current season.
+# 
+# Matches "/fixtures-results/days/*/*/*/page/*" (end of chain).
+# 
+# =cut
+# 
+# sub view_day_current_season_specific_page :Chained("view_day_current_season") :PathPart("page") :Args(1) {
+#   my ( $self, $c, $page_number ) = @_;
+#   $c->detach( "clean_page_number", [$page_number, "view_day"] );
+# }
+# 
+# =head2 view_day_specific_season_specific_page
+# 
+# Shows the specified page of a given day's fixtures in the specified season.
+# 
+# Matches "/fixtures-results/seasons/*/days/*/*/*/page/*" (end of chain).
+# 
+# =cut
+# 
+# sub view_day_specific_season_specific_page :Chained("view_day_specific_season") :PathPart("page") :Args(1) {
+#   my ( $self, $c, $page_number ) = @_;
+#   $c->detach( "clean_page_number", [$page_number, "view_day"] );
+# }
 
 =head2 view_day
 
@@ -2175,7 +2181,7 @@ Private routine that all of the view_day_* functions end up at.  Does the match 
 =cut
 
 sub view_day :Private {
-  my ( $self, $c, $page_number ) = @_;
+  my ( $self, $c ) = @_;
   my ( $subtitle_field, $matches );
   my $date            = $c->stash->{date};
   my $season          = $c->stash->{season};
@@ -2188,33 +2194,33 @@ sub view_day :Private {
   $matches = $c->model("DB::TeamMatch")->matches_on_date({
     season            => $season,
     date              => $date,
-    page_number       => $page_number,
-    results_per_page  => $c->config->{Pagination}{default_page_size},
+    #page_number       => $page_number,
+    #results_per_page  => $c->config->{Pagination}{default_page_size},
   });
   
-  # Work out the arguments and actions based on whether or not we've specified the season or just using the current one
-  my ( $page1_action, $specific_page_action, $page1_arguments, $specific_page_arguments );
-  if ( $specific_season ) {
-    $page1_action             = "/fixtures-results/view_day_specific_season_first_page";
-    $page1_arguments          = [ $season->url_key, $date->year, $date->month, $date->day ];
-    $specific_page_action     = "/fixtures-results/view_day_specific_season_specific_page";
-    $specific_page_arguments  = [ $season->url_key, $date->year, $date->month, $date->day ];
-  } else {
-    $page1_action             = "/fixtures-results/view_day_current_season_first_page";
-    $page1_arguments          = [ $date->year, $date->month, $date->day ];
-    $specific_page_action     = "/fixtures-results/view_day_current_season_specific_page";
-    $specific_page_arguments  = [ $date->year, $date->month, $date->day ];
-  }
-  
-  my $page_info   = $matches->pager;
-  my $page_links  = $c->forward( "TopTable::Controller::Root", "generate_pagination_links", [{
-    page_info                       => $page_info,
-    page1_action                    => $page1_action,
-    page1_action_arguments          => $page1_arguments,
-    specific_page_action            => $specific_page_action,
-    specific_page_action_arguments  => $specific_page_arguments,
-    current_page                    => $page_number,
-  }] );
+#   # Work out the arguments and actions based on whether or not we've specified the season or just using the current one
+#   my ( $page1_action, $specific_page_action, $page1_arguments, $specific_page_arguments );
+#   if ( $specific_season ) {
+#     $page1_action             = "/fixtures-results/view_day_specific_season_first_page";
+#     $page1_arguments          = [ $season->url_key, $date->year, $date->month, $date->day ];
+#     $specific_page_action     = "/fixtures-results/view_day_specific_season_specific_page";
+#     $specific_page_arguments  = [ $season->url_key, $date->year, $date->month, $date->day ];
+#   } else {
+#     $page1_action             = "/fixtures-results/view_day_current_season_first_page";
+#     $page1_arguments          = [ $date->year, $date->month, $date->day ];
+#     $specific_page_action     = "/fixtures-results/view_day_current_season_specific_page";
+#     $specific_page_arguments  = [ $date->year, $date->month, $date->day ];
+#   }
+#   
+#   my $page_info   = $matches->pager;
+#   my $page_links  = $c->forward( "TopTable::Controller::Root", "generate_pagination_links", [{
+#     page_info                       => $page_info,
+#     page1_action                    => $page1_action,
+#     page1_action_arguments          => $page1_arguments,
+#     specific_page_action            => $specific_page_action,
+#     specific_page_action_arguments  => $specific_page_arguments,
+#     current_page                    => $page_number,
+#   }] );
   
   my $online_display;
   if ( $specific_season ) {
@@ -2235,21 +2241,23 @@ sub view_day :Private {
     view_online_link    => 1,
     matches             => $matches,
     $subtitle_field     => $encoded_date,
-    page_info           => $page_info,
-    page_links          => $page_links,
+    #page_info           => $page_info,
+    #page_links          => $page_links,
     title_links         => [{
       image_uri => $c->uri_for("/static/images/icons/0038-Calender-icon-32.png"),
       text      => $c->maketext("calendar.download"),
       link_uri  => $c->uri_for_action("/fixtures-results/download_day_specific_season", [$season->url_key, $date->year, sprintf("%02d", $date->month), sprintf("%02d", $date->day), "calendar"]),
     }],
     external_scripts    => [
+      $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
       $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
-      $c->uri_for("/static/script/fixtures-results/view-group-divisions-no-date.js"),
+      $c->uri_for("/static/script/fixtures-results/view-group-divisions-no-date.js", {v => 2}),
     ],
     external_styles     => [
+      $c->uri_for("/static/css/chosen/chosen.min.css"),
       $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
@@ -2263,19 +2271,28 @@ sub view_day :Private {
       path  => $c->uri_for_action("/fixtures-results/filter_view_specific_season", [$season->url_key, "days"]),
       label => $c->maketext("menu.text.fixtures-results-by-day"),
     }, {
-      path  => $c->uri_for_action("/fixtures-results/view_day_specific_season", [$season->url_key, $date->year, $date->month, $date->day]),
+      path  => $c->uri_for_action("/fixtures-results/view_day_specific_season_end", [$season->url_key, $date->year, $date->month, $date->day]),
       label => sprintf( "%s, %d %s %d", $date->day_name, $date->day, $date->month_name, $date->year ),
     });
   } else {
     push( @{ $c->stash->{breadcrumbs} }, {
-      path  => $c->uri_for_action("/fixtures-results/filter_view_specific_season", ["days"]),
+      path  => $c->uri_for_action("/fixtures-results/filter_view_current_season", ["days"]),
       label => $c->maketext("menu.text.fixtures-results-by-day"),
     }, {
-      path  => $c->uri_for_action("/fixtures-results/view_day_current_season_first_page", [$date->year, $date->month, $date->day]),
+      path  => $c->uri_for_action("/fixtures-results/view_day_current_season_end", [$date->year, $date->month, $date->day]),
       label => $encoded_date,
     });
   }
 }
+
+=head2 view_day_current_season_end, view_day_specific_season_end
+
+End points for view_day_current_season and view_day_specific_season without using calendar / download options.
+
+=cut
+
+sub view_day_current_season_end :Chained("view_day_current_season") :PathPart("") :Args(0) {}
+sub view_day_specific_season_end :Chained("view_day_specific_season") :PathPart("") :Args(0) {}
 
 =head2 download_team
 

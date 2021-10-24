@@ -5,84 +5,59 @@
 $(document).ready(function() {
   $("#fixtures-table").DataTable({
     "responsive": true,
-    "paging": false,
-    "info": false,
+    "paging": true,
+    "pageLength": 25,
+    //pagingType: "full_numbers",
+    "lengthChange": true,
+    "lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
+    "info": true,
     "fixedHeader": true,
     "searching": true,
-    "order": [[2, "asc"]],
+    "order": [4, "asc"],
     "ordering": true,
     "rowGroup": {
-      "dataSrc": 2
+      "dataSrc": 4
     },
     "columnDefs": [{
-      // Day of week number, date sortable, division rank
+      // Day of week number, date sortable, division name (used in group), division rank
       "visible": false,
-      //"targets": [1, 3, 5]
-      "targets": [1, 2, 3] // Whilst DataTables bug is investigated we don't have day name columns
+      "targets": [1, 3, 4, 5]
     }, {
       // Date printable
       "responsivePriority": 1,
-      "orderData": 1,
-      "targets": 0
+      "orderData": 3,
+      "targets": 2
     }, {
       // Home team
       "responsivePriority": 2,
-      "targets": 4
+      "targets": 6
     }, {
       // Away team
       "responsivePriority": 3,
-      "targets": 5
+      "targets": 7
     }, {
       // Score
       "responsivePriority": 4,
-      "targets": 6
+      "targets": 8
     }, {
       // Division name
       "responsivePriority": 5,
-      "orderData": 3,
-      "targets": 2
+      "orderData": 5,
+      "targets": 4
     }/*, {
       // Venue
       "responsivePriority": 6,
       "targets": 9
-    }, {
+    }*/, {
       // Day name
       "responsivePriority": 7,
       "targets": 0
-    }*/]
-    /*"columns": [{
-      // Day name
-      "orderData": 1,
-      "responsivePriority": 6
-    }, {
-      // Day of week number
-      "visible": false
-    }, {
-      // Date printable
-      "orderData": 3,
-      "responsivePriority": 1
-    }, {
-      // Date sortable
-      "visible": false
-    }, {
-      // Division name
-      "orderData": 5,
-      "responsivePriority": 5
-    }, {
-      // Division rank
-      "visible": false
-    }, {
-      // Home team
-      "responsivePriority": 2
-    }, {
-      // Away team
-      "responsivePriority": 3
-    }, {
-      // Score
-      "responsivePriority": 4
-    }, {
-      // Venue
-      "responsivePriority": 7
-    }]*/
+    }]
+  });
+  
+  $("select[name=fixtures-table_length]").chosen({
+    disable_search: true,
+    single_backstroke_delete: false,
+    allow_single_deselect: true
   });
 });

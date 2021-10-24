@@ -9,9 +9,9 @@ FOREACH venue IN display_options;
   <li>
 [%
   IF specific_season;
-    SET uri = c.uri_for_action("/fixtures-results/view_venue_specific_season_first_page", [season.url_key, venue.venue.url_key]);
+    SET uri = c.uri_for_action("/fixtures-results/view_venue_specific_season_end", [season.url_key, venue.venue.url_key]);
   ELSE;
-    SET uri = c.uri_for_action("/fixtures-results/view_venue_current_season_first_page", [venue.venue.url_key]);
+    SET uri = c.uri_for_action("/fixtures-results/view_venue_current_season_end", [venue.venue.url_key]);
   END;
 -%]
     <a href="[% uri %]">[% venue.venue.name %]</a> ([% c.maketext("fixtures-results.view.match-count", venue.get_column("number_of_matches")) %])

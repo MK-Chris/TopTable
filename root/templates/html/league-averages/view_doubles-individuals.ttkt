@@ -44,6 +44,8 @@ IF doubles_individual_averages.size;
       SET person_uri  = c.uri_for_action("/people/view_current_season", [average.person.url_key]);
     END;
     
+    SET person_html = average.display_name | html_entity;
+    
     IF average.team_membership_type.id == "loan";
       SET player_class = ' class="loan-player"';
       SET add_player_class = ' loan-player';
@@ -59,12 +61,42 @@ IF doubles_individual_averages.size;
 -%]
     <tr>
       <td class="numeric[% add_player_class %]" data-label="[% c.maketext("stats.table-heading.position") %]">[% i %]</td>
-      <td data-label="[% c.maketext("stats.table-heading.player") %]"[% player_class %]><a href="[% person_uri %]"[% player_class %]>[% average.person.display_name | html_entity %]</a></td>
+      <td data-label="[% c.maketext("stats.table-heading.player") %]"[% player_class %]><a href="[% person_uri %]"[% player_class %]>[% person_html %]</a>
+[%-
+IF authorisation.person_edit;
+-%]
+ <a href="[% c.uri_for_action("/people/edit", [average.person.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", person_html) %]" title="[% c.maketext("admin.edit-object", person_html) %]" /></a>
+[%-
+END;
+IF authorisation.person_delete AND average.person.can_delete;
+-%]
+ <a href="[% c.uri_for_action("/people/delete", [average.person.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", person_html) %]" title="[% c.maketext("admin.delete-object", person_html) %]" /></a>
+[%-
+END;
+-%]
+</td>
 [%
     UNLESS averages_team_page;
-      team_name = FILTER html_entity; average.team_season.club_season.short_name _ " " _ average.team_season.team.name; END;
+      SET team_season = average.team_season;
+      SET club_season = average.team_season.club_season;
+      SET team = team_season.team;
+      SET club = club_season.club;
+      team_name = FILTER html_entity; club_season.short_name _ " " _ team_season.name; END;
 -%]
-      <td data-label="[% c.maketext("stats.table-heading.team") %]"[% player_class %]><a href="[% team_uri %]"[% player_class %]>[% team_name %]</a></td>
+      <td data-label="[% c.maketext("stats.table-heading.team") %]"[% player_class %]><a href="[% team_uri %]"[% player_class %]> [% team_name %]</a>
+[%-
+IF authorisation.team_edit;
+-%]
+ <a href="[% c.uri_for_action("/teams/edit_by_url_key", [club.url_key, team.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", team_name) %]" title="[% c.maketext("admin.edit-object", team_name) %]" /></a>
+[%-
+END;
+IF authorisation.team_delete AND average.team_season.team.can_delete;
+-%]
+ <a href="[% c.uri_for_action("/teams/delete_by_url_key", [club.url_key, team.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", team_name) %]" title="[% c.maketext("admin.delete-object", team_name) %]" /></a>
+[%-
+END;
+-%]
+</td>
 [%
     END;
 -%]

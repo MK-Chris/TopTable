@@ -45,6 +45,9 @@ IF doubles_pair_averages.size;
       SET person2_uri = c.uri_for_action("/people/view_current_season", [average.person2.url_key]);
     END;
     
+    SET person1_html = average.person1.display_name | html_entity;
+    SET person2_html = average.person2.display_name | html_entity;
+    
     IF average.person1.team_membership_type.id == "loan";
       SET player1_class = ' class="loan-player"';
       SET loan_players = 1;
@@ -67,7 +70,33 @@ IF doubles_pair_averages.size;
 -%]
     <tr>
       <td class="numeric[% add_player_class %]" data-label="[% c.maketext("stats.table-heading.position") %]">[% i %]</td>
-      <td class="fit-width" data-label="[% c.maketext("stats.table-heading.players") %]"><a href="[% person1_uri %]"[% player1_class %]>[% average.person1.display_name %]</a> [% c.maketext("msg.and") %] <a href="[% person2_uri %]"[% player2_class %]>[% average.person2.display_name %]</a></td>
+      <td class="fit-width" data-label="[% c.maketext("stats.table-heading.players") %]"><a href="[% person1_uri %]"[% player1_class %]>[% person1_html %]</a>
+[%-
+    IF authorisation.person_edit;
+-%]
+ <a href="[% c.uri_for_action("/people/edit", [average.person1.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", person1_html) %]" title="[% c.maketext("admin.edit-object", person1_html) %]" /></a>
+[%-
+    END;
+    IF authorisation.person_delete AND average.person1.can_delete;
+-%]
+ <a href="[% c.uri_for_action("/people/delete", [average.person1.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", person1_html) %]" title="[% c.maketext("admin.delete-object", person1_html) %]" /></a>
+[%-
+    END;
+-%]
+ [% c.maketext("msg.and") %] <a href="[% person2_uri %]"[% player2_class %]>[% person2_html %]</a>
+[%-
+    IF authorisation.person_edit;
+-%]
+ <a href="[% c.uri_for_action("/people/edit", [average.person2.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", person2_html) %]" title="[% c.maketext("admin.edit-object", person2_html) %]" /></a>
+[%-
+    END;
+    IF authorisation.person_delete AND average.person2.can_delete;
+-%]
+ <a href="[% c.uri_for_action("/people/delete", [average.person2.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", person2_html) %]" title="[% c.maketext("admin.delete-object", person2_html) %]" /></a>
+[%-
+    END;
+-%]
+</td>
 [%
   UNLESS averages_team_page;
 -%]

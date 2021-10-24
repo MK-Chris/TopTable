@@ -4,35 +4,51 @@
  */
 $(document).ready(function() {
   var report_table = $("#report").DataTable({
-    responsive: true,
-    paging: true,
-    pageLength: 30,
-    lengthChange: false,
-    info: true,
-    fixedHeader: true,
-    colReorder: {
-      fixedColumnsLeft: 1
+    "responsive": true,
+    "paging": true,
+    "pageLength": 25,
+    //pagingType: "full_numbers",
+    "lengthChange": true,
+    "lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
+    "info": true,
+    "fixedHeader": true,
+    "colReorder": {
+      "fixedColumnsLeft": 1
     },
-    rowGroup: {
-      enable: false,
-      dataSrc: 0,
-      startRender: function (rows, group) {
-        return group + " (" + rows.count() + " rows)";
+    "rowGroup": {
+      "enable": false,
+      "dataSrc": 0,
+      "startRender": function (rows, group) {
+        var rowsText;
+        
+        if (rows.count() == 1) {
+          rowsText = "row";
+        } else {
+          rowsText = "rows";
+        }
+        
+        return group + " (" + rows.count() + " " + rowsText + ")";
       }
     },
-    columnDefs: [{
-      visible: false,
-      targets: [4, 6, 9]
+    "columnDefs": [{
+      "visible": false,
+      "targets": [4, 6, 9]
     }, {
-      orderData: 4,
-      targets: 3
+      "orderData": 4,
+      "targets": 3
     }, {
-      orderData: 6,
-      targets: 5
+      "orderData": 6,
+      "targets": 5
     }, {
-      orderData: 9,
-      targets: 8
+      "orderData": 9,
+      "targets": 8
     }]
+  });
+  
+  $("select").chosen({
+    disable_search: true,
+    single_backstroke_delete: false,
+    allow_single_deselect: true
   });
   
   /*

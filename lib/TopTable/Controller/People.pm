@@ -339,6 +339,7 @@ sub view_finalise :Private {
   my $tokeninput_confs  = [];
   my $external_styles   = [
     $c->uri_for("/static/css/responsive-tabs/responsive-tabs.css"),
+    $c->uri_for("/static/css/chosen/chosen.min.css"),
     $c->uri_for("/static/css/responsive-tabs/style-jqueryui.css"),
     $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
     $c->uri_for("/static/css/datatables/fixedColumns.dataTables.min.css"),
@@ -347,12 +348,12 @@ sub view_finalise :Private {
   ];
   my $external_scripts  = [
     $c->uri_for("/static/script/plugins/responsive-tabs/jquery.responsiveTabs.mod.js"),
-    #$c->uri_for("/static/script/standard/responsive-tabs.js"),
+    $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
     $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
     $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
     $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
     $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
-    $c->uri_for("/static/script/people/view.js"),
+    $c->uri_for("/static/script/people/view.js", {v => 2}),
     $c->uri_for("/static/script/standard/option-list.js"),
     $c->uri_for("/static/script/standard/vertical-table.js"),
   ];
@@ -1299,13 +1300,15 @@ sub import_results :Path("import-results") {
         subtitle2           => $c->maketext("people.form.import-results.title"),
         view_online_display => "Importing people",
         external_scripts    => [
+          $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
           $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
           $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
           $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
           $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
-          $c->uri_for("/static/script/people/import-results.js"),
+          $c->uri_for("/static/script/people/import-results.js", {v => 2}),
         ],
         external_styles     => [
+          $c->uri_for("/static/css/chosen/chosen.min.css"),
           $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
           $c->uri_for("/static/css/datatables/fixedColumns.dataTables.min.css"),
           $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),

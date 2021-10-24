@@ -478,6 +478,9 @@ sub view_finalise :Private {
   my $specific_season     = $c->stash->{specific_season};
   my $encoded_name        = $c->stash->{encoded_name};
   
+  # Check authorisation for editing and deleting people, so we can display those links if necessary
+  $c->forward( "TopTable::Controller::Users", "check_authorisation", [[ qw( person_edit person_delete ) ], "", 0] ) unless $season->complete;
+  
   my $canonical_uri = ( $season->complete )
     ? $c->uri_for_action("/teams/view_specific_season_by_url_key", [$team->club->url_key, $team->url_key, $season->url_key])
     : $c->uri_for_action("/teams/view_current_season_by_url_key", [$team->club->url_key, $team->url_key]);

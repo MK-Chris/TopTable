@@ -178,7 +178,7 @@ sub view :Chained("base") :PathPart("") :CaptureArgs(0) {
   
   # Check that we are authorised to view clubs
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["club_view", $c->maketext("user.auth.view-clubs"), 1] );
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( club_edit club_delete team_view team_create team_edit team_delete ) ], "", 0] );
+  $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( club_edit club_delete team_view team_create team_edit team_delete person_edit person_delete venue_edit venue_delete ) ], "", 0] );
 }
 
 =head2 view_current_season
@@ -356,12 +356,14 @@ sub view_finalise :Private {
     view_online_link    => 1,
     canonical_uri       => $canonical_uri,
     external_scripts    => [
+      $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
       $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
-      $c->uri_for("/static/script/clubs/view.js"),
+      $c->uri_for("/static/script/clubs/view.js", {v => 2}),
     ],
     external_styles     => [
+      $c->uri_for("/static/css/chosen/chosen.min.css"),
       $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),

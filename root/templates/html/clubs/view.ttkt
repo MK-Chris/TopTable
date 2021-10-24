@@ -8,7 +8,23 @@ IF club_season;
 %]
 <div id="club-venue">
 <h4>[% c.maketext("clubs.field.venue") %]</h4>
-<a href="[% c.uri_for_action("/venues/view", [club_season.venue.url_key]) %]">[% club_season.venue.name %]</a><br />
+[%
+SET venue = club_season.venue;
+SET venue_html = venue.name | html_entity;
+%]
+<a href="[% c.uri_for_action("/venues/view", [venue.url_key]) %]">[% venue_html %]</a>
+[%-
+  IF authorisation.venue_edit;
+-%]
+ <a href="[% c.uri_for_action("/venues/edit", [venue.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", venue_html) %]" title="[% c.maketext("admin.edit-object", venue_html) %]" /></a>
+[%-
+  END;
+  IF authorisation.venue_delete AND club_season.venue.can_delete;
+-%]
+ <a href="[% c.uri_for_action("/venues/delete", [venue.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", venue_html) %]" title="[% c.maketext("admin.delete-object", venue_html) %]" /></a>
+[%-
+  END;
+-%]<br />
 <address>[% FILTER html_line_break; club_season.venue.full_address; END; %]</address><br /><br />
 [%
   IF club.email_address;
@@ -28,13 +44,28 @@ IF club_season;
 <h4>[% c.maketext("clubs.field.secretary") %]</h4>
 [%
   IF club_season.secretary;
+    SET secretary = club_season.secretary;
+    SET secretary_html = secretary.display_name | html_entity;
+    
     IF specific_season;
-      SET person_url = c.uri_for_action("/people/view_specific_season", [club_season.secretary.url_key, season.url_key]);
+      SET person_url = c.uri_for_action("/people/view_specific_season", [secretary.url_key, season.url_key]);
     ELSE;
-      SET person_url = c.uri_for_action("/people/view_current_season", [club_season.secretary.url_key]);
+      SET person_url = c.uri_for_action("/people/view_current_season", [secretary.url_key]);
     END;
 -%]
-<a href="[% person_url %]">[% club_season.secretary.display_name | html_entity %]</a><br />
+<a href="[% person_url %]">[% secretary_html %]</a>
+[%-
+  IF authorisation.person_edit;
+-%]
+ <a href="[% c.uri_for_action("/people/edit", [secretary.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", secretary_html) %]" title="[% c.maketext("admin.edit-object", secretary_html) %]" /></a>
+[%-
+  END;
+  IF authorisation.person_delete AND club_season.secretary.can_delete;
+-%]
+ <a href="[% c.uri_for_action("/people/delete", [secretary.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", secretary_html) %]" title="[% c.maketext("admin.delete-object", secretary_html) %]" /></a>
+[%-
+  END;
+-%]<br />
 <address>[% FILTER html_line_break; club_season.secretary.full_address; END; %]</address><br /><br />
 [%
   ELSE;
@@ -51,6 +82,7 @@ IF club_season;
   <thead>
     <tr>
       <th>[% c.maketext("teams.field.name") %]</th>
+      <th>[% c.maketext("teams.field.captain") %]</th>
       <th>[% c.maketext("teams.field.captain") %]</th>
       <th>[% c.maketext("teams.field.division") %]</th>
       <th>[% c.maketext("teams.field.division") %]</th>
@@ -75,36 +107,53 @@ IF club_season;
       
       # Just do this once so we don't keep having to go back to the DB (which is what first does)
       SET team_season = team.team_seasons.first;
+      SET captain = team_season.captain;
       
       SET team_html = team_season.name | html_entity;
       SET club_html = club_season.short_name | html_entity;
+      SET captain_html = captain.display_name | html_entity;
+      SET captain_sort_html = captain.surname _ ", " _ captain.first_name | html_entity;
 -%]
     <tr>
-      <td>
-        <a href="[% team_uri %]">[% team_html %]</a>
-[%
+      <td><a href="[% team_uri %]">[% team_html %]</a>
+[%-
         IF authorisation.team_edit;
 -%]
-        <a href="[% c.uri_for_action("/teams/edit_by_url_key", [club_season.club.url_key, team.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", club_html _ " " _ team_html) %]" title="[% c.maketext("admin.edit-object", club_html _ " " _ team_html) %]" /></a>
-[%
+ <a href="[% c.uri_for_action("/teams/edit_by_url_key", [club_season.club.url_key, team.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", club_html _ " " _ team_html) %]" title="[% c.maketext("admin.edit-object", club_html _ " " _ team_html) %]" /></a>
+[%-
         END;
 -%]
-[%
+[%-
         IF authorisation.team_delete AND team.can_delete;
 -%]
-        <a href="[% c.uri_for_action("/teams/delete_by_url_key", [club_season.club.url_key, team.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", club_html _ " " _ team_html) %]" title="[% c.maketext("admin.delete-object", club_html _ " " _ team_html) %]" /></a>
-[%
+ <a href="[% c.uri_for_action("/teams/delete_by_url_key", [club_season.club.url_key, team.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", club_html _ " " _ team_html) %]" title="[% c.maketext("admin.delete-object", club_html _ " " _ team_html) %]" /></a>
+[%-
         END;
 -%]
-      </td>
+</td>
 [%
-        IF team.team_seasons.first.captain;
+        IF captain;
 -%]
-      <td><a href="[% person_uri %]">[% team.team_seasons.first.captain.display_name %]</a></td>
+      <td><a href="[% person_uri %]">[% captain_html %]</a>
+[%-
+          IF authorisation.person_edit;
+-%]
+ <a href="[% c.uri_for_action("/people/edit", [captain.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", captain_html) %]" title="[% c.maketext("admin.edit-object", captain_html) %]" /></a>
+[%-
+          END;
+          IF authorisation.person_delete AND captain.can_delete;
+-%]
+ <a href="[% c.uri_for_action("/people/delete", [captain.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", captain_html) %]" title="[% c.maketext("admin.delete-object", captain_html) %]" /></a>
+[%-
+          END;
+-%]
+</td>
+      <td>[% captain_sort_html %]</td>
 [%
         ELSE;
 -%]
       <td>None specified.</td>
+      <td>&nbsp;</td>
 [%
         END;
 -%]
