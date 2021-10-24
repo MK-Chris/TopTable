@@ -531,7 +531,7 @@ sub matches_at_venue {
       division_season => "division"
     }],
     order_by  =>  {
-      -asc => [ qw( division.rank scheduled_date club_season.short_name team_season_home_team_season.name )]
+      -asc => [ qw( scheduled_date division.rank club_season.short_name team_season_home_team_season.name )]
     }
   };
   

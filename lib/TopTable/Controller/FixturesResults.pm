@@ -1286,7 +1286,7 @@ sub view_venue :Private {
   
   # Set up the template to use
   $c->stash({
-    template            => "html/fixtures-results/view-no-grouping-with-division-no-venue.ttkt",
+    template            => "html/fixtures-results/view-group-weeks-ordering.ttkt",
     matches             => $matches,
     $subtitle_field     => $encoded_venue_name,
     view_online_display => sprintf( "Viewing fixtures & results taking place at %s in %s", $venue->name, $season->name ),
@@ -1304,13 +1304,15 @@ sub view_venue :Private {
       $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
-      $c->uri_for("/static/script/fixtures-results/view-no-grouping-with-division-no-venue.js", {v => 2}),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
+      $c->uri_for("/static/script/fixtures-results/view-group-weeks-ordering.js", {v => 2}),
     ],
     external_styles     => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
       $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/rowGroup.dataTables.min.css"),
     ],
   });
   

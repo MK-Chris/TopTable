@@ -14,12 +14,13 @@ IF matches.count;
   <thead>
     <tr>
       <th>[% c.maketext("fixtures-results.heading.week-beginning") %]</th>
-      <th>[% c.maketext("teams.field.division") %]</th>
       <th>[% c.maketext("teams.fixtures.date") %]</th>
+      <th>[% c.maketext("teams.fixtures.date") %]</th>
+      <th>[% c.maketext("teams.field.division") %]</th>
+      <th>[% c.maketext("teams.field.division") %]</th>
       <th>[% c.maketext("fixtures-results.heading.home-team") %]</th>
       <th>[% c.maketext("fixtures-results.heading.away-team") %]</th>
       <th>[% c.maketext("fixtures-results.heading.score-versus") %]</th>
-      <th>[% c.maketext("fixtures-results.heading.venue") %]</th>
 [%
     IF authorisation.match_update OR authorisation.match_cancel OR match.can_report( c.user );
 -%]
@@ -73,10 +74,16 @@ IF matches.count;
       <a href="[% fixtures_week_uri %]">[% c.maketext("fixtures-results.view.week-beginning", week_day_html _ ", " _ week.day _ " " _ week_month_html _ " " _ week_year) | html_entity %]</a>
     </td>
     <td>
-      <a href="[% division_uri %]">[% match.division_season.name %]</a>
+      <a href="[% fixtures_day_uri %]">[% date.dmy("/") %]</a>
     </td>
     <td>
-      <a href="[% fixtures_day_uri %]">[% date.dmy("/") %]</a>
+      [% date.ymd %]
+    </td>
+    <td>
+      <a href="[% division_uri %]">[% match.division_season.name | html_entity %]</a>
+    </td>
+    <td>
+      [% match.division_season.division.rank %]
     </td>
     <td>
       <a href="[% home_team_uri %]">[% home_team.club_season.short_name %] [% home_team.name %]</a>
@@ -86,9 +93,6 @@ IF matches.count;
     </td>
     <td>
       <a href="[% c.uri_for_action('/matches/team/view_by_url_keys', match.url_keys) %]" title="[% c.maketext("fixtures-results.view-scorecard") %]">[% score %]</a>
-    </td>
-    <td>
-      <a href="[% c.uri_for_action('/venues/view', [match.venue.url_key]) %]">[% match.venue.name %]</a>
     </td>
 [%
     IF authorisation.match_update OR authorisation.match_cancel;
