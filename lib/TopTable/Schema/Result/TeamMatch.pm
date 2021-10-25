@@ -982,7 +982,7 @@ sub get_team_seasons {
   my $season = $self->season;
   my $team_seasons = {
     home  => $self->team_season_home_team_season,
-    away  => $self->team_season_home_team_season,
+    away  => $self->team_season_away_team_season,
   };
   
   return $team_seasons;

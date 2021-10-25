@@ -235,14 +235,14 @@ END;
       </thead>
       <tbody>
         <tr>
-          <td data-label="[% c.maketext("matches.summaries.heading.team") %]"><a href="[% home_uri %]">[% home_team.club_season.short_name | html_entity %] [% home_team.name | html_entity %]</a></td>
+          <td data-label="[% c.maketext("matches.summaries.heading.team") %]"><a href="[% home_uri %]">[% team_seasons.home.club_season.short_name | html_entity %] [% team_seasons.home.team.name | html_entity %]</a></td>
           <td class="numeric">[% match.home_team_legs_won %]</td>
           <td class="numeric">[% match.home_team_average_leg_wins | format('%.2f') %]</td>
           <td class="numeric">[% match.home_team_points_won %]</td>
           <td class="numeric">[% match.home_team_average_point_wins | format('%.2f') %]</td>
         </tr>
         <tr>
-          <td data-label="[% c.maketext("matches.summaries.heading.team") %]"><a href="[% away_uri %]">[% away_team.club_season.short_name | html_entity %] [% away_team.name | html_entity %]</a></td>
+          <td data-label="[% c.maketext("matches.summaries.heading.team") %]"><a href="[% away_uri %]">[% team_seasons.away.club_season.short_name | html_entity %] [% team_seasons.away.team.name | html_entity %]</a></td>
           <td class="numeric">[% match.away_team_legs_won %]</td>
           <td class="numeric">[% match.away_team_average_leg_wins | format('%.2f') %]</td>
           <td class="numeric">[% match.away_team_points_won %]</td>
@@ -254,8 +254,8 @@ END;
   
   <div id="players">
 [%
-home_team_html = FILTER html_entity; team_seasons.home.club.short_name _ " " _ team_seasons.home.name; END;
-away_team_html = FILTER html_entity; team_seasons.away.club.short_name _ " " _ team_seasons.away.name; END;
+home_team_html = FILTER html_entity; team_seasons.home.club_season.short_name _ " " _ team_seasons.home.name; END;
+away_team_html = FILTER html_entity; team_seasons.away.club_season.short_name _ " " _ team_seasons.away.name; END;
 -%]
     <h4>[% c.maketext("matches.players", home_team_html, home_uri) %]</h4>
     <table id="home-players-table" class="stripe hover order-column row-border" style="width: 100%;">
