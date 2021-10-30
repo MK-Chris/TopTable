@@ -528,7 +528,7 @@ sub view_finalise :Private {
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/standard/vertical-table.js"),
-      $c->uri_for( sprintf( "/static/script/teams/view%s.js", $team_view_js_suffix ) ),
+      $c->uri_for( sprintf( "/static/script/teams/view%s.js", $team_view_js_suffix ), {v => 2} ),
     ],
     external_styles     => [
       $c->uri_for("/static/css/responsive-tabs/responsive-tabs.css"),
