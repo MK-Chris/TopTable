@@ -17,9 +17,9 @@ $(document).ready(function() {
       "orderData": 0,
       "responsivePriority": 1
     }, {
-      "responsivePriority": 2
-    }, {
       "responsivePriority": 3
+    }, {
+      "responsivePriority": 2
     }]
   });
 });

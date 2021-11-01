@@ -350,7 +350,7 @@ IF nav_current_season;
     
     IF authorisation.club_create;
 -%]
-      <li><a href="[% c.uri_for("/clubs/create") %]" title="[% c.maketext("club.create") %]"><img src="[% c.uri_for("/static/images/icons/0009-Add-icon-16.png") %]" /> &laquo; [% c.maketext("admin.create") %] &raquo;</a></li>
+      <li><a href="[% c.uri_for("/clubs/create") %]" title="[% c.maketext("admin.create") %]"><img src="[% c.uri_for("/static/images/icons/0009-Add-icon-16.png") %]" /> &laquo; [% c.maketext("admin.create") %] &raquo;</a></li>
 [%
     END;
 -%]

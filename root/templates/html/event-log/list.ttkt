@@ -101,9 +101,9 @@ IF event_logs.count;
 [%
     END;
 -%]
-      <td class="event-datetime"><nobr>[% event.log_updated_tz(timezone).ymd _ " " _ event.log_updated_tz(timezone).hms %]</nobr></td>
-      <td class="event-datetime"><nobr>[% event.log_updated_tz(timezone).dmy("/") _ " " _ event.log_updated_tz(timezone).hms %]</nobr></td>
-      <td class="event-type"><nobr>[% c.maketext("object.plural." _ event.system_event_log_type.plural_objects) | ucfirst %]</nobr></td>
+      <td class="event-datetime">[% event.log_updated_tz(timezone).ymd _ " " _ event.log_updated_tz(timezone).hms %]</td>
+      <td class="event-datetime">[% event.log_updated_tz(timezone).dmy("/") _ " " _ event.log_updated_tz(timezone).hms %]</td>
+      <td class="event-type">[% c.maketext("object.plural." _ event.system_event_log_type.plural_objects) | ucfirst %]</td>
       <td class="event-detail">[% c.maketext(event.system_event_log_type.description, display_object_text, tooltip_link_text) %]</td>
     </tr>
 [%

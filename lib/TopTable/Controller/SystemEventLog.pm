@@ -133,7 +133,7 @@ sub retrieve_paged :Private {
       $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
-      $c->uri_for("/static/script/event-viewer/view.js"),
+      $c->uri_for("/static/script/event-viewer/view.js", {v => 2}),
     ],
     external_styles     => [
       $c->uri_for("/static/css/qtip/jquery.qtip.css"),

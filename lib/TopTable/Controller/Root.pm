@@ -120,7 +120,9 @@ sub index :Path :Args(0) {
   # Load the messages
   $c->load_status_msgs;
   
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["index_edit", $c->maketext("user.auth.edit-index"), 0] );
+  $c->forward( "TopTable::Controller::Users", "check_authorisation", [[qw( index_edit match_update match_cancel news_article_create news_article_edit_all news_article_delete_all )], "", 0] );
+  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["news_article_edit_own", "", 0] ) if $c->user_exists and !$c->stash->{authorisation}{news_article_edit_all}; # Only do this if the user is logged in and we can't edit all articles
+  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["news_article_delete_own", "", 0] ) if $c->user_exists and !$c->stash->{authorisation}{news_article_delete_all}; # Only do this if the user is logged in and we can't delete all articles
   
   # Set up the title links if we need them
   my @title_links = ();
@@ -181,8 +183,9 @@ sub index :Path :Args(0) {
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
-      $c->uri_for("/static/script/event-viewer/view-home.js"),
-      $c->uri_for("/static/script/fixtures-results/view-teams-and-divisions.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
+      $c->uri_for("/static/script/event-viewer/view-home.js", {v => 2}),
+      $c->uri_for("/static/script/fixtures-results/view-group-divisions-no-date-no-score.js"),
       $c->uri_for("/static/script/standard/option-list.js"),
     ],
     external_styles       => [
@@ -191,6 +194,7 @@ sub index :Path :Args(0) {
       $c->uri_for("/static/css/datatables/fixedColumns.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/rowGroup.dataTables.min.css"),
     ],
     subtitle1             => $c->maketext("home-page.welcome"),
     title_links           => \@title_links,

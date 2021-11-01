@@ -5,8 +5,13 @@
 [% # Some basic HTML with a loop to display clubs -%]
 [%
 IF authorisation.news_article_create;
+  IF index;
+    SET img_file = "0009-Add-icon-32.png";
+  ELSE;
+    SET img_file = "0009-Add-icon-48.png";
+  END;
 -%]
-<a href="[% c.uri_for("/news/create") %]"><img src="[% c.uri_for("/static/images/icons/0009-Add-icon-48.png") %]" title="[% c.maketext("admin.create-object", c.maketext("object.singular.news-articles")) %]" /></a>
+<a href="[% c.uri_for("/news/create") %]"><img src="[% c.uri_for("/static/images/icons/" _ img_file) %]" title="[% c.maketext("admin.create-object", c.maketext("object.singular.news-articles")) %]" /></a>
 [%
 END;
 IF articles.count;
@@ -28,7 +33,7 @@ IF articles.count;
     END;
 -%]
   <li>
-    [% pinned_text %]<a href="[% c.uri_for_action("/news/view_by_url_key", [article.published_year, month, article.url_key]) %]">[% article.headline | html_entity %]</a>
+    [% pinned_text %]<a href="[% c.uri_for_action("/news/view_by_url_key", [article.published_year, month, article.url_key]) %]">[% current_details.headline | html_entity %]</a>
 [%
     IF authorisation.news_article_edit_all OR ( authorisation.news_article_edit_own AND article.user.id == c.user.id )
 -%]
@@ -58,7 +63,7 @@ ELSE;
 END;
 IF authorisation.news_article_create;
 -%]
-<a href="[% c.uri_for("/news/create") %]"><img src="[% c.uri_for("/static/images/icons/0009-Add-icon-48.png") %]" title="[% c.maketext("admin.create-object", c.maketext("object.singular.news-articles")) %]" /></a>
+<a href="[% c.uri_for("/news/create") %]"><img src="[% c.uri_for("/static/images/icons/" _ img_file) %]" title="[% c.maketext("admin.create-object", c.maketext("object.singular.news-articles")) %]" /></a>
 [%
 END;
 -%]

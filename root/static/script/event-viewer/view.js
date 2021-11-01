@@ -12,15 +12,14 @@ $(document).ready(function() {
     "columns": [{
       "responsivePriority": 3
     }, {
-      "visible": false,
-      "responsivePriority": 5
+      "visible": false
     }, {
       "orderData": 1,
       "responsivePriority": 1
     }, {
-      "responsivePriority": 2
-    }, {
       "responsivePriority": 4
+    }, {
+      "responsivePriority": 2
     }]
   });
 });

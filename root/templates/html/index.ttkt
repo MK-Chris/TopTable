@@ -14,7 +14,7 @@ INCLUDE "html/event-log/list.ttkt";
   <h4>[% c.maketext("home-page.news.recent") %]</h4>
 [%
 # Latest news
-INCLUDE "html/news/list.ttkt";
+INCLUDE "html/news/list.ttkt" index = 1;
 -%]<br />
   <a href="[% c.uri_for("/news") %]">[% c.maketext("home-page.news.view-more") %]</a>.
   </div>
@@ -22,7 +22,7 @@ INCLUDE "html/news/list.ttkt";
   <h4>[% c.maketext("home-page.todays-matches") %] ([% matches_today %])</h4>
 [%
 # Today's matches
-INCLUDE "html/fixtures-results/view-teams-and-divisions.ttkt";
+INCLUDE "html/fixtures-results/view-group-divisions-no-date-no-score.ttkt";
 -%]
   </div>
 </div>
