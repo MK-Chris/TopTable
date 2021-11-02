@@ -228,12 +228,13 @@ sub view :Private {
     $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
     $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
     $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
     $c->uri_for("/static/script/standard/vertical-table.js"),
   );
   
   if ( $match->started ) {
     # The match has started, we don't specify a tab and it will default to the first one (games)
-    push( @external_scripts, $c->uri_for("/static/script/matches/team/view.js") );
+    push( @external_scripts, $c->uri_for("/static/script/matches/team/view.js", {v => 2}) );
   } else {
     # The match has not started, start on the match details tab
     push( @external_scripts, $c->uri_for("/static/script/matches/team/view-not-started.js") );
@@ -269,6 +270,7 @@ sub view :Private {
       $c->uri_for("/static/css/datatables/fixedColumns.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/rowGroup.dataTables.min.css"),
     ],
     title_links         => \@title_links,
     subtitle2           => sprintf( "%s, %d %s %d", ucfirst( $date->day_name ), $date->day, $date->month_name, $date->year ),

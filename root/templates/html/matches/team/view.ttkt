@@ -257,10 +257,10 @@ END;
 home_team_html = FILTER html_entity; team_seasons.home.club_season.short_name _ " " _ team_seasons.home.name; END;
 away_team_html = FILTER html_entity; team_seasons.away.club_season.short_name _ " " _ team_seasons.away.name; END;
 -%]
-    <h4>[% c.maketext("matches.players", home_team_html, home_uri) %]</h4>
-    <table id="home-players-table" class="stripe hover order-column row-border" style="width: 100%;">
+    <table id="players-table" class="stripe hover order-column row-border" style="width: 100%;">
       <thead>
         <tr>
+          <th>[% c.maketext("matches.summaries.heading.team") %]</th>
           <th>[% c.maketext("matches.summaries.heading.player") %]</th>
           <th class="numeric">[% c.maketext("matches.summaries.heading.games-played") %]</th>
           <th class="numeric">[% c.maketext("matches.summaries.heading.games-won") %]</th>
@@ -287,6 +287,7 @@ IF home_players.count;
       END;
 -%]
         <tr>
+          <td><a href="[% home_uri %]">[% home_team_html %]</a>
           <td><a href="[% person_uri %]">[% person_season.display_name %]</a>
 [%-
 IF player.loan_team.id;
@@ -330,27 +331,6 @@ ELSE;
         </tr>
 [%
 END;
--%]
-      </tbody>
-    </table>
-    
-    <h4>[% c.maketext("matches.players", away_team_html, away_uri) %]</h4>
-    <table id="away-players-table" class="stripe hover order-column row-border" style="width: 100%;">
-      <thead>
-        <tr>
-          <th>[% c.maketext("matches.summaries.heading.player") %]</th>
-          <th class="numeric">[% c.maketext("matches.summaries.heading.games-played") %]</th>
-          <th class="numeric">[% c.maketext("matches.summaries.heading.games-won") %]</th>
-          <th class="numeric">[% c.maketext("matches.summaries.heading.legs-played") %]</th>
-          <th class="numeric">[% c.maketext("matches.summaries.heading.legs-won") %]</th>
-          <th class="numeric">[% c.maketext("matches.summaries.heading.legs-average") %]</th>
-          <th class="numeric">[% c.maketext("matches.summaries.heading.points-played") %]</th>
-          <th class="numeric">[% c.maketext("matches.summaries.heading.points-won") %]</th>
-          <th class="numeric">[% c.maketext("matches.summaries.heading.points-average") %]</th>
-        </tr>
-      </thead>
-      <tbody>
-[%
 IF away_players.count;
   WHILE (player = away_players.next);
     SET person_season = player.player.person_seasons.first;
@@ -364,6 +344,7 @@ IF away_players.count;
       END;
 -%]
         <tr>
+          <td><a href="[% away_uri %]">[% away_team_html %]</a>
           <td><a href="[% person_uri %]">[% person_season.display_name %]</a>
 [%-
 IF player.loan_team.id;
