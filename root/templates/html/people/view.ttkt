@@ -75,8 +75,6 @@ IF season;
   <div id="[% person_team.team_membership_type.id %]">
 [%
       END;
-      
-      CALL c.log.debug( "TT - Display name: " _ team_season.display_name _ ", season ID: " _ team_season.season.id _ ", person ID: " _ team_season.person.id _ ", matches played: " _ team_season.matches_played _ ", matches won: " _ team_season.matches_won _ ", matches lost: " _ team_season.matches_lost _ "" );
 -%]
     <h4><a href="[% team_uri %]">[% team_season.club_season.club.short_name | html_entity %] [% team_season.name | html_entity %]</a> (<a href="[% averages_uri %]">[% team_season.division_season.division.name %]</a>)</h4>
     <div class="row">

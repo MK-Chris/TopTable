@@ -858,7 +858,7 @@ sub games_played_in_season {
       }],
     }],
     order_by  => {
-      -asc    => [ qw( team_match.scheduled_date me.actual_game_number ) ],
+      -asc    => [ qw( me.scheduled_date me.home_team me.away_team me.actual_game_number me.scheduled_game_number ) ],
     },
   });
 }
