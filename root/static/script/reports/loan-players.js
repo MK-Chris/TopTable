@@ -32,7 +32,7 @@ $(document).ready(function() {
     },
     "columnDefs": [{
       "visible": false,
-      "targets": [4, 6, 9]
+      "targets": [4, 6, 9, 11]
     }, {
       "orderData": 4,
       "targets": 3
@@ -42,6 +42,9 @@ $(document).ready(function() {
     }, {
       "orderData": 9,
       "targets": 8
+    }, {
+      "orderData": 11,
+      "targets": 10
     }]
   });
   

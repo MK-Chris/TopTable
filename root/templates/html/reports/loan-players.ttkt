@@ -35,6 +35,7 @@ IF report_data.count;
       <th>[% c.maketext("reports.columns.loan-players.from-division") %]</th>
       <th>[% c.maketext("reports.columns.loan-players.from-division-rank") %]</th>
       <th>[% c.maketext("reports.columns.loan-players.games-won") %]</th>
+      <th>[% c.maketext("reports.columns.loan-players.games-won") %]</th>
     </tr>
   </thead>
   <tbody>
@@ -100,8 +101,9 @@ IF report_data.count;
       <td>[% game_player.team_match.actual_date.ymd %]</td>
       <td><a href="[% played_from_team_uri %]">[% played_from_team_name | html %]</a></td>
       <td><a href="[% played_from_division_uri %]">[% played_from_division_season.name | html %]</a></td>
-      <td>[% played_from_team_season.division.rank %]</td>
+      <td>[% played_from_team_season.division_season.division.rank %]</td>
       <td><a href="[% c.uri_for_action("/matches/team/view_by_url_keys", match.url_keys) %]">[% game_player.games_won %]</a></td>
+      <td>[% game_player.games_won %]</td>
     </tr>
 [%
   END;
