@@ -77,7 +77,10 @@ $(document).ready(function() {
       // Group by select value's column index
       report_table.column( $this.val() ).visible(false);
       report_table.columns.adjust();
-      report_table.rowGroup().dataSrc( $this.val() );
+      
+      var rowGroupData = $this.val();
+      if (rowGroupData == 10) rowGroupData = 11;
+      report_table.rowGroup().dataSrc( rowGroupData );
       report_table.rowGroup().enable().draw();
     }
     
