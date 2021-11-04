@@ -854,7 +854,7 @@ sub loan_team_season {
     "division_season.season" => $match->season->id,
   }, {
     prefetch => [qw( team ), {
-      club_season => {"club"},
+      club_season => "club",
       division_season => "division",
     }],
   });
