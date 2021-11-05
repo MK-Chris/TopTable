@@ -464,7 +464,7 @@ sub retrieve_paged_seasons :Private {
   # Set up the template to use
   $c->stash({
     template            => "html/clubs/list-seasons.ttkt",
-    view_online_display => sprintf( "Viewing seasons for ", $club->full_name ),
+    view_online_display => sprintf( "Viewing seasons for %s", $club->full_name ),
     view_online_link    => 1,
     seasons             => $seasons,
     subtitle1           => $encoded_club_full_name,
