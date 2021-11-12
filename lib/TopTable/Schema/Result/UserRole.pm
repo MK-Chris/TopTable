@@ -118,12 +118,12 @@ __PACKAGE__->belongs_to(
   "user",
   "TopTable::Schema::Result::User",
   { id => "user" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+  { is_deferrable => 1, on_delete => "CASCADE", on_update => "RESTRICT" },
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2015-09-04 12:04:57
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:do20wm0kRUgc80SQp7c7OQ
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-11-11 23:19:45
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:TYUmrfYBagKohqFNRwn95g
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

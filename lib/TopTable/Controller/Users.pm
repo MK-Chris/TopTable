@@ -274,6 +274,9 @@ sub delete :Chained("base") :PathPart("delete") :Args(0) {
   my ( $self, $c ) = @_;
   my $user = $c->stash->{user};
   
+  # Check that we are authorised to delete users
+  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["user_delete_all", $c->maketext("user.auth.delete-users"), 1] );
+  
   $c->stash({
     template  => "html/users/delete.ttkt",
     subtitle2 => $c->maketext("admin.delete"),
@@ -597,6 +600,42 @@ sub setup_user :Private {
       $c->detach;
       return;
     }
+  }
+}
+
+=head2 do_delete
+
+Process the deletion of a venue.
+
+=cut
+
+sub do_delete :Chained("base") :PathPart("do-delete") :Args(0) {
+  my ( $self, $c ) = @_;
+  my $user = $c->stash->{user};
+  
+  # Check that we are authorised to delete users
+  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["user_delete_all", $c->maketext("user.auth.delete-users"), 1] );
+  
+  # Save away the venue name, as if there are no errors and it can be deleted, we will need to
+  # reference the name in the message back to the user.
+  my $username = $user->username;
+  
+  # Hand off to the model to do some checking
+  my $error = $user->check_and_delete;
+  
+  if ( scalar( @{ $error } ) ) {
+    # Error deleting, go back to deletion page
+    $c->response->redirect( $c->uri_for_action("/users/view", [$user->url_key],
+                                {mid => $c->set_status_msg( {error => $c->build_message($error)} ) }) );
+    $c->detach;
+    return;
+  } else {
+    # Success, log a deletion and return to the user list
+    $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["user", "delete", {id => undef}, $username] );
+    $c->response->redirect( $c->uri_for("/users",
+                                {mid => $c->set_status_msg( {success => $c->maketext( "admin.forms.success", $username, $c->maketext("admin.message.deleted") )} ) }) );
+    $c->detach;
+    return;
   }
 }
 

@@ -242,7 +242,7 @@ __PACKAGE__->belongs_to(
   {
     is_deferrable => 1,
     join_type     => "LEFT",
-    on_delete     => "RESTRICT",
+    on_delete     => "CASCADE",
     on_update     => "RESTRICT",
   },
 );
@@ -268,8 +268,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-06-20 11:58:16
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:7gOnrmmaFSV0a1GKRqFvZw
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-11-11 23:19:45
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:fR7+jJF2tZFeGjO1UUdZPQ
 
 use HTTP::BrowserDetect;
 

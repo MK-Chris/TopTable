@@ -1,0 +1,8 @@
+<div id="form">
+<form method="post" action="[% c.uri_for_action("/users/do_delete", [user.url_key]) %]">
+<input type="submit" name="Submit" value="[% c.maketext("form.button.delete") %]" />
+</form>
+</div>
+[%
+INCLUDE "html/users/view.ttkt";
+%]

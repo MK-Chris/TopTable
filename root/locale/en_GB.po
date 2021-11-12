@@ -3531,6 +3531,9 @@ msgstr "You are already logged in."
 msgid "users.online-view-heading"
 msgstr "Users online"
 
+msgid "users.delete.error.not-allowed"
+msgstr "%1 cannot be deleted."
+
 msgid "user.auth.login"
 msgstr "You must login to %1."
 
@@ -3758,6 +3761,9 @@ msgstr "edit league officials"
 
 msgid "user.auth.delete-officials"
 msgstr "delete league officials"
+
+msgid "user.auth.delete-users"
+msgstr "delete users"
 
 msgid "user.auth.view-privacy"
 msgstr "view the privacy policy"

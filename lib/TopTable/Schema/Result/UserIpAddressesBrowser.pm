@@ -137,7 +137,7 @@ __PACKAGE__->belongs_to(
   "user",
   "TopTable::Schema::Result::User",
   { id => "user_id" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+  { is_deferrable => 1, on_delete => "CASCADE", on_update => "RESTRICT" },
 );
 
 =head2 user_agent
@@ -156,8 +156,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2015-09-04 12:04:57
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:xKQRKpwJfo0kO9K3BL2Xsg
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-11-11 22:56:33
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:cwzz3lqkv0teyF7WQQ+tFA
 
 #
 # Enable automatic date handling

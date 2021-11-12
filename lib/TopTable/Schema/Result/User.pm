@@ -642,6 +642,47 @@ __PACKAGE__->add_columns(
     { data_type => "datetime", timezone => "UTC", set_on_create => 0, set_on_update => 0, datetime_undef_if_invalid => 1, is_nullable => 1, },
 );
 
+=head2 can_delete
+
+Performs the logic checks to see if the user can be deleted; returns true if it can or false if it can't.  Currently this just returns 1 so we can always delete.
+
+=cut
+
+sub can_delete {
+  my ( $self ) = @_;
+  
+  # If we get this far, we can delete.
+  return 1;
+}
+
+=head2 check_and_delete
+
+Checks that the venue can be deleted (via can_delete) and then performs the deletion.
+
+=cut
+
+sub check_and_delete {
+  my ( $self ) = @_;
+  my $error = [];
+  
+  # Check we can delete
+  push(@{ $error }, {
+    id          => "users.delete.error.not-allowed",
+    parameters  => [$self->username],
+  }) unless $self->can_delete;
+  
+  # Delete
+  my $ok = $self->delete unless scalar( @{ $error } );
+  
+  # Error if the delete was unsuccessful
+  push(@{ $error }, {
+    id          => "admin.delete.error.database",
+    parameters  => $self->username,
+  }) unless $ok;
+  
+  return $error;
+}
+
 =head2 display_name
 
 Display the person's name instead if there's a person associated

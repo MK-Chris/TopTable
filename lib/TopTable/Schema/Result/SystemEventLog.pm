@@ -506,14 +506,14 @@ __PACKAGE__->belongs_to(
   {
     is_deferrable => 1,
     join_type     => "LEFT",
-    on_delete     => "RESTRICT",
+    on_delete     => "SET NULL",
     on_update     => "RESTRICT",
   },
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-04-26 22:08:24
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:xhaWjKCzTmH7dvLM6GE6Vg
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-11-11 10:18:13
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:kbR8ez5IPvRslNk1b6X5HA
 
 #
 # Enable automatic date handling
