@@ -139,6 +139,12 @@ __PACKAGE__->table("seasons");
   extra: {unsigned => 1}
   is_nullable: 0
 
+=head2 loan_players_limit_per_player_per_opposition
+
+  data_type: 'tinyint'
+  default_value: 0
+  is_nullable: 0
+
 =head2 loan_players_limit_per_team
 
   data_type: 'tinyint'
@@ -224,6 +230,8 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
+  "loan_players_limit_per_player_per_opposition",
+  { data_type => "tinyint", default_value => 0, is_nullable => 0 },
   "loan_players_limit_per_team",
   {
     data_type => "tinyint",
@@ -429,8 +437,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-01-15 14:32:43
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Ejhr9hvuzGOGC0koHXipJQ
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-11-18 15:28:42
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:jqLZem+sKrDL3fSQsPsnkA
 
 use HTML::Entities;
 

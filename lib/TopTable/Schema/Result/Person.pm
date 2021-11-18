@@ -706,10 +706,6 @@ __PACKAGE__->many_to_many(
 # Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-01-27 15:12:25
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:iJI8bHKysqSBtwf8KNpzAw
 
-#
-# Row-level helper methods
-#
-
 =head2 full_address
 
 Row-level helper method to get the address with blank lines removed.
@@ -730,6 +726,105 @@ sub full_address {
   
   # Return the string joined with linefeeds. 
   return join("\n", @full_address);
+}
+
+=head2 matches_on_loan
+
+Return matches where a player has played on loan.
+
+  Params (all optional):
+    season - only returns matches in the given season.
+    for_team - only returns matches where the person is playing FOR the given team.
+    against_team - only returns matches where the person is playing AGAINST the given team.
+
+=cut
+
+sub matches_on_loan {
+  my ( $self, $params ) = @_;
+  my $season = delete $params->{season} || undef;
+  my $for_team = delete $params->{for_team} || undef;
+  my $against_team = delete $params->{against_team} || undef;
+  my $not_for_team = delete $params->{not_for_team} || undef;
+  my $not_against_team = delete $params->{not_against_team} || undef;
+  my $division = delete $params->{division} || undef;
+  my $where;
+  
+  # If we have a for team or an away team
+  if ( defined( $for_team ) or defined( $against_team ) or defined( $not_for_team ) or defined( $not_against_team ) ) {
+    # Setup an array with two hashes, since we need to either check the home team / location and away tema / location.
+    # Both will have the player = this player and loan team is not null
+    $where = [{
+      "team_match_players.player" => $self->id,
+      "team_match_players.loan_team" => {
+        "<>" => undef,
+      },
+    }, {
+      "team_match_players.player" => $self->id,
+      "team_match_players.loan_team" => {
+        "<>" => undef,
+      },
+    }];
+    
+    # Add the season to both array elements, if it's provided
+    $where->[0]{"me.season"} = $season->id if defined( $season );
+    $where->[1]{"me.season"} = $season->id if defined( $season );
+    $where->[0]{"me.division"} = $division->id if defined( $division );
+    $where->[1]{"me.division"} = $division->id if defined( $division );
+    
+    if ( defined( $for_team ) ) {
+      # If we have a for team, we search for that where the player location is home and home team matches OR where the player location is away and away team matches
+      # A home player will always be playing for the home team and an away player will always be playing for the away team
+      $where->[0]{"team_match_players.home_team"} = $for_team->id;
+      $where->[0]{"team_match_players.location"} = "home";
+      $where->[1]{"team_match_players.away_team"} = $for_team->id;
+      $where->[1]{"team_match_players.location"} = "away";
+    }
+    
+    if ( defined( $against_team ) ) {
+      # If we have an against team, we search for that where the player location is home and AWAY team matches OR where the player location is away and HOME team matches
+      # A home player will always be playing AGIANST the away team and an away player will always be playing AGAINST the home team
+      $where->[0]{"team_match_players.away_team"} = $against_team->id;
+      $where->[0]{"team_match_players.location"} = "home";
+      $where->[1]{"team_match_players.home_team"} = $against_team->id;
+      $where->[1]{"team_match_players.location"} = "away";
+    }
+    
+    if ( defined( $not_for_team ) ) {
+      # If we have a for team, we search for that where the player location is home and home team matches OR where the player location is away and away team matches
+      # A home player will always be playing for the home team and an away player will always be playing for the away team
+      $where->[0]{"team_match_players.home_team"} = {"<>" => $not_for_team->id};
+      $where->[0]{"team_match_players.location"} = "home";
+      $where->[1]{"team_match_players.away_team"} = {"<>" => $not_for_team->id};
+      $where->[1]{"team_match_players.location"} = "away";
+    }
+    
+    if ( defined( $not_against_team ) ) {
+      # If we have an against team, we search for that where the player location is home and AWAY team matches OR where the player location is away and HOME team matches
+      # A home player will always be playing AGIANST the away team and an away player will always be playing AGAINST the home team
+      $where->[0]{"team_match_players.away_team"} = {"<>" => $not_against_team->id};
+      $where->[0]{"team_match_players.location"} = "home";
+      $where->[1]{"team_match_players.home_team"} = {"<>" => $not_against_team->id};
+      $where->[1]{"team_match_players.location"} = "away";
+    }
+  } else {
+    $where = {
+      "team_match_players.player" => $self->id,
+      "team_match_players.loan_team" => {
+        "<>" => undef,
+      },
+    };
+    
+    $where->{"me.season"} = $season->id if defined( $season );
+    $where->{"me.division"} = $division->id if defined( $division );
+  }
+  
+  return $self->result_source->schema->resultset("TeamMatch")->search($where, {
+    prefetch => ["team_match_players", {
+      team_season_home_team_season => ["team", {club_season => "club"}],
+      team_season_away_team_season => ["team", {club_season => "club"}],
+    }],
+    order_by => {-asc => [ qw( me.scheduled_date me.home_team me.away_team ) ]},
+  });
 }
 
 =head2 can_delete

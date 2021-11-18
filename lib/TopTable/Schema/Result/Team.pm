@@ -296,6 +296,8 @@ __PACKAGE__->has_many(
 # Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-02-03 10:04:06
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:O5mKU1PMG1tz5nJz4TYQbA
 
+use Data::Dumper::Concise;
+
 =head2 get_players
 
 Retrieve an arrayref of players registered for this team for the given season.
@@ -313,6 +315,46 @@ sub get_players {
     order_by => {
       -asc => [ qw( person.surname person.first_name ) ],
     }
+  });
+}
+
+=head2 loan_players
+
+Return matches where the team has played a loan player (in a given season if supplied).
+
+=cut
+
+sub loan_players {
+  my ( $self, $params ) = @_;
+  my $season = delete $params->{season} || undef;
+  my $where = [{
+    "me.home_team" => $self->id,
+    "me.location" => "home",
+    "me.loan_team" => {
+      "<>" => undef,
+    },
+  }, {
+    "me.away_team" => $self->id,
+    "me.location" => "away",
+    "me.loan_team" => {
+      "<>" => undef,
+    },
+  }];
+  
+  if ( defined( $season ) ) {
+    $where->[0]{"team_match.season"} = $season->id;
+    $where->[1]{"team_match.season"} = $season->id;
+  }
+  
+  return $self->result_source->schema->resultset("TeamMatchPlayer")->search($where, {
+    prefetch => ["player", {
+      team_match  => [{
+        team_season_home_team_season  => ["team", {club_season => "club"}],
+      }, {
+        team_season_away_team_season => ["team", {club_season => "club"}],
+      }],
+    }],
+    order_by => {-asc => [ qw( me.scheduled_date me.home_team me.away_team ) ]},
   });
 }
 

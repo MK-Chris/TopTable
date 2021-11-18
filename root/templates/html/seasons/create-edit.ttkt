@@ -231,9 +231,10 @@ ELSE;
   END;
   
   # Numeric values - do it this way because if they're zero, the DB value will override them (as zero is false)
-  SET loan_players_limit_per_player          = season.loan_players_limit_per_player;
-  SET loan_players_limit_per_player_per_team = season.loan_players_limit_per_player_per_team;
-  SET loan_players_limit_per_team            = season.loan_players_limit_per_team;
+  SET loan_players_limit_per_player                 = season.loan_players_limit_per_player;
+  SET loan_players_limit_per_player_per_team        = season.loan_players_limit_per_player_per_team;
+  SET loan_players_limit_per_player_per_opposition  = season.loan_players_limit_per_player_per_opposition;
+  SET loan_players_limit_per_team                   = season.loan_players_limit_per_team;
 END;
 
 # Now check if we've ticked the allow subs box - if not, we'll hide the other fields
@@ -275,6 +276,14 @@ END;
         <label for="loan_players_limit_per_player_per_team">[% c.maketext("seasons.form.field.loan-players-limit-per-player-per-team") %]</label>
         <div class="field-container">
           <input type="number" id="loan_players_limit_per_player_per_team" name="loan_players_limit_per_player_per_team" min="0" value="[% loan_players_limit_per_player_per_team %]"[% DISABLED %] />
+        </div>
+        <div class="clear-fix"></div>
+      </div>
+      
+      <div class="label-field-container">
+        <label for="loan_players_limit_per_opposition">[% c.maketext("seasons.form.field.loan-players-limit-per-opposition") %]</label>
+        <div class="field-container">
+          <input type="number" id="loan_players_limit_per_player_per_opposition" name="loan_players_limit_per_player_per_opposition" min="0" value="[% loan_players_limit_per_player_per_opposition %]"[% DISABLED %] />
         </div>
         <div class="clear-fix"></div>
       </div>

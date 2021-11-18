@@ -1393,7 +1393,10 @@ msgid "seasons.form.field.loan-players-limit-per-player"
 msgstr "Maximum number of times a player may play on loan"
 
 msgid "seasons.form.field.loan-players-limit-per-player-per-team"
-msgstr "Maximum number of times a player may play on loan for the same team"
+msgstr "Maximum number of times a player may play on loan <i><u>for</u></i> the same team"
+
+msgid "seasons.form.field.loan-players-limit-per-opposition"
+msgstr "Maximum number of times a player may play on loan <i><u>against</u></i> the same team"
 
 msgid "seasons.form.rules"
 msgstr "Rules"
@@ -2110,8 +2113,35 @@ msgstr "Search for a loan player in position %1"
 msgid "matches.loan-player.add.error.player-active-for-team"
 msgstr "%1 has an active membership for %2 %3, so cannot be used as a loan player in a match involving that team."
 
+msgid "matches.loan-player.add.error.played-too-many-times"
+msgstr "%1 has played on loan too many times to play this time, the limit is %2.  In order to play in this position, you must register %3 as an active player for %4."
+
+msgid "matches.loan-player.add.error.played-too-many-times-for-team"
+msgstr "%1 has played on loan too many times for %2 to play this time, the limit is %3.  In order to play in this position, you must register %4 as an active player for %2."
+
+msgid "matches.loan-player.add.error.played-too-many-times-for-opposition"
+msgstr "%1 has played on loan too many times against %2 and cannot play against them again, the limit is %3."
+
+msgid "matches.loan-player.add.error.team-played-too-many-loan-players"
+msgstr "%1 has played loan players the maximum number of times and cannot play any more.  The maximum number is %2."
+
+msgid "matches.loan-player.add.error.cannot-play-for-more-than-one-team-in-division"
+msgstr "%1 has already played for another team in %2 and the current rules stipulate that you cannot play on loan for more than one team in a given division."
+
+msgid "matches.loan-player.add.error.cant-add-from-division-below"
+msgstr "%1 plays in %2, which is ranked below %3, where this match is being played.  The current rules do not allow for players to play on loan from a division below that which the match is being played in."
+
+msgid "matches.loan-player.add.error.cant-add-from-division-above"
+msgstr "%1 plays in %2, which is ranked above %3, where this match is being played.  The current rules do not allow for players to play on loan from a division above that which the match is being played in."
+
+msgid "matches.loan-player.add.error.cant-add-from-same-division"
+msgstr "%1 plays in %2, which is the same division as this match.  The current rules do not allow for players to play on loan from the same division as that which the match is being played in."
+
+msgid "matches.loan-player.add.error.cant-play-for-different-clubs"
+msgstr "%1 is unable to play on loan for teams from %2 because they play at %3.  The current rules stipulate that players may only play on loan for teams from the same club."
+
 msgid "matches.add-player.error.player-already-set"
-msgstr "%1 is already set in position %2, so can&#39;t be set in another position until they are removed from this one."
+msgstr "%1 is already set in position %2, so can't be set in another position until they are removed from this one."
 
 msgid "matches.loan-player.add.error.player-not-active"
 msgstr "%1 is not registered to play in %2."

@@ -465,7 +465,7 @@ sub update_person {
     # If the person is available, get the season and division for this season
     $active_season = $person->find_related("person_seasons", {
       person                => $person->id,
-      "me.season"           => $self->team_match->season->id,
+      "me.season"           => $match->season->id,
       team_membership_type  => "active",
     }, {
       prefetch => {
@@ -482,36 +482,169 @@ sub update_person {
     
     if ( defined( $active_season ) ) {
       # Check it's active to be safe
-      if ( $loan_player and ( $active_season->team_season->team->id == $self->team_match->team_season_home_team_season->team->id or $active_season->team_season->team->id == $self->team_match->team_season_away_team_season->team->id ) ) {
-        # Can't use this person as a sub in a match involving their active team
-        push(@{ $return_value->{error} }, {
-          id          => "matches.loan-player.add.error.player-active-for-team",
-          parameters  => [$person->display_name, $active_season->team_season->club_season->short_name, $active_season->team_season->name],
-        });
-      } else {
-        # Check that we have not got this person set in a position for this match already
-        my $player_already_set = $self->team_match->find_related("team_match_players", {}, {
-          where => {
-            player_number => {
-              "!=" => $self->player_number,
-            },
-            player => $person->id,
-          },
-        });
+      if ( $loan_player ) {
+        # Grab the loan player rules
+        my $season = $match->season;
+        my $match_division = $match->division_season->division;
         
-        push(@{ $return_value->{error} }, {
-          id          => "matches.add-player.error.player-already-set",
-          parameters  => [$person->display_name, $player_already_set->player_number],
-        }) if defined( $player_already_set );
+        my $loan_allow_div_below = $season->allow_loan_players_below;
+        my $loan_allow_div_above = $season->allow_loan_players_above;
+        my $loan_allow_div_same = $season->allow_loan_players_across;
+        my $loan_allow_club_same_only = $season->allow_loan_players_same_club_only;
+        my $loan_allow_player_limit = $season->loan_players_limit_per_player;
+        my $loan_allow_player_limit_per_team = $season->loan_players_limit_per_player_per_team;
+        my $loan_allow_player_limit_per_opposition = $season->loan_players_limit_per_player_per_opposition;
+        my $loan_allow_team_limit = $season->loan_players_limit_per_team;
+        my $loan_allow_div_multi_team = $season->allow_loan_players_multiple_teams_per_division;
+        
+        # If it's a loan player, there's an initial check to ensure they are not actively playing for either of the teams involved in the match
+        if ( $active_season->team_season->team->id == $match->team_season_home_team_season->team->id or $active_season->team_season->team->id == $match->team_season_away_team_season->team->id ) {
+          # Can't use this person as a sub in a match involving their active team
+          push(@{ $return_value->{error} }, {
+            id          => "matches.loan-player.add.error.player-active-for-team",
+            parameters  => [$person->display_name, $active_season->team_season->club_season->short_name, $active_season->team_season->name],
+          });
+        } else {
+          # Get the loan player's active team
+          $loan_team = $active_season->team_season->team;
+          
+          # Get the name of the team this person is playing on loan for / against
+          my $playing_for_team = ( $location eq "home" ) ? $match->team_season_home_team_season->team : $match->team_season_away_team_season->team;
+          my $playing_for_team_name = ( $location eq "home" ) ? sprintf( "%s %s", $match->team_season_home_team_season->team->club->short_name, $match->team_season_home_team_season->team->name ) : sprintf( "%s %s", $match->team_season_away_team_season->team->club->short_name, $match->team_season_away_team_season->team->name );
+          
+          my $playing_against_team = ( $location eq "home" ) ? $match->team_season_away_team_season->team : $match->team_season_home_team_season->team;
+          my $playing_against_team_name = ( $location eq "home" ) ? sprintf( "%s %s", $match->team_season_away_team_season->team->club->short_name, $match->team_season_away_team_season->team->name ) : sprintf( "%s %s", $match->team_season_home_team_season->team->club->short_name, $match->team_season_home_team_season->team->name );
+          
+          # Check if we have a limit on the number of times a player can play up
+          if ( $loan_allow_player_limit > 0 ) {
+            # Get the number of times this person has played up
+            my $loan_times_played = $person->matches_on_loan({season => $season})->count;
+            
+            # Error if the person has already played up the maximum number of times
+            push(@{ $return_value->{error} }, {
+              id          => "matches.loan-player.add.error.played-too-many-times",
+              parameters  => [$person->display_name, $loan_allow_player_limit, $person->first_name, $playing_for_team_name],
+            }) if $loan_times_played >= $loan_allow_player_limit;
+          }
+          
+          # Check there's a limit on the number of times a player can play FOR a team
+          if ( $loan_allow_player_limit_per_team ) {
+            my $loan_played_this_team = $person->matches_on_loan({
+              season => $season,
+              for_team => $playing_for_team,
+            })->count;
+            
+            # Error if this person has already played on loan for this team the maximum number of times
+            push(@{ $return_value->{error} }, {
+              id          => "matches.loan-player.add.error.played-too-many-times-for-team",
+              parameters  => [$person->display_name, $playing_for_team_name, $loan_allow_player_limit_per_team, $person->first_name],
+            }) if $loan_played_this_team >= $loan_allow_player_limit_per_team;
+          }
+          
+          # Check if there's a limit on the number of times a person can play AGAINST a team
+          if ( $loan_allow_player_limit_per_opposition ) {
+            my $loan_played_against_this_team = $person->matches_on_loan({
+              season => $season,
+              against_team => $playing_against_team,
+            })->count;
+            
+            # Error if this person has played on loan against this team the maximum number of times
+            push(@{ $return_value->{error} }, {
+              id          => "matches.loan-player.add.error.played-too-many-times-for-opposition",
+              parameters  => [$person->display_name, $playing_against_team_name, $loan_allow_player_limit_per_opposition],
+            }) if $loan_played_against_this_team >= $loan_allow_player_limit_per_opposition;
+          }
+          
+          # Check if there's a limit on the number of times a team can play loan players
+          if ( $loan_allow_team_limit ) {
+            my $matches_with_loan_players = $playing_for_team->loan_players({season => $season})->count;
+            
+            # Error if this team has already played the maximum number of loan players
+            push(@{ $return_value->{error} }, {
+              id          => "matches.loan-player.add.error.team-played-too-many-loan-players",
+              parameters  => [$playing_for_team_name, $loan_allow_team_limit],
+            }) if $matches_with_loan_players >= $loan_allow_team_limit;
+          }
+          
+          # Check if there's a stipulation that a player can only play on loan for one team per division
+          unless ( $loan_allow_div_multi_team ) {
+            my $matches_with_loan_players = $playing_for_team->loan_players({season => $season})->count;
+            
+            # Error if this person has already played on loan for a different team in this division
+            push(@{ $return_value->{error} }, {
+              id          => "matches.loan-player.add.error.cannot-play-for-more-than-one-team-in-division",
+              parameters  => [$person->display_name, $match_division->name],
+            }) if $person->matches_on_loan({
+              season => $season,
+              division => $match_division,
+              not_for_team => $playing_for_team,
+            })->count > 1;
+          }
+          
+          # Get the active division so we can check the player is authorised to play on loan in this division
+          my $loan_division = $active_season->team_season->division_season->division;
+          
+          # Check if we can allow people from lower divisions to play on loan
+          unless ( $loan_allow_div_below ) {
+            # Error if this player is from a division below
+            push(@{ $return_value->{error} }, {
+              id          => "matches.loan-player.add.error.cant-add-from-division-below",
+              parameters  => [$person->display_name, $loan_division->name, $match_division->name],
+            }) if $loan_division->rank > $match_division->rank;
+          }
+          
+          # Check if we can allow people from higher divisions to play on loan
+          unless ( $loan_allow_div_above ) {
+            # Error if this player is from a division above
+            push(@{ $return_value->{error} }, {
+              id          => "matches.loan-player.add.error.cant-add-from-division-above",
+              parameters  => [$person->display_name, $loan_division->name, $match_division->name],
+            }) if $loan_division->rank < $match_division->rank;
+          }
+          
+          # Check if we can allow people from the same divisional rank to play on loan
+          unless ( $loan_allow_div_same ) {
+            # Error if this player is from the same divisional rank
+            push(@{ $return_value->{error} }, {
+              id          => "matches.loan-player.add.error.cant-add-from-same-division",
+              parameters  => [$person->display_name, $loan_division->name],
+            }) if $loan_division->rank == $match_division->rank;
+          }
+        }
+        
+        # Check if we can allow people to play on loan from different clubs
+        if ( $loan_allow_club_same_only ) {
+          my $loan_club = $active_season->team_season->team->club;
+          my $playing_club = ( $location eq "home" ) ? $match->team_season_home_team_season->team->club : $match->team_season_away_team_season->team->club;
+          
+          # Error if this person plays for a different club
+          push(@{ $return_value->{error} }, {
+            id          => "matches.loan-player.add.error.cant-play-for-different-clubs",
+            parameters  => [$person->display_name, $playing_club->full_name, $loan_club->full_name],
+          }) if $loan_club->id != $playing_club->id;
+        }
       }
       
-      # Get the loan player's active team if indeed it's a loan player
-      $loan_team = $active_season->team_season->team if $loan_player;
+      # Check that we have not got this person set in a position for this match already
+      my $player_already_set = $match->find_related("team_match_players", {}, {
+        where => {
+          player_number => {
+            "!=" => $self->player_number,
+          },
+          player => $person->id,
+        },
+      });
+      
+      push(@{ $return_value->{error} }, {
+        id          => "matches.add-player.error.player-already-set",
+        parameters  => [$person->display_name, $player_already_set->player_number],
+      }) if defined( $player_already_set );
+      
     } else {
       # No teams for this person this season
       push(@{ $return_value->{error} }, {
         id          => "matches.loan-player.add.error.player-not-active",
-        parameters  => [$person->display_name, $self->team_match->season->name],
+        parameters  => [$person->display_name, $match->season->name],
       });
     }
   } elsif ( $action eq "add" ) {
@@ -540,7 +673,7 @@ sub update_person {
       # Get the opposition player object
       if ( $location eq "home" ) {
         # If it's a home player, we need to check the away player number
-        $opposition_player = $self->team_match->find_related("team_match_players", {
+        $opposition_player = $match->find_related("team_match_players", {
           player_number => $player_game->away_player_number,
         }, {
           prefetch => "player",
@@ -549,7 +682,7 @@ sub update_person {
         $opposition_location  = "away";
       } else {
         # Otherwise, we need to check the home player number
-        $opposition_player = $self->team_match->find_related("team_match_players", {
+        $opposition_player = $match->find_related("team_match_players", {
           player_number => $player_game->home_player_number,
         }, {
           prefetch => "player",
@@ -608,8 +741,8 @@ sub update_person {
       
       # Create a new season object for the new person if there isn't one already
       $new_player_season = $person->create_related("person_seasons", {
-        season                => $self->team_match->season->id,
-        team                  => $self->team_match->$match_team_field->team->id,
+        season                => $match->season->id,
+        team                  => $match->$match_team_field->team->id,
         team_membership_type  => "loan",
         first_name            => $person->first_name,
         surname               => $person->surname,
@@ -729,8 +862,8 @@ sub update_person {
       
       # Create a new season object for the new person if there isn't one already
       $new_player_season = $person->create_related("person_seasons", {
-        season                => $self->team_match->season->id,
-        team                  => $self->team_match->$match_team_field->team->id,
+        season                => $match->season->id,
+        team                  => $match->$match_team_field->team->id,
         team_membership_type  => "loan"
       }) unless defined( $new_player_season );
       
@@ -795,7 +928,7 @@ sub update_person {
         # Get the opposition player object
         if ( $location eq "home" ) {
           # If it's a home player, we need to check the away player number
-          $opposition_player = $self->team_match->find_related("team_match_players", {
+          $opposition_player = $match->find_related("team_match_players", {
             player_number => $player_game->away_player_number,
           }, {
             prefetch => "player",
@@ -804,7 +937,7 @@ sub update_person {
           $opposition_location  = "away";
         } else {
           # Otherwise, we need to check the home player number
-          $opposition_player = $self->team_match->find_related("team_match_players", {
+          $opposition_player = $match->find_related("team_match_players", {
             player_number => $player_game->home_player_number,
           }, {
             prefetch => "player",
