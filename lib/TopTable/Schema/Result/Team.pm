@@ -157,21 +157,6 @@ __PACKAGE__->belongs_to(
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
 );
 
-=head2 doubles_pairs
-
-Type: has_many
-
-Related object: L<TopTable::Schema::Result::DoublesPair>
-
-=cut
-
-__PACKAGE__->has_many(
-  "doubles_pairs",
-  "TopTable::Schema::Result::DoublesPair",
-  { "foreign.team" => "self.id" },
-  { cascade_copy => 0, cascade_delete => 0 },
-);
-
 =head2 person_tournaments
 
 Type: has_many
@@ -293,8 +278,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-02-03 10:04:06
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:O5mKU1PMG1tz5nJz4TYQbA
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-11-20 08:25:35
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:qgunySBHcrxmHwLIwL4BKA
 
 use Data::Dumper::Concise;
 

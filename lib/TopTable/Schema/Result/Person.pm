@@ -263,36 +263,6 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
-=head2 doubles_pairs_person1s
-
-Type: has_many
-
-Related object: L<TopTable::Schema::Result::DoublesPair>
-
-=cut
-
-__PACKAGE__->has_many(
-  "doubles_pairs_person1s",
-  "TopTable::Schema::Result::DoublesPair",
-  { "foreign.person1" => "self.id" },
-  { cascade_copy => 0, cascade_delete => 0 },
-);
-
-=head2 doubles_pairs_person2s
-
-Type: has_many
-
-Related object: L<TopTable::Schema::Result::DoublesPair>
-
-=cut
-
-__PACKAGE__->has_many(
-  "doubles_pairs_person2s",
-  "TopTable::Schema::Result::DoublesPair",
-  { "foreign.person2" => "self.id" },
-  { cascade_copy => 0, cascade_delete => 0 },
-);
-
 =head2 event_seasons
 
 Type: has_many
@@ -703,8 +673,8 @@ __PACKAGE__->many_to_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-01-27 15:12:25
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:iJI8bHKysqSBtwf8KNpzAw
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-11-20 08:25:35
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:7aDwVaztDq/DKxPGVln0aQ
 
 =head2 full_address
 
@@ -837,7 +807,7 @@ sub can_delete {
   my ( $self ) = @_;
   
   # Select any seasons in which we've played matches
-  my @seasons_started = $self->search_related("person_seasons", {}, {
+  my $seasons_started = $self->search_related("person_seasons", {}, {
     where => {
       matches_played => {
         ">" => 0,
@@ -846,21 +816,21 @@ sub can_delete {
   });
   
   # If we've got seasons with stats in, no need to do any more checking, we can't delete
-  return 0 if scalar( @seasons_started );
+  return 0 if $seasons_started->count;
   
   # Doubles pairings - if any of the doubles pairings involving this player have games played,
   # we won't allow delection
-  my $pairings1 = $self->search_related("doubles_pairs_person1s", undef, {
+  my $pairings1 = $seasons_started->search_related("doubles_pairs_person1_season_teams", undef, {
     where => {
-      games_played => {
+      "me.games_played" => {
         ">" => 0,
       },
     }
   });
   
-  my $pairings2 = $self->search_related("doubles_pairs_person2s", undef, {
+  my $pairings2 = $seasons_started->search_related("doubles_pairs_person2_season_teams", undef, {
     where => {
-      games_played => {
+      "me.games_played" => {
         ">" => 0,
       },
     }
@@ -1079,12 +1049,12 @@ sub transfer_statistics {
         });
         
         foreach my $pair ( @doubles_pairs ) {
-          if ( $pair->person1->id == $self->id ) {
+          if ( $pair->person_season_person1_season_team->person->id == $self->id ) {
             # Person 1 matches our "from" person and needs to change
-            $pair->update({person1 => $to_person->id});
-          } elsif ( $pair->person2->id == $self->id ) {
+            $pair->update({person_season_person1_season_team => $to_person->id});
+          } elsif ( $pair->person_season_person1_season_team->person->id == $self->id ) {
             # Person 2 matches our "from" person and needs to change
-            $pair->update({person2 => $to_person->id});
+            $pair->update({person_season_person2_season_team => $to_person->id});
           }
         }
         

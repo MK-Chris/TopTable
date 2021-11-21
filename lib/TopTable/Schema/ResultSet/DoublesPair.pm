@@ -22,14 +22,13 @@ sub get_doubles_pairs_in_division_in_averages_order {
   my $criteria        = $parameters->{criteria} || undef;
   
   my $where = {
-    "me.season"             => $season->id,
-    "team_seasons.division" => $division->id,
-    "team_seasons.season"   => $season->id,
+    "me.season" => $season->id,
+    "division_season.division" => $division->id,
   };
   
   # Set up the team if there is one
   if ( defined( $team ) ) {
-    $where->{"team_seasons.team"} = $team->id;
+    $where->{"team_season.team"} = $team->id;
   }
   
   if ( defined( $criteria_field ) and defined( $operator ) and defined( $criteria ) and ( $operator eq "<" or $operator eq "<=" or $operator eq "=" or $operator eq ">=" or $operator eq ">" ) and $criteria =~ /^\d+$/ ) {
@@ -40,19 +39,41 @@ sub get_doubles_pairs_in_division_in_averages_order {
   
   return $self->search($where, {
     prefetch  => [
-      "person1",
-      "person2", {
-        "team" => "club",
+      "person_season_person1_season_team",
+      "person_season_person2_season_team", {
+        team_season => ["division_season", {
+          club_season => "club",
+      }],
     }],
-    join => {
-      "team" => "team_seasons"
-    },
     order_by  => [{
-      -desc => [ qw( average_game_wins games_played games_won ) ],
+      -desc => [ qw( me.average_game_wins me.games_played me.games_won ) ],
     }, {
-      -asc  => [ qw( person1.surname person1.first_name person2.surname person2.first_name ) ],
+      -asc  => [ qw( person_season_person1_season_team.surname person_season_person1_season_team.first_name person_season_person2_season_team.surname person_season_person2_season_team.first_name ) ],
     }],
   });
+}
+
+=head2 get_tables_last_updated_timestamp
+
+For a given season and division, return the last updated date / time.
+
+=cut
+
+sub get_tables_last_updated_timestamp {
+  my ( $self, $params ) = @_;
+  my $division = delete $params->{division};
+  my $season = delete $params->{season};
+  my $team = delete $params->{team} || undef;
+  
+  my $where = {season => $season->id};
+  $where->{"me.team"} = $team->id if defined( $team );
+  $where->{"team_season.division"} = $division->id if defined( $division );
+  
+  return $self->find($where, {
+    rows => 1,
+    join => {team_season => "division_season"},
+    order_by => {-desc => "last_updated"}
+  })->last_updated;
 }
 
 =head2 find_pair
@@ -70,16 +91,16 @@ sub find_pair {
   return $self->search([{
     person1 => $person1->id,
     person2 => $person2->id,
-    season  => $season->id,
-    team    => $team->id,
+    "me.season" => $season->id,
+    "me.team" => $team->id,
   }, {
     person1 => $person2->id,
     person2 => $person1->id,
-    season  => $season->id,
-    team    => $team->id,
+    "me.season" => $season->id,
+    "me.team" => $team->id,
   }], {
-    prefetch  => ["person1", "person2", "season", {
-      team  => "club"
+    prefetch  => ["person_season_person1_season_team", "person_season_person2_season_team", {
+      team_season => "club_season",
     }],
   });
 }
@@ -104,8 +125,8 @@ sub pairs_involving_person {
   
   # If we have a season, pass that into the where queries
   if ( defined( $season ) ) {
-    $where->[0]{season} = $season->id;
-    $where->[1]{season} = $season->id;
+    $where->[0]{"me.season"} = $season->id;
+    $where->[1]{"me.season"} = $season->id;
   }
   
   # If we have a team, pass that into the where queries
@@ -115,8 +136,8 @@ sub pairs_involving_person {
   }
   
   return $self->search($where, {
-    prefetch  => ["person1", "person2", "season", {
-      team  => "club"
+    prefetch  => ["person_season_person1_season_team", "person_season_person2_season_team", "season", {
+      team_season  => ["team", {club_season => "club"}]
     }],
   });
 }

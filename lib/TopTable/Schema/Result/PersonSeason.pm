@@ -611,6 +611,44 @@ __PACKAGE__->set_primary_key("person", "season", "team");
 
 =head1 RELATIONS
 
+=head2 doubles_pairs_person1_season_teams
+
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::DoublesPair>
+
+=cut
+
+__PACKAGE__->has_many(
+  "doubles_pairs_person1_season_teams",
+  "TopTable::Schema::Result::DoublesPair",
+  {
+    "foreign.person1" => "self.person",
+    "foreign.season"  => "self.season",
+    "foreign.team"    => "self.team",
+  },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+=head2 doubles_pairs_person2_season_teams
+
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::DoublesPair>
+
+=cut
+
+__PACKAGE__->has_many(
+  "doubles_pairs_person2_season_teams",
+  "TopTable::Schema::Result::DoublesPair",
+  {
+    "foreign.person2" => "self.person",
+    "foreign.season"  => "self.season",
+    "foreign.team"    => "self.team",
+  },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
 =head2 person
 
 Type: belongs_to
@@ -672,8 +710,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-01-27 15:12:25
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:2fp2C+KiDNOvNtRg+NeETg
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-11-20 08:25:35
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:KoSQIlkT6Rp63Tnb3MW/TQ
 
 #
 # Enable automatic date handling

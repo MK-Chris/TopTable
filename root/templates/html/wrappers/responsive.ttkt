@@ -84,7 +84,8 @@ END;
 
 <title>[% page_title %]</title>
 
-<link rel="stylesheet" href="[% c.uri_for('/static/css/main.css') %]?v1.6" type="text/css" media="screen" />
+<link rel="stylesheet" href="[% c.uri_for('/static/css/main.css') %]?v1.7" type="text/css" media="screen" />
+<link rel="stylesheet" href="[% c.uri_for('/static/css/main-print.css') %]?v1.7" type="text/css" media="print" />
 <link rel="stylesheet" href="[% c.uri_for('/static/css/jqueryui/jquery-ui.structure.min.css') %]" type="text/css" media="screen" />
 <link rel="stylesheet" href="[% c.uri_for('/static/css/jqueryui/jquery-ui.theme.min.css') %]" type="text/css" media="screen" />
 <link rel="stylesheet" href="[% c.uri_for('/static/css/smartmenus/sm-core-css.css') %]" type="text/css" media="screen" />
@@ -100,7 +101,7 @@ END;
 IF external_styles;
   FOREACH stylesheet IN external_styles;
 -%]
-<link rel="stylesheet" href="[% stylesheet %]" media="screen" />
+<link rel="stylesheet" href="[% stylesheet %]" />
 [%
   END;
 END;
@@ -593,9 +594,9 @@ IF title_links.size;
   FOREACH title_link IN title_links;
     SET text = title_link.text;
     IF title_link.image_uri;
-      SET link = ' <a href="' _ title_link.link_uri _ '"><img src="' _ title_link.image_uri _ '" title="' _ text _ '" alt="' _ text _ '" /></a>';
+      SET link = ' <a class="admin-links" href="' _ title_link.link_uri _ '"><img src="' _ title_link.image_uri _ '" title="' _ text _ '" alt="' _ text _ '" /></a>';
     ELSE;
-      SET link = ' <a href="' _ title_link.link_uri _ '">' _ text _ '</a>';
+      SET link = ' <a class="admin-links" href="' _ title_link.link_uri _ '">' _ text _ '</a>';
     END;
     link;
   END;

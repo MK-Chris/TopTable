@@ -1669,10 +1669,10 @@ sub update_score {
     if ( $self->doubles_game ) {
       # Doubles game
       # Get the person_season objects we need to update for the individual doubles statistics
-      my $home_doubles1 = $home_player->person1->find_related("person_seasons", {season => $season->id, team => $home_team->id});
-      my $home_doubles2 = $home_player->person2->find_related("person_seasons", {season => $season->id, team => $home_team->id});
-      my $away_doubles1 = $away_player->person1->find_related("person_seasons", {season => $season->id, team => $away_team->id});
-      my $away_doubles2 = $away_player->person2->find_related("person_seasons", {season => $season->id, team => $away_team->id});
+      my $home_doubles1 = $home_player->person_season_person1_season_team;
+      my $home_doubles2 = $home_player->person_season_person2_season_team;
+      my $away_doubles1 = $away_player->person_season_person1_season_team;
+      my $away_doubles2 = $away_player->person_season_person2_season_team;
       #printf "Home doubles pair ID: %d, away doubles pair ID: %d\n", $home_player->id, $away_player->id;
       #printf "H Player 1: %s, H player 2: %s\n", $home_doubles1->display_name, $home_doubles2->display_name;
       #printf "A Player 1: %s, A player 2: %s\n", $away_doubles1->display_name, $away_doubles2->display_name;
@@ -2349,14 +2349,27 @@ sub update_doubles_pair {
           # Return if we have an error here
           return $return_value if scalar( @{ $return_value->{error} } );
           
+          # Get person season for this team if there is one so we can search from the doubles pair from that
+          
+          # Work out if either player is a loan player
+          my $person1_season = $player1->find_related("person_seasons", {
+            season                => $season->id,
+            team                  => $team->id,
+          });
+          
+          my $person2_season = $player2->find_related("person_seasons", {
+            season                => $season->id,
+            team                  => $team->id,
+          });
+          
           # Now check if there's a doubles pairing with the two players
-          my $doubles_pair1 = $player1->search_related("doubles_pairs_person1s", {
+          my $doubles_pair1 = $person1_season->search_related("doubles_pairs_person1_season_teams", {
             season  => $season->id,
             person2 => $player2->id,
             team    => $team->id,
           });
           
-          my $doubles_pair2 = $player1->search_related("doubles_pairs_person2s", {
+          my $doubles_pair2 = $person2_season->search_related("doubles_pairs_person2_season_teams", {
             season  => $season->id,
             person1 => $player2->id,
             team    => $team->id,
@@ -2415,7 +2428,7 @@ sub update_doubles_pair {
             return $return_value if scalar( @{ $return_value->{error} } );
             
             # Now do the create
-            $doubles_pair = $player1->create_related("doubles_pairs_person1s", {
+            $doubles_pair = $person1_season->create_related("doubles_pairs_person1_season_teams", {
               person2             => $player2->id,
               season              => $season->id,
               team                => $team->id,
@@ -2513,8 +2526,8 @@ sub update_doubles_pair {
               $original_player2->update;
             }
             
-            my $player1_season = $doubles_pair->person1->find_related("person_seasons", {season => $season->id, team => $team->id});
-            my $player2_season = $doubles_pair->person2->find_related("person_seasons", {season => $season->id, team => $team->id});
+            my $player1_season = $doubles_pair->person_season_person1_season_team;
+            my $player2_season = $doubles_pair->person_season_person2_season_team;
             
             # Now add those values on to the current doubles pair
             # Add one to the games played

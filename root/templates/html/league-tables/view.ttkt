@@ -2,27 +2,29 @@
 [% # "chomps" the whitespace/newline at that end of the    -%]
 [% # output (use View Source in browser to see the effect) -%]
 
+<div class="table-wrap">
+  <div class="table-layout table-layout-centre">
 [%
-IF tables.size;
+IF league_tables.count;
 -%]
-<table id="league-table" class="stripe hover row-border" style="width: 100%;">
-  <thead>
-    <tr>
-      <th class="numeric">[% c.maketext("stats.table-heading.position") %]</th>
-      <th>[% c.maketext("stats.table-heading.team") %]</th>
-      <th class="numeric">[% c.maketext("stats.table-heading.matches-played") %]</th>
-      <th class="numeric">[% c.maketext("stats.table-heading.matches-won") %]</th>
-      <th class="numeric">[% c.maketext("stats.table-heading.matches-drawn") %]</th>
-      <th class="numeric">[% c.maketext("stats.table-heading.matches-lost") %]</th>
-      <th class="numeric">[% c.maketext("stats.table-heading.for") %]</th>
-      <th class="numeric">[% c.maketext("stats.table-heading.against") %]</th>
-    </tr>
-  </thead>
-  <tbody>
+    <table id="league-table" class="stripe hover row-border">
+      <thead>
+        <tr>
+          <th class="numeric">[% c.maketext("stats.table-heading.position") %]</th>
+          <th>[% c.maketext("stats.table-heading.team") %]</th>
+          <th class="numeric">[% c.maketext("stats.table-heading.team-matches-played") %]</th>
+          <th class="numeric">[% c.maketext("stats.table-heading.matches-won") %]</th>
+          <th class="numeric">[% c.maketext("stats.table-heading.matches-drawn") %]</th>
+          <th class="numeric">[% c.maketext("stats.table-heading.matches-lost") %]</th>
+          <th class="numeric">[% c.maketext("stats.table-heading.for") %]</th>
+          <th class="numeric">[% c.maketext("stats.table-heading.against") %]</th>
+        </tr>
+      </thead>
+      <tbody>
 [%
   # Count up as we go
   SET i = 0;
-  FOREACH table_team IN tables;
+  WHILE (table_team = league_tables.next);
     i = i + 1;
     IF specific_season;
       SET team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [table_team.team.club.url_key, table_team.team.url_key, season.url_key]);
@@ -32,44 +34,46 @@ IF tables.size;
     
     SET team_name = table_team.club_season.short_name _ " " _ table_team.name | html_entity;
 -%]
-    <tr>
-      <td class="numeric">[% i %]</td>
-      <td><a href="[% team_uri %]">[% team_name %]</a>
+        <tr>
+          <td class="numeric">[% i %]</td>
+          <td><a href="[% team_uri %]"><nobr>[% table_team.club_season.short_name | html_entity %]</nobr> [% table_team.name | html_entity %]</a>
 [%-
 IF authorisation.team_edit;
 -%]
- <a href="[% c.uri_for_action("/teams/edit_by_url_key", [table_team.team.club.url_key, table_team.team.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", team_name) %]" title="[% c.maketext("admin.edit-object", team_name) %]" /></a>
+ <a class="admin-links" href="[% c.uri_for_action("/teams/edit_by_url_key", [table_team.team.club.url_key, table_team.team.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", team_name) %]" title="[% c.maketext("admin.edit-object", team_name) %]" /></a>
 [%-
 END;
 IF authorisation.team_delete AND average.team_season.team.can_delete;
 -%]
- <a href="[% c.uri_for_action("/teams/delete_by_url_key", [table_team.team.club.url_key, table_team.team.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", team_name) %]" title="[% c.maketext("admin.delete-object", team_name) %]" /></a>
+ <a class="admin-links" href="[% c.uri_for_action("/teams/delete_by_url_key", [table_team.team.club.url_key, table_team.team.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", team_name) %]" title="[% c.maketext("admin.delete-object", team_name) %]" /></a>
 [%-
 END;
 -%]
 </td>
-      <td class="numeric">[% table_team.matches_played %]</td>
-      <td class="numeric">[% table_team.matches_won %]</td>
-      <td class="numeric">[% table_team.matches_drawn %]</td>
-      <td class="numeric">[% table_team.matches_lost %]</td>
-      <td class="numeric">[% table_team.games_won %]</td>
-      <td class="numeric">[% table_team.games_lost %]</td>
-    </tr>
+          <td class="numeric">[% table_team.matches_played %]</td>
+          <td class="numeric">[% table_team.matches_won %]</td>
+          <td class="numeric">[% table_team.matches_drawn %]</td>
+          <td class="numeric">[% table_team.matches_lost %]</td>
+          <td class="numeric">[% table_team.games_won %]</td>
+          <td class="numeric">[% table_team.games_lost %]</td>
+        </tr>
 [%
   END;
 -%]
-  </tbody>
-</table>
+      </tbody>
+    </table>
+    <div class="dataTables_info" id="league-table_info" role="status" aria-live="polite">[% c.maketext("updated.time", c.i18n_datetime_format_datetime.format_datetime(last_updated)) %]</div>
 [%
 ELSE;
 -%]
-<div class="list-item">
-  No teams have been entered into this season.
-</div>
+    <div class="list-item">
+      No teams have been entered into this season.
+    </div>
 [%
 END;
 -%]
-
+  </div>
+</div>
 
 <div class="links-list">
 [%

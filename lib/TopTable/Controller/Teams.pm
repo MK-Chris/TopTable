@@ -415,10 +415,10 @@ sub get_team_season :Private {
   my $doubles_pair_averages = [];
     if ( $entered ) {
     # Get the team's position - we need to get all teams in the division in an array ordered properly first
-    my @teams_in_division = $c->model("DB::TeamSeason")->get_teams_in_division_in_league_table_order( $season, $team_season->division_season->division );
+    my $teams_in_division = $c->model("DB::TeamSeason")->get_teams_in_division_in_league_table_order({season => $season, division => $team_season->division_season->division});
     
     # Now we need to loop throug the array, counting up as we go
-    foreach my $division_team ( @teams_in_division ) {
+    while ( my $division_team = $teams_in_division->next ) {
       # Increment our count
       $league_position++;
       
@@ -426,37 +426,49 @@ sub get_team_season :Private {
       last if $division_team->team->id == $team->id;
     }
     
-    $singles_averages = [ $c->model("DB::PersonSeason")->get_people_in_division_in_singles_averages_order({
+    $singles_averages = $c->model("DB::PersonSeason")->get_people_in_division_in_singles_averages_order({
       season    => $season,
       division  => $team_season->division_season->division,
       team      => $team,
-    } ) ];
+    });
     
-    $doubles_individual_averages = [ $c->model("DB::PersonSeason")->get_people_in_division_in_doubles_individual_averages_order({
+    $doubles_individual_averages = $c->model("DB::PersonSeason")->get_people_in_division_in_doubles_individual_averages_order({
       season          => $season,
       division        => $team_season->division_season->division,
       team            => $team,
       criteria_field  => "played",
       operator        => ">=",
       criteria        => 1,
-    }) ];
+    });
     
-    $doubles_pair_averages = [ $c->model("DB::DoublesPair")->get_doubles_pairs_in_division_in_averages_order({
+    $doubles_pair_averages = $c->model("DB::DoublesPair")->get_doubles_pairs_in_division_in_averages_order({
       season          => $season,
       division        => $team_season->division_season->division,
       team            => $team,
       criteria_field  => "played",
       operator        => ">=",
       criteria        => 1,
-    }) ];
+    });
   }
   
   # $team_players is called averages in the stash so we can include the team averages table
   $c->stash({
     team_season                 => $team_season,
     singles_averages            => $singles_averages,
+    singles_last_updated        => $c->model("DB::PersonSeason")->get_tables_last_updated_timestamp({
+      season    => $season,
+      team      => $team,
+    }),
     doubles_individual_averages => $doubles_individual_averages,
+    doubles_ind_last_updated    => $c->model("DB::PersonSeason")->get_tables_last_updated_timestamp({
+      season    => $season,
+      team      => $team,
+    }),
     doubles_pair_averages       => $doubles_pair_averages,
+      doubles_pairs_last_updated => $c->model("DB::DoublesPair")->get_tables_last_updated_timestamp({
+      season    => $season,
+      team      => $team,
+    }),
     averages_team_page          => 1,
     season                      => $season,
     league_position             => $league_position,

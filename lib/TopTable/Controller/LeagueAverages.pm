@@ -369,27 +369,53 @@ sub view_finalise :Private {
   
   if ( defined( $averages_type ) and $averages_type eq "singles" ) {
     # Singles averages
-    $c->stash({ singles_averages => [ $c->model("DB::PersonSeason")->get_people_in_division_in_singles_averages_order( $config ) ], });
+    my $singles_averages = $c->model("DB::PersonSeason")->get_people_in_division_in_singles_averages_order( $config );
+    $c->stash({
+      singles_averages => $singles_averages,
+        singles_last_updated => $c->model("DB::PersonSeason")->get_tables_last_updated_timestamp({
+        season => $season,
+        division => $division,
+      }),
+    });
     
     # Check if we're authorised to display edit / delete links next to names
     $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( person_edit person_delete team_edit team_delete ) ], "", 0] );
-    
-    my $people = $c->model("DB::PersonSeason")->get_people_in_division_in_singles_averages_order( $config );
   } elsif ( defined( $averages_type ) and $averages_type eq "doubles-individuals" ) {
     # Doubles averages (invidual)
-    $c->stash({ doubles_individual_averages => [ $c->model("DB::PersonSeason")->get_people_in_division_in_doubles_individual_averages_order( $config ) ], });
+    my $doubles_ind_averages = $c->model("DB::PersonSeason")->get_people_in_division_in_doubles_individual_averages_order( $config );
+    $c->stash({
+      doubles_individual_averages => $doubles_ind_averages,
+      doubles_ind_last_updated => $c->model("DB::PersonSeason")->get_tables_last_updated_timestamp({
+        season => $season,
+        division => $division,
+      }),
+    });
     
     # Check if we're authorised to display edit / delete links next to names
     $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( person_edit person_delete team_edit team_delete ) ], "", 0] );
   } elsif ( defined( $averages_type ) and $averages_type eq "doubles-pairs" ) {
     # Doubles averages (pairs)
-    $c->stash({ doubles_pair_averages => [ $c->model("DB::DoublesPair")->get_doubles_pairs_in_division_in_averages_order( $config ) ], });
+    my $doubles_pairs_averages = $c->model("DB::DoublesPair")->get_doubles_pairs_in_division_in_averages_order( $config );
+    $c->stash({
+      doubles_pair_averages => $doubles_pairs_averages,
+      doubles_pairs_last_updated => $c->model("DB::DoublesPair")->get_tables_last_updated_timestamp({
+        season => $season,
+        division => $division,
+      }),
+    });
     
     # Check if we're authorised to display edit / delete links next to names
     $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( person_edit person_delete team_edit team_delete ) ], "", 0] );
   } elsif ( defined( $averages_type ) and $averages_type eq "doubles-teams" ) {
     # Team doubles records
-    $c->stash({ doubles_team_averages => [ $c->model("DB::TeamSeason")->get_doubles_teams_in_division_in_averages_order( $config ) ], });
+    my $doubles_teams_averages = $c->model("DB::TeamSeason")->get_doubles_teams_in_division_in_averages_order( $config );
+    $c->stash({
+      doubles_team_averages => $doubles_teams_averages,
+      doubles_teams_last_updated => $c->model("DB::TeamSeason")->get_tables_last_updated_timestamp({
+        season => $season,
+        division => $division,
+      }),
+    });
     
     # Check if we're authorised to display edit / delete links next to names
     $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( team_edit team_delete ) ], "", 0] );

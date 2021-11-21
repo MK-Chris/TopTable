@@ -189,10 +189,10 @@ FOREACH game IN match.team_match_games;
     END;
     SET NO_PLAYERS_NOTICE = c.maketext("matches.game.fill-out-players.doubles-notice");
     SET GAME_TYPE = ' data-game-type="doubles"';
-    SET HOME_PLAYER1 = game.home_doubles_pair.person1.id;
-    SET HOME_PLAYER2 = game.home_doubles_pair.person2.id;
-    SET AWAY_PLAYER1 = game.away_doubles_pair.person1.id;
-    SET AWAY_PLAYER2 = game.away_doubles_pair.person2.id;
+    SET HOME_PLAYER1 = game.home_doubles_pair.person_season_person1_season_team.person.id;
+    SET HOME_PLAYER2 = game.home_doubles_pair.person_season_person2_season_team.person.id;
+    SET AWAY_PLAYER1 = game.away_doubles_pair.person_season_person1_season_team.person.id;
+    SET AWAY_PLAYER2 = game.away_doubles_pair.person_season_person2_season_team.person.id;
 -%]
       <div class="doubles_home_player_selection field-container">
         <select name="game_[% game.scheduled_game_number %]_home_doubles_pairing" id="game_[% game.scheduled_game_number %]_home_doubles_pairing" class="doubles doubles_home doubles_game_[% game.scheduled_game_number %]" data-player-location="home" data-game="[% game.scheduled_game_number %]" multiple="multiple" data-placeholder="[% c.maketext("matches.game.field.doubles-home-players") %]">

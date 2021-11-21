@@ -582,9 +582,9 @@ sub get_match_by_ids {
         individual_match_template => [ qw( game_type serve_type ) ],
         team_match_legs => [ qw( first_server next_point_server ) ],
       }, {
-        home_doubles_pair => [ qw(person1 person2) ],
+        home_doubles_pair => [ qw(person_season_person1_season_team person_season_person2_season_team) ],
       }, {
-        away_doubles_pair => [ qw(person1 person2) ],
+        away_doubles_pair => [ qw(person_season_person1_season_team person_season_person2_season_team) ],
       }],
     }, {
       team_match_players => [ qw( loan_team location ), {
@@ -622,13 +622,10 @@ sub get_match_by_url_keys {
     scheduled_date      => $scheduled_date->ymd,
   }, {
     prefetch  => [ qw( venue season ), {
-      team_match_games => ["home_player", "away_player", "umpire", {
+      team_match_games => ["home_player", "away_player", "umpire", "team_match_legs", {
+        home_doubles_pair => [ qw(person_season_person1_season_team person_season_person2_season_team) ],
+        away_doubles_pair => [ qw(person_season_person1_season_team person_season_person2_season_team) ],
         individual_match_template => [ qw( game_type serve_type ) ],
-        team_match_legs => [ qw( first_server next_point_server ) ],
-      }, {
-        home_doubles_pair => [ qw(person1 person2) ],
-      }, {
-        away_doubles_pair => [ qw(person1 person2) ],
       }],
     }, {
       team_match_players => ["loan_team", "location", {
@@ -645,7 +642,8 @@ sub get_match_by_url_keys {
     }],
     order_by  => {
       -asc  => [ qw(team_match_games.actual_game_number team_match_legs.leg_number team_match_players.player_number) ],
-    }
+    },
+    group_by  => [ qw( team_match_games.actual_game_number team_match_games.scheduled_game_number team_match_legs.leg_number team_match_players.player_number ) ],
   });
 }
 

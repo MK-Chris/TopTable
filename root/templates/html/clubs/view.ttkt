@@ -119,14 +119,14 @@ SET venue_html = venue.name | html_entity;
 [%-
         IF authorisation.team_edit;
 -%]
- <a href="[% c.uri_for_action("/teams/edit_by_url_key", [club_season.club.url_key, team.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", club_html _ " " _ team_html) %]" title="[% c.maketext("admin.edit-object", club_html _ " " _ team_html) %]" /></a>
+ <a class="admin-links" href="[% c.uri_for_action("/teams/edit_by_url_key", [club_season.club.url_key, team.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", club_html _ " " _ team_html) %]" title="[% c.maketext("admin.edit-object", club_html _ " " _ team_html) %]" /></a>
 [%-
         END;
 -%]
 [%-
         IF authorisation.team_delete AND team.can_delete;
 -%]
- <a href="[% c.uri_for_action("/teams/delete_by_url_key", [club_season.club.url_key, team.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", club_html _ " " _ team_html) %]" title="[% c.maketext("admin.delete-object", club_html _ " " _ team_html) %]" /></a>
+ <a class="admin-links" href="[% c.uri_for_action("/teams/delete_by_url_key", [club_season.club.url_key, team.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", club_html _ " " _ team_html) %]" title="[% c.maketext("admin.delete-object", club_html _ " " _ team_html) %]" /></a>
 [%-
         END;
 -%]
@@ -138,12 +138,12 @@ SET venue_html = venue.name | html_entity;
 [%-
           IF authorisation.person_edit;
 -%]
- <a href="[% c.uri_for_action("/people/edit", [captain.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", captain_html) %]" title="[% c.maketext("admin.edit-object", captain_html) %]" /></a>
+ <a class="admin-links" href="[% c.uri_for_action("/people/edit", [captain.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", captain_html) %]" title="[% c.maketext("admin.edit-object", captain_html) %]" /></a>
 [%-
           END;
           IF authorisation.person_delete AND captain.can_delete;
 -%]
- <a href="[% c.uri_for_action("/people/delete", [captain.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", captain_html) %]" title="[% c.maketext("admin.delete-object", captain_html) %]" /></a>
+ <a class="admin-links" href="[% c.uri_for_action("/people/delete", [captain.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", captain_html) %]" title="[% c.maketext("admin.delete-object", captain_html) %]" /></a>
 [%-
           END;
 -%]
@@ -192,7 +192,7 @@ END;
 
 IF authorisation.team_create;
 -%]
-<a href="[% c.uri_for_action("/teams/create_with_club", [club.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0009-Add-icon-32.png") %]" alt="[% c.maketext("teams.create-for", club_season.full_name) | html_entity %]" title="[% c.maketext("teams.create-for", club_name_html) %]" /></a>
+<a class="admin-links" href="[% c.uri_for_action("/teams/create_with_club", [club.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0009-Add-icon-32.png") %]" alt="[% c.maketext("teams.create-for", club_season.full_name) | html_entity %]" title="[% c.maketext("teams.create-for", club_name_html) %]" /></a>
 [%
 END;
 IF seasons == 1;

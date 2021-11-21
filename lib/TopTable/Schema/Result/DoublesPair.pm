@@ -353,34 +353,34 @@ __PACKAGE__->set_primary_key("id");
 
 =head1 RELATIONS
 
-=head2 person1
+=head2 person_season_person1_season_team
 
 Type: belongs_to
 
-Related object: L<TopTable::Schema::Result::Person>
+Related object: L<TopTable::Schema::Result::PersonSeason>
 
 =cut
 
 __PACKAGE__->belongs_to(
-  "person1",
-  "TopTable::Schema::Result::Person",
-  { id => "person1" },
-  { is_deferrable => 1, on_delete => "CASCADE", on_update => "RESTRICT" },
+  "person_season_person1_season_team",
+  "TopTable::Schema::Result::PersonSeason",
+  { person => "person1", season => "season", team => "team" },
+  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
 );
 
-=head2 person2
+=head2 person_season_person2_season_team
 
 Type: belongs_to
 
-Related object: L<TopTable::Schema::Result::Person>
+Related object: L<TopTable::Schema::Result::PersonSeason>
 
 =cut
 
 __PACKAGE__->belongs_to(
-  "person2",
-  "TopTable::Schema::Result::Person",
-  { id => "person2" },
-  { is_deferrable => 1, on_delete => "CASCADE", on_update => "RESTRICT" },
+  "person_season_person2_season_team",
+  "TopTable::Schema::Result::PersonSeason",
+  { person => "person2", season => "season", team => "team" },
+  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
 );
 
 =head2 season
@@ -395,21 +395,6 @@ __PACKAGE__->belongs_to(
   "season",
   "TopTable::Schema::Result::Season",
   { id => "season" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
-);
-
-=head2 team
-
-Type: belongs_to
-
-Related object: L<TopTable::Schema::Result::Team>
-
-=cut
-
-__PACKAGE__->belongs_to(
-  "team",
-  "TopTable::Schema::Result::Team",
-  { id => "team" },
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
 );
 
@@ -443,9 +428,24 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
+=head2 team_season
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-02-15 20:58:42
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:irqWFXWfNextp2uRNAfylg
+Type: belongs_to
+
+Related object: L<TopTable::Schema::Result::TeamSeason>
+
+=cut
+
+__PACKAGE__->belongs_to(
+  "team_season",
+  "TopTable::Schema::Result::TeamSeason",
+  { season => "season", team => "team" },
+  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+);
+
+
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-11-20 08:35:58
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:TH/CxjrnYIMZ46gl9Css/A
 
 #
 # Enable automatic date handling

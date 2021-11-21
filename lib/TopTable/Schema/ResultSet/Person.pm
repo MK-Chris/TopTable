@@ -610,7 +610,26 @@ sub create_or_edit {
       } else {
         # No team defined; if there is an active season association where they haven't played yet, we'll remove it (if they have played, we'll leave it active,
         # as there's no point deactivating it for nothing.)
-        $active_person_season->delete if defined( $active_person_season ) and $active_person_season->matches_played == 0;
+        if ( defined( $active_person_season ) and $active_person_season->matches_played == 0 ) {
+          # Now search for doubles pairs to ensure they haven't played doubles
+          my $pairings1 = $active_person_season->search_related("doubles_pairs_person1_season_teams", {
+            games_played => {">" => 0},
+          });
+          
+          my $pairings2 = $active_person_season->search_related("doubles_pairs_person2_season_teams", {
+            games_played => {">" => 0},
+          });
+          
+          my $pairings = $pairings1->union( $pairings2 );
+          
+          unless ( $pairings->count ) {
+            # We may have a doubles pairing, but they haven't played, so we can delete them
+            $active_person_season->delete_related("doubles_pairs_person1_season_teams");
+            $active_person_season->delete_related("doubles_pairs_person2_season_teams");
+            $active_person_season->delete;
+          }
+          
+        }
       }
       
       # Do the setting to null of secretaries / captains where this person was captain / secretary but is no longer
@@ -657,13 +676,13 @@ sub create_or_edit {
           if ( $action eq "edit" ) {
             # This is only necessary if we're editing; get the doubles pairing involving this teammate
             # and the player we're editing / creating for the team.
-            my $pairings1 = $teammate->person->search_related("doubles_pairs_person1s", {
+            my $pairings1 = $teammate->search_related("doubles_pairs_person1_season_teams", {
               person2 => $person->id,
               season  => $season->id,
               team    => $team->id,
             });
             
-            my $pairings2 = $teammate->person->search_related("doubles_pairs_person2s", {
+            my $pairings2 = $teammate->search_related("doubles_pairs_person2_season_teams", {
               person1 => $person->id,
               season  => $season->id,
               team    => $team->id,
@@ -677,9 +696,9 @@ sub create_or_edit {
           
           # If we need to create the doubles pairing, do it here.  It doesn't matter which person is 1 and which is 2,
           # any searches will need to use an OR query to check both fields - as it happens, using create_related on
-          # doubles_pairs_person1s with the teammate populates person1 with the teammate's ID, so we manually fill
+          # doubles_pairs_person1_season_teams with the teammate populates person1 with the teammate's ID, so we manually fill
           # person2 with our $person->id
-          my $pairing = $teammate->person->create_related("doubles_pairs_person1s", {
+          my $pairing = $teammate->create_related("doubles_pairs_person1_season_teams", {
             person2 => $person->id,
             season  => $season->id,
             team    => $team->id,

@@ -3,7 +3,13 @@
 [% # output (use View Source in browser to see the effect) -%]
 
 [%
-IF singles_averages.size;
+UNLESS averages_team_page;
+%]
+<div class="table-wrap">
+  <div class="table-layout table-layout-centre">
+[%
+END;
+IF singles_averages.count;
   # Set a count so when we process the form include, the variable is incremented and we get unique field IDs
   SET filter_forms = 1;
   
@@ -11,30 +17,30 @@ IF singles_averages.size;
     PROCESS "html/league-averages/filter-view-form.ttkt" COMPETITORS = c.maketext("averages.competitor-type.players");
   END;
 -%]
-<table id="averages-singles" class="stripe hover row-border" style="width: 100%;">
-  <thead>
-    <tr>
-      <th class="numeric">[% c.maketext("stats.table-heading.position") %]</th>
-      <th>[% c.maketext("stats.table-heading.player") %]</th>
+    <table id="averages-singles" class="stripe hover row-border" style="width: 100%;">
+      <thead>
+        <tr>
+          <th class="numeric">[% c.maketext("stats.table-heading.position") %]</th>
+          <th>[% c.maketext("stats.table-heading.player") %]</th>
 [%
   UNLESS averages_team_page;
 -%]
-      <th>[% c.maketext("stats.table-heading.team") %]</th>
+          <th>[% c.maketext("stats.table-heading.team") %]</th>
 [%
   END;
 -%]
-      <th class="numeric">[% c.maketext("stats.table-heading.matches-played") %]</th>
-      <th class="numeric">[% c.maketext("stats.table-heading.matches-available") %]</th>
-      <th class="numeric">[% c.maketext("stats.table-heading.games-played") %]</th>
-      <th class="numeric">[% c.maketext("stats.table-heading.games-won") %]</th>
-      <th class="numeric">[% c.maketext("stats.table-heading.games-lost") %]</th>
-      <th class="numeric">[% c.maketext("stats.table-heading.average") %]</th>
-    </tr>
-  </thead>
-  <tbody>
+          <th class="numeric">[% c.maketext("stats.table-heading.matches-played") %]</th>
+          <th class="numeric">[% c.maketext("stats.table-heading.matches-available") %]</th>
+          <th class="numeric">[% c.maketext("stats.table-heading.games-played") %]</th>
+          <th class="numeric">[% c.maketext("stats.table-heading.games-won") %]</th>
+          <th class="numeric">[% c.maketext("stats.table-heading.games-lost") %]</th>
+          <th class="numeric">[% c.maketext("stats.table-heading.average") %]</th>
+        </tr>
+      </thead>
+      <tbody>
 [%
   SET i = 0;
-  FOREACH average IN singles_averages;
+  WHILE (average = singles_averages.next);
     i = i + 1;
     IF specific_season;
       SET team_uri        = c.uri_for_action("/teams/view_specific_season_by_url_key", [average.team_season.club_season.club.url_key, average.team_season.team.url_key, average.season.url_key]);
@@ -59,18 +65,18 @@ IF singles_averages.size;
       SET add_player_class = '';
     END;
 -%]
-    <tr>
-      <td class="numeric[% add_player_class %]">[% i %]</td>
-      <td[% player_class %]><a href="[% person_uri %]"[% player_class %]>[% person_html %]</a>
+        <tr>
+          <td class="numeric[% add_player_class %]">[% i %]</td>
+          <td[% player_class %]><a href="[% person_uri %]"[% player_class %]>[% person_html %]</a>
 [%-
 IF authorisation.person_edit;
 -%]
- <a href="[% c.uri_for_action("/people/edit", [average.person.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", person_html) %]" title="[% c.maketext("admin.edit-object", person_html) %]" /></a>
+ <a class="admin-links" href="[% c.uri_for_action("/people/edit", [average.person.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", person_html) %]" title="[% c.maketext("admin.edit-object", person_html) %]" /></a>
 [%-
 END;
 IF authorisation.person_delete AND average.person.can_delete;
 -%]
- <a href="[% c.uri_for_action("/people/delete", [average.person.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", person_html) %]" title="[% c.maketext("admin.delete-object", person_html) %]" /></a>
+ <a class="admin-links" href="[% c.uri_for_action("/people/delete", [average.person.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", person_html) %]" title="[% c.maketext("admin.delete-object", person_html) %]" /></a>
 [%-
 END;
 -%]
@@ -83,16 +89,16 @@ END;
       SET club = club_season.club;
       team_name = club_season.short_name _ " " _ team_season.name | html_entity;
 -%]
-      <td[% player_class %]><a href="[% team_uri %]"[% player_class %]>[% team_name %]</a>
+          <td[% player_class %]><a href="[% team_uri %]"[% player_class %]><nobr>[% club_season.short_name | html_entity %]</nobr> [% team_season.name | html_entity %]</a>
 [%-
 IF authorisation.team_edit;
 -%]
- <a href="[% c.uri_for_action("/teams/edit_by_url_key", [club.url_key, team.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", team_name) %]" title="[% c.maketext("admin.edit-object", team_name) %]" /></a>
+ <a class="admin-links" href="[% c.uri_for_action("/teams/edit_by_url_key", [club.url_key, team.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", team_name) %]" title="[% c.maketext("admin.edit-object", team_name) %]" /></a>
 [%-
 END;
 IF authorisation.team_delete AND average.team_season.team.can_delete;
 -%]
- <a href="[% c.uri_for_action("/teams/delete_by_url_key", [club.url_key, team.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", team_name) %]" title="[% c.maketext("admin.delete-object", team_name) %]" /></a>
+ <a class="admin-links" href="[% c.uri_for_action("/teams/delete_by_url_key", [club.url_key, team.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", team_name) %]" title="[% c.maketext("admin.delete-object", team_name) %]" /></a>
 [%-
 END;
 -%]
@@ -100,38 +106,43 @@ END;
 [%
     END;
 -%]
-      <td class="numeric[% add_player_class %]"><span[% player_class %]>[% average.matches_played %]</span></td>
-      <td class="numeric[% add_player_class %]"><span[% player_class %]>[% average.available_matches %]</span></td>
-      <td class="numeric[% add_player_class %]"><span[% player_class %]>[% average.games_played %]</span></td>
-      <td class="numeric[% add_player_class %]"><span[% player_class %]>[% average.games_won %]</span></td>
-      <td class="numeric[% add_player_class %]"><span[% player_class %]>[% average.games_lost %]</span></td>
-      <td class="numeric[% add_player_class %]"><span[% player_class %]>[% average.average_game_wins | format('%.2f') %]</span></td>
-    </tr>
+          <td class="numeric[% add_player_class %]"><span[% player_class %]>[% average.matches_played %]</span></td>
+          <td class="numeric[% add_player_class %]"><span[% player_class %]>[% average.available_matches %]</span></td>
+          <td class="numeric[% add_player_class %]"><span[% player_class %]>[% average.games_played %]</span></td>
+          <td class="numeric[% add_player_class %]"><span[% player_class %]>[% average.games_won %]</span></td>
+          <td class="numeric[% add_player_class %]"><span[% player_class %]>[% average.games_lost %]</span></td>
+          <td class="numeric[% add_player_class %]"><span[% player_class %]>[% average.average_game_wins | format('%.2f') %]</span></td>
+        </tr>
 [%
   END;
 -%]
-  </tbody>
-</table>
+      </tbody>
+    </table>
 [%
+  IF singles_last_updated.defined;
+%]
+    <div class="dataTables_info" id="league-table_info" role="status" aria-live="polite">[% c.maketext("updated.time", c.i18n_datetime_format_datetime.format_datetime(singles_last_updated)) %]</div>
+[%
+  END;
   UNLESS no_filter;
     PROCESS "html/league-averages/filter-view-form.ttkt" COMPETITORS = c.maketext("averages.competitor-type.players");
   END;
   IF loan_players OR inactive;
 -%]
-    <div id="games-key">
+        <div id="games-key">
 [%
     IF loan_players;
 -%]
-      <div class="loan-player-key">&nbsp;</div> [% c.maketext("team-membership-type.name.loan") %]<br />
+          <div class="loan-player-key">&nbsp;</div> [% c.maketext("team-membership-type.name.loan") %]<br />
 [%
     END;
     IF inactive;
 -%]
-      <div class="inactive-player-key">&nbsp;</div> [% c.maketext("team-membership-type.name.inactive") %]<br />
+          <div class="inactive-player-key">&nbsp;</div> [% c.maketext("team-membership-type.name.inactive") %]<br />
 [%
     END;
 -%]
-    </div>
+        </div>
 [%
   END;
 ELSE;
@@ -144,14 +155,15 @@ ELSE;
     END;
   END;
 -%]
-<div class="list-item">
-  [% c.maketext("averages.no-players") %]
-</div>
+    <div class="list-item">
+      [% c.maketext("averages.no-players") %]
+    </div>
 [%
 END;
-
 UNLESS averages_team_page;
 -%]
+  </div>
+</div>
 
 <div class="links-list">
 [%

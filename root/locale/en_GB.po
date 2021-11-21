@@ -2123,7 +2123,7 @@ msgid "matches.loan-player.add.error.played-too-many-times-for-opposition"
 msgstr "%1 has played on loan too many times against %2 and cannot play against them again, the limit is %3."
 
 msgid "matches.loan-player.add.error.team-played-too-many-loan-players"
-msgstr "%1 has played loan players the maximum number of times and cannot play any more.  The maximum number is %2."
+msgstr "%1 has played loan players the maximum number of times and cannot play any more, the maximum number is %2."
 
 msgid "matches.loan-player.add.error.cannot-play-for-more-than-one-team-in-division"
 msgstr "%1 has already played for another team in %2 and the current rules stipulate that you cannot play on loan for more than one team in a given division."
@@ -2486,6 +2486,9 @@ msgstr "Team"
 msgid "stats.table-heading.matches-played"
 msgstr "Matches"
 
+msgid "stats.table-heading.team-matches-played"
+msgstr "P"
+
 msgid "stats.table-heading.matches-available"
 msgstr "Matches available"
 
@@ -2807,6 +2810,10 @@ msgstr "Only show players who have %1 %2 %3 %4."
 
 msgid "average-filter.user-defined"
 msgstr "This is a user-defined average filter, created by %1"
+
+### Last updated date / time
+msgid "updated.time"
+msgstr "Last updated: %1"
 
 ### Events
 msgid "events.create"

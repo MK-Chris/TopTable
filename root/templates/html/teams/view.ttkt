@@ -209,12 +209,13 @@ END;
 [%
   END;
 -%]
-    <h4>[% c.maketext("divisions.option.league-averages-singles") %]</h4>
+<div class="table-wrap">
+  <div class="table-layout table-layout-centre">
+        <h4>[% c.maketext("divisions.option.league-averages-singles") %]</h4>
 [%
   # Singles averages
   INCLUDE "html/league-averages/view_singles.ttkt";
 -%]
-
     <h4>[% c.maketext("divisions.option.league-averages-doubles-individuals") %]</h4>
 [%
   # Individual doubles averages
@@ -226,6 +227,8 @@ END;
   # Individual doubles averages
   INCLUDE "html/league-averages/view_doubles-pairs.ttkt";
 -%]
+  </div>
+</div>
   </div>
   
   <div id="fixtures-results">

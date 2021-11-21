@@ -74,23 +74,23 @@ ELSE;
         
         IF match.season.complete;
           # Specific season player links
-          SET home1_uri = c.uri_for_action("/people/view_specific_season", [game.home_doubles_pair.person1.url_key, match.season.url_key]);
-          SET home2_uri = c.uri_for_action("/people/view_specific_season", [game.home_doubles_pair.person2.url_key, match.season.url_key]);
-          SET away1_uri = c.uri_for_action("/people/view_specific_season", [game.away_doubles_pair.person1.url_key, match.season.url_key]);
-          SET away2_uri = c.uri_for_action("/people/view_specific_season", [game.away_doubles_pair.person2.url_key, match.season.url_key]);
+          SET home1_uri = c.uri_for_action("/people/view_specific_season", [game.home_doubles_pair.person_season_person1_season_team.person.url_key, match.season.url_key]);
+          SET home2_uri = c.uri_for_action("/people/view_specific_season", [game.home_doubles_pair.person_season_person2_season_team.person.url_key, match.season.url_key]);
+          SET away1_uri = c.uri_for_action("/people/view_specific_season", [game.away_doubles_pair.person_season_person1_season_team.person.url_key, match.season.url_key]);
+          SET away2_uri = c.uri_for_action("/people/view_specific_season", [game.away_doubles_pair.person_season_person2_season_team.person.url_key, match.season.url_key]);
         ELSE;
           # Current season player links
-          SET home1_uri = c.uri_for_action("/people/view_current_season", [game.home_doubles_pair.person1.url_key]);
-          SET home2_uri = c.uri_for_action("/people/view_current_season", [game.home_doubles_pair.person2.url_key]);
-          SET away1_uri = c.uri_for_action("/people/view_current_season", [game.away_doubles_pair.person1.url_key]);
-          SET away2_uri = c.uri_for_action("/people/view_current_season", [game.away_doubles_pair.person2.url_key]);
+          SET home1_uri = c.uri_for_action("/people/view_current_season", [game.home_doubles_pair.person_season_person1_season_team.person.url_key]);
+          SET home2_uri = c.uri_for_action("/people/view_current_season", [game.home_doubles_pair.person_season_person2_season_team.person.url_key]);
+          SET away1_uri = c.uri_for_action("/people/view_current_season", [game.away_doubles_pair.person_season_person1_season_team.person.url_key]);
+          SET away2_uri = c.uri_for_action("/people/view_current_season", [game.away_doubles_pair.person_season_person2_season_team.person.url_key]);
         END;
         
         # Set the result text now we know the URIs
-        home1_html = FILTER html_entity; game.home_doubles_pair.person1.display_name; END;
-        home2_html = FILTER html_entity; game.home_doubles_pair.person2.display_name; END;
-        away1_html = FILTER html_entity; game.away_doubles_pair.person1.display_name; END;
-        away2_html = FILTER html_entity; game.away_doubles_pair.person2.display_name; END;
+        home1_html = FILTER html_entity; game.home_doubles_pair.person_season_person1_season_team.display_name; END;
+        home2_html = FILTER html_entity; game.home_doubles_pair.person_season_person2_season_team.display_name; END;
+        away1_html = FILTER html_entity; game.away_doubles_pair.person_season_person1_season_team.display_name; END;
+        away2_html = FILTER html_entity; game.away_doubles_pair.person_season_person2_season_team.display_name; END;
         SET result = c.maketext(result.message.id, home1_html, home2_html, away1_html, away2_html, home1_uri, home2_uri, away1_uri, away2_uri);
 -%]
           <td>[% result %]</span> ([% summary_score.home %]-[% summary_score.away %])</td>

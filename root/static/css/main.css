@@ -214,6 +214,52 @@ div.error-message, div.error-message-small {
   border: 1px solid #D8000C;
 }
 
+/* Tables */
+.table-wrap {
+  max-width: 1008px;
+  margin: 0 auto;
+  padding-right: 8px;
+  padding-left: 8px;
+  /*border: 1px solid black;*/
+}
+
+@media (min-width:25em) {
+  .table-wrap {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
+
+/*@media (min-width:80em) {
+  .b-pw-1280 .table-wrap {
+    max-width: 1280px;
+  }
+}*/
+
+.table-layout {
+  margin-right: 0;
+  margin-left: -8px;
+  padding-right: 0;
+  padding-left: 0;
+  /*border: 1px solid red;*/
+}
+
+.table-layout-centre {
+  -webkit-justify-content: center;
+  -ms-flex-pack: center;
+  justify-content: center;
+}
+
+@media (min-width:37.5em) {
+  .table-layout {
+    margin-left: -16px;
+  }
+}
+
+.filter-options {
+  padding-top: 30px;
+}
+
 /* Breadcrumbs */
 #breadcrumbs {
   margin: 0 0 5px;

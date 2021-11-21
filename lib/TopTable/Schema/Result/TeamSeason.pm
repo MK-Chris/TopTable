@@ -675,6 +675,21 @@ __PACKAGE__->belongs_to(
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
 );
 
+=head2 doubles_pairs
+
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::DoublesPair>
+
+=cut
+
+__PACKAGE__->has_many(
+  "doubles_pairs",
+  "TopTable::Schema::Result::DoublesPair",
+  { "foreign.season" => "self.season", "foreign.team" => "self.team" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
 =head2 home_night
 
 Type: belongs_to
@@ -772,8 +787,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-03-13 09:25:49
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:mnt1JV1v8hSvpN7bDNMXXA
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-11-20 08:35:59
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:OlBX367bZ/PbRrSljNUtTg
 
 #
 # Enable automatic date handling

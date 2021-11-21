@@ -3,6 +3,7 @@ package TopTable::Schema::ResultSet::TeamSeason;
 use strict;
 use warnings;
 use base 'DBIx::Class::ResultSet';
+use DateTime;
 
 =head2 get_teams_in_division_in_league_table_order
 
@@ -11,7 +12,9 @@ Retrieve people in a given season / division in averages order.  If the $criteri
 =cut
 
 sub get_teams_in_division_in_league_table_order {
-  my ( $self, $season, $division ) = @_;
+  my ( $self, $params ) = @_;
+  my $season = delete $params->{season};
+  my $division = delete $params->{division};
   
   return $self->search({
     "me.season" => $season->id,
@@ -39,12 +42,12 @@ Retrieve doubles teams in a given season / division in averages order.
 =cut
 
 sub get_doubles_teams_in_division_in_averages_order {
-  my ( $self, $parameters ) = @_;
-  my $division        = $parameters->{division};
-  my $season          = $parameters->{season};
-  my $criteria_field  = $parameters->{criteria_field} || undef;
-  my $operator        = $parameters->{operator} || undef;
-  my $criteria        = $parameters->{criteria} || undef;
+  my ( $self, $params ) = @_;
+  my $division        = delete $params->{division};
+  my $season          = delete $params->{season};
+  my $criteria_field  = delete $params->{criteria_field} || undef;
+  my $operator        = delete $params->{operator} || undef;
+  my $criteria        = delete $params->{criteria} || undef;
   
   my $where = {
     "me.season"   => $season->id,
@@ -67,6 +70,26 @@ sub get_doubles_teams_in_division_in_averages_order {
       -asc  => [ qw( club.short_name team.name ) ],
     }],
   });
+}
+
+=head2 get_tables_last_updated_timestamp
+
+For a given season and division, return the last updated date / time.
+
+=cut
+
+sub get_tables_last_updated_timestamp {
+  my ( $self, $params ) = @_;
+  my $division = delete $params->{division};
+  my $season = delete $params->{season};
+  
+  return $self->find({
+    season => $season->id,
+    division => $division->id,
+  }, {
+    rows => 1,
+    order_by => {-desc => "last_updated"}
+  })->last_updated;
 }
 
 =head2 grid_positions_filled

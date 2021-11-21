@@ -254,6 +254,29 @@ sub get_people_in_division_in_doubles_individual_averages_order {
   });
 }
 
+=head2 get_tables_last_updated_timestamp
+
+For a given season and division, return the last updated date / time.
+
+=cut
+
+sub get_tables_last_updated_timestamp {
+  my ( $self, $params ) = @_;
+  my $season = delete $params->{season};
+  my $division = delete $params->{division} || undef;
+  my $team = delete $params->{team} || undef;
+  
+  my $where = {season => $season->id};
+  $where->{"me.team"} = $team->id if defined( $team );
+  $where->{"team_season.division"} = $division->id if defined( $division );
+  
+  return $self->find($where, {
+    join => "team_season",
+    rows => 1,
+    order_by => {-desc => "last_updated"}
+  })->last_updated;
+}
+
 =head2 get_people_in_team_in_name_order
 
 Retrieve people in a given season / team in order by surname, then first name.

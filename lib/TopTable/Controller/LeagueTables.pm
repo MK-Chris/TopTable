@@ -283,6 +283,12 @@ sub view_finalise :Private {
     ? $c->uri_for_action("league-tables/view_specific_season", [$division->url_key, $season->url_key])
     : $c->uri_for_action("league-tables/view_current_season", [$division->url_key]);
   
+  # Grab these here rather than the stash call, as it'll be forced into list context otherwise
+  my $league_tables = $c->model("DB::TeamSeason")->get_teams_in_division_in_league_table_order({
+    season => $season,
+    division => $division,
+  });
+  
   # Stash the common details
   $c->stash({
     template            => "html/league-tables/view.ttkt",
@@ -291,14 +297,18 @@ sub view_finalise :Private {
     divisions           => [ $season->divisions ],
     view_online_display => sprintf( "Viewing %s league tables for %s", $division->name, $season->name ),
     view_online_link    => 1,
-    tables              => [ $c->model("DB::TeamSeason")->get_teams_in_division_in_league_table_order( $season, $division ) ],
+    league_tables       => $league_tables,
+    last_updated        => $c->model("DB::TeamSeason")->get_tables_last_updated_timestamp({
+      season => $season,
+      division => $division,
+    }),
     canonical_uri       => $canonical_uri,
     external_scripts    => [
       $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
-      $c->uri_for("/static/script/league-tables/view.js"),
+      $c->uri_for("/static/script/league-tables/view.js", {v => 2}),
     ],
     external_styles     => [
       $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),

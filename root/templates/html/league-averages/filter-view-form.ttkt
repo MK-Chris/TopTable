@@ -1,5 +1,5 @@
 <form method="post">
-  <div id="filter-options[% filter_forms %]">
+  <div class="filter-options" id="filter-options[% filter_forms %]">
 [%-
 IF defined_filter;
   SET DEFINED_CHECKED = ' checked="checked"';
