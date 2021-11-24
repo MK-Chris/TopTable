@@ -23,10 +23,10 @@
         
         IF page.number == page_info.current_page;
           # Current page number is just displayed
-          SET page_links_text = page_links_text _ '<span class="current-page">' _ page.number _ '</span>';
+          SET page_links_text = page_links_text _ '<span class="current-page">' _ c.i18n_numberformat.format_number( page.number ) _ '</span>';
         ELSE;
           # We need to link to it
-          SET page_links_text = page_links_text _ '<a href="' _ c.uri_for_action(page.action, page.arguments) _ '">' _ page.number _ '</a>';
+          SET page_links_text = page_links_text _ '<a href="' _ c.uri_for_action(page.action, page.arguments) _ '">' _ c.i18n_numberformat.format_number( page.number ) _ '</a>';
         END;
         
         SET last_page_number = page.number;
