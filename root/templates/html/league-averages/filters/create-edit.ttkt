@@ -140,7 +140,7 @@ END;
   <div class="label-field-container">
     <label for="criteria_type">[% c.maketext("average-filters.criteria") %]</label>
     <div class="field-container">
-      <input type="number" name="criteria" id="criteria" value="[% c.flash.number OR filter.number | html_entity %]" />
+      <input type="number" name="criteria" id="criteria" value="[% c.flash.criteria OR filter.criteria | html_entity %]" />
     </div>
     <div class="clear-fix"></div>
   </div>

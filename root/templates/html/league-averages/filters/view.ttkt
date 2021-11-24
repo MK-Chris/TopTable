@@ -39,6 +39,6 @@ END;
   </tr>
   <tr>
     <th scope="row">[% c.maketext("average.filters.settings") %]</th>
-    <td>[% c.maketext("average.filters.settings-data", filter.criteria_field, c.maketext("averages.filter-form.operator." _ filter.operator), filter.criteria, filter.criteria_type) %]</td>
+    <td>[% c.maketext("average.filters.settings-data", filter.criteria_field, c.maketext("averages.filter-form.operator." _ filter.operator), filter.criteria, c.maketext(filter.criteria_type)) %]</td>
   </tr>
 </table>

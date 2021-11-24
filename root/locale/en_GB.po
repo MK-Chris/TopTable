@@ -2691,6 +2691,9 @@ msgstr "matches"
 msgid "averages.filter-form.criteria-type.games"
 msgstr "games"
 
+msgid "matches-pc"
+msgstr "% of available matches"
+
 msgid "averages.filter-form.filter"
 msgstr "Filter"
 
@@ -4533,7 +4536,7 @@ msgid "system-event-log.description.login"
 msgstr "%1%2 logged in."
 
 msgid "system-event-log.description.login-failed"
-msgstr "Failed login attempt using username %1%2."
+msgstr "Failed login attempt using username '%1'%2."
 
 msgid "system-event-log.description.logout"
 msgstr "%1%2 logged out."

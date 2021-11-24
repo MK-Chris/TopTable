@@ -35,18 +35,28 @@ sub page_records {
   
   return $self->search($where, {
     prefetch  => [
+      "system_event_log_average_filters",
       "system_event_log_clubs",
+      "system_event_log_contact_reasons",
       "system_event_log_divisions",
+      "system_event_log_events",
+      "system_event_log_files",
       "system_event_log_fixtures_grids",
-      "system_event_log_team_matches",
+      "system_event_log_images",
+      "system_event_log_meeting_types",
+      "system_event_log_meetings",
       "system_event_log_news",
       "system_event_log_people",
+      "system_event_log_roles",
       "system_event_log_seasons",
+      "system_event_log_team_matches",
       "system_event_log_teams",
+      "system_event_log_template_league_table_rankings",
       "system_event_log_template_match_individuals",
       "system_event_log_template_match_team_games",
       "system_event_log_template_match_teams",
       "system_event_log_template_league_table_rankings",
+      "system_event_log_users",
       "system_event_log_venues", {
         user => "person",
       },
@@ -75,7 +85,7 @@ sub set_event_log {
   my $object_type       = $params->{object_type} || undef;
   my $event_type        = $params->{event_type} || undef;
   my $object_ids        = $params->{object_ids} || undef;
-  my $object_name       = $params->{object_name} || undef;
+  my $object_name       = $params->{object_name} || "";
   my $user_id           = defined( $params->{user} ) ? $params->{user}->id : undef;
   my $ip_address        = $params->{ip_address} || undef;
   my $current_datetime  = $params->{current_time} || undef;
