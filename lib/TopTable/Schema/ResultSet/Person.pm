@@ -5,6 +5,7 @@ use warnings;
 use base 'DBIx::Class::ResultSet';
 use DateTime;
 use Try::Tiny;
+use Data::Dumper::Concise;
 
 =head2 get_person_and_gender
 
@@ -92,39 +93,59 @@ Return search results based on a supplied full or partial club / team name.
 =cut
 
 sub search_by_name {
-  my ( $self, $search_term, $season ) = @_;  my ( $where, $attributes );
+  my ( $self, $params ) = @_;
+  my $q = delete $params->{q};
+  my $split_words = delete $params->{split_words} || 0;
+  my $season = delete $params->{season};
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $page = delete $params->{page} || undef;
+  my $results_per_page = delete $params->{results} || undef;
   
-  if ( $season ) {
-    $where = {
-      "me.display_name"  => {
-        like => "%" . $search_term . "%"
-      },
-      "season.id"   => $season->id,
-    };
-    $attributes = {
-      join => {
-        "person_seasons"  => "season",
-      },
-      order_by => {
-        -asc => [
-            qw( surname first_name )
-        ]
-      },
-    };
+  # Split into words, so we can match a single word
+  my @words = split( /\s+/, $q );
+  
+  # Construct the LIKE '%word1%' AND  LIKE '%word2%' etc.  I couldn't work out how to map this, so a loop it is.
+  my ( $where );
+  if ( $split_words ) {
+    my @constructed_like = ("-and");
+    foreach my $word ( @words ) {
+      my $constructed_like = { -like => "%$word%" };
+      push ( @constructed_like, $constructed_like );
+    }
+    
+    $where = {"me.display_name" => \@constructed_like};
   } else {
+    # Don't split words up before performing a like
     $where = {
-      display_name  => {
-        like  => "%" . $search_term . "%"
-      },
-    };
-    $attributes = {
-      order_by      => {
-        -asc  => "display_name"
-      },
+      "me.display_name" => {-like => "%$q%"}
     };
   }
   
-  return $self->search( $where, $attributes );
+  my $attrib = {
+    order_by => {-asc => [ qw( me.surname me.first_name ) ]},
+    group_by => qw( me.display_name ),
+  };
+  
+  my $use_paging = ( defined( $page ) ) ? 1 : 0;
+  
+  if ( $use_paging ) {
+    # Set a default for results per page if it's not provided or invalid
+    $results_per_page = 25 if !defined( $results_per_page ) or $results_per_page !~ m/^\d+$/;
+    
+    # Default the page number to 1
+    $page = 1 if $page !~ m/^\d+$/;
+    
+    # Set the attribs for paging
+    $attrib->{page} = $page;
+    $attrib->{rows} = $results_per_page;
+  }
+  
+  if ( defined( $season ) ) {
+    $where->{"person_seasons.season"} = $season->id;
+    $attrib->{join} = "person_seasons";
+  }
+  
+  return $self->search( $where, $attrib );
 }
 
 =head2 find_person_in_season_and_team

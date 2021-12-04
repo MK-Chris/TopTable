@@ -20,6 +20,67 @@ sub all_grids {
   });
 }
 
+=head2 search_by_name
+
+Return search results based on a supplied full or partial name.
+
+=cut
+
+sub search_by_name {
+  my ( $self, $params ) = @_;
+  my $q = delete $params->{q};
+  my $split_words = delete $params->{split_words} || 0;
+  my $season = delete $params->{season};
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $page = delete $params->{page} || undef;
+  my $results_per_page = delete $params->{results} || undef;
+  
+  # Construct the LIKE '%word1%' AND  LIKE '%word2%' etc.  I couldn't work out how to map this, so a loop it is.
+  my ( $where );
+  if ( $split_words ) {
+    my @words = split( /\s+/, $q );
+    my @constructed_like = ("-and");
+    foreach my $word ( @words ) {
+      my $constructed_like = { -like => "%$word%" };
+      push ( @constructed_like, $constructed_like );
+    }
+    
+    $where = [{
+      name => \@constructed_like,
+    }];
+  } else {
+    # Don't split words up before performing a like
+    $where = {
+      name => {-like => "%$q%"}
+    };
+  }
+  
+  my $attrib = {
+    order_by => {-asc => [ qw( name ) ]},
+    group_by => [ qw( name ) ],
+  };
+  
+  my $use_paging = ( defined( $page ) ) ? 1 : 0;
+  
+  if ( $use_paging ) {
+    # Set a default for results per page if it's not provided or invalid
+    $results_per_page = 25 if !defined( $results_per_page ) or $results_per_page !~ m/^\d+$/;
+    
+    # Default the page number to 1
+    $page = 1 if $page !~ m/^\d+$/;
+    
+    # Set the attribs for paging
+    $attrib->{page} = $page;
+    $attrib->{rows} = $results_per_page;
+  }
+  
+  if ( defined( $season ) ) {
+    $where->[0]{season} = $season->id;
+  }
+  
+  return $self->search( $where, $attrib );
+}
+
 =head2 page_records
 
 Returns a paginated resultset of fixtures grids.

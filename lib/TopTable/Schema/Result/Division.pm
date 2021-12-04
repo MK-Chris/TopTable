@@ -162,6 +162,17 @@ __PACKAGE__->has_many(
 # Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-02-03 10:04:05
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:LDGauLeNZKMTw8uNt3m44A
 
+=head2 url_keys
+
+Return the URL key for this object as an array ref (even if there's only one, an array ref is necessary so we can do the same for other objects with more than one array key field).
+
+=cut
+
+sub url_keys {
+  my ( $self ) = @_;
+  return [ $self->url_key ];
+}
+
 =head2 get_season
 
 Retrieve the division_seasons object for this division and the specified season.
@@ -176,6 +187,61 @@ sub get_season {
   }, {
     rows    => 1,
   })->single;
+}
+
+=head2 last_season_used
+
+Return the last season this division was used.
+
+=cut
+
+sub last_season_used {
+  my ( $self ) = @_;
+  
+  my $div_season = $self->search_related("division_seasons", undef, {
+    join => "season",
+    rows => 1,
+    order_by => {
+      -desc => [qw( season.start_date season.end_date )]
+    },
+  })->single;
+  
+  return defined( $div_season ) ? $div_season->season : undef;
+}
+
+=head2 teams
+
+Return a list of teams in the given season.
+
+=cut
+
+sub teams {
+  my ( $self, $params ) = @_;
+  my $season = delete $params->{season};
+  
+  my $div_season = $self->find_related("division_seasons", {season => $season});
+  
+  # Return 0 if this division wasn't used for this season.
+  return undef unless defined( $div_season );
+  
+  return $div_season->search_related("team_seasons");
+}
+
+=head2 search_display
+
+Function in all searchable objects to give a common accessor to the text to display. 
+
+=cut
+
+sub search_display {
+  my ( $self, $params ) = @_;
+  
+  return {
+    id => $self->id,
+    name => $self->name,
+    url_keys => $self->url_keys,
+    type => "division"
+  };
 }
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

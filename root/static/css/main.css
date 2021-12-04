@@ -461,7 +461,7 @@ table.vertical tr th:after {content: ":";}
 .pagination {
 	height: 1%;
 	width: auto;
-	margin-top: 5px;
+	margin-top: 25px;
 }
 
 .pagination span.page-separator {display: none;}
@@ -533,6 +533,8 @@ div.label-field-container-multi > div.field-container, div.label-field-container
   width: 46px;
 }
 
+div#search-results, div.search-result {margin-top: 20px;}
+
 legend {
   color: #222;
   font-size: 1.15em;
@@ -581,6 +583,32 @@ textarea {
 input::-moz-focus-inner, button::-moz-focus-inner {
   border:0;
   padding:0;
+}
+
+div.field-container-search {
+  margin-left: 5px;
+  width: 100%;
+  max-width: 480px;
+	float: left;
+}
+
+div.field-container-search-right {
+  margin-right: 2.5%;
+  width: 100%;
+  max-width: 480px;
+	float: right;
+}
+
+input.search-box {
+  background-image: url("../images/icons/0030-Search-icon-16.png");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  float: left;
+  /*width: 60%;*/
+}
+
+input.search-button {
+  float: left;
 }
 
 .no-boxshadow .blurred:invalid {background-color:#f0dddd;}

@@ -28,6 +28,9 @@ Catalyst Controller.
 sub auto :Private {
   my ( $self, $c ) = @_;
   
+  # Load the messages
+  $c->load_status_msgs;
+  
   # The title bar will always have
   $c->stash({subtitle1 => $c->maketext("menu.text.meeting-types")});
   
@@ -45,9 +48,6 @@ Chain base for getting the meeting type ID or URL key and checking it.
 
 sub base :Chained("/") :PathPart("meeting-types") :CaptureArgs(1) {
   my ( $self, $c, $id_or_key ) = @_;
-  
-  # Load the messages
-  $c->load_status_msgs;
   
   my $meeting_type = $c->model("DB::MeetingType")->find_id_or_url_key( $id_or_key );
   

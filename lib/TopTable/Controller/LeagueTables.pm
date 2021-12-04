@@ -28,6 +28,9 @@ Catalyst Controller to display league tables.
 sub auto :Private {
   my ( $self, $c ) = @_;
   
+  # Load the messages
+  $c->load_status_msgs;
+  
   # Set up average types
   $c->stash({subtitle1 => $c->maketext("menu.text.league-tables")});
   
@@ -46,9 +49,6 @@ Chain base for getting the division ID or URL key and checking it.
 
 sub base :Chained("/") :PathPart("league-tables") :CaptureArgs(1) {
   my ( $self, $c, $id_or_url_key ) = @_;
-  
-  # Load the messages
-  $c->load_status_msgs;
   
   my $division = $c->model("DB::Division")->find_id_or_url_key( $id_or_url_key );
   

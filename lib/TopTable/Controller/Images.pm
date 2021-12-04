@@ -31,6 +31,9 @@ my @allowed_types = qw( image/gif image/jpeg image/png  );
 sub auto :Private {
   my ( $self, $c ) = @_;
   
+  # Load the messages
+  $c->load_status_msgs;
+  
   # The title bar will always have
   $c->stash({subtitle1 => $c->maketext("menu.text.images") });
   
@@ -57,9 +60,6 @@ Chain base for getting the image ID and checking it.
 
 sub base :Chained("/") :PathPart("images") :CaptureArgs(1) {
   my ( $self, $c, $id_or_key ) = @_;
-  
-  # Load the messages
-  $c->load_status_msgs;
   
   if ( my $image = $c->model("DB::UploadedImage")->find_id_or_url_key( $id_or_key ) ) {
     my $file_path = File::Spec->catfile( $c->config->{Paths}{image_streaming}, $image->filename );

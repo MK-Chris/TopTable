@@ -1717,6 +1717,9 @@ msgstr "There is no current season, so divisions cannot be created or edited - c
 msgid "divisions.form.error.matches-created-cant-create-or-edit"
 msgstr "The current season already has matches; therefore the divisions can't be edited and new divisions cannot be created."
 
+msgid "divisions.not-yet-used"
+msgstr "Not yet used"
+
 ### Fixtures grids
 msgid "fixtures-grids.matches"
 msgstr "Matches"
@@ -4161,6 +4164,99 @@ msgstr "Image uploaded successfully."
 msgid "image.download.errror.file-doesnt-exist"
 msgstr "Can&#39;t find or read the image; it may have been deleted."
 
+### Search
+msgid "search.title"
+msgstr "Search"
+
+msgid "search.form"
+msgstr "Search form"
+
+msgid "search.form.query-term"
+msgstr "Search query"
+
+msgid "search.form.team-match.include-incomplete"
+msgstr "Include incomplete matches"
+
+msgid "search.form.team-match.include-complete"
+msgstr "Include completed matches"
+
+msgid "search.form.team-match.include-cancelled"
+msgstr "Include cancelled matches"
+
+msgid "form.button.search"
+msgstr "Search"
+
+msgid "search.results"
+msgstr "%1 search results for &#39;%2&#39;"
+
+msgid "search.error.no-query"
+msgstr "You did not submit a search query."
+
+msgid "search-results.no-seasons-entered"
+msgstr "No seasons entered"
+
+msgid "search.results.no-results"
+msgstr "Nothing returned for search; please try again: '%1'."
+
+## Club search
+msgid "search-results.club.description"
+msgstr "Last season entered: %1<br />\n"
+"Teams: %2<br />\n"
+"Registered players: %3<br />\n"
+"Home venue: %4<br />\n"
+
+## Division search
+msgid "search-results.division.description"
+msgstr "Last used: %1<br />\n"
+"Teams: %2<br />\n"
+
+## Fixtures grid search
+msgid "search-results.fixtures-grid.description"
+msgstr "Grid for planning fixtures.<br >\n"
+"Maximum teams: %1<br />\n"
+"Fixtures repeated: %2 times<br />\n"
+
+## Team match search
+msgid "search-results.team-match.played.description"
+msgstr "Match played on %1.<br />\n"
+"Score: %2<br />\n"
+
+msgid "search-results.team-match.scheduled.description"
+msgstr "Match to be played on %1.<br />\n"
+
+msgid "search-results.team-match.cancelled.description"
+msgstr "Match cancelled; should have been played on %1.<br />\n"
+
+## Person search
+msgid "search-results.person.description"
+msgstr "Last registered in %1 for %2 %3<br />\n"
+
+## Season search
+msgid "search-results.season.description"
+msgstr "%1 to %2"
+
+## Team search
+msgid "search-results.team.description"
+msgstr "Last registered in %1 at %2<br />\n"
+
+## User search
+msgid "search-results.user.description"
+msgstr "Registered on: %1<br />\n"
+
+## Venue search
+msgid "search-results.venue.description"
+msgstr "Address: %1<br />\n"
+
+## Template searches
+msgid "search-results.template-league-table-ranking.description"
+msgstr "Template determining how points are apportioned in matches."
+
+msgid "search-results.template-match-individual.description"
+msgstr "Template determining the rules for individual matches."
+
+msgid "search-results.template-match-team.description"
+msgstr "Template determining the rules for team matches."
+
 ### Generic messages
 msgid "page.error.heading"
 msgstr "Error"
@@ -4673,6 +4769,12 @@ msgstr "contact reason"
 
 msgid "object.plural.contact-reasons"
 msgstr "contact reasons"
+
+msgid "object.singular.search-results"
+msgstr "search result"
+
+msgid "object.plural.search-results"
+msgstr "search results"
 
 msgid "object.singular.average-filters"
 msgstr "filter"

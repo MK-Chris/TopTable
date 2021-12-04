@@ -35,5 +35,28 @@ IF scripts;
   END;
 END;
 -%]
+
+    $("body").ihavecookies({
+      "title": "[% c.maketext("cookie.title") %]",
+      "message": "[% c.maketext("cookie.detail") %]",
+      "moreInfoLabel": "[% c.maketext("cookie.privacy-link.label") %]",
+      "link": "[% c.uri_for('/info/privacy') %]",
+      "delay": 600,
+      "expires": 30,
+      "uncheckBoxes": false,
+      "acceptBtnLabel": "[% c.maketext("cookie.accept-button.label") %]",
+      "cookieTypesTitle": "[% c.maketext("cookie.select-cookies.label") %]",
+      "fixedCookieTypeLabel": "[% c.maketext("cookie.types.essential.label") %]",
+      "fixedCookieTypeDesc": "[% c.maketext("cookie.types.essential.description") %]",
+      "cookieTypes": [{
+        "type": "[% c.maketext("cookie.types.preferences.label") %]",
+        "value": "[% c.maketext("cookie.types.preferences.id") %]",
+        "description": "[% c.maketext("cookie.types.preferences.description") %]"
+      }, {
+        "type": "[% c.maketext("cookie.types.analytics.label") %]",
+        "value": "[% c.maketext("cookie.types.analytics.id") %]",
+        "description": "[% c.maketext("cookie.types.analytics.description") %]"
+      }]
+    });
   });
 </script>

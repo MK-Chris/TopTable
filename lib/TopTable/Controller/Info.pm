@@ -25,6 +25,8 @@ Catalyst Controller.
 sub auto :Private {
   my ( $self, $c ) = @_;
   
+  $c->load_status_msgs;
+  
   # The title bar will always have
   $c->stash({subtitle1 => $c->maketext("menu.title.info") });
   
@@ -63,8 +65,6 @@ Display a contact form.  If the user is logged in, use their user information, o
 sub contact :Local {
   my ( $self, $c ) = @_;
   my $site_name = $c->stash->{encoded_site_name};
-  
-  $c->load_status_msgs;
   
   my $reasons = $c->model("DB::ContactReason")->all_reasons;
   

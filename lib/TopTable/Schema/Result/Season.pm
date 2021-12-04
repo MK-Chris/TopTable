@@ -442,6 +442,17 @@ __PACKAGE__->has_many(
 
 use HTML::Entities;
 
+=head2 url_keys
+
+Return the URL key for this object as an array ref (even if there's only one, an array ref is necessary so we can do the same for other objects with more than one array key field).
+
+=cut
+
+sub url_keys {
+  my ( $self ) = @_;
+  return [ $self->url_key ];
+}
+
 =head2 number_of_weeks
 
 Returns the number of weeks in the season.
@@ -705,6 +716,23 @@ sub check_and_delete {
   $transaction->commit;
   
   return $error;
+}
+
+=head2 search_display
+
+Function in all searchable objects to give a common accessor to the text to display. 
+
+=cut
+
+sub search_display {
+  my ( $self, $params ) = @_;
+  
+  return {
+    id => $self->id,
+    name => $self->name,
+    url_keys => $self->url_keys,
+    type => "season"
+  };
 }
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

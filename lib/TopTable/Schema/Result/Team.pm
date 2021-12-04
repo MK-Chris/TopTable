@@ -404,6 +404,24 @@ sub last_competed_season {
   })->single;
 }
 
+=head2 last_season_entered
+
+Return the season this team was last entered in.
+
+=cut
+
+sub last_season_entered {
+  my ( $self ) = @_;
+  
+  return $self->result_source->schema->resultset("Season")->search({
+    "team_seasons.team" => $self->id,
+  }, {
+    join => "team_seasons",
+    order_by => {-desc => [ qw( me.start_date me.end_date ) ]},
+    rows => 1,
+  })->single;
+}
+
 =head2 seasons
 
 Retrieve all seasons associated with the team.

@@ -26,6 +26,9 @@ Catalyst Controller.
 sub auto :Private {
   my ( $self, $c ) = @_;
   
+  # Load the messages
+  $c->load_status_msgs;
+  
   # The title bar will always have
   $c->stash({subtitle1 => $c->maketext("menu.text.teams")});
    
@@ -43,9 +46,6 @@ sub auto :Private {
 
 sub index :Path :Args(0) {
   my ( $self, $c ) = @_;
-  
-  # Load the messages
-  $c->load_status_msgs;
 
   # Retrieve all of the clubs to display
   $c->forward("list");
@@ -86,7 +86,7 @@ sub base_by_id :Chained("/") :PathPart("teams") :CaptureArgs(1) {
 
 =head2 base_by_url_key
 
-Chain base for getting the club ID and checking it.
+Chain base for getting the club / team URL key and checking it.
 
 =cut
 
@@ -165,38 +165,6 @@ sub list :Local {
     })],
     page_description    => $c->maketext("description.teams.list", $site_name),
   });
-}
-
-=head2 ajax_search
-
-Handle search requests and return the data in JSON.
-
-=cut
-
-sub ajax_search :Path("ajax-search") :Args(0) {
-  my ( $self, $c ) = @_;
-  my $season_id_or_url_key = $c->request->parameters->{season} if exists( $c->request->parameters->{season} );
-  
-  my $season = $c->model("DB::Season")->find_id_or_url_key( $season_id_or_url_key ) if defined( $season_id_or_url_key );
-  $c->detach( "TopTable::Controller::Root", "json_error", [400, "The season specified is invalid."] ) if defined( $season_id_or_url_key ) and !defined( $season );
-  
-  if ( defined( $c->request->parameters->{q} ) and defined( $season ) ) {
-    # Perform the search
-    my @teams       = $c->model("DB::Team")->search_by_name( $c->request->parameters->{q}, $season );
-    my $json_teams  = [];
-    
-    # Loop through and concatenate the short club name and team name, then push it on to the $json_teams arrayref
-    push( @{$json_teams}, {id => $_->id, name => encode_entities( sprintf( "%s %s", $_->club->short_name, $_->name ) )} ) foreach (@teams);
-    
-    # Set up the stash
-    $c->stash({json_teams => $json_teams});
-    
-    # Detach to the JSON view
-    $c->detach( $c->view("JSON") );
-  }
-  
-  # Don't alter the view who's online activity
-  $c->stash->{skip_view_online} = 1;
 }
 
 =head2 view_by_id
@@ -774,7 +742,7 @@ sub create :Chained("base_no_object_specified") :PathPart("create") :CaptureArgs
   if ( $people_count ) {
     # First setup the function arguments
     my $captain_tokeninput_options = {
-      jsonContainer => "json_people",
+      jsonContainer => "json_search",
       tokenLimit    => 1,
       hintText      => $c->maketext("person.tokeninput.type"),
       noResultsText => $c->maketext("tokeninput.text.no-results"),
@@ -786,7 +754,7 @@ sub create :Chained("base_no_object_specified") :PathPart("create") :CaptureArgs
     $captain_tokeninput_options->{prePopulate} = [{id => $captain->id, name => encode_entities( $captain->display_name )}] if defined( $captain );
     
     my $players_tokeninput_options = {
-      jsonContainer => "json_people",
+      jsonContainer => "json_search",
       hintText      => $c->maketext("person.tokeninput.type"),
       noResultsText => $c->maketext("tokeninput.text.no-results"),
       searchingText => $c->maketext("tokeninput.text.searching"),
@@ -800,11 +768,11 @@ sub create :Chained("base_no_object_specified") :PathPart("create") :CaptureArgs
     }, @{ $players })] if ref( $players ) eq "ARRAY" and scalar( @{ $players } );
     
     my $tokeninput_confs = [{
-      script    => $c->uri_for("/people/ajax-search"),
+      script    => $c->uri_for("/people/search"),
       options   => encode_json( $captain_tokeninput_options ),
       selector  => "captain",
     }, {
-      script    => $c->uri_for("/people/ajax-search"),
+      script    => $c->uri_for("/people/search"),
       options   => encode_json( $players_tokeninput_options ),
       selector  => "players",
     }];
@@ -823,7 +791,7 @@ sub create :Chained("base_no_object_specified") :PathPart("create") :CaptureArgs
     external_scripts    => [
       $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
       $c->uri_for("/static/script/standard/chosen.js"),
-      $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js"),
+      $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js", {v => 2}),
       $c->uri_for("/static/script/teams/create-edit.js"),
     ],
     external_styles     => [
@@ -957,7 +925,7 @@ sub edit :Private {
   if ( $people_count ) {
     # First setup the function arguments
     my $captain_tokeninput_options = {
-      jsonContainer => "json_people",
+      jsonContainer => "json_search",
       tokenLimit    => 1,
       hintText      =>  $c->maketext("person.tokeninput.type"),
       noResultsText =>  $c->maketext("tokeninput.text.no-results"),
@@ -983,7 +951,7 @@ sub edit :Private {
     
     # Players
     my $players_tokeninput_options = {
-      jsonContainer => "json_people",
+      jsonContainer => "json_search",
       hintText      => $c->maketext("person.tokeninput.type"),
       noResultsText => $c->maketext("tokeninput.text.no-results"),
       searchingText => $c->maketext("tokeninput.text.searching"),
@@ -1006,11 +974,11 @@ sub edit :Private {
     }, @{ $players })] if ref( $players ) eq "ARRAY" and scalar( @{ $players } );
     
     my $tokeninput_confs = [{
-      script    => $c->uri_for("/people/ajax-search"),
+      script    => $c->uri_for("/people/search"),
       options   => encode_json( $captain_tokeninput_options ),
       selector  => "captain",
     }, {
-      script    => $c->uri_for("/people/ajax-search"),
+      script    => $c->uri_for("/people/search"),
       options   => encode_json( $players_tokeninput_options ),
       selector  => "players",
     }];
@@ -1027,7 +995,7 @@ sub edit :Private {
     external_scripts    => [
       $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
       $c->uri_for("/static/script/standard/chosen.js"),
-      $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js"),
+      $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js", {v => 2}),
       $c->uri_for("/static/script/teams/create-edit.js"),
     ],
     external_styles     => [
@@ -1328,6 +1296,31 @@ sub setup_team :Private {
     $c->detach;
     return;
   }
+}
+
+=head2 search
+
+Handle search requests and return the data in JSON for AJAX requests, or paginate and return in an HTML page for normal web requests (or just display a search form if no query provided).
+
+=cut
+
+sub search :Local :Args(0) {
+  my ( $self, $c ) = @_;
+  
+  # Check that we are authorised to view clubs
+  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["team_view", $c->maketext("user.auth.view-teams"), 1] );
+  
+  my $q = $c->req->param( "q" ) || undef;
+  
+  $c->stash({
+    db_resultset => "ClubTeamView",
+    query_params => {q => $q},
+    view_action => "/teams/view_current_season_by_url_key",
+    search_action => "/teams/search",
+  });
+  
+  # Do the search
+  $c->forward( "TopTable::Controller::Search", "do_search" );
 }
 
 

@@ -26,6 +26,9 @@ Catalyst Controller for viewing and administering events.  This is quite a broad
 sub auto :Private {
   my ( $self, $c ) = @_;
   
+  # Load the messages
+  $c->load_status_msgs;
+  
   # The title bar will always have
   $c->stash({subtitle1 => $c->maketext("menu.text.events") });
   
@@ -45,9 +48,6 @@ Chain base for getting the event identifier and checking it.
 
 sub base :Chained("/") :PathPart("events") :CaptureArgs(1) {
   my ( $self, $c, $id_or_key ) = @_;
-  
-  # Load the messages
-  $c->load_status_msgs;
   
   my $event = $c->model("DB::Event")->find_id_or_url_key( $id_or_key );
   
@@ -470,7 +470,7 @@ sub create :Local {
   if ( $people_count ) {
     # First setup the function arguments
     my $tokeninput_options = {
-      jsonContainer => "json_people",
+      jsonContainer => "json_search",
       tokenLimit    => 1,
       hintText      => encode_entities( $c->maketext("person.tokeninput.type") ),
       noResultsText => encode_entities( $c->maketext("tokeninput.text.no-results") ),
@@ -481,7 +481,7 @@ sub create :Local {
     $tokeninput_options->{prePopulate} = [{id => $c->flash->{organiser}->id, name => $c->flash->{organiser}->display_name}] if defined( $c->flash->{organiser} );
     
     my $tokeninput_confs = [{
-      script    => $c->uri_for("/people/ajax-search"),
+      script    => $c->uri_for("/people/search"),
       options   => encode_json( $tokeninput_options ),
       selector  => "organiser",
     }];
@@ -497,7 +497,7 @@ sub create :Local {
     ],
     external_scripts    => [
       $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
-      $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js"),
+      $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js", {v => 2}),
       $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
       $c->uri_for("/static/script/standard/chosen.js"),
       $c->uri_for("/static/script/standard/datepicker.js"),

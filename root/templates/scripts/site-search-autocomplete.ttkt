@@ -1,0 +1,26 @@
+
+    $("#site-search-box").easyAutocomplete({
+      url: function(phrase) {
+        // Get a URI object from the action
+        var uri = URI("[% c.uri_for_action("/search/index") %]");
+        
+        // Add the search query
+        uri.search({q: phrase});
+        return uri;
+      },
+      listLocation: "[% autocomplete_list %]",
+      getValue: "name",
+      requestDelay: 200,
+      list: {
+        maxNumberOfElements: 10,
+        onKeyEnterEvent: function() {
+          window.location.href = $("#site-search-box").getSelectedItemData().url;
+        }
+      },
+      template: {
+        type: "links",
+        fields: {
+            link: "url"
+        }
+      }
+    });

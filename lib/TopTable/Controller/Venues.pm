@@ -789,6 +789,31 @@ sub set_opening_hours :Path("set-opening-hours") {
   
 }
 
+=head2 search
+
+Handle search requests and return the data in JSON for AJAX requests, or paginate and return in an HTML page for normal web requests (or just display a search form if no query provided).
+
+=cut
+
+sub search :Local :Args(0) {
+  my ( $self, $c ) = @_;
+  
+  # Check that we are authorised to view venues
+  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["venue_view", $c->maketext("user.auth.view-venues"), 1] );
+  
+  my $q = $c->req->param( "q" ) || undef;
+  
+  $c->stash({
+    db_resultset => "Venue",
+    query_params => {q => $q},
+    view_action => "/venues/view",
+    search_action => "/venues/search",
+  });
+  
+  # Do the search
+  $c->forward( "TopTable::Controller::Search", "do_search" );
+}
+
 =encoding utf8
 
 =head1 AUTHOR

@@ -29,6 +29,9 @@ Catalyst Controller to display league averages for singles, doubles pairs and do
 sub auto :Private {
   my ( $self, $c ) = @_;
   
+  # Load the messages
+  $c->load_status_msgs;
+  
   # Set up average types
   $c->stash({
     subtitle1     => $c->maketext("menu.text.league-averages"),
@@ -55,9 +58,6 @@ Chain base for getting the division ID or URL key and checking it.
 
 sub base :Chained("/") :PathPart("league-averages") :CaptureArgs(1) {
   my ( $self, $c, $averages_type ) = @_;
-  
-  # Load the messages
-  $c->load_status_msgs;
   
   # Check that the type of averages we have is valid
   if ( exists( $c->stash->{average_types}{$averages_type} ) ) {

@@ -191,7 +191,7 @@ sub view :Private {
   my $scoreless_name  = $c->stash->{scoreless_name};
   my $score           = $c->stash->{score};
   
-  # Check that we are authorised to view clubs
+  # Check that we are authorised to view matches
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["match_view", $c->maketext("user.auth.view-matches"), 1] );
   $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( match_update match_cancel ) ], "", 0] );
   
@@ -365,7 +365,7 @@ sub update :Private {
     external_scripts    => [
       $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
       $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
-      $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js"),
+      $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js", {v => 2}),
       $c->uri_for("/static/script/plugins/toastmessage/jquery.toastmessage.js"),
       $c->uri_for("/static/script/standard/chosen.js"),
       $c->uri_for("/static/script/standard/prettycheckable.js"),
@@ -1175,6 +1175,47 @@ sub check_report_create_edit_authorisation :Private {
     live_report     => $live_report,
     original_report => $original_report,
   });
+}
+
+=head2 search
+
+Handle search requests and return the data in JSON for AJAX requests, or paginate and return in an HTML page for normal web requests (or just display a search form if no query provided).
+
+=cut
+
+sub search :Local :Args(0) {
+  my ( $self, $c ) = @_;
+  
+  # Check that we are authorised to view matches
+  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["match_view", $c->maketext("user.auth.view-matches"), 1] );
+  
+  my $q = $c->req->param( "q" ) || undef;
+  my $include_complete = $c->req->param( "complete" ) || 0;
+  my $include_incomplete = $c->req->param( "incomplete" ) || 0;
+  my $include_cancelled = $c->req->param( "cancelled" ) || 0;
+  
+  $c->stash({
+    db_resultset => "TeamMatchView",
+    query_params => {
+      q => $q,
+      include_complete => $include_complete,
+      include_incomplete => $include_incomplete,
+      include_cancelled => $include_cancelled,
+    },
+    view_action => "/matches/team/view_by_url_keys",
+    search_action => "/matches/team/search",
+    search_form_include => "team-match",
+    external_scripts    => [
+      $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
+      $c->uri_for("/static/script/standard/prettycheckable.js"),
+    ],
+    external_styles     => [
+      $c->uri_for("/static/css/prettycheckable/prettyCheckable.css"),
+    ],
+  });
+  
+  # Do the search
+  $c->forward( "TopTable::Controller::Search", "do_search" );
 }
 
 =encoding utf8

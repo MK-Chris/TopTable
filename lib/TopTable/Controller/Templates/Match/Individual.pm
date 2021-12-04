@@ -26,6 +26,9 @@ Catalyst Controller.
 sub auto :Private {
   my ( $self, $c ) = @_;
   
+  # Load the messages
+  $c->load_status_msgs;
+  
   # The title bar will always have
   $c->stash({subtitle1 => $c->maketext("menu.text.templates-invididual-match")});
   
@@ -44,9 +47,6 @@ Chain base sub for checking the ID.
 
 sub base :Chained("/") PathPart("templates/match/individual") CaptureArgs(1) {
   my ( $self, $c, $id_or_key ) = @_;
-  
-  # Load the messages
-  $c->load_status_msgs;
   
   my $tt_template = $c->model("DB::TemplateMatchIndividual")->find_id_or_url_key( $id_or_key );
   
@@ -78,10 +78,10 @@ Chain base for the list of ranking.  Matches /templates/league-table-ranking
 sub base_list :Chained("/") :PathPart("templates/match/individual") :CaptureArgs(0) {
   my ( $self, $c ) = @_;
   
-  # Check that we are authorised to view clubs
+  # Check that we are authorised to view templates
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["template_view", $c->maketext("user.auth.view-templates"), 1] );
   
-  # Check the authorisation to edit clubs we can display the link if necessary
+  # Check the authorisation to edit templates we can display the link if necessary
   $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( template_edit template_delete template_create) ], "", 0] );
   
   $c->stash({
@@ -96,7 +96,7 @@ sub base_list :Chained("/") :PathPart("templates/match/individual") :CaptureArgs
 
 =head2 list_first_page
 
-List the clubs on the first page.
+List the templates on the first page.
 
 =cut
 
@@ -109,14 +109,14 @@ sub list_first_page :Chained("base_list") :PathPart("") :Args(0) {
 
 =head2 list_specific_page
 
-List the clubs on the specified page.
+List the templates on the specified page.
 
 =cut
 
 sub list_specific_page :Chained("base_list") :PathPart("page") :Args(1) {
   my ( $self, $c, $page_number ) = @_;
   
-  # Check that we are authorised to view clubs
+  # Check that we are authorised to view templates
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["template_view", $c->maketext("user.auth.view-templates"), 1] );
   
   if ( $page_number == 1 ) {
@@ -130,7 +130,7 @@ sub list_specific_page :Chained("base_list") :PathPart("page") :Args(1) {
 
 =head2 retrieve_paged
 
-Performs the lookups for clubs with the given page number.
+Performs the lookups for templates with the given page number.
 
 =cut
 
@@ -496,6 +496,31 @@ sub setup_template :Private {
     $c->detach;
     return;
   }
+}
+
+=head2 search
+
+Handle search requests and return the data in JSON for AJAX requests, or paginate and return in an HTML page for normal web requests (or just display a search form if no query provided).
+
+=cut
+
+sub search :Local :Args(0) {
+  my ( $self, $c ) = @_;
+  
+  # Check that we are authorised to view templates
+  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["template_view", $c->maketext("user.auth.view-templates"), 1] );
+  
+  my $q = $c->req->param( "q" ) || undef;
+  
+  $c->stash({
+    db_resultset => "TemplateMatchIndividual",
+    query_params => {q => $q},
+    view_action => "/templates/match/individual/view",
+    search_action => "/templates/match/individual/search",
+  });
+  
+  # Do the search
+  $c->forward( "TopTable::Controller::Search", "do_search" );
 }
 
 =encoding utf8

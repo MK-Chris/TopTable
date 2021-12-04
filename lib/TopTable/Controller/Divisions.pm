@@ -25,8 +25,11 @@ Catalyst Controller to display divisions; there is not much to display apart fro
 sub auto :Private {
   my ( $self, $c ) = @_;
   
+  # Load the messages
+  $c->load_status_msgs;
+  
   # Set up average types
-  $c->stash({subtitle1 => "Divisions"});
+  $c->stash({subtitle1 => $c->maketext("menu.text.divisions")});
   
   # Breadcrumbs links
   push( @{ $c->stash->{breadcrumbs} }, {
@@ -44,9 +47,6 @@ Chain base for getting the division ID and checking it.
 
 sub base :Chained("/") PathPart("divisions") CaptureArgs(1) {
   my ( $self, $c, $id_or_url_key ) = @_;
-  
-  # Load the messages
-  $c->load_status_msgs;
   
   my $division = $c->model("DB::Division")->find_id_or_url_key( $id_or_url_key );
   
@@ -406,6 +406,27 @@ sub retrieve_paged_seasons :Private {
     page_info           => $page_info,
     page_links          => $page_links,
   });
+}
+
+=head2 search
+
+Handle search requests and return the data in JSON for AJAX requests, or paginate and return in an HTML page for normal web requests (or just display a search form if no query provided).
+
+=cut
+
+sub search :Local :Args(0) {
+  my ( $self, $c ) = @_;
+  my $q = $c->req->param( "q" ) || undef;
+  
+  $c->stash({
+    db_resultset => "Division",
+    query_params => {q => $q},
+    view_action => "/divisions/view_current_season",
+    search_action => "/divisions/search",
+  });
+  
+  # Do the search
+  $c->forward( "TopTable::Controller::Search", "do_search" );
 }
 
 

@@ -828,8 +828,8 @@ END;
 [%
 FOREACH player = match.team_match_players;
 -%]
-  $("#player_search[% player.player_number %]").tokenInput("[% c.uri_for_action("/people/ajax_search_with_season", [season.id]) %]", {
-    jsonContainer: 'json_people',
+  $("#player_search[% player.player_number %]").tokenInput("[% c.uri_for_action("/people/search", {season => match.season.url_key}) %]", {
+    jsonContainer: 'json_search',
     tokenLimit: 1,
     hintText: "[% c.maketext("matches.loan-player.tokeninput.hint-text", player.player_number) %]",
     noResultsText: "[% c.maketext("tokeninput.text.no-results") %]",
@@ -1254,8 +1254,8 @@ END;
 [%
 FOREACH game = match.team_match_games;
 -%]
-  $("#game_[% game.scheduled_game_number %]_umpire").tokenInput("[% c.uri_for_action("/people/ajax_search") %]", {
-    jsonContainer: 'json_people',
+  $("#game_[% game.scheduled_game_number %]_umpire").tokenInput("[% c.uri_for_action("/people/search") %]", {
+    jsonContainer: 'json_search',
     tokenLimit: 1,
     hintText: "[% c.maketext("matches.umpire.tokeninput.hint-text") %]",
     noResultsText: "[% c.maketext("tokeninput.text.no-results") %]",

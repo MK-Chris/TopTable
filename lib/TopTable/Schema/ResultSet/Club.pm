@@ -3,6 +3,7 @@ package TopTable::Schema::ResultSet::Club;
 use strict;
 use warnings;
 use base 'DBIx::Class::ResultSet';
+use Data::Dumper::Concise;
 use Regexp::Common qw /URI/;
 
 =head2 get_club_and_secretary_and_venue
@@ -44,20 +45,70 @@ Return search results based on a supplied full or partial full / short name.
 =cut
 
 sub search_by_name {
-  my ( $self, $search_term ) = @_;
-  my ( $where, $attributes );
+  my ( $self, $params ) = @_;
+  my $q = delete $params->{q};
+  my $split_words = delete $params->{split_words} || 0;
+  my $season = delete $params->{season};
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $page = delete $params->{page} || undef;
+  my $results_per_page = delete $params->{results} || undef;
   
-  return $self->search([{
-    full_name   => {
-      like => "%$search_term%"
+  # Construct the LIKE '%word1%' AND  LIKE '%word2%' etc.  I couldn't work out how to map this, so a loop it is.
+  my ( $where );
+  
+  if ( $split_words ) {
+    # Split individual words and perform a like on each one
+    my @words = split( /\s+/, $q );
+    my @constructed_like = ("-and");
+    foreach my $word ( @words ) {
+      my $constructed_like = { -like => "%$word%" };
+      push ( @constructed_like, $constructed_like );
     }
-  }, {
-    short_name => {
-      like => "%$search_term%"}
-    }
-  ], {
-    order_by            => "full_name"
-  });
+    
+    $where = [{
+      "me.full_name" => \@constructed_like,
+    }, {
+      "me.short_name" => \@constructed_like,
+    }, {
+      "me.abbreviated_name" => \@constructed_like,
+    }];
+  } else {
+    # Don't split words up before performing a like
+    $where = [{
+      "me.full_name" => {-like => "%$q%"},
+    }, {
+      "me.short_name" => {-like => "%$q%"},
+    }, {
+      "me.abbreviated_name" => {-like => "%$q%"},
+    }];
+  }
+  
+  my $attrib = {
+    order_by => {-asc => [ qw( me.full_name ) ]},
+    group_by => [ qw( me.full_name ) ],
+  };
+  
+  my $use_paging = ( defined( $page ) ) ? 1 : 0;
+  
+  if ( $use_paging ) {
+    # Set a default for results per page if it's not provided or invalid
+    $results_per_page = 25 if !defined( $results_per_page ) or $results_per_page !~ m/^\d+$/;
+    
+    # Default the page number to 1
+    $page = 1 if $page !~ m/^\d+$/;
+    
+    # Set the attribs for paging
+    $attrib->{page} = $page;
+    $attrib->{rows} = $results_per_page;
+  }
+  
+  if ( defined( $season ) ) {
+    $where->[0]{"club_seasons.season"} = $season->id;
+    $where->[1]{"club_seasons.season"} = $season->id;
+    $attrib->{join} = "club_seasons";
+  }
+  
+  return $self->search( $where, $attrib );
 }
 
 =head2 find_by_short_name

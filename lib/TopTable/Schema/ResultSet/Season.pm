@@ -6,7 +6,7 @@ use base 'DBIx::Class::ResultSet';
 use DateTime;
 use DateTime::TimeZone;
 use Try::Tiny;
-use Data::Dumper;
+use Data::Dumper::Concise;
 
 =head2 last_complete_season
 
@@ -66,6 +66,61 @@ sub all_seasons {
       division_seasons  => "division",
     },
   });
+}
+
+=head2 search_by_name
+
+Search for seasons by name.
+
+=cut
+
+sub search_by_name {
+  my ( $self, $params ) = @_;
+  my $q = delete $params->{q};
+  my $split_words = delete $params->{split_words} || 0;
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $page = delete $params->{page} || undef;
+  my $results_per_page = delete $params->{results} || undef;
+  
+  # Construct the LIKE '%word1%' AND  LIKE '%word2%' etc.  I couldn't work out how to map this, so a loop it is.
+  my ( $where );
+  if ( $split_words ) {
+    my @words = split( /\s+/, $q );
+    my @constructed_like = ("-and");
+    foreach my $word ( @words ) {
+      my $constructed_like = { -like => "%$word%" };
+      push ( @constructed_like, $constructed_like );
+    }
+    
+    $where = [{
+      name => \@constructed_like,
+    }];
+  } else {
+    # Don't split words up before performing a like
+    $where = {
+      name => {-like => "%$q%"}
+    };
+  }
+  
+  my $attrib = {
+    order_by => {-desc => [ qw( start_date end_date ) ]},
+  };
+  
+  my $use_paging = ( defined( $page ) ) ? 1 : 0;
+  
+  if ( $use_paging ) {
+    # Set a default for results per page if it's not provided or invalid
+    $results_per_page = 25 if !defined( $results_per_page ) or $results_per_page !~ m/^\d+$/;
+    
+    # Default the page number to 1
+    $page = 1 if $page !~ m/^\d+$/;
+    
+    # Set the attribs for paging
+    $attrib->{page} = $page;
+    $attrib->{rows} = $results_per_page;
+  }
+  
+  return $self->search( $where, $attrib );
 }
 
 =head2 get_archived
@@ -142,18 +197,18 @@ sub find_id_or_url_key {
   my ( $where );
   
   if ( $id_or_url_key =~ m/^\d+$/ ) {
-    # Numeric - assume it's the ID
-    $where = {
-      id => $id_or_url_key,
-    };
+    # Numeric - look in ID or URL key
+    $where = [{
+      id => $id_or_url_key
+    }, {
+      url_key => $id_or_url_key
+    }];
   } else {
     # Not numeric - must be the URL key
-    $where = {
-      url_key => $id_or_url_key,
-    };
+    $where = {url_key => $id_or_url_key};
   }
   
-  return $self->find( $where );
+  return $self->search( $where, {rows => 1})->single;
 }
 
 =head2 generate_url_key

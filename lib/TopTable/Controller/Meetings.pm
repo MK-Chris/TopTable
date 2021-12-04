@@ -27,6 +27,9 @@ Catalyst Controller to handle meetings; these methods are NOT private, though ca
 sub auto :Private {
   my ( $self, $c ) = @_;
   
+  # Load the messages
+  $c->load_status_msgs;
+  
   # The title bar will always have
   $c->stash({subtitle1 => $c->maketext("menu.text.meetings")});
   
@@ -45,9 +48,6 @@ Chain base for getting the meeting type and date and checking it.
 sub base_by_type_and_date :Chained("/") :PathPart("meetings") :CaptureArgs(4) {
   my ( $self, $c, $type_id_or_key, $year, $month, $day ) = @_;
   my $meeting_date;
-  
-  # Load the messages
-  $c->load_status_msgs;
   
   # Make sure the date is valid
   try {
@@ -353,7 +353,7 @@ sub create :Local {
   
   # First setup the function arguments
   my $organiser_tokeninput_options = {
-    jsonContainer => "json_people",
+    jsonContainer => "json_search",
     tokenLimit    => 1,
     hintText      => encode_entities( $c->maketext("person.tokeninput.type") ),
     noResultsText => encode_entities( $c->maketext("tokeninput.text.no-results") ),
@@ -365,7 +365,7 @@ sub create :Local {
   
   # Attendee tokeninputs
   my $attendee_tokeninput_options = {
-    jsonContainer => "json_people",
+    jsonContainer => "json_search",
     hintText      => encode_entities( $c->maketext("meetings.field.attendees.tokeninput.type") ),
     noResultsText => encode_entities( $c->maketext("tokeninput.text.no-results") ),
     searchingText => encode_entities( $c->maketext("tokeninput.text.searching") ),
@@ -383,7 +383,7 @@ sub create :Local {
   
   # Apologies tokeninputs
   my $apologies_tokeninput_options = {
-    jsonContainer => "json_people",
+    jsonContainer => "json_search",
     hintText      => encode_entities( $c->maketext("meetings.field.apologies.tokeninput.type") ),
     noResultsText => encode_entities( $c->maketext("tokeninput.text.no-results") ),
     searchingText => encode_entities( $c->maketext("tokeninput.text.searching") ),
@@ -400,15 +400,15 @@ sub create :Local {
   }
   
   my $tokeninput_confs = [{
-    script    => $c->uri_for("/people/ajax-search"),
+    script    => $c->uri_for("/people/search"),
     options   => encode_json( $organiser_tokeninput_options ),
     selector  => "organiser",
   }, {
-    script    => $c->uri_for("/people/ajax-search"),
+    script    => $c->uri_for("/people/search"),
     options   => encode_json( $attendee_tokeninput_options ),
     selector  => "attendees",
   }, {
-    script    => $c->uri_for("/people/ajax-search"),
+    script    => $c->uri_for("/people/search"),
     options   => encode_json( $apologies_tokeninput_options ),
     selector  => "apologies",
   }];
@@ -425,7 +425,7 @@ sub create :Local {
     external_scripts    => [
       $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
       $c->uri_for("/static/script/standard/chosen.js"),
-      $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js"),
+      $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js", {v => 2}),
       $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
       $c->uri_for("/static/script/plugins/ckeditor/ckeditor.js"),
       $c->uri_for("/static/script/plugins/ckeditor/adapters/jquery.js"),
@@ -499,7 +499,7 @@ sub edit :Private {
   
   # Organiser token inputs
   my $organiser_tokeninput_options = {
-    jsonContainer => "json_people",
+    jsonContainer => "json_search",
     tokenLimit    => 1,
     hintText      => encode_entities( $c->maketext("person.tokeninput.type") ),
     noResultsText => encode_entities( $c->maketext("tokeninput.text.no-results") ),
@@ -520,7 +520,7 @@ sub edit :Private {
   
   # Attendee tokeninputs
   my $attendee_tokeninput_options = {
-    jsonContainer => "json_people",
+    jsonContainer => "json_search",
     hintText      => encode_entities( $c->maketext("meetings.field.attendees.tokeninput.type") ),
     noResultsText => encode_entities( $c->maketext("tokeninput.text.no-results") ),
     searchingText => encode_entities( $c->maketext("tokeninput.text.searching") ),
@@ -544,7 +544,7 @@ sub edit :Private {
   
   # Apologies tokeninputs
   my $apologies_tokeninput_options = {
-    jsonContainer => "json_people",
+    jsonContainer => "json_search",
     hintText      => encode_entities( $c->maketext("meetings.field.apologies.tokeninput.type") ),
     noResultsText => encode_entities( $c->maketext("tokeninput.text.no-results") ),
     searchingText => encode_entities( $c->maketext("tokeninput.text.searching") ),
@@ -567,15 +567,15 @@ sub edit :Private {
   }
   
   my $tokeninput_confs = [{
-    script    => $c->uri_for("/people/ajax-search"),
+    script    => $c->uri_for("/people/search"),
     options   => encode_json( $organiser_tokeninput_options ),
     selector  => "organiser",
   }, {
-    script    => $c->uri_for("/people/ajax-search"),
+    script    => $c->uri_for("/people/search"),
     options   => encode_json( $attendee_tokeninput_options ),
     selector  => "attendees",
   }, {
-    script    => $c->uri_for("/people/ajax-search"),
+    script    => $c->uri_for("/people/search"),
     options   => encode_json( $apologies_tokeninput_options ),
     selector  => "apologies",
   }];
@@ -592,7 +592,7 @@ sub edit :Private {
     external_scripts    => [
       $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
       $c->uri_for("/static/script/standard/chosen.js"),
-      $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js"),
+      $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js", {v => 2}),
       $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
       $c->uri_for("/static/script/plugins/ckeditor/ckeditor.js"),
       $c->uri_for("/static/script/plugins/ckeditor/adapters/jquery.js"),

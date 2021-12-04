@@ -639,36 +639,6 @@ sub do_delete :Chained("base") :PathPart("do-delete") :Args(0) {
   }
 }
 
-=head2 ajax_search
-
-Handle search requests and return the data in JSON.
-
-=cut
-
-sub ajax_search :Path('ajax-search') :Args(0) {
-  my ( $self, $c ) = @_;
-  
-  if (defined($c->request->parameters->{q})) {
-    # Perform the search
-    my @users       = $c->model("DB::User")->search_by_name( $c->request->parameters->{q} );
-    my $json_users  = [];
-    
-    # Loop through and concatenate the short club name and team name, then push it on to the $json_teams arrayref
-    foreach my $user (@users) {
-      push( @{$json_users}, {id => $user->id, name => $user->username} );
-    }
-    
-    # Set up the stash
-    $c->stash({ json_users => $json_users,});;
-    
-    # Detach to the JSON view
-    $c->detach( $c->view("JSON") );
-  }
-  
-  # Don't alter the view who's online activity
-  $c->stash->{skip_view_online} = 1;
-}
-
 =head2 resend_activation
 
 Resend the email with the activation key.
@@ -1621,6 +1591,31 @@ sub check_authorisation :Private {
       }
     }
   }
+}
+
+=head2 search
+
+Handle search requests and return the data in JSON for AJAX requests, or paginate and return in an HTML page for normal web requests (or just display a search form if no query provided).
+
+=cut
+
+sub search :Local :Args(0) {
+  my ( $self, $c ) = @_;
+  
+  # Check that we are authorised to view users
+  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["user_view", $c->maketext("user.auth.view-users"), 1] );
+  
+  my $q = $c->req->param( "q" ) || undef;
+  
+  $c->stash({
+    db_resultset => "User",
+    query_params => {q => $q},
+    view_action => "/users/view",
+    search_action => "/users/search",
+  });
+  
+  # Do the search
+  $c->forward( "TopTable::Controller::Search", "do_search" );
 }
 
 

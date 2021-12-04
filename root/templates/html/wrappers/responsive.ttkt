@@ -118,7 +118,6 @@ END;
 
 <script type="text/javascript" src="[% c.uri_for("/static/script/standard/main.js") %]"></script>
 [%
-INCLUDE "html/calling-scripts.ttkt";
 IF external_scripts;
   FOREACH script IN external_scripts;
 -%]
@@ -126,33 +125,8 @@ IF external_scripts;
 [%
   END;
 END;
+INCLUDE "html/calling-scripts.ttkt";
 -%]
-<script type="text/javascript">
-  $(document).ready(function() {
-    $("body").ihavecookies({
-      "title": "[% c.maketext("cookie.title") %]",
-      "message": "[% c.maketext("cookie.detail") %]",
-      "moreInfoLabel": "[% c.maketext("cookie.privacy-link.label") %]",
-      "link": "[% c.uri_for('/info/privacy') %]",
-      "delay": 600,
-      "expires": 30,
-      "uncheckBoxes": false,
-      "acceptBtnLabel": "[% c.maketext("cookie.accept-button.label") %]",
-      "cookieTypesTitle": "[% c.maketext("cookie.select-cookies.label") %]",
-      "fixedCookieTypeLabel": "[% c.maketext("cookie.types.essential.label") %]",
-      "fixedCookieTypeDesc": "[% c.maketext("cookie.types.essential.description") %]",
-      "cookieTypes": [{
-        "type": "[% c.maketext("cookie.types.preferences.label") %]",
-        "value": "[% c.maketext("cookie.types.preferences.id") %]",
-        "description": "[% c.maketext("cookie.types.preferences.description") %]"
-      }, {
-        "type": "[% c.maketext("cookie.types.analytics.label") %]",
-        "value": "[% c.maketext("cookie.types.analytics.id") %]",
-        "description": "[% c.maketext("cookie.types.analytics.description") %]"
-      }]
-    });
-  });
-</script>
 </head>
 <body>
 <div id="header">
@@ -556,6 +530,20 @@ END;
 </ul>
 </nav>
 <!-- END MENU -->
+
+[%
+IF c.config.Search.enable_search_bar;
+-%]
+<!-- SEARCH BAR -->
+<form method="get" action="[% c.uri_for_action("/search/index") %]">
+<div class="field-container-search-right">
+  <input type="text" name="q" value="[% q %]" placeholder="[% c.maketext("search.form.query-term") %]" autocomplete="off" class="search-box" id="site-search-box" />
+</div>
+<div class="clear-fix"></div>
+</form>
+[%
+END;
+-%]
 
 <div id="content">
 [%

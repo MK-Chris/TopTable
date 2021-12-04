@@ -27,6 +27,9 @@ Catalyst Controller.
 sub auto :Private {
   my ( $self, $c ) = @_;
   
+  # Load the messages
+  $c->load_status_msgs;
+  
   # The title bar will always have
   $c->stash({subtitle1 => $c->maketext("menu.text.system-event-log")});
   
@@ -52,9 +55,6 @@ sub base :Chained("/") :PathPart("event-log") :CaptureArgs(0) {
   
   # Page description
   $c->stash({page_description => $c->maketext("description.event-log.list", $site_name)});
-  
-  # Load the messages
-  $c->load_status_msgs;
 }
 
 =head2 list_first_page

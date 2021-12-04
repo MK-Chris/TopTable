@@ -25,6 +25,9 @@ Catalyst Controller.
 sub auto :Private {
   my ( $self, $c ) = @_;
   
+  # Load the messages
+  $c->load_status_msgs;
+  
   # The title bar will always have
   $c->stash({subtitle1 => $c->maketext("menu.text.roles")});
   
@@ -42,9 +45,6 @@ Chain base for getting the role ID or URL key and checking it.
 
 sub base :Chained("/") :PathPart("roles") :CaptureArgs(1) {
   my ( $self, $c, $id_or_key ) = @_;
-  
-  # Load the messages
-  $c->load_status_msgs;
   
   my $role = $c->model("DB::Role")->find_id_or_url_key( $id_or_key );
   
@@ -241,7 +241,7 @@ sub create :Local {
   }
   
   my $tokeninput_confs = [{
-    script    => $c->uri_for("/users/ajax-search"),
+    script    => $c->uri_for("/users/search"),
     options   => encode_json( $member_tokeninput_options ),
     selector  => "members",
   }];
@@ -256,7 +256,7 @@ sub create :Local {
     external_scripts    => [
       $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
       $c->uri_for("/static/script/standard/prettycheckable.js"),
-      $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js"),
+      $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js", {v => 2}),
     ],
     external_styles     => [
       $c->uri_for("/static/css/tokeninput/token-input-tt.css"),
@@ -431,7 +431,7 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["role_edit", $c->maketext("user.auth.edit-roles"), 1] );
   
   my $member_tokeninput_options = {
-    jsonContainer => "json_people",
+    jsonContainer => "json_search",
     hintText      => encode_entities( $c->maketext("person.tokeninput.type") ),
     noResultsText => encode_entities( $c->maketext("tokeninput.text.no-results") ),
     searchingText => encode_entities( $c->maketext("tokeninput.text.searching") ),
@@ -454,7 +454,7 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
   }
   
   my $tokeninput_confs = [{
-    script    => $c->uri_for("/people/ajax-search"),
+    script    => $c->uri_for("/people/search"),
     options   => encode_json( $member_tokeninput_options ),
     selector  => "recipients",
   }];
@@ -469,7 +469,7 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
     external_scripts    => [
       $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
       $c->uri_for("/static/script/standard/prettycheckable.js"),
-      $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js"),
+      $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js", {v => 2}),
     ],
     external_styles     => [
       $c->uri_for("/static/css/tokeninput/token-input-tt.css"),

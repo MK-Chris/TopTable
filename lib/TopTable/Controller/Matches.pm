@@ -25,6 +25,9 @@ Things to run automatically with any path that starts /matches.
 sub auto :Private {
   my ( $self, $c ) = @_;
   
+  # Load the messages
+  $c->load_status_msgs;
+  
   # Breadcrumbs links
   push( @{ $c->stash->{breadcrumbs} }, {
     path  => $c->uri_for_action("/fixtures-results/root_current_season"),
