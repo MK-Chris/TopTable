@@ -642,6 +642,17 @@ __PACKAGE__->add_columns(
     { data_type => "datetime", timezone => "UTC", set_on_create => 0, set_on_update => 0, datetime_undef_if_invalid => 1, is_nullable => 1, },
 );
 
+=head2 url_keys
+
+Return the URL key for this object as an array ref (even if there's only one, an array ref is necessary so we can do the same for other objects with more than one array key field).
+
+=cut
+
+sub url_keys {
+  my ( $self ) = @_;
+  return [ $self->url_key ];
+}
+
 =head2 can_delete
 
 Performs the logic checks to see if the user can be deleted; returns true if it can or false if it can't.  Currently this just returns 1 so we can always delete.
@@ -892,6 +903,35 @@ sub has_role {
   my ( $self, $role ) = @_;
   
   return ( defined( $self->find_related("user_roles", {role => $role->id}) ) ) ? 1 : 0;
+}
+
+=head2 search_display
+
+Function in all searchable objects to give a common accessor to the text to display. 
+
+=cut
+
+sub search_display {
+  my ( $self, $params ) = @_;
+  
+  return {
+    id => $self->id,
+    name => $self->username,
+    url_keys => $self->url_keys,
+    type => "user"
+  };
+}
+
+=head2 registered_long_date
+
+Return the long registered date.
+
+=cut
+
+sub registered_long_date {
+  my ( $self ) = @_;
+  
+  return sprintf( "%s, %s %s %s", ucfirst( $self->registered_date->day_name ), $self->registered_date->day, $self->registered_date->month_name, $self->registered_date->year );
 }
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

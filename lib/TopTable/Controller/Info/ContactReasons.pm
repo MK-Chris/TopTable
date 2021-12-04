@@ -225,7 +225,7 @@ sub create :Local {
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["contact_reason_create", $c->maketext("user.auth.create-contact-reason"), 1] );
   
   my $recipient_tokeninput_options = {
-    jsonContainer => "json_people",
+    jsonContainer => "json_searchjson_search",
     hintText      => encode_entities( $c->maketext("person.tokeninput.type") ),
     noResultsText => encode_entities( $c->maketext("tokeninput.text.no-results") ),
     searchingText => encode_entities( $c->maketext("tokeninput.text.searching") ),
@@ -242,7 +242,7 @@ sub create :Local {
   }
   
   my $tokeninput_confs = [{
-    script    => $c->uri_for("/people/ajax-search"),
+    script    => $c->uri_for("/people/search"),
     options   => encode_json( $recipient_tokeninput_options ),
     selector  => "recipients",
   }];
@@ -255,7 +255,7 @@ sub create :Local {
       "tokeninput-standard",
     ],
     external_scripts    => [
-      $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js"),
+      $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js", {v => 2}),
     ],
     external_styles     => [
       $c->uri_for("/static/css/tokeninput/token-input-tt.css"),
@@ -292,7 +292,7 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["contact_reason_edit", $c->maketext("user.auth.edit-contact-reasons"), 1] );
   
   my $recipient_tokeninput_options = {
-    jsonContainer => "json_people",
+    jsonContainer => "json_search",
     hintText      => encode_entities( $c->maketext("person.tokeninput.type") ),
     noResultsText => encode_entities( $c->maketext("tokeninput.text.no-results") ),
     searchingText => encode_entities( $c->maketext("tokeninput.text.searching") ),
@@ -315,7 +315,7 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
   }
   
   my $tokeninput_confs = [{
-    script    => $c->uri_for("/people/ajax-search"),
+    script    => $c->uri_for("/people/search"),
     options   => encode_json( $recipient_tokeninput_options ),
     selector  => "recipients",
   }];
@@ -328,7 +328,7 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
       "tokeninput-standard",
     ],
     external_scripts    => [
-      $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js"),
+      $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js", {v => 2}),
     ],
     external_styles     => [
       $c->uri_for("/static/css/tokeninput/token-input-tt.css"),

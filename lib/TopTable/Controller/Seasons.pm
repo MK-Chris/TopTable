@@ -25,6 +25,9 @@ Catalyst Controller.
 sub auto :Private {
   my ( $self, $c ) = @_;
   
+  # Load the messages
+  $c->load_status_msgs;
+  
   # The title bar will always have
   $c->stash({subtitle1 => $c->maketext("menu.text.seasons")});
   
@@ -42,9 +45,6 @@ Chain base for getting the season ID and checking it.
 
 sub base :Chained("/") :PathPart("seasons") :CaptureArgs(1) {
   my ( $self, $c, $id_or_key ) = @_;
-  
-  # Load the messages
-  $c->load_status_msgs;
   
   my $season = $c->model("DB::Season")->find_id_or_url_key( $id_or_key );
   
@@ -77,10 +77,7 @@ sub base_list :Chained("/") :PathPart("seasons") :CaptureArgs(0) {
   my ( $self, $c ) = @_;
   my $site_name = $c->stash->{encoded_site_name};
   
-  # Check that we are authorised to view clubs
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["season_view", $c->maketext("user.auth.view-seasons"), 1] );
-  
-  # Check the authorisation to edit clubs we can display the link if necessary
+  # Check the authorisation to edit seasons we can display the link if necessary
   $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( season_edit season_delete season_create) ], "", 0] );
   
   # Page description
@@ -97,7 +94,7 @@ sub base_list :Chained("/") :PathPart("seasons") :CaptureArgs(0) {
 
 =head2 list_first_page
 
-List the clubs on the first page.
+List the seasons on the first page.
 
 =cut
 
@@ -110,7 +107,7 @@ sub list_first_page :Chained("base_list") :PathPart("") :Args(0) {
 
 =head2 list_specific_page
 
-List the clubs on the specified page.
+List the seasons on the specified page.
 
 =cut
 
@@ -131,7 +128,7 @@ sub list_specific_page :Chained("base_list") :PathPart("page") :Args(1) {
 
 =head2 retrieve_paged
 
-Performs the lookups for clubs with the given page number.
+Performs the lookups for seasons with the given page number.
 
 =cut
 
@@ -173,7 +170,7 @@ sub view :Chained("base") :PathPart("") :Args(0) {
   my $site_name     = $c->stash->{encoded_site_name};
   my $edit_teams_allowed;
   
-  # Check that we are authorised to view clubs
+  # Check that we are authorised to view seasons
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["season_view", $c->maketext("user.auth.view-seasons"), 1] );
   $c->forward( "TopTable::Controller::Users", "check_authorisation", [[ qw( season_edit season_delete ) ], "", 0] );
   
@@ -765,6 +762,31 @@ sub do_archive :Chained("base") :PathPart("do-archive") :Args(0) {
     $c->detach;
     return;
   }
+}
+
+=head2 search
+
+Handle search requests and return the data in JSON for AJAX requests, or paginate and return in an HTML page for normal web requests (or just display a search form if no query provided).
+
+=cut
+
+sub search :Local :Args(0) {
+  my ( $self, $c ) = @_;
+  
+  # Check that we are authorised to view clubs
+  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["season_view", $c->maketext("user.auth.view-seasons"), 1] );
+  
+  my $q = $c->req->param( "q" ) || undef;
+  
+  $c->stash({
+    db_resultset => "Season",
+    query_params => {q => $q},
+    view_action => "/seasons/view",
+    search_action => "/seasons/search",
+  });
+  
+  # Do the search
+  $c->forward( "TopTable::Controller::Search", "do_search" );
 }
 
 =encoding utf8

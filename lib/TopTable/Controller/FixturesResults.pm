@@ -31,6 +31,9 @@ Catalyst Controller for displaying fixtures and results in a variety of ways.  T
 sub auto :Private {
   my ( $self, $c ) = @_;
   
+  # Load the messages
+  $c->load_status_msgs;
+  
   # The title bar will always have
   $c->stash({subtitle1 => $c->maketext("menu.text.fixtures-results")});
 }
@@ -43,9 +46,6 @@ Chain base for getting the club ID and checking it.  Matches "/fixtures-results/
 
 sub base :Chained("/") :PathPart("fixtures-results") :CaptureArgs(0) {
   my ( $self, $c, $id_or_key ) = @_;
-  
-  # Load the messages
-  $c->load_status_msgs;
 }
 
 =head2 load_current_season

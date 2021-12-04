@@ -189,6 +189,17 @@ __PACKAGE__->has_many(
 # Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-01-08 00:07:04
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:OqXSR9xArT9LLH+t1V2YIg
 
+=head2 url_keys
+
+Return the URL key for this object as an array ref (even if there's only one, an array ref is necessary so we can do the same for other objects with more than one array key field).
+
+=cut
+
+sub url_keys {
+  my ( $self ) = @_;
+  return [ $self->url_key ];
+}
+
 =head2 can_delete
 
 Checks to see whether a fixtures grid can be deleted.  A fixtures grid can be deleted if there are no matches and no divisions assigned to it.
@@ -734,6 +745,23 @@ sub set_matches {
   }
   
   return $return;
+}
+
+=head2 search_display
+
+Function in all searchable objects to give a common accessor to the text to display. 
+
+=cut
+
+sub search_display {
+  my ( $self, $params ) = @_;
+  
+  return {
+    id => $self->id,
+    name => $self->name,
+    url_keys => $self->url_keys,
+    type => "fixtures-grid"
+  };
 }
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

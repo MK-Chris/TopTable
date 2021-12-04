@@ -300,6 +300,18 @@ __PACKAGE__->belongs_to(
 # Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-02-25 14:03:10
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:+Yc7CDZg1S/4z4MftGCdJw
 
+=head2 url_keys
+
+Return the URL key for this object as an array ref (even if there's only one, an array ref is necessary so we can do the same for other objects with more than one array key field).
+
+=cut
+
+sub url_keys {
+  my ( $self ) = @_;
+  return [ $self->url_key ];
+}
+
+
 =head2 get_season
 
 Get a club_season object for this club with the specified season.
@@ -417,6 +429,159 @@ sub check_and_delete {
   
   return $error;
 }
+
+=head2 last_season_entered
+
+Return the last season this club entered.
+
+=cut
+
+sub last_season_entered {
+  my ( $self ) = @_;
+  
+  my $club_season = $self->search_related("club_seasons", undef, {
+    join => "season",
+    rows => 1,
+    order_by => {
+      -desc => [qw( season.start_date season.end_date )]
+    },
+  })->single;
+  
+  return defined( $club_season ) ? $club_season->season : undef;
+}
+
+=head2 teams_in_club
+
+Return the current list of teams (or, at least, the teams for the last season entered).
+
+=cut
+
+sub teams_in_club {
+  my ( $self, $params ) = @_;
+  my ( $where, $sort_hash );
+  my $season      = $params->{season} || undef;
+  my $sort_column = $params->{sort};
+  my $order       = $params->{order};
+  
+  # Sanitist the sort order
+  $sort_column  = "name" unless defined( $sort_column ) and ( $sort_column eq "name" or $sort_column eq "captain" or $sort_column eq "division" or $sort_column eq "home-night" );
+  $order        = "asc" unless defined( $order ) and ( $order eq "asc" or $order eq "desc" );
+  $order        = "-$order"; # The 'order_by' hash key needs to start with a '-'
+  
+  # If there's no season specified, we won't have a captain, a division or a home night, so we must just be sorting by name
+  $sort_column = "name" unless defined( $season );
+  
+  # Build the hashref that will give us the database columns to sort by
+  my %db_columns = (
+    name => [ qw( me.name ) ],
+    captain => [ qw( captain.surname captain.first_name ) ],
+    division => [ qw( division.rank ) ],
+    "home-night" => [ qw( home_night.weekday_number ) ],
+  );
+  
+  # Build the sort hash
+  my $sort_instruction = {
+    $order => $db_columns{$sort_column},
+  };
+  
+  # Add an ascending team name search to the sort hash if the primary sort isn't by name
+  if ( $sort_column ne "name" ) {
+    if ( $sort_column eq "-asc" ) {
+      # We're doing an ascending sort already, so just push "me.name" on to it
+      push( @{ $sort_instruction->{$order} }, "me.name" );
+    } else {
+      # The primary sort is descending, so we need to make the sort hash an array
+      $sort_instruction = [ $sort_instruction, {-asc => "me.name"} ];
+    }
+  }
+  
+  if ( defined( $season ) ) {
+    # We have a season passed in, so we need to go through club_seasons and team_seasons
+    my $club_season = $self->search_related("club_seasons", {
+      season => $season->id
+    }, {
+      rows => 1,
+    })->single;
+    
+    return undef unless defined( $club_season );
+    
+    return $club_season->search_related("team_seasons", undef, {
+      prefetch  => ["season", "captain", "home_night", {division_season => "division"}],
+      order_by  => $sort_instruction,
+    });
+    
+  } else {
+    # No season defined, just search the currently registered teams
+    return $self->search_related("teams", undef, {
+      prefetch  => {
+        "team_seasons" => ["season", "captain", "home_night", {division_season => "division", club_season => "club"}],
+      },
+      order_by  => [{
+        -asc   => ["me.name"]
+      }, {
+        -desc  => [ qw( season.start_date season.end_date) ]
+      }]
+    });
+  }
+}
+
+=head2 players_in_club
+
+Return a list of players who play for this club (in the given season if specified, otherwise just a list of players currently registered).
+
+=cut
+
+sub players_in_club {
+  my ( $self, $params ) = @_;
+  my $season = $params->{season} || undef;
+  my ( $where, $attrib );
+  
+  # Get a list of teams, then map the IDs into the array
+  if ( defined( $season ) ) {
+    $where = {"team_seasons.season" => $season->id};
+    $attrib = {join => "team_seasons"};
+  }
+  
+  my @teams = $self->search_related("teams", $where, $attrib);
+  my @team_ids = map( $_->id , @teams );
+  
+  if ( defined( $season ) ) {
+    $where = {
+      "person_seasons.team" => {-in => \@team_ids},
+      "person_seasons.season" => $season->id,
+    };
+    
+    $attrib = {
+      join => "person_seasons",
+    };
+  } else {
+    $where = {
+      team => {-in => \@team_ids},
+    };
+    
+    undef( $attrib );
+  }
+  
+  return $self->result_source->schema->resultset("Person")->search( $where, $attrib );
+}
+
+=head2 search_display
+
+Function in all searchable objects to give a common accessor to the text to display. 
+
+=cut
+
+sub search_display {
+  my ( $self, $params ) = @_;
+  
+  return {
+    id => $self->id,
+    name => $self->full_name,
+    url_keys => $self->url_keys,
+    type => "club"
+  };
+}
+
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 __PACKAGE__->meta->make_immutable;

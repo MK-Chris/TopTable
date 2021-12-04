@@ -26,6 +26,9 @@ Catalyst Controller for clubs; handles viewing, editing, creating and deleting.
 sub auto :Private {
   my ( $self, $c ) = @_;
   
+  # Load the messages
+  $c->load_status_msgs;
+  
   # The title bar will always have
   $c->stash({subtitle1 => $c->maketext("menu.text.clubs") });
   
@@ -45,9 +48,6 @@ Chain base for getting the club ID and checking it.
 
 sub base :Chained("/") :PathPart("clubs") :CaptureArgs(1) {
   my ( $self, $c, $id_or_key ) = @_;
-  
-  # Load the messages
-  $c->load_status_msgs;
   
   my $club = $c->model("DB::Club")->find_id_or_url_key( $id_or_key );
   
@@ -474,36 +474,6 @@ sub retrieve_paged_seasons :Private {
   });
 }
 
-=head2 ajax_search
-
-Handle search requests and return the data in JSON.
-
-=cut
-
-sub ajax_search :Path('ajax-search') :Args(0) {
-  my ( $self, $c ) = @_;
-  
-  if (defined($c->request->parameters->{q})) {
-    # Perform the search
-    my @clubs       = $c->model("DB::Club")->search_by_name( $c->request->parameters->{q} );
-    my $json_clubs  = [];
-    
-    # Loop through and concatenate the short club name and team name, then push it on to the $json_teams arrayref
-    foreach my $club (@clubs) {
-      push( @{$json_clubs}, {id => $club->id, name => $club->full_name} );
-    }
-    
-    # Set up the stash
-    $c->stash({json_clubs => $json_clubs});
-    
-    # Detach to the JSON view
-    $c->detach( $c->view("JSON") );
-  }
-  
-  # Don't alter the view who's online activity
-  $c->stash->{skip_view_online} = 1;
-}
-
 =head2 create
 
 Display a form to collect information for creating a club
@@ -544,7 +514,7 @@ sub create :Local {
   if ( $people_count ) {
     # First setup the function arguments
     my $tokeninput_options = {
-      jsonContainer => "json_people",
+      jsonContainer => "json_search",
       tokenLimit    => 1,
       hintText      => encode_entities( $c->maketext("person.tokeninput.type") ),
       noResultsText => encode_entities( $c->maketext("tokeninput.text.no-results") ),
@@ -555,7 +525,7 @@ sub create :Local {
     $tokeninput_options->{prePopulate} = [{id => $c->flash->{secretary}->id, name => $c->flash->{secretary}->display_name}] if defined( $c->flash->{secretary} );
     
     my $tokeninput_confs = [{
-      script    => $c->uri_for("/people/ajax-search"),
+      script    => $c->uri_for("/people/search"),
       options   => encode_json( $tokeninput_options ),
       selector  => "secretary",
     }];
@@ -571,7 +541,7 @@ sub create :Local {
     ],
     external_scripts    => [
       $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
-      $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js"),
+      $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js", {v => 2}),
       $c->uri_for("/static/script/standard/chosen.js"),
       $c->uri_for("/static/script/clubs/create-edit.js"),
     ],
@@ -618,7 +588,7 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
   if ( $people_count ) {
     # First setup the function arguments
     my $tokeninput_options = {
-      jsonContainer => "json_people",
+      jsonContainer => "json_search",
       tokenLimit    => 1,
       hintText      => $c->maketext("person.tokeninput.type"),
       noResultsText => $c->maketext("tokeninput.text.no-results"),
@@ -636,7 +606,7 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
     $tokeninput_options->{prePopulate} = [{id => $secretary->id, name => $secretary->display_name}] if defined( $secretary );
     
     my $tokeninput_confs = [{
-      script    => $c->uri_for("/people/ajax-search"),
+      script    => $c->uri_for("/people/search"),
       options   => encode_json( $tokeninput_options ),
       selector  => "secretary",
     }];
@@ -655,7 +625,7 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
     external_scripts    => [
       $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
       $c->uri_for("/static/script/standard/chosen.js"),
-      $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js"),
+      $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js", {v => 2}),
       $c->uri_for("/static/script/clubs/create-edit.js"),
     ],
     external_styles     => [
@@ -868,6 +838,31 @@ sub setup_club :Private {
     $c->detach;
     return;
   }
+}
+
+=head2 search
+
+Handle search requests and return the data in JSON for AJAX requests, or paginate and return in an HTML page for normal web requests (or just display a search form if no query provided).
+
+=cut
+
+sub search :Local :Args(0) {
+  my ( $self, $c ) = @_;
+  
+  # Check that we are authorised to view clubs
+  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["club_view", $c->maketext("user.auth.view-clubs"), 1] );
+  
+  my $q = $c->req->param( "q" ) || undef;
+  
+  $c->stash({
+    db_resultset => "Club",
+    query_params => {q => $q},
+    view_action => "/clubs/view_current_season",
+    search_action => "/clubs/search",
+  });
+  
+  # Do the search
+  $c->forward( "TopTable::Controller::Search", "do_search" );
 }
 
 

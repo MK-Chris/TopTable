@@ -25,6 +25,9 @@ Catalyst Controller.
 sub auto :Private {
   my ( $self, $c ) = @_;
   
+  # Load the messages
+  $c->load_status_msgs;
+  
   # The title bar will always have
   $c->stash({subtitle1 => $c->maketext("menu.text.reports") });
   
@@ -46,9 +49,6 @@ Chain base for getting the report ID and checking it.
 sub base :Chained("/") :PathPart("reports") :CaptureArgs(1) {
   my ( $self, $c, $report_id ) = @_;
   my @reports = qw( loan-players );
-  
-  # Load the messages
-  $c->load_status_msgs;
   
   if ( grep( $_ eq $report_id, @reports ) ) {
     # Report ID is in the list, stash it and continue

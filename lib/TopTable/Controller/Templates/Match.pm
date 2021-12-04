@@ -24,6 +24,9 @@ Catalyst Controller.
 sub auto :Private {
   my ( $self, $c ) = @_;
   
+  # Load the messages
+  $c->load_status_msgs;
+  
   # The title bar will always have
   $c->stash({subtitle1 => $c->maketext("menu.text.templates-match")});
   
@@ -42,9 +45,6 @@ sub auto :Private {
 
 sub index :Path :Args(0) {
   my ( $self, $c ) = @_;
-  
-  # Load the messages
-  $c->load_status_msgs;
   
   # Check that we are authorised to view
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["template_view", "view templates", 1] );

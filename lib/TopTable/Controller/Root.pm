@@ -5,7 +5,7 @@ use DateTime;
 use DateTime::TimeZone;
 use LWP::UserAgent;
 use JSON;
-use Data::Dumper::Concise;
+use Data::Dumper;
 use List::Util qw( min max );
 use Time::HiRes qw( gettimeofday tv_interval );
 use HTML::Entities;
@@ -300,15 +300,7 @@ Attempt to render a view, if needed.
 
 sub end :ActionClass("RenderView") {
   my ( $self, $c ) = @_;
-  
-  #### MOVED FROM BEGIN
   if ( !$c->stash->{no_wrapper} and !$c->is_ajax ) {
-    # Set the first part of the title
-    $c->stash({
-      title   => encode_entities( $c->config->{name} ),
-      wrapper => "html/wrappers/responsive.ttkt",
-    });
-    
     ## Nav drop down menus
     # Current season, clubs in current season, archived seasons
     my $current_season  = $c->model("DB::Season")->get_current;
@@ -322,18 +314,52 @@ sub end :ActionClass("RenderView") {
     }) ] if defined( $current_season );
     my $venues          = [ $c->model("DB::Venue")->all_venues ];
     
-    # Check the authorisation for creation of clubs
-    $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( club_view club_create event_view event_create season_view season_create venue_view venue_create meeting_view ) ], "", 0 ] );
-    $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( team_create team_view ) ], "", 0 ] ) if $c->config->{Menu}{show_teams};
-    $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( person_create person_view ) ], "", 0 ] ) if $c->config->{Menu}{show_players};
+    # See if we need to stash the search script; first grab the external scripts
+    my $scripts = $c->stash->{scripts} || [];
+    my $external_scripts = $c->stash->{external_scripts} || [];
+    my $external_styles = $c->stash->{external_styles} || [];
+    
+    if ( $c->config->{Search}{enable_search_bar} ) {
+      # Add the site search autocomplete script, as this is only added here, so we don't need to check we've not already added it
+      push( @{ $scripts }, "site-search-autocomplete" );
+      
+      unless ( $c->stash->{search_scripts_added} ) {
+        # Add the search scripts and tyles if they're not already stashed (we don't want to include them twice)
+        push( @{ $external_scripts }, $c->uri_for("/static/script/plugins/uri/URI.js") );
+        push( @{ $external_scripts }, $c->uri_for("/static/script/plugins/autocomplete/jquery.easy-autocomplete.js") );
+        
+        push( @{ $external_styles }, $c->uri_for("/static/css/autocomplete/easy-autocomplete.min.css") );
+        push( @{ $external_styles }, $c->uri_for("/static/css/autocomplete/easy-autocomplete.themes.min.css") );
+        
+        $c->stash({autocomplete_list => "json_search"});
+      }
+    }
     
     $c->stash({
+      # Set the first part of the title and the wrapper
+      title   => encode_entities( $c->config->{name} ),
+      wrapper => "html/wrappers/responsive.ttkt",
+      
+      # Nav elements
       nav_current_season      => $current_season,
       archived_seasons        => [ $c->model("DB::Season")->get_archived ],
       archived_seasons_count  => $c->model("DB::Season")->get_archived->count,
       nav_clubs               => $clubs,
       nav_venues              => $venues,
       nav_events              => $events,
+      
+      # Stash the new external scripts (everything previously stashed should be preserved)
+      scripts => $scripts,
+      external_scripts => $external_scripts,
+      external_styles => $external_styles,
+    });
+    
+    # Check the authorisation for creation of clubs
+    $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( club_view club_create event_view event_create season_view season_create venue_view venue_create meeting_view ) ], "", 0 ] );
+    $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( team_create team_view ) ], "", 0 ] ) if $c->config->{Menu}{show_teams};
+    $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( person_create person_view ) ], "", 0 ] ) if $c->config->{Menu}{show_players};
+    
+    $c->stash({
     });
   }
   #### END MOVED FROM BEGIN
@@ -495,7 +521,7 @@ sub json_error :Private {
 
 =head2 generate_pagination_links
 
-Handles pagination given parameters of a number of items, number of items per page
+Handles pagination given parameters of a number of items, number of items per page.  This works with pagination via an action for, e.g., /page/2.  Use generate_pagination_links_qs if using query strings
 
 =cut
 
@@ -574,6 +600,97 @@ sub generate_pagination_links :Private {
       number    => $_,
       action    => $action,
       arguments => \@arguments,
+    };
+  } @page_links;
+  
+  return \@page_links;
+}
+
+=head2 generate_pagination_links_qs
+
+Handles pagination given parameters of a number of items, number of items per page.  This works with pagination via a query string, e.g., ?page=2.  Use generate_pagination_links if using an action.
+
+=cut
+
+sub generate_pagination_links_qs :Private {
+  my ( $self, $c, $params ) = @_;
+  my $page_info = $params->{page_info};
+  my $page = $params->{page}; # Page attempted by the user
+  my $action = $params->{action};
+  my $page1_arguments = $params->{page1_arguments};
+  my $specific_page_arguments = $params->{specific_page_arguments};
+  my $action_params = $params->{params};
+  
+  # Make our arguments arrayrefs if they're not already
+  $page1_arguments = [] unless defined( $page1_arguments );
+  $specific_page_arguments = [] unless defined( $specific_page_arguments );
+  $page1_arguments = [ $page1_arguments ] if ref( $page1_arguments ) ne "ARRAY";
+  $specific_page_arguments = [ $specific_page_arguments ] if ref( $specific_page_arguments ) ne "ARRAY";
+  
+  if ( ( $page > 1 and $page_info->last_page < $page ) or !defined( $page ) or !$page or $page !~ /^\d+$/ or $page < 1 ) {
+    # Trying to access a page past the end or an invalid page number
+    if ( $action ) {
+      if ( $page1_arguments ) {
+        # Add arguments
+        $action_params->{mid} = $c->set_status_msg( {warning => $c->maketext("pagination.page-invalid-redirect", $page)} );
+        $c->response->redirect( $c->uri_for_action($action, $page1_arguments, $action_params) );
+      } else {
+        # No arguments
+        $action_params->{mid} = $c->set_status_msg( {warning => $c->maketext("pagination.page-invalid-redirect", $page)} );
+        $c->response->redirect( $c->uri_for_action($action, undef, $action_params) );
+      }
+      
+      $c->detach;
+      return;
+    } else {
+      $c->add_status_message( "error", $c->maketext("pagination.page-invalid-no-redirect", $page) );
+    }
+  }
+  
+  # Build the pagination
+  my @page_links;
+  if ( $page_info->last_page > 5 ) {
+    # More than five pages, we'll display a subset
+    
+    # Work out the start and end page
+    my $first_listed_page = min( max( 1, $page_info->current_page - 4 ), $page_info->last_page - 5 );
+    my $last_listed_page  = max( min( $page_info->last_page, $page_info->current_page + 4 ), 6 );
+    
+    push( @page_links, $_ ) foreach ( $first_listed_page .. $last_listed_page - 1 );
+    
+    # If the first page number isn't one, we need to make sure it is now; similarly, if the last item is not the last page, we need to add it
+    unshift( @page_links, 1 ) unless $page_links[0] == 1;
+    push( @page_links, $page_info->last_page ) unless $page_links[-1] == $page_info->last_page;
+  } else {
+    # All page numbers will go into the array if we have five or less
+    @page_links = ( 1 .. $page_info->last_page );
+  }
+  
+  # Now map the page numbers to their corresponding actions
+  @page_links = map{
+    # Set up the default action
+    my @arguments = ();
+    
+    # Check the page number to build our arguments
+    if ( $_ == 1 ) {
+      # Page 1, just add the page 1 action arguments that were passed in
+      @arguments = @{ $page1_arguments };
+    } else {
+      # Specific page, add in our action arguments, then push the page number on to the end
+      @arguments = @{ $specific_page_arguments };
+    }
+    
+    # Make sure we have a key for each page so the page number doesn't get trashed
+    my %page_params = %{ $action_params };
+    $page_params{page} = $_;
+    $page_params{results} = $page_info->entries_per_page unless $page_info->entries_per_page == $c->config->{Pagination}{default_page_size};
+    
+    # Return a hashref
+    {
+      number => $_,
+      action => $action,
+      arguments => \@arguments,
+      params => \%page_params,
     };
   } @page_links;
   

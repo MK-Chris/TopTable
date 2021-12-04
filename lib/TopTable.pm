@@ -214,7 +214,7 @@ Detect if this request is an AJAX one
 
 sub is_ajax {
   my ( $c ) = @_;
-  return ( defined( $c->request->headers->header("X-Requested-With") ) and $c->request->headers->header("X-Requested-With") eq "XMLHttpRequest" ) ? 1 : 0;
+  return ( defined( $c->req->header("X-Requested-With") ) and $c->req->header("X-Requested-With") eq "XMLHttpRequest" ) ? 1 : 0;
 }
 
 =head2 get_locale_with_uri

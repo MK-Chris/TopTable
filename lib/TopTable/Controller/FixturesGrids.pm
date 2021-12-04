@@ -29,6 +29,9 @@ Catalyst Controller for fixtures grids; handles viewing, editing, creating and d
 sub auto :Private {
   my ( $self, $c ) = @_;
   
+  # Load the messages
+  $c->load_status_msgs;
+  
   # The title bar will always have
   $c->stash({subtitle1 => $c->maketext("menu.text.fixtures-grids")});
   
@@ -47,9 +50,6 @@ Chain base for getting the fixtures grid ID and checking it.
 
 sub base :Chained("/") :PathPart("fixtures-grids") :CaptureArgs(1) {
   my ( $self, $c, $id_or_key ) = @_;
-  
-  # Load the messages
-  $c->load_status_msgs;
   
   my $grid = $c->model("DB::FixturesGrid")->find_id_or_url_key( $id_or_key );
   
@@ -1171,6 +1171,31 @@ sub do_delete_fixtures :Chained("base") :PathPart("do-delete-fixtures") :Args(0)
     $c->detach;
     return; 
   }
+}
+
+=head2 search
+
+Handle search requests and return the data in JSON for AJAX requests, or paginate and return in an HTML page for normal web requests (or just display a search form if no query provided).
+
+=cut
+
+sub search :Local :Args(0) {
+  my ( $self, $c ) = @_;
+  
+  # Check that we are authorised to view fixtures grids
+  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["fixtures_view", $c->maketext("user.auth.view-fixtures-grids"), 1] );
+  
+  my $q = $c->req->param( "q" ) || undef;
+  
+  $c->stash({
+    db_resultset => "FixturesGrid",
+    query_params => {q => $q},
+    view_action => "/fixtures-grids/view_current_season",
+    search_action => "/fixtures-grids/search",
+  });
+  
+  # Do the search
+  $c->forward( "TopTable::Controller::Search", "do_search" );
 }
 
 =encoding utf8

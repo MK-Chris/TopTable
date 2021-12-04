@@ -1,0 +1,235 @@
+<form method="get" action="[% form_action %]">
+[%
+# Search-specific form options
+IF search_form_include;
+  SET INCLUDE_SCRIPT = "html/search/includes/" _ search_form_include _ ".ttkt";
+  INCLUDE $INCLUDE_SCRIPT;
+END;
+-%]
+  <div class="field-container-search">
+    <input type="text" name="q" value="[% q %]" placeholder="[% c.maketext("search.form.query-term") %]" autocomplete="off" class="search-box" id="search-box" />
+    <input type="submit" value="[% c.maketext("form.button.search") %]" class="btn btn-eac" />
+  </div>
+  <div class="clear-fix"></div>
+</form>
+
+[%
+IF search_results.size;
+  # Use PROCESS instead of INCLUDE so that the page_links_text is defined in the current template thereafter
+  PROCESS "html/generic/pagination-qs.ttkt" OBJECT_PLURAL = c.maketext("object.plural.search-results");
+  page_links_text;
+-%]
+<div id="search-results">
+[%
+  FOREACH result = search_results;
+    SET display = result.search_display;
+    SWITCH display.type;
+      CASE "club";
+        SET URI = c.uri_for_action("/clubs/view_current_season", display.url_keys);
+        
+        IF search_all;
+          # If we're searching everything, the result is from the view, not the specific table we want
+          SET CLUB = c.model("DB::Club").find( result.id );
+        ELSE;
+          SET CLUB = result;
+        END;
+        
+        # Get description text
+        SET LAST_SEASON_ENTERED = CLUB.last_season_entered;
+        SET TEAMS_COUNT = 0;
+        SET PLAYERS_COUNT = 0;
+        SET TEAMS = [];
+        SET PLAYERS = [];
+        
+        IF LAST_SEASON_ENTERED;
+          SET LAST_SEASON_NAME = LAST_SEASON_ENTERED.name | html_entity;
+          SET TEAMS = CLUB.teams_in_club({season => LAST_SEASON_ENTERED});
+          
+          # size is sometimes returning an incorrect value for some reason, so we are using max + 1
+          #SET TEAMS_COUNT = TEAMS.size;
+          SET TEAMS_COUNT = TEAMS.max + 1;
+          SET PLAYERS = CLUB.players_in_club({season => LAST_SEASON_ENTERED});
+          SET PLAYERS_COUNT = PLAYERS.size;
+        ELSE;
+          SET LAST_SEASON_NAME = c.maketext("search-results.no-seasons-entered");
+          SET TEAMS_COUNT = 0;
+          SET PLAYERS_COUNT = 0;
+        END;
+        
+        SET VENUE = CLUB.venue.name | html_entity;
+        SET DESCRIPTION = c.maketext("search-results.club.description", LAST_SEASON_NAME, TEAMS_COUNT, PLAYERS_COUNT, VENUE);
+      CASE "division";
+        SET URI = c.uri_for_action("/divisions/view_current_season", display.url_keys);
+        
+        IF search_all;
+          # If we're searching everything, the result is from the view, not the specific table we want
+          SET DIVISION = c.model("DB::Division").find( result.id );
+        ELSE;
+          SET DIVISION = result;
+        END;
+        
+        # Set description text
+        SET LAST_SEASON_USED = DIVISION.last_season_used;
+        SET LAST_SEASON_NAME = LAST_SEASON_USED.name | html_entity;
+        
+        IF LAST_SEASON_NAME;
+          SET TEAMS = DIVISION.teams({season => LAST_SEASON_USED}).size;
+        ELSE;
+          SET LAST_SEASON_NAME = c.maketext("divisions.not-yet-used");
+          SET TEAMS = 0;
+        END;
+        
+        SET DESCRIPTION = c.maketext("search-results.division.description", LAST_SEASON_NAME, TEAMS);
+      CASE "fixtures-grid";
+        SET URI = c.uri_for_action("/fixtures-grids/view_current_season", display.url_keys);
+        
+        IF search_all;
+          # If we're searching everything, the result is from the view, not the specific table we want
+          SET GRID = c.model("DB::FixturesGrid").find( result.id );
+        ELSE;
+          SET GRID = result;
+        END;
+        
+        # Get description text
+        SET DESCRIPTION = c.maketext("search-results.fixtures-grid.description", GRID.maximum_teams, GRID.fixtures_repeated);
+      CASE "team-match";
+        SET URI = c.uri_for_action("/matches/team/view_by_url_keys", display.url_keys);
+        
+        IF search_all;
+          # If we're searching everything, the result is from the view, not the specific table we want
+          SET IDS = result.id.split(",");
+          SET DATE = IDS.2 _ "-" _ IDS.3 _ "-" _ IDS.4;
+          SET MATCH = c.model("DB::TeamMatch").find(IDS.0, IDS.1, DATE);
+          SET HOME_SCORE = MATCH.home_team_match_score;
+          SET AWAY_SCORE = MATCH.away_team_match_score;
+          SET HOME_TEAM = MATCH.home_team.club.short_name _ " " _ MATCH.home_team.name;
+          SET AWAY_TEAM = MATCH.away_team.club.short_name _ " " _ MATCH.away_team.name;
+        ELSE;
+          SET MATCH = result;
+          SET HOME_SCORE = MATCH.home_score;
+          SET AWAY_SCORE = MATCH.away_score;
+          SET HOME_TEAM = MATCH.home_team_name;
+          SET AWAY_TEAM = MATCH.away_team_name;
+        END;
+        
+        SET DATE = MATCH.actual_date;
+        CALL DATE.set_locale( c.locale );
+        
+        IF MATCH.cancelled;
+          SET DESCRIPTION = c.maketext("search-results.team-match.cancelled.description", DATE.dmy("/"));
+        ELSE;
+          IF HOME_SCORE OR HOME_SCORE;
+            SET SCORE = HOME_SCORE _ "-" _ HOME_SCORE;
+            SET DESCRIPTION = c.maketext("search-results.team-match.played.description", DATE.dmy("/"), SCORE);
+          ELSE;
+            SET DESCRIPTION = c.maketext("search-results.team-match.scheduled.description", DATE.dmy("/"));
+          END;
+        END;
+        
+        # Get description text
+      CASE "person";
+        SET URI = c.uri_for_action("/people/view_current_season", display.url_keys);
+        
+        IF search_all;
+          # If we're searching everything, the result is from the view, not the specific table we want
+          SET PERSON = c.model("DB::Person").find( result.id );
+        ELSE;
+          SET PERSON = result;
+        END;
+        
+        SET LAST_SEASON = PERSON.last_season_entered;
+        SET LAST_SEASON_NAME = LAST_SEASON.season.name | html_entity;
+        SET CLUB = LAST_SEASON.team_season.club_season.short_name | html_entity;
+        SET TEAM = LAST_SEASON.team_season.name | html_entity;
+        
+        # Get description text
+        SET DESCRIPTION = c.maketext("search-results.person.description", LAST_SEASON_NAME, CLUB, TEAM);
+      CASE "season";
+        SET URI = c.uri_for_action("/seasons/view", display.url_keys);
+        
+        IF search_all;
+          # If we're searching everything, the result is from the view, not the specific table we want
+          SET SEASON = c.model("DB::Season").find( result.id );
+        ELSE;
+          SET SEASON = result;
+        END;
+        
+        # Get description text
+        SET DESCRIPTION = c.maketext("search-results.season.description", SEASON.start_date_long, SEASON.end_date_long);
+      CASE "team";
+        SET URI = c.uri_for_action("/teams/view_current_season_by_url_key", display.url_keys);
+        
+        IF search_all;
+          # If we're searching everything, the result is from the view, not the specific table we want
+          SET TEAM = c.model("DB::Team").find( result.id, {prefetch = club});
+          
+          # Get directly from clubs table
+          SET CLUB = TEAM.club.full_name | html_entity;
+        ELSE;
+          SET TEAM = result;
+          
+          # This is a TeamClubView object, so we have the club details already in this view
+          SET CLUB = TEAM.club_full_name | html_entity;
+        END;
+        
+        SET LAST_SEASON_NAME = TEAM.last_season_entered.name | html_entity;
+        
+        # Get description text
+        SET DESCRIPTION = c.maketext("search-results.team.description", LAST_SEASON_NAME, CLUB);
+      CASE "user";
+        SET URI = c.uri_for_action("/users/view", display.url_keys);
+        
+        IF search_all;
+          # If we're searching everything, the result is from the view, not the specific table we want
+          SET USER = c.model("DB::User").find( result.id );
+        ELSE;
+          SET USER = result;
+        END;
+        
+        # Get description text
+        SET DESCRIPTION = c.maketext("search-results.user.description", USER.registered_long_date);
+      CASE "venue";
+        SET URI = c.uri_for_action("/venues/view", display.url_keys);
+        
+        IF search_all;
+          # If we're searching everything, the result is from the view, not the specific table we want
+          SET VENUE = c.model("DB::Venue").find( result.id );
+        ELSE;
+          SET VENUE = result;
+        END;
+        
+        SET ADDRESS = VENUE.full_address(", ") | html_entity;
+        
+        # Get description text
+        SET DESCRIPTION = c.maketext("search-results.venue.description", ADDRESS);
+      CASE "template-league-table-ranking";
+        SET URI = c.uri_for_action("/templates/league-table-ranking/view", display.url_keys);
+        
+        # Get description text
+        SET DESCRIPTION = c.maketext("search-results.template-league-table-ranking.description");
+      CASE "template-match-individual";
+        SET URI = c.uri_for_action("/templates/match/individual/view", display.url_keys);
+        
+        # Get description text
+        SET DESCRIPTION = c.maketext("search-results.template-match-individual.description");
+      CASE "template-match-team";
+        SET URI = c.uri_for_action("/templates/match/team/view", display.url_keys);
+        
+        # Get description text
+        SET DESCRIPTION = c.maketext("search-results.template-match-team.description");
+      END;
+%]
+<div class="search-result">
+<a href="[% URI %]"><b>[% display.name | html_entity %]</b></a><br />
+[% DESCRIPTION %]
+</div>
+[%
+  END;
+%]
+</div>
+[%
+page_links_text;
+ELSIF q != "";
+c.maketext("search.results.no-results", q);
+END;
+%]

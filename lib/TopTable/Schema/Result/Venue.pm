@@ -294,10 +294,17 @@ __PACKAGE__->has_many(
 # Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-01-27 15:12:25
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:yslnt/QIuWO5lz61uCJY5w
 
+=head2 url_keys
 
-#
-# Row-level helper methods
-#
+Return the URL key for this object as an array ref (even if there's only one, an array ref is necessary so we can do the same for other objects with more than one array key field).
+
+=cut
+
+sub url_keys {
+  my ( $self ) = @_;
+  return [ $self->url_key ];
+}
+
 =head2 full_address
 
 Type: Row-level helper method to get the address with blank lines removed.
@@ -453,6 +460,23 @@ sub get_full_timetable_by_session {
     # No timetable information, return undefined
     return undef;
   }
+}
+
+=head2 search_display
+
+Function in all searchable objects to give a common accessor to the text to display. 
+
+=cut
+
+sub search_display {
+  my ( $self, $params ) = @_;
+  
+  return {
+    id => $self->id,
+    name => $self->name,
+    url_keys => $self->url_keys,
+    type => "venue"
+  };
 }
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

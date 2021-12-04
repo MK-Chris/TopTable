@@ -25,6 +25,9 @@ Catalyst Controller.
 sub auto :Private {
   my ( $self, $c ) = @_;
   
+  # Load the messages
+  $c->load_status_msgs;
+  
   # The title bar will always have
   $c->stash({subtitle1 => $c->maketext("menu.text.news")});
   
@@ -43,9 +46,6 @@ Chain base for getting the news URL key and date parameters and checking them.
 
 sub base_by_url_key :Chained("/") PathPart("news") CaptureArgs(3) {
   my ( $self, $c, $published_year, $published_month, $id_or_url_key ) = @_;
-  
-  # Load the messages
-  $c->load_status_msgs;
   
   my $article = $c->model("DB::NewsArticle")->find_id_or_url_key( $id_or_url_key, $published_year, $published_month );
   

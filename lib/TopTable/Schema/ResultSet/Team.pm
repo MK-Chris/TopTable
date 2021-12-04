@@ -239,56 +239,47 @@ Return search results based on a supplied full or partial club / team name.
 =cut
 
 sub search_by_name {
-  my ( $self, $search_term, $season ) = @_;
-  my ( $where, $attributes );
+  my ( $self, $params ) = @_;
+  my $q = delete $params->{q};
+  my $season = delete $params->{season};
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.;
   
-  if ( $season ) {
-    $where = {
-      -or   => [{
-        "club.full_name" => {
-          like => "%" . $search_term . "%"
-        }
-      }, {
-        "club.short_name" => {
-          like => "%" . $search_term . "%"
-        }
-      }, {
-        "me.name" => {
-          like => "%" . $search_term . "%"
-        }
-      }],
-      -and  => {"season.id" => $season->id},
-    };
-    
-    $attributes = {
-      prefetch  => "club",
-      join      => {
-        "team_seasons" => "season",
-      },
-      order_by  => [ qw( club.short_name me.name )]
-    };
-  } else {
-    $where = [{
-      "club.full_name" => {
-        like => "%" . $search_term . "%"
-      }
-    }, {
-      "club.short_name" => {
-        like => "%" . $search_term . "%"
-      }
-    }, {
-      name => {
-        like => "%" . $search_term . "%"
-      }
-    }];
-    
-    $attributes = {
-      prefetch  => "club",
-      order_by  => [ qw( club.short_name name) ]
-    };
+  # Construct the LIKE '%word1%' AND  LIKE '%word2%' etc.  I couldn't work out how to map this, so a loop it is.
+  my @words = split( /\s+/, $q );
+  
+  # We do words on 'or' here so we can construct a 'club name + team name' in the search
+  my @constructed_like = ("-and");
+  foreach my $word ( @words ) {
+    my $constructed_like = { -like => "%$word%" };
+    push ( @constructed_like, $constructed_like );
   }
   
-  return $self->search( $where, $attributes );
+  my $where = [{
+    "club.full_name" => \@constructed_like,
+  }, {
+    "club.short_name" => \@constructed_like,
+  }, {
+    "me.name" => \@constructed_like,
+  }];
+  
+  my $attrib = {
+    prefetch => "club",
+    order_by => {-asc => [ qw( club.short_name me.name ) ]},
+    group_by => [ qw( club.short_name me.name ) ],
+  };
+  
+  if ( defined( $season ) ) {
+    $where->[0]{"team_seasons.season"} = $season->id;
+    $where->[1]{"team_seasons.season"} = $season->id;
+    $where->[2]{"team_seasons.season"} = $season->id;
+    $attrib->{join} = "team_seasons";
+    #push( @{ $attrib->{order_by}{-asc} }, qw( me.id me.url_key me.name me.club club.id club.full_name club.short_name club.abbreviated_name team_seasons.team team_seasons.season team_seasons.name team_seasons.club team_seasons.division team_seasons.captain club.full_name club.abbreviated_name ) );
+    push( @{ $attrib->{order_by}{-asc} }, qw( me.id ) );
+  }
+  
+  print Dumper( $where );
+  
+  return $self->search( $where, $attrib );
 }
 
 =head2 find_url_key

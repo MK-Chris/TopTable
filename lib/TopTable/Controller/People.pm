@@ -28,6 +28,9 @@ Catalyst Controller to create, edit view and delete people.  The people created 
 sub auto :Private {
   my ( $self, $c ) = @_;
   
+  # Load the messages
+  $c->load_status_msgs;
+  
   # The title bar will always have
   $c->stash({subtitle1 => $c->maketext("menu.text.people")});
   
@@ -47,9 +50,6 @@ Chain base for getting the person ID and checking it.
 sub base :Chained("/") PathPart("people") CaptureArgs(1) {
   my ( $self, $c, $id_or_url_key ) = @_;
   
-  # Load the messages
-  $c->load_status_msgs;
-  
   my $person = $c->model("DB::Person")->find_with_user( $id_or_url_key );
   
   if ( defined($person) ) {
@@ -65,7 +65,7 @@ sub base :Chained("/") PathPart("people") CaptureArgs(1) {
     
     # Push the people list page on to the breadcrumbs
     push( @{ $c->stash->{breadcrumbs} }, {
-      # Club view page (current season)
+      # View page (current season)
       path  => $c->uri_for_action("/people/view_current_season", [$person->url_key]),
       label => $encoded_display_name,
     });
@@ -76,7 +76,7 @@ sub base :Chained("/") PathPart("people") CaptureArgs(1) {
 
 =head2 base_list
 
-Chain base for the list of clubs.  Matches /clubs
+Chain base for the list of people.  Matches /people
 
 =cut
 
@@ -84,10 +84,10 @@ sub base_list :Chained("/") :PathPart("people") :CaptureArgs(0) {
   my ( $self, $c ) = @_;
   my $site_name = $c->stash->{encoded_site_name};
   
-  # Check that we are authorised to view clubs
+  # Check that we are authorised to view people
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["person_view", $c->maketext("user.auth.view-people"), 1] );
   
-  # Check the authorisation to edit clubs we can display the link if necessary
+  # Check the authorisation to edit people we can display the link if necessary
   $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( person_edit person_delete person_create) ], "", 0] );
   
   # Page description
@@ -104,7 +104,7 @@ sub base_list :Chained("/") :PathPart("people") :CaptureArgs(0) {
 
 =head2 list_first_page
 
-List the clubs on the first page.
+List the people on the first page.
 
 =cut
 
@@ -117,7 +117,7 @@ sub list_first_page :Chained("base_list") :PathPart("") :Args(0) {
 
 =head2 list_specific_page
 
-List the clubs on the specified page.
+List the people on the specified page.
 
 =cut
 
@@ -138,7 +138,7 @@ sub list_specific_page :Chained("base_list") :PathPart("page") :Args(1) {
 
 =head2 retrieve_paged
 
-Performs the lookups for clubs with the given page number.
+Performs the lookups for people with the given page number.
 
 =cut
 
@@ -360,7 +360,7 @@ sub view_finalise :Private {
   
   if ( $c->stash->{authorisation}{person_edit} ) {
     my $tokeninput_options = {
-      jsonContainer => "json_people",
+      jsonContainer => "json_search",
       tokenLimit    => 1,
       hintText      => $c->maketext("person.tokeninput.type"),
       noResultsText => encode_entities( $c->maketext("tokeninput.text.no-results") ),
@@ -372,13 +372,13 @@ sub view_finalise :Private {
     
     $scripts          = ["tokeninput-standard"];
     $tokeninput_confs = [{
-      script    => $c->uri_for_action("/people/ajax_search"),
+      script    => $c->uri_for("/people/search"),
       options   => encode_json( $tokeninput_options ),
       selector  => "to"
     }];
     
     push( @{ $external_styles }, $c->uri_for("/static/css/tokeninput/token-input-tt.css") );
-    push( @{ $external_scripts }, $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js") );
+    push( @{ $external_scripts }, $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js", {v => 2}) );
   }
   
   # Set up the template to use
@@ -621,7 +621,7 @@ sub create :Chained("base_no_object_specified") :PathPart("create") :CaptureArgs
   
   ## Club(s) secretaried
   $tokeninput_secretary_options = {
-    jsonContainer => "json_clubs",
+    jsonContainer => "json_search",
     hintText      => encode_entities( $c->maketext( "clubs.tokeninput.type-secretary" ) ),
   };
   
@@ -667,19 +667,19 @@ sub create :Chained("base_no_object_specified") :PathPart("create") :CaptureArgs
       $c->uri_for("/static/css/tokeninput/token-input-tt.css"),
     ],
     tokeninput_confs    => [{
-      script    => $c->uri_for_action("/teams/ajax_search", {season => $current_season->url_key}),
+      script    => $c->uri_for("/teams/search", {season => $current_season->url_key}),
       options   => encode_json( $tokeninput_team_options ),
       selector  => "team"
     }, {
-      script    => $c->uri_for_action("/teams/ajax_search", {season => $current_season->url_key}),
+      script    => $c->uri_for("/teams/search", {season => $current_season->url_key}),
       options   => encode_json( $tokeninput_captain_options ),
       selector  => "captain"
     }, {
-      script    => $c->uri_for("/clubs/ajax-search"),
+      script    => $c->uri_for("/clubs/search"),
       options   => encode_json( $tokeninput_secretary_options ),
       selector  => "secretary"
     }, {
-      script    => $c->uri_for("/users/ajax-search"),
+      script    => $c->uri_for("/users/search"),
       options   => encode_json( $tokeninput_user_options ),
       selector  => "username",
     }],
@@ -860,7 +860,7 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
   
   ## Club(s) secretaried
   $tokeninput_secretary_options = {
-    jsonContainer => "json_clubs",
+    jsonContainer => "json_search",
     hintText      => $c->maketext("clubs.tokeninput.type-secretary"),
     noResultsText => encode_entities( $c->maketext("tokeninput.text.no-results") ),
     searchingText => encode_entities( $c->maketext("tokeninput.text.searching") ),
@@ -897,12 +897,7 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
   };
   
   # Prioritise flashed values
-  my $user;
-  if ( defined( $c->flash->{user} ) ) {
-    $user = $c->flash->{user};
-  } else {
-    $user = $person->user;
-  }
+  my $user = defined( $c->flash->{user} ) ? $c->flash->{user} : $person->user;
   
   # Add the pre-population if required
   $tokeninput_user_options->{prePopulate} = [{id => $user->id, name => encode_entities( $user->username )}] if defined( $user );
@@ -925,19 +920,19 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
       $c->uri_for("/static/css/tokeninput/token-input-tt.css"),
     ],
     tokeninput_confs    => [{
-      script    => $c->uri_for_action("/teams/ajax_search", {season => $current_season->url_key}),
+      script    => $c->uri_for("/teams/search", {season => $current_season->url_key}),
       options   => encode_json( $tokeninput_team_options ),
       selector  => "team"
     }, {
-      script    => $c->uri_for_action("/teams/ajax_search", {season => $current_season->url_key}),
+      script    => $c->uri_for("/teams/search", {season => $current_season->url_key}),
       options   => encode_json( $tokeninput_captain_options ),
       selector  => "captain"
     }, {
-      script    => $c->uri_for("/clubs/ajax-search"),
+      script    => $c->uri_for("/clubs/search"),
       options   => encode_json( $tokeninput_secretary_options ),
       selector  => "secretary"
     }, {
-      script    => $c->uri_for("/users/ajax-search"),
+      script    => $c->uri_for("/users/search"),
       options   => encode_json( $tokeninput_user_options ),
       selector  => "username",
     }],
@@ -1105,7 +1100,7 @@ sub setup_person :Private {
   
   # A person can be a captain / secretary of multiple teams / clubs respectively
   my @captain_ids = split(",", $c->request->parameters->{captain});
-  my @captains    = map($c->model("DB::Team")->find_with_prefetches( $_ ), @captain_ids);
+  my @captains    = map( $c->model("DB::Team")->find_with_prefetches( $_ ), @captain_ids );
   
   my @secretary_ids = split(",", $c->request->parameters->{secretary});
   my @secretaries   = map( $c->model("DB::Club")->find( $_ ), @secretary_ids );
@@ -1561,64 +1556,32 @@ sub validate_team_for_player :Private {
   };
 }
 
-=head2 ajax_search
+=head2 search
 
 Handle search requests and return the data in JSON.
 
 =cut
 
-sub ajax_search :Path("ajax-search") {
+sub search :Local :Args(0) {
   my ( $self, $c ) = @_;
   
-  if (defined($c->request->parameters->{q})) {
-    # Perform the search
-    my @people       = $c->model("DB::Person")->search_by_name( $c->request->parameters->{q} );
-    my $json_people  = [];
-    
-    # Loop through and concatenate the short club name and team name, then push it on to the $json_teams arrayref
-    push( @{$json_people}, {id => $_->id, name => encode_entities( $_->display_name )} ) foreach ( @people );
-    
-    # Set up the stash
-    $c->stash({json_people => $json_people});
-    
-    # Detach to the JSON view
-    $c->detach( $c->view("JSON") );
-  }
+  # Check that we are authorised to view people
+  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["person_view", $c->maketext("user.auth.view-people"), 1] );
   
-  # Don't alter the view who's online activity
-  $c->stash->{skip_view_online} = 1;
+  my $q = $c->req->param( "q" ) || undef;
+  
+  $c->stash({
+    db_resultset => "Person",
+    query_params => {q => $q},
+    view_action => "/people/view_current_season",
+    search_action => "/people/search",
+  });
+  
+  # Do the search
+  $c->forward( "TopTable::Controller::Search", "do_search" );
 }
 
-=head2 ajax_search_with_season
 
-Handle search requests (with a specified season) and return the data in JSON.
-
-=cut
-
-sub ajax_search_with_season :Path('ajax-search') :Args(1) {
-  my ( $self, $c, $season_id ) = @_;
-  my $use_loan_rules = $c->request->parameters->{"use-loan-rules"};
-  
-  my $season = $c->model("DB::Season")->find($season_id);
-  
-  if (defined($c->request->parameters->{q}) and defined($season) ) {
-    # Perform the search
-    my @people      = $c->model("DB::Person")->search_by_name( $c->request->parameters->{q}, $season );
-    my $json_people = [];
-    
-    # Loop through and concatenate the short club name and team name, then push it on to the $json_teams arrayref
-    push( @{$json_people}, {id => $_->id, name => encode_entities( $_->display_name )} ) foreach ( @people );
-    
-    # Set up the stash
-    $c->stash({json_people => $json_people});
-    
-    # Detach to the JSON view
-    $c->detach( $c->view("JSON") );
-  }
-  
-  # Don't alter the view who's online activity
-  $c->stash->{skip_view_online} = 1;
-}
 
 
 =encoding utf8

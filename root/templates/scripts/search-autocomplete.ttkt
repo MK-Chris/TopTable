@@ -1,0 +1,50 @@
+
+    /*
+      Search autocomplete
+    */
+    $("#search-box").easyAutocomplete({
+      url: function(phrase) {
+        // Get a URI object from the action
+        var uri = URI("[% form_action OR c.uri_for_action("/search/index") %]");
+        
+        // Add the search query
+        uri.search({q: phrase});
+        
+[%
+SWITCH search_form_include;
+  CASE "team-match";
+-%]
+        // Add the team match options
+        if ( $("#complete").prop("checked") ) {
+          uri.addSearch({complete: 1});
+        }
+        
+        if ( $("#incomplete").prop("checked") ) {
+          uri.addSearch({incomplete: 1});
+        }
+        
+        if ( $("#cancelled").prop("checked") ) {
+          uri.addSearch({cancelled: 1});
+        }
+[%
+END;
+-%]
+        return uri;
+      },
+      listLocation: "[% autocomplete_list %]",
+      getValue: "name",
+      requestDelay: 200,
+      list: {
+        maxNumberOfElements: 10,
+        onKeyEnterEvent: function() {
+          window.location.href = $("#site-search-box").getSelectedItemData().url;
+        }
+      },
+      template: {
+        type: "links",
+        fields: {
+            link: "url"
+        }
+      }
+    });
+  

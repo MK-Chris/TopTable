@@ -525,6 +525,8 @@ div.label-field-container-multi > div.field-container, div.label-field-container
   width: 46px;
 }
 
+div#search-results, div.search-result {margin-top: 20px;}
+
 legend {
   color: #222;
   font-size: 1.15em;
@@ -576,6 +578,25 @@ input::-moz-focus-inner, button::-moz-focus-inner {
 }
 
 .no-boxshadow .blurred:invalid {background-color:#f0dddd;}
+
+div.field-container-search {
+  margin-left: 5px;
+  width: 100%;
+  max-width: 480px;
+	float: left;
+}
+
+input.search-box {
+  background-image: url("../images/icons/0030-Search-icon-16.png");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  float: left;
+  /*width: 60%;*/
+}
+
+input.search-button {
+  float: left;
+}
 
 /* Responsive images */
 img {

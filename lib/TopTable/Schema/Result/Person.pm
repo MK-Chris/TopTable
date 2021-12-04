@@ -676,6 +676,52 @@ __PACKAGE__->many_to_many(
 # Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-11-20 08:25:35
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:7aDwVaztDq/DKxPGVln0aQ
 
+=head2 url_keys
+
+Return the URL key for this object as an array ref (even if there's only one, an array ref is necessary so we can do the same for other objects with more than one array key field).
+
+=cut
+
+sub url_keys {
+  my ( $self ) = @_;
+  return [ $self->url_key ];
+}
+
+=head2 last_season_entered
+
+Return the person_season with the last season this person entered.
+
+=cut
+
+sub last_season_entered {
+  my ( $self ) = @_;
+  
+  return $self->search_related("person_seasons", {
+    "me.team_membership_type" => "active"
+  }, {
+    prefetch => ["season", {team_season => "club_season"}],
+    rows => 1,
+    order_by => {-desc => [qw( season.start_date season.end_date )]},
+  })->single;
+}
+
+=head2 search_display
+
+Function in all searchable objects to give a common accessor to the text to display. 
+
+=cut
+
+sub search_display {
+  my ( $self, $params ) = @_;
+  
+  return {
+    id => $self->id,
+    name => $self->display_name,
+    url_keys => $self->url_keys,
+    type => "person"
+  };
+}
+
 =head2 full_address
 
 Row-level helper method to get the address with blank lines removed.
@@ -683,7 +729,7 @@ Row-level helper method to get the address with blank lines removed.
 =cut
 
 sub full_address {
-  my ($self) = @_;
+  my ( $self ) = @_;
   my @full_address = ();
   
   # Add each address line if it's not blank
