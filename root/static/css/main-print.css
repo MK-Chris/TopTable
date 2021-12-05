@@ -586,6 +586,15 @@ div.field-container-search {
 	float: left;
 }
 
+div.field-container-search-right {
+  margin-right: 2.5%;
+  margin-left: 2.5%;
+  width: 95%;
+  max-width: 480px;
+	float: right;
+  display: none;
+}
+
 input.search-box {
   background-image: url("../images/icons/0030-Search-icon-16.png");
   background-repeat: no-repeat;

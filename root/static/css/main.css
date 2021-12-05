@@ -594,7 +594,8 @@ div.field-container-search {
 
 div.field-container-search-right {
   margin-right: 2.5%;
-  width: 100%;
+  margin-left: 2.5%;
+  width: 95%;
   max-width: 480px;
 	float: right;
 }
