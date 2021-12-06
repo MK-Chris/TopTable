@@ -7,7 +7,7 @@ IF search_form_include;
 END;
 -%]
   <div class="field-container-search">
-    <input type="text" name="q" value="[% q %]" placeholder="[% c.maketext("search.form.query-term") %]" autocomplete="off" class="search-box" id="search-box" />
+    <input type="text" name="q" value="[% q %]" placeholder="[% placeholder %]" autocomplete="off" class="search-box" id="search-box" />
     <input type="submit" value="[% c.maketext("form.button.search") %]" class="btn btn-eac" />
   </div>
   <div class="clear-fix"></div>
@@ -119,7 +119,7 @@ IF search_results.size;
           SET DESCRIPTION = c.maketext("search-results.team-match.cancelled.description", DATE.dmy("/"));
         ELSE;
           IF HOME_SCORE OR HOME_SCORE;
-            SET SCORE = HOME_SCORE _ "-" _ HOME_SCORE;
+            SET SCORE = HOME_SCORE _ "-" _ AWAY_SCORE;
             SET DESCRIPTION = c.maketext("search-results.team-match.played.description", DATE.dmy("/"), SCORE);
           ELSE;
             SET DESCRIPTION = c.maketext("search-results.team-match.scheduled.description", DATE.dmy("/"));

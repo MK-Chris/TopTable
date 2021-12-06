@@ -51,6 +51,7 @@ sub index :Path :Args(0) {
     },
     search_action => "/search/index",
     search_all => 1,
+    placeholder => $c->maketext( "search.form.placeholder", $c->maketext("object.plural.search-all") ),
   });
   
   # Do the search
@@ -131,7 +132,10 @@ sub do_search {
           }
         }
         
-        push( @{$json_search}, {id => $display{id}, name => $display{name}, url => $c->uri_for_action($obj_action, $display{url_keys})->as_string} );
+        my $json_result = {id => $display{id}, url => $c->uri_for_action($obj_action, $display{url_keys})->as_string};
+        $json_result->{name} = ( $result->result_source->schema->source($db_resultset)->has_column( "date" ) and defined( $result->date ) ) ? sprintf( "%s (%s)", $display{name}, $result->date->dmy("/") ) : $display{name};
+        
+        push( @{$json_search}, $json_result );
       }
       
       # Set up the stash

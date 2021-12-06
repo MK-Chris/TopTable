@@ -484,6 +484,7 @@ sub search :Local :Args(0) {
     query_params => {q => $q},
     view_action => "/templates/league-table-ranking/view",
     search_action => "/templates/league-table-ranking/search",
+    placeholder => $c->maketext( "search.form.placeholder", $c->maketext("object.plural.templates.league-table-ranking") ),
   });
   
   # Do the search

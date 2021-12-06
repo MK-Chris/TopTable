@@ -4171,8 +4171,8 @@ msgstr "Search"
 msgid "search.form"
 msgstr "Search form"
 
-msgid "search.form.query-term"
-msgstr "Search query"
+msgid "search.form.placeholder"
+msgstr "Search for %1"
 
 msgid "search.form.team-match.include-incomplete"
 msgstr "Include incomplete matches"
@@ -4781,6 +4781,9 @@ msgstr "filter"
 
 msgid "object.plural.average-filters"
 msgstr "filters"
+
+msgid "object.plural.search-all"
+msgstr "clubs, teams, people, matches, etc."
 
 ### Generic forms
 msgid "form.button.save"

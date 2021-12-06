@@ -423,6 +423,7 @@ sub search :Local :Args(0) {
     query_params => {q => $q},
     view_action => "/divisions/view_current_season",
     search_action => "/divisions/search",
+    placeholder => $c->maketext( "search.form.placeholder", $c->maketext("object.plural.divisions") ),
   });
   
   # Do the search

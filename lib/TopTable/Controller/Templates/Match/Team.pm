@@ -677,6 +677,7 @@ sub search :Local :Args(0) {
     query_params => {q => $q},
     view_action => "/templates/match/team/view",
     search_action => "/templates/match/team/search",
+    placeholder => $c->maketext( "search.form.placeholder", $c->maketext("object.plural.templates.match-individual") ),
   });
   
   # Do the search

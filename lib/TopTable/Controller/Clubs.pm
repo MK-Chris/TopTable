@@ -859,6 +859,7 @@ sub search :Local :Args(0) {
     query_params => {q => $q},
     view_action => "/clubs/view_current_season",
     search_action => "/clubs/search",
+    placeholder => $c->maketext( "search.form.placeholder", $c->maketext("object.plural.clubs") ),
   });
   
   # Do the search

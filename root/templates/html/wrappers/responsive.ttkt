@@ -537,7 +537,7 @@ IF c.config.Search.enable_search_bar;
 <!-- SEARCH BAR -->
 <form method="get" action="[% c.uri_for_action("/search/index") %]">
 <div class="field-container-search-right">
-  <input type="text" name="q" value="[% q %]" placeholder="[% c.maketext("search.form.query-term") %]" autocomplete="off" class="search-box" id="site-search-box" />
+  <input type="text" name="q" value="[% q %]" placeholder="[% c.maketext("search.form.placeholder", c.maketext("object.plural.search-all")) %]" autocomplete="off" class="search-box" id="site-search-box" />
 </div>
 <div class="clear-fix"></div>
 </form>

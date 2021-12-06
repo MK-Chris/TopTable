@@ -1612,6 +1612,7 @@ sub search :Local :Args(0) {
     query_params => {q => $q},
     view_action => "/users/view",
     search_action => "/users/search",
+    placeholder => $c->maketext( "search.form.placeholder", $c->maketext("object.plural.users") ),
   });
   
   # Do the search

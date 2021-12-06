@@ -1192,6 +1192,7 @@ sub search :Local :Args(0) {
     query_params => {q => $q},
     view_action => "/fixtures-grids/view_current_season",
     search_action => "/fixtures-grids/search",
+    placeholder => $c->maketext( "search.form.placeholder", $c->maketext("object.plural.fixtures-grids") ),
   });
   
   # Do the search

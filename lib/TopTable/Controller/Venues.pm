@@ -808,6 +808,7 @@ sub search :Local :Args(0) {
     query_params => {q => $q},
     view_action => "/venues/view",
     search_action => "/venues/search",
+    placeholder => $c->maketext( "search.form.placeholder", $c->maketext("object.plural.venues") ),
   });
   
   # Do the search

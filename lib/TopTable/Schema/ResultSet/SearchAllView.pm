@@ -52,7 +52,13 @@ sub search_by_name {
     }];
   }
   
-  my $attrib = {};
+  my $attrib = {
+    order_by => [{
+      -asc => [ qw( search_priority ) ],
+    }, {
+      -desc => [ qw( date ) ],
+    }]
+  };
   
   my $use_paging = ( defined( $page ) ) ? 1 : 0;
   

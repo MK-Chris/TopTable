@@ -1205,6 +1205,7 @@ sub search :Local :Args(0) {
     view_action => "/matches/team/view_by_url_keys",
     search_action => "/matches/team/search",
     search_form_include => "team-match",
+    placeholder => $c->maketext( "search.form.placeholder", $c->maketext("object.plural.matches") ),
     external_scripts    => [
       $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
       $c->uri_for("/static/script/standard/prettycheckable.js"),
