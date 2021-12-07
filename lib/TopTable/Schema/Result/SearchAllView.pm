@@ -40,25 +40,25 @@ __PACKAGE__->table("search_all");
 __PACKAGE__->result_source_instance->is_virtual(1);
 __PACKAGE__->result_source_instance->view_definition(
   "-- People
-SELECT 'person' AS 'type', id, url_key AS 'url_keys_csv', display_name AS 'name1', NULL AS 'name2', 1 AS 'search_priority', NULL AS 'date'
+SELECT 'person' AS 'type', id, url_key AS 'url_keys_csv', display_name AS 'name1', NULL AS 'name2', 1 AS 'search_priority', NULL AS 'date', NULL AS 'match_complete'
 FROM people
 UNION
 -- Clubs
-SELECT 'club' AS 'type', id, url_key AS 'url_keys_csv', full_name AS 'name1', short_name AS 'name2', 2 AS 'search_priority', NULL AS 'date'
+SELECT 'club' AS 'type', id, url_key AS 'url_keys_csv', full_name AS 'name1', short_name AS 'name2', 2 AS 'search_priority', NULL AS 'date', NULL AS 'match_complete'
 FROM clubs
 UNION
 -- Venues
-SELECT 'venue' AS 'type', id, url_key AS 'url_keys_csv', name AS 'name1', NULL AS 'name2', 3 AS 'search_priority', NULL AS 'date'
+SELECT 'venue' AS 'type', id, url_key AS 'url_keys_csv', name AS 'name1', NULL AS 'name2', 3 AS 'search_priority', NULL AS 'date', NULL AS 'match_complete'
 FROM venues
 UNION
 -- Teams
-SELECT 'team' AS 'type', t.id AS 'id', CONCAT(c.url_key, ',', t.url_key) AS 'url_keys_csv', CONCAT(c.short_name, ' ', t.name) AS 'name1', NULL AS 'name2', 4 AS 'search_priority', NULL AS 'date'
+SELECT 'team' AS 'type', t.id AS 'id', CONCAT(c.url_key, ',', t.url_key) AS 'url_keys_csv', CONCAT(c.short_name, ' ', t.name) AS 'name1', NULL AS 'name2', 4 AS 'search_priority', NULL AS 'date', NULL AS 'match_complete'
 FROM teams t
 JOIN clubs c
 ON t.club = c.id
 UNION
 -- Team matches
-SELECT 'team-match' AS 'type', CONCAT(home_team, ',', away_team, ',', YEAR(scheduled_date), ',', MONTH(scheduled_date), ',', DAY(scheduled_date)) AS 'id', CONCAT(hc.url_key, ',', ht.url_key, ',', ac.url_key, ',', at.url_key, ',', YEAR(scheduled_date), ',', MONTH(scheduled_date), ',', DAY(scheduled_date)) AS 'url_keys_csv', CONCAT(hcs.short_name, ' ', hts.name, ' v ', acs.short_name, ' ', ats.name) AS 'name1', NULL AS 'name2', 5 AS 'search_priority', scheduled_date AS 'date'
+SELECT 'team-match' AS 'type', CONCAT(home_team, ',', away_team, ',', YEAR(scheduled_date), ',', MONTH(scheduled_date), ',', DAY(scheduled_date)) AS 'id', CONCAT(hc.url_key, ',', ht.url_key, ',', ac.url_key, ',', at.url_key, ',', YEAR(scheduled_date), ',', MONTH(scheduled_date), ',', DAY(scheduled_date)) AS 'url_keys_csv', CONCAT(hcs.short_name, ' ', hts.name, ' v ', acs.short_name, ' ', ats.name) AS 'name1', NULL AS 'name2', 5 AS 'search_priority', scheduled_date AS 'date', complete AS 'match_complete'
 FROM team_matches m
 JOIN team_seasons hts
 ON m.home_team = hts.team AND m.season = hts.season
@@ -78,31 +78,31 @@ JOIN clubs ac
 ON acs.club = ac.id
 UNION
 -- Divisions
-SELECT 'division' AS 'type', id, url_key AS 'url_keys', name AS 'name1', NULL AS 'name2', 6 AS 'search_priority', NULL AS 'date'
+SELECT 'division' AS 'type', id, url_key AS 'url_keys', name AS 'name1', NULL AS 'name2', 6 AS 'search_priority', NULL AS 'date', NULL AS 'match_complete'
 FROM divisions
 UNION
 -- Seasons
-SELECT 'season' AS 'type', id, url_key AS 'url_keys_csv', name AS 'name1', NULL AS 'name2', 7 AS 'search_priority', NULL AS 'date'
+SELECT 'season' AS 'type', id, url_key AS 'url_keys_csv', name AS 'name1', NULL AS 'name2', 7 AS 'search_priority', NULL AS 'date', NULL AS 'match_complete'
 FROM seasons
 UNION
 -- Fixtures grids
-SELECT 'fixtures-grid' AS 'type', id, url_key AS 'url_keys_csv', name AS 'name1', NULL AS 'name2', 8 AS 'search_priority', NULL AS 'date'
+SELECT 'fixtures-grid' AS 'type', id, url_key AS 'url_keys_csv', name AS 'name1', NULL AS 'name2', 8 AS 'search_priority', NULL AS 'date', NULL AS 'match_complete'
 FROM fixtures_grids
 UNION
 -- League ranking templates
-SELECT 'template-league-table-ranking' AS 'type', id, url_key AS 'url_keys_csv', name AS 'name1', NULL AS 'name2', 9 AS 'search_priority', NULL AS 'date'
+SELECT 'template-league-table-ranking' AS 'type', id, url_key AS 'url_keys_csv', name AS 'name1', NULL AS 'name2', 9 AS 'search_priority', NULL AS 'date', NULL AS 'match_complete'
 FROM template_league_table_ranking
 UNION
 -- Individual match templates
-SELECT 'template-match-individual' AS 'type', id, url_key AS 'url_keys_csv', name AS 'name1', NULL AS 'name2', 10 AS 'search_priority', NULL AS 'date'
+SELECT 'template-match-individual' AS 'type', id, url_key AS 'url_keys_csv', name AS 'name1', NULL AS 'name2', 10 AS 'search_priority', NULL AS 'date', NULL AS 'match_complete'
 FROM template_match_individual
 UNION
 -- Team match templates
-SELECT 'template-match-team' AS 'type', id, url_key AS 'url_keys_csv', name AS 'name1', NULL AS 'name2', 11 AS 'search_priority', NULL AS 'date'
+SELECT 'template-match-team' AS 'type', id, url_key AS 'url_keys_csv', name AS 'name1', NULL AS 'name2', 11 AS 'search_priority', NULL AS 'date', NULL AS 'match_complete'
 FROM template_match_team
 UNION
 -- Users
-SELECT 'user' AS 'type', id, url_key AS 'url_keys_csv', username AS 'name1', NULL AS 'name2', 12 AS 'search_priority', NULL AS 'date'
+SELECT 'user' AS 'type', id, url_key AS 'url_keys_csv', username AS 'name1', NULL AS 'name2', 12 AS 'search_priority', NULL AS 'date', NULL AS 'match_complete'
 FROM users"
 );
 
@@ -142,6 +142,12 @@ __PACKAGE__->add_columns(
     data_type => "date",
     datetime_undef_if_invalid => 1,
     is_nullable => 0
+  },
+  "match_complete" => {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
   },
 );
 

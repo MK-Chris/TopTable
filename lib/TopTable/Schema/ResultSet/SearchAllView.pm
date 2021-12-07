@@ -56,7 +56,7 @@ sub search_by_name {
     order_by => [{
       -asc => [ qw( search_priority ) ],
     }, {
-      -desc => [ qw( date ) ],
+      -desc => [ qw( match_complete date ) ],
     }]
   };
   
