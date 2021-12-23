@@ -794,13 +794,13 @@ sub approve {
   return $error;
 }
 
-=head2 disapprove
+=head2 reject
 
 Disapprove the user (delete).
 
 =cut
 
-sub disapprove {
+sub reject {
   my ( $self, $params ) = @_;
   my $error = [];
   my $approver = delete $params->{approver};
