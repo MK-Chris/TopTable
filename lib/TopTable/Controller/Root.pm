@@ -4,7 +4,6 @@ use namespace::autoclean;
 use DateTime;
 use DateTime::TimeZone;
 use LWP::UserAgent;
-use LWP::ConsoleLogger::Everywhere ();
 use JSON;
 use Data::Dumper::Concise;
 use List::Util qw( min max );
