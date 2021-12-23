@@ -201,4 +201,4 @@ ELSE;
   SET season_text = c.maketext("object.plural.seasons");
 END;
 -%]
-<div class="seasons-count"><a href="[% c.uri_for_action("/clubs/view_seasons_first_page", [club.url_key]) %]">[% c.maketext("clubs.seasons.count-text", encoded_club_full_name, seasons_count, season_text) %]</a></div>
+<div class="seasons-count"><a href="[% c.uri_for_action("/clubs/view_seasons", [club.url_key]) %]">[% c.maketext("clubs.seasons.count-text", encoded_club_full_name, seasons_count, season_text) %]</a></div>

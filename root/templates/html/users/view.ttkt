@@ -17,31 +17,84 @@ END;
 
 username_html = FILTER html_entity; user.username; END;
 -%]
-<!--<div id="user">-->
-  <div id="avatar-container-block">
-    <div id="avatar-container">
-      <div id="avatar">
-        <img src="[% image_source %]" />
+<div class="table-wrap">
+  <div class="table-layout table-layout-centre">
+    <div id="avatar-container-block">
+      <div id="avatar-container">
+        <div id="avatar">
+          <img src="[% image_source %]" />
+        </div>
       </div>
     </div>
-  </div>
-  <div id="user-info">
-    <table class="vertical">
-      <tr>
-        <th>[% c.maketext("user.person.name") %]</th>
+    <div id="user-info">
+      <table class="vertical">
+        <tr>
+          <th>[% c.maketext("user.person.name") %]</th>
 [%
 IF user.person.id;
 -%]
-        <td><a href="[% c.uri_for_action("/people/view_current_season", [user.person.url_key]) %]">[% user.person.display_name %]</a></td>
+          <td><a href="[% c.uri_for_action("/people/view_current_season", [user.person.url_key]) %]">[% user.person.display_name %]</a></td>
 [%
 ELSE;
 -%]
-        <td>[% c.maketext("user.person.not-associated", username_html) %]</td>
+          <td>[% c.maketext("user.person.not-associated", username_html) %]</td>
 [%
 END;
 -%]
-      </tr>
-    </table>
+        </tr>
+[%
+IF authorisation.user_edit OR authorisation.user_approve_new OR c.user.id == user.id;
+%]
+        <tr>
+          <th>[% c.maketext("user.field.email-address") %]</th>
+          <td><a href="mailto:[% user.email_address %]">[% user.email_address %]</a></td>
+        </tr>
+[%
+END;
+%]
+        <tr>
+          <th>[% c.maketext("user.fields.social") %]</th>
+          <td>
+[%-
+IF user.facebook;
+  SET SOCIALS = 1;
+  SET FACEBOOK_URI = c.config.Users.SocialLinks.facebook.replace("<profile>", user.facebook);
+-%]
+<a href="[% FACEBOOK_URI %]"><img src="[% c.uri_for("/static/images/social-media-logos/facebook-32.png") %]" class="social-link-icon" alt="Facebook: [% user.facebook %]" title="Facebook: [% user.facebook %]" /></a>
+[%-
+END;
+IF user.twitter;
+  SET SOCIALS = 1;
+  SET TWITTER_URI = c.config.Users.SocialLinks.twitter.replace("<profile>", user.twitter);
+-%]
+<a href="[% TWITTER_URI %]"><img src="[% c.uri_for("/static/images/social-media-logos/twitter-32.png") %]" class="social-link-icon" alt="Twitter: [% user.twitter %]" title="Twitter: @[% user.twitter %]" /></a>
+[%-
+END;
+IF !SOCIALS;
+-%]
+&nbsp;
+[%-
+END;
+-%]</td>
+        </tr>
+        <tr>
+          <th>[% c.maketext("user.field.website") %]</th>
+          <td><a href="[% user.website %]">[% user.website OR "&nbsp;" %]</a></td>
+        </tr>
+        <tr>
+          <th>[% c.maketext("user.field.location") %]</th>
+          <td>[% user.location OR "&nbsp;" %]</td>
+        </tr>
+        <tr>
+          <th>[% c.maketext("user.field.interests") %]</th>
+          <td>[% user.interests OR "&nbsp;" %]</td>
+        </tr>
+        <tr>
+          <th>[% c.maketext("user.field.occupation") %]</th>
+          <td>[% user.occupation OR "&nbsp;" %]</td>
+        </tr>
+      </table>
+    </div>
+    <div class="clear-fix"></div>
   </div>
-<!--</div>-->
-<div class="clear-fix"></div>
+</div>

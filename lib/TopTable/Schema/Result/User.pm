@@ -222,6 +222,25 @@ __PACKAGE__->table("users");
   extra: {unsigned => 1}
   is_nullable: 0
 
+=head2 approved
+
+  data_type: 'tinyint'
+  default_value: 1
+  is_nullable: 0
+
+=head2 approved_by
+
+  data_type: 'integer'
+  extra: {unsigned => 1}
+  is_foreign_key: 1
+  is_nullable: 1
+
+=head2 approved_by_name
+
+  data_type: 'varchar'
+  is_nullable: 1
+  size: 45
+
 =head2 activation_key
 
   data_type: 'varchar'
@@ -374,6 +393,17 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
+  "approved",
+  { data_type => "tinyint", default_value => 1, is_nullable => 0 },
+  "approved_by",
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_foreign_key => 1,
+    is_nullable => 1,
+  },
+  "approved_by_name",
+  { data_type => "varchar", is_nullable => 1, size => 45 },
   "activation_key",
   { data_type => "varchar", is_nullable => 1, size => 64 },
   "activated",
@@ -451,6 +481,26 @@ __PACKAGE__->add_unique_constraint("url_key", ["url_key"]);
 __PACKAGE__->add_unique_constraint("user_person_idx", ["person"]);
 
 =head1 RELATIONS
+
+=head2 approved_by
+
+Type: belongs_to
+
+Related object: L<TopTable::Schema::Result::User>
+
+=cut
+
+__PACKAGE__->belongs_to(
+  "approved_by",
+  "TopTable::Schema::Result::User",
+  { id => "approved_by" },
+  {
+    is_deferrable => 1,
+    join_type     => "LEFT",
+    on_delete     => "SET NULL",
+    on_update     => "SET NULL",
+  },
+);
 
 =head2 average_filters
 
@@ -592,6 +642,21 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
+=head2 users
+
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::User>
+
+=cut
+
+__PACKAGE__->has_many(
+  "users",
+  "TopTable::Schema::Result::User",
+  { "foreign.approved_by" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
 =head2 roles
 
 Type: many_to_many
@@ -603,8 +668,8 @@ Composing rels: L</user_roles> -> role
 __PACKAGE__->many_to_many("roles", "user_roles", "role");
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-01-08 00:07:05
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:OwGo1vJU4FZI1t7x8mSdNw
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-12-07 14:10:48
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:55tguDgKE2CDU3hZ7RP13Q
 
 use Digest::SHA qw( sha256_hex );
 use Time::HiRes;
@@ -690,6 +755,63 @@ sub check_and_delete {
     id          => "admin.delete.error.database",
     parameters  => $self->username,
   }) unless $ok;
+  
+  return $error;
+}
+
+=head2 approve
+
+Approve the user
+
+=cut
+
+sub approve {
+  my ( $self, $params ) = @_;
+  my $error = [];
+  my $approver = delete $params->{approver};
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  
+  if ( ref( $approver ) eq "Catalyst::Authentication::Store::DBIx::Class::User" ) {
+    # We have passed in the logged in user
+    # Update to approved
+    # Also activated / null the activation key - even if the user hasn't activated, assume the admin knows best.
+    my $ok = $self->update({
+      approved => 1,
+      approved_by => $approver->id,
+      approved_by_name => $approver->username,
+      activated => 1,
+      activation_key => undef,
+      activation_expires => undef,
+    });
+    
+    # Error if the delete was unsuccessful
+    push(@{ $error }, {id => "admin.update.error.database"}) unless $ok;
+  } else {
+    # No user passed in
+    push( @{ $error }, {id => "admin.performing-user-invalid"});
+  }
+  
+  return $error;
+}
+
+=head2 disapprove
+
+Disapprove the user (delete).
+
+=cut
+
+sub disapprove {
+  my ( $self, $params ) = @_;
+  my $error = [];
+  my $approver = delete $params->{approver};
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  
+  # We have passed in the logged in user
+  # Update to approved
+  my $ok = $self->delete;
+  
+  # Error if the delete was unsuccessful
+  push(@{ $error }, {id => "admin.delete.error.database"}) unless $ok;
   
   return $error;
 }
@@ -903,6 +1025,24 @@ sub has_role {
   my ( $self, $role ) = @_;
   
   return ( defined( $self->find_related("user_roles", {role => $role->id}) ) ) ? 1 : 0;
+}
+
+=head2 roles
+
+Return the roles that this user is a member of.  If sep is specified, a string is returned with all roles separated by that string; if not, we return either an array or resultset, depending on context.
+
+=cut
+
+sub roles {
+  my ( $self ) = @_;
+  
+  return $self->search_related("user_roles", undef, {
+    order_by => [{
+      -desc => "system"
+    }, {
+      -asc => "name"
+    }]
+  });
 }
 
 =head2 search_display

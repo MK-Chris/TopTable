@@ -4,8 +4,9 @@ use namespace::autoclean;
 use DateTime;
 use DateTime::TimeZone;
 use LWP::UserAgent;
+use LWP::ConsoleLogger::Everywhere ();
 use JSON;
-use Data::Dumper;
+use Data::Dumper::Concise;
 use List::Util qw( min max );
 use Time::HiRes qw( gettimeofday tv_interval );
 use HTML::Entities;
@@ -277,7 +278,7 @@ Standard 404 error page
 =cut
 
 sub default :Path {
-  my ( $self, $c, $error_message ) = @_;
+  my ( $self, $c ) = @_;
   
   # Set up the template to use
   $c->stash({
@@ -358,35 +359,9 @@ sub end :ActionClass("RenderView") {
     $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( club_view club_create event_view event_create season_view season_create venue_view venue_create meeting_view ) ], "", 0 ] );
     $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( team_create team_view ) ], "", 0 ] ) if $c->config->{Menu}{show_teams};
     $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( person_create person_view ) ], "", 0 ] ) if $c->config->{Menu}{show_players};
-    
-    $c->stash({
-    });
   }
-  #### END MOVED FROM BEGIN
   
   unless ( $c->stash->{no_wrapper} or $c->is_ajax ) {
-    # Join our title and subtitled elements
-    
-    my $page_title;
-    if ( $c->stash->{no_subtitles_in_title} ) {
-      # Some pages (i.e., the index page) we may only want the site title to show in the title bar
-      $page_title = encode_entities( $c->config->{name} );
-    } else {
-      # Define an array for page title bits and push on the various subtitles we have if we have them
-      my @page_title_bits = ();
-      push( @page_title_bits, $c->stash->{subtitle1} ) if $c->stash->{subtitle1};
-      push( @page_title_bits, $c->stash->{subtitle2} ) if $c->stash->{subtitle2};
-      push( @page_title_bits, $c->stash->{subtitle3} ) if $c->stash->{subtitle3};
-      
-      push( @page_title_bits, encode_entities( $c->config->{name} ) );
-      
-      # Now join them up for the title bar text
-      $page_title = join( " | ", @page_title_bits );
-    }
-    
-    # Stash it for use in the web page title bar
-    $c->stash({page_title => $page_title});
-    
     # Additional session / user functionality
     my $last_active_datetime = $c->datetime_tz({time_zone => "UTC"});
     my ( $session, $user, $hide_online );
@@ -460,9 +435,51 @@ sub end :ActionClass("RenderView") {
     $c->response->headers->header("X-Frame-Options", "SAMEORIGIN");
     
     # Filter meta description for HTML
-    $c->stash({
-      meta_description => $c->model("FilterHTML")->filter( $c->stash->{page_description} ),
-    }) if exists( $c->stash->{page_description} ) and defined( $c->stash->{page_description} );
+    $c->stash({meta_description => $c->model("FilterHTML")->filter( $c->stash->{page_description} )}) if exists( $c->stash->{page_description} ) and defined( $c->stash->{page_description} );
+    
+    # Error handling
+    if ( scalar( @{ $c->error } ) ) {
+      # Errors, make sure we print a prettier page
+
+      # Set up the template to use
+      $c->stash({
+        template => "html/error/500.ttkt",
+        external_scripts => [
+          $c->uri_for("/static/script/standard/vertical-table.js"),
+        ],
+        view_online_display => "Home",
+        view_online_link => 0,
+        subtitle1 => $c->maketext("page.error.heading"),
+        subtitle2 => $c->maketext("page.error.internal.heading"),
+        hide_breadcrumbs => 1, # Hide the breadcrumbs
+        errors => $c->error,
+      });
+      
+      # Log the errors, then clear them
+      $c->log->error( $_ ) foreach @{ $c->error };
+      $c->clear_errors;
+    }
+    
+    # Join our title and subtitled elements
+    my $page_title;
+    if ( $c->stash->{no_subtitles_in_title} ) {
+      # Some pages (i.e., the index page) we may only want the site title to show in the title bar
+      $page_title = encode_entities( $c->config->{name} );
+    } else {
+      # Define an array for page title bits and push on the various subtitles we have if we have them
+      my @page_title_bits = ();
+      push( @page_title_bits, $c->stash->{subtitle1} ) if $c->stash->{subtitle1};
+      push( @page_title_bits, $c->stash->{subtitle2} ) if $c->stash->{subtitle2};
+      push( @page_title_bits, $c->stash->{subtitle3} ) if $c->stash->{subtitle3};
+      
+      push( @page_title_bits, encode_entities( $c->config->{name} ) );
+      
+      # Now join them up for the title bar text
+      $page_title = join( " &#8226; ", @page_title_bits );
+    }
+    
+    # Stash it for use in the web page title bar
+    $c->stash({page_title => $page_title});
   }
 }
 
@@ -482,14 +499,16 @@ sub recaptcha :Private {
   
   # Create the user agent
   my $ua = LWP::UserAgent->new;
-  $ua->agent("TopTable/" . $c->toptable_version );
+  $ua->agent( "TopTable/" . $c->toptable_version );
   
   # Create the request object
   my $request = HTTP::Request->new(POST => $c->config->{Google}{reCAPTCHA}{verify_uri} );
   $request->content_type("application/x-www-form-urlencoded");
-  $request->content("secret=$secret_key&response=$recaptcha_data&remoteip=" . $c->request->address);
+  #$request->content("secret=$secret_key&response=$recaptcha_data&remoteip=" . $c->request->address);
+  $request->content("secret=$secret_key&response=$recaptcha_data");
   
   my $response = $ua->request( $request );
+  $c->log->debug( $response->content );
   my $response_content = decode_json( $response->content );
   
   return {

@@ -155,7 +155,7 @@ END
   <fieldset>
     <legend>Social</legend>
     <div class="label-field-container">
-      <label for="facebook">Facebook</label>
+      <label for="facebook">[% c.maketext("user.field.facebook") %]</label>
       <div class="field-container">
         <input type="text" id="facebook" name="facebook" placeholder="https://www.facebook.com/" value="[% c.flash.facebook OR user.facebook %]" />
       </div>
@@ -163,25 +163,9 @@ END
     </div>
     
     <div class="label-field-container">
-      <label for="twitter">Twitter</label>
+      <label for="twitter">[% c.maketext("user.field.twitter") %]</label>
       <div class="field-container">
-        <input type="text" id="twitter" name="twitter" placeholder="https://twitter.com/" value="[% c.flash.twitter OR user.twitter %]" />
-      </div>
-      <div class="clear-fix"></div>
-    </div>
-    
-    <div class="label-field-container">
-      <label for="aim">AIM</label>
-      <div class="field-container">
-        <input type="text" id="aim" name="aim" value="[% c.flash.aim OR user.aim %]" />
-      </div>
-      <div class="clear-fix"></div>
-    </div>
-    
-    <div class="label-field-container">
-      <label for="jabber">Jabber</label>
-      <div class="field-container">
-        <input type="text" id="jabber" name="jabber" value="[% c.flash.jabber OR user.jabber %]" />
+        <input type="text" id="twitter" name="twitter" value="[% c.flash.twitter OR user.twitter %]" />
       </div>
       <div class="clear-fix"></div>
     </div>

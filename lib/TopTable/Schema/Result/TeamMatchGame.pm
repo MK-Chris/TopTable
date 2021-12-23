@@ -2449,8 +2449,8 @@ sub update_doubles_pair {
             if ( defined( $original_doubles_pair ) ) {
               #printf "There was previously another doubles pair\n";
               # Get the original player 1 / player 2 objects to update their individual statistics
-              my $original_player1  = $original_doubles_pair->person1->find_related("person_seasons", {season => $season->id, team => $team->id});
-              my $original_player2  = $original_doubles_pair->person2->find_related("person_seasons", {season => $season->id, team => $team->id});
+              my $original_player1  = $original_doubles_pair->person_season_person1_season_team;
+              my $original_player2  = $original_doubles_pair->person_season_person2_season_team;
               
               # There is an original doubles pair to take some games off
               if ( $self->complete ) {
@@ -2631,7 +2631,9 @@ sub update_doubles_pair {
           #  * there are no games played for the original doubles pair AND
           #  * either player for the original doubles pair are loan players
           $original_doubles_pair->delete if defined( $original_doubles_pair ) and $original_doubles_pair->games_played == 0 and ( $original_doubles_pair->person1_loan or $original_doubles_pair->person2_loan );
-          #print "Deleted doubles pair.\n" if defined( $original_doubles_pair ) and $original_doubles_pair->games_played == 0 and ( $original_doubles_pair->person1_loan or $original_doubles_pair->person2_loan );
+          
+          # Blank the doubles pair in this game
+          $self->update({$location_doubles_pair => undef});
         }
       } else {
         # Invalid location

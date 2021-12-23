@@ -30,6 +30,9 @@ Catalyst Controller to manage users, including registration and logging in.
 sub auto :Private {
   my ( $self, $c ) = @_;
   
+  # Load the messages
+  $c->load_status_msgs;
+  
   # The title bar will always have
   $c->stash({subtitle1 => $c->maketext("menu.text.users")});
   
@@ -48,9 +51,6 @@ Chain base for getting the club ID and checking it.
 
 sub base :Chained("/") :PathPart("users") :CaptureArgs(1) {
   my ($self, $c, $user_id) = @_;
-  
-  # Load the messages
-  $c->load_status_msgs;
   
   # Check that we are authorised to view users
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["user_view", $c->maketext("user.auth.view-users"), 1] );
@@ -80,13 +80,13 @@ sub base :Chained("/") :PathPart("users") :CaptureArgs(1) {
   }
 }
 
-=head2 base_list
+=head2 list
 
 Chain base for the list of clubs.  Matches /clubs
 
 =cut
 
-sub base_list :Chained("/") :PathPart("users") :CaptureArgs(0) {
+sub list :Chained("/") :PathPart("users") :Args(0) {
   my ( $self, $c ) = @_;
   my $site_name = $c->stash->{encoded_site_name};
   
@@ -98,52 +98,67 @@ sub base_list :Chained("/") :PathPart("users") :CaptureArgs(0) {
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["user_edit_own", "", 0] ) if $c->user_exists and !$c->stash->{authorisation}{news_article_edit_all}; # Only do this if the user is logged in and we can't edit all articles
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["user_delete_own", "", 0] ) if $c->user_exists and !$c->stash->{authorisation}{news_article_delete_all}; # Only do this if the user is logged in and we can't delete all articles
   
-  # Page description
+  my $users = $c->model("DB::User")->all_users;
+  
+  my $user_list_script = ( $c->stash->{authorisation}{user_edit_all} or $c->stash->{authorisation}{user_approve_new} ) ? $c->uri_for("/static/script/users/user-list-with-email.js") : $c->uri_for("/static/script/users/user-list.js");
+  
+  # Set up the template to use
   $c->stash({
-    page_description  => $c->maketext("description.users.list", $site_name),
-    external_scripts  => [
-      $c->uri_for("/static/script/standard/option-list.js"),
+    page_description => $c->maketext("description.users.list", $site_name),
+    template => "html/users/list-table.ttkt",
+    view_online_display => "Viewing users",
+    view_online_link => 1,
+    users => $users,
+    external_scripts => [
+      $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
+      $user_list_script,
+    ],
+    external_styles => [
+      $c->uri_for("/static/css/chosen/chosen.min.css"),
+      $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
     ],
   });
-  
-  # Load the messages
-  $c->load_status_msgs;
 }
 
-=head2 list_first_page
-
-List the clubs on the first page.
-
-=cut
-
-sub list_first_page :Chained("base_list") :PathPart("") :Args(0) {
-  my ( $self, $c ) = @_;
-  
-  $c->detach( "retrieve_paged", [1] );
-  $c->stash({canonical_uri => $c->uri_for_action("/users/list_first_page")});
-}
-
-=head2 list_specific_page
-
-List the clubs on the specified page.
-
-=cut
-
-sub list_specific_page :Chained("base_list") :PathPart("page") :Args(1) {
-  my ( $self, $c, $page_number ) = @_;
-  
-  $c->detach( "retrieve_paged", [$page_number] );
-  
-  if ( $page_number == 1 ) {
-    $c->stash({canonical_uri => $c->uri_for_action("/users/list_first_page")});
-  } else {
-    $c->stash({canonical_uri => $c->uri_for_action("/users/list_specific_page", [$page_number])});
-  }
-}
+# =head2 list_first_page
+# 
+# List the clubs on the first page.
+# 
+# =cut
+# 
+# sub list_first_page :Chained("base_list") :PathPart("") :Args(0) {
+#   my ( $self, $c ) = @_;
+#   
+#   $c->detach( "retrieve_paged", [1] );
+#   $c->stash({canonical_uri => $c->uri_for_action("/users/list_first_page")});
+# }
+# 
+# =head2 list_specific_page
+# 
+# List the clubs on the specified page.
+# 
+# =cut
+# 
+# sub list_specific_page :Chained("base_list") :PathPart("page") :Args(1) {
+#   my ( $self, $c, $page_number ) = @_;
+#   
+#   $c->detach( "retrieve_paged", [$page_number] );
+#   
+#   if ( $page_number == 1 ) {
+#     $c->stash({canonical_uri => $c->uri_for_action("/users/list_first_page")});
+#   } else {
+#     $c->stash({canonical_uri => $c->uri_for_action("/users/list_specific_page", [$page_number])});
+#   }
+# }
 
 =head2 retrieve_paged
 
-Performs the lookups for clubs with the given page number.
+Performs the lookups for users with the given page number.
 
 =cut
 
@@ -163,14 +178,29 @@ sub retrieve_paged :Private {
     current_page          => $page_number,
   }] );
   
+  my $user_list_script = ( $c->stash->{authorisation}{user_edit_all} or $c->stash->{authorisation}{user_approve_new} ) ? $c->uri_for("/static/script/users/user-list-with-email.js") : $c->uri_for("/static/script/users/user-list.js");
+  
   # Set up the template to use
   $c->stash({
-    template            => "html/users/list.ttkt",
+    template => "html/users/list-table.ttkt",
     view_online_display => "Viewing users",
-    view_online_link    => 1,
-    users               => $users,
-    page_info           => $page_info,
-    page_links          => $page_links,
+    view_online_link => 1,
+    users => $users,
+    page_info => $page_info,
+    page_links => $page_links,
+    external_scripts => [
+      $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
+      $user_list_script,
+    ],
+    external_styles => [
+      $c->uri_for("/static/css/chosen/chosen.min.css"),
+      $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
+    ],
   });
 }
 
@@ -298,9 +328,6 @@ Display a form for users to register.
 sub register :Global {
   my ( $self, $c ) = @_;
   
-  # Load the messages
-  $c->load_status_msgs;
-  
   if ( $c->user_exists ) {
     $c->response->redirect( $c->uri_for("/",
             {mid => $c->set_status_msg( {info => $c->maketext("user.login.error.already-logged-in")} )}));
@@ -405,26 +432,28 @@ Process the registration / user edit form.
 
 sub setup_user :Private {
   my ( $self, $c, $action ) = @_;
-  my $user                  = $c->stash->{user};
-  my $username              = $c->request->parameters->{username};
-  my $email_address         = $c->request->parameters->{email_address};
-  my $confirm_email_address = $c->request->parameters->{confirm_email_address};
-  my $password              = $c->request->parameters->{password};
-  my $confirm_password      = $c->request->parameters->{confirm_password};
-  my $current_password      = $c->request->parameters->{current_password};
-  my $language              = $c->request->parameters->{language};
-  my $timezone              = $c->request->parameters->{timezone};
-  my $html_emails           = $c->request->parameters->{html_emails};
-  my $facebook              = $c->request->parameters->{facebook};
-  my $twitter               = $c->request->parameters->{twitter};
-  my $aim                   = $c->request->parameters->{aim};
-  my $jabber                = $c->request->parameters->{jabber};
-  my $website               = $c->request->parameters->{website};
-  my $interests             = $c->request->parameters->{interests};
-  my $occupation            = $c->request->parameters->{occupation};
-  my $location              = $c->request->parameters->{location};
-  my $hide_online           = $c->request->parameters->{hide_online};
-  my $roles                 = $c->request->parameters->{roles};
+  my $user = $c->stash->{user};
+  my $username = $c->req->param( "username" );
+  my $email_address = $c->req->param( "email_address" );
+  my $confirm_email_address = $c->req->param( "confirm_email_address" );
+  my $password = $c->req->param( "password" );
+  my $confirm_password = $c->req->param( "confirm_password" );
+  my $current_password = $c->req->param( "current_password" );
+  my $language = $c->req->param( "language" );
+  my $timezone = $c->req->param( "timezone" );
+  my $html_emails = $c->req->param( "html_emails" );
+  my $facebook = $c->req->param( "facebook" );
+  my $twitter = $c->req->param( "twitter" );
+  my $aim = $c->req->param( "aim" );
+  my $jabber = $c->req->param( "jabber" );
+  my $website = $c->req->param( "website" );
+  my $interests = $c->req->param( "interests" );
+  my $occupation = $c->req->param( "occupation" );
+  my $location = $c->req->param( "location" );
+  my $hide_online = $c->req->param( "hide_online" );
+  my $roles = $c->req->param( "roles" );
+  my $activation_expiry_limit = $c->config->{Users}{activation_expiry_limit};
+  my $manual_approval = $c->config->{Users}{manual_approval} || 0;
   my $error;
   
   if ( $action eq "register" and $c->config->{Google}{reCAPTCHA}{validate_on_register} ) {
@@ -469,31 +498,33 @@ sub setup_user :Private {
   
   # Send the form details to the model to do error checking and registration
   my $user_result = $c->model("DB::User")->create_or_edit({
-    action                => $action,
-    username_editable     => $username_editable,
-    username              => $username,
-    user                  => $user,
-    email_address         => $email_address,
+    action => $action,
+    username_editable => $username_editable,
+    username => $username,
+    user => $user,
+    email_address => $email_address,
     confirm_email_address => $confirm_email_address,
-    password              => $password,
-    confirm_password      => $confirm_password,
-    current_password      => $current_password,
-    language              => $language,
-    timezone              => $timezone,
-    html_emails           => $html_emails,
-    facebook              => $facebook,
-    twitter               => $twitter,
-    aim                   => $aim,
-    jabber                => $jabber,
-    website               => $website,
-    interests             => $interests,
-    occupation            => $occupation,
-    location              => $location,
-    hide_online           => $hide_online,
-    ip_address            => $c->request->address,
-    installed_languages   => $c->config->{I18N}{locales},
-    roles                 => $roles,
-    editing_user          => $c->user,
+    password => $password,
+    confirm_password => $confirm_password,
+    current_password => $current_password,
+    language => $language,
+    timezone => $timezone,
+    html_emails => $html_emails,
+    facebook => $facebook,
+    twitter => $twitter,
+    aim => $aim,
+    jabber => $jabber,
+    website => $website,
+    interests => $interests,
+    occupation => $occupation,
+    location => $location,
+    hide_online => $hide_online,
+    ip_address => $c->request->address,
+    installed_languages => $c->config->{I18N}{locales},
+    roles => $roles,
+    editing_user => $c->user,
+    manual_approval => $manual_approval,
+    logger => sub{ my $level = shift; $c->log->$level( @_ ); },
   });
   
   if ( scalar( @{ $user_result->{error} } ) ) {
@@ -715,9 +746,6 @@ sub resend_activation :Chained("base") :PathPart("resend-activation") :Args(0) {
 sub activate :Local :Args(1) {
   my ( $self, $c, $activation_key ) = @_;
   
-  # Load the messages
-  $c->load_status_msgs;
-  
   if ( $c->user_exists ) {
     # We're logged in, so can't activate anything, as we must already be activated
     $c->response->redirect($c->uri_for("/",
@@ -754,6 +782,20 @@ sub activate :Local :Args(1) {
         } else {
           # Log the activation
           $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["user", "activate", {id => $user->id}, $user->username] );
+          my $manual_approval = $c->config->{Users}{manual_approval} || 0;
+          my ( $plain_text, $html_text );
+          
+          # Encode the HTML bits
+          my $html_site_name  = encode_entities( $c->config->{name} );
+          my $html_username   = encode_entities( $user->username );
+          
+          if ( $manual_approval ) {
+            $plain_text = $c->maketext("email.plain-text.users.activated.approval-required", $user->username, $c->config->{name});
+            $html_text = $c->maketext("email.html.users.activated.approval-required", $html_username, $html_site_name, $c->uri_for("/login"));
+          } else {
+            $plain_text = $c->maketext("email.plain-text.users.activated.no-approval", $user->username, $c->config->{name}, $c->uri_for("/login"));
+            $html_text = $c->maketext("email.html.users.activated.no-approval", $html_username, $html_site_name, $c->uri_for("/login"));
+          }
           
           # Email the user to tell them their account has been activated.
           # Stash the email details
@@ -771,13 +813,10 @@ sub activate :Local :Args(1) {
             to            => [ $user->email_address, $user->username ],
             image         => [ $c->path_to( qw( root static images banner-logo-player-small.png ) )->stringify, "logo" ],
             subject       => $subject,
-            plaintext     => $c->maketext("email.plain-text.users.activated", $user->username, $c->config->{name}, $c->uri_for("/login")),
+            plaintext     => $plain_text,
           };
           
           if ( $user->html_emails ) {
-            # Encode the HTML bits
-            my $html_site_name  = encode_entities( $c->config->{name} );
-            my $html_username   = encode_entities( $user->username );
             my $html_subject    = $c->maketext("email.subject.users.activated", $html_username, $html_site_name, $c->uri_for("/login"));
             
             # Add the HTML parts of the email
@@ -786,12 +825,40 @@ sub activate :Local :Args(1) {
               name                => $html_site_name,
               home_uri            => $c->uri_for("/"),
               email_subject       => $html_subject,
-              email_html_message  => $c->maketext("email.html.users.activated", $html_username, $html_site_name, $c->uri_for("/login")),
+              email_html_message  => $html_text,
             };
           }
           
           # Email the user
           $c->model("Email")->send( $send_options );
+          
+          my $manual_approval_notification_email = $c->config->{Users}{manual_approval_notification_email} || undef;
+          
+          if ( $manual_approval and defined( $manual_approval_notification_email ) ) {
+            # We are manually approving and want notification emails for this.
+            # Setup the locale for this email
+            $c->locale( $c->config->{Users}{manual_approval_notification_language} ) if $c->locale ne $c->config->{Users}{manual_approval_notification_language};
+            
+            my $subject = $c->maketext("email.subject.users.approve-user", $c->config->{name}, $user->username);
+            my $html_subject = $c->maketext("email.subject.users.approve-user", $html_site_name, $html_username);
+            
+            my $approval_send_options = {
+              to            => [ $manual_approval_notification_email ],
+              image         => [ $c->path_to( qw( root static images banner-logo-player-small.png ) )->stringify, "logo" ],
+              subject       => $subject,
+              plaintext     => $c->maketext("email.plain-text.users.approve-user", $user->username, $c->config->{name}, $c->uri_for_action("/users/view", [$user->url_key]), $c->uri_for_action("/users/approval_list")),
+              htmltext      => [ qw( html/generic/generic-message.ttkt :TT ) ],
+              template_vars => {
+                name                => $html_site_name,
+                home_uri            => $c->uri_for("/"),
+                email_subject       => $html_subject,
+                email_html_message  => $c->maketext("email.html.users.approve-user", $html_username, $html_site_name, $c->uri_for_action("/users/view", [$user->url_key]), , $c->uri_for_action("/users/approval_list")),
+              },
+            };
+            
+            # Email the approver
+            $c->model("Email")->send( $approval_send_options );
+          }
           
           # Set the locale back if we changed it
           $c->locale( $original_locale ) if $original_locale ne $user->locale;
@@ -813,6 +880,256 @@ sub activate :Local :Args(1) {
   }
 }
 
+=head2 approval_list
+
+Show a list of users awaiting approval.
+
+=cut
+
+sub approval_list :Path("approval-list") :Args(0) {
+  my ( $self, $c ) = @_;
+  
+  # Check that we are authorised to approve users
+  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["user_approve_new", $c->maketext("user.auth.approve-new-users"), 1] );
+  $c->forward( "TopTable::Controller::Users", "check_authorisation", [[ qw( user_edit_all user_delete_all ) ], "", 0] );
+  
+  # Get a list of unapproved users
+  my $users = $c->model("DB::User")->get_unapproved;
+  
+  $c->stash({
+      template => "html/users/approval-list.ttkt",
+      subtitle2 => $c->maketext("user.list-to-approve"),
+      external_scripts => [
+        $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
+        $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
+        $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
+        $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
+        $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
+        $c->uri_for("/static/script/standard/prettycheckable.js"),
+        $c->uri_for("/static/script/users/approval-list.js"),
+      ],
+      external_styles => [
+        $c->uri_for("/static/css/chosen/chosen.min.css"),
+        $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
+        $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
+        $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
+        $c->uri_for("/static/css/prettycheckable/prettyCheckable.css"),
+      ],
+      view_online_display => "Approving users",
+      view_online_link => 0,
+      users => $users,
+  });
+}
+
+=head2 bulk_approval
+
+Process the approval list form, based on the tickboxes that are ticked and the button that was clicked (approve or reject).
+
+=cut
+
+sub bulk_approval :Path("bulk-approval") :Args(0) {
+  my ( $self, $c ) = @_;
+  my $response = {
+    error => [],
+    success => [],
+  };
+  
+  # Identify whether the user clicked approve or deny
+  my $approve = ( $c->req->params->{submit} eq "approve" ) ? 1 : 0;
+  
+  # Since we'll be forwarding through the individual approval 
+  $c->stash({bulk => 1});
+  
+  foreach ( keys %{ $c->req->params } ) {
+   if ( m/^user-(\d+)$/ ) {
+      my $extracted_user_id = $1;
+      my $user = $c->model("DB::User")->find( $extracted_user_id ) if defined( $extracted_user_id );
+      
+      if ( defined( $user ) ) {
+        # Stash this user (it will overwrite the previous iteration's user) and approve / deny it
+        # Reset user_error / user_success so we can check it after the forward on this iteration
+        $c->stash({
+          user => $user,
+          encoded_username => encode_entities( $user->username ),
+          user_error => [],
+          user_success => [],
+        });
+        
+        $c->forward( "approve" );
+        
+        if ( scalar( @{ $c->stash->{user_error} } ) ) {
+          # This user approval errored
+          push( @{ $response->{error} }, @{ $c->stash->{user_error} } );
+        } elsif ( scalar( @{ $c->stash->{user_success} } ) ) {
+          # This user approval failed
+          push( @{ $response->{success} }, @{ $c->stash->{user_success} } );
+        }
+      } else {
+        # Error, not a user ID
+        push( @{ $response->{error} }, $c->maketext("users.approve.user-invalid", $extracted_user_id, $c->req->params->{$_}) );
+      }
+    }
+  }
+  
+  $c->log->debug( Dumper( $response ) );
+  
+  # Convert errors / successes into messages
+  my $response_msgs = {};
+  
+  if ( scalar( @{ $response->{error} } ) ) {
+    my $errors = $c->build_message( $response->{error} );
+    $response_msgs->{error} = $errors;
+  }
+  
+  if ( scalar( @{ $response->{success} } ) ) {
+    my $successes = $c->build_message( $response->{success} );
+    $response_msgs->{success} = $successes;
+  }
+  
+  $c->response->redirect( $c->uri_for_action("/users/approval_list",
+                              {mid => $c->set_status_msg( $response_msgs ) }) );
+  $c->detach;
+  return;
+}
+
+=head2 approve
+
+Approve this user (chained to the base user list).
+
+=cut
+
+sub approve :Chained("base") :PathPart("approve") :Args(0) {
+  my ( $self, $c ) = @_;
+  
+  # Identify whether the user clicked approve or deny
+  my $approve = ( $c->req->params->{submit} eq "approve" ) ? 1 : 0;
+  my $user = $c->stash->{user};
+  my $bulk = $c->stash->{bulk};
+  my $username = $user->username;
+  my $encoded_username = $c->stash->{encoded_username};
+  my $site_name = $c->stash->{encoded_site_name};
+  
+  # Check that we are authorised to approve users
+  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["user_approve_new", $c->maketext("user.auth.approve-new-users"), 1] );
+  
+  if ( $user->approved ) {
+    # User is approved already, error
+    my $error = $c->maketext("users.approve.already-approved", $encoded_username);
+    
+    if ( $bulk ) {
+      # Doing bulk, log the error
+      $c->stash({user_error => [$error]});
+      return;
+    } else {
+      $c->response->redirect( $c->uri_for_action("/users/view", [$user->url_key],
+                                  {mid => $c->set_status_msg( {error => $error} ) }) );
+      $c->detach;
+      return;
+    }
+  }
+  
+  # Approve / reject the user
+  if ( $approve ) {
+    my $user_error = $user->approve({
+      approver => $c->user,
+      logger => sub{ my $level = shift; $c->log->$level( @_ ); },
+    });
+    
+    if ( scalar( @{ $user_error } ) ) {
+      # Error
+      if ( $bulk ) {
+        # Bulk, add the error into the stash for the return back to the bulk
+        $c->stash({user_error => $user_error});
+      } else {
+        $c->response->redirect( $c->uri_for_action("/users/view", [$user->url_key],
+                                    {mid => $c->set_status_msg( {error => $c->build_message($user_error)} ) }) );
+        $c->detach;
+        return;
+      }
+    } else {
+      # Success
+      my $msg = $c->maketext("users.approve.user-approved", $encoded_username);
+      $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["user", "approve", {id => $user->id}, $username] );
+      
+      # Set the locale before getting the email message text, but save the current locale so we can set it back afterwards
+      my $original_locale = $c->locale;
+      $c->locale( $user->locale ) if $user->locale ne $c->locale;
+      
+      # Do the encoding - these do it once for each element here, as this is quite an expensive task
+      my $subject = $c->maketext("email.subject.users.approved", $c->config->{name}, $user->username);
+      
+      # Set up the email send hash; we'll add to this if we're sending a HTML email
+      my $send_options = {
+        to            => [ $user->email_address, $username ],
+        image         => [ $c->path_to( qw( root static images banner-logo-player-small.png ) )->stringify, "logo" ],
+        subject       => $subject,
+        plaintext     => $c->maketext("email.plain-text.users.approved", $username, $c->config->{name}, $c->uri_for("/login")),
+      };
+      
+      if ( $user->html_emails ) {
+        my $html_site_name  = encode_entities( $c->config->{name} );
+        my $html_subject = $c->maketext("email.subject.users.approved", $html_site_name, $encoded_username);
+        my $html_text = $c->maketext("email.html.users.approved", $encoded_username, $html_site_name, $c->uri_for("/login"));
+        
+        # Add the HTML parts of the email
+        $send_options->{htmltext} = [ qw( html/generic/generic-message.ttkt :TT ) ];
+        $send_options->{template_vars} = {
+          name => $html_site_name,
+          home_uri => $c->uri_for("/"),
+          email_subject => $html_subject,
+          email_html_message => $html_text,
+        };
+      }
+      
+      # Email the user
+      $c->log->debug( sprintf( "Sending email to: %s (%s)", $username, $user->email_address ) );
+      $c->model("Email")->send( $send_options );
+      
+      $c->locale( $original_locale ) if $c->locale ne $original_locale;
+      
+      if ( $bulk ) {
+        $c->stash({user_success => [$msg]});
+        return;
+      } else {
+        $c->response->redirect( $c->uri_for_action("/users/view", [$user->url_key],
+                                    {mid => $c->set_status_msg( {success => $msg} ) }) );
+        $c->detach;
+        return;
+      }
+    }
+  } else {
+    my $user_error = $user->reject;
+    
+    if ( scalar( @{ $user_error } ) ) {
+      # Error
+      if ( $bulk ) {
+        # Bulk, add the error into the stash for the return back to the bulk
+        $c->stash({user_error => $user_error});
+        return;
+      } else {
+        $c->response->redirect( $c->uri_for_action("/users/view", [$user->url_key],
+                                    {mid => $c->set_status_msg( {error => $c->build_message($user_error)} ) }) );
+        $c->detach;
+        return;
+      }
+    } else {
+      # Success
+      my $msg = $c->maketext("users.approve.user-rejected", $encoded_username);
+      $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["user", "reject", {id => undef}, $username] );
+      
+      if ( $bulk ) {
+        $c->stash({user_success => [$msg]});
+        return;
+      } else {
+        $c->response->redirect( $c->uri_for_action("/users/list_first_page",
+                                    {mid => $c->set_status_msg( {success => $msg} ) }) );
+        $c->detach;
+        return;
+      }
+    }
+  }
+}
+
 =head2 login
 
 Display a form for users to login.
@@ -821,9 +1138,6 @@ Display a form for users to login.
 
 sub login :Global {
   my ( $self, $c ) = @_;
-  
-  # Load the messages
-  $c->load_status_msgs;
   
   if ( $c->user_exists ) {
     $c->response->redirect( $c->uri_for("/",
@@ -971,7 +1285,7 @@ sub do_login :Path("authenticate") {
       
       if ( defined( $user ) ) {
         # User exists, check they're activated
-        if ( $user->activated ) {
+        if ( $user->activated and $user->approved ) {
           # They are activated; process the login request.
           # Attempt to log the user in
           if ( $c->authenticate({username => $username, password => $password} ) ) {
@@ -1054,13 +1368,16 @@ sub do_login :Path("authenticate") {
             return;
           }
         } else {
-          # Not yet activated; error
+          # Not yet activated and / or approved; error
+          my @errors = ( $c->maketext("user.login.error.user-not-activated", $c->uri_for_action("/users/resend_activation", [$user->url_key])) ) unless $user->activated;
+          push( @errors, $c->maketext("user.login.error.user-not-approved", $c->uri_for("/info/contact")) ) unless $user->approved;
+          my $errors = $c->build_message( \@errors );
           
           # Stash the values we've got so we can set them
           $c->flash->{username}     = $username;
           $c->flash->{redirect_uri} = $redirect_uri;
           $c->response->redirect( $c->uri_for("/login",
-                                      {mid => $c->set_status_msg( {error => $c->maketext("user.login.error.user-not-activated", $c->uri_for_action("/users/resend_activation", [$user->url_key]))} ) }) );
+                                      {mid => $c->set_status_msg( {error => $errors} ) }) );
           $c->detach;
           return;
         }
@@ -1096,9 +1413,6 @@ Show the form to enter a username and have the user's password reset link emaile
 
 sub forgot_password :Path("forgot-password") {
   my ( $self, $c ) = @_;
-  
-  # Load the messages
-  $c->load_status_msgs;
   
   # Set up reCAPTCHA if required
   my @external_scripts = ();

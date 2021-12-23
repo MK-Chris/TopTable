@@ -263,7 +263,7 @@ sub view_specific_season :Chained("view") :PathPart("seasons") :Args(1) {
   
   # Push the current URI on to the breadcrumbs
   push( @{ $c->stash->{breadcrumbs} }, {
-    path  => $c->uri_for_action("/people/view_seasons_first_page", [$person->url_key]),
+    path  => $c->uri_for_action("/people/view_seasons", [$person->url_key]),
     label => $c->maketext("menu.text.seasons"),
   }, {
     path  => $c->uri_for_action("/people/view_specific_season", [$person->url_key, $season->url_key]),
@@ -284,18 +284,26 @@ sub get_person_season :Private {
   my ( $self, $c ) = @_;
   my ( $person, $season ) = ( $c->stash->{person}, $c->stash->{season} );
   
-  my $games = $person->games_played_in_season({season => $season});
-  $c->stash({
-    teams   => [ $c->model("DB::PersonSeason")->get_person_season_and_teams_and_divisions({
-      person  => $person,
-      season  => $season,
-    }) ],
-    types   => [ $c->model("DB::PersonSeason")->get_team_membership_types_for_person_in_season({
-      person  => $person,
-      season  => $season,
-    }) ],
-    games   => $games,
+  my $teams = $c->model("DB::PersonSeason")->get_person_season_and_teams_and_divisions({
+    person  => $person,
     season  => $season,
+  });
+  my $types = $c->model("DB::PersonSeason")->get_team_membership_types_for_person_in_season({
+    person  => $person,
+    season  => $season,
+  });
+  my $games = $person->games_played_in_season({season => $season});
+  my ( $person_name, $person_season_name ) = ( encode_entities( $person->display_name ), encode_entities( $teams->first->display_name ) );
+  
+  # If the name has changed, we need to display a notice
+  $c->add_status_message( "info", $c->maketext("people.name.changed-notice", $person_season_name, $person_name ) ) unless $person_name eq $person_season_name;
+  
+  $c->stash({
+    subtitle1 => $person_season_name,
+    teams => $teams,
+    types => $types,
+    games => $games,
+    season => $season,
   });
 }
 
@@ -464,98 +472,51 @@ Retrieve and display a list of seasons that this club has entered teams into.
 
 =cut
 
-sub view_seasons :Chained("view") :PathPart("seasons") :CaptureArgs(0) {
+sub view_seasons :Chained("view") :PathPart("seasons") :Args(0) {
   my ( $self, $c ) = @_;
   my $person      = $c->stash->{person};
   my $site_name   = $c->stash->{encoded_site_name};
   my $person_name = $c->stash->{encoded_display_name};
   
-  # Stash the template; the data will be retrieved when we know what page we're on
+  my $seasons = $person->get_seasons;
+  
+  # See if we have a count or not
+  my ( $ext_scripts, $ext_styles );
+  if ( $seasons->count ) {
+    $ext_scripts = [
+      $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
+      $c->uri_for("/static/script/people/seasons.js"),
+    ];
+    $ext_styles = [
+      $c->uri_for("/static/css/chosen/chosen.min.css"),
+      $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
+    ];
+  } else {
+    $ext_scripts = [ $c->uri_for("/static/script/standard/option-list.js") ];
+    $ext_styles = [];
+  }
+  
+  # Set up the template to use
   $c->stash({
-    template          => "html/people/list-seasons.ttkt",
+    template => "html/people/list-seasons-table.ttkt",
+    subtitle2 => $c->maketext("menu.text.seasons"),
     page_description  => $c->maketext("description.people.list-seasons", $person_name, $site_name),
-    external_scripts  => [
-      $c->uri_for("/static/script/standard/option-list.js"),
-    ],
+    view_online_display => sprintf( "Viewing seasons for %s", $person->display_name ),
+    view_online_link => 1,
+    seasons => $seasons,
+    external_scripts => $ext_scripts,
+    external_styles => $ext_styles,
   });
   
   # Push the current URI on to the breadcrumbs
   push( @{ $c->stash->{breadcrumbs} }, {
-    path              => $c->uri_for_action("/people/view_seasons_first_page", [$person->url_key]),
+    path              => $c->uri_for_action("/people/view_seasons", [$person->url_key]),
     label             => $c->maketext("menu.text.seasons"),
-  });
-}
-
-=head2 view_seasons_first_page
-
-List the clubs on the first page.
-
-=cut
-
-sub view_seasons_first_page :Chained("view_seasons") :PathPart("") :Args(0) {
-  my ( $self, $c ) = @_;
-  my $person = $c->stash->{person};
-  
-  $c->stash({canonical_uri => $c->uri_for_action("/people/view_seasons_first_page", [$person->url_key])});
-  $c->detach( "retrieve_paged_seasons", [1] );
-}
-
-=head2 view_seasons_specific_page
-
-List the clubs on the specified page.
-
-=cut
-
-sub view_seasons_specific_page :Chained("view_seasons") :PathPart("page") :Args(1) {
-  my ( $self, $c, $page_number ) = @_;
-  my $person = $c->stash->{person};
-  
-  # If the page number is less then 1, not defined, false, or not a number, set it to 1
-  $page_number = 1 if !defined( $page_number ) or !$page_number or $page_number !~ /^\d+$/ or $page_number < 1;
-  
-  if ( $page_number == 1 ) {
-    $c->stash({canonical_uri => $c->uri_for_action("/people/view_seasons_first_page", [$person->url_key])});
-  } else {
-    $c->stash({canonical_uri => $c->uri_for_action("/people/view_seasons_specific_page", [$person->url_key, $page_number])});
-  }
-  
-  $c->detach( "retrieve_paged_seasons", [$page_number] );
-}
-
-=head2 retrieve_paged_seasons
-
-Performs the lookups for clubs with the given page number.
-
-=cut
-
-sub retrieve_paged_seasons :Private {
-  my ( $self, $c, $page_number ) = @_;
-  my $person = $c->stash->{person};
-  
-  my $seasons = $c->model("DB::Season")->page_records({
-    person            => $person,
-    page_number       => $page_number,
-    results_per_page  => $c->config->{Pagination}{default_page_size},
-  });
-  
-  my $page_info   = $seasons->pager;
-  my $page_links  = $c->forward( "TopTable::Controller::Root", "generate_pagination_links", [{
-    page_info                       => $page_info,
-    page1_action                    => "/people/view_seasons_first_page",
-    page1_action_arguments          => [$person->url_key],
-    specific_page_action            => "/people/view_seasons_specific_page",
-    specific_page_action_arguments  => [$person->url_key],
-    current_page                    => $page_number,
-  }] );
-  
-  # Set up the template to use
-  $c->stash({
-    template            => "html/people/list-seasons.ttkt",
-    view_online_display => sprintf( "Viewing seasons for %s", $person->display_name ),
-    view_online_link    => 1,
-    seasons             => $seasons,
-    page_info           => $page_info,
-    page_links          => $page_links,
   });
 }
 

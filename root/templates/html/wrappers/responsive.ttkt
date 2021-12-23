@@ -84,8 +84,8 @@ END;
 
 <title>[% page_title %]</title>
 
-<link rel="stylesheet" href="[% c.uri_for('/static/css/main.css') %]?v1.9" type="text/css" media="screen" />
-<link rel="stylesheet" href="[% c.uri_for('/static/css/main-print.css') %]?v1.9" type="text/css" media="print" />
+<link rel="stylesheet" href="[% c.uri_for('/static/css/main.css') %]?v10" type="text/css" media="screen" />
+<link rel="stylesheet" href="[% c.uri_for('/static/css/main-print.css') %]?v10" type="text/css" media="print" />
 <link rel="stylesheet" href="[% c.uri_for('/static/css/jqueryui/jquery-ui.structure.min.css') %]" type="text/css" media="screen" />
 <link rel="stylesheet" href="[% c.uri_for('/static/css/jqueryui/jquery-ui.theme.min.css') %]" type="text/css" media="screen" />
 <link rel="stylesheet" href="[% c.uri_for('/static/css/smartmenus/sm-core-css.css') %]" type="text/css" media="screen" />
@@ -116,7 +116,7 @@ END;
 <script type="text/javascript" src="[% c.uri_for('/static/plugins/jquery-scrollto/jquery-scrollto.js') %]"></script>
 <script type="text/javascript" src="[% c.uri_for('/static/script/plugins/ihavecookies/jquery.ihavecookies.min.js') %]"></script>
 
-<script type="text/javascript" src="[% c.uri_for("/static/script/standard/main.js") %]"></script>
+<script type="text/javascript" src="[% c.uri_for("/static/script/standard/main.js", {v => 2}) %]"></script>
 [%
 IF external_scripts;
   FOREACH script IN external_scripts;

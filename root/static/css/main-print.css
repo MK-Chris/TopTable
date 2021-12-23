@@ -553,6 +553,26 @@ button, input, textarea, select {
   overflow: visible;
 }
 
+input.button-approve {
+  background-image: url("../images/icons/0007-Tick-icon-32.png");
+  background-size: cover;
+  border: none;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  color: transparent;
+}
+
+input.button-deny {
+  background-image: url("../images/icons/0006-Cross-icon-32.png");
+  background-size: cover;
+  border: none;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  color: transparent;
+}
+
 input[type=radio], input[type=checkbox] {vertical-align: text-bottom;}
 input[type=number] {width:50px;}
 input.date_picker {width: 100px;}
@@ -815,6 +835,10 @@ input.menu-input {width: 150px;}
 #avatar img {
   display: block;
   margin: 0 auto;
+}
+
+img.social-link-icon {
+  margin: 8px;
 }
 
 #user-info {vertical-align: top;}

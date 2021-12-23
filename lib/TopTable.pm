@@ -147,12 +147,12 @@ sub build_message {
       my $text = $c->maketext( $message->{id}, @parameters );
       
       # Escape javascript if necessary
-      $text = javascript_value_escape( $text ) if defined( $c->request->headers->header("X-Requested-With") ) and $c->request->headers->header("X-Requested-With") eq "XMLHttpRequest";
+      #$text = javascript_value_escape( $text ) if $c->is_ajax;
       return $text;
     } else {
       # Not a hashref, just return the value
       # Escape javascript if necessary
-      $message = javascript_value_escape( $message ) if defined( $c->request->headers->header("X-Requested-With") ) and $c->request->headers->header("X-Requested-With") eq "XMLHttpRequest";
+      #$message = javascript_value_escape( $message ) if $c->is_ajax;
       return $message;
     }
   }
@@ -167,13 +167,13 @@ sub build_message {
       my $text = $c->maketext( $message->{id}, @parameters );
       
       # Escape javascript if necessary
-      $text = javascript_value_escape( $text ) if $c->request->headers->header("X-Requested-With") eq "XMLHttpRequest";
+      #$text = javascript_value_escape( $text ) if $c->is_ajax;
       
       $return_message .= sprintf( "  <li>%s</li>", $text );
     } else {
       # Not a hashref, just do a 'maketext' on the value
       # Escape javascript if necessary
-      $message = javascript_value_escape( $message ) if defined( $c->request->headers->header("X-Requested-With") ) and $c->request->headers->header("X-Requested-With") eq "XMLHttpRequest";
+      #$message = javascript_value_escape( $message ) if $c->is_ajax;
       
       $return_message .= sprintf( "  <li>%s</li>", $message );
     }

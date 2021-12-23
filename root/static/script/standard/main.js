@@ -29,7 +29,7 @@ $(document).ready(function(){
   /*
     jQueryUI buttons
   */
-  $( "input[type=submit], input[type=button], button" ).button();
+  $( "input[type=submit]:not(.button-approve, .button-deny), input[type=button], button" ).button();
   
   /*
    Active / inactive input fields

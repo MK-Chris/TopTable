@@ -283,6 +283,43 @@ __PACKAGE__->has_many(
 
 use Data::Dumper::Concise;
 
+=head2 get_seasons
+
+Get person_seasons for this person (all seasons this person has entered).
+
+=cut
+
+sub get_seasons {
+  my ( $self, $params ) = @_;
+  my $page_number = $params->{page_number} || undef;
+  my $results_per_page = $params->{results_per_page} || undef;
+  
+  my $attr = {
+    prefetch => ["season", "home_night", {
+      captain => "person_seasons",
+      club_season => "club",
+      division_season => "division",
+    }],
+    order_by => [{
+      -asc => [ qw( season.complete ) ]
+    }, {
+      -desc => [ qw( season.start_date season.end_date ) ]
+    }],
+  };
+  
+  if ( defined( $results_per_page ) ) {
+    # If we're passing in a number of results per page and it's numeric, add that in to the query (along with a 
+    # page number - which defaults to 1 if it's not passed in, or it's garbage).
+    if ( $results_per_page !~ /^\d+$/ ) {
+      $page_number = 1 unless defined( $page_number ) and $page_number =~ /^\d+$/;
+      $attr->{page} = $page_number;
+      $attr->{rows} = $results_per_page;
+    }
+  }
+  
+  return $self->search_related("team_seasons", undef, $attr);
+}
+
 =head2 get_players
 
 Retrieve an arrayref of players registered for this team for the given season.
