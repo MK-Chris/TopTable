@@ -224,7 +224,7 @@ sub create :Local {
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["role_create", $c->maketext("user.auth.create-roles"), 1] );
   
   my $member_tokeninput_options = {
-    jsonContainer => "json_users",
+    jsonContainer => "json_search",
     hintText      => encode_entities( $c->maketext("person.tokeninput.type") ),
     noResultsText => encode_entities( $c->maketext("tokeninput.text.no-results") ),
     searchingText => encode_entities( $c->maketext("tokeninput.text.searching") ),

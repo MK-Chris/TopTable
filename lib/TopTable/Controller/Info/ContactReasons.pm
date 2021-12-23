@@ -225,7 +225,7 @@ sub create :Local {
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["contact_reason_create", $c->maketext("user.auth.create-contact-reason"), 1] );
   
   my $recipient_tokeninput_options = {
-    jsonContainer => "json_searchjson_search",
+    jsonContainer => "json_search",
     hintText      => encode_entities( $c->maketext("person.tokeninput.type") ),
     noResultsText => encode_entities( $c->maketext("tokeninput.text.no-results") ),
     searchingText => encode_entities( $c->maketext("tokeninput.text.searching") ),

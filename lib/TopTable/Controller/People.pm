@@ -549,7 +549,7 @@ sub create :Chained("base_no_object_specified") :PathPart("create") :CaptureArgs
   
   ## Team played for
   $tokeninput_team_options = {
-    jsonContainer => "json_teams",
+    jsonContainer => "json_search",
     tokenLimit    => 1,
     hintText      => $c->maketext("teams.tokeninput.type"),
     noResultsText => encode_entities( $c->maketext("tokeninput.text.no-results") ),
@@ -561,7 +561,7 @@ sub create :Chained("base_no_object_specified") :PathPart("create") :CaptureArgs
   
   ## Team(s) captained
   $tokeninput_captain_options = {
-    jsonContainer => "json_teams",
+    jsonContainer => "json_search",
     hintText      => encode_entities( $c->maketext( "teams.tokeninput.type-captain" ) ),
     noResultsText => encode_entities( $c->maketext("tokeninput.text.no-results") ),
     searchingText => encode_entities( $c->maketext("tokeninput.text.searching") ),
@@ -601,7 +601,7 @@ sub create :Chained("base_no_object_specified") :PathPart("create") :CaptureArgs
   
   ## Website users
   $tokeninput_user_options = {
-    jsonContainer => "json_users",
+    jsonContainer => "json_search",
     tokenLimit    => 1,
     hintText      => encode_entities( $c->maketext( "user.tokeninput.type-person-association" ) ),
     noResultsText => encode_entities( $c->maketext("tokeninput.text.no-results") ),
@@ -762,7 +762,7 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
   
   ## Team played for
   $tokeninput_team_options = {
-    jsonContainer => "json_teams",
+    jsonContainer => "json_search",
     tokenLimit    => 1,
     hintText      => $c->maketext("teams.tokeninput.type"),
     noResultsText => encode_entities( $c->maketext("tokeninput.text.no-results") ),
@@ -850,7 +850,7 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
   
   ## Website users
   $tokeninput_user_options = {
-    jsonContainer => "json_users",
+    jsonContainer => "json_search",
     tokenLimit    => 1,
     hintText      => $c->maketext("user.tokeninput.type-person-association"),
     noResultsText => encode_entities( $c->maketext("tokeninput.text.no-results") ),
