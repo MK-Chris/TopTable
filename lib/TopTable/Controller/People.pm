@@ -293,7 +293,9 @@ sub get_person_season :Private {
     season  => $season,
   });
   my $games = $person->games_played_in_season({season => $season});
-  my ( $person_name, $person_season_name ) = ( encode_entities( $person->display_name ), encode_entities( $teams->first->display_name ) );
+  my $person_name = encode_entities( $person->display_name );
+  my $team_season = $teams->first;
+  my $person_season_name = encode_entities( $team_season->display_name ) if defined( $team_season );
   
   # If the name has changed, we need to display a notice
   $c->add_status_message( "info", $c->maketext("people.name.changed-notice", $person_season_name, $person_name ) ) unless $person_name eq $person_season_name;
