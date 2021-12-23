@@ -33,6 +33,7 @@ sub auto :Private {
   # Load the messages
   $c->load_status_msgs;
   
+  
   # The title bar will always have
   $c->stash({subtitle1 => $c->maketext("menu.text.users")});
   
@@ -970,8 +971,6 @@ sub bulk_approval :Path("bulk-approval") :Args(0) {
       }
     }
   }
-  
-  $c->log->debug( Dumper( $response ) );
   
   # Convert errors / successes into messages
   my $response_msgs = {};
