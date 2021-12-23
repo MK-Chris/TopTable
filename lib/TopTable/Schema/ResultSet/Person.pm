@@ -435,9 +435,7 @@ sub create_or_edit {
   # Check the team entered is correct
   if ( defined( $team ) and ref( $team ) eq "TopTable::Model::DB::Team" ) {
     # Team is specified and valid, check they've entered
-    my $team_season = $team->search_related("team_seasons", {
-      season => $season->id
-    });
+    my $team_season = $team->search_related("team_seasons", {season => $season->id});
     
     # If we don't find a team season, they're not entered yet
     push(@{ $return_value->{error} }, {
@@ -456,29 +454,27 @@ sub create_or_edit {
   $captains = [$captains] unless ref( $captains ) eq "ARRAY";
   
   # Loop through the captain objects (these are actually teams that this person should be captain of)
-  foreach my $team ( @{$captains} ) {
-    if ( defined( $team ) and ref( $team ) eq "TopTable::Model::DB::Team" ) {
+  foreach my $captain_team ( @{$captains} ) {
+    if ( defined( $captain_team ) and ref( $captain_team ) eq "TopTable::Model::DB::Team" ) {
       # The object is a reference to a team, get the team season object and push it on to the array
-      my $team_season = $team->search_related("team_seasons", {
-        season => $season->id
-      });
+      my $captain_team_season = $captain_team->search_related("team_seasons", {season => $season->id});
       
-      if ( defined( $team_season ) ) {
+      if ( defined( $captain_team_season ) ) {
         # Push on to the array of captains to keep (not set to null) if we're editing (if we're creating, there's no way this person can have been captain before)
-        push( @team_season_captain_ids, $team->id ) if $action eq "edit";
-        push( @team_season_captains, $team_season );
+        push( @team_season_captain_ids, $captain_team->id ) if $action eq "edit";
+        push( @team_season_captains, $captain_team_season );
       } else {
         # If we don't find a team season, they're not entered yet
         push(@{ $return_value->{error} }, {
           id          => "people.form.error.captain-team-not-entered",
-          parameters  => [ $team->club->short_name, $team->name, $season->name ],
+          parameters  => [ $captain_team->club->short_name, $captain_team->name, $season->name ],
         });
       }
     } else {
       # Invalid object
       push(@{ $return_value->{error} }, {
         id          => "people.form.error.captain-team-invalid",
-        parameters  => [$team],
+        parameters  => [$captain_team],
       });
     }
   }
@@ -568,7 +564,7 @@ sub create_or_edit {
         url_key           => $url_key,
         first_name        => $first_name,
         surname           => $surname,
-        display_name      => $first_name . " " . $surname, # Automatically set the display name from first and surnames - the user never interacts with this field.
+        display_name      => sprintf( "%s %s", $first_name, $surname ), # Automatically set the display name from first and surnames - the user never interacts with this field.
         address1          => $address1,
         address2          => $address2,
         address3          => $address3,
@@ -582,6 +578,14 @@ sub create_or_edit {
         date_of_birth     => $date_of_birth,
         gender            => $gender,
       });
+      
+      # Ensure the name is updated for any person season objects from this season
+      $person->search_related("person_seasons", {season => $season->id})->update({
+        first_name        => $first_name,
+        surname           => $surname,
+        display_name      => sprintf( "%s %s", $first_name, $surname ), # Automatically set the display name from first and surnames - the user never interacts with this field.
+      });
+      
       
       # Because we're updating, there is a complex-ish system of checks for teams that this person is playing for
       if ( defined( $team ) ) {

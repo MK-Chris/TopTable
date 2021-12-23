@@ -55,8 +55,9 @@ sub base :Chained("/") :PathPart("clubs") :CaptureArgs(1) {
     # Club found, stash it, then stash the name / view URL in the breadcrumbs section of our stash
     my $encoded_club_full_name = encode_entities( $club->full_name );
     $c->stash({
-      club                    => $club,
-      encoded_club_full_name  => $encoded_club_full_name,
+      club => $club,
+      encoded_club_full_name => $encoded_club_full_name,
+      subtitle1 => $encoded_club_full_name,
     });
     
     # Push the clubs list page on to the breadcrumbs
@@ -243,7 +244,7 @@ sub view_specific_season :Chained("view") :PathPart("seasons") :Args(1) {
   
     # Push the season list URI and the current URI on to the breadcrumbs
     push( @{ $c->stash->{breadcrumbs} }, {
-      path  => $c->uri_for_action("/clubs/view_seasons_first_page", [$club->url_key]),
+      path  => $c->uri_for_action("/clubs/view_seasons", [$club->url_key]),
       label => $c->maketext("menu.text.seasons"),
     }, {
       path  => $c->uri_for_action("/clubs/view_specific_season", [$club->url_key, $season->url_key]),
@@ -377,100 +378,52 @@ Retrieve and display a list of seasons that this club has entered teams into.
 
 =cut
 
-sub view_seasons :Chained("view") :PathPart("seasons") :CaptureArgs(0) {
+sub view_seasons :Chained("view") :PathPart("seasons") :Args(0) {
   my ( $self, $c ) = @_;
   my $club      = $c->stash->{club};
   my $site_name = $c->stash->{encoded_site_name};
   my $club_name = $c->stash->{encoded_club_full_name};
   
-  # Stash the template; the data will be retrieved when we know what page we're on
+  # Get the seasons this club has entered
+  my $seasons = $club->get_seasons;
+  
+  # See if we have a count or not
+  my ( $ext_scripts, $ext_styles );
+  if ( $seasons->count ) {
+    $ext_scripts = [
+      $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
+      $c->uri_for("/static/script/clubs/seasons.js"),
+    ];
+    $ext_styles = [
+      $c->uri_for("/static/css/chosen/chosen.min.css"),
+      $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
+    ];
+  } else {
+    $ext_scripts = [ $c->uri_for("/static/script/standard/option-list.js") ];
+    $ext_styles = [];
+  }
+  
+  # Set up the template to use
   $c->stash({
-    template          => "html/clubs/list-seasons.ttkt",
-    page_description  => $c->maketext("description.clubs.list-seasons", $club_name, $site_name),
-    external_scripts      => [
-      $c->uri_for("/static/script/standard/option-list.js"),
-    ],
+    template => "html/clubs/list-seasons-table.ttkt",
+    subtitle2 => $c->maketext("menu.text.seasons"),
+    page_description => $c->maketext("description.clubs.list-seasons", $club_name, $site_name),
+    view_online_display => sprintf( "Viewing seasons for %s", $club->full_name ),
+    view_online_link => 1,
+    seasons => $seasons,
+    external_scripts => $ext_scripts,
+    external_styles => $ext_styles,
   });
   
   # Push the current URI on to the breadcrumbs
   push( @{ $c->stash->{breadcrumbs} }, {
-    path  => $c->uri_for_action("/clubs/view_seasons_first_page", [$club->url_key]),
+    path  => $c->uri_for_action("/clubs/view_seasons", [$club->url_key]),
     label => $c->maketext("menu.text.seasons"),
-  });
-}
-
-=head2 view_seasons_first_page
-
-List the clubs on the first page.
-
-=cut
-
-sub view_seasons_first_page :Chained("view_seasons") :PathPart("") :Args(0) {
-  my ( $self, $c ) = @_;
-  my $club = $c->stash->{club};
-  
-  $c->stash({canonical_uri => $c->uri_for_action("/clubs/view_seasons_first_page", [$club->url_key])});
-  $c->detach( "retrieve_paged_seasons", [1] );
-}
-
-=head2 view_seasons_specific_page
-
-List the clubs on the specified page.
-
-=cut
-
-sub view_seasons_specific_page :Chained("view_seasons") :PathPart("page") :Args(1) {
-  my ( $self, $c, $page_number ) = @_;
-  my $club = $c->stash->{club};
-  
-  # If the page number is less then 1, not defined, false, or not a number, set it to 1
-  $page_number = 1 if !defined( $page_number ) or !$page_number or $page_number !~ /^\d+$/ or $page_number < 1;
-  
-  if ( $page_number == 1 ) {
-    $c->stash({canonical_uri => $c->uri_for_action("/clubs/view_seasons_first_page", [$club->url_key])});
-  } else {
-    $c->stash({canonical_uri => $c->uri_for_action("/clubs/view_seasons_specific_page", [$club->url_key, $page_number])});
-  }
-  
-  $c->detach( "retrieve_paged_seasons", [$page_number] );
-}
-
-=head2 retrieve_paged_seasons
-
-Performs the lookups for clubs with the given page number.
-
-=cut
-
-sub retrieve_paged_seasons :Private {
-  my ( $self, $c, $page_number ) = @_;
-  my $club = $c->stash->{club};
-  my $encoded_club_full_name = $c->stash->{encoded_club_full_name};
-  
-  my $seasons = $club->get_seasons({
-    page_number       => $page_number,
-    results_per_page  => $c->config->{Pagination}{default_page_size},
-  });
-  
-  my $page_info   = $seasons->pager;
-  my $page_links  = $c->forward( "TopTable::Controller::Root", "generate_pagination_links", [{
-    page_info                       => $page_info,
-    page1_action                    => "/clubs/view_seasons_first_page",
-    page1_action_arguments          => [$club->url_key],
-    specific_page_action            => "/clubs/view_seasons_specific_page",
-    specific_page_action_arguments  => [$club->url_key],
-    current_page                    => $page_number,
-  }] );
-  
-  # Set up the template to use
-  $c->stash({
-    template            => "html/clubs/list-seasons.ttkt",
-    view_online_display => sprintf( "Viewing seasons for %s", $club->full_name ),
-    view_online_link    => 1,
-    seasons             => $seasons,
-    subtitle1           => $encoded_club_full_name,
-    subtitle2           => $c->maketext("menu.text.seasons"),
-    page_info           => $page_info,
-    page_links          => $page_links,
   });
 }
 

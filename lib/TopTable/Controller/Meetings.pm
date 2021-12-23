@@ -249,7 +249,7 @@ sub view :Private {
   my ( $edit_uri, $delete_uri, $edit_auth_code, $delete_auth_code, $name, $meeting );
   
   if ( $is_event ) {
-    $meeting = $event_season->event_detail;
+    $meeting = $event_season->event_detail if defined( $event_season );
     $c->stash({meeting => $meeting});
   } else {
     $meeting = $c->stash->{meeting};

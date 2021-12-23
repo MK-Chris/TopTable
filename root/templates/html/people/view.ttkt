@@ -27,11 +27,12 @@ IF season;
 <div id="tabs">
   <ul>
 [%
-  FOREACH type = types;
+  WHILE (type = types.next);
     IF type.team_membership_type.id == "active";
-      # Below item(0) will work because "active" will always come first.
+      # Below first will work because "active" will always come first.
+      SET ACTIVE_TEAM = teams.first;
 -%]
-    <li><a href="#active">[% teams.item(0).team_season.club_season.club.short_name | html_entity %] [% teams.item(0).team_season.name %]</a></li>
+    <li><a href="#active">[% ACTIVE_TEAM.team_season.club_season.club.short_name | html_entity %] [% ACTIVE_TEAM.team_season.name %]</a></li>
 [%
     ELSE;
 -%]
@@ -51,16 +52,18 @@ IF season;
   </ul>
 [%
   # Check there's a person's season
-  IF teams.size;
-    FOREACH person_team IN teams;
+  IF teams.count;
+    CALL teams.reset;
+    WHILE (person_team = teams.next);
       SET team_season = person_team.team_season;
+      CALL c.log.debug( person_team.team_membership_type.id );
       
       IF specific_season;
-        SET team_uri      = c.uri_for_action("/teams/view_specific_season_by_url_key", [team_season.club_season.club.url_key, team_season.team.url_key, season.url_key]);
+        SET team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [team_season.club_season.club.url_key, team_season.team.url_key, season.url_key]);
         SET averages_uri  = c.uri_for_action("/league-averages/view_specific_season", ["singles", team_season.division_season.division.url_key, season.url_key]);
       ELSE;
         SET team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [team_season.club_season.club.url_key, team_season.team.url_key]);
-        SET averages_uri  = c.uri_for_action("/league-averages/view_current_season", ["singles", team_season.division_season.division.url_key]);
+        SET averages_uri = c.uri_for_action("/league-averages/view_current_season", ["singles", team_season.division_season.division.url_key]);
       END;
       
       # New tab div if this is a new type
@@ -76,96 +79,100 @@ IF season;
 [%
       END;
 -%]
-    <h4><a href="[% team_uri %]">[% team_season.club_season.club.short_name | html_entity %] [% team_season.name | html_entity %]</a> (<a href="[% averages_uri %]">[% team_season.division_season.division.name %]</a>)</h4>
-    <div class="row">
-      <div class="column left">
-        <h5>[% c.maketext("stats.heading.matches") %]</h5>
-        <table class="vertical">
-          <tr>
-            <th scope="row">[% c.maketext("stats.label.played") %]</td>
-            <td>[% c.i18n_numberformat.format_number( person_team.matches_played ) %]</td>
-          </tr>
-          <tr>
-            <th scope="row">[% c.maketext("stats.label.won") %]</th>
-            <td>[% c.i18n_numberformat.format_number( person_team.matches_won ) %]</td>
-          </tr>
-          <tr>
-            <th scope="row">[% c.maketext("stats.label.drawn") %]</th>
-            <td>[% c.i18n_numberformat.format_number( person_team.matches_drawn ) %]</td>
-          </tr>
-          <tr>
-            <th scope="row">[% c.maketext("stats.label.lost") %]</th>
-            <td>[% c.i18n_numberformat.format_number( person_team.matches_lost ) %]</td>
-          </tr>
-        </table>
-      </div>
-      
-      <div class="column right">
-        <h5>[% c.maketext("stats.heading.games") %]</h5>
-        <table class="vertical">
-          <tr>
-            <th scope="row">[% c.maketext("stats.label.played") %]</th>
-            <td>[% c.i18n_numberformat.format_number( person_team.games_played ) %]</td>
-          </tr>
-          <tr>
-            <th scope="row">[% c.maketext("stats.label.won") %]</th>
-            <td>[% c.i18n_numberformat.format_number( person_team.games_won ) %]</td>
-          </tr>
-          <tr>
-            <th scope="row">[% c.maketext("stats.label.lost") %]</th>
-            <td>[% c.i18n_numberformat.format_number( person_team.games_lost ) %]</td>
-          </tr>
-          <tr>
-            <th scope="row">[% c.maketext("stats.label.average") %]</th>
-            <td>[% c.i18n_numberformat.format_number( person_team.average_game_wins, 2, 1) %]</td>
-          </tr>
-        </table>
-      </div>
-    </div>
-    
-    <div class="row">
-      <div class="column left">
-        <h5>[% c.maketext("stats.heading.legs") %]</h5>
-        <table class="vertical">
-          <tr>
-            <th scope="row">[% c.maketext("stats.label.played") %]</th>
-            <td>[% c.i18n_numberformat.format_number( person_team.legs_played ) %]</td>
-          </tr>
-          <tr>
-            <th scope="row">[% c.maketext("stats.label.won") %]</th>
-            <td>[% c.i18n_numberformat.format_number( person_team.legs_won ) %]</td>
-          </tr>
-          <tr>
-            <th scope="row">[% c.maketext("stats.label.lost") %]</th>
-            <td>[% c.i18n_numberformat.format_number( person_team.legs_lost ) %]</td>
-          </tr>
-          <tr>
-            <th scope="row">[% c.maketext("stats.label.average") %]</th>
-            <td>[% c.i18n_numberformat.format_number( person_team.average_leg_wins, 2, 1) %]</td>
-          </tr>
-        </table>
-      </div>
-      
-      <div class="column right">
-        <h5>[% c.maketext("stats.heading.points") %]</h5>
-        <table class="vertical">
-          <tr>
-            <th scope="row">[% c.maketext("stats.label.played") %]</th>
-            <td>[% c.i18n_numberformat.format_number( person_team.points_played ) %]</td>
-          </tr>
-          <tr>
-            <th scope="row">[% c.maketext("stats.label.won") %]</th>
-            <td>[% c.i18n_numberformat.format_number( person_team.points_won ) %]</td>
-          </tr>
-          <tr>
-            <th scope="row">[% c.maketext("stats.label.lost") %]</th>
-            <td>[% c.i18n_numberformat.format_number( person_team.points_lost ) %]</td>
-          </tr>
-          <tr>
-            <th scope="row">[% c.maketext("stats.label.average") %]</th>
-            <td>[% c.i18n_numberformat.format_number( person_team.average_point_wins, 2, 1) %]</td>
-          </tr>
-        </table>
+    <div class="table-wrap">
+      <div class="table-layout table-layout-centre">
+        <h4><a href="[% team_uri %]">[% team_season.club_season.club.short_name | html_entity %] [% team_season.name | html_entity %]</a> (<a href="[% averages_uri %]">[% team_season.division_season.division.name %]</a>)</h4>
+        <div class="row">
+          <div class="column left">
+            <h5>[% c.maketext("stats.heading.matches") %]</h5>
+            <table class="vertical">
+              <tr>
+                <th scope="row">[% c.maketext("stats.label.played") %]</td>
+                <td>[% c.i18n_numberformat.format_number( person_team.matches_played ) %]</td>
+              </tr>
+              <tr>
+                <th scope="row">[% c.maketext("stats.label.won") %]</th>
+                <td>[% c.i18n_numberformat.format_number( person_team.matches_won ) %]</td>
+              </tr>
+              <tr>
+                <th scope="row">[% c.maketext("stats.label.drawn") %]</th>
+                <td>[% c.i18n_numberformat.format_number( person_team.matches_drawn ) %]</td>
+              </tr>
+              <tr>
+                <th scope="row">[% c.maketext("stats.label.lost") %]</th>
+                <td>[% c.i18n_numberformat.format_number( person_team.matches_lost ) %]</td>
+              </tr>
+            </table>
+          </div>
+          
+          <div class="column right">
+            <h5>[% c.maketext("stats.heading.games") %]</h5>
+            <table class="vertical">
+              <tr>
+                <th scope="row">[% c.maketext("stats.label.played") %]</th>
+                <td>[% c.i18n_numberformat.format_number( person_team.games_played ) %]</td>
+              </tr>
+              <tr>
+                <th scope="row">[% c.maketext("stats.label.won") %]</th>
+                <td>[% c.i18n_numberformat.format_number( person_team.games_won ) %]</td>
+              </tr>
+              <tr>
+                <th scope="row">[% c.maketext("stats.label.lost") %]</th>
+                <td>[% c.i18n_numberformat.format_number( person_team.games_lost ) %]</td>
+              </tr>
+              <tr>
+                <th scope="row">[% c.maketext("stats.label.average") %]</th>
+                <td>[% c.i18n_numberformat.format_number( person_team.average_game_wins, 2, 1) %]</td>
+              </tr>
+            </table>
+          </div>
+        </div>
+        
+        <div class="row">
+          <div class="column left">
+            <h5>[% c.maketext("stats.heading.legs") %]</h5>
+            <table class="vertical">
+              <tr>
+                <th scope="row">[% c.maketext("stats.label.played") %]</th>
+                <td>[% c.i18n_numberformat.format_number( person_team.legs_played ) %]</td>
+              </tr>
+              <tr>
+                <th scope="row">[% c.maketext("stats.label.won") %]</th>
+                <td>[% c.i18n_numberformat.format_number( person_team.legs_won ) %]</td>
+              </tr>
+              <tr>
+                <th scope="row">[% c.maketext("stats.label.lost") %]</th>
+                <td>[% c.i18n_numberformat.format_number( person_team.legs_lost ) %]</td>
+              </tr>
+              <tr>
+                <th scope="row">[% c.maketext("stats.label.average") %]</th>
+                <td>[% c.i18n_numberformat.format_number( person_team.average_leg_wins, 2, 1) %]</td>
+              </tr>
+            </table>
+          </div>
+          
+          <div class="column right">
+            <h5>[% c.maketext("stats.heading.points") %]</h5>
+            <table class="vertical">
+              <tr>
+                <th scope="row">[% c.maketext("stats.label.played") %]</th>
+                <td>[% c.i18n_numberformat.format_number( person_team.points_played ) %]</td>
+              </tr>
+              <tr>
+                <th scope="row">[% c.maketext("stats.label.won") %]</th>
+                <td>[% c.i18n_numberformat.format_number( person_team.points_won ) %]</td>
+              </tr>
+              <tr>
+                <th scope="row">[% c.maketext("stats.label.lost") %]</th>
+                <td>[% c.i18n_numberformat.format_number( person_team.points_lost ) %]</td>
+              </tr>
+              <tr>
+                <th scope="row">[% c.maketext("stats.label.average") %]</th>
+                <td>[% c.i18n_numberformat.format_number( person_team.average_point_wins, 2, 1) %]</td>
+              </tr>
+            </table>
+          </div>
+        </div>
       </div>
     </div>
 [%
@@ -298,8 +305,17 @@ IF season;
     </form>
   </div>
 [%
+      IF seasons == 1;
+        SET SEASON_TEXT = c.maketext("object.singular.seasons");
+      ELSE;
+        SET SEASON_TEXT = c.maketext("object.plural.seasons");
+      END;
+
+      SET SEASONS_LINK_TEXT = c.maketext("people.seasons.count-text", encoded_display_name, seasons, SEASON_TEXT);
     END;
 -%]
+</div>
+<div class="seasons-count"><a href="[% c.uri_for_action("/people/view_seasons", [person.url_key]) %]">[% SEASONS_LINK_TEXT %]</a></div>
 [%
   # Else for the check for a team season
   ELSE;
@@ -309,13 +325,4 @@ IF season;
     # End for the check for a season
   END;
 END;
-
-IF seasons == 1;
-  SET season_text = c.maketext("object.singular.seasons");
-ELSE;
-  SET season_text = c.maketext("object.plural.seasons");
-END;
 -%]
-<div class="seasons-count"><a href="[% c.uri_for_action("/people/view_seasons_first_page", [person.url_key]) %]">[% c.maketext("people.seasons.count-text", encoded_display_name, seasons, season_text) %]</a></div>
-[%
-%]

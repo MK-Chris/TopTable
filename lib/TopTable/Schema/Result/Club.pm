@@ -336,30 +336,26 @@ Get club_seasons for this club (all seasons this club has entered).
 
 sub get_seasons {
   my ( $self, $parameters ) = @_;
-  my $page_number       = $parameters->{page_number}      || undef;
-  my $results_per_page  = $parameters->{results_per_page} || undef;
+  my $page_number = $parameters->{page_number} || undef;
+  my $results_per_page = $parameters->{results_per_page} || undef;
   
   my $attributes = {
-    prefetch => "season",
-    page      => $page_number,
-    rows      => $results_per_page,
+    prefetch => [ qw ( season secretary venue ) ],
     order_by => [{
-      -asc => [
-        qw( season.complete )
-      ]}, {
-      -desc => [
-        qw( season.start_date season.end_date )
-      ]}
-    ],
+      -asc => [ qw( season.complete ) ]
+    }, {
+      -desc => [ qw( season.start_date season.end_date ) ]
+    }],
   };
   
-  if ( defined( $page_number ) or defined( $results_per_page ) ) {
-    # If either page number of results per page is defined, set the other to a default (page 1, 25 results).  Also sanitise if they're not numeric
-    $page_number      = 1 unless defined( $page_number ) or $page_number !~ /^\d+$/;
-    $results_per_page = 25 unless defined( $results_per_page ) or $results_per_page !~ /^\d+$/;
-    
-    $attributes->{page} = $page_number;
-    $attributes->{rows} = $results_per_page;
+  if ( defined( $results_per_page ) ) {
+    # If we're passing in a number of results per page and it's numeric, add that in to the query (along with a 
+    # page number - which defaults to 1 if it's not passed in, or it's garbage).
+    if ( $results_per_page !~ /^\d+$/ ) {
+      $page_number = 1 unless defined( $page_number ) and $page_number =~ /^\d+$/;
+      $attributes->{page} = $page_number;
+      $attributes->{rows} = $results_per_page;
+    }
   }
   
   return $self->search_related("club_seasons", undef, $attributes);

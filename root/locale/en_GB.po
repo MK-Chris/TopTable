@@ -613,6 +613,9 @@ msgstr "Short name"
 msgid "clubs.field.abbreviated-name"
 msgstr "Abbreviated name"
 
+msgid "clubs.field.name"
+msgstr "Name"
+
 msgid "clubs.field.email-address"
 msgstr "Email address"
 
@@ -639,6 +642,12 @@ msgstr "There are no people currently in the database; you will get the option t
 
 msgid "clubs.field.venue"
 msgstr "Venue"
+
+msgid "clubs.seasons.season"
+msgstr "Season"
+
+msgid "clubs.seasons.registered-as"
+msgstr "Registered as"
 
 msgid "clubs.none"
 msgstr "There are no clubs to view."
@@ -695,7 +704,7 @@ msgid "clubs.delete.error.cannot-delete"
 msgstr "You cannot delete %1, as it has teams assigned either in this season or in historical seasons."
 
 msgid "clubs.seasons.count-text"
-msgstr "There is a record of %1 in %2 %3."
+msgstr "%1 has entered teams in %2 %3."
 
 msgid "clubs.name.changed-notice"
 msgstr "%1 (%2) is now known as %3 (%4)"
@@ -939,7 +948,13 @@ msgid "teams.fixtures.options"
 msgstr "Options"
 
 msgid "teams.seasons.count-text"
-msgstr "There is a record of %1 %2 in %3 %4."
+msgstr "%1 %2 is registered in %3 %4."
+
+msgid "teams.seasons.registered-as"
+msgstr "Registered as"
+
+msgid "teams.seasons.club"
+msgstr "Registered for"
 
 ### People
 msgid "people.create"
@@ -1170,6 +1185,12 @@ msgstr "Membership type"
 msgid "people.field.averages-position"
 msgstr "Averages position"
 
+msgid "people.seasons.registered-as"
+msgstr "Registered as"
+
+msgid "people.seasons.team"
+msgstr "Registered for"
+
 msgid "people.teams.loan"
 msgstr "Played on loan"
 
@@ -1207,7 +1228,7 @@ msgid "people.opponents.result"
 msgstr "Result"
 
 msgid "people.seasons.count-text"
-msgstr "There is a record of %1 in %2 %3."
+msgstr "%1 is registered in %2 %3."
 
 msgid "people.transfer-season"
 msgstr "Transfer season statistics"
@@ -1229,6 +1250,9 @@ msgstr "Did not find any team memberships to transfer."
 
 msgid "people.transfer.success"
 msgstr "Season statistics successfully transferred."
+
+msgid "people.name.changed-notice"
+msgstr "%1 is now known as %2."
 
 ### Generic team / person statistics labels
 msgid "stats.heading.matches"
@@ -1631,6 +1655,9 @@ msgstr "League ranking template"
 
 msgid "seasons.events"
 msgstr "Events"
+
+msgid "seasons.list.season-name"
+msgstr "Season"
 
 ### Divisions
 msgid "divisions.option.league-tables"
@@ -3488,8 +3515,14 @@ msgstr "%1 has been successfully %2."
 msgid "admin.forms.success-with-warnings"
 msgstr "%1 has been successfully %2, but the warnings below were encountered."
 
+msgid "admin.update.error.database"
+msgstr "There was an error updating the database; please try again and contact the system administrator if the problem persists."
+
 msgid "admin.delete.error.database"
 msgstr "There was an error deleting %1 from the database; please try again and contact the system administrator if the problem persists.  %2"
+
+msgid "admin.performing-user-invalid"
+msgstr "The user running the task is invalid.  Please contact the system administrator."
 
 msgid "admin.edit.privacy"
 msgstr "Edit privacy policy"
@@ -3506,6 +3539,9 @@ msgstr "The username or password is incorrect; please try again."
 
 msgid "user.login.error.user-not-activated"
 msgstr "The username entered has not yet been activated; please check the username, or if this is the correct account, you can <a href=\"%1\">resend the activation email</a>."
+
+msgid "user.login.error.user-not-approved"
+msgstr "This user account has not yet been approved by the administrator; please <a href="%1">contact us</a> if you'd like to ask when this might be done, but try to remember that the website is run by volunteers giving up their time for free."
 
 msgid "user.login.success.header"
 msgstr "Logged in"
@@ -3552,6 +3588,36 @@ msgstr "Activation details"
 
 msgid "user.activation.error.failed"
 msgstr "Failed to activate; please try again or contact the system administrator if the problem persists."
+
+msgid "user.list-to-approve"
+msgstr "Approval list"
+
+msgid "users.approve.already-approved"
+msgstr "%1 is already approved, so cannot be re-approved."
+
+msgid "users.approve.user-approved"
+msgstr "%1 has been approved and can now login."
+
+msgid "users.approve.user-rejected"
+msgstr "%1 has been rejected and their user account has been deleted."
+
+msgid "users.approve.user-invalid"
+msgstr "%1 refers to a user that doesn't exist (display name given: %2)."
+
+msgid "user.approve"
+"Approve user"
+
+msgid "user.approve.success"
+msgstr "%1 has been approved and can now login."
+
+msgid "user.approval-form.no-users"
+msgstr "There are no users to approve."
+
+msgid "user.approval-form.approve-selected"
+msgstr "Approve selected users"
+
+msgid "user.approval-form.deny-selected"
+msgstr "Deny selected users"
 
 msgid "user.form.activation.field.activation-id"
 msgstr "Activation ID"
@@ -3805,6 +3871,9 @@ msgstr "edit league officials"
 msgid "user.auth.delete-officials"
 msgstr "delete league officials"
 
+msgid "user.auth.approve-new-users"
+msgstr "approve new user registrations"
+
 msgid "user.auth.delete-users"
 msgstr "delete users"
 
@@ -3875,7 +3944,7 @@ msgid "user.field.html-emails"
 msgstr "Receive emails in HTML?"
 
 msgid "user.field.roles"
-msgstr "Roles"
+msgstr "Role(s)"
 
 msgid "user.person.name"
 msgstr "Full name"
@@ -3883,8 +3952,17 @@ msgstr "Full name"
 msgid "user.field.language"
 msgstr "Language"
 
+msgid "user.field.facebook"
+msgstr "Facebook user ID / name"
+
+msgid "user.field.twitter"
+msgstr "Twitter name (don&#39;t use &#39;@&#39;)"
+
+msgid "user.fields.social"
+msgstr "Social media accounts"
+
 msgid "user.field.website"
-msgstr "Website"
+msgstr "Link to website"
 
 msgid "user.field.interests"
 msgstr "Interests"
@@ -3900,6 +3978,21 @@ msgstr "Hide my online status"
 
 msgid "user.field.timezone"
 msgstr "Timezone"
+
+msgid "user.field.date-registered"
+msgstr "Date / time registered"
+
+msgid "user.field.last-active"
+msgstr "Last active"
+
+msgid "user.field.activated"
+msgstr "Account activated"
+
+msgid "user.activated"
+msgstr "Account activated"
+
+msgid "user.not-activated"
+msgstr "Account not yet activated"
 
 msgid "user.form.legend.details"
 msgstr "User details"
@@ -3957,6 +4050,15 @@ msgstr "Some of the fields that have been modified require you to fill out your 
 
 msgid "user.form.error.curent-password-incorrect"
 msgstr "The current password filled out is incorrect."
+
+msgid "user.form.error.facebook-invalid"
+msgstr "The Facebook profile field is invalid, it must only contain letters, numbers, underscores (_) or dots.  The &#39;https://www.facebook.com&#39; part will be automatically prefixed to this."
+
+msgid "user.form.error.twitter-invalid"
+msgstr "The Twitter profile field is invalid, it must only contain letters, numbers or dots and must be 15 characters or under.  You do not need the initial @ and the &#39;https://twitter.com&#39; part will be automatically prefixed to the value you enter."
+
+msgid "user.form.error.website-invalid"
+msgstr "The website entered is invalid."
 
 msgid "user.form.error.language-invalid"
 msgstr "The language selected is invalid."
@@ -4266,6 +4368,36 @@ msgstr "Page not found"
 
 msgid "page.error.not-found.message"
 msgstr "The page you are looking for could not be found; please use the menu at the top of the page."
+
+msgid "page.error.internal.heading"
+msgstr "Internal server error"
+
+msgid "page.error.internal"
+msgstr "This page encountered an error; please refresh the page or <a href="%1">contact the administrator</a>, quoting the information below, if the error persists."
+
+msgid "error.info.date-time"
+msgstr "Date / time served (UTC)"
+
+msgid "error.info.referrer"
+msgstr "Referrer"
+
+msgid "error.info.base-uri"
+msgstr "Base URI"
+
+msgid "error.info.req-method"
+msgstr "Request method"
+
+msgid "error.info.path"
+msgstr "Path"
+
+msgid "error.info.query"
+msgstr "Query"
+
+msgid "error.info.user"
+msgstr "User"
+
+msgid "error.info.user.not-logged-in"
+msgstr "Anonymous"
 
 msgid "footer.copyright"
 msgstr "Copyright"
@@ -4640,6 +4772,12 @@ msgstr "%1%2 logged out."
 msgid "system-event-log.description.register"
 msgstr "%1%2 registered"
 
+msgid "system-event-log.description.approve"
+msgstr "Approved %1%2"
+
+msgid "system-event-log.description.reject"
+msgstr "Rejected %1%2"
+
 msgid "system-event-log.and"
 msgstr "and"
 
@@ -4878,19 +5016,57 @@ msgstr "Hi %1\n\n"
 msgid "email.subject.users.activated"
 msgstr "%1: %2, your user account has been activated"
 
-msgid "email.html.users.activated"
+msgid "email.html.users.activated.no-approval"
 msgstr "Hi %1<br /><br />\n\n"
 "Your account on %2 has now been activated and you may login by clicking <a href="%3">here</a> and entering your username and the password you created during the registration process.  If the link doesn&#39;t work, you can copy and paste the next line into your browser&#39;s address bar.<br /><br />\n\n"
 "%3<br /><br />\n\n"
 "Regards,<br /><br /><br />\n\n\n"
 "%2<br />\n"
 
-msgid "email.plain-text.users.activated"
+msgid "email.plain-text.users.activated.no-approval"
 msgstr "Hi %1\n\n"
 "Your account on %2 has now been activated and you may login by clicking on the link below and entering your username and the password you created during the registration process.  If the link doesn't work, you can copy and paste it into your browser's address bar.\n\n"
 "%3\n\n"
 "Regards,<br /><br /><br />\n\n\n"
 "%2<br />\n"
+
+msgid "email.html.users.activated.approval-required"
+msgstr "Hi %1<br /><br />\n\n"
+"Your account on %2 has now been activated, but must be manually approved by a site administrator.  You will receive another email notification when this has been done and you can login.<br /><br />\n\n"
+"Regards,<br /><br /><br />\n\n\n"
+"%2<br />\n"
+
+msgid "email.plain-text.users.activated.approval-required"
+msgstr "Hi %1\n\n"
+"Your account on %2 has now been activated, but must be manually approved by a site administrator.  You will receive another email notification when this has been done and you can login.\n\n"
+"Regards,"
+"%2\n"
+
+msgid "email.subject.users.approved"
+msgstr "%1: %2, your user account has been approved"
+
+msgid "email.html.users.approved"
+msgstr "Hi %1<br /><br />\n\n"
+"Your account on %2 has been approved by an administrator and you can now <a href="%3">login</a> and entering your username and the password you created during the registration process.  If the link doesn&#39;t work, you can copy and paste the next line into your browser&#39;s address bar.<br /><br />\n\n"
+"%3<br /><br />\n\n"
+"Regards,<br /><br /><br />\n\n\n"
+"%2<br />\n"
+
+msgid "email.plain-text.users.approved"
+msgstr "Hi %1\n\n"
+"Your account on %2 has now been approved by an administrator and you may login by clicking on the link below and entering your username and the password you created during the registration process.  If the link doesn't work, you can copy and paste it into your browser's address bar.\n\n"
+"%3\n\n"
+"Regards,\n\n\n"
+"%2<br />\n"
+
+msgid "email.subject.users.approve-user"
+msgstr "%1: user registration request: %2"
+
+msgid "email.html.users.approve-user"
+msgstr "%1 has registered and activated their account on %2.  You must now login and <a href="%3">approve or reject</a> this account.  You can also view the <a href="%4">full list of users who require approval</a>.<br />\n\n"
+
+msgid "email.plain-text.users.approve-user"
+msgstr "%1 has registered and activated their account on %2.  You must now login and approve or reject (%3) this account.  You can also view the full list of users who require approval here: %4.<br />\n\n"
 
 msgid "email.subject.users.password-reset"
 msgstr "%1: password reset request for %2"

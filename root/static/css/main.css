@@ -178,9 +178,12 @@ div.info-message, div.success-message, div.warning-message, div.error-message, d
   box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
 }
 
-div.info-message, div.success-message, div.warning-message, div.error-message {min-height: 48px;}
+div.info-message, div.success-message, div.warning-message, div.error-message {
+  min-height: 48px; 
+  vertical-align: middle;
+}
 div.info-message-small, div.success-message-small, div.warning-message-small, div.error-message-small {min-height: 32px;}
-div.info-message > span.message-text, div.success-message > span.message-text, div.warning-message > span.message-text, div.error-message > span.message-text, div.info-message-small > span.message-text, div.success-message-small > span.message-text, div.warning-message-small > span.message-text, div.error-message-small > span.message-text {padding: 10% 0;}
+/*div.info-message > span.message-text, div.success-message > span.message-text, div.warning-message > span.message-text, div.error-message > span.message-text, div.info-message-small > span.message-text, div.success-message-small > span.message-text, div.warning-message-small > span.message-text, div.error-message-small > span.message-text {vertical-align: middle; display: table-cell;}*/
 div.info-message {background: #BDE5F8 url("../images/icons/0011-Info-icon-48.png") no-repeat left center;}
 div.success-message {background: #DFF2BF url("../images/icons/0007-Tick-icon-48.png") no-repeat left center;}
 div.warning-message {background: #FEEFB3 url("../images/icons/0010-Alert-icon-48.png") no-repeat left center;}
@@ -561,6 +564,26 @@ button, input, textarea, select {
   overflow: visible;
 }
 
+input.button-approve {
+  background-image: url("../images/icons/0007-Tick-icon-32.png");
+  background-size: cover;
+  border: none;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  color: transparent;
+}
+
+input.button-deny {
+  background-image: url("../images/icons/0006-Cross-icon-32.png");
+  background-size: cover;
+  border: none;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  color: transparent;
+}
+
 input[type=radio], input[type=checkbox] {vertical-align: text-bottom;}
 input[type=number] {width:50px;}
 input.date_picker {width: 100px;}
@@ -655,6 +678,8 @@ input[disabled="disabled"], div.chosen-disabled, div.chosen-disabled a, div.chos
   position: relative;
   /*overflow: auto;*/
 }
+
+p {margin-bottom: 15px;}
 
 #footer {
   text-align: center;
@@ -822,6 +847,10 @@ input.menu-input {width: 150px;}
 #avatar img {
   display: block;
   margin: 0 auto;
+}
+
+img.social-link-icon {
+  margin: 8px;
 }
 
 #user-info {vertical-align: top;}

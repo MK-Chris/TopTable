@@ -1,0 +1,72 @@
+[% # This is a TT comment. -%]
+[% # Note That the '-' at the beginning or end of TT code  -%]
+[% # "chomps" the whitespace/newline at that end of the    -%]
+[% # output (use View Source in browser to see the effect) -%]
+[% # Some basic HTML with a loop to display clubs -%]
+[%
+IF seasons.count;
+-%]
+<div class="table-wrap">
+  <div class="table-layout table-layout-centre">
+    <table id="datatable" class="stripe hover order-column row-border">
+    <thead>
+      <tr>
+        <th>[% c.maketext("seasons.list.season-name") %]</th>
+        <th>[% c.maketext("seasons.list.season-name") %]</th>
+        <th>[% c.maketext("teams.seasons.registered-as") %]</th>
+        <th>[% c.maketext("teams.seasons.club") %]</th>
+        <th>[% c.maketext("teams.field.division") %]</th>
+        <th>[% c.maketext("teams.field.division") %]</th>
+        <th>[% c.maketext("teams.field.captain") %]</th>
+        <th>[% c.maketext("teams.field.captain") %]</th>
+      </tr>
+    <thead>
+    <tbody>
+[%
+  WHILE (team_season = seasons.next);
+    IF team_season.season.complete;
+      SET CURRENT_TEXT = "";
+    ELSE;
+      SET CURRENT_TEXT = " (" _ c.maketext("seasons.text.current") _ ")";
+    END;
+    
+    SET TEAM_NAME = team_season.club_season.short_name _ " " _ team_season.name;
+    
+    SET SEASON_START = team_season.season.start_date;
+    SET SEASON_END = team_season.season.end_date;
+    CALL SEASON_START.set_locale( c.locale );
+    CALL SEASON_END.set_locale( c.locale );
+    SET SEASON_SORT = SEASON_START("ymd") _ " " _ SEASON_END("ymd");
+    SET CAPTAIN_SEASON = team_season.captain.person_seasons.first;
+    SET_CAPTAIN_SORT = CAPTAIN_SEASON.surname _ ", " _ CAPTAIN_SEASON.first_name; 
+    SET CAPTAIN_NAME = CAPTAIN_SEASON.display_name;
+-%]
+
+      <tr>
+        <td>[% SEASON_SORT %]</td>
+        <td><a href="[% c.uri_for_action("/teams/view_specific_season_by_url_key", [team_season.club_season.club.url_key, team_season.team.url_key, team_season.season.url_key]) %]">[% team_season.season.name | html_entity %]</a>[% CURRENT_TEXT %]</td>
+        <td>[% TEAM_NAME | html_entity %]</td>
+        <td><a href="[% c.uri_for_action("/clubs/view_specific_season", [team_season.club_season.club.url_key, team_season.season.url_key]) %]">[% team_season.club_season.full_name | html_entity %]</a></td>
+        <td>[% team_season.division_season.division.rank %]</td>
+        <td><a href="[% c.uri_for_action("/league-tables/view_specific_season", [team_season.division_season.division.url_key, team_season.season.url_key]) %]">[% team_season.division_season.name | html_entity %]</a></td>
+        <td>[% SET_CAPTAIN_SORT | html_entity %]</td>
+        <td><a href="[% c.uri_for_action("/people/view_specific_season", [team_season.captain.url_key, team_season.season.url_key]) %]">[% CAPTAIN_NAME | html_entity %]</a></td>
+      </tr>
+[%
+  END;
+-%]
+    </table>
+  </div>
+</div>
+[%
+  page_links_text;
+ELSE;
+-%]
+<ul class="option-list">
+  <li>
+    [% c.maketext("seasons.none") %]
+  </li>
+</ul>
+[%
+END;
+-%]

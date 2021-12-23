@@ -733,6 +733,12 @@ If 1 the person can create match reports involving teams the user is associated 
   extra: {unsigned => 1}
   is_nullable: 0
 
+=head2 user_approve_new
+
+  data_type: 'tinyint'
+  default_value: 0
+  is_nullable: 0
+
 =head2 venue_view
 
   data_type: 'tinyint'
@@ -1447,6 +1453,8 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
+  "user_approve_new",
+  { data_type => "tinyint", default_value => 0, is_nullable => 0 },
   "venue_view",
   {
     data_type => "tinyint",
@@ -1560,8 +1568,8 @@ Composing rels: L</user_roles> -> user
 __PACKAGE__->many_to_many("users", "user_roles", "user");
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-03-13 09:25:49
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:LJ+0upt+WJhWGWQR1l/wkw
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-12-07 14:03:01
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:/msb7kLU1I3nTZbth7CMUg
 
 =head2 members
 

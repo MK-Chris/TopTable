@@ -1,0 +1,137 @@
+[% # This is a TT comment. -%]
+[% # Note That the '-' at the beginning or end of TT code  -%]
+[% # "chomps" the whitespace/newline at that end of the    -%]
+[% # output (use View Source in browser to see the effect) -%]
+[% # Some basic HTML with a loop to display clubs -%]
+[%
+IF users.count;
+-%]
+<form method="post" action="[% c.uri_for_action("/users/bulk_approval") %]">
+  <table id="datatable" class="stripe hover order-column row-border" style="width: 100%;">
+    <thead>
+      <tr>
+        <th><input type="checkbox" name="checkall" id="checkall" value="" /></th>
+        <th>[% c.maketext("user.field.username") %]</th>
+        <th>[% c.maketext("user.field.email-address") %]</th>
+        <th>[% c.maketext("user.person.name") %]</th>
+        <th>[% c.maketext("user.person.name") %]</th>
+        <th>[% c.maketext("user.field.location") %]</th>
+        <th>[% c.maketext("user.field.timezone") %]</th>
+        <th>[% c.maketext("user.field.date-registered") %]</th>
+        <th>[% c.maketext("user.field.date-registered") %]</th>
+        <th>[% c.maketext("user.field.activated") %]</th>
+        <th>[% c.maketext("user.field.activated") %]</th>
+        <th>[% c.maketext("user.field.roles") %]</th>
+      </tr>
+    <thead>
+    <tbody>
+[%
+  WHILE (user = users.next);
+    USERNAME_HTML = FILTER html_entity; user.username; END;
+    USER_EMAIL_HTML = FILTER html_entity; user.email_address; END;
+    USER_LOCATION_HTML = FILTER html_entity; user.location; END;
+    SET USER_REGISTERED = user.registered_date;
+    CALL USER_REGISTERED.set_locale( c.locale );
+    SET USER_REGISTERED_FORMAT = USER_REGISTERED.dmy("/") _ " " _ USER_REGISTERED.hms;
+    
+    IF user.activated;
+      SET ACTIVATED_IMG = c.uri_for("/static/images/icons/0007-Tick-icon-32.png");
+      SET ACTIVATED_TITLE = c.maketext("user.activated");
+    ELSE;
+      SET ACTIVATED_IMG = c.uri_for("/static/images/icons/0006-Cross-icon-32.png");
+      SET ACTIVATED_TITLE = c.maketext("user.not-activated");
+    END;
+    
+    ROLES = "";
+    
+    FOREACH ROLE IN user.roles;
+      IF ROLE.system;
+        ROLE_NAME = c.maketext("roles.name." _ ROLE.name);
+      ELSE;
+        ROLE_NAME = FILTER html_entity; ROLE.name; END;
+      END;
+      
+      IF ROLES == "";
+        ROLES = ROLE_NAME;
+      ELSE;
+        ROLES = ROLES _ ", " _ ROLE_NAME;
+      END;
+    END;
+    
+    IF user.person;
+      USER_PERSON_HTML = FILTER html_entity; user.person.display_name; END;
+      USER_PERSON_SORT_HTML = FILTER html_entity; user.person.surname _ ", " _ user.person.first_name; END;
+    ELSE;
+      USER_PERSON_HTML = "";
+      USER_PERSON_SORT_HTML = "";
+    END;
+-%]
+    <tr>
+      <td><input type="checkbox" name="user-[% user.id %]" id="user-[% user.id %]" value="[% USERNAME_HTML %]" class="single-check" /></td>
+      <td><a href="[% c.uri_for_action("/users/view", [user.url_key]) %]">[% USERNAME_HTML %]</a>
+[%-
+    IF authorisation.user_edit_all OR ( authorisation.user_edit_own AND c.user_exists AND c.user.id == user.id );
+%]
+      <a href="[% c.uri_for_action("/users/edit", [user.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", USERNAME_HTML) %]" title="[% c.maketext("admin.edit-object", USERNAME_HTML) %]" /></a>
+[%-
+    END;
+    IF authorisation.user_delete_all OR ( authorisation.user_delete_own AND c.user_exists AND c.user.id == user.id );
+%]
+      <a href="[% c.uri_for_action("/users/delete", [user.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", USERNAME_HTML) %]" title="[% c.maketext("admin.delete-object", USERNAME_HTML) %]" /></a>
+[%-
+    END;
+-%]
+</td>
+      <td><a href="mailto:[% USER_EMAIL_HTML %]">[% USER_EMAIL_HTML %]</a></td>
+      <td>
+[%-
+    IF user.person;
+USER_PERSON_SORT_HTML;
+-%]
+[%-
+    ELSE;
+-%]
+&nbsp;
+[%-
+    END;
+-%]
+</td>
+      <td>
+[%-
+    IF user.person;
+-%]
+<a href="[% c.uri_for_action("/people/view_current_season", [user.person.url_key]) %]">[% USER_PERSON_HTML %]</a>
+[%-
+    ELSE;
+-%]
+&nbsp;
+[%-
+    END;
+-%]
+</td>
+      <td>[% USER_LOCATION_HTML OR "&nbsp;" %]</td>
+      <td>[% user.timezone.replace("_", " ") OR "&nbsp;" %]</td>
+      <td>[% USER_REGISTERED %]</td>
+      <td>[% USER_REGISTERED_FORMAT %]</td>
+      <td><img src="[% ACTIVATED_IMG %]" alt="[% ACTIVATED_TITLE %]" title="[% ACTIVATED_TITLE %]" /></td>
+      <td>[% user.activated %]</td>
+      <td>[% ROLES OR "&nbsp;" %]</td>
+    </tr>
+[%
+  END;
+-%]
+    </tbody>
+  </table>
+  
+  <input type="submit" class="button-approve" value="approve" name="submit" title="[% c.maketext("user.approval-form.approve-selected") %]" />
+  <input type="submit" class="button-deny" value="deny" name="submit" title="[% c.maketext("user.approval-form.deny-selected") %]" />
+</form>
+[%
+ELSE;
+-%]
+<ul class="option-list">
+  <li>[% c.maketext("user.approval-form.no-users") %]</li>
+</ul>
+[%
+END;
+-%]

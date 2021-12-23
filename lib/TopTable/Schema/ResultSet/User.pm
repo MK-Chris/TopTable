@@ -9,6 +9,7 @@ use DateTime::TimeZone;
 use Time::HiRes;
 use Set::Object;
 use HTML::Entities;
+use Regexp::Common qw /URI/;
 
 =head2 search_by_name
 
@@ -89,6 +90,23 @@ sub page_records {
     order_by  => {
       -asc => "username",
     },
+  });
+}
+
+=head2 all_users
+
+Returns a paginated resultset of clubs.
+
+=cut
+
+sub all_users {
+  my ( $self, $params ) = @_;
+  
+  return $self->search(undef, {
+    prefetch => "person",
+    order_by => {
+      -asc => "username",
+    }
   });
 }
 
@@ -189,10 +207,20 @@ sub delete_expired_keys {
         "<=" => sprintf( "%s %s", $now->ymd, $now->hms ),
       }
     }
-  })->update({
-    activation_key      => undef,
-    activation_expires  => undef,
-  });
+  })->delete;
+}
+
+=head2 get_unapproved
+
+Get a list of unapproved users.
+
+=cut
+
+sub get_unapproved {
+  my ( $self ) = @_;
+  
+  #return $self->search([{"person.id" => {"!=" => undef}}, {approved => 0}], {prefetch => "person"});
+  return $self->search({approved => 0}, {prefetch => "person"});
 }
 
 =head2 create_or_edit
@@ -202,35 +230,39 @@ Error checks requested registration details and creates the user with an activat
 =cut
 
 sub create_or_edit {
-  my ( $self, $parameters ) = @_;
-  my $action                = $parameters->{action};
-  my $user                  = $parameters->{user};
-  my $id                    = $parameters->{id};
-  my $username              = $parameters->{username};
-  my $username_editable     = $parameters->{username_editable};
-  my $email_address         = $parameters->{email_address};
-  my $confirm_email_address = $parameters->{confirm_email_address};
-  my $password              = $parameters->{password};
-  my $confirm_password      = $parameters->{confirm_password};
-  my $current_password      = $parameters->{current_password};
-  my $language              = $parameters->{language};
-  my $facebook              = $parameters->{facebook};
-  my $twitter               = $parameters->{twitter};
-  my $aim                   = $parameters->{aim};
-  my $jabber                = $parameters->{jabber};
-  my $website               = $parameters->{website};
-  my $interests             = $parameters->{interests};
-  my $occupation            = $parameters->{occupation};
-  my $location              = $parameters->{location};
-  my $timezone              = $parameters->{timezone};
-  my $html_emails           = $parameters->{html_emails};
-  my $hide_online           = $parameters->{hide_online};
-  my $ip_address            = $parameters->{ip_address};
-  my $editing_user          = $parameters->{editing_user};
-  my $roles                 = $parameters->{roles};
-  my $installed_languages   = $parameters->{installed_languages};
+  my ( $self, $params ) = @_;
+  my $action = delete $params->{action};
+  my $user = delete $params->{user};
+  my $id = delete $params->{id};
+  my $username = delete $params->{username};
+  my $username_editable = delete $params->{username_editable};
+  my $email_address = delete $params->{email_address};
+  my $confirm_email_address = delete $params->{confirm_email_address};
+  my $password = delete $params->{password};
+  my $confirm_password = delete $params->{confirm_password};
+  my $current_password = delete $params->{current_password};
+  my $language = delete $params->{language};
+  my $facebook = delete $params->{facebook} || undef;
+  my $twitter = delete $params->{twitter} || undef;
+  my $website = delete $params->{website} || undef;
+  my $interests = delete $params->{interests} || undef;
+  my $occupation = delete $params->{occupation} || undef;
+  my $location = delete $params->{location} || undef;
+  my $timezone = delete $params->{timezone};
+  my $html_emails = delete $params->{html_emails};
+  my $hide_online = delete $params->{hide_online};
+  my $ip_address = delete $params->{ip_address};
+  my $editing_user = delete $params->{editing_user};
+  my $roles = delete $params->{roles};
+  my $activation_expiry_limit = delete $params->{activation_expiry_limit} || 24;
+  my $manual_approval = delete $params->{manual_approval};
+  my $installed_languages = delete $params->{installed_languages};
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $set_locale;
-  my $return_value          = {error => [], warning => []};
+  my $return_value = {error => [], warning => []};
+  
+  # Sanitise the activation expiry limit - default to 24 if it's not numeric
+  $activation_expiry_limit = 24 unless $activation_expiry_limit =~ /^\d+$/;
   
   # Check the username is valid
   if ( $action ne "register" and $action ne "edit" ) {
@@ -339,8 +371,8 @@ sub create_or_edit {
         if ( length( $password ) < 8 ) {
           # Password too short
           push(@{ $return_value->{error} }, {
-            id          => "user.form.error.password-too-short",
-            parameters  => [8],
+            id => "user.form.error.password-too-short",
+            parameters => [8],
           });
         } else {
           # Check password complexity
@@ -363,6 +395,11 @@ sub create_or_edit {
       push(@{ $return_value->{error} }, {id => "user.form.error.curent-password-blank"});
     }
   }
+  
+  # Social / website checks
+  push(@{ $return_value->{error} }, {id => "user.form.error.facebook-invalid"}) if defined( $facebook ) and $facebook !~ m/^[a-z0-9_.]+$/i;
+  push(@{ $return_value->{error} }, {id => "user.form.error.twitter-invalid"}) if defined( $twitter ) and $twitter !~ m/^[a-z0-9_.]{1,15}$/i;
+  push(@{ $return_value->{error} }, {id => "user.form.error.website-invalid"}) if defined( $website ) and $website !~ m/$RE{URI}{HTTP}{-scheme => qr<https?>}/;
   
   if ( $language ) {
     # Language selected, check it's installed
@@ -460,20 +497,32 @@ sub create_or_edit {
     
     if ( $action eq "register" ) {
       # Create new user
-      $user = $self->create({
-        username        => $username,
-        url_key         => $url_key,
-        email_address   => $email_address,
-        password        => $password,
-        registered_ip   => $ip_address,
-        last_active_ip  => $ip_address,
-        locale          => $language,
-        timezone        => $timezone,
-        html_emails     => $html_emails,
-        activation_key  => $activation_key,
-        activated       => 0,
-        user_roles      => \@roles,
-      });
+      my $activation_expires = DateTime->now( time_zone  => "UTC" )->add( hours => $activation_expiry_limit );
+      my $create_options = {
+        username => $username,
+        url_key => $url_key,
+        email_address => $email_address,
+        password => $password,
+        registered_ip => $ip_address,
+        last_active_ip => $ip_address,
+        locale => $language,
+        timezone => $timezone,
+        html_emails => $html_emails,
+        activation_key => $activation_key,
+        activated => 0,
+        activation_expires => sprintf( "%s %s", $activation_expires->ymd, $activation_expires->hms ),
+        user_roles => \@roles,
+      };
+      
+      if ( $manual_approval ) {
+        # Manual approval, set 'approved' to 0
+        $create_options->{approved} = 0;
+      } else {
+        # Automatic approval, set 'approved' to 1
+        $create_options->{approved} = 1;
+      }
+      
+      $user = $self->create( $create_options );
       
       # We will NEVER set locale if the user is being created, as that user needs to be activated first
       $set_locale = 0;
@@ -486,26 +535,24 @@ sub create_or_edit {
       $set_locale = ( $language ne $user->locale and defined( $editing_user ) and $user->id == $editing_user->id ) ? 1 : 0;
       
       my $update_data = {
-        email_address   => $email_address,
-        last_active_ip  => $ip_address,
-        locale          => $language,
-        timezone        => $timezone,
-        html_emails     => $html_emails,
-        facebook        => $facebook,
-        twitter         => $twitter,
-        aim             => $aim,
-        jabber          => $jabber,
-        website         => $website,
-        interests       => $interests,
-        occupation      => $occupation,
-        location        => $location,
-        hide_online     => $hide_online,
+        email_address => $email_address,
+        last_active_ip => $ip_address,
+        locale => $language,
+        timezone => $timezone,
+        html_emails => $html_emails,
+        facebook => $facebook,
+        twitter => $twitter,
+        website => $website,
+        interests => $interests,
+        occupation => $occupation,
+        location => $location,
+        hide_online => $hide_online,
       };
       
       # Add the new username and URL key to the updated data if it's editable and been changed
       if ( $username_editable and $username_changed ) {
-        $update_data->{username}  = $username;
-        $update_data->{url_key}   = $url_key;
+        $update_data->{username} = $username;
+        $update_data->{url_key} = $url_key;
       }
       
       # Add the new password to the updated data if it's been updated
@@ -524,13 +571,13 @@ sub create_or_edit {
       # to return a list of what's in @current_roles and not in @roles (roles to remove) and also what's
       # in @roles and not in @current_roles (roles to add).  Anything in both is a role that is currently
       # assigned and should stay assigned, so doesn't need to be touched.
-      my $current_roles   = Set::Object->new( @current_roles );
-      my $new_roles       = Set::Object->new( @roles );
-      my $roles_to_add    = $new_roles->difference( $current_roles );
+      my $current_roles = Set::Object->new( @current_roles );
+      my $new_roles = Set::Object->new( @roles );
+      my $roles_to_add = $new_roles->difference( $current_roles );
       my $roles_to_remove = $current_roles->difference( $new_roles );
       
       # Get the arrays back
-      my @roles_to_add    = @$roles_to_add;
+      my @roles_to_add = @$roles_to_add;
       my @roles_to_remove = @$roles_to_remove;
       
       # Check if any of the roles we're removing is the sysadmin role

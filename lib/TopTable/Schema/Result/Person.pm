@@ -687,6 +687,43 @@ sub url_keys {
   return [ $self->url_key ];
 }
 
+=head2 get_seasons
+
+Get person_seasons for this person (all seasons this person has entered).
+
+=cut
+
+sub get_seasons {
+  my ( $self, $parameters ) = @_;
+  my $page_number = $parameters->{page_number} || undef;
+  my $results_per_page = $parameters->{results_per_page} || undef;
+  
+  my $attributes = {
+    prefetch => ["season", {
+      team_season => ["division_season", "team", {club_season => "club"}]
+    }],
+    order_by => [{
+      -asc => [ qw( season.complete ) ]
+    }, {
+      -desc => [ qw( season.start_date season.end_date ) ]
+    }],
+  };
+  
+  if ( defined( $results_per_page ) ) {
+    # If we're passing in a number of results per page and it's numeric, add that in to the query (along with a 
+    # page number - which defaults to 1 if it's not passed in, or it's garbage).
+    if ( $results_per_page !~ /^\d+$/ ) {
+      $page_number = 1 unless defined( $page_number ) and $page_number =~ /^\d+$/;
+      $attributes->{page} = $page_number;
+      $attributes->{rows} = $results_per_page;
+    }
+  }
+  
+  return $self->search_related("person_seasons", {
+    team_membership_type => "active"
+  }, $attributes);
+}
+
 =head2 last_season_entered
 
 Return the person_season with the last season this person entered.

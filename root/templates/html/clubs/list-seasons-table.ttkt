@@ -1,0 +1,64 @@
+[% # This is a TT comment. -%]
+[% # Note That the '-' at the beginning or end of TT code  -%]
+[% # "chomps" the whitespace/newline at that end of the    -%]
+[% # output (use View Source in browser to see the effect) -%]
+[% # Some basic HTML with a loop to display clubs -%]
+[%
+IF seasons.count;
+-%]
+<div class="table-wrap">
+  <div class="table-layout table-layout-centre">
+    <table id="datatable" class="stripe hover order-column row-border">
+    <thead>
+      <tr>
+        <th>[% c.maketext("seasons.list.season-name") %]</th>
+        <th>[% c.maketext("seasons.list.season-name") %]</th>
+        <th>[% c.maketext("clubs.seasons.registered-as") %]</th>
+        <th>[% c.maketext("clubs.field.secretary") %]</th>
+        <th>[% c.maketext("clubs.field.secretary") %]</th>
+        <th>[% c.maketext("clubs.field.venue") %]</th>
+      </tr>
+    <thead>
+    <tbody>
+[%
+  WHILE (club_season = seasons.next);
+    IF club_season.season.complete;
+      SET CURRENT_TEXT = "";
+    ELSE;
+      SET CURRENT_TEXT = " (" _ c.maketext("seasons.text.current") _ ")";
+    END;
+    
+    SET SECRETARY_SORT = club_season.secretary.surname _ ", " _ club_season.secretary.first_name;
+    
+    SET SEASON_START = club_season.season.start_date;
+    SET SEASON_END = club_season.season.end_date;
+    CALL SEASON_START.set_locale( c.locale );
+    CALL SEASON_END.set_locale( c.locale );
+    SET SEASON_SORT = SEASON_START("ymd") _ " " _ SEASON_END("ymd");
+-%]
+
+      <tr>
+        <td>[% SEASON_SORT %]</td>
+        <td><a href="[% c.uri_for_action("/clubs/view_specific_season", [club_season.club.url_key, club_season.season.url_key]) %]">[% club_season.season.name | html_entity %]</a>[% CURRENT_TEXT %]</td>
+        <td>[% club_season.full_name | html_entity %]</td>
+        <td>[% SECRETARY_SORT  | html_entity %]</td>
+        <td><a href="[% c.uri_for_action("/people/view_specific_season", [club_season.secretary.url_key, club_season.season.url_key]) %]">[% club_season.secretary.display_name | html_entity %]</a></td>
+        <td><a href="[% c.uri_for_action("/venues/view", [club_season.venue.url_key]) %]">[% club_season.venue.name | html_entity %]</a></td>
+      </tr>
+[%
+  END;
+-%]
+    </table>
+  </div>
+</div>
+[%
+ELSE;
+-%]
+<ul class="option-list">
+  <li>
+    [% c.maketext("seasons.none") %]
+  </li>
+</ul>
+[%
+END;
+-%]
