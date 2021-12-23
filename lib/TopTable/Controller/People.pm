@@ -298,10 +298,10 @@ sub get_person_season :Private {
   my $person_season_name = encode_entities( $team_season->display_name ) if defined( $team_season );
   
   # If the name has changed, we need to display a notice
-  $c->add_status_message( "info", $c->maketext("people.name.changed-notice", $person_season_name, $person_name ) ) unless $person_name eq $person_season_name;
+  $c->add_status_message( "info", $c->maketext("people.name.changed-notice", $person_season_name, $person_name ) ) unless defined( $person_season_name ) and $person_name eq $person_season_name;
   
   $c->stash({
-    subtitle1 => $person_season_name,
+    subtitle1 => $person_season_name || $person_name,
     teams => $teams,
     types => $types,
     games => $games,
