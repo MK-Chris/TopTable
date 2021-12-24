@@ -305,24 +305,27 @@ IF season;
     </form>
   </div>
 [%
-      IF seasons == 1;
-        SET SEASON_TEXT = c.maketext("object.singular.seasons");
-      ELSE;
-        SET SEASON_TEXT = c.maketext("object.plural.seasons");
-      END;
-
-      SET SEASONS_LINK_TEXT = c.maketext("people.seasons.count-text", encoded_display_name, seasons, SEASON_TEXT);
     END;
 -%]
 </div>
-<div class="seasons-count"><a href="[% c.uri_for_action("/people/view_seasons", [person.url_key]) %]">[% SEASONS_LINK_TEXT %]</a></div>
 [%
   # Else for the check for a team season
   ELSE;
 %]
   <div class="no-entry">[% c.maketext("people.message.did-not-enter", first_name_html, season_html) %]</div>
+</div>
 [% 
     # End for the check for a season
   END;
 END;
+
+IF seasons == 1;
+  SET SEASON_TEXT = c.maketext("object.singular.seasons");
+ELSE;
+  SET SEASON_TEXT = c.maketext("object.plural.seasons");
+END;
+
+SET SEASONS_LINK_TEXT = c.maketext("people.seasons.count-text", encoded_display_name, seasons, SEASON_TEXT);
 -%]
+<div class="seasons-count"><a href="[% c.uri_for_action("/people/view_seasons", [person.url_key]) %]">[% SEASONS_LINK_TEXT %]</a></div>
+

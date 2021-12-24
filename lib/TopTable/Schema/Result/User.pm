@@ -178,19 +178,25 @@ __PACKAGE__->table("users");
 
   data_type: 'varchar'
   is_nullable: 1
-  size: 255
+  size: 15
 
-=head2 aim
-
-  data_type: 'varchar'
-  is_nullable: 1
-  size: 255
-
-=head2 jabber
+=head2 instagram
 
   data_type: 'varchar'
   is_nullable: 1
-  size: 255
+  size: 30
+
+=head2 snapchat
+
+  data_type: 'varchar'
+  is_nullable: 1
+  size: 15
+
+=head2 tiktok
+
+  data_type: 'varchar'
+  is_nullable: 1
+  size: 24
 
 =head2 website
 
@@ -373,11 +379,13 @@ __PACKAGE__->add_columns(
   "facebook",
   { data_type => "varchar", is_nullable => 1, size => 255 },
   "twitter",
-  { data_type => "varchar", is_nullable => 1, size => 255 },
-  "aim",
-  { data_type => "varchar", is_nullable => 1, size => 255 },
-  "jabber",
-  { data_type => "varchar", is_nullable => 1, size => 255 },
+  { data_type => "varchar", is_nullable => 1, size => 15 },
+  "instagram",
+  { data_type => "varchar", is_nullable => 1, size => 30 },
+  "snapchat",
+  { data_type => "varchar", is_nullable => 1, size => 15 },
+  "tiktok",
+  { data_type => "varchar", is_nullable => 1, size => 24 },
   "website",
   { data_type => "varchar", is_nullable => 1, size => 255 },
   "interests",
@@ -668,8 +676,8 @@ Composing rels: L</user_roles> -> role
 __PACKAGE__->many_to_many("roles", "user_roles", "role");
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-12-07 14:10:48
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:55tguDgKE2CDU3hZ7RP13Q
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-12-24 10:18:55
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:WOzTCXSHETqY3bdE/vc15g
 
 use Digest::SHA qw( sha256_hex );
 use Time::HiRes;

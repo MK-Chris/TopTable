@@ -171,6 +171,30 @@ END
     </div>
     
     <div class="label-field-container">
+      <label for="instagram">[% c.maketext("user.field.instagram") %]</label>
+      <div class="field-container">
+        <input type="text" id="instagram" name="instagram" value="[% c.flash.instagram OR user.instagram %]" />
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+    
+    <div class="label-field-container">
+      <label for="snapchat">[% c.maketext("user.field.snapchat") %]</label>
+      <div class="field-container">
+        <input type="text" id="snapchat" name="snapchat" value="[% c.flash.snapchat OR user.snapchat %]" />
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+    
+    <div class="label-field-container">
+      <label for="tiktok">[% c.maketext("user.field.tiktok") %]</label>
+      <div class="field-container">
+        <input type="text" id="tiktok" name="tiktok" value="[% c.flash.tiktok OR user.tiktok %]" />
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+    
+    <div class="label-field-container">
       <label for="website">[% c.maketext("user.field.website") %]</label>
       <div class="field-container">
         <input type="text" id="website" name="website" placeholder="http://" value="[% c.flash.website OR user.website | html_entity %]" />

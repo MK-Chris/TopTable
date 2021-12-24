@@ -3956,7 +3956,16 @@ msgid "user.field.facebook"
 msgstr "Facebook user ID / name"
 
 msgid "user.field.twitter"
-msgstr "Twitter name (don&#39;t use &#39;@&#39;)"
+msgstr "Twitter username (don&#39;t use &#39;@&#39;)"
+
+msgid "user.field.instagram"
+msgstr "Instagram username"
+
+msgid "user.field.snapchat"
+msgstr "Snapchat username"
+
+msgid "user.field.tiktok"
+msgstr "TikTok username (don&#39;t use &#39;@&#39;)"
 
 msgid "user.fields.social"
 msgstr "Social media accounts"
@@ -4013,7 +4022,7 @@ msgid "user.form.error.username-registered"
 msgstr "That username is already registered."
 
 msgid "user.form.error.username-invalid"
-msgstr "The username is invalid, please only use letters, numbers, spaces, hyphens and underscores."
+msgstr "The username is invalid; please ensure it is between 3 and 45 characters and contains only letters, numbers, dashes, underscores, spaces and dots (it must start with a letter)."
 
 msgid "user.form.error.username-blank"
 msgstr "The username field is blank."
@@ -4052,10 +4061,19 @@ msgid "user.form.error.curent-password-incorrect"
 msgstr "The current password filled out is incorrect."
 
 msgid "user.form.error.facebook-invalid"
-msgstr "The Facebook profile field is invalid, it must only contain letters, numbers, underscores (_) or dots.  The &#39;https://www.facebook.com&#39; part will be automatically prefixed to this."
+msgstr "The Facebook profile field is invalid, it must only contain letters, numbers, underscores and dots.  The &#39;https://www.facebook.com&#39; part will be automatically prefixed to this."
 
 msgid "user.form.error.twitter-invalid"
-msgstr "The Twitter profile field is invalid, it must only contain letters, numbers or dots and must be 15 characters or under.  You do not need the initial @ and the &#39;https://twitter.com&#39; part will be automatically prefixed to the value you enter."
+msgstr "The Twitter profile field is invalid, it must only contain letters, numbers and underscores and must be 15 characters or under.  You do not need the initial @."
+
+msgid "user.form.error.instagram-invalid"
+msgstr "The Instagram profile field is invalid, it must only contain letters, numbers, underscores and dots and must be 30 characters or under.  You do not need the initial @."
+
+msgid "user.form.error.snapchat-invalid"
+msgstr "The Snapchat profile field is invalid, it must be 3-15 characters long and only contain letters, numbers, underscores, dashes and dots; the username must start with a letter and cannot end with a dash, underscore or dot.  You do not need the initial @."
+
+msgid "user.form.error.tiktok-invalid"
+msgstr "The TikTok profile field is invalid, it must be 2-24 characters long."
 
 msgid "user.form.error.website-invalid"
 msgstr "The website entered is invalid."

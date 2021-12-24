@@ -244,6 +244,9 @@ sub create_or_edit {
   my $language = delete $params->{language};
   my $facebook = delete $params->{facebook} || undef;
   my $twitter = delete $params->{twitter} || undef;
+  my $instagram = delete $params->{instagram} || undef;
+  my $snapchat = delete $params->{snapchat} || undef;
+  my $tiktok = delete $params->{tiktok} || undef;
   my $website = delete $params->{website} || undef;
   my $interests = delete $params->{interests} || undef;
   my $occupation = delete $params->{occupation} || undef;
@@ -295,7 +298,7 @@ sub create_or_edit {
   # Check the username if we're creating a new user OR we are allowing this username to be edited and we've detected a change
   if ( $action eq "register" or ( $username_editable and $username_changed ) ) {
     if ( $username ) {
-      if ( $username =~ m/^[a-z0-9-_ .]{3,45}$/i ) {
+      if ( $username =~ m/^[a-z][a-z0-9-_ .]{2,45}$/i ) {
         # If the username is valid, check it isn't already registered
         my $check_username;
         
@@ -305,9 +308,7 @@ sub create_or_edit {
           $check_username = $self->find({}, {
             where       => {
               username  => $username,
-              id        => {
-                "!=" => $user->id
-              },
+              id        => {"!=" => $user->id},
             },
           });
         }
@@ -337,9 +338,7 @@ sub create_or_edit {
             $check_email = $self->find({}, {
               where       => {
                 username  => $username,
-                id        => {
-                  "!=" => $user->id
-                },
+                id        => {"!=" => $user->id},
               },
             });
           }
@@ -399,6 +398,9 @@ sub create_or_edit {
   # Social / website checks
   push(@{ $return_value->{error} }, {id => "user.form.error.facebook-invalid"}) if defined( $facebook ) and $facebook !~ m/^[a-z0-9_.]+$/i;
   push(@{ $return_value->{error} }, {id => "user.form.error.twitter-invalid"}) if defined( $twitter ) and $twitter !~ m/^[a-z0-9_.]{1,15}$/i;
+  push(@{ $return_value->{error} }, {id => "user.form.error.instagram-invalid"}) if defined( $instagram ) and $instagram !~ m/^[a-z0-9_.]{1,30}$/i;
+  push(@{ $return_value->{error} }, {id => "user.form.error.snapchat-invalid"}) if defined( $snapchat ) and $snapchat !~ m/^[a-z][a-z0-9_.-]{1,13}[a-z0-9]$/i;
+  push(@{ $return_value->{error} }, {id => "user.form.error.tiktok-invalid"}) if defined( $tiktok ) and ( length( $tiktok ) < 2 or length( $tiktok ) > 24 );
   push(@{ $return_value->{error} }, {id => "user.form.error.website-invalid"}) if defined( $website ) and $website !~ m/$RE{URI}{HTTP}{-scheme => qr<https?>}/;
   
   if ( $language ) {
@@ -542,6 +544,9 @@ sub create_or_edit {
         html_emails => $html_emails,
         facebook => $facebook,
         twitter => $twitter,
+        instagram => $instagram,
+        snapchat => $snapchat,
+        tiktok => $tiktok,
         website => $website,
         interests => $interests,
         occupation => $occupation,

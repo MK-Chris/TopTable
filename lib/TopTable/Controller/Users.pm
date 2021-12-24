@@ -445,8 +445,9 @@ sub setup_user :Private {
   my $html_emails = $c->req->param( "html_emails" );
   my $facebook = $c->req->param( "facebook" );
   my $twitter = $c->req->param( "twitter" );
-  my $aim = $c->req->param( "aim" );
-  my $jabber = $c->req->param( "jabber" );
+  my $instagram = $c->req->param( "instagram" );
+  my $snapchat = $c->req->param( "snapchat" );
+  my $tiktok = $c->req->param( "tiktok" );
   my $website = $c->req->param( "website" );
   my $interests = $c->req->param( "interests" );
   my $occupation = $c->req->param( "occupation" );
@@ -513,8 +514,9 @@ sub setup_user :Private {
     html_emails => $html_emails,
     facebook => $facebook,
     twitter => $twitter,
-    aim => $aim,
-    jabber => $jabber,
+    instagram => $instagram,
+    snapchat => $snapchat,
+    tiktok => $tiktok,
     website => $website,
     interests => $interests,
     occupation => $occupation,
@@ -533,21 +535,22 @@ sub setup_user :Private {
     my $error = $c->build_message( $user_result->{error} );
     
     # Flash the values we've got so we can set them back to the form
-    $c->flash->{username}               = $username;
-    $c->flash->{email_address}          = $email_address;
-    $c->flash->{confirm_email_address}  = $confirm_email_address;
-    $c->flash->{language}               = $language;
-    $c->flash->{html_emails}            = $html_emails;
-    $c->flash->{timezone}               = $timezone;
-    $c->flash->{facebook}               = $facebook;
-    $c->flash->{twitter}                = $twitter;
-    $c->flash->{aim}                    = $aim;
-    $c->flash->{jabber}                 = $jabber;
-    $c->flash->{website}                = $website;
-    $c->flash->{interests}              = $interests;
-    $c->flash->{occupation}             = $occupation;
-    $c->flash->{location}               = $location;
-    $c->flash->{hide_online}            = $hide_online;
+    $c->flash->{username} = $username;
+    $c->flash->{email_address} = $email_address;
+    $c->flash->{confirm_email_address} = $confirm_email_address;
+    $c->flash->{language} = $language;
+    $c->flash->{html_emails} = $html_emails;
+    $c->flash->{timezone} = $timezone;
+    $c->flash->{facebook} = $facebook;
+    $c->flash->{twitter} = $twitter;
+    $c->flash->{instagram} = $instagram;
+    $c->flash->{snapchat} = $snapchat;
+    $c->flash->{tiktok} = $tiktok;
+    $c->flash->{website} = $website;
+    $c->flash->{interests} = $interests;
+    $c->flash->{occupation} = $occupation;
+    $c->flash->{location} = $location;
+    $c->flash->{hide_online} = $hide_online;
     
     # If we're editing, the URI to redirect to is different
     my $redirect_uri;

@@ -502,7 +502,7 @@ END;
 IF c.user_exists;
 %]
   <li>
-    <a href="[% c.uri_for("/logout") %]" title="[% c.maketext("user.logout") %] [% c.user.display_name | html_entity %]" class="right-menu-tip">[% c.maketext("user.logout") %] [ <b>[% c.user.display_name | html_entity %]</b> ]</a>
+    <a href="[% c.uri_for("/logout") %]" title="[% c.maketext("user.logout") %] [% c.user.display_name | html_entity %]" class="right-menu-tip">[% c.maketext("user.logout") %] [ <b>[% c.user.username | html_entity %]</b> ]</a>
     <ul>
       <li><a href="[% c.uri_for_action("/users/view", [c.user.url_key]) %]" title="[% c.maketext("menu.title.user.profile") %]" class="right-menu-tip">[% c.maketext("menu.text.user.profile") %]</a></li>
     </ul>
