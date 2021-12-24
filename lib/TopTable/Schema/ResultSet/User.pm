@@ -295,7 +295,7 @@ sub create_or_edit {
   # Check the username if we're creating a new user OR we are allowing this username to be edited and we've detected a change
   if ( $action eq "register" or ( $username_editable and $username_changed ) ) {
     if ( $username ) {
-      if ( $username =~ m/[a-z0-9-_ ]/i ) {
+      if ( $username =~ m/^[a-z0-9-_ .]{3,45}$/i ) {
         # If the username is valid, check it isn't already registered
         my $check_username;
         
