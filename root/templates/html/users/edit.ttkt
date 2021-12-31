@@ -1,3 +1,4 @@
+[% USE Dumper; %]
 <form method="post" action="[% form_action %]">
 <div class="form-column">
   <fieldset>
@@ -267,31 +268,35 @@ IF authorisation.role_edit;
         <select id="roles" name="roles" multiple="multiple" data-placeholder="[% c.maketext("user.field.roles") %]">
           <option value="">
 [%
-  FOREACH role IN roles;
-    SET role_id = role.id;
+  FOREACH ROLE IN roles;
+    SET ROLE_ID = ROLE.id;
     
     # Set the name
-    IF role.system;
-      SET role_name = c.maketext("roles.name." _ role.name);
+    IF ROLE.system;
+      SET ROLE_NAME = c.maketext("roles.name." _ ROLE.name);
     ELSE;
-      role_name = FILTER html_entity; role.name; END;
+      ROLE_NAME = FILTER html_entity; ROLE.name; END;
     END;
     
     IF c.flash.roles;
-      IF c.flash.roles.$role_id == role_id;
-        SET role_selected = ' selected="selected"';
-      ELSE;
-        SET role_selected = '';
+      CALL c.log.debug( Dumper.dump( c.flash.roles ) );
+      FOREACH FLASHED_ROLE IN c.flash.roles;
+        IF FLASHED_ROLE == ROLE_ID;
+          SET ROLE_SELECTED = ' selected="selected"';
+          LAST;
+        ELSE;
+          SET ROLE_SELECTED = '';
+        END;
       END;
     ELSE;
-      IF user.has_role( role );
-        SET role_selected = ' selected="selected"';
+      IF user.has_role( ROLE );
+        SET ROLE_SELECTED = ' selected="selected"';
       ELSE;
-        SET role_selected = '';
+        SET ROLE_SELECTED = '';
       END;
     END;
 -%]
-          <option value="[% role_id %]"[% role_selected %]>[% role_name %]</option>
+          <option value="[% ROLE_ID %]"[% ROLE_SELECTED %]>[% ROLE_NAME %]</option>
 [%
   END;
 -%]

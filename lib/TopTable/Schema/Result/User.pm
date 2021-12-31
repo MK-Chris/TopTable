@@ -1035,22 +1035,16 @@ sub has_role {
   return ( defined( $self->find_related("user_roles", {role => $role->id}) ) ) ? 1 : 0;
 }
 
-=head2 roles
+=head2 all_roles
 
 Return the roles that this user is a member of.  If sep is specified, a string is returned with all roles separated by that string; if not, we return either an array or resultset, depending on context.
 
 =cut
 
-sub roles {
+sub all_roles {
   my ( $self ) = @_;
   
-  return $self->search_related("user_roles", undef, {
-    order_by => [{
-      -desc => "system"
-    }, {
-      -asc => "name"
-    }]
-  });
+  return $self->roles;
 }
 
 =head2 search_display

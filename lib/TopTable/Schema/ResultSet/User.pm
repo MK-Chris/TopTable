@@ -262,27 +262,28 @@ sub create_or_edit {
   my $installed_languages = delete $params->{installed_languages};
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $set_locale;
-  my $return_value = {error => [], warning => []};
+  my $response = {error => [], warning => []};
+  my $can_edit_roles = 0;
   
   # Sanitise the activation expiry limit - default to 24 if it's not numeric
   $activation_expiry_limit = 24 unless $activation_expiry_limit =~ /^\d+$/;
   
   # Check the username is valid
   if ( $action ne "register" and $action ne "edit" ) {
-    push(@{ $return_value->{error} }, {
+    push(@{ $response->{error} }, {
       id          => "admin.form.invalid-action",
       parameters  => [$action],
     });
     
     # This error is fatal, so we return straight away
-    return $return_value;
+    return $response;
   } elsif ( $action eq "edit" ) {
     # Check the user passed is valid
     unless ( defined( $user ) and ref( $user ) eq "TopTable::Model::DB::User" ) {
-      push(@{ $return_value->{error} }, {id => "user.form.error.user-invalid"});
+      push(@{ $response->{error} }, {id => "user.form.error.user-invalid"});
       
       # Another fatal error
-      return $return_value;
+      return $response;
     }
   }
   
@@ -312,14 +313,14 @@ sub create_or_edit {
             },
           });
         }
-        push(@{ $return_value->{error} }, {id => "user.form.error.username-registered"}) if defined( $check_username );
+        push(@{ $response->{error} }, {id => "user.form.error.username-registered"}) if defined( $check_username );
       } else {
         # Invalid username
-        push(@{ $return_value->{error} }, {id => "user.form.error.username-invalid"});
+        push(@{ $response->{error} }, {id => "user.form.error.username-invalid"});
       }
     } else {
       # Blank username
-      push(@{ $return_value->{error} }, {id => "user.form.error.username-blank"});
+      push(@{ $response->{error} }, {id => "user.form.error.username-blank"});
     }
   }
   
@@ -343,18 +344,18 @@ sub create_or_edit {
             });
           }
           
-          push(@{ $return_value->{error} }, {id => "user.form.error.email-registered"}) if defined( $check_email );
+          push(@{ $response->{error} }, {id => "user.form.error.email-registered"}) if defined( $check_email );
         } else {
           # Invalid email address.
-          push(@{ $return_value->{error} }, {id => "user.form.error.email-invalid"});
+          push(@{ $response->{error} }, {id => "user.form.error.email-invalid"});
         }
       } else {
         # Non-matching email addresses
-        push(@{ $return_value->{error} }, {id => "user.form.error.email-confirm-mismatch"});
+        push(@{ $response->{error} }, {id => "user.form.error.email-confirm-mismatch"});
       }
     } else {
       # Email address not entered
-      push(@{ $return_value->{error} }, {id => "user.form.error.email-blank"});
+      push(@{ $response->{error} }, {id => "user.form.error.email-blank"});
     }
   }
   
@@ -364,23 +365,23 @@ sub create_or_edit {
       # Check the passwords match
       if ( $password ne $confirm_password ) {
         # Non-matching passwords
-        push(@{ $return_value->{error} }, {id => "user.form.error.password-confirm-mismatch"});
+        push(@{ $response->{error} }, {id => "user.form.error.password-confirm-mismatch"});
       } else {
         # Check password strength
         if ( length( $password ) < 8 ) {
           # Password too short
-          push(@{ $return_value->{error} }, {
+          push(@{ $response->{error} }, {
             id => "user.form.error.password-too-short",
             parameters => [8],
           });
         } else {
           # Check password complexity
-          push(@{ $return_value->{error} }, {id => "user.form.error.password-complexity"}) unless $password =~ /[A-Z]/ and $password =~ /[a-z]/ and $password =~ /\d/;
+          push(@{ $response->{error} }, {id => "user.form.error.password-complexity"}) unless $password =~ /[A-Z]/ and $password =~ /[a-z]/ and $password =~ /\d/;
         }
       }
     } else {
       # Password is blank
-      push(@{ $return_value->{error} }, {id => "user.form.error.password-blank"});
+      push(@{ $response->{error} }, {id => "user.form.error.password-blank"});
     }
   }
   
@@ -388,33 +389,33 @@ sub create_or_edit {
     # The username, email or password has changed, so we need to authenticate the current password
     if ( $current_password ) {
       # Check the current password entered is correct
-      push(@{ $return_value->{error} }, {id => "user.form.error.curent-password-incorrect"}) unless $editing_user->check_password( $current_password );
+      push(@{ $response->{error} }, {id => "user.form.error.curent-password-incorrect"}) unless $editing_user->check_password( $current_password );
     } else {
       # Current password field is blank
-      push(@{ $return_value->{error} }, {id => "user.form.error.curent-password-blank"});
+      push(@{ $response->{error} }, {id => "user.form.error.curent-password-blank"});
     }
   }
   
   # Social / website checks
-  push(@{ $return_value->{error} }, {id => "user.form.error.facebook-invalid"}) if defined( $facebook ) and $facebook !~ m/^[a-z0-9_.]+$/i;
-  push(@{ $return_value->{error} }, {id => "user.form.error.twitter-invalid"}) if defined( $twitter ) and $twitter !~ m/^[a-z0-9_.]{1,15}$/i;
-  push(@{ $return_value->{error} }, {id => "user.form.error.instagram-invalid"}) if defined( $instagram ) and $instagram !~ m/^[a-z0-9_.]{1,30}$/i;
-  push(@{ $return_value->{error} }, {id => "user.form.error.snapchat-invalid"}) if defined( $snapchat ) and $snapchat !~ m/^[a-z][a-z0-9_.-]{1,13}[a-z0-9]$/i;
-  push(@{ $return_value->{error} }, {id => "user.form.error.tiktok-invalid"}) if defined( $tiktok ) and ( length( $tiktok ) < 2 or length( $tiktok ) > 24 );
-  push(@{ $return_value->{error} }, {id => "user.form.error.website-invalid"}) if defined( $website ) and $website !~ m/$RE{URI}{HTTP}{-scheme => qr<https?>}/;
+  push(@{ $response->{error} }, {id => "user.form.error.facebook-invalid"}) if defined( $facebook ) and $facebook !~ m/^[a-z0-9_.]+$/i;
+  push(@{ $response->{error} }, {id => "user.form.error.twitter-invalid"}) if defined( $twitter ) and $twitter !~ m/^[a-z0-9_.]{1,15}$/i;
+  push(@{ $response->{error} }, {id => "user.form.error.instagram-invalid"}) if defined( $instagram ) and $instagram !~ m/^[a-z0-9_.]{1,30}$/i;
+  push(@{ $response->{error} }, {id => "user.form.error.snapchat-invalid"}) if defined( $snapchat ) and $snapchat !~ m/^[a-z][a-z0-9_.-]{1,13}[a-z0-9]$/i;
+  push(@{ $response->{error} }, {id => "user.form.error.tiktok-invalid"}) if defined( $tiktok ) and ( length( $tiktok ) < 2 or length( $tiktok ) > 24 );
+  push(@{ $response->{error} }, {id => "user.form.error.website-invalid"}) if defined( $website ) and $website !~ m/$RE{URI}{HTTP}{-scheme => qr<https?>}/;
   
   if ( $language ) {
     # Language selected, check it's installed
-    push(@{ $return_value->{error} }, {id => "user.form.error.language-invalid"}) unless exists( $installed_languages->{$language} );
+    push(@{ $response->{error} }, {id => "user.form.error.language-invalid"}) unless exists( $installed_languages->{$language} );
   } else {
     # Error, language is not selected
-    push(@{ $return_value->{error} }, {id => "user.form.error.language-blank"});
+    push(@{ $response->{error} }, {id => "user.form.error.language-blank"});
   }
   
   if ( $timezone ) {
-    push(@{ $return_value->{error} }, {id => "user.form.error.timezone-invalid"}) unless DateTime::TimeZone->is_valid_name( $timezone );
+    push(@{ $response->{error} }, {id => "user.form.error.timezone-invalid"}) unless DateTime::TimeZone->is_valid_name( $timezone );
   } else {
-    push(@{ $return_value->{error} }, {id => "user.form.error.timezone-blank"});
+    push(@{ $response->{error} }, {id => "user.form.error.timezone-blank"});
   }
   
   # Boolean sanity check - true = 1, false = 0
@@ -436,34 +437,28 @@ sub create_or_edit {
     }
   } elsif ( $action eq "edit" ) {
     # Check that we can edit roles, then loop through and add them
-    my @need_roles = $self->result_source->schema->resultset("Role")->search({
-      role_edit => 1
-    }, {
-      order_by => {
-        -asc => [ qw( name ) ],
-      },
-    });
-    
+    my @need_roles = $self->result_source->schema->resultset("Role")->search({role_edit => 1});
+    my @have_roles = $editing_user->roles;
     @need_roles = map( $_->name, @need_roles );
-    
-    my $have_roles = Set::Object->new( $editing_user->roles );
+    @have_roles = map( $_, @have_roles );
+    my $have_roles = Set::Object->new( @have_roles );
     my $need_roles = Set::Object->new( @need_roles );
     
     # Set check roles to zero unless we're authorised to do it.
-    my $can_edit_roles = ( $have_roles->intersection( $need_roles )->size > 0 ) ? 1 : 0;
+    $can_edit_roles = ( $have_roles->intersection( $need_roles )->size > 0 ) ? 1 : 0;
     
     if ( $can_edit_roles ) {
       # Check the roles we have.
       $roles = [ $roles ] unless ref( $roles ) eq "ARRAY";
       
       my $invalid_roles = 0;
-      foreach my $role ( @{ $roles } ) {
-        $role = $self->result_source->schema->resultset("Role")->find( $role );
+      foreach my $role_id ( @{ $roles } ) {
+        my $role = $self->result_source->schema->resultset("Role")->find( $role_id );
         
         if ( defined( $role ) ) {
           if ( $role->anonymous ) {
             # Don't push and warn that we can't add to anonymous
-            push(@{ $return_value->{warning} }, {id => "user.form.warning.cant-add-to-anonymous"});
+            push(@{ $response->{warning} }, {id => "user.form.warning.cant-add-to-anonymous"});
           } else {
             push(@roles, $role->id);
           }
@@ -473,16 +468,33 @@ sub create_or_edit {
       }
       
       # Warn if any of the roles were invalid
-      push( @{ $return_value->{warning} }, {
-        id          => "user.form.warning.one-or-more-roles-invalid",
-        parameters  => $invalid_roles,
+      push( @{ $response->{warning} }, {
+        id => "user.form.warning.one-or-more-roles-invalid",
+        parameters => $invalid_roles,
       }) if $invalid_roles;
       
-      push( @{ $return_value->{error} }, {id => "user.form.error.no-valid-roles"}) if scalar @roles == 0;
+      my @default_roles = $self->result_source->schema->resultset("Role")->search({apply_on_registration => 1});
+      @default_roles = map( $_->id , @default_roles );
+      my $default_roles = Set::Object->new( @default_roles );
+      my $selected_roles = Set::Object->new( @roles );
+      my $default_roles_not_selected = $default_roles->difference( $selected_roles );
+      
+      # Check we have all the default roles selected
+      if ( $default_roles_not_selected->size ) {
+        $selected_roles->insert( @$default_roles_not_selected );
+        
+        push( @{ $response->{warning} }, {
+          id => "user.form.warning.default-roles-added",
+          parameters => [ $invalid_roles ],
+        });
+      }
+      
+      @roles = $selected_roles->members;
+      push( @{ $response->{error} }, {id => "user.form.error.no-valid-roles"}) if scalar @roles == 0;
     }
   }
   
-  if ( scalar( @{ $return_value->{error} } == 0 ) ) {
+  if ( scalar( @{ $response->{error} } == 0 ) ) {
     # This is a random verification key that we can then put into an email.
     my $activation_key = sha256_hex( $username . Time::HiRes::time . int(rand(100)) ) if $action eq "register";
     
@@ -500,6 +512,7 @@ sub create_or_edit {
     if ( $action eq "register" ) {
       # Create new user
       my $activation_expires = DateTime->now( time_zone  => "UTC" )->add( hours => $activation_expiry_limit );
+      
       my $create_options = {
         username => $username,
         url_key => $url_key,
@@ -565,71 +578,68 @@ sub create_or_edit {
       
       $user->update( $update_data );
       
-      # Set up the roles - get the current roles first
-      my @current_roles = $user->search_related("user_roles");
-      
-      # Map the ID only so that we can compare IDs to the IDs in the @roles
-      @current_roles = map( $_->id, @current_roles );
-      
-      # From those two arrays we can now work out what to add and remove: currently @roles contains
-      # all the roles we need to add; @current_roles contains the current roles.  We can use Set::Object
-      # to return a list of what's in @current_roles and not in @roles (roles to remove) and also what's
-      # in @roles and not in @current_roles (roles to add).  Anything in both is a role that is currently
-      # assigned and should stay assigned, so doesn't need to be touched.
-      my $current_roles = Set::Object->new( @current_roles );
-      my $new_roles = Set::Object->new( @roles );
-      my $roles_to_add = $new_roles->difference( $current_roles );
-      my $roles_to_remove = $current_roles->difference( $new_roles );
-      
-      # Get the arrays back
-      my @roles_to_add = @$roles_to_add;
-      my @roles_to_remove = @$roles_to_remove;
-      
-      # Check if any of the roles we're removing is the sysadmin role
-      my $sysadmin_role = $self->result_source->schema->resultset("Role")->find({
-        sysadmin => 1,
-        id => {
-          -in => \@roles_to_remove,
-        }
-      });
-      
-      if ( defined( $sysadmin_role ) ) {
-        my $users = $sysadmin_role->search_related("user_roles")->search_related("user", {
-          id => {
-            "!=" => $user->id,
-          }
-        })->count;
+      if ( $can_edit_roles ) {
+        # Set up the roles - get the current roles first
+        my @current_roles = $user->search_related("user_roles");
         
-        if ( $users == 0 ) {
-          # Trying to remove the last user from the sysadmin group - error
-          push( @{ $return_value->{warning} }, {
-            id          => "user.form.warning.cant-remove-last-sysadmin",
-            parameters  => [ encode_entities( $user->username ) ],
-          });
+        # From those two arrays we can now work out what to add and remove: currently @roles contains
+        # all the roles we need to add; @current_roles contains the current roles.  We can use Set::Object
+        # to return a list of what's in @current_roles and not in @roles (roles to remove) and also what's
+        # in @roles and not in @current_roles (roles to add).  Anything in both is a role that is currently
+        # assigned and should stay assigned, so doesn't need to be touched.
+        @current_roles = map( $_->id, @current_roles );
+        my $current_roles = Set::Object->new( @current_roles );
+        my $new_roles = Set::Object->new( @roles );
+        my $roles_to_add = $new_roles->difference( $current_roles );
+        my $roles_to_remove = $current_roles->difference( $new_roles );
+        $logger->( "debug", "current: %s, new: %s, add: %s, remove: %s", $current_roles->as_string, $new_roles->as_string, $roles_to_add->as_string, $roles_to_remove->as_string );
+        
+        # Get the arrays back
+        my @roles_to_add = @$roles_to_add;
+        my @roles_to_remove = @$roles_to_remove;
+        
+        # Check if any of the roles we're removing is the sysadmin role
+        my $sysadmin_role = $self->result_source->schema->resultset("Role")->find({
+          sysadmin => 1,
+          id => {-in => \@roles_to_remove}
+        });
+        
+        if ( defined( $sysadmin_role ) ) {
+          my $users = $sysadmin_role->search_related("user_roles")->search_related("user", {
+            id => {"!=" => $user->id}
+          })->count;
           
-          $roles_to_remove->delete( $sysadmin_role->id );
-          @roles_to_remove = @$roles_to_remove;
+          if ( $users == 0 ) {
+            # Trying to remove the last user from the sysadmin group - error
+            push( @{ $response->{warning} }, {
+              id => "user.form.warning.cant-remove-last-sysadmin",
+              parameters => [ encode_entities( $user->username ) ],
+            });
+            
+            $roles_to_remove->delete( $sysadmin_role->id );
+            @roles_to_remove = @$roles_to_remove;
+          }
         }
+        
+        # Now do the SQL operations themselves
+        $user->delete_related("user_roles", {
+          role => {-in => \@roles_to_remove},
+        }) if scalar @roles_to_remove;
+        
+        $user->create_related("user_roles", {role => $_}) foreach @roles_to_add;
       }
-      
-      # Now do the SQL operations themselves
-      $user->delete_related("user_roles", {
-        role => {
-          -in => \@roles_to_remove,
-        },
-      }) if scalar @roles_to_remove;
-      
-      $user->create_related("user_roles", {role => $_}) foreach @roles_to_add;
     }
     
     # Commit the transaction
     $transaction->commit;
     
-    $return_value->{set_locale} = $set_locale;
-    $return_value->{user}       = $user;
+    $response->{set_locale} = $set_locale;
+    $response->{user} = $user;
   }
   
-  return $return_value;
+  # Return the roles too, as they may have been altered
+  $response->{roles} = \@roles;
+  return $response;
 }
 
 =head2 find_key

@@ -453,10 +453,11 @@ sub setup_user :Private {
   my $occupation = $c->req->param( "occupation" );
   my $location = $c->req->param( "location" );
   my $hide_online = $c->req->param( "hide_online" );
-  my $roles = $c->req->param( "roles" );
+  my $roles = $c->req->parameters->{roles};
   my $activation_expiry_limit = $c->config->{Users}{activation_expiry_limit};
   my $manual_approval = $c->config->{Users}{manual_approval} || 0;
   my $error;
+  $c->log->debug( "setup: $roles, ref: " . ref( $roles ) . ", dump: " . Dumper( $roles ) );
   
   if ( $action eq "register" and $c->config->{Google}{reCAPTCHA}{validate_on_register} ) {
     my $captcha_result = $c->forward( "TopTable::Controller::Root", "recaptcha" );
@@ -499,7 +500,7 @@ sub setup_user :Private {
   }
   
   # Send the form details to the model to do error checking and registration
-  my $user_result = $c->model("DB::User")->create_or_edit({
+  my $response = $c->model("DB::User")->create_or_edit({
     action => $action,
     username_editable => $username_editable,
     username => $username,
@@ -530,9 +531,15 @@ sub setup_user :Private {
     logger => sub{ my $level = shift; $c->log->$level( @_ ); },
   });
   
-  if ( scalar( @{ $user_result->{error} } ) ) {
+  my $status_msg = {};
+  
+  # Setup the warning here, as we may have these whether we're successful or not
+  $status_msg->{warning} = $c->build_message( $response->{warning} ) if scalar( @{ $response->{warning} } );
+  $roles = $response->{roles} if exists( $response->{roles} );
+  
+  if ( scalar( @{ $response->{error} } ) ) {
     # If there are errors, redirect back to the registration form with errors
-    my $error = $c->build_message( $user_result->{error} );
+    $status_msg->{error} = $c->build_message( $response->{error} );
     
     # Flash the values we've got so we can set them back to the form
     $c->flash->{username} = $username;
@@ -551,15 +558,22 @@ sub setup_user :Private {
     $c->flash->{occupation} = $occupation;
     $c->flash->{location} = $location;
     $c->flash->{hide_online} = $hide_online;
+    $c->flash->{roles} = $roles;
+    $c->log->debug( sprintf( "roles ref: %s", ref( $roles ) ) );
+    
+    foreach my $role ( @$roles ) {
+      $c->log->debug( sprintf( "role in controller: %s, ref: %s", $role, ref( $role ) ) );
+    }
+    
     
     # If we're editing, the URI to redirect to is different
     my $redirect_uri;
     if ( $action eq "register" ) {
       $redirect_uri = $c->uri_for("/register",
-                                {mid => $c->set_status_msg( {error => $error} ) });
+                                {mid => $c->set_status_msg( $status_msg ) });
     } else {
       $redirect_uri = $c->uri_for_action("/users/edit", [$user->url_key],
-                                {mid => $c->set_status_msg( {error => $error} ) });
+                                {mid => $c->set_status_msg( $status_msg ) });
     }
     
     $c->response->redirect( $redirect_uri );
@@ -567,7 +581,7 @@ sub setup_user :Private {
     return;
   } else {
     # Success
-    $user = $user_result->{user} if $action eq "register";
+    $user = $response->{user} if $action eq "register";
     $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["user", $action, {id => $user->id}, $user->username] );
     
     my $html_username = encode_entities( $username );
@@ -618,19 +632,10 @@ sub setup_user :Private {
         user      => $user,
       });
     } else {
-      $c->locale( $language ) if $user_result->{set_locale};
-      
-      my $warnings = $user_result->{warning};
-      
-      if ( scalar @$warnings ) {
-        $warnings = $c->build_message( $warnings );
-        $c->response->redirect( $c->uri_for_action("/users/view", [$user->url_key],
-                                    {mid => $c->set_status_msg( {success  => $c->maketext("user.edit.success-with-warnings", $html_username),
-                                                                warning   => $warnings} ) }) );
-      } else {
-        $c->response->redirect( $c->uri_for_action("/users/view", [$user->url_key],
-                                    {mid => $c->set_status_msg( {success => $c->maketext("user.edit.success", $html_username) } ) }) );
-      }
+      $c->locale( $language ) if $response->{set_locale};
+      $status_msg->{success} = ( scalar( @{ $response->{warning} } ) ) ? $c->maketext("user.edit.success-with-warnings", $html_username) : $c->maketext("user.edit.success", $html_username);
+      $c->response->redirect( $c->uri_for_action("/users/view", [$user->url_key],
+                                  {mid => $c->set_status_msg( $status_msg ) }) );
       
       $c->detach;
       return;

@@ -119,6 +119,30 @@ END;
           <th>[% c.maketext("user.field.occupation") %]</th>
           <td>[% user.occupation OR "&nbsp;" %]</td>
         </tr>
+        <tr>
+          <th>[% c.maketext("user.field.roles") %]</th>
+          <td>
+[%-
+
+SET ROLES = user.roles;
+SET ROLES_TEXT = "";
+FOREACH ROLE IN ROLES;
+  IF ROLE.system;
+    SET ROLE_NAME = c.maketext("roles.name." _ ROLE.name);
+  ELSE;
+    ROLE_NAME = FILTER html_entity; ROLE.name; END;
+  END;
+  
+  IF ROLES_TEXT == "";
+    SET ROLES_TEXT = ROLE_NAME;
+  ELSE;
+    SET ROLES_TEXT = ROLES_TEXT _ ", " _ ROLE_NAME;
+  END;
+END;
+
+ROLES_TEXT
+-%]</td>
+        </tr>
       </table>
     </div>
     <div class="clear-fix"></div>

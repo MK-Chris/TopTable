@@ -4102,6 +4102,9 @@ msgstr "You cannot add users to the Anonymous role, so that role has not been as
 msgid "user.form.warning.cant-remove-last-sysadmin"
 msgstr "You cannot remove %1 from the Administrators group because they are the only member of the group and Administrators must have at least one member."
 
+msgid "user.form.warning.default-roles-added"
+msgstr "You cannot remove the default roles, so they have been re-added."
+
 msgid "user.edit.success"
 msgstr "%1 has been edited successfully."
 

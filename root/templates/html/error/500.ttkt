@@ -3,7 +3,6 @@
 [% # output (use View Source in browser to see the effect) -%]
 [%-
 FOREACH q IN c.req.params.keys;
-  CALL c.log.debug( "key: " _ q _ "; value: " _ c.req.params.$q );
   IF qs == "";
     SET qs = q _ "=" _ c.req.params.$q;
   ELSE;
