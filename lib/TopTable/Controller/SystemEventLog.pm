@@ -109,43 +109,57 @@ sub retrieve_paged :Private {
   # Work out if we can view all events or just public ones
   my $public_events_only = 1;
   $public_events_only = 0 if $c->stash->{authorisation}{system_event_log_view_all} and !exists( $c->request->parameters->{"suppress-private"} );
+  $c->forward( "TopTable::Controller::Users", "check_authorisation", [[ qw( view_users_ip ) ], "", 0] );
   
-  my $event_logs = $c->model("DB::SystemEventLog")->page_records({
-    public_events_only  => $public_events_only,
-    page_number         => $page_number,
-    results_per_page    => $c->config->{Pagination}{default_page_size},
-  });
-  
-  my $page_info   = $event_logs->pager;
-  my $page_links  = $c->forward( "TopTable::Controller::Root", "generate_pagination_links", [{
-    page_info             => $page_info,
-    page1_action          => "/event-log/list_first_page",
-    specific_page_action  => "/event-log/list_specific_page",
-    current_page          => $page_number,
-  }] );
-  
-  # Set up the template to use
-  $c->stash({
-    template            => "html/event-log/list.ttkt",
-    external_scripts    => [
+  my $ext_scripts = ( $c->stash->{authorisation}{view_users_ip} ) ?
+    [
+      $c->uri_for("/static/script/plugins/qtip/jquery.qtip.min.js"),
+      $c->uri_for("/static/script/standard/qtip.js"),
+      $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/plugins/sorting/ip-address.js"),
+      $c->uri_for("/static/script/event-viewer/view-with-ip.js"),
+    ]
+     :
+    [
       $c->uri_for("/static/script/plugins/qtip/jquery.qtip.min.js"),
       $c->uri_for("/static/script/standard/qtip.js"),
       $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/event-viewer/view.js", {v => 2}),
-    ],
-    external_styles     => [
+    ];
+  
+  my $event_logs = $c->model("DB::SystemEventLog")->page_records({
+    public_events_only => $public_events_only,
+    page_number => $page_number,
+    results_per_page => $c->config->{Pagination}{default_page_size},
+  });
+  
+  my $page_info   = $event_logs->pager;
+  my $page_links  = $c->forward( "TopTable::Controller::Root", "generate_pagination_links", [{
+    page_info => $page_info,
+    page1_action => "/event-log/list_first_page",
+    specific_page_action  => "/event-log/list_specific_page",
+    current_page => $page_number,
+  }] );
+  
+  # Set up the template to use
+  $c->stash({
+    template => "html/event-log/list.ttkt",
+    external_scripts => $ext_scripts,
+    external_styles => [
       $c->uri_for("/static/css/qtip/jquery.qtip.css"),
       $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
     ],
     view_online_display => "Viewing event log",
-    view_online_link    => 1,
-    event_logs          => $event_logs,
-    page_info           => $page_info,
-    page_links          => $page_links,
+    view_online_link => 1,
+    event_logs => $event_logs,
+    page_info => $page_info,
+    page_links => $page_links,
   });
 }
 

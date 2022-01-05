@@ -4700,6 +4700,9 @@ msgstr "Page %1 does not exist."
 msgid "system-event-log.heading.user"
 msgstr "User"
 
+msgid "system-event-log.heading.ip-address"
+msgstr "IP address"
+
 msgid "system-event-log.heading.timestamp"
 msgstr "Timestamp"
 
@@ -4776,7 +4779,7 @@ msgid "system-event-log.description.forgot-password"
 msgstr "Password reset link sent for %1%2."
 
 msgid "system-event-log.description.forgot-password-invalid"
-msgstr "Password reset attempted for invalid account."
+msgstr "Password reset attempted for invalid account using email: %1."
 
 msgid "system-event-log.description.reset-password"
 msgstr "Password reset for %1%2."
@@ -4791,13 +4794,13 @@ msgid "system-event-log.description.logout"
 msgstr "%1%2 logged out."
 
 msgid "system-event-log.description.register"
-msgstr "%1%2 registered"
+msgstr "%1%2 registered."
 
 msgid "system-event-log.description.approve"
-msgstr "Approved %1%2"
+msgstr "Approved %1%2."
 
 msgid "system-event-log.description.reject"
-msgstr "Rejected %1%2"
+msgstr "Rejected %1%2."
 
 msgid "system-event-log.and"
 msgstr "and"

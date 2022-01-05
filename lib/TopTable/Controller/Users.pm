@@ -1572,7 +1572,7 @@ sub send_reset_link :Path("send-reset-link") {
       });
       
       # Log that we've had a request to reset an invalid account
-      $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["user", "password-reset-invalid", {id => undef}, ""] );
+      $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["user", "password-reset-invalid", {id => undef}, $email_address] );
     }
   } else {
     # Email aaddress not supplied
