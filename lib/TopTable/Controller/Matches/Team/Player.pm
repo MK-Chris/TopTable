@@ -174,7 +174,11 @@ sub update :Private {
     
     if ( $c->is_ajax ) {
       # Stash the original player so any select lists or inputs can be reset to their old values
-      $c->stash({json_player => $details->{original_player}});
+      $c->stash({
+        json_data => {
+          json_player => $details->{original_player}
+        }
+      });
       $c->detach( "TopTable::Controller::Root", "json_error", [400, $error] );
     } else {
       $c->log->error( $error );
@@ -195,7 +199,11 @@ sub update :Private {
     
     $c->stash({
       json_player_games => $details->{player_games},
-      json_message      => $message, # Stash the message to display, so we can provide it in the correct language to the client script
+      json_message => $message, # Stash the message to display, so we can provide it in the correct language to the client script
+      json_data => {
+        json_player_games => $details->{player_games},
+        json_message => $message, # Stash the message to display, so we can provide it in the correct language to the client script
+      }
     });
   }
   

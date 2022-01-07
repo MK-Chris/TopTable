@@ -777,7 +777,7 @@ sub approve {
   my ( $self, $params ) = @_;
   my $error = [];
   my $approver = delete $params->{approver};
-  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   
   if ( ref( $approver ) eq "Catalyst::Authentication::Store::DBIx::Class::User" ) {
     # We have passed in the logged in user
@@ -812,7 +812,7 @@ sub reject {
   my ( $self, $params ) = @_;
   my $error = [];
   my $approver = delete $params->{approver};
-  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   
   # We have passed in the logged in user
   # Update to approved

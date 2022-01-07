@@ -227,7 +227,7 @@ sub do_upload :Path("do-upload") :Args(0) {
   }
   
   if ( $return_json ) {
-    $c->stash($return_value);
+    $c->stash({json_data => $return_value});
     $c->detach( $c->view("JSON") );
   }
 }

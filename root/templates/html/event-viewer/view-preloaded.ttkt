@@ -4,14 +4,6 @@
 [% # "chomps" the whitespace/newline at that end of the    -%]
 [% # output (use View Source in browser to see the effect) -%]
 
-[%
-# Pagination
-IF event_logs.count;
-  # Use PROCESS instead of INCLUDE so that the page_links_text is defined in the current template thereafter
-  PROCESS "html/generic/pagination.ttkt" CONTROLLER = "event-log", OBJECT_PLURAL = "events";
-  page_links_text;
--%]
-
 <table id="datatable" class="stripe hover order-column row-border" style="width: 100%;">
   <thead>
     <tr>
@@ -35,7 +27,7 @@ IF event_logs.count;
   </thead>
   <tbody>
 [%
-  WHILE (event = event_logs.next);
+  FOREACH event IN events;
     # Work out what object type we have
     SET object = "system_event_log_" _ event.object_type _ "s";
     SET display_description = event.display_description(3, 35);
@@ -121,13 +113,4 @@ IF event_logs.count;
 -%]
   </tbody>
 </table>
-[%
-page_links_text;
-ELSE;
--%]
-<div class="list-item">
-  No events to display.
-</div>
-[%
-END;
--%]
+

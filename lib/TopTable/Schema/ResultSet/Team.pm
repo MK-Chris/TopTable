@@ -242,7 +242,7 @@ sub search_by_name {
   my ( $self, $params ) = @_;
   my $q = delete $params->{q};
   my $season = delete $params->{season};
-  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.;
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.;
   
   # Construct the LIKE '%word1%' AND  LIKE '%word2%' etc.  I couldn't work out how to map this, so a loop it is.
   my @words = split( /\s+/, $q );

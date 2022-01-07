@@ -720,19 +720,19 @@ sub search_geolocation :Path("geolocation") {
     }
   }
   
-  if ( $content_type eq "json" ) {
+  if ( $c->is_ajax ) {
     # If it's an AJAX request, return a list so that the web app can display the options for selection
     $c->stash({
-      json_results      => \@results,
-      skip_view_online  => 1,
+      json_data => {
+        json_results => \@results,
+      },
+      skip_view_online => 1,
     });
     
     $c->detach( $c->view("JSON") );
   } else {
     # Not an AJAX request, just stash the first result
-    $c->stash({
-      geocode_results  => \@results,
-    });
+    $c->stash({geocode_results  => \@results});
   }
 }
 

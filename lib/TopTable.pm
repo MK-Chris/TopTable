@@ -73,9 +73,10 @@ __PACKAGE__->config(
   disable_component_resolution_regex_fallback => 1, # Disable deprecated behavior needed by old applications
   enable_catalyst_header => 1, # Send X-Catalyst header
   "View::JSON" => {
-    allow_callback  => 1,    # defaults to 0
-    callback_param  => 'cb', # defaults to 'callback'
-    expose_stash    => qr/(^json|^link$|^error$)/,
+    allow_callback => 1,    # defaults to 0
+    callback_param => 'cb', # defaults to 'callback'
+    expose_stash => "json_data",
+    #expose_stash    => qr/(^json|^link$|^error$)/,
     #expose_stash    => [ "link", "error", qr/^json/ ], # defaults to everything
   },
   "CatalystX::DebugFilter" => {
