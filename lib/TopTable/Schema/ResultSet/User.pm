@@ -21,7 +21,7 @@ sub search_by_name {
   my ( $self, $params ) = @_;
   my $q = delete $params->{q};
   my $split_words = delete $params->{split_words} || 0;
-  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $page = delete $params->{page} || undef;
   my $results_per_page = delete $params->{results} || undef;
   
@@ -260,7 +260,7 @@ sub create_or_edit {
   my $activation_expiry_limit = delete $params->{activation_expiry_limit} || 24;
   my $manual_approval = delete $params->{manual_approval};
   my $installed_languages = delete $params->{installed_languages};
-  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $set_locale;
   my $response = {error => [], warning => []};
   my $can_edit_roles = 0;

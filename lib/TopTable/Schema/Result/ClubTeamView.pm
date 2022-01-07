@@ -161,6 +161,7 @@ sub search_display {
   my ( $self, $params ) = @_;
   
   return {
+    id => $self->team_id,
     name => $self->team_with_club,
     url_keys => $self->url_keys,
     type => "team"

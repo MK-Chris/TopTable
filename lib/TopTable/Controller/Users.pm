@@ -1823,7 +1823,7 @@ sub check_authorisation :Private {
   my ( $self, $c, $actions, $message_detail, $redirect ) = @_;
   my ( @roles, @role_names ) = ();
   my ( $anonymous_permission, $authorised );
-  my $content_type = $c->request->parameters->{content_type} || "html";
+  #my $content_type = $c->request->parameters->{content_type} || "html";
   
   # If the action is an array, we need to check for each
   if ( ref( $actions ) eq "ARRAY" ) {
@@ -1875,7 +1875,7 @@ sub check_authorisation :Private {
       } else {
         # Logged in, just error
         if ( $redirect ) {
-          if ( $content_type eq "json" ) {
+          if ( $c->is_ajax ) {
             $c->detach( "TopTable::Controller::Root", "json_error", [403, $c->maketext("user.auth.denied", $message_detail)] );
           } else {
             $c->response->status(403);
@@ -1897,7 +1897,7 @@ sub check_authorisation :Private {
         
         # Redirect to the login page
         # Logged in, just error
-        if ( $content_type eq "json" ) {
+        if ( $c->is_ajax ) {
           $c->response->headers->header("WWW-Authenticate" => "FormBased");
           $c->detach( "TopTable::Controller::Root", "json_error", [401, $c->maketext("user.auth.login", $message_detail)] );
         } else {

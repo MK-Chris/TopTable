@@ -707,7 +707,7 @@ sub create_with_team :Private {
   if ( defined ( $team ) ) {
     # We just update the prePopulate first element of the tokenInput arrays, as this is the team
     $c->stash->{tokeninput_confs}[0]{options} = encode_json({
-      jsonContainer => "json_teams",
+      jsonContainer => "json_search",
       tokenLimit    => 1,
       hintText      => $c->maketext("teams.tokeninput.type"),
       noResultsText => encode_entities( $c->maketext("tokeninput.text.no-results") ),
@@ -794,7 +794,7 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
   
   ## Team(s) captained
   $tokeninput_captain_options = {
-    jsonContainer => "json_teams",
+    jsonContainer => "json_search",
     hintText      => $c->maketext("teams.tokeninput.type-captain"),
     noResultsText => encode_entities( $c->maketext("tokeninput.text.no-results") ),
     searchingText => encode_entities( $c->maketext("tokeninput.text.searching") ),

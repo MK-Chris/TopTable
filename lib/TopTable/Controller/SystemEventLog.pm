@@ -6,7 +6,7 @@ use Data::Dumper::Concise;
 BEGIN { extends 'Catalyst::Controller'; }
 
 # Sets the actions in this controller to be registered event-log, so the URLs start /event-log.
-__PACKAGE__->config(namespace => "event-log");
+__PACKAGE__->config(namespace => "event-viewer");
 
 =head1 NAME
 
@@ -46,7 +46,7 @@ Base routine for the event log listing.  Checks the authorisation.
 
 =cut
 
-sub base :Chained("/") :PathPart("event-log") :CaptureArgs(0) {
+sub base :Chained("/") :PathPart("event-viewer") :CaptureArgs(0) {
   my ( $self, $c ) = @_;
   my $site_name = $c->stash->{encoded_site_name};
   
@@ -57,99 +57,35 @@ sub base :Chained("/") :PathPart("event-log") :CaptureArgs(0) {
   $c->stash({page_description => $c->maketext("description.event-log.list", $site_name)});
 }
 
-=head2 list_first_page
+=head2 render_list_page
 
-Set the page number to 1 and forward to the routine that retrieves the events.
+List the events.
 
 =cut
 
-sub list_first_page :Chained("base") :PathPart("") :Args(0) {
+sub render_list_page :Chained("base") :PathPart("") :Args(0) {
   my ( $self, $c ) = @_;
   
-  # Retrieve the events, specifying page 1
-  $c->detach("retrieve_paged", [1]);
-}
-
-=head2 list_specific_page
-
-Check the page number, then forward to the routine that retrieves the events.
-
-=cut
-
-sub list_specific_page :Chained("base") :PathPart("page") :Args(1) {
-  my ( $self, $c, $page_number ) = @_;
-  
-  # If the page number is less then 1, not defined, false, or not a number, set it to 1
-  
-  # If the page number is less then 1, not defined, false, or not a number, set it to 1
-  if ( !defined( $page_number ) or !$page_number or $page_number !~ /^\d+$/ or $page_number < 1 ) {
-    $page_number = 1;
-    
-    # Stash a warning
-    if ( exists( $c->stash->{status_msg}{warning} ) and $c->stash->{status_msg}{warning} ) {
-      $c->stash->{status_msg}{warning} .= "\nInvalid page specified: $page_number.  Defaulting to page 1.";
-    } else {
-      $c->stash->{status_msg}{warning} = "Invalid page specified: $page_number.  Defaulting to page 1.";
-    }
-  }
-  
-  # Retrieve the events, specifying our page number
-  $c->detach("retrieve_paged", [$page_number]);
-}
-
-=head2 retrieve_paged
-
-List the events on the specified page.
-
-=cut
-
-sub retrieve_paged :Private {
-  my ( $self, $c, $page_number ) = @_;
-  
-  # Work out if we can view all events or just public ones
-  my $public_events_only = 1;
-  $public_events_only = 0 if $c->stash->{authorisation}{system_event_log_view_all} and !exists( $c->request->parameters->{"suppress-private"} );
   $c->forward( "TopTable::Controller::Users", "check_authorisation", [[ qw( view_users_ip ) ], "", 0] );
   
-  my $ext_scripts = ( $c->stash->{authorisation}{view_users_ip} ) ?
-    [
+  # Set up the template to use
+  $c->stash({
+    template => "html/event-viewer/view-ajax.ttkt",
+    scripts => [
+      "event-viewer/view"
+    ],
+    external_scripts => [
+      $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
       $c->uri_for("/static/script/plugins/qtip/jquery.qtip.min.js"),
       $c->uri_for("/static/script/standard/qtip.js"),
       $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/plugins/datatables/plugins/sorting/ip-address.js"),
-      $c->uri_for("/static/script/event-viewer/view-with-ip.js"),
-    ]
-     :
-    [
-      $c->uri_for("/static/script/plugins/qtip/jquery.qtip.min.js"),
-      $c->uri_for("/static/script/standard/qtip.js"),
-      $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
-      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
-      $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
-      $c->uri_for("/static/script/event-viewer/view.js", {v => 2}),
-    ];
-  
-  my $event_logs = $c->model("DB::SystemEventLog")->page_records({
-    public_events_only => $public_events_only,
-    page_number => $page_number,
-    results_per_page => $c->config->{Pagination}{default_page_size},
-  });
-  
-  my $page_info   = $event_logs->pager;
-  my $page_links  = $c->forward( "TopTable::Controller::Root", "generate_pagination_links", [{
-    page_info => $page_info,
-    page1_action => "/event-log/list_first_page",
-    specific_page_action  => "/event-log/list_specific_page",
-    current_page => $page_number,
-  }] );
-  
-  # Set up the template to use
-  $c->stash({
-    template => "html/event-log/list.ttkt",
-    external_scripts => $ext_scripts,
+      $c->uri_for("/static/script/standard/datatable-clear-pipeline.js"),
+    ],
     external_styles => [
+      $c->uri_for("/static/css/chosen/chosen.min.css"),
       $c->uri_for("/static/css/qtip/jquery.qtip.css"),
       $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
@@ -157,13 +93,149 @@ sub retrieve_paged :Private {
     ],
     view_online_display => "Viewing event log",
     view_online_link => 1,
-    event_logs => $event_logs,
-    page_info => $page_info,
-    page_links => $page_links,
   });
 }
 
-=head2
+=head2 load_events_js
+
+Load the specified page of events.
+
+=cut
+
+sub load_events_js :Path("load.js") :Args(0) {
+  my ( $self, $c ) = @_;
+  my $start = $c->req->param( "start" );
+  my $page_length = $c->req->param( "pagelength" );
+  my $max_results = $c->req->param( "length" ) || $c->config->{Pagination}{default_page_size}; # Not necessarily the same as page length - we could be caching subsuquent pages
+  my $draw = $c->req->param( "draw" );
+  my $order_col = $c->req->param( "order[0][column]" ) || undef;
+  my $order_dir = $c->req->param( "order[0][dir]" ) || undef;
+  my $search_val = $c->req->param( "search[value]" ) || undef;
+  
+  # Sanity checks on parameters
+  $draw = 1 unless defined( $draw ) and $draw =~ /^\d+$/;
+  $order_dir = "asc" unless defined( $order_dir ) and ($order_dir eq "asc" or $order_dir eq "desc");
+  
+  # Get the name to order by
+  $order_col = $c->req->param( "columns[$order_col][name]" );
+  
+  $c->forward( "TopTable::Controller::Users", "check_authorisation", [[ qw( view_users_ip system_event_log_view_all ) ], "", 0] );
+  
+  # Work out if we can view all events or just public ones
+  my $public_only = ( $c->stash->{authorisation}{system_event_log_view_all} and !exists( $c->request->parameters->{"suppress-private"} ) ) ? 0 : 1;
+  $c->log->debug( sprintf( "view all: %d, public only: %d", $c->stash->{authorisation}{system_event_log_view_all}, $public_only ) );
+  
+  my @events = $c->model("DB::SystemEventLog")->page_records({
+    public_only => $public_only,
+    page_length => $page_length,
+    start => $start + 1, # Start is 0 based from dataTables
+    max_results => $max_results,
+    order_col => $order_col,
+    order_dir => $order_dir,
+    search_val => $search_val,
+    search_ips => $c->stash->{authorisation}{view_users_ip},
+    logger => sub{ my $level = shift; $c->log->$level( @_ ); },
+  });
+  
+  # Setup the dataTables columns array
+  my @data = ();
+  
+  foreach my $event ( @events ) {
+    # Each of these is a row in the table
+    # Add an array to add the row columns to
+    my @row = ();
+    
+    my $user = defined( $event->user ) ? sprintf( '<a href="%s">%s</a>', $c->uri_for_action("/users/view", [$event->user->url_key]), $event->user->display_name ) : $c->maketext("system-event-log.guest");
+    push( @row, $user ) unless $c->stash->{exclude_event_user};
+    push( @row, $event->ip_address ) if $c->stash->{authorisation}{view_users_ip};
+    
+    my $updated = $event->log_updated_tz( $c->stash->{timezone} );
+    push( @row, sprintf( "%s %s", $updated->dmy("/"), $updated->hms ) );
+    push( @row, ucfirst( $c->maketext( sprintf( "object.plural.%s", $event->system_event_log_type->plural_objects ) ) ) );
+    
+    my $display_desc = $event->display_description( 3, 35 );
+    my $display_obj_text = ""; # Set the object text to blank when we start a new row
+    
+    # Loop through all our display objects
+    my $obj_count = 0;
+    foreach my $display_obj ( @{ $display_desc->{for_display} } ) {
+      $obj_count++;
+      
+      # If this is not the first loop through, we'll need to add a comma or "and", depending on some criteria...
+      if ( $obj_count > 1 ) {
+        if ( $obj_count == scalar( @{$display_desc->{for_display}} ) and scalar( @{$display_desc->{for_tooltip}} ) <= 1 ) {
+          # If we're on the last display object and there are no tooltip objects, we need "and"
+          $display_obj_text .= sprintf( " %s ", $c->maketext("system-event-log.and") );
+        } else {
+          # Otherwise, it'll be a comma
+          $display_obj_text .= ", ";
+        }
+      }
+      
+      if ( $display_obj->{ids}[0] and $event->system_event_log_type->view_action_for_uri ) {
+        $display_obj_text .= '<a href="' . $c->uri_for_action( $event->system_event_log_type->view_action_for_uri, $display_obj->{ids} ) . '">' . $display_obj->{name} . '</a>';
+      } else {
+        $display_obj_text .= $display_obj->{name};
+      }
+    }
+    
+    my $tooltip_link_text = "";
+    if ( scalar( @{$display_desc->{for_tooltip}} > 1 ) ) {
+      # Keep count of our tooltip objects
+      $obj_count = 0;
+      
+      my $tooltip_obj_text = "";
+      my $tooltip_display_text = "";
+      
+      # Loop through all our tooltip objects
+      foreach my $tooltip_obj ( @{ $display_desc->{for_tooltip} } ) {
+        # Increment the counter
+        $obj_count++;
+        
+        # If this is not the first iteration, add a <br />
+        $tooltip_obj_text .= "<br />" if $obj_count > 1;
+        
+        # Set this name into the tooltip
+        $tooltip_obj_text .= "<a class='tip' href='" . $c->uri_for_action( $event->system_event_log_type->view_action_for_uri, $tooltip_obj->{ids} ) . "'>" . $tooltip_obj->{name} . "</a>";
+      }
+      
+      # Set our 'others'
+      $tooltip_obj_text .= "<br />" . $c->maketext("system-event-log.others", scalar(@{$display_desc->{other}}) ) if scalar(@{$display_desc->{other}});
+      
+      # Set up the text to be displayed and the tooltip in the final display text
+      $tooltip_link_text = $c->maketext("system-event-log.other-objects", $tooltip_obj_text, ( scalar @{$display_desc->{for_tooltip}} + scalar @{$display_desc->{other}} ), $c->maketext("object.plural." . $event->system_event_log_type->plural_objects) );
+    } else {
+      # Nothing to show in the tooltip, replace the text with nothing
+      $tooltip_link_text = "";
+    }
+    
+    push( @row, ucfirst( $c->maketext( $event->system_event_log_type->description, $display_obj_text, $tooltip_link_text ) ) );
+    
+    # Now we have all the columns in our row, push on to the data array
+    push( @data, \@row );
+  }
+  
+  my $total_records = $c->model("DB::SystemEventLog")->page_records({public_only => $public_only})->count;
+  my $filtered_records = ( defined( $search_val ) ) ? $c->model("DB::SystemEventLog")->page_records({
+    public_only => $public_only,
+    search_val => $search_val,
+    search_ips => $c->stash->{authorisation}{view_users_ip}
+  })->count : $total_records; # If there's a search value, we need a filtered count too; if there's not the filtered count IS the same as the total count
+  
+  # Set up the stash
+  $c->stash({
+    json_data => {
+      draw => $draw,
+      recordsTotal => $total_records,
+      recordsFiltered => $filtered_records,
+      data => \@data,
+    },
+    skip_view_online => 1,
+  });
+  
+  # Detach to the JSON view
+  $c->detach( $c->view("JSON") );
+}
 
 =head2 add_event
 

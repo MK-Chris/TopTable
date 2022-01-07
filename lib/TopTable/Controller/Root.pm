@@ -42,9 +42,9 @@ sub auto :Private {
   # Stash the correct timezone
   # Only do timezone stuff if we're not processing a js file
   $c->stash({
-    timezone          => $c->timezone,
+    timezone => $c->timezone,
     encoded_site_name => encode_entities( $c->config->{name} ),
-  }) unless $c->request->path =~ /\.js$/;
+  });
 }
 
 =head2 begin
@@ -137,16 +137,18 @@ sub index :Path :Args(0) {
   my $events_to_show = $c->config->{Index}{recent_updates_visible};
   $events_to_show = 5 if !defined( $events_to_show ) or $events_to_show !~ m/^\d+$/;
   
-  my $event_logs = $c->model("DB::SystemEventLog")->page_records({
-    public_events_only  => 1,
-    page_number         => 1,
-    results_per_page    => $events_to_show,
+  my @events = $c->model("DB::SystemEventLog")->page_records({
+    public_only => 1,
+    page => 1,
+    page_length => $events_to_show,
+    order_col => "me.log_updated",
+    order_dir => "desc",
   });
   
   # Today's matches (if there's a current season)
-  my $current_season                  = $c->model("DB::Season")->get_current;
-  my $online_users_last_active_limit  = $c->datetime_tz({time_zone => "UTC"})->subtract(minutes => 15);
-  my $online_user_count               = $c->model("DB::Session")->get_all_online_users( $online_users_last_active_limit )->count;
+  my $current_season = $c->model("DB::Season")->get_current;
+  my $online_users_last_active_limit = $c->datetime_tz({time_zone => "UTC"})->subtract(minutes => 15);
+  my $online_user_count = $c->model("DB::Session")->get_all_online_users( $online_users_last_active_limit )->count;
   
   my ( $matches, $matches_today );
   
@@ -165,8 +167,8 @@ sub index :Path :Args(0) {
   $news_articles_to_show = 10 if !defined( $news_articles_to_show ) or $news_articles_to_show !~ m/^\d+$/;
   
   my $articles = $c->model("DB::NewsArticle")->page_records({
-    page_number       => 1,
-    results_per_page  => $news_articles_to_show,
+    page_number => 1,
+    results_per_page => $news_articles_to_show,
   });
   
   # A 0 online user count is nonsensical to the user, as they are on the website, so there must be at least one; this can happen, however, if this is the first page view for them
@@ -175,8 +177,8 @@ sub index :Path :Args(0) {
   $online_user_count = 1 if $online_user_count == 0;
   
   $c->stash({
-    template              => "html/index.ttkt",
-    external_scripts      => [
+    template => "html/index.ttkt",
+    external_scripts => [
       $c->uri_for("/static/script/plugins/qtip/jquery.qtip.min.js"),
       $c->uri_for("/static/script/standard/qtip.js"),
       $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
@@ -188,7 +190,7 @@ sub index :Path :Args(0) {
       $c->uri_for("/static/script/fixtures-results/view-group-divisions-no-date-no-score.js"),
       $c->uri_for("/static/script/standard/option-list.js"),
     ],
-    external_styles       => [
+    external_styles => [
       $c->uri_for("/static/css/qtip/jquery.qtip.css"),
       $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/fixedColumns.dataTables.min.css"),
@@ -196,19 +198,19 @@ sub index :Path :Args(0) {
       $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/rowGroup.dataTables.min.css"),
     ],
-    subtitle1             => $c->maketext("home-page.welcome"),
-    title_links           => \@title_links,
+    subtitle1 => $c->maketext("home-page.welcome"),
+    title_links => \@title_links,
     no_subtitles_in_title => 1,
-    view_online_display   => "Home Page",
-    view_online_link      => 1,
-    event_logs            => $event_logs,
-    exclude_event_user    => 1,
-    matches               => $matches,
-    matches_today         => $matches_today,
-    articles              => $articles,
-    online_user_count     => $online_user_count,
-    index_text            => $c->model("DB::PageText")->get_text("index"),
-    hide_breadcrumbs      => 1, # Hide the breadcrumbs
+    view_online_display => "Home Page",
+    view_online_link => 1,
+    events => \@events,
+    exclude_event_user => 1,
+    matches => $matches,
+    matches_today => $matches_today,
+    articles => $articles,
+    online_user_count => $online_user_count,
+    index_text => $c->model("DB::PageText")->get_text("index"),
+    hide_breadcrumbs => 1, # Hide the breadcrumbs
   });
 }
 
@@ -527,11 +529,13 @@ sub json_error :Private {
   my ( $code, $reason ) = @{ $c->request->arguments };
   $reason ||= $c->maketext("ajax.error.unknown");
   $code   ||= 500;
+  my $json_data = $c->stash->{json_data} || {};
   
   $c->response->status($code);
   
   # Error text is rendered as JSON as well
-  $c->stash->{json_error} = $reason;
+  $json_data->{json_error} = $reason;
+  $c->stash({json_data => $json_data});
   
   # Detach to the JSON view
   $c->detach( $c->view("JSON") );

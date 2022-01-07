@@ -18,7 +18,7 @@ sub search_by_name {
   my $split_words = delete $params->{split_words} || 0;
   my $season = delete $params->{season};
   my $include_types = delete $params->{include_types};
-  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $page = delete $params->{page} || undef;
   my $results_per_page = delete $params->{results} || undef;
   

@@ -508,9 +508,11 @@ sub update_game_score :Private {
   # Stash something to say the request was okay
   if ( $c->is_ajax ) {
     $c->stash({
-      json_status               => "Okay",
-      json_originally_complete  => $update_result->{match_originally_complete},
-      json_match_complete       => $update_result->{match}->complete,
+      json_data => {
+        json_status => "Okay",
+        json_originally_complete => $update_result->{match_originally_complete},
+        json_match_complete => $update_result->{match}->complete,
+      }
     });
     
     $c->detach( $c->view("JSON") );
@@ -557,7 +559,7 @@ sub update_js :Private {
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["match_update", $c->maketext("user.auth.update-matches"), 1] );
   
   # This will be a javascript file, not a HTML
-  $c->response->headers->header("Content-type" => "text/javascript");
+  $c->res->header( "Content-type" => "text/javascript" );
   
   # Stash no wrapper and the template
   $c->stash({
@@ -625,7 +627,10 @@ sub change_played_date :Private {
   
   # Stash something to say the request was okay
   if ( $c->is_ajax ) {
-    $c->stash({json_status  => "Okay",});
+    $c->stash({
+      json_data => {json_status  => "Okay"}
+    });
+    
     $c->detach( $c->view("JSON") );
   }
 }
@@ -685,7 +690,10 @@ sub change_venue :Private {
   } else {
     # Success
     if ( $c->is_ajax ) {
-      $c->stash({json_status  => "Okay",});
+      $c->stash({
+        json_data => {json_status  => "Okay"}
+      });
+      
       $c->detach( $c->view("JSON") );
     }
   }
@@ -753,16 +761,17 @@ sub get_player_lists :Private {
   
   # Stash our values
   $c->stash({
-    home_player_list        => \@home_player_list,
-    away_player_list        => \@away_player_list,
-    home_doubles_list       => $home_doubles_list,
-    away_doubles_list       => $away_doubles_list,
+    home_player_list => \@home_player_list,
+    away_player_list => \@away_player_list,
+    home_doubles_list => $home_doubles_list,
+    away_doubles_list => $away_doubles_list,
+    skip_view_online        => 1, # Don't alter the view who's online activity
     
     # No encoding for this, as we're forwarding to a JSON view that will do it for us
-    json_home_doubles_list  => $home_doubles_list,
-    json_away_doubles_list  => $away_doubles_list,
-    # Don't alter the view who's online activity
-    skip_view_online        => 1,
+    json_data => {
+      json_home_doubles_list => $home_doubles_list,
+      json_away_doubles_list => $away_doubles_list,
+    }
   });
   
   # Detach to the JSON view if required
@@ -811,6 +820,10 @@ sub update_playing_order :Private {
     $c->detach( "TopTable::Controller::Root", "json_error", [400, $error] );
   } else {
     # Detach to the JSON view
+    $c->stash({
+      json_data => {json_status  => "Okay"}
+    });
+    
     $c->detach( $c->view("JSON") );
   }
 }

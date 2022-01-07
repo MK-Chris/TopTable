@@ -167,7 +167,9 @@ sub update_umpire :Private {
       $message = $c->maketext("matches.umpire.remove.success", $game->scheduled_game_number);
     }
     
-    $c->stash({json_message => $message});
+    $c->stash({
+      json_data => {json_message => $message}
+    });
   }
   
   # Detach to the JSON view
@@ -228,7 +230,6 @@ sub doubles_pair :Private {
     
     if ( $c->is_ajax ) {
       # Stash the original player so any select lists or inputs can be reset to their old values
-      $c->stash({json_player => $actioned->{original_player}});
       $c->detach( "TopTable::Controller::Root", "json_error", [400, $error] );
     } else {
       $c->log->error( $error );
@@ -245,7 +246,8 @@ sub doubles_pair :Private {
     }
     
     $c->stash({
-      json_message  => $message, # Stash the message to display, so we can provide it in the correct language to the client script
+      json_data => {json_message => $message}, # Stash the message to display, so we can provide it in the correct language to the client script
+      json_player => $actioned->{original_player}
     });
   }
   

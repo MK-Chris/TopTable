@@ -1,0 +1,27 @@
+[% # This is a TT comment. -%]
+
+[% # Note That the '-' at the beginning or end of TT code  -%]
+[% # "chomps" the whitespace/newline at that end of the    -%]
+[% # output (use View Source in browser to see the effect) -%]
+
+<table id="event-log" class="stripe hover order-column row-border" style="width: 100%;">
+  <thead>
+    <tr>
+[%
+    UNLESS exclude_event_user;
+-%]
+      <th class="event-user">[% c.maketext("system-event-log.heading.user") %]</th>
+[%
+      IF authorisation.view_users_ip;
+-%]
+      <th class="event-ip">[% c.maketext("system-event-log.heading.ip-address") %]</th>
+[%
+      END;
+    END;
+-%]
+      <th class="event-datetime">[% c.maketext("system-event-log.heading.timestamp") %]</th>
+      <th class="event-type">[% c.maketext("system-event-log.heading.category") %]</th>
+      <th class="event-detail">[% c.maketext("system-event-log.heading.description") %]</th>
+    </tr>
+  </thead>
+</table>

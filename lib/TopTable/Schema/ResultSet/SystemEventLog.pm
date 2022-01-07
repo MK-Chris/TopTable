@@ -4,36 +4,36 @@ use strict;
 use warnings;
 use base 'DBIx::Class::ResultSet';
 use Data::Dumper::Concise;
+use Math::Round;
 
 =head2 page_records
 
-A predefined search to find all events, ordered by the datestamp.
+A predefined search to find all events and page them if required, ordered by the specified column / relationship.  We always return an array from this (as opposed to a resultset), as if we're caching multiple pages, we can't merge them into one resultset (that I know of - UNION won't work because we need a LIMIT clause on each query and LIMIT only works after the UNIONs).
 
 =cut
 
 sub page_records {
-  my ( $self, $parameters ) = @_;
-  my $public_events_only  = $parameters->{public_events_only} // 1;
-  my $page_number         = $parameters->{page_number} || 1;
-  my $results_per_page    = $parameters->{results_per_page} || 25;
-  my ( $where );
+  my ( $self, $params ) = @_;
+  my $public_only = $params->{public_only};
+  my $page = $params->{page};
+  my $start = $params->{start};
+  my $page_length = $params->{page_length};
+  my $max_results = $params->{max_results};
+  my $pages = 1; # Number of pages to retrieve.  1 is default, but if we are paging, this is worked out below 
+  my $page_results = 0; # Default; gets overridden further down
+  my $last_page_retrieved;
+  my $order_col = $params->{order_col};
+  my $order_dir = $params->{order_dir};
+  my $search_val = $params->{search_val};
+  my $search_ips = $params->{search_ips};
+  my $logger = $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   
-  # Set a default for results per page if it's not provided or invalid
-  $results_per_page = 25 if !defined($results_per_page) or $results_per_page !~ m/^\d+$/;
+  # Sanity check public only / search IPs
+  $public_only = 1 unless defined( $public_only ) and ( $public_only == 1 or $public_only == 0 );
+  $search_ips = 0 unless defined( $search_ips ) and ( $search_ips == 1 or $search_ips == 0 );
   
-  # Default the page number to 1
-  $page_number = 1 if !defined($page_number) or $page_number !~ m/^\d+$/;
-  
-  # Set up the where clause based on what we want to return (public only, or all)
-  if ( $public_events_only ) {
-    $where = {
-      "system_event_log_type.public_event" => 1,
-    };
-  } else {
-    $where = {};
-  }
-  
-  return $self->search($where, {
+  # Initial attrib set - these are here whatever happens
+  my $attrib = {
     prefetch  => [
       "system_event_log_average_filters",
       "system_event_log_clubs",
@@ -60,17 +60,103 @@ sub page_records {
       "system_event_log_venues", {
         user => "person",
       },
-      "system_event_log_type",
-    ],
-    page      => $page_number,
-    rows      => $results_per_page,
-    order_by  => [{
-      -desc => "me.log_updated",
-    }, {
-      # ID is in there in case we do any multiple updates together, which may appear in the same second.
-      -asc => "me.id",
-    }],
-  });
+      "system_event_log_type"
+    ]
+  };
+  
+  ## Work out pagination options
+  # We must have a max number of pages, otherwise we don't do anything with pagination
+  if ( defined( $page_length ) and $page_length =~ /^\d+$/ ) {
+    # Sanity check on page length
+    $max_results = $page_length unless defined( $max_results ) and $max_results =~ /^\d+$/;
+    
+    # Max results can't be less tha page length
+    $max_results = $page_length unless $max_results >= $page_length;
+    
+    if ( defined( $page ) and $page =~ /^\d+$/ ) {
+      # If we have a page number, use that
+      $attrib->{page} = $page;
+      $attrib->{rows} = $page_length;
+      $page_results = 1;
+    } elsif ( defined( $page_length ) and $page_length =~ /^\d+$/ and defined( $start ) and $start =~ /^\d+$/ ) {
+      # We have a page length / start value instead, so work out the page
+      # This is the start + page length - 1 (to give the last value of this page), divided by page length
+      $page = ( ( $start + $page_length ) - 1 ) / $page_length;
+      $attrib->{page} = $page;
+      
+      # Still use max results here, as we could be caching subsequent pages
+      $attrib->{rows} = $page_length;
+      $page_results = 1;
+    }
+    
+    if ( $page_results and $max_results > $page_length ) {
+      # Max results is greater than page length, work out how many pages to get
+      # We shouldn't need to round, as it should divide exactly, but make sure by using Math::Round
+      $pages = round( $max_results / $page_length );
+      $last_page_retrieved = ( $page + $pages ) - 1;
+      
+      # Sanity check, this should always be at least the current page number
+      $last_page_retrieved = $page if $last_page_retrieved < $page;
+    }
+  }
+  
+  # Check we have a search column and direction
+  if ( defined( $order_col ) ) {
+    # Sanity check direction
+    $order_dir = "asc" unless defined( $order_dir ) and ( $order_dir eq "asc" or $order_dir eq "desc" );
+    $attrib->{order_by} = {"-$order_dir" => $order_col};
+  }
+  
+  # Set up the search query if we have one
+  my $where = defined( $search_val ) ? [{
+    "user.username" => {-like => "%$search_val%"}
+  }, {
+    "me.log_updated" => {-like => "%$search_val%"}
+  }, {
+    "system_event_log_type.object_description" => {-like => "%$search_val%"}
+  }] : {};
+  
+  push( @{ $where }, {ip_address => {-like => "%$search_val%"}} ) if defined( $search_val ) and $search_ips;
+  
+  # Add the public event clause if we need to
+  if ( $public_only ) {
+    if ( ref( $where ) eq "HASH" ) {
+      # Hash ref, just add the key in
+      $where->{"system_event_log_type.public_event"} = 1;
+    } else {
+      # Array ref, add the key into each element of the array
+      my $i = 0;
+      while ( $i < scalar( @{ $where } ) ) {
+        $where->[$i]{"system_event_log_type.public_event"} = 1;
+        $i++;
+      }
+    }
+  }
+  
+  # Return into a resultset, even though we really want an array, so that we can perform paging functions on it first
+  my $rs = $self->search($where, $attrib);
+  
+  if ( $page_results ) {
+    my @pages = $rs->all;
+    my $pager = $rs->pager;
+    
+    if ( defined( $last_page_retrieved ) and $pager->current_page < $last_page_retrieved ) {
+      for my $curr_page ( $pager->current_page  .. $last_page_retrieved ) {
+        last if $curr_page > $pager->last_page;
+        
+        # Grab the next page and union it
+        my $rs_page = $rs->page( $curr_page );
+        my @page = $rs_page->all;
+        push( @pages, @page );
+      }
+    }
+    
+    # Return the array
+    return @pages;
+  } else {
+    # Return the resultset if we're not paging
+    return $rs;
+  }
 }
 
 =head2 set_event_log
@@ -90,7 +176,7 @@ sub set_event_log {
   my $ip_address        = $params->{ip_address} || undef;
   my $current_datetime  = $params->{current_time} || undef;
   my $return_value      = {};
-  my $logger            = $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.;;
+  my $logger            = $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.;;
   
   # Do some initial error checking / prep on names and IDs
   if ( ref($object_ids) eq "HASH" ) {

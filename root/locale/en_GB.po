@@ -4700,6 +4700,9 @@ msgstr "Page %1 does not exist."
 msgid "system-event-log.heading.user"
 msgstr "User"
 
+msgid "system-event-log.guest"
+msgstr "Guest"
+
 msgid "system-event-log.heading.ip-address"
 msgstr "IP address"
 

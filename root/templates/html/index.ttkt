@@ -6,9 +6,9 @@
 [%
 # Recent updates
 SET table_width = 70;
-INCLUDE "html/event-log/list.ttkt";
+INCLUDE "html/event-viewer/view-preloaded.ttkt";
 -%]<br />
-<a href="[% c.uri_for("/event-log") %]">[% c.maketext("home-page.updates.view-more") %]</a><br /><br />
+<a href="[% c.uri_for("/event-viewer") %]">[% c.maketext("home-page.updates.view-more") %]</a><br /><br />
 <div class="row">
   <div class="column left">
   <h4>[% c.maketext("home-page.news.recent") %]</h4>

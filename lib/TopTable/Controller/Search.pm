@@ -140,7 +140,7 @@ sub do_search {
       
       # Set up the stash
       $c->stash({
-        json_search => $json_search,
+        json_data => {json_search => $json_search},
         skip_view_online => 1,
       });
       
