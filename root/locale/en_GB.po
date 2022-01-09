@@ -4121,7 +4121,7 @@ msgid "user.form.error.timezone-blank"
 msgstr "Please select a timezone."
 
 msgid "user.form.error.reason-blank"
-msgstr "Please entere the reason you're registering - this is manually checked and is required to stop spammers."
+msgstr "Please enter the reason you're registering - this is manually checked and is required to stop spammers."
 
 msgid "user.form.warning.one-or-more-roles-invalid"
 msgstr "%1 of the specified roles were invalid, so haven&#39;t been assigned to the user; check assigned roles and add some more required roles if necessary."
