@@ -105,19 +105,61 @@ END;
         </tr>
         <tr>
           <th>[% c.maketext("user.field.website") %]</th>
-          <td><a href="[% user.website %]">[% user.website OR "&nbsp;" %]</a></td>
+          <td>
+[%-
+IF user.website;
+-%]
+<a href="[% user.website | html_entity %]">[% user.website | html_entity %]</a>
+[%-
+ELSE;
+-%]
+&nbsp;
+[%-
+END;
+-%]
+</td>
         </tr>
         <tr>
           <th>[% c.maketext("user.field.location") %]</th>
-          <td>[% user.location OR "&nbsp;" %]</td>
+          <td>
+[%-
+IF user.website;
+  user.location | html_entity;
+ELSE;
+-%]
+  &nbsp;
+[%-
+END;
+-%]
+</td>
         </tr>
         <tr>
           <th>[% c.maketext("user.field.interests") %]</th>
-          <td>[% user.interests OR "&nbsp;" %]</td>
+          <td>
+[%-
+IF user.website;
+  user.interests | html_entity;
+ELSE;
+-%]
+  &nbsp;
+[%-
+END;
+-%]
+</td>
         </tr>
         <tr>
           <th>[% c.maketext("user.field.occupation") %]</th>
-          <td>[% user.occupation OR "&nbsp;" %]</td>
+          <td>
+[%-
+IF user.website;
+  user.occupation | html_entity;
+ELSE;
+-%]
+  &nbsp;
+[%-
+END;
+-%]
+</td>
         </tr>
         <tr>
           <th>[% c.maketext("user.field.roles") %]</th>

@@ -36,7 +36,14 @@ END;
         <td>[% qs %]</td>
       <tr>
         <th scope="row">[% c.maketext("error.info.user") %]</th>
-        <td>[% c.user.username OR c.maketext("error.info.user.not-logged-in") %]</td>
+        <td>
+[%-
+IF c.user_exists;
+  c.user.username | html_entity;
+ELSE;
+  c.maketext("error.info.user.not-logged-in");
+END;
+-%]</td>
       </tr>
     </table>
   </div>
