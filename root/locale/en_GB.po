@@ -3497,6 +3497,12 @@ msgstr "Cancel %1"
 msgid "admin.report-object"
 msgstr "Report on %1"
 
+msgid "admin.approve-object"
+msgstr "Approve %1"
+
+msgid "admin.reject-object"
+msgstr "Reject on %1"
+
 msgid "admin.form.invalid-action"
 msgstr "Invalid action (%1) passed; the action must be &#39;create&#39; or &#39;edit&#39;."
 
@@ -3568,8 +3574,11 @@ msgstr "Thank you, %1.\n\n"
 msgid "user.activation.error-already-activated"
 msgstr "This user is already activated; please log in."
 
-msgid "user.activation.success"
+msgid "user.activation.success-login"
 msgstr "Your account has now been activated; please login."
+
+msgid "user.activation.success-approval-needed"
+msgstr "Your account has now been activated, but requires approval.  An administrator has been notified and will check this shortly."
 
 msgid "user.activation.error.key-incorrect"
 msgstr "The activation key is incorrect; please try again or login if your account has been activated already."
@@ -3952,6 +3961,12 @@ msgstr "Full name"
 msgid "user.field.language"
 msgstr "Language"
 
+msgid "user.field.registration-reason"
+msgstr "Reason for registering"
+
+msgid "user.field.registration-reason-desc"
+msgstr "If you are a player in the league, please mention the name you&#39;re registered with."
+
 msgid "user.field.facebook"
 msgstr "Facebook user ID / name"
 
@@ -3997,11 +4012,26 @@ msgstr "Last active"
 msgid "user.field.activated"
 msgstr "Account activated"
 
+msgid "user.field.approved"
+msgstr "Account approved"
+
+msgid "user.field.approved-by"
+msgstr "Account approved by"
+
+msgid "user.field.approved-by-auto"
+msgstr "Auto-approved"
+
 msgid "user.activated"
 msgstr "Account activated"
 
 msgid "user.not-activated"
 msgstr "Account not yet activated"
+
+msgid "user.approved"
+msgstr "Account approved"
+
+msgid "user.not-approved"
+msgstr "Account not yet approved"
 
 msgid "user.form.legend.details"
 msgstr "User details"
@@ -4089,6 +4119,9 @@ msgstr "The timezone is invalid."
 
 msgid "user.form.error.timezone-blank"
 msgstr "Please select a timezone."
+
+msgid "user.form.error.reason-blank"
+msgstr "Please entere the reason you're registering - this is manually checked and is required to stop spammers."
 
 msgid "user.form.warning.one-or-more-roles-invalid"
 msgstr "%1 of the specified roles were invalid, so haven&#39;t been assigned to the user; check assigned roles and add some more required roles if necessary."
@@ -4454,7 +4487,7 @@ msgid "msg.view-contact-details"
 msgstr "View contact details"
 
 msgid "msg.insecure-password-form"
-msgstr "This web site is not currently being served on a secure connection and you are about to fill in a form that has a password field; it&#39;s recommended that you use the <a href="%1">secure form</a> instead if possible, but bear in mind that the security certificate uses modern ciphers that are not compatible with Windows XP (which itself is no longer supported by Microsoft)."
+msgstr "This web site is not currently being served on a secure connection and you are about to fill in a form that has a password field; it&#39;s recommended that you use the <a href="%1">secure form</a> instead if possible."
 
 # Cookies
 msgid "cookie.title"
@@ -5090,10 +5123,14 @@ msgid "email.subject.users.approve-user"
 msgstr "%1: user registration request: %2"
 
 msgid "email.html.users.approve-user"
-msgstr "%1 has registered and activated their account on %2.  You must now login and <a href="%3">approve or reject</a> this account.  You can also view the <a href="%4">full list of users who require approval</a>.<br />\n\n"
+msgstr "%1 has registered and activated their account on %2 with the following reason:<br /><br />\n\n"
+"%3<br /><br />\n\n"
+"You must now login and <a href="%4">approve or reject</a> this account.  You can also view the <a href="%5">full list of users who require approval</a>.<br />\n\n"
 
 msgid "email.plain-text.users.approve-user"
-msgstr "%1 has registered and activated their account on %2.  You must now login and approve or reject (%3) this account.  You can also view the full list of users who require approval here: %4.<br />\n\n"
+msgstr "%1 has registered and activated their account on %2 with the following reason:\n\n"
+"%3\n\n"
+"You must now login and approve or reject (%4) this account.  You can also view the full list of users who require approval here: %5.\n\n"
 
 msgid "email.subject.users.password-reset"
 msgstr "%1: password reset request for %2"

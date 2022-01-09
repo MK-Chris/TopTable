@@ -64,7 +64,7 @@ END;
   </div>
   
   <div class="label-field-container">
-    <label for="reason">[% c.maketext("contact.form.field.reason") %]</label>
+    <label for="message">[% c.maketext("contact.form.field.message") %]</label>
     <div class="field-container">
       <textarea id="message" name="message" placeholder="[% c.maketext("contact.form.field.message") %]">[% c.flash.message | html_entity %]</textarea>
     </div>

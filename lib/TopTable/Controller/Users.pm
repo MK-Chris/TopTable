@@ -126,37 +126,6 @@ sub list :Chained("/") :PathPart("users") :Args(0) {
   });
 }
 
-# =head2 list_first_page
-# 
-# List the clubs on the first page.
-# 
-# =cut
-# 
-# sub list_first_page :Chained("base_list") :PathPart("") :Args(0) {
-#   my ( $self, $c ) = @_;
-#   
-#   $c->detach( "retrieve_paged", [1] );
-#   $c->stash({canonical_uri => $c->uri_for_action("/users/list_first_page")});
-# }
-# 
-# =head2 list_specific_page
-# 
-# List the clubs on the specified page.
-# 
-# =cut
-# 
-# sub list_specific_page :Chained("base_list") :PathPart("page") :Args(1) {
-#   my ( $self, $c, $page_number ) = @_;
-#   
-#   $c->detach( "retrieve_paged", [$page_number] );
-#   
-#   if ( $page_number == 1 ) {
-#     $c->stash({canonical_uri => $c->uri_for_action("/users/list_first_page")});
-#   } else {
-#     $c->stash({canonical_uri => $c->uri_for_action("/users/list_specific_page", [$page_number])});
-#   }
-# }
-
 =head2 retrieve_paged
 
 Performs the lookups for users with the given page number.
@@ -217,22 +186,36 @@ sub view :Chained("base") :PathPart("") :Args(0) {
   my $encoded_username  = $c->stash->{encoded_username};
   my $site_name         = $c->stash->{encoded_site_name};
   
+  # Check that we are authorised to approve users
+  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["user_approve_new", "", 0] );
+  
   # Set up the title links if we need them
   my @title_links = ();
   
   # Push a delete link if we're authorised to eidt all or to edit our own user and are logged in as the user we're viewing
   push(@title_links, {
     image_uri => $c->uri_for("/static/images/icons/0018-Pencil-icon-32.png"),
-    text      => $c->maketext("admin.edit-object", $encoded_username),
-    link_uri  => $c->uri_for_action("/users/edit", [$user->url_key]),
+    text => $c->maketext("admin.edit-object", $encoded_username),
+    link_uri => $c->uri_for_action("/users/edit", [$user->url_key]),
   }) if $c->stash->{authorisation}{user_edit_all} or ( $c->stash->{authorisation}{user_edit_own} and $c->user_exists and $c->user->id == $user->id );
   
   # Push a delete link if we're authorised to delete all or to delete our own user and are logged in as the user we're viewing
   push(@title_links, {
     image_uri => $c->uri_for("/static/images/icons/0005-Delete-icon-32.png"),
-    text      => $c->maketext("admin.delete-object", $encoded_username),
-    link_uri  => $c->uri_for_action("/users/delete", [$user->url_key]),
+    text => $c->maketext("admin.delete-object", $encoded_username),
+    link_uri => $c->uri_for_action("/users/delete", [$user->url_key]),
   }) if $c->stash->{authorisation}{user_delete_all} or ( $c->stash->{authorisation}{user_delete_own} and $c->user_exists and $c->user->id == $user->id );
+  
+  # Push an approve and a reject link if we're authorised to approve and the user isn't yet approved
+  push(@title_links, {
+    image_uri => $c->uri_for("/static/images/icons/0007-Tick-icon-32.png"),
+    text => $c->maketext("admin.approve-object", $encoded_username),
+    link_uri => $c->uri_for_action("/users/approve", [$user->url_key], {submit => "approve"}),
+  }, {
+    image_uri => $c->uri_for("/static/images/icons/0006-Cross-icon-32.png"),
+    text => $c->maketext("admin.reject-object", $encoded_username),
+    link_uri => $c->uri_for_action("/users/approve", [$user->url_key], {submit => "deny"}),
+  }) if $c->stash->{authorisation}{user_approve_new} and !$user->approved;
   
   $c->stash({
     template          => "html/users/view.ttkt",
@@ -346,6 +329,8 @@ sub register :Global {
       $c->uri_for("/static/script/standard/prettycheckable.js"),
       $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
       $c->uri_for("/static/script/standard/chosen.js"),
+      $c->uri_for("/static/script/plugins/autogrow/jquery.ns-autogrow.min.js"),
+      $c->uri_for("/static/script/standard/autogrow.js"),
     );
     
     # Push recaptcha script and set the flag if we need to
@@ -358,16 +343,16 @@ sub register :Global {
     }
     
     $c->stash({
-      template          => "html/users/register.ttkt",
-      external_scripts  => \@external_scripts,
-      external_styles     => [
+      template => "html/users/register.ttkt",
+      external_scripts => \@external_scripts,
+      external_styles => [
         $c->uri_for("/static/css/prettycheckable/prettyCheckable.css"),
         $c->uri_for("/static/css/chosen/chosen.min.css"),
       ],
-      subtitle1         => $c->maketext("user.register"),
-      reCAPTCHA         => $recaptcha,
-      timezones         => $timezones,
-      languages         => $c->config->{I18N}{locales},
+      subtitle1 => $c->maketext("user.register"),
+      reCAPTCHA => $recaptcha,
+      timezones => $timezones,
+      languages => $c->config->{I18N}{locales},
     });
   }
   
@@ -375,7 +360,7 @@ sub register :Global {
   
   # Breadcrumbs
   push(@{ $c->stash->{breadcrumbs} }, {
-    path  => $c->uri_for("/register"),
+    path => $c->uri_for("/register"),
     label => $c->maketext("user.register"),
   });
 }
@@ -453,11 +438,12 @@ sub setup_user :Private {
   my $occupation = $c->req->param( "occupation" );
   my $location = $c->req->param( "location" );
   my $hide_online = $c->req->param( "hide_online" );
+  my $registration_reason = $c->req->param( "registration_reason" );
   my $roles = $c->req->parameters->{roles};
   my $activation_expiry_limit = $c->config->{Users}{activation_expiry_limit};
   my $manual_approval = $c->config->{Users}{manual_approval} || 0;
+  my $require_reason = $c->config->{Users}{require_registration_reason} || 0;
   my $error;
-  $c->log->debug( "setup: $roles, ref: " . ref( $roles ) . ", dump: " . Dumper( $roles ) );
   
   if ( $action eq "register" and $c->config->{Google}{reCAPTCHA}{validate_on_register} ) {
     my $captcha_result = $c->forward( "TopTable::Controller::Root", "recaptcha" );
@@ -476,10 +462,10 @@ sub setup_user :Private {
     if ( $error ) {
       # If we couldn't validate the CAPTCHA, we need to redirect to the error page straight away
       # Flash the values we've got so we can set them
-      $c->flash->{username}               = $username;
-      $c->flash->{email_address}          = $email_address;
-      $c->flash->{confirm_email_address}  = $confirm_email_address;
-      $c->flash->{timezone}               = $timezone;
+      $c->flash->{username} = $username;
+      $c->flash->{email_address} = $email_address;
+      $c->flash->{confirm_email_address} = $confirm_email_address;
+      $c->flash->{timezone} = $timezone;
       
       $c->response->redirect( $c->uri_for_action("/users/register",
                                   {mid => $c->set_status_msg( {error => $error} ) }) );
@@ -525,9 +511,11 @@ sub setup_user :Private {
     hide_online => $hide_online,
     ip_address => $c->request->address,
     installed_languages => $c->config->{I18N}{locales},
+    registration_reason => $registration_reason,
     roles => $roles,
     editing_user => $c->user,
     manual_approval => $manual_approval,
+    require_reason => $require_reason,
     logger => sub{ my $level = shift; $c->log->$level( @_ ); },
   });
   
@@ -548,6 +536,7 @@ sub setup_user :Private {
     $c->flash->{language} = $language;
     $c->flash->{html_emails} = $html_emails;
     $c->flash->{timezone} = $timezone;
+    $c->flash->{registration_reason} = $registration_reason;
     $c->flash->{facebook} = $facebook;
     $c->flash->{twitter} = $twitter;
     $c->flash->{instagram} = $instagram;
@@ -559,12 +548,6 @@ sub setup_user :Private {
     $c->flash->{location} = $location;
     $c->flash->{hide_online} = $hide_online;
     $c->flash->{roles} = $roles;
-    $c->log->debug( sprintf( "roles ref: %s", ref( $roles ) ) );
-    
-    foreach my $role ( @$roles ) {
-      $c->log->debug( sprintf( "role in controller: %s, ref: %s", $role, ref( $role ) ) );
-    }
-    
     
     # If we're editing, the URI to redirect to is different
     my $redirect_uri;
@@ -588,10 +571,10 @@ sub setup_user :Private {
     if ( $action eq "register" ) {
       # Stash the confirmation screen details
       $c->stash({
-        username            => $username,
-        email_address       => $email_address,
+        username => $username,
+        email_address => $email_address,
         view_online_display => "Registering",
-        view_online_link    => 0,
+        view_online_link => 0,
       });
       
       # Set the locale before getting the email message text
@@ -602,24 +585,24 @@ sub setup_user :Private {
       
       # Set up the email send hash; we'll add to this if we're sending a HTML email
       my $send_options = {
-        to            => [ $email_address, $username ],
-        image         => [ $c->path_to( qw( root static images banner-logo-player-small.png ) )->stringify, "logo" ],
-        subject       => $subject,
-        plaintext     => $c->maketext("email.plain-text.users.activate-user", $username, $c->config->{name}, $c->uri_for_action("/users/activate", [$user->activation_key])),
+        to => [ $email_address, $username ],
+        image => [ $c->path_to( qw( root static images banner-logo-player-small.png ) )->stringify, "logo" ],
+        subject => $subject,
+        plaintext => $c->maketext("email.plain-text.users.activate-user", $username, $c->config->{name}, $c->uri_for_action("/users/activate", [$user->activation_key])),
       };
       
       if ( $html_emails ) {
         # Encode the HTML bits
-        my $html_site_name  = encode_entities( $c->config->{name} );
-        my $html_subject    = $c->maketext("email.subject.users.activate-user", $html_site_name, $html_username);
+        my $html_site_name = encode_entities( $c->config->{name} );
+        my $html_subject = $c->maketext("email.subject.users.activate-user", $html_site_name, $html_username);
         
         # Add the HTML parts of the email
-        $send_options->{htmltext}       = [ qw( html/generic/generic-message.ttkt :TT ) ];
-        $send_options->{template_vars}  = {
-          name                => $html_site_name,
-          home_uri            => $c->uri_for("/"),
-          email_subject       => $html_subject,
-          email_html_message  => $c->maketext("email.html.users.activate-user", $html_username, $html_site_name, $c->uri_for_action("/users/activate", [$user->activation_key])),
+        $send_options->{htmltext} = [ qw( html/generic/generic-message.ttkt :TT ) ];
+        $send_options->{template_vars} = {
+          name => $html_site_name,
+          home_uri => $c->uri_for("/"),
+          email_subject => $html_subject,
+          email_html_message => $c->maketext("email.html.users.activate-user", $html_username, $html_site_name, $c->uri_for_action("/users/activate", [$user->activation_key])),
         };
       }
       
@@ -627,9 +610,9 @@ sub setup_user :Private {
       $c->model("Email")->send( $send_options );
       
       $c->stash({
-        template  => "html/users/created.ttkt",
+        template => "html/users/created.ttkt",
         subtitle2 => $c->maketext("user.registration.success-header"),
-        user      => $user,
+        user => $user,
       });
     } else {
       $c->locale( $language ) if $response->{set_locale};
@@ -795,8 +778,8 @@ sub activate :Local :Args(1) {
           my ( $plain_text, $html_text );
           
           # Encode the HTML bits
-          my $html_site_name  = encode_entities( $c->config->{name} );
-          my $html_username   = encode_entities( $user->username );
+          my $html_site_name = encode_entities( $c->config->{name} );
+          my $html_username = encode_entities( $user->username );
           
           if ( $manual_approval ) {
             $plain_text = $c->maketext("email.plain-text.users.activated.approval-required", $user->username, $c->config->{name});
@@ -819,22 +802,22 @@ sub activate :Local :Args(1) {
           
           # Set up the email send hash; we'll add to this if we're sending a HTML email
           my $send_options = {
-            to            => [ $user->email_address, $user->username ],
-            image         => [ $c->path_to( qw( root static images banner-logo-player-small.png ) )->stringify, "logo" ],
-            subject       => $subject,
-            plaintext     => $plain_text,
+            to => [ $user->email_address, $user->username ],
+            image => [ $c->path_to( qw( root static images banner-logo-player-small.png ) )->stringify, "logo" ],
+            subject => $subject,
+            plaintext => $plain_text,
           };
           
           if ( $user->html_emails ) {
             my $html_subject    = $c->maketext("email.subject.users.activated", $html_username, $html_site_name, $c->uri_for("/login"));
             
             # Add the HTML parts of the email
-            $send_options->{htmltext}       = [ qw( html/generic/generic-message.ttkt :TT ) ];
-            $send_options->{template_vars}  = {
-              name                => $html_site_name,
-              home_uri            => $c->uri_for("/"),
-              email_subject       => $html_subject,
-              email_html_message  => $html_text,
+            $send_options->{htmltext} = [ qw( html/generic/generic-message.ttkt :TT ) ];
+            $send_options->{template_vars} = {
+              name => $html_site_name,
+              home_uri => $c->uri_for("/"),
+              email_subject => $html_subject,
+              email_html_message => $html_text,
             };
           }
           
@@ -850,18 +833,22 @@ sub activate :Local :Args(1) {
             
             my $subject = $c->maketext("email.subject.users.approve-user", $c->config->{name}, $user->username);
             my $html_subject = $c->maketext("email.subject.users.approve-user", $html_site_name, $html_username);
+            my $html_reason = encode_entities( $user->registration_reason );
+            
+            # Line breaks in HTML reason
+            $html_reason =~ s|(\r?\n)|<br />$1|g;
             
             my $approval_send_options = {
-              to            => [ $manual_approval_notification_email ],
-              image         => [ $c->path_to( qw( root static images banner-logo-player-small.png ) )->stringify, "logo" ],
-              subject       => $subject,
-              plaintext     => $c->maketext("email.plain-text.users.approve-user", $user->username, $c->config->{name}, $c->uri_for_action("/users/view", [$user->url_key]), $c->uri_for_action("/users/approval_list")),
-              htmltext      => [ qw( html/generic/generic-message.ttkt :TT ) ],
+              to => [ $manual_approval_notification_email ],
+              image => [ $c->path_to( qw( root static images banner-logo-player-small.png ) )->stringify, "logo" ],
+              subject => $subject,
+              plaintext => $c->maketext("email.plain-text.users.approve-user", $user->username, $c->config->{name}, $user->registration_reason, $c->uri_for_action("/users/view", [$user->url_key]), $c->uri_for_action("/users/approval_list")),
+              htmltext => [ qw( html/generic/generic-message.ttkt :TT ) ],
               template_vars => {
-                name                => $html_site_name,
-                home_uri            => $c->uri_for("/"),
-                email_subject       => $html_subject,
-                email_html_message  => $c->maketext("email.html.users.approve-user", $html_username, $html_site_name, $c->uri_for_action("/users/view", [$user->url_key]), , $c->uri_for_action("/users/approval_list")),
+                name => $html_site_name,
+                home_uri => $c->uri_for("/"),
+                email_subject => $html_subject,
+                email_html_message => $c->maketext("email.html.users.approve-user", $html_username, $html_site_name, $html_reason, $c->uri_for_action("/users/view", [$user->url_key]), , $c->uri_for_action("/users/approval_list")),
               },
             };
             
@@ -872,8 +859,9 @@ sub activate :Local :Args(1) {
           # Set the locale back if we changed it
           $c->locale( $original_locale ) if $original_locale ne $user->locale;
           
+          my $message = ( $manual_approval ) ? $c->maketext("user.activation.success-approval-needed") : $c->maketext("user.activation.success-login");
           $c->response->redirect( $c->uri_for("/login",
-                                      {mid => $c->set_status_msg( {success => $c->maketext("user.activation.success")} ) }) );
+                                      {mid => $c->set_status_msg( {success => $message} ) }) );
           $c->detach;
           return;
         }
@@ -1089,7 +1077,6 @@ sub approve :Chained("base") :PathPart("approve") :Args(0) {
       }
       
       # Email the user
-      $c->log->debug( sprintf( "Sending email to: %s (%s)", $username, $user->email_address ) );
       $c->model("Email")->send( $send_options );
       
       $c->locale( $original_locale ) if $c->locale ne $original_locale;
@@ -1114,7 +1101,7 @@ sub approve :Chained("base") :PathPart("approve") :Args(0) {
         $c->stash({user_error => $user_error});
         return;
       } else {
-        $c->response->redirect( $c->uri_for_action("/users/view", [$user->url_key],
+        $c->response->redirect( $c->uri_for_action("/users/list",
                                     {mid => $c->set_status_msg( {error => $c->build_message($user_error)} ) }) );
         $c->detach;
         return;
@@ -1128,7 +1115,7 @@ sub approve :Chained("base") :PathPart("approve") :Args(0) {
         $c->stash({user_success => [$msg]});
         return;
       } else {
-        $c->response->redirect( $c->uri_for_action("/users/list_first_page",
+        $c->response->redirect( $c->uri_for_action("/users/list",
                                     {mid => $c->set_status_msg( {success => $msg} ) }) );
         $c->detach;
         return;

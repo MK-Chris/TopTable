@@ -252,13 +252,15 @@ sub create_or_edit {
   my $occupation = delete $params->{occupation} || undef;
   my $location = delete $params->{location} || undef;
   my $timezone = delete $params->{timezone};
+  my $registration_reason = delete $params->{registration_reason};
   my $html_emails = delete $params->{html_emails};
   my $hide_online = delete $params->{hide_online};
   my $ip_address = delete $params->{ip_address};
   my $editing_user = delete $params->{editing_user};
   my $roles = delete $params->{roles};
   my $activation_expiry_limit = delete $params->{activation_expiry_limit} || 24;
-  my $manual_approval = delete $params->{manual_approval};
+  my $manual_approval = delete $params->{manual_approval} || 0;
+  my $require_reason = delete $params->{require_reason} || 0;
   my $installed_languages = delete $params->{installed_languages};
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $set_locale;
@@ -271,8 +273,8 @@ sub create_or_edit {
   # Check the username is valid
   if ( $action ne "register" and $action ne "edit" ) {
     push(@{ $response->{error} }, {
-      id          => "admin.form.invalid-action",
-      parameters  => [$action],
+      id => "admin.form.invalid-action",
+      parameters => [$action],
     });
     
     # This error is fatal, so we return straight away
@@ -418,6 +420,8 @@ sub create_or_edit {
     push(@{ $response->{error} }, {id => "user.form.error.timezone-blank"});
   }
   
+  push(@{ $response->{error} }, {id => "user.form.error.reason-blank"}) if $action eq "register" and $manual_approval and $require_reason and ( !defined( $registration_reason ) or !$registration_reason );
+  
   # Boolean sanity check - true = 1, false = 0
   $html_emails = ( $html_emails ) ? 1 : 0;
   
@@ -526,6 +530,7 @@ sub create_or_edit {
         activation_key => $activation_key,
         activated => 0,
         activation_expires => sprintf( "%s %s", $activation_expires->ymd, $activation_expires->hms ),
+        registration_reason => $registration_reason,
         user_roles => \@roles,
       };
       
@@ -592,7 +597,6 @@ sub create_or_edit {
         my $new_roles = Set::Object->new( @roles );
         my $roles_to_add = $new_roles->difference( $current_roles );
         my $roles_to_remove = $current_roles->difference( $new_roles );
-        $logger->( "debug", "current: %s, new: %s, add: %s, remove: %s", $current_roles->as_string, $new_roles->as_string, $roles_to_add->as_string, $roles_to_remove->as_string );
         
         # Get the arrays back
         my @roles_to_add = @$roles_to_add;

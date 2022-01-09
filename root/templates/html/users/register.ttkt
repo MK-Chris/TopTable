@@ -129,6 +129,14 @@ END;
 <input type="checkbox" name="html_emails" id="html_emails" value="1" data-label="[% c.maketext("user.field.html-emails") %]"[% html_emails_checked %] />
 <div class="clear-fix"></div>
 
+<div class="label-field-container">
+  <label for="registration_reason">[% c.maketext("user.field.registration-reason") %]</label>
+  <div class="field-container">
+    <textarea id="registration_reason" name="registration_reason" placeholder="[% c.maketext("user.field.registration-reason-desc") %]">[% c.flash.registration_reason | html_entity %]</textarea>
+  </div>
+  <div class="clear-fix"></div>
+</div>
+
 [%
 IF reCAPTCHA AND c.config.Google.reCAPTCHA.site_key;
 -%]

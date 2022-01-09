@@ -69,23 +69,23 @@ sub contact :Local {
   my $reasons = $c->model("DB::ContactReason")->all_reasons;
   
   $c->stash({
-    template            => "html/info/contact/form.ttkt",
-    subtitle1           => $c->maketext("menu.title.contact"),
-    form_action         => $c->uri_for_action("/info/do_contact"),
+    template => "html/info/contact/form.ttkt",
+    subtitle1 => $c->maketext("menu.title.contact"),
+    form_action => $c->uri_for_action("/info/do_contact"),
     view_online_display => "Sending an email",
-    view_online_link    => 1,
-    reasons             => [ $c->model("DB::ContactReason")->all_reasons ],
-    external_scripts    => [
+    view_online_link => 1,
+    reasons => [ $c->model("DB::ContactReason")->all_reasons ],
+    external_scripts => [
       $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
       $c->uri_for("/static/script/plugins/autogrow/jquery.ns-autogrow.min.js"),
       $c->uri_for("/static/script/standard/chosen.js"),
       $c->uri_for("/static/script/standard/autogrow.js"),
       $c->uri_for("/static/script/info/contact.js"),
     ],
-    external_styles     => [
+    external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
     ],
-    page_description    => $c->maketext("description.contact", $site_name),
+    page_description => $c->maketext("description.contact", $site_name),
   });
   
   if ( !$c->user_exists and $c->config->{Google}{reCAPTCHA}{validate_on_contact} and $c->config->{Google}{reCAPTCHA}{site_key} and $c->config->{Google}{reCAPTCHA}{secret_key} ) {
@@ -98,7 +98,7 @@ sub contact :Local {
   # Breadcrumbs links
   push( @{ $c->stash->{breadcrumbs} }, {
     # Clubs listing
-    path  => $c->uri_for("/info/contact"),
+    path => $c->uri_for("/info/contact"),
     label => $c->maketext("menu.title.contact"),
   });
 }
@@ -117,13 +117,13 @@ sub do_contact :Path("send-email") {
   # Handle the contact form and send the email if there are no errors.
   if ( $c->user_exists ) {
     # The user is logged in, take their details from their login.
-    $name           = $c->user->display_name;
-    $email_address  = $c->user->email_address;
+    $name = $c->user->display_name;
+    $email_address = $c->user->email_address;
   } else {
     # Not logged on, check we have the required form fields.
-    $first_name     = $c->request->parameters->{first_name};
-    $surname        = $c->request->parameters->{surname};
-    $email_address  = $c->request->parameters->{email_address};
+    $first_name = $c->request->parameters->{first_name};
+    $surname = $c->request->parameters->{surname};
+    $email_address = $c->request->parameters->{email_address};
     
     if ( !$c->user_exists and $c->config->{Google}{reCAPTCHA}{validate_on_contact} and $c->config->{Google}{reCAPTCHA}{site_key} and $c->config->{Google}{reCAPTCHA}{secret_key} ) {
       my $captcha_result = $c->forward( "TopTable::Controller::Root", "recaptcha" );
@@ -161,7 +161,7 @@ sub do_contact :Path("send-email") {
     }
   }
   
-  my $reason  = $c->model("DB::ContactReason")->check( $c->request->parameters->{reason} );
+  my $reason = $c->model("DB::ContactReason")->check( $c->request->parameters->{reason} );
   my $message = $c->request->parameters->{message};
   
   push(@errors, {id => "contact.form.error.reason-invalid"}) unless defined( $reason );
@@ -169,11 +169,11 @@ sub do_contact :Path("send-email") {
   
   if ( scalar( @errors ) ) {
     # Errors, flash the values and redirect back to the form
-    $c->flash->{first_name}     = $first_name;
-    $c->flash->{surname}        = $surname;
-    $c->flash->{email_address}  = $email_address;
-    $c->flash->{reason}         = $reason->id if defined( $reason );
-    $c->flash->{message}        = $message;
+    $c->flash->{first_name} = $first_name;
+    $c->flash->{surname} = $surname;
+    $c->flash->{email_address} = $email_address;
+    $c->flash->{reason} = $reason->id if defined( $reason );
+    $c->flash->{message} = $message;
     
     $c->response->redirect( $c->uri_for("/info/contact",
             {mid => $c->set_status_msg( {error => $c->build_message( \@errors ) } )}));
@@ -189,32 +189,32 @@ sub do_contact :Path("send-email") {
     }
     
     # Prepare values for HTML email
-    my $html_site_name  = encode_entities( $c->config->{name} );
-    my $html_name       = encode_entities( $name );
-    my $html_reason     = encode_entities( $reason->name );
-    my $html_email      = encode_entities( $email_address );
-    my $html_message    = encode_entities( $message );
+    my $html_site_name = encode_entities( $c->config->{name} );
+    my $html_name = encode_entities( $name );
+    my $html_reason = encode_entities( $reason->name );
+    my $html_email = encode_entities( $email_address );
+    my $html_message = encode_entities( $message );
     
     # Line breaks in HTML message
-    $html_message       =~ s|(\r?\n)|<br />$1|g;
+    $html_message =~ s|(\r?\n)|<br />$1|g;
     
     $c->model("Email")->send({
-      to            => $recipients,
-      reply         => [ $email_address, $name ],
-      image         => [ $c->path_to( qw( root static images banner-logo-player-small.png ) )->stringify, "logo" ],
-      subject       => $c->maketext("email.subject.contact-form", $c->config->{name}, $name, $reason->name),
-      plaintext     => $c->maketext("email.plain-text.contact-form", $c->config->{name}, $name, $email_address, $message),
-      htmltext      => [ qw( html/generic/generic-message.ttkt :TT ) ],
+      to => $recipients,
+      reply => [ $email_address, $name ],
+      image => [ $c->path_to( qw( root static images banner-logo-player-small.png ) )->stringify, "logo" ],
+      subject => $c->maketext("email.subject.contact-form", $c->config->{name}, $name, $reason->name),
+      plaintext => $c->maketext("email.plain-text.contact-form", $c->config->{name}, $name, $email_address, $message),
+      htmltext => [ qw( html/generic/generic-message.ttkt :TT ) ],
       template_vars => {
-        name                => $html_site_name,
-        home_uri            => $c->uri_for("/"),
-        email_subject       => $c->maketext("email.subject.contact-form", $html_site_name, $html_name, $html_reason),
-        email_html_message  => $c->maketext("email.html.contact-form", $html_site_name, $html_name, $html_email, $html_message),
+        name => $html_site_name,
+        home_uri => $c->uri_for("/"),
+        email_subject => $c->maketext("email.subject.contact-form", $html_site_name, $html_name, $html_reason),
+        email_html_message => $c->maketext("email.html.contact-form", $html_site_name, $html_name, $html_email, $html_message),
       },
     });
     
     $c->stash({
-      template  => "html/info/contact/thank-you.ttkt",
+      template => "html/info/contact/thank-you.ttkt",
       subtitle1 => $c->maketext("contact.thank-you.header", $html_name),
       user_name => $html_name,
     });
@@ -222,7 +222,7 @@ sub do_contact :Path("send-email") {
     # Breadcrumbs links
     push( @{ $c->stash->{breadcrumbs} }, {
       # Clubs listing
-      path  => $c->uri_for("/info/contact"),
+      path => $c->uri_for("/info/contact"),
       label => $c->maketext("menu.title.contact"),
     });
   }

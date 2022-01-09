@@ -247,6 +247,11 @@ __PACKAGE__->table("users");
   is_nullable: 1
   size: 45
 
+=head2 registration_reason
+
+  data_type: 'text'
+  is_nullable: 1
+
 =head2 activation_key
 
   data_type: 'varchar'
@@ -412,6 +417,8 @@ __PACKAGE__->add_columns(
   },
   "approved_by_name",
   { data_type => "varchar", is_nullable => 1, size => 45 },
+  "registration_reason",
+  { data_type => "text", is_nullable => 1 },
   "activation_key",
   { data_type => "varchar", is_nullable => 1, size => 64 },
   "activated",
@@ -676,8 +683,8 @@ Composing rels: L</user_roles> -> role
 __PACKAGE__->many_to_many("roles", "user_roles", "role");
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-12-24 10:18:55
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:WOzTCXSHETqY3bdE/vc15g
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2022-01-08 23:28:17
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:2pLWHw3m2PnbF4+m/HSFRg
 
 use Digest::SHA qw( sha256_hex );
 use Time::HiRes;
