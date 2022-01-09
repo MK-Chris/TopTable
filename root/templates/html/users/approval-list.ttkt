@@ -21,6 +21,7 @@ IF users.count;
         <th>[% c.maketext("user.field.date-registered") %]</th>
         <th>[% c.maketext("user.field.activated") %]</th>
         <th>[% c.maketext("user.field.activated") %]</th>
+        <th>[% c.maketext("user.field.registration-reason") %]</th>
         <th>[% c.maketext("user.field.roles") %]</th>
       </tr>
     <thead>
@@ -115,6 +116,7 @@ USER_PERSON_SORT_HTML;
       <td>[% USER_REGISTERED_FORMAT %]</td>
       <td><img src="[% ACTIVATED_IMG %]" alt="[% ACTIVATED_TITLE %]" title="[% ACTIVATED_TITLE %]" /></td>
       <td>[% user.activated %]</td>
+      <td>[% user.registration_reason | html_line_break %]</td>
       <td>[% ROLES OR "&nbsp;" %]</td>
     </tr>
 [%

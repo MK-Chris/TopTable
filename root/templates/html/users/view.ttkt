@@ -143,6 +143,74 @@ END;
 ROLES_TEXT
 -%]</td>
         </tr>
+[%
+# Only show activation / approval data if we're authorised to approve new users
+IF authorisation.user_approve_new;
+-%]
+        <tr>
+          <th>[% c.maketext("user.field.activated") %]</th>
+[%
+  IF user.activated;
+    SET ACTIVATED_IMG = c.uri_for("/static/images/icons/0007-Tick-icon-32.png");
+    SET ACTIVATED_TITLE = c.maketext("user.activated");
+  ELSE;
+    SET ACTIVATED_IMG = c.uri_for("/static/images/icons/0006-Cross-icon-32.png");
+    SET ACTIVATED_TITLE = c.maketext("user.not-activated");
+  END;
+-%]
+          <td><img src="[% ACTIVATED_IMG %]" alt="[% ACTIVATED_TITLE %]" title="[% ACTIVATED_TITLE %]" /></td>
+        </tr>
+        <tr>
+          <th>[% c.maketext("user.field.approved") %]</th>
+[%
+  IF user.approved;
+    SET APPROVED_IMG = c.uri_for("/static/images/icons/0007-Tick-icon-32.png");
+    SET APPROVED_TITLE = c.maketext("user.approved");
+  ELSE;
+    SET APPROVED_IMG = c.uri_for("/static/images/icons/0006-Cross-icon-32.png");
+    SET APPROVED_TITLE = c.maketext("user.not-approved");
+  END;
+-%]
+          <td><img src="[% APPROVED_IMG %]" alt="[% APPROVED_TITLE %]" title="[% APPROVED_TITLE %]" /></td>
+        </tr>
+[%
+  IF user.approved;
+-%]
+        <tr>
+          <th>[% c.maketext("user.field.approved-by") %]</th>
+          <td>
+[%-
+    
+    IF user.approved_by.id;
+-%]
+<a href="[% c.uri_for_action("/users/view", [user.approved_by.url_key]) %]">[% user.approved_by.username | html_entity %]</a>
+[%-
+    ELSIF user.approved_by_name;
+user.approved_by_name | html_entity;
+    ELSE;
+c.maketext("user.field.approved-by-auto");
+    END;
+-%]
+</td>
+        </tr>
+        <tr>
+          <th>[% c.maketext("user.field.registration-reason") %]</th>
+          <td>
+[%-
+    IF user.registration_reason;
+user.registration_reason | html_line_break;
+    ELSE;
+-%]
+&nbsp;
+[%-
+    END;
+-%]
+</td>
+        </tr>
+[%
+  END;
+END;
+-%]
       </table>
     </div>
     <div class="clear-fix"></div>
