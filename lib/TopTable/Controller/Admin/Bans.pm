@@ -85,6 +85,7 @@ sub base :Chained("/") :PathPart("admin/bans") :CaptureArgs(1) {
     });
   } else {
     # 404
+    $c->log->debug( sprintf( "couldn't find ban type: '%s'", $ban_type ) );
     $c->detach( qw/TopTable::Controller::Root default/ );
     return;
   }
