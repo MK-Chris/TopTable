@@ -66,10 +66,12 @@ sub base :Chained("/") :PathPart("admin/bans") :CaptureArgs(1) {
   my ( $self, $c, $ban_type_id ) = @_;
   
   my $ban_type = $c->model("DB::LookupBanType")->find( $ban_type_id );
+  $c->log->debug( sprintf( "finding ban type id: '%s'", $ban_type_id ) );
   
   if ( defined( $ban_type ) ) {
     # Club found, stash it, then stash the name / view URL in the breadcrumbs section of our stash
     my $ban_type_name =  $c->maketext( sprintf( "ban-type.%s", $ban_type->id ) );
+    $c->log->debug( sprintf( "found ban type: '%s'", $ban_type_name ) );
     
     $c->stash({
       ban_type => $ban_type,
@@ -85,7 +87,7 @@ sub base :Chained("/") :PathPart("admin/bans") :CaptureArgs(1) {
     });
   } else {
     # 404
-    $c->log->debug( sprintf( "couldn't find ban type: '%s'", $ban_type ) );
+    $c->log->debug( sprintf( "couldn't find ban type: '%s'", $ban_type_id ) );
     $c->detach( qw/TopTable::Controller::Root default/ );
     return;
   }
