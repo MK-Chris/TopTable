@@ -241,12 +241,12 @@ __PACKAGE__->belongs_to(
   "type",
   "TopTable::Schema::Result::LookupBanType",
   { id => "type" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "CASCADE" },
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2022-01-15 21:50:49
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:QlkzTyisyPohMSRjhYkOnQ
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2022-01-19 16:43:09
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:jJ2zkIZbBtnkSjrwD9SARQ
 
 # Enable automatic date handling
 __PACKAGE__->add_columns(
