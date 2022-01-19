@@ -58,22 +58,22 @@ END;
 <meta property="og:image" content="[% c.uri_for("/static/images/social/facebook.png") %]" />
 <!-- End social / SEO -->
 
-<link rel="apple-touch-icon"  sizes="57x57"   href="[% c.uri_for("/static/images/web-app/web-app-icon-57x57.png") %]" />
-<link rel="apple-touch-icon"  sizes="72x72"   href="[% c.uri_for("/static/images/web-app/web-app-icon-72x72.png") %]" />
-<link rel="apple-touch-icon"  sizes="76x76"   href="[% c.uri_for("/static/images/web-app/web-app-icon-76x76.png") %]" />
-<link rel="apple-touch-icon"  sizes="120x120" href="[% c.uri_for("/static/images/web-app/web-app-icon-120x120.png") %]" />
-<link rel="apple-touch-icon"  sizes="114x114" href="[% c.uri_for("/static/images/web-app/web-app-icon-144x144.png") %]" />
-<link rel="apple-touch-icon"  sizes="152x152" href="[% c.uri_for("/static/images/web-app/web-app-icon-152x152.png") %]" />
-<link rel="apple-touch-icon"  sizes="192x192" href="[% c.uri_for("/static/images/web-app/web-app-icon-192x192.png") %]" />
-<link rel="apple-touch-icon"  sizes="196x196" href="[% c.uri_for("/static/images/web-app/web-app-icon-196x196.png") %]" />
-<link rel="shortcut icon"     sizes="57x57"   href="[% c.uri_for("/static/images/web-app/web-app-icon-57x57.png") %]" />
-<link rel="shortcut icon"     sizes="72x72"   href="[% c.uri_for("/static/images/web-app/web-app-icon-72x72.png") %]" />
-<link rel="shortcut icon"     sizes="76x76"   href="[% c.uri_for("/static/images/web-app/web-app-icon-76x76.png") %]" />
-<link rel="shortcut icon"     sizes="120x120" href="[% c.uri_for("/static/images/web-app/web-app-icon-120x120.png") %]" />
-<link rel="shortcut icon"     sizes="114x114" href="[% c.uri_for("/static/images/web-app/web-app-icon-144x144.png") %]" />
-<link rel="shortcut icon"     sizes="152x152" href="[% c.uri_for("/static/images/web-app/web-app-icon-152x152.png") %]" />
-<link rel="shortcut icon"     sizes="192x192" href="[% c.uri_for("/static/images/web-app/web-app-icon-192x192.png") %]" />
-<link rel="shortcut icon"     sizes="196x196" href="[% c.uri_for("/static/images/web-app/web-app-icon-196x196.png") %]" />
+<link rel="apple-touch-icon" sizes="57x57" href="[% c.uri_for("/static/images/web-app/web-app-icon-57x57.png") %]" />
+<link rel="apple-touch-icon" sizes="72x72" href="[% c.uri_for("/static/images/web-app/web-app-icon-72x72.png") %]" />
+<link rel="apple-touch-icon" sizes="76x76" href="[% c.uri_for("/static/images/web-app/web-app-icon-76x76.png") %]" />
+<link rel="apple-touch-icon" sizes="120x120" href="[% c.uri_for("/static/images/web-app/web-app-icon-120x120.png") %]" />
+<link rel="apple-touch-icon" sizes="114x114" href="[% c.uri_for("/static/images/web-app/web-app-icon-144x144.png") %]" />
+<link rel="apple-touch-icon" sizes="152x152" href="[% c.uri_for("/static/images/web-app/web-app-icon-152x152.png") %]" />
+<link rel="apple-touch-icon" sizes="192x192" href="[% c.uri_for("/static/images/web-app/web-app-icon-192x192.png") %]" />
+<link rel="apple-touch-icon" sizes="196x196" href="[% c.uri_for("/static/images/web-app/web-app-icon-196x196.png") %]" />
+<link rel="shortcut icon" sizes="57x57" href="[% c.uri_for("/static/images/web-app/web-app-icon-57x57.png") %]" />
+<link rel="shortcut icon" sizes="72x72" href="[% c.uri_for("/static/images/web-app/web-app-icon-72x72.png") %]" />
+<link rel="shortcut icon" sizes="76x76" href="[% c.uri_for("/static/images/web-app/web-app-icon-76x76.png") %]" />
+<link rel="shortcut icon" sizes="120x120" href="[% c.uri_for("/static/images/web-app/web-app-icon-120x120.png") %]" />
+<link rel="shortcut icon" sizes="114x114" href="[% c.uri_for("/static/images/web-app/web-app-icon-144x144.png") %]" />
+<link rel="shortcut icon" sizes="152x152" href="[% c.uri_for("/static/images/web-app/web-app-icon-152x152.png") %]" />
+<link rel="shortcut icon" sizes="192x192" href="[% c.uri_for("/static/images/web-app/web-app-icon-192x192.png") %]" />
+<link rel="shortcut icon" sizes="196x196" href="[% c.uri_for("/static/images/web-app/web-app-icon-196x196.png") %]" />
 [%
 IF canonical_uri;
 -%]
@@ -84,8 +84,8 @@ END;
 
 <title>[% page_title %]</title>
 
-<link rel="stylesheet" href="[% c.uri_for('/static/css/main.css') %]?v10" type="text/css" media="screen" />
-<link rel="stylesheet" href="[% c.uri_for('/static/css/main-print.css') %]?v10" type="text/css" media="print" />
+<link rel="stylesheet" href="[% c.uri_for('/static/css/main.css') %]?v11" type="text/css" media="screen" />
+<link rel="stylesheet" href="[% c.uri_for('/static/css/main-print.css') %]?v11" type="text/css" media="print" />
 <link rel="stylesheet" href="[% c.uri_for('/static/css/jqueryui/jquery-ui.structure.min.css') %]" type="text/css" media="screen" />
 <link rel="stylesheet" href="[% c.uri_for('/static/css/jqueryui/jquery-ui.theme.min.css') %]" type="text/css" media="screen" />
 <link rel="stylesheet" href="[% c.uri_for('/static/css/smartmenus/sm-core-css.css') %]" type="text/css" media="screen" />
@@ -134,6 +134,9 @@ INCLUDE "html/calling-scripts.ttkt";
 <a href="[% c.uri_for("/") %]"><img class="banner-logo logo-tip" src="[% c.uri_for('/static/images/banner-logo-player-small.png') %]" alt="[% name %]" title="[% name %]" /></a>
 </div>
 
+[%
+IF !no_menu;
+%]
 <!-- START MENU -->
 <nav id="main-nav">
 <a id="menu-button"></a>
@@ -499,8 +502,54 @@ END;
     </ul>
   </li>
 [%
+IF authorisation.match_update OR authorisation.user_approve_new OR authorisation.admin_issue_bans;
+-%]
+  <li><a href="[% c.uri_for("/admin") %]" title="[% c.maketext("menu.admin.text.title") %]">[% c.maketext("menu.admin.text.title") %]</a>
+    <ul>
+[%
+  IF authorisation.match_update;
+-%]
+      <li>
+        <a href="javascript:void(0)" title="[% c.maketext("menu.text.fixtures-results") %]">[% c.maketext("menu.text.fixtures-results") %]</a>
+        <ul>
+          <li><a href="[% c.uri_for_action("/fixtures-results/view_outstanding_current_season") %]" title="[% c.maketext("fixtures-results.view.outstanding-scorecards") %]">[% c.maketext("fixtures-results.view.outstanding-scorecards") %]</a></li>
+        </ul>
+      </li>
+[%
+  END;
+  IF authorisation.user_approve_new;
+-%]
+      <li>
+        <a href="javascript:void(0)" title="[% c.maketext("menu.text.users") %]">[% c.maketext("menu.text.users") %]</a>
+        <ul>
+          <li><a href="[% c.uri_for_action("/users/approval_list") %]" title="[% c.maketext("user.list-to-approve") %]">[% c.maketext("user.list-to-approve") %]</a></li>
+        </ul>
+      </li>
+[%
+  END;
+  IF authorisation.admin_issue_bans;
+-%]
+      <li>
+        <a href="javascript:void(0)" title="[% c.maketext("menu.admin.text.bans") %]">[% c.maketext("menu.admin.text.bans") %]</a>
+        <ul>
+[%
+    WHILE ( ban_type = nav_ban_types.next );
+-%]
+          <li><a href="[% c.uri_for_action("/admin/bans/list", [ban_type.id]) %]" title="[% c.maketext("ban-type." _ ban_type.id) %]">[% c.maketext("ban-type." _ ban_type.id) %]</a></li>
+[%
+    END;
+-%]
+        </ul>
+      </li>
+[%
+  END;
+-%]
+    </ul>
+  </li>
+[%
+END;
 IF c.user_exists;
-%]
+-%]
   <li>
     <a href="[% c.uri_for("/logout") %]" title="[% c.maketext("user.logout") %] [% c.user.display_name | html_entity %]" class="right-menu-tip">[% c.maketext("user.logout") %] [ <b>[% c.user.username | html_entity %]</b> ]</a>
     <ul>
@@ -532,18 +581,19 @@ END;
 <!-- END MENU -->
 
 [%
-IF c.config.Search.enable_search_bar;
+  IF c.config.Search.enable_search_bar;
 -%]
 <!-- SEARCH BAR -->
 <form method="get" action="[% c.uri_for_action("/search/index") %]">
 <div class="field-container-search-right">
-  <input type="text" name="q" value="[% q %]" placeholder="[% c.maketext("search.form.placeholder", c.maketext("object.plural.search-all")) %]" autocomplete="off" class="search-box" id="site-search-box" />
+  <input type="search" name="q" value="[% q %]" placeholder="[% c.maketext("search.form.placeholder", c.maketext("object.plural.search-all")) %]" autocomplete="off" class="search-box" id="site-search-box" />
 </div>
 <div class="clear-fix"></div>
 </form>
 [%
-END;
--%]
+  END;
+END; # End of check for no_menu
+%]
 
 <div id="content">
 [%

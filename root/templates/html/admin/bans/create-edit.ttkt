@@ -1,0 +1,154 @@
+<form method="post" action="[% form_action %]">
+<fieldset id="ban-details">
+  <legend>[% c.maketext("admin.bans.form.legend.details") %]</legend>
+[%
+SWITCH ban_type.id;
+  CASE "email-address";
+    SET input_type = "email";
+  CASE;
+  SET input_type = "text";
+END;
+-%]
+  <div class="label-field-container">
+    <label for="banned_id">[% c.maketext("ban-type." _ ban_type.id) %]</label>
+    <div class="field-container">
+      <input type="[% input_type %]" id="banned_id" name="banned_id" value="[% c.flash.banned_id OR ban.banned_id OR c.req.param( ban_type.id ) | html_entity %]" />
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+[%
+EXPIRY_DATE = c.flash.expires_date.dmy("/") OR c.flash.expires_date OR ban.expiry.dmy("/");
+EXPIRY_DATE = FILTER html_entity; EXPIRY_DATE; END;
+-%]
+  <div class="label-field-container">
+    <label for="expires_date">[% c.maketext("admin.bans.field.expires") %] [% admin.bans.field.expires.desc %]</label>
+    <div class="field-container">
+      <input type="text" id="expires_date" name="expires_date" class="date_picker" autocomplete="off" value="[% EXPIRY_DATE %]" />
+      
+      <select id="expires_hour" class="time" name="expires_hour" data-placeholder="[% c.maketext("admin.bans.field.expires.placeholder-hour") %]">
+        <option value=""></option>
+[%
+# Work out if our fields are flashed
+IF c.flash.expires_hour;
+  SET EXPIRES_HOUR = c.flash.expires_hour;
+ELSE;
+  SET EXPIRES_HOUR = ban.expires.hour;
+END;
+
+SET COUNTER = 0;
+WHILE COUNTER <= 23;
+  IF COUNTER < 10;
+    SET COUNTER_DISPLAY = "0" _ COUNTER;
+  ELSE;
+    SET COUNTER_DISPLAY = COUNTER;
+  END;
+  # Now set selected text if needed;
+  IF COUNTER_DISPLAY == EXPIRES_HOUR;
+    SET SELECTED = ' selected="selected"';
+  ELSE;
+    SET SELECTED = '';
+  END;
+-%]
+        <option value="[% COUNTER_DISPLAY %]"[% SELECTED %]>[% COUNTER_DISPLAY %]</option>
+[%
+  SET COUNTER = COUNTER + 1;
+END;
+-%]
+      </select>:
+      <select id="expires_minute" class="time" name="expires_minute" data-placeholder="[% c.maketext("admin.bans.field.expires.placeholder-minute") %]">
+        <option value=""></option>
+[%
+# Work out if our fields are flashed
+IF c.flash.expires_minute;
+  SET EXPIRES_MINUTE = c.flash.expires_minute;
+ELSE;
+  SET EXPIRES_MINUTE = ban.expires.minute;
+END;
+
+SET COUNTER = 0;
+WHILE COUNTER <= 59;
+  IF COUNTER < 10;
+    # Set leading zeroes if needed;
+    SET COUNTER_DISPLAY = "0" _ COUNTER;
+  ELSE;
+    SET COUNTER_DISPLAY = COUNTER;
+  END;
+  # Now set selected text if needed;
+  IF COUNTER_DISPLAY == EXPIRES_MINUTE;
+    SET SELECTED = ' selected="selected"';
+  ELSE;
+    SET SELECTED = '';
+  END;
+-%]
+        <option value="[% COUNTER_DISPLAY %]"[% SELECTED %]>[% COUNTER_DISPLAY %]</option>
+[%
+  SET COUNTER = COUNTER + 1;
+END;
+-%]
+      </select>
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+  
+[%
+IF c.flash.show_flashed;
+  SET ban_access_checked = c.flash.ban_access;
+  SET ban_reg_checked = c.flash.ban_registration;
+  SET ban_login_checked = c.flash.ban_login;
+  SET ban_contact_checked = c.flash.ban_contact;
+ELSE;
+  SET ban_access_checked = ban.ban_access;
+  SET ban_reg_checked = ban.ban_registration;
+  SET ban_login_checked = ban.ban_login;
+  SET ban_contact_checked = ban.ban_contact;
+END;
+
+SWITCH ban_type.id;
+  CASE "ip-address";
+    IF ban_access_checked;
+      SET ban_access_checked = ' checked="checked"';
+    ELSE;
+      SET ban_access_checked = '';
+    END;
+-%]
+  <input type="checkbox" id="ban_access" name="ban_access" data-label="[% c.maketext("admin.bans.field.ban-access") %]" value="1"[% ban_access_checked %] />
+  <div class="clear-fix"></div>
+  
+[%
+END;
+
+SWITCH ban_type.id;
+  CASE ["ip-address", "email-address"];
+    IF ban_reg_checked;
+      SET ban_reg_checked = ' checked="checked"';
+    ELSE;
+      SET ban_reg_checked = '';
+    END;
+-%]
+  <input type="checkbox" id="ban_registration" name="ban_registration" data-label="[% c.maketext("admin.bans.field.ban-registration") %]" value="1"[% ban_reg_checked %] />
+  <div class="clear-fix"></div>
+  
+[%
+END;
+
+IF ban_login_checked;
+  SET ban_login_checked = ' checked="checked"';
+ELSE;
+  SET ban_login_checked = '';
+END;
+-%]
+  <input type="checkbox" id="ban_login" name="ban_login" data-label="[% c.maketext("admin.bans.field.ban-login") %]" value="1"[% ban_login_checked %] />
+  <div class="clear-fix"></div>
+  
+[%
+IF ban_contact_checked;
+  SET ban_contact_checked = ' checked="checked"';
+ELSE;
+  SET ban_contact_checked = '';
+END;
+-%]
+  <input type="checkbox" id="ban_contact" name="ban_contact" data-label="[% c.maketext("admin.bans.field.ban-contact") %]" value="1"[% ban_contact_checked %] />
+  <div class="clear-fix"></div>
+</fieldset>
+<input type="submit" name="Submit" value="[% c.maketext("form.button.save") %]" />
+</form>

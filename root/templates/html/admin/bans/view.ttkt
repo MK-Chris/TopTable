@@ -1,0 +1,121 @@
+[%-
+IF ban_type.id == "username";
+  SET banned_id = ban.banned.username;
+ELSE;
+  SET banned_id = ban.banned_id;
+END;
+
+IF ban.expires;
+  SET expiry_date = ban.expires;
+  CALL expiry_date.set_locale( c.locale );
+  SET expiry_date_text = expiry_date.dmy("/") _ " " _ expiry_date.hms;
+ELSE;
+  SET expiry_date_text = c.maketext("admin.bans.expiry.indefinite");
+END;
+
+IF ban.ban_access;
+  SET access_txt = c.maketext("msg.yes");
+ELSE;
+  SET access_txt = c.maketext("msg.no");
+END;
+
+IF ban.ban_registration;
+  SET reg_txt = c.maketext("msg.yes");
+ELSE;
+  SET reg_txt = c.maketext("msg.no");
+END;
+
+IF ban.ban_login;
+  SET login_txt = c.maketext("msg.yes");
+ELSE;
+  SET login_txt = c.maketext("msg.no");
+END;
+
+IF ban.ban_contact;
+  SET contact_txt = c.maketext("msg.yes");
+ELSE;
+  SET contact_txt = c.maketext("msg.no");
+END;
+
+IF ban.banned_by.id;
+  FILTER html_entity;
+    SET banned_by_name = ban.banned_by.username;
+  END;
+  SET banned_by_link = c.uri_for("/users/view", ban.banned_by.url_key);
+ELSE;
+  FILTER html_entity;
+    SET banned_by_name = ban.banned_by_name;
+  END;
+  SET banned_by_link = "";
+END;
+-%]
+<div class="table-wrap">
+  <div class="table-layout table-layout-centre">
+    <table class="vertical">
+      <tr>
+        <th>[% c.maketext("admin.bans.field.type") %]</th>
+        <td>[% c.maketext("ban-type." _ ban_type.id) %]</td>
+      </tr>
+      <tr>
+        <th>[% c.maketext("ban-type." _ ban_type.id) %]</th>
+        <td>
+[%-
+IF ban_type.id == "username";
+-%]
+<a href="[% c.uri_for_action("/users/view", [ban.banned.url_key]) %]">[% ban.banned.username | html_entity %]</a>
+[%-
+ELSE;
+  FILTER html_entity;
+    banned_id;
+  END;
+END;
+-%]
+</td>
+      </tr>
+      <tr>
+        <th>[% c.maketext("admin.bans.field.expires") %]</th>
+        <td>[% expiry_date_text %]</td>
+      </tr>
+[%
+SWITCH ban_type.id;
+  CASE "ip-address";
+-%]
+      <tr>
+        <th>[% c.maketext("admin.bans.field.ban-access") %]</th>
+        <td>[% access_txt %]</td>
+      </tr>
+[%
+END;
+
+SWITCH ban_type.id;
+  CASE ["ip-address", "email-address"];
+-%]
+      <tr>
+        <th>[% c.maketext("admin.bans.field.ban-registration") %]</th>
+        <td>[% reg_txt %]</td>
+      </tr>
+[%
+END;
+%]
+      <tr>
+        <th>[% c.maketext("admin.bans.field.ban-login") %]</th>
+        <td>[% login_txt %]</td>
+      </tr>
+      <tr>
+        <th>[% c.maketext("admin.bans.field.ban-contact") %]</th>
+        <td>[% contact_txt %]</td>
+      </tr>
+      <tr>
+        <th>[% c.maketext("admin.bans.field.banning-user") %]</th>
+        <td>
+[%-
+IF banned_by_link;
+  '<a href="' _ banned_by_link _ '">' _ banned_by_name _ '</a>';
+ELSE;
+  banned_by_name;
+END;
+-%]</td>
+      </tr>
+    </table>
+  </div>
+</div>

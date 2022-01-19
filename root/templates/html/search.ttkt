@@ -7,7 +7,7 @@ IF search_form_include;
 END;
 -%]
   <div class="field-container-search">
-    <input type="text" name="q" value="[% q %]" placeholder="[% placeholder %]" autocomplete="off" class="search-box" id="search-box" />
+    <input type="search" name="q" value="[% q %]" placeholder="[% placeholder %]" autocomplete="off" class="search-box" id="search-box" />
     <input type="submit" value="[% c.maketext("form.button.search") %]" class="btn btn-eac" />
   </div>
   <div class="clear-fix"></div>

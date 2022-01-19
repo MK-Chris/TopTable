@@ -1,0 +1,7 @@
+<form method="post" action="[% c.uri_for_action("/admin/bans/do_delete", [ban_type.id, ban.id]) %]">
+<input type="submit" name="Submit" value="[% c.maketext("form.button.delete") %]" />
+</form>
+
+[%
+INCLUDE "html/admin/bans/view.ttkt";
+%]

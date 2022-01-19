@@ -1682,8 +1682,8 @@ sub view_outstanding :Private {
   
   # Get the start / end date to look for matches; the start date will always be 1 and the end date will always be the last date of that particular month.
   $matches = $c->model("DB::TeamMatch")->incomplete_matches({
-    season            => $season,
-    date_cutoff       => $date_cutoff,
+    season => $season,
+    date_cutoff => $date_cutoff,
     #page_number       => $page_number,
     #results_per_page  => $c->config->{Pagination}{default_page_size},
   });
@@ -1723,14 +1723,14 @@ sub view_outstanding :Private {
   
   # Set up the template to use
   $c->stash({
-    template            => "html/fixtures-results/view-group-weeks.ttkt",
+    template => "html/fixtures-results/view-group-weeks.ttkt",
     view_online_display => $online_display,
-    view_online_link    => 1,
-    matches             => $matches,
-    $subtitle_field     => $c->maketext("fixtures-results.view.outstanding-scorecards"),
-    #page_info           => $page_info,
-    #page_links          => $page_links,
-    external_scripts    => [
+    view_online_link => 1,
+    matches => $matches,
+    $subtitle_field => $c->maketext("fixtures-results.view.outstanding-scorecards"),
+    #page_info => $page_info,
+    #page_links => $page_links,
+    external_scripts => [
       $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
       $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
@@ -1738,7 +1738,7 @@ sub view_outstanding :Private {
       $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
       $c->uri_for("/static/script/fixtures-results/view-group-weeks.js", {v => 2}),
     ],
-    external_styles     => [
+    external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
       $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
@@ -1749,7 +1749,7 @@ sub view_outstanding :Private {
   
   # Breadcrumbs links
   push( @{ $c->stash->{breadcrumbs} }, {
-    path  => $c->uri_for_action("/fixtures-results/view_outstanding_current_season"),
+    path => $c->uri_for_action("/fixtures-results/view_outstanding_current_season"),
     label => $c->maketext("fixtures-results.view.outstanding-scorecards"),
   });
 }

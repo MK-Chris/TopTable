@@ -318,6 +318,32 @@ sub register :Global {
     $c->detach;
     return;
   } else {
+    # Check we're not banned from registering - we can only check the IP address at this point,
+    # the email address is checked as part of the form submission (as well as a second check of the IP)
+    my $banned = $c->model("DB::Ban")->is_banned({
+      ip_address => $c->req->address,
+      level => "registration",
+      log_allowed => 1,
+      log_banned => 1,
+      logger => sub{ my $level = shift; $c->log->$level( @_ ); },
+      language => sub{ $c->maketext( @_ ); },
+    });
+    
+    # Log our responses
+    my @log_info = @{$banned->{log}{info}};
+    my @log_warning = @{$banned->{log}{warning}};
+    my @log_error = @{$banned->{log}{error}};
+    map( $c->log->error( $c->build_message( $_ ) ), @log_error );
+    map( $c->log->warning( $c->build_message( $_ ) ), @log_warning );
+    map( $c->log->info( $c->build_message( $_ ) ), @log_info );
+    
+    if ( $banned->{is_banned} ) {
+      $c->response->redirect( $c->uri_for("/",
+              {mid => $c->set_status_msg( {error => $c->maketext("user.form.error.registration-banned")} )}));
+      $c->detach;
+      return;
+    }
+    
     # Get the timezone categories, then map each timezone in that category with the category as the key to a hashref, value is an arrayref of countries
     my @tz_categories = DateTime::TimeZone->categories;
     my $timezones = {};
@@ -1139,20 +1165,45 @@ sub login :Global {
     $c->detach;
     return;
   } else {
+    # Check we're not banned from logging in - check the IP address, email address from the user record
+    # and user itself.
+    my $banned = $c->model("DB::Ban")->is_banned({
+      ip_address => $c->req->address,
+      level => "login",
+      log_allowed => 1,
+      log_banned => 1,
+      logger => sub{ my $level = shift; $c->log->$level( @_ ); },
+      language => sub{ $c->maketext( @_ ); },
+    });
+    
+    # Log our responses
+    my @log_info = @{$banned->{log}{info}};
+    my @log_warning = @{$banned->{log}{warning}};
+    my @log_error = @{$banned->{log}{error}};
+    map( $c->log->error( $c->build_message( $_ ) ), @log_error );
+    map( $c->log->warning( $c->build_message( $_ ) ), @log_warning );
+    map( $c->log->info( $c->build_message( $_ ) ), @log_info );
+    
+    if ( $banned->{is_banned} ) {
+      $c->response->redirect( $c->uri_for("/",
+              {mid => $c->set_status_msg( {error => $c->maketext("user.login.error.banned")} )}));
+      $c->detach;
+      return;
+    }
+    
     $c->stash({
-      template            => "html/users/login.ttkt",
-      external_scripts    => [
+      template => "html/users/login.ttkt",
+      external_scripts => [
         $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
         $c->uri_for("/static/script/standard/prettycheckable.js"),
         $c->uri_for("/static/script/users/login.js"),
       ],
-      external_styles     => [
+      external_styles => [
         $c->uri_for("/static/css/prettycheckable/prettyCheckable.css"),
       ],
-      form_action         => "login",
-      subtitle2           => $c->maketext("user.login"),
+      subtitle2 => $c->maketext("user.login"),
       view_online_display => "Logging in",
-      view_online_link    => 0,
+      view_online_link => 0,
     });
     
     # reCAPTCHA if we've had lots of invalid login attempts either on the user, IP address or session
@@ -1180,18 +1231,18 @@ Process the login request.
 
 sub do_login :Path("authenticate") {
   my ( $self, $c ) = @_;
-  my $username      = $c->request->parameters->{username};
-  my $password      = $c->request->parameters->{password};
-  my $redirect_uri  = $c->request->parameters->{redirect_uri};
-  my $remember_user = ( exists( $c->stash->{cookie_settings}{preferences} ) and $c->stash->{cookie_settings}{preferences} ) ? $c->request->parameters->{remember_username} : 0;
-  my $from_menu     = $c->request->parameters->{from_menu};
+  my $username = $c->req->param( "username" );
+  my $password = $c->req->param( "password" );
+  my $redirect_uri = $c->req->param( "redirect_uri" );
+  my $remember_user = ( exists( $c->stash->{cookie_settings}{preferences} ) and $c->stash->{cookie_settings}{preferences} ) ? $c->req->param( "remember_username" ) : 0;
+  my $from_menu = $c->req->param( "from_menu" );
   my ( $user );
   my $error = [];
   
   if ( $c->user_exists ) {
     # Logged in already
     $c->response->redirect( $c->uri_for("/",
-            {mid => $c->set_status_msg( {info => $c->maketext("user.login.error.already-logged-in")} )}));
+            {mid => $c->set_status_msg({info => $c->maketext("user.login.error.already-logged-in")} )}));
     $c->detach;
     return;
   } else {
@@ -1239,7 +1290,7 @@ sub do_login :Path("authenticate") {
         
         # If we couldn't validate the CAPTCHA, we need to redirect to the error page straight away
         # Flash the values we've got so we can set them
-        $c->flash->{username}     = $username;
+        $c->flash->{username} = $username;
         $c->flash->{redirect_uri} = $redirect_uri;
         $c->response->redirect( $c->uri_for("/login",
                                     {mid => $c->set_status_msg( {error => $c->build_message( $error )} ) }) );
@@ -1267,7 +1318,7 @@ sub do_login :Path("authenticate") {
       $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["user", "login-fail", {id => undef}, $username] );
       
       # Stash the values we've got so we can set them
-      $c->flash->{username}     = $username;
+      $c->flash->{username} = $username;
       $c->flash->{redirect_uri} = $redirect_uri;
       $c->response->redirect( $c->uri_for("/login",
                                   {mid => $c->set_status_msg( {error => $c->build_message( $error )} ) }) );
@@ -1278,6 +1329,34 @@ sub do_login :Path("authenticate") {
       $user = $c->model("DB::User")->find({username => $username});
       
       if ( defined( $user ) ) {
+        # Check we're not banned from logging in - check the IP address, email address from the user record
+        # and user itself.
+        my $banned = $c->model("DB::Ban")->is_banned({
+          ip_address => $c->req->address,
+          email_address => $user->email_address,
+          user => $user,
+          level => "login",
+          log_allowed => 1,
+          log_banned => 1,
+          logger => sub{ my $level = shift; $c->log->$level( @_ ); },
+          language => sub{ $c->maketext( @_ ); },
+        });
+        
+        # Log our responses
+        my @log_info = @{$banned->{log}{info}};
+        my @log_warning = @{$banned->{log}{warning}};
+        my @log_error = @{$banned->{log}{error}};
+        map( $c->log->error( $c->build_message( $_ ) ), @log_error );
+        map( $c->log->warning( $c->build_message( $_ ) ), @log_warning );
+        map( $c->log->info( $c->build_message( $_ ) ), @log_info );
+        
+        if ( $banned->{is_banned} ) {
+          $c->response->redirect( $c->uri_for("/",
+                  {mid => $c->set_status_msg( {error => $c->maketext("user.login.error.banned")} )}));
+          $c->detach;
+          return;
+        }
+        
         # User exists, check they're activated
         if ( $user->activated and $user->approved ) {
           # They are activated; process the login request.
@@ -1289,10 +1368,10 @@ sub do_login :Path("authenticate") {
             # Update user last visit data and reset invalid logins
             my $last_visited_date = $c->datetime_tz({time_zone => "UTC"});
             $c->user->update({
-              last_visit_date     => sprintf("%s %s", $last_visited_date->ymd, $last_visited_date->hms),
-              last_visit_ip       => $c->request->address,
-              invalid_logins      => 0,
-              last_invalid_login  => undef,
+              last_visit_date => sprintf("%s %s", $last_visited_date->ymd, $last_visited_date->hms),
+              last_visit_ip => $c->request->address,
+              invalid_logins => 0,
+              last_invalid_login => undef,
             });
             
             # Change the locale
@@ -1308,14 +1387,14 @@ sub do_login :Path("authenticate") {
               # If the user wants us to remember the username, set the cookie; if they've come from the menu and there's already a cookie set, we'll
               # assume we need to keep it.
               $c->response->cookies->{toptable_username} = {
-                value     => $c->user->username,
-                expires   => "+3M",
-                httponly  => 1,
+                value => $c->user->username,
+                expires => "+3M",
+                httponly => 1,
               };
             } else {
               # Otherwise, get rid of the cookie if it exists
               $c->response->cookies->{toptable_username} = {
-                value   => "",
+                value => "",
                 expires => "-1d",
               };
             }
@@ -1326,18 +1405,18 @@ sub do_login :Path("authenticate") {
             # If successful, then let them use the application
             # Redirect to wherever we earlier worked out we needed to go
             $c->stash({
-              template            => "html/users/logged-in-notice.ttkt",
-              subtitle2           => $c->maketext("user.login.success.header"),
+              template => "html/users/logged-in-notice.ttkt",
+              subtitle2 => $c->maketext("user.login.success.header"),
               view_online_display => "Logging in",
-              view_online_link    => 0,
-              meta_refresh        => {
-                time              => 5,
-                url               => $redirect_uri,
+              view_online_link => 0,
+              meta_refresh => {
+                time => 5,
+                url => $redirect_uri,
               },
-              status_msg          => {
-                success           => $c->maketext("user.login.success.status-message"),
+              status_msg => {
+                success => $c->maketext("user.login.success.status-message"),
               },
-              hide_breadcrumbs    => 1,
+              hide_breadcrumbs => 1,
             });
           } else {
             # Username or password incorrect
@@ -1810,20 +1889,12 @@ sub check_authorisation :Private {
   my ( $self, $c, $actions, $message_detail, $redirect ) = @_;
   my ( @roles, @role_names ) = ();
   my ( $anonymous_permission, $authorised );
-  #my $content_type = $c->request->parameters->{content_type} || "html";
   
-  # If the action is an array, we need to check for each
-  if ( ref( $actions ) eq "ARRAY" ) {
-    # It's an array - make sure $redirect is disabled (we can only check one permission with redirection on)
-    if ( $redirect ) {
-      # Redirection is on - turn it off and log an error
-      $redirect = 0;
-      $c->log->warning( "Can't call check_authorisation with \$redirect turned on when \$action is passed as an arrayref.  \$redirect will be turned off." );
-    }
-  } else {
-    # If it's not an array, turn it into one so we can avoid if statements with branches that essentially do the same thing
-    $actions = [ $actions ];
-  }
+  # This flag is used so we can check if we're authorised for anything - if it's still false at the end, we can do the redirection.
+  my $any_authorised = 0;
+    
+  # If $actions is not an array, turn it into one so we can avoid if statements with branches that essentially do the same thing
+  $actions = [ $actions ] unless ref( $actions ) eq "ARRAY";
   
   foreach my $action ( @{ $actions } ) {
     # If we've already called this function for this authorisation level, just move to the next item as there's no point doing it again
@@ -1832,13 +1903,14 @@ sub check_authorisation :Private {
     # First find out if we can do this anonymously
     $anonymous_permission = $c->model("DB::Role")->find({
       anonymous => 1,
-      $action   => 1,
+      $action => 1,
     });
     
     if ( defined( $anonymous_permission ) ) {
       # Can view anonymously, no need to check any other permissions
       # Stash the auth value if we're not redirecting on error.
-      $c->stash->{authorisation}{$action} = 1 if !$redirect;
+      $c->stash->{authorisation}{$action} = 1;
+      $any_authorised = 1;
     } elsif ( $c->user_exists ) {
       # We are logged in, so need to check we're in a user group that can view
       @roles = $c->model("DB::Role")->search({
@@ -1859,43 +1931,47 @@ sub check_authorisation :Private {
         # but it could be used in other areas (i.e., putting a create link on the nav
         # menu).
         $c->stash->{authorisation}{$action} = 1;
+        $any_authorised = 1;
       } else {
-        # Logged in, just error
-        if ( $redirect ) {
-          if ( $c->is_ajax ) {
-            $c->detach( "TopTable::Controller::Root", "json_error", [403, $c->maketext("user.auth.denied", $message_detail)] );
-          } else {
-            $c->response->status(403);
-            $c->response->redirect($c->uri_for("/",
-              {mid => $c->set_status_msg( {error => $c->maketext("user.auth.denied", $message_detail)} )}));
-            $c->detach;
-            return;
-          }
-        } else {
-          # Stash the auth value if we're not redirecting on error.
-          $c->stash->{authorisation}{$action} = 0;
-        }
+        # Logged in, stash that we're not authorised.
+        # We now do this whether or not we're redirecting, as we could be checking multiple values and still redirecting if we're not authorised for any of them
+        $c->stash->{authorisation}{$action} = 0;
       }
     } else {
-      # Not logged in and anonymous users are unauthorised; redirect to /login
-      if ( $redirect ) {
-        # Flash the requested page value, so we can return to the same page once the user has authenticated.
-        $c->flash->{redirect_uri} = $c->request->uri;
-        
-        # Redirect to the login page
-        # Logged in, just error
-        if ( $c->is_ajax ) {
-          $c->response->headers->header("WWW-Authenticate" => "FormBased");
-          $c->detach( "TopTable::Controller::Root", "json_error", [401, $c->maketext("user.auth.login", $message_detail)] );
-        } else {
-          $c->response->redirect($c->uri_for("/login",
-            {mid => $c->set_status_msg( {info => $c->maketext("user.auth.login", $message_detail)} )}));
-          $c->detach;
-          return;
-        }
+      # Not logged in and anonymous users are unauthorised
+      $c->stash->{authorisation}{$action} = 0;
+    }
+  }
+  
+  # If we're redirecting and NOTHING is authorised, do the redirection.  If we pass in multiple actions, we essentially only redirect if none are authorised.
+  # This enables the application to show a menu with the relevant authorised options, but redirect if nothing is authorised.
+  if ( $redirect and !$any_authorised ) {
+    if ( $c->user_exists ) {
+      # Logged in, access denied
+      if ( $c->is_ajax ) {
+        $c->detach( "TopTable::Controller::Root", "json_error", [403, $c->maketext("user.auth.denied", $message_detail)] );
       } else {
-        # Stash the auth value if we're not redirecting on error.
-        $c->stash->{authorisation}{$action} = 0;
+        $c->response->status(403);
+        $c->response->redirect($c->uri_for("/",
+          {mid => $c->set_status_msg( {error => $c->maketext("user.auth.denied", $message_detail)} )}));
+        $c->detach;
+        return;
+      }
+    } else {
+      # Not logged in, redirect to login page
+      # Flash the requested page value, so we can return to the same page once the user has authenticated.
+      $c->flash->{redirect_uri} = $c->request->uri;
+      
+      # Redirect to the login page
+      # Logged in, just error
+      if ( $c->is_ajax ) {
+        $c->response->headers->header("WWW-Authenticate" => "FormBased");
+        $c->detach( "TopTable::Controller::Root", "json_error", [401, $c->maketext("user.auth.login", $message_detail)] );
+      } else {
+        $c->response->redirect($c->uri_for("/login",
+          {mid => $c->set_status_msg( {info => $c->maketext("user.auth.login", $message_detail)} )}));
+        $c->detach;
+        return;
       }
     }
   }

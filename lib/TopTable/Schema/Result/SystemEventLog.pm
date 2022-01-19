@@ -161,6 +161,36 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
+=head2 system_event_log_banned_users
+
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::SystemEventLogBannedUser>
+
+=cut
+
+__PACKAGE__->has_many(
+  "system_event_log_banned_users",
+  "TopTable::Schema::Result::SystemEventLogBannedUser",
+  { "foreign.system_event_log_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+=head2 system_event_log_bans
+
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::SystemEventLogBan>
+
+=cut
+
+__PACKAGE__->has_many(
+  "system_event_log_bans",
+  "TopTable::Schema::Result::SystemEventLogBan",
+  { "foreign.system_event_log_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
 =head2 system_event_log_clubs
 
 Type: has_many
@@ -512,12 +542,12 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-11-11 10:18:13
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:kbR8ez5IPvRslNk1b6X5HA
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2022-01-16 23:47:11
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:DZxtHJYMjxrnV47d5BqvPg
 
-#
+use Data::Dumper::Concise;
+
 # Enable automatic date handling
-#
 __PACKAGE__->add_columns(
     "log_created",
     { data_type => "datetime", timezone => "UTC", set_on_create => 1, set_on_update => 0, datetime_undef_if_invalid => 1, is_nullable => 0, },
@@ -564,11 +594,12 @@ Groups all the related objects for this row into hashrefs of 'for_display', 'for
 =cut
 
 sub display_description {
-  my ( $self, $maximum_items_display, $maximum_items_tooltip ) = @_;
+  my ( $self, $maximum_items_display, $maximum_items_tooltip, $params ) = @_;
   
   # Maximum objects to display in the main text - default to 2 if not specified or invalid (non-numeric or less than 0)
   $maximum_items_display = 2 if !defined( $maximum_items_display ) or $maximum_items_display !~ /^\d+$/ or $maximum_items_display < 0;
   $maximum_items_tooltip = 10 if !defined( $maximum_items_tooltip ) or $maximum_items_tooltip !~ /^\d+$/ or $maximum_items_tooltip < 0;
+  #my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   
   # Returned objects will be a hashref like this:
   # $returned_objects = {
@@ -651,26 +682,30 @@ sub display_description {
       if ( $column =~ /^object_([a-z_]+)$/ ) {
         # Save away the stored value - the object relationship columns are set up such that the column name will always be "object_<relationship_name>", so that this can be extracted
         my $column_relation_accessor = $1;
+        $column_relation_accessor = "id" if ( $object_relation eq "system_event_log_bans" or $object_relation eq "system_event_log_banned_users" ) and $column eq "object_type"; 
+        #$logger->( "debug", sprintf( "column: $column: get value. ref: %s, rel accessor: $column_relation_accessor, accessor ref: %s", ref( $object->$column ), ref( $object->$column->$column_relation_accessor ) ) );
         
         # The pushed values is a list, as we may push more than one (if we have a date, for example)
         my @pushed_values = ();
         # Need to do some checks on what type of column this is
         if ( !ref( $object->$column ) ) {
           # The column is a straight link to an ID somewhere, just push the column value
-          $pushed_values[0] = $object->$column;
+          push( @pushed_values, $object->$column );
         } elsif ( ref( $object->$column ) eq "DateTime" ) {
           # A DateTime object needs to be returned in all its components (year, month, day)
-          @pushed_values = ( $object->$column->year, $object->$column->month, $object->$column->day );
+          push( @pushed_values, $object->$column->year, $object->$column->month, $object->$column->day );
         } elsif ( ref( $object->$column ) =~ /^TopTable::Model::DB::[A-Z][A-Za-z]+/ ) {
           # The column is a link to another column with a relationship (this table probably has multiple primary keys linking elsewhere)
           # In this case, we need to use the value in memory from the match as the relationship accessor for the actual value
           # We now need to check the ref of that to see what type of object it is
-          if ( ref( $object->$column->$column_relation_accessor ) eq "DateTime" ) {
+          if ( !ref( $object->$column->$column_relation_accessor ) ) {
+            push( @pushed_values, $object->$column->id );
+          } elsif ( ref( $object->$column->$column_relation_accessor ) eq "DateTime" ) {
             # A DateTime object needs to be returned in all its components (year, month, day)
-            @pushed_values = ( $object->$column->$column_relation_accessor->year, $object->$column->$column_relation_accessor->month, $object->$column->$column_relation_accessor->day );
+            push( @pushed_values, $object->$column->$column_relation_accessor->year, $object->$column->$column_relation_accessor->month, $object->$column->$column_relation_accessor->day );
           } elsif ( ref( $object->$column->$column_relation_accessor ) =~ /^TopTable::Model::DB::[A-Z][A-Za-z]+/ ) {
             # The object refers to another DB table - in this case, the accessor will always be 'id'
-            $pushed_values[0] = $object->$column->$column_relation_accessor->id;
+            push( @pushed_values, $object->$column->$column_relation_accessor->id );
           }
         }
         
@@ -681,8 +716,8 @@ sub display_description {
     
     # Push the name and ID(s) on to the specified hash's array
     push( @{ $returned_objects->{$hash_key} }, {
-      ids   => $ids,
-      name  => $object->name,
+      ids => $ids,
+      name => $object->name,
     });
   }
   

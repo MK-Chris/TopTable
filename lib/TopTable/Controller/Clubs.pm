@@ -426,7 +426,7 @@ sub view_seasons :Chained("view") :PathPart("seasons") :Args(0) {
 
 =head2 create
 
-Display a form to collect information for creating a club
+Display a form to collect information for creating a club.
 
 =cut
 
@@ -482,30 +482,30 @@ sub create :Local {
   
   # Get venues and people to list
   $c->stash({
-    template            => "html/clubs/create-edit.ttkt",
-    scripts             => [
+    template => "html/clubs/create-edit.ttkt",
+    scripts => [
       "tokeninput-standard",
     ],
-    external_scripts    => [
+    external_scripts => [
       $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
       $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js", {v => 2}),
       $c->uri_for("/static/script/standard/chosen.js"),
       $c->uri_for("/static/script/clubs/create-edit.js"),
     ],
-    external_styles     => [
+    external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
       $c->uri_for("/static/css/tokeninput/token-input-tt.css"),
     ],
-    venues              => $venues,
-    form_action         => $c->uri_for("do-create"),
-    subtitle2           => $c->maketext("admin.create"),
+    venues => $venues,
+    form_action => $c->uri_for("do-create"),
+    subtitle2 => $c->maketext("admin.create"),
     view_online_display => "Creating clubs",
-    view_online_link    => 0,
+    view_online_link => 0,
   });
   
   # Push the breadcrumbs links
   push( @{ $c->stash->{breadcrumbs} }, {
-    path  => $c->uri_for("/clubs/create"),
+    path => $c->uri_for("/clubs/create"),
     label => $c->maketext("admin.create"),
   });
 }

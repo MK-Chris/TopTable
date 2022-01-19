@@ -532,6 +532,51 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
+=head2 banned_users_banned
+
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::BannedUser>
+
+=cut
+
+__PACKAGE__->has_many(
+  "banned_users_banned",
+  "TopTable::Schema::Result::BannedUser",
+  { "foreign.banned_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+=head2 banned_users_banned_by
+
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::BannedUser>
+
+=cut
+
+__PACKAGE__->has_many(
+  "banned_users_banned_by",
+  "TopTable::Schema::Result::BannedUser",
+  { "foreign.banned_by" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+=head2 bans
+
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::Ban>
+
+=cut
+
+__PACKAGE__->has_many(
+  "bans",
+  "TopTable::Schema::Result::Ban",
+  { "foreign.banned_by" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
 =head2 news_articles
 
 Type: has_many
@@ -683,8 +728,8 @@ Composing rels: L</user_roles> -> role
 __PACKAGE__->many_to_many("roles", "user_roles", "role");
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2022-01-08 23:28:17
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:2pLWHw3m2PnbF4+m/HSFRg
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2022-01-15 21:50:49
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:XaoqzN7qRiHcD42jcvbGGA
 
 use Digest::SHA qw( sha256_hex );
 use Time::HiRes;
