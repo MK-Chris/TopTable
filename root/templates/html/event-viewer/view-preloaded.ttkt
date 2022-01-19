@@ -14,7 +14,7 @@
 [%
       IF authorisation.view_users_ip;
 %]
-      <th class="event-ip">[% c.maketext("system-event-log.heading.ip-address") %]</th>
+      <th class="event-ip">[% c.maketext("system-event-log.heading.ip") %]</th>
 [%
       END;
     END;

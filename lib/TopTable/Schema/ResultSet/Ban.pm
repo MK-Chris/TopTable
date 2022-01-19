@@ -140,10 +140,10 @@ sub create_or_edit {
   
   # Now check the other data.  banned_id is the actual value of what we want to ban,
   # so how we check depends on the ban type
-  if ( $ban_type eq "ip-address" ) {
+  if ( $ban_type eq "ip" ) {
     # IP address, check validity against a regex
     $banned_id_valid = $banned_id =~ /^((25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])\.){3}(25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9]?[0-9])$/ ? 1 : 0;
-  } elsif ( $ban_type eq "email-address" ) {
+  } elsif ( $ban_type eq "email" ) {
     $banned_id_valid = $banned_id =~ /^[-!#$%&\'*+\\.\/0-9=?A-Z^_`{|}~]+@([-0-9A-Z]+\.)+([0-9A-Z]){2,4}$/i ? 1 : 0;
     
     # Can't have a total access ban with email-address, so set that to 0 regardless
@@ -353,7 +353,7 @@ sub is_banned {
   
   if ( defined( $ip_address ) ) {
     my $ip_banned = $self->search({
-      type => "ip-address",
+      type => "ip",
       banned_id => $ip_address,
       "ban_$level" => 1,
       expires => [ -or => {
@@ -366,16 +366,16 @@ sub is_banned {
     if ( $ip_banned ) {
       # Banned by IP
       $is_banned = 1;
-      push(@log_info, $lang->( "admin.bans.lookup.banned", $lang->( "admin.bans.lookup.level.$level" ), $lang->( "admin.bans.lookup.type.ip-address" ), $ip_address )) if $log_banned;
+      push(@log_info, $lang->( "admin.bans.lookup.banned", $lang->( "admin.bans.lookup.level.$level" ), $lang->( "admin.bans.lookup.type.ip" ), $ip_address )) if $log_banned;
     } else {
       # Allowed by IP
-      push(@log_info, $lang->( "admin.bans.lookup.allowed", $lang->( "admin.bans.lookup.level.$level" ), $lang->( "admin.bans.lookup.type.ip-address" ), $ip_address )) if $log_allowed;
+      push(@log_info, $lang->( "admin.bans.lookup.allowed", $lang->( "admin.bans.lookup.level.$level" ), $lang->( "admin.bans.lookup.type.ip" ), $ip_address )) if $log_allowed;
     }
   }
   
   if ( defined( $email_address ) ) {
     my $email_banned = $self->search({
-      type => "email-address",
+      type => "email",
       banned_id => $email_address,
       "ban_$level" => 1,
       expires => [ -or => {
@@ -388,10 +388,10 @@ sub is_banned {
     if ( $email_banned ) {
       # Banned by email
       $is_banned = 1;
-      push(@log_info, $lang->( "admin.bans.lookup.banned", $lang->( "admin.bans.lookup.level.$level" ), $lang->( "admin.bans.lookup.type.email-address" ), $email_address )) if $log_banned;
+      push(@log_info, $lang->( "admin.bans.lookup.banned", $lang->( "admin.bans.lookup.level.$level" ), $lang->( "admin.bans.lookup.type.email" ), $email_address )) if $log_banned;
     } else {
       # Allowed by email
-      push(@log_info, $lang->( "admin.bans.lookup.allowed", $lang->( "admin.bans.lookup.level.$level" ), $lang->( "admin.bans.lookup.type.email-address" ), $email_address )) if $log_allowed;
+      push(@log_info, $lang->( "admin.bans.lookup.allowed", $lang->( "admin.bans.lookup.level.$level" ), $lang->( "admin.bans.lookup.type.email" ), $email_address )) if $log_allowed;
     }
   }
   

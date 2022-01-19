@@ -623,7 +623,7 @@ msgstr "Abbreviated name"
 msgid "clubs.field.name"
 msgstr "Name"
 
-msgid "clubs.field.email-address"
+msgid "clubs.field.email"
 msgstr "Email address"
 
 msgid "clubs.field.website"
@@ -1030,7 +1030,7 @@ msgstr "Mobile telephone"
 msgid "people.form.field.work-phone"
 msgstr "Work telephone"
 
-msgid "people.form.field.email-address"
+msgid "people.form.field.email"
 msgstr "Email address"
 
 msgid "people.form.field.gender"
@@ -1338,7 +1338,7 @@ msgstr "Google Maps location"
 msgid "venues.field.telephone"
 msgstr "Telephone number"
 
-msgid "venues.field.email-address"
+msgid "venues.field.email"
 msgstr "Email address"
 
 msgid "venues.none"
@@ -3420,7 +3420,7 @@ msgstr "First name"
 msgid "contact.form.field.surname"
 msgstr "Surname"
 
-msgid "contact.form.field.email-address"
+msgid "contact.form.field.email"
 msgstr "Email address"
 
 msgid "contact.form.field.reason"
@@ -3435,7 +3435,7 @@ msgstr "You are not currently allowed to use the contact form.  Please speak to 
 msgid "contact.form.error.no-first-name"
 msgstr "Please fill out your first name."
 
-msgid "contact.form.error.no-email-address"
+msgid "contact.form.error.no-email"
 msgstr "Please fill out your email address."
 
 msgid "contact.form.error.reason-invalid"
@@ -3498,10 +3498,10 @@ msgstr "Cannot edit: invalid ban specified."
 msgid "admin.bans.form.error.no-ban-type-given"
 msgstr "You must either pass in a valid ban type object or the ID for a valid ban type."
 
-msgid "admin.bans.form.error.invalid-ip-address"
+msgid "admin.bans.form.error.invalid-ip"
 msgstr "Please enter a valid IP address."
 
-msgid "admin.bans.form.error.invalid-email-address"
+msgid "admin.bans.form.error.invalid-email"
 msgstr "Please enter a valid email address."
 
 msgid "admin.bans.form.error.invalid-username"
@@ -3525,10 +3525,10 @@ msgstr "The expiry date cannot be in the past."
 msgid "admin.bans.form.error.no-levels-selected"
 msgstr "You must tick at least one of the options in order to create a ban."
 
-msgid "admin.issue-bans.ip-address"
+msgid "admin.issue-bans.ip"
 msgstr "Issue an IP address ban"
 
-msgid "admin.issue-bans.email-address"
+msgid "admin.issue-bans.email"
 msgstr "Issue an email address ban"
 
 msgid "admin.issue-bans.username"
@@ -3552,10 +3552,10 @@ msgstr "Login"
 msgid "admin.bans.lookup.level.contact"
 msgstr "Contact"
 
-msgid "admin.bans.lookup.type.ip-address"
+msgid "admin.bans.lookup.type.ip"
 msgstr "IP address"
 
-msgid "admin.bans.lookup.type.email-address"
+msgid "admin.bans.lookup.type.email"
 msgstr "email address"
 
 msgid "admin.bans.lookup.type.username"
@@ -4042,7 +4042,7 @@ msgstr "Retrieve username"
 msgid "user.field.username"
 msgstr "Username"
 
-msgid "user.field.ip-address"
+msgid "user.field.ip"
 msgstr "IP address"
 
 msgid "user.field.operating-system"
@@ -4075,10 +4075,10 @@ msgstr "New password"
 msgid "user.field.password-confirm"
 msgstr "Confirm password"
 
-msgid "user.field.email-address"
+msgid "user.field.email"
 msgstr "Email address"
 
-msgid "user.field.email-address-confirm"
+msgid "user.field.email-confirm"
 msgstr "Confirm email address"
 
 msgid "user.field.password-current"
@@ -4285,7 +4285,7 @@ msgstr "%1 has been successfully edited, but the warnings below should be noted.
 msgid "user.tokeninput.type-person-association"
 msgstr "Start typing a username to associate this person with a website login"
 
-msgid "user.retrieve-username.error.email-address-missing"
+msgid "user.retrieve-username.error.email-missing"
 msgstr "Please fill out your email address."
 
 msgid "user.retrieve-username.form-submit-notice"
@@ -4674,10 +4674,10 @@ msgid "cookie.types.analytics.description"
 msgstr "Cookies related to site visits, browser types, etc."
 
 ### Ban types
-msgid "ban-type.ip-address"
+msgid "ban-type.ip"
 msgstr "IP address"
 
-msgid "ban-type.email-address"
+msgid "ban-type.email"
 msgstr "Email address"
 
 msgid "ban-type.username"
@@ -4890,7 +4890,7 @@ msgstr "User"
 msgid "system-event-log.guest"
 msgstr "Guest"
 
-msgid "system-event-log.heading.ip-address"
+msgid "system-event-log.heading.ip"
 msgstr "IP address"
 
 msgid "system-event-log.heading.timestamp"

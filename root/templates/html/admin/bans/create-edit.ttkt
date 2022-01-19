@@ -3,7 +3,7 @@
   <legend>[% c.maketext("admin.bans.form.legend.details") %]</legend>
 [%
 SWITCH ban_type.id;
-  CASE "email-address";
+  CASE "email";
     SET input_type = "email";
   CASE;
   SET input_type = "text";
@@ -104,7 +104,7 @@ ELSE;
 END;
 
 SWITCH ban_type.id;
-  CASE "ip-address";
+  CASE "ip";
     IF ban_access_checked;
       SET ban_access_checked = ' checked="checked"';
     ELSE;
@@ -118,7 +118,7 @@ SWITCH ban_type.id;
 END;
 
 SWITCH ban_type.id;
-  CASE ["ip-address", "email-address"];
+  CASE ["ip", "email"];
     IF ban_reg_checked;
       SET ban_reg_checked = ' checked="checked"';
     ELSE;

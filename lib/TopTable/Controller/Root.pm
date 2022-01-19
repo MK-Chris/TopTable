@@ -114,7 +114,7 @@ sub begin :Private {
   my $banned = $c->model("DB::Ban")->is_banned({
     ip_address => $c->request->address,
     level => "access",
-    log_allowed => 1,
+    log_allowed => 0,
     log_banned => 1,
     logger => sub{ my $level = shift; $c->log->$level( @_ ); },
     language => sub{ $c->maketext( @_ ); },

@@ -299,7 +299,7 @@ sub create_or_edit {
       email_address => $email_address,
       level => "registration",
       log_allowed => 0,
-      log_banned => 0,
+      log_banned => 1,
     });
     
     # Log our responses

@@ -39,7 +39,7 @@ END;
     </div>
     
     <div class="label-field-container">
-      <label for="email_address">[% c.maketext("user.field.email-address") %]</label>
+      <label for="email_address">[% c.maketext("user.field.email") %]</label>
       <div class="field-container">
         <input type="text" id="email_address" name="email_address" value="[% c.flash.email_address OR user.email_address | html_entity %]" />
       </div>
@@ -47,7 +47,7 @@ END;
     </div>
     
     <div class="label-field-container">
-      <label for="confirm_email_address">[% c.maketext("user.field.email-address-confirm") %]</label>
+      <label for="confirm_email_address">[% c.maketext("user.field.email-confirm") %]</label>
       <div class="field-container">
         <input type="text" id="confirm_email_address" name="confirm_email_address" value="[% c.flash.email_address_confirm OR "" | html_entity %]" />
       </div>

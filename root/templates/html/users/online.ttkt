@@ -14,7 +14,7 @@ IF online_users.size;
 [%
   IF authorisation.view_users_ip;
 -%]
-      <th>[% c.maketext("user.field.ip-address") %]</th>
+      <th>[% c.maketext("user.field.ip") %]</th>
 [%
   END;
   IF authorisation.view_users_user_agent;

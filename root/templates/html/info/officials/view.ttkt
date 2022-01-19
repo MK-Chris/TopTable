@@ -29,7 +29,7 @@ IF officials.size;
     IF official.position_holder.email_address;
 %]
 <br />
-<b>[% people.form.field.email-address %]:</b> <a href="mailto:[% official.position_holder.email_address %]">[% official.position_holder.email_address %]</a>
+<b>[% people.form.field.email %]:</b> <a href="mailto:[% official.position_holder.email_address %]">[% official.position_holder.email_address %]</a>
 [%
     END;
 -%]

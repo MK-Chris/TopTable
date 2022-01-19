@@ -14,7 +14,7 @@ IF users.count;
 [%
 IF authorisation.user_edit_all OR authorisation.user_approve_new;
 -%]
-        <th>[% c.maketext("user.field.email-address") %]</th>
+        <th>[% c.maketext("user.field.email") %]</th>
 [%
 END;
 -%]

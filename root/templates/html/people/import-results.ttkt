@@ -19,7 +19,7 @@ IF c.flash.failed_rows.size;
       <th>[% c.maketext("people.form.field.home-phone") %]</th>
       <th>[% c.maketext("people.form.field.mobile-phone") %]</th>
       <th>[% c.maketext("people.form.field.work-phone") %]</th>
-      <th>[% c.maketext("people.form.field.email-address") %]</th>
+      <th>[% c.maketext("people.form.field.email") %]</th>
       <th>[% c.maketext("people.form.button.captain-of-club") %]</th>
       <th>[% c.maketext("people.form.button.captain-of-team") %]</th>
       <th>[% c.maketext("people.form.button.secretary-for") %]</th>
@@ -186,7 +186,7 @@ IF c.flash.successful_rows.size;
       <th>[% c.maketext("people.form.field.home-phone") %]</th>
       <th>[% c.maketext("people.form.field.mobile-phone") %]</th>
       <th>[% c.maketext("people.form.field.work-phone") %]</th>
-      <th>[% c.maketext("people.form.field.email-address") %]</th>
+      <th>[% c.maketext("people.form.field.email") %]</th>
       <th>[% c.maketext("people.form.button.captain-of-club") %]</th>
       <th>[% c.maketext("people.form.button.captain-of-team") %]</th>
       <th>[% c.maketext("people.form.button.secretary-for") %]</th>

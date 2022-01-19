@@ -11,7 +11,7 @@
 </div>
 
 <div class="label-field-container">
-  <label for="email_address">[% c.maketext("user.field.email-address") %]</label>
+  <label for="email_address">[% c.maketext("user.field.email") %]</label>
   <div class="field-container">
     <input type="email" id="email_address" name="email_address" value="[% c.flash.email_address | html_entity %]" />
   </div>
@@ -19,7 +19,7 @@
 </div>
 
 <div class="label-field-container">
-  <label for="confirm_email_address">[% c.maketext("user.field.email-address-confirm") %]</label>
+  <label for="confirm_email_address">[% c.maketext("user.field.email-confirm") %]</label>
   <div class="field-container">
     <input type="email" id="confirm_email_address" name="confirm_email_address" value="[% c.flash.confirm_email_address | html_entity %]" autocomplete="off" />
   </div>

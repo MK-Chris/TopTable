@@ -3,7 +3,7 @@
   <legend>[% c.maketext("user.retrieve-username") %]</legend>
   
   <div class="label-field-container">
-    <label for="email_address">[% c.maketext("user.field.email-address") %]</label>
+    <label for="email_address">[% c.maketext("user.field.email") %]</label>
     <div class="field-container">
       <input type="email" id="email_address" name="email_address" value="[% c.flash.email_address | html_entity %]" />
     </div>

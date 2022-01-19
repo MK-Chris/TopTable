@@ -23,7 +23,7 @@ END;
   </div>
   
   <div class="label-field-container">
-    <label for="email_address">[% c.maketext("contact.form.field.email-address") %]</label>
+    <label for="email_address">[% c.maketext("contact.form.field.email") %]</label>
     <div class="field-container">
 [%
 IF c.user_exists;

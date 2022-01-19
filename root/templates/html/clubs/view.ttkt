@@ -29,7 +29,7 @@ SET venue_html = venue.name | html_entity;
 [%
   IF club.email_address;
 -%]
-<b>[% c.maketext("clubs.field.email-address") %]:</b> <a href="mailto:[% club.email_address %]">[% club.email_address %]</a><br />
+<b>[% c.maketext("clubs.field.email") %]:</b> <a href="mailto:[% club.email_address %]">[% club.email_address %]</a><br />
 [%
   END;
   IF club.website;

@@ -70,7 +70,7 @@ sub contact :Local {
     ip_address => $c->req->address,
     user => $c->user,
     level => "contact",
-    log_allowed => 1,
+    log_allowed => 0,
     log_banned => 1,
     logger => sub{ my $level = shift; $c->log->$level( @_ ); },
     language => sub{ $c->maketext( @_ ); },
@@ -183,7 +183,7 @@ sub do_contact :Path("send-email") {
       
     } else {
       # Email missing
-      push(@errors, {id => "contact.form.error.no-email-address"});
+      push(@errors, {id => "contact.form.error.no-email"});
     }
   }
   
@@ -192,7 +192,7 @@ sub do_contact :Path("send-email") {
     email_address => $email_address,
     user => $user,
     level => "contact",
-    log_allowed => 1,
+    log_allowed => 0,
     log_banned => 1,
     logger => sub{ my $level = shift; $c->log->$level( @_ ); },
     language => sub{ $c->maketext( @_ ); },

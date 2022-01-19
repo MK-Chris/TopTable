@@ -46,7 +46,7 @@ END;
 IF authorisation.user_edit OR authorisation.user_approve_new OR c.user.id == user.id;
 %]
         <tr>
-          <th>[% c.maketext("user.field.email-address") %]</th>
+          <th>[% c.maketext("user.field.email") %]</th>
           <td><a href="mailto:[% user.email_address %]">[% user.email_address %]</a></td>
         </tr>
 [%

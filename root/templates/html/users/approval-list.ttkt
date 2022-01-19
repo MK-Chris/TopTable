@@ -12,7 +12,7 @@ IF users.count;
       <tr>
         <th><input type="checkbox" name="checkall" id="checkall" value="" /></th>
         <th>[% c.maketext("user.field.username") %]</th>
-        <th>[% c.maketext("user.field.email-address") %]</th>
+        <th>[% c.maketext("user.field.email") %]</th>
         <th>[% c.maketext("user.person.name") %]</th>
         <th>[% c.maketext("user.person.name") %]</th>
         <th>[% c.maketext("user.field.location") %]</th>

@@ -78,7 +78,7 @@ END;
       </tr>
 [%
 SWITCH ban_type.id;
-  CASE "ip-address";
+  CASE "ip";
 -%]
       <tr>
         <th>[% c.maketext("admin.bans.field.ban-access") %]</th>
@@ -88,7 +88,7 @@ SWITCH ban_type.id;
 END;
 
 SWITCH ban_type.id;
-  CASE ["ip-address", "email-address"];
+  CASE ["ip", "email"];
 -%]
       <tr>
         <th>[% c.maketext("admin.bans.field.ban-registration") %]</th>

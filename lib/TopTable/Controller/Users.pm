@@ -323,7 +323,7 @@ sub register :Global {
     my $banned = $c->model("DB::Ban")->is_banned({
       ip_address => $c->req->address,
       level => "registration",
-      log_allowed => 1,
+      log_allowed => 0,
       log_banned => 1,
       logger => sub{ my $level = shift; $c->log->$level( @_ ); },
       language => sub{ $c->maketext( @_ ); },
@@ -1170,7 +1170,7 @@ sub login :Global {
     my $banned = $c->model("DB::Ban")->is_banned({
       ip_address => $c->req->address,
       level => "login",
-      log_allowed => 1,
+      log_allowed => 0,
       log_banned => 1,
       logger => sub{ my $level = shift; $c->log->$level( @_ ); },
       language => sub{ $c->maketext( @_ ); },
@@ -1336,7 +1336,7 @@ sub do_login :Path("authenticate") {
           email_address => $user->email_address,
           user => $user,
           level => "login",
-          log_allowed => 1,
+          log_allowed => 0,
           log_banned => 1,
           logger => sub{ my $level = shift; $c->log->$level( @_ ); },
           language => sub{ $c->maketext( @_ ); },

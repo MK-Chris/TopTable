@@ -128,7 +128,7 @@ registration_date_html = FILTER html_entity; registration_date; END;
     </div>
     
     <div class="label-field-container">
-      <label for="email_address">[% c.maketext("people.form.field.email-address") %]</label>
+      <label for="email_address">[% c.maketext("people.form.field.email") %]</label>
       <div class="field-container">
         <input type="text" id="email_address" name="email_address" value="[% email_address_html %]" />
       </div>
