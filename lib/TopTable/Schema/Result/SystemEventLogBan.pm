@@ -1,12 +1,12 @@
 use utf8;
-package TopTable::Schema::Result::SystemEventLogAverageFilter;
+package TopTable::Schema::Result::SystemEventLogBan;
 
 # Created by DBIx::Class::Schema::Loader
 # DO NOT MODIFY THE FIRST PART OF THIS FILE
 
 =head1 NAME
 
-TopTable::Schema::Result::SystemEventLogAverageFilter
+TopTable::Schema::Result::SystemEventLogBan
 
 =cut
 
@@ -34,11 +34,11 @@ extends 'DBIx::Class::Core';
 
 __PACKAGE__->load_components("InflateColumn::DateTime", "TimeStamp", "PassphraseColumn");
 
-=head1 TABLE: C<system_event_log_average_filters>
+=head1 TABLE: C<system_event_log_ban>
 
 =cut
 
-__PACKAGE__->table("system_event_log_average_filters");
+__PACKAGE__->table("system_event_log_ban");
 
 =head1 ACCESSORS
 
@@ -56,6 +56,13 @@ __PACKAGE__->table("system_event_log_average_filters");
   is_foreign_key: 1
   is_nullable: 0
 
+=head2 object_type
+
+  data_type: 'varchar'
+  is_foreign_key: 1
+  is_nullable: 1
+  size: 20
+
 =head2 object_id
 
   data_type: 'integer'
@@ -69,7 +76,7 @@ __PACKAGE__->table("system_event_log_average_filters");
   is_nullable: 0
   size: 300
 
-Only used if there is no ID (i.e., if the club was deleted and is not available).
+Only used if there is no ID (i.e., if the ban was deleted and is not available).
 
 =head2 log_updated
 
@@ -102,6 +109,8 @@ __PACKAGE__->add_columns(
     is_foreign_key => 1,
     is_nullable => 0,
   },
+  "object_type",
+  { data_type => "varchar", is_foreign_key => 1, is_nullable => 1, size => 20 },
   "object_id",
   {
     data_type => "integer",
@@ -139,14 +148,34 @@ __PACKAGE__->set_primary_key("id");
 
 Type: belongs_to
 
-Related object: L<TopTable::Schema::Result::AverageFilter>
+Related object: L<TopTable::Schema::Result::Ban>
 
 =cut
 
 __PACKAGE__->belongs_to(
   "object",
-  "TopTable::Schema::Result::AverageFilter",
+  "TopTable::Schema::Result::Ban",
   { id => "object_id" },
+  {
+    is_deferrable => 1,
+    join_type     => "LEFT",
+    on_delete     => "SET NULL",
+    on_update     => "CASCADE",
+  },
+);
+
+=head2 object_type
+
+Type: belongs_to
+
+Related object: L<TopTable::Schema::Result::LookupBanType>
+
+=cut
+
+__PACKAGE__->belongs_to(
+  "object_type",
+  "TopTable::Schema::Result::LookupBanType",
+  { id => "object_type" },
   {
     is_deferrable => 1,
     join_type     => "LEFT",
@@ -171,8 +200,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-01-08 00:07:05
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:/KfxzLT1BQxQ5UUnH3BC4g
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2022-01-16 23:47:11
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:XJWGuQZmwGgnIpktILWfLg
 
 # Enable automatic date handling
 __PACKAGE__->add_columns(

@@ -1,0 +1,111 @@
+<a href="[% c.uri_for_action("/admin/bans/issue", [ban_type.id]) %]"><img src="[% c.uri_for("/static/images/icons/0009-Add-icon-48.png") %]" title="[% c.maketext("admin.create-object", c.maketext("object.singular.bans")) %]" /></a>
+[%
+IF bans.count;
+%]
+<table id="bans-list">
+  <thead>
+    <tr>
+      <th>[% c.maketext("ban-type." _ ban_type.id) %]</th>
+      <th>[% c.maketext("admin.bans.field.expires") %]</th>
+      <th>[% c.maketext("admin.bans.field.expires") %]</th>
+      <th>[% c.maketext("admin.bans.field.ban-access") %]</th>
+      <th>[% c.maketext("admin.bans.field.ban-registration") %]</th>
+      <th>[% c.maketext("admin.bans.field.ban-login") %]</th>
+      <th>[% c.maketext("admin.bans.field.ban-contact") %]</th>
+      <th>[% c.maketext("admin.bans.field.banning-user") %]</th>
+      <th>[% c.maketext("admin.bans.field.banning-user") %]</th>
+    </tr>
+  </thead>
+  <tbody>
+[%
+  WHILE (ban = bans.next);
+    IF ban_type.id == "username";
+      SET banned_id = ban.banned.username;
+    ELSE;
+      SET banned_id = ban.banned_id;
+    END;
+    
+    IF ban.expires;
+      SET expiry_date = ban.expires;
+      CALL expiry_date.set_locale( c.locale );
+      SET expiry_date_text = expiry_date.dmy("/") _ " " _ expiry_date.hms;
+      SET expiry_sort = expiry_date.ymd("") _ expiry_date.hms;
+    ELSE;
+      SET expiry_date_text = c.maketext("admin.bans.expiry.indefinite");
+      SET expiry_sort = c.maketext("admin.bans.expiry.indefinite");
+    END;
+    
+    IF ban.ban_access;
+      SET access_txt = c.maketext("msg.yes");
+    ELSE;
+      SET access_txt = c.maketext("msg.no");
+    END;
+
+    IF ban.ban_registration;
+      SET reg_txt = c.maketext("msg.yes");
+    ELSE;
+      SET reg_txt = c.maketext("msg.no");
+    END;
+
+    IF ban.ban_login;
+      SET login_txt = c.maketext("msg.yes");
+    ELSE;
+      SET login_txt = c.maketext("msg.no");
+    END;
+
+    IF ban.ban_contact;
+      SET contact_txt = c.maketext("msg.yes");
+    ELSE;
+      SET contact_txt = c.maketext("msg.no");
+    END;
+    
+    IF ban.banned_by.id;
+      FILTER html_entity;
+        SET banned_by_name = ban.banned_by.username;
+      END;
+      
+      SET banned_by_link = c.uri_for("/users/view", ban.banned_by.url_key);
+    ELSE;
+      FILTER html_entity;
+        SET banned_by_name = ban.banned_by_name;
+      END;
+      SET banned_by_link = "";
+    END;
+-%]
+    <tr>
+      <td><a href="[% c.uri_for_action("/admin/bans/view", [ban_type.id, ban.id]) %]">[% banned_id | html_entity %]</a>
+      <a href="[% c.uri_for_action("/admin/bans/edit", [ban_type.id, ban.id]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit") %]" title="[% c.maketext("admin.edit") %]" /></a>
+      <a href="[% c.uri_for_action("/admin/bans/delete", [ban_type.id, ban.id]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete") %]" title="[% c.maketext("admin.delete") %]" /></a></td>
+      <td>[% expiry_sort %]</td>
+      <td>[% expiry_date_text %]</td>
+      <td>[% access_txt %]</td>
+      <td>[% reg_txt %]</td>
+      <td>[% login_txt %]</td>
+      <td>[% contact_txt %]</td>
+      <td>[% banned_by_name %]</td>
+      <td>
+[%-
+IF banned_by_link;
+  '<a href="' _ banned_by_link _ '">' _ banned_by_name _ '</a>';
+ELSE;
+  banned_by_name;
+END;
+-%]
+</td>
+    </tr>
+[%
+  END;
+-%]
+  </tbody>
+</table>
+[%
+ELSE;
+%]
+<ul class="option-list">
+  <li>[% c.maketext("admin.bans.list.none") %]</li>
+</ul>
+[%
+END;
+%]
+<a href="[% c.uri_for_action("/admin/bans/issue", [ban_type.id]) %]"><img src="[% c.uri_for("/static/images/icons/0009-Add-icon-48.png") %]" title="[% c.maketext("admin.create-object", c.maketext("object.singular.bans")) %]" /></a>
+

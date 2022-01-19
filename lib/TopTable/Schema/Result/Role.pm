@@ -737,6 +737,7 @@ If 1 the person can create match reports involving teams the user is associated 
 
   data_type: 'tinyint'
   default_value: 0
+  extra: {unsigned => 1}
   is_nullable: 0
 
 =head2 venue_view
@@ -775,6 +776,13 @@ If 1 the person can create match reports involving teams the user is associated 
   is_nullable: 0
 
 =head2 index_edit
+
+  data_type: 'tinyint'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 0
+
+=head2 admin_issue_bans
 
   data_type: 'tinyint'
   default_value: 0
@@ -1454,7 +1462,12 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
   },
   "user_approve_new",
-  { data_type => "tinyint", default_value => 0, is_nullable => 0 },
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
   "venue_view",
   {
     data_type => "tinyint",
@@ -1491,6 +1504,13 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
   },
   "index_edit",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
+  "admin_issue_bans",
   {
     data_type => "tinyint",
     default_value => 0,
@@ -1568,8 +1588,8 @@ Composing rels: L</user_roles> -> user
 __PACKAGE__->many_to_many("users", "user_roles", "user");
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-12-07 14:03:01
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:/msb7kLU1I3nTZbth7CMUg
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2022-01-12 14:51:19
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:+AT0++ZQY2/i9nchoyP8XQ
 
 =head2 members
 

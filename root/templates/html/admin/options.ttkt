@@ -1,0 +1,26 @@
+<ul class="option-list">
+[%
+IF authorisation.match_update;
+-%]
+  <li class="heading">[% c.maketext("menu.text.fixtures-results") %]</li>
+  <li><a href="[% c.uri_for_action("/fixtures-results/view_outstanding_current_season") %]">[% c.maketext("fixtures-results.view.outstanding-scorecards") %]</a></li>
+[%
+END;
+IF authorisation.user_approve_new;
+-%]
+  <li class="heading">[% c.maketext("menu.text.users") %]</li>
+  <li><a href="[% c.uri_for_action("/users/approval_list") %]">[% c.maketext("user.list-to-approve") %]</a></li>
+[%
+END;
+IF authorisation.admin_issue_bans AND ban_types.count;
+-%]
+  <li class="heading">[% c.maketext("menu.admin.text.bans") %]</li>
+[%
+  WHILE (BAN_TYPE = ban_types.next);
+-%]
+  <li><a href="[% c.uri_for_action("/admin/bans/list", [BAN_TYPE.id]) %]">[% c.maketext("ban-type." _ BAN_TYPE.id) %]</a> <a href="[% c.uri_for_action("/admin/bans/issue", [BAN_TYPE.id]) %]"><img src="http://localhost:3000/static/images/icons/0009-Add-icon-16.png" title="[% c.maketext("admin.issue-bans." _ BAN_TYPE.id) %]" alt="[% c.maketext("admin.issue-bans." _ BAN_TYPE.id) %]" /></a></li>
+[%
+  END;
+END;
+-%]
+</ul>

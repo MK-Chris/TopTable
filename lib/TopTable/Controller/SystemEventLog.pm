@@ -119,11 +119,10 @@ sub load_events_js :Path("load.js") :Args(0) {
   # Get the name to order by
   $order_col = $c->req->param( "columns[$order_col][name]" );
   
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", [[ qw( view_users_ip system_event_log_view_all ) ], "", 0] );
+  $c->forward( "TopTable::Controller::Users", "check_authorisation", [[ qw( view_users_ip system_event_log_view_all admin_issue_bans ) ], "", 0] );
   
   # Work out if we can view all events or just public ones
   my $public_only = ( $c->stash->{authorisation}{system_event_log_view_all} and !exists( $c->request->parameters->{"suppress-private"} ) ) ? 0 : 1;
-  $c->log->debug( sprintf( "view all: %d, public only: %d", $c->stash->{authorisation}{system_event_log_view_all}, $public_only ) );
   
   my @events = $c->model("DB::SystemEventLog")->page_records({
     public_only => $public_only,

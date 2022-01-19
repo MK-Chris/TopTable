@@ -292,7 +292,29 @@ sub create_or_edit {
   # If the following fields are changed, we will need to check the 
   my ( $username_changed, $email_changed, $password_changed );
   
-  if ( $action eq "edit" ) {
+  if ( $action eq "register" ) {
+    # Check we're not banned from registering - check the IP passed in and the email entered; if either is banned, we error
+    my $banned = $self->result_source->schema->resultset("Ban")->is_banned({
+      ip_address => $ip_address,
+      email_address => $email_address,
+      level => "registration",
+      log_allowed => 0,
+      log_banned => 0,
+    });
+    
+    # Log our responses
+    my @log_info = @{$banned->{log}{info}};
+    my @log_warning = @{$banned->{log}{warning}};
+    my @log_error = @{$banned->{log}{error}};
+    map( $logger->( "error", $_->{id} ), @log_error );
+    map( $logger->( "warning", $_->{id} ), @log_warning );
+    map( $logger->( "info", $_->{id} ), @log_info );
+    
+    if ( $banned->{is_banned} ) {
+      push(@{ $response->{error} }, {id => "user.form.error.registration-banned"});
+      return $response;
+    }
+  } elsif ( $action eq "edit" ) {
     $username_changed = ( $username ne $user->username and $username_editable ) ? 1 : 0;
     $email_changed    = $email_address eq $user->email_address ? 0 : 1;
     $password_changed = $password eq "" ? 0 : 1; # We don't check this against the current password at the moment, if there is a password entered, assume it's changing

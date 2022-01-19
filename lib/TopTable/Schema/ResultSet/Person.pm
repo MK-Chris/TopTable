@@ -320,7 +320,7 @@ sub create_or_edit {
   my $season            = $parameters->{season};
   my $log               = $parameters->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.    
   
-  my ($dob_day, $dob_month, $dob_year)                            = split("/", $date_of_birth) if defined( $date_of_birth );
+  my ($dob_day, $dob_month, $dob_year) = split("/", $date_of_birth) if defined( $date_of_birth );
   my ($registration_day, $registration_month, $registration_year) = split("/", $registration_date) if defined( $registration_date );
   
   # Check the season is valid

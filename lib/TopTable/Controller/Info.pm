@@ -2,7 +2,7 @@ package TopTable::Controller::Info;
 use Moose;
 use namespace::autoclean;
 use HTML::Entities;
-use Email::Valid;
+#use Email::Valid;
 
 BEGIN { extends 'Catalyst::Controller'; }
 
@@ -47,10 +47,10 @@ sub index :Path :Args(0) {
   my ( $self, $c ) = @_;
   
   $c->stash({
-    template            => "html/info/options.ttkt",
+    template => "html/info/options.ttkt",
     view_online_display => "Viewing league information",
-    view_online_link    => 1,
-    external_scripts      => [
+    view_online_link => 1,
+    external_scripts => [
       $c->uri_for("/static/script/standard/option-list.js"),
     ],
   });
@@ -65,6 +65,31 @@ Display a contact form.  If the user is logged in, use their user information, o
 sub contact :Local {
   my ( $self, $c ) = @_;
   my $site_name = $c->stash->{encoded_site_name};
+  
+  my $banned = $c->model("DB::Ban")->is_banned({
+    ip_address => $c->req->address,
+    user => $c->user,
+    level => "contact",
+    log_allowed => 1,
+    log_banned => 1,
+    logger => sub{ my $level = shift; $c->log->$level( @_ ); },
+    language => sub{ $c->maketext( @_ ); },
+  });
+  
+  # Log our responses
+  my @log_info = @{$banned->{log}{info}};
+  my @log_warning = @{$banned->{log}{warning}};
+  my @log_error = @{$banned->{log}{error}};
+  map( $c->log->error( $c->build_message( $_ ) ), @log_error );
+  map( $c->log->warning( $c->build_message( $_ ) ), @log_warning );
+  map( $c->log->info( $c->build_message( $_ ) ), @log_info );
+  
+  if ( $banned->{is_banned} ) {
+    $c->response->redirect( $c->uri_for("/",
+            {mid => $c->set_status_msg( {error => $c->maketext("contact.form.error.banned")} )}));
+    $c->detach;
+    return;
+  }
   
   my $reasons = $c->model("DB::ContactReason")->all_reasons;
   
@@ -111,21 +136,22 @@ Send the email from someone sending the contact form.
 
 sub do_contact :Path("send-email") {
   my ( $self, $c ) = @_;
-  my ( $first_name, $surname, $name, $email_address );
+  my ( $first_name, $surname, $name, $email_address, $user );
   my @errors = ();
   
   # Handle the contact form and send the email if there are no errors.
   if ( $c->user_exists ) {
     # The user is logged in, take their details from their login.
-    $name = $c->user->display_name;
-    $email_address = $c->user->email_address;
+    $user = $c->user;
+    $name = $user->display_name;
+    $email_address = $user->email_address;
   } else {
     # Not logged on, check we have the required form fields.
-    $first_name = $c->request->parameters->{first_name};
-    $surname = $c->request->parameters->{surname};
-    $email_address = $c->request->parameters->{email_address};
+    $first_name = $c->req->param( "first_name" );
+    $surname = $c->req->param( "surname" );
+    $email_address = $c->req->param( "email_address" );
     
-    if ( !$c->user_exists and $c->config->{Google}{reCAPTCHA}{validate_on_contact} and $c->config->{Google}{reCAPTCHA}{site_key} and $c->config->{Google}{reCAPTCHA}{secret_key} ) {
+    if ( $c->config->{Google}{reCAPTCHA}{validate_on_contact} and $c->config->{Google}{reCAPTCHA}{site_key} and $c->config->{Google}{reCAPTCHA}{secret_key} ) {
       my $captcha_result = $c->forward( "TopTable::Controller::Root", "recaptcha" );
       
       if ( $captcha_result->{request_success} ) {
@@ -161,8 +187,34 @@ sub do_contact :Path("send-email") {
     }
   }
   
-  my $reason = $c->model("DB::ContactReason")->check( $c->request->parameters->{reason} );
-  my $message = $c->request->parameters->{message};
+  my $banned = $c->model("DB::Ban")->is_banned({
+    ip_address => $c->req->address,
+    email_address => $email_address,
+    user => $user,
+    level => "contact",
+    log_allowed => 1,
+    log_banned => 1,
+    logger => sub{ my $level = shift; $c->log->$level( @_ ); },
+    language => sub{ $c->maketext( @_ ); },
+  });
+  
+  # Log our responses
+  my @log_info = @{$banned->{log}{info}};
+  my @log_warning = @{$banned->{log}{warning}};
+  my @log_error = @{$banned->{log}{error}};
+  map( $c->log->error( $c->build_message( $_ ) ), @log_error );
+  map( $c->log->warning( $c->build_message( $_ ) ), @log_warning );
+  map( $c->log->info( $c->build_message( $_ ) ), @log_info );
+  
+  if ( $banned->{is_banned} ) {
+    $c->response->redirect( $c->uri_for("/",
+            {mid => $c->set_status_msg( {error => $c->maketext("contact.form.error.banned")} )}));
+    $c->detach;
+    return;
+  }
+  
+  my $reason = $c->model("DB::ContactReason")->check( $c->req->param( "reason" ) );
+  my $message = $c->req->param( "message" );
   
   push(@errors, {id => "contact.form.error.reason-invalid"}) unless defined( $reason );
   push(@errors, {id => "contact.form.error.no-message"}) unless $message;
@@ -203,13 +255,13 @@ sub do_contact :Path("send-email") {
       reply => [ $email_address, $name ],
       image => [ $c->path_to( qw( root static images banner-logo-player-small.png ) )->stringify, "logo" ],
       subject => $c->maketext("email.subject.contact-form", $c->config->{name}, $name, $reason->name),
-      plaintext => $c->maketext("email.plain-text.contact-form", $c->config->{name}, $name, $email_address, $message),
+      plaintext => $c->maketext("email.plain-text.contact-form", $c->config->{name}, $name, $email_address, $message, $c->request->address),
       htmltext => [ qw( html/generic/generic-message.ttkt :TT ) ],
       template_vars => {
         name => $html_site_name,
         home_uri => $c->uri_for("/"),
         email_subject => $c->maketext("email.subject.contact-form", $html_site_name, $html_name, $html_reason),
-        email_html_message => $c->maketext("email.html.contact-form", $html_site_name, $html_name, $html_email, $html_message),
+        email_html_message => $c->maketext("email.html.contact-form", $html_site_name, $html_name, $html_email, $html_message, $c->request->address),
       },
     });
     

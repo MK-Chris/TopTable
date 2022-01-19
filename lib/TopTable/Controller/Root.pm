@@ -12,10 +12,8 @@ use HTML::Entities;
 
 BEGIN { extends 'Catalyst::Controller' }
 
-#
 # Sets the actions in this controller to be registered with no prefix
 # so they function identically to actions created in TopTable.pm
-#
 __PACKAGE__->config(namespace => "");
 
 =encoding utf-8
@@ -104,8 +102,38 @@ sub begin :Private {
   $cookie_settings = ( defined( $cookie_settings ) ) ? decode_json( $cookie_settings ) : [];
   $c->stash({cookie_settings => { map{ $_ => 1 } @{ $cookie_settings } },});
   
-  # Housekeeping - unpin news articles where the pin expiry has passed
+  # Housekeeping - unpin news articles where the pin expiry has passed, delete expired password reset / activation keys and cleanup invalid logins, delete expired bans
   $c->model("DB::NewsArticle")->unpin_expired_pins;
+  $c->model("DB::InvalidLogin")->reset_expired_counts( $c->config->{Google}{reCAPTCHA}{invalid_login_time_threshold} );
+  $c->model("DB::User")->reset_expired_invalid_login_counts( $c->config->{Google}{reCAPTCHA}{invalid_login_time_threshold} );
+  $c->model("DB::Session")->reset_expired_invalid_login_counts( $c->config->{Google}{reCAPTCHA}{invalid_login_time_threshold} );
+  $c->model("DB::User")->delete_expired_keys;
+  $c->model("DB::Ban")->delete_expired_bans;
+  
+  # Check we're not banned from accessing the site; if we are, go straight for the forbidden page
+  my $banned = $c->model("DB::Ban")->is_banned({
+    ip_address => $c->request->address,
+    level => "access",
+    log_allowed => 1,
+    log_banned => 1,
+    logger => sub{ my $level = shift; $c->log->$level( @_ ); },
+    language => sub{ $c->maketext( @_ ); },
+  });
+  
+  #$c->log->debug( Dumper( $banned->{log} ) );
+  
+  # Log our responses
+  my @log_info = @{$banned->{log}{info}};
+  my @log_warning = @{$banned->{log}{warning}};
+  my @log_error = @{$banned->{log}{error}};
+  map( $c->log->error( $c->build_message( $_ ) ), @log_error );
+  map( $c->log->warning( $c->build_message( $_ ) ), @log_warning );
+  map( $c->log->info( $c->build_message( $_ ) ), @log_info );
+  
+  if ( $banned->{is_banned} ) {
+    $c->detach( "forbidden" );
+    return;
+  }
 }
 
 =head2 index
@@ -272,9 +300,32 @@ sub do_index_edit :Path("do-index-edit") :Args(0) {
   }
 }
 
+=head2 forbidden
+
+403 forbidden error page.
+
+=cut
+
+sub forbidden :Path {
+  my ( $self, $c ) = @_;
+  
+  # Set up the template to use
+  $c->stash({
+    template => "html/error/403.ttkt",
+    view_online_display => "Home",
+    view_online_link => 0,
+    subtitle1 => $c->maketext("page.error.heading"),
+    subtitle2 => $c->maketext("page.error.forbidden.heading"),
+    hide_breadcrumbs => 1, # Hide the breadcrumbs
+    no_menu => 1,
+  });
+  
+  $c->response->status( 403 );
+}
+
 =head2 default
 
-Standard 404 error page
+Standard 404 error page.
 
 =cut
 
@@ -283,15 +334,15 @@ sub default :Path {
   
   # Set up the template to use
   $c->stash({
-    template            => "html/error/404.ttkt",
+    template => "html/error/404.ttkt",
     view_online_display => "Home",
-    view_online_link    => 0,
-    subtitle1           => $c->maketext("page.error.heading"),
-    subtitle2           => $c->maketext("page.error.not-found.heading"),
-    hide_breadcrumbs    => 1, # Hide the breadcrumbs
+    view_online_link => 0,
+    subtitle1 => $c->maketext("page.error.heading"),
+    subtitle2 => $c->maketext("page.error.not-found.heading"),
+    hide_breadcrumbs => 1, # Hide the breadcrumbs
   });
   
-  $c->response->status(404);
+  $c->response->status( 404 );
 }
 
 =head2 end
@@ -315,6 +366,11 @@ sub end :ActionClass("RenderView") {
       season            => $current_season,
     }) ] if defined( $current_season );
     my $venues          = [ $c->model("DB::Venue")->all_venues ];
+    
+    # Check admin authorisation for showing an admin menu
+  $c->forward( "TopTable::Controller::Users", "check_authorisation", [[ qw( match_update user_approve_new admin_issue_bans ) ], "", 0] );
+  
+  my $nav_ban_types = $c->model("DB::LookupBanType")->all_types if $c->stash->{authorisation}{admin_issue_bans};
     
     # See if we need to stash the search script; first grab the external scripts
     my $scripts = $c->stash->{scripts} || [];
@@ -343,12 +399,13 @@ sub end :ActionClass("RenderView") {
       wrapper => "html/wrappers/responsive.ttkt",
       
       # Nav elements
-      nav_current_season      => $current_season,
-      archived_seasons        => [ $c->model("DB::Season")->get_archived ],
-      archived_seasons_count  => $c->model("DB::Season")->get_archived->count,
-      nav_clubs               => $clubs,
-      nav_venues              => $venues,
-      nav_events              => $events,
+      nav_current_season => $current_season,
+      archived_seasons  => [ $c->model("DB::Season")->get_archived ],
+      archived_seasons_count => $c->model("DB::Season")->get_archived->count,
+      nav_clubs => $clubs,
+      nav_venues => $venues,
+      nav_events => $events,
+      nav_ban_types => $nav_ban_types,
       
       # Stash the new external scripts (everything previously stashed should be preserved)
       scripts => $scripts,
@@ -356,10 +413,8 @@ sub end :ActionClass("RenderView") {
       external_styles => $external_styles,
     });
     
-    # Check the authorisation for creation of clubs
-    $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( club_view club_create event_view event_create season_view season_create venue_view venue_create meeting_view ) ], "", 0 ] );
-    $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( team_create team_view ) ], "", 0 ] ) if $c->config->{Menu}{show_teams};
-    $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( person_create person_view ) ], "", 0 ] ) if $c->config->{Menu}{show_players};
+    # Check the authorisation for showing / creating clubs, events, seasons, venues, meetings, teams and people.
+    $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( club_view club_create event_view event_create season_view season_create venue_view venue_create meeting_view team_create team_view person_create person_view ) ], "", 0 ] );
   }
   
   unless ( $c->stash->{no_wrapper} or $c->is_ajax ) {
@@ -373,15 +428,15 @@ sub end :ActionClass("RenderView") {
     # Check if we have a user
     if ( $c->user_exists ) {
       # User logged in, use the values from the user record
-      $user         = $c->user->id;
-      $hide_online  = $c->user->hide_online;
+      $user = $c->user->id;
+      $hide_online = $c->user->hide_online;
       
       # User last active stuff
       $c->user->update({last_active_date => sprintf("%s %s", $last_active_datetime->ymd, $last_active_datetime->hms) });
     } else {
       # Not logged in, user ID is null, view online is true
-      $user         = undef;
-      $hide_online  = 0;
+      $user = undef;
+      $hide_online = 0;
     }
     
     my $session_data = {};
@@ -397,18 +452,18 @@ sub end :ActionClass("RenderView") {
     if ( !exists( $c->stash->{skip_view_online} ) and exists( $c->stash->{view_online_display} ) and $c->request->path !~ /\.js$/ ) {
       # The title bar will always have
       # Set last active date to UTC
-      $session_data->{user}                 = $user;
-      $session_data->{ip_address}           = $c->request->address;
-      $session_data->{user_agent}           = $c->stash->{user_agent}->id;
-      $session_data->{locale}               = $c->locale;
-      $session_data->{path}                 = $c->request->path;
-      $session_data->{view_online_display}  = $c->stash->{view_online_display};
-      $session_data->{view_online_link}     = $c->stash->{view_online_link};
-      $session_data->{hide_online}          = $hide_online;
-      $session_data->{secure}               = $c->request->secure;
-      $session_data->{query_string}         = $c->request->uri->query;
-      $session_data->{client_hostname}      = $c->request->hostname;
-      $session_data->{referrer}             = $c->request->referer;
+      $session_data->{user} = $user;
+      $session_data->{ip_address} = $c->request->address;
+      $session_data->{user_agent} = $c->stash->{user_agent}->id;
+      $session_data->{locale} = $c->locale;
+      $session_data->{path} = $c->request->path;
+      $session_data->{view_online_display} = $c->stash->{view_online_display};
+      $session_data->{view_online_link} = $c->stash->{view_online_link};
+      $session_data->{hide_online} = $hide_online;
+      $session_data->{secure} = $c->request->secure;
+      $session_data->{query_string} = $c->request->uri->query;
+      $session_data->{client_hostname} = $c->request->hostname;
+      $session_data->{referrer} = $c->request->referer;
     }
     
     $session_data->{last_active} = sprintf( "%s %s", $last_active_datetime->ymd, $last_active_datetime->hms );
@@ -422,12 +477,6 @@ sub end :ActionClass("RenderView") {
       $session_data->{id} = "session:" . $c->sessionid;
       $c->model("DB::Session")->create( $session_data );
     }
-    
-    # General housekeeping - delete expired password reset / activation keys and cleanup invalid logins
-    $c->model("DB::InvalidLogin")->reset_expired_counts( $c->config->{Google}{reCAPTCHA}{invalid_login_time_threshold} );
-    $c->model("DB::User")->reset_expired_invalid_login_counts( $c->config->{Google}{reCAPTCHA}{invalid_login_time_threshold} );
-    $c->model("DB::Session")->reset_expired_invalid_login_counts( $c->config->{Google}{reCAPTCHA}{invalid_login_time_threshold} );
-    $c->model("DB::User")->delete_expired_keys;
     
     # Add IE rendering header
     $c->response->headers->header("X-UA-Compatible", "IE=edge,chrome=1");

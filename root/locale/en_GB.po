@@ -357,6 +357,13 @@ msgstr "Reports"
 msgid "menu.title.reports"
 msgstr "Reports"
 
+## Admin
+msgid "menu.admin.text.title"
+msgstr "Admin"
+
+msgid "menu.admin.text.bans"
+msgstr "Bans"
+
 ### Home page
 msgid "home-page.welcome"
 msgstr "Welcome"
@@ -3422,6 +3429,9 @@ msgstr "Contact reason"
 msgid "contact.form.field.message"
 msgstr "Message"
 
+msgid "contact.form.error.banned"
+msgstr "You are not currently allowed to use the contact form.  Please speak to the site administrator if you believe this to be an error."
+
 msgid "contact.form.error.no-first-name"
 msgstr "Please fill out your first name."
 
@@ -3443,6 +3453,122 @@ msgstr "Thank you for your message, %1.  We will respond in due course."
 ### Officials
 msgid "officials.none"
 msgstr "No officials to view."
+
+### Admin
+## Bans
+msgid "admin.bans.form.legend.details"
+msgstr "Ban details"
+
+msgid "admin.bans.field.type"
+msgstr "Ban type"
+
+msgid "admin.bans.field.expires"
+msgstr "Expiry date / time"
+
+msgid "admin.bans.field.expires.desc"
+msgstr "(leave blank for an indefinite ban)"
+
+msgid "admin.bans.expiry.indefinite"
+msgstr "Indefinite"
+
+msgid "admin.bans.field.expires.placeholder-hour"
+msgstr "Hour"
+
+msgid "admin.bans.field.expires.placeholder-minute"
+msgstr "Minute"
+
+msgid "admin.bans.field.ban-access"
+msgstr "Complete website access ban"
+
+msgid "admin.bans.field.ban-registration"
+msgstr "Ban registration"
+
+msgid "admin.bans.field.ban-login"
+msgstr "Ban login"
+
+msgid "admin.bans.field.ban-contact"
+msgstr "Ban use of the contact form"
+
+msgid "admin.bans.field.banning-user"
+msgstr "Banned by"
+
+msgid "admin.bans.form.error.ban-invalid"
+msgstr "Cannot edit: invalid ban specified."
+
+msgid "admin.bans.form.error.no-ban-type-given"
+msgstr "You must either pass in a valid ban type object or the ID for a valid ban type."
+
+msgid "admin.bans.form.error.invalid-ip-address"
+msgstr "Please enter a valid IP address."
+
+msgid "admin.bans.form.error.invalid-email-address"
+msgstr "Please enter a valid email address."
+
+msgid "admin.bans.form.error.invalid-username"
+msgstr "Please enter a valid username."
+
+msgid "admin.bans.form.error.expiry-date-invalid"
+msgstr "The expiry date is not a valid date."
+
+msgid "admin.bans.form.error.expires-hour-invalid"
+msgstr "The expiry date hour value is invalid; it must be selected from the list (&#39;00&#39; to &#39;23&#39;), or left blank to expire the ban at midnight on the date given; if the date is left blank (for an indefinite ban), the time must also be blank."
+
+msgid "admin.bans.form.error.expires-minute-invalid"
+msgstr "The default match start minute value is invalid; it must be selected from the list (&#39;00&#39; to &#39;59&#39;), or left blank to expire the ban at midnight on the date given; if the date is left blank (for an indefinite ban), the time must also be blank."
+
+msgid "admin.bans.form.error.expires-time-passed-without-date"
+msgstr "The expiry date has not been set, but the time has.  Either set date as well, or don't set a date and time (for an indefinite ban)."
+
+msgid "admin.bans.form.error.expires-date-in-past"
+msgstr "The expiry date cannot be in the past."
+
+msgid "admin.bans.form.error.no-levels-selected"
+msgstr "You must tick at least one of the options in order to create a ban."
+
+msgid "admin.issue-bans.ip-address"
+msgstr "Issue an IP address ban"
+
+msgid "admin.issue-bans.email-address"
+msgstr "Issue an email address ban"
+
+msgid "admin.issue-bans.username"
+msgstr "Issue a username ban"
+
+msgid "admin.bans.list.none"
+msgstr "No bans to show."
+
+msgid "admin.bans.form.success"
+msgstr "A ban on %1 has been successfully %2."
+
+msgid "admin.bans.lookup.level.access"
+msgstr "Access"
+
+msgid "admin.bans.lookup.level.registration"
+msgstr "Registration"
+
+msgid "admin.bans.lookup.level.login"
+msgstr "Login"
+
+msgid "admin.bans.lookup.level.contact"
+msgstr "Contact"
+
+msgid "admin.bans.lookup.type.ip-address"
+msgstr "IP address"
+
+msgid "admin.bans.lookup.type.email-address"
+msgstr "email address"
+
+msgid "admin.bans.lookup.type.username"
+msgstr "user"
+
+msgid "admin.bans.lookup.banned"
+msgstr "%1 banned by %2: %3"
+
+msgid "admin.bans.lookup.allowed"
+msgstr "%1 allowed by %2: %3"
+
+msgid "admin.bans.lookup.no-valid-user"
+msgstr "No valid users have been passed in, so the user can't be checked for bans."
 
 ### Generic admin messages
 msgid "admin.create"
@@ -3539,6 +3665,9 @@ msgstr "Edit the index page"
 ### Users
 msgid "user.login"
 msgstr "Log in"
+
+msgid "user.login.error.banned"
+msgstr "You are not currently allowed to login.  Please contact the site administrator if you believe this to be an error."
 
 msgid "user.login.error.authentication-failed"
 msgstr "The username or password is incorrect; please try again."
@@ -3901,6 +4030,12 @@ msgstr "upload images"
 msgid "user.auth.upload-files"
 msgstr "upload files"
 
+msgid "user.auth.issue-bans"
+msgstr "issue bans"
+
+msgid "user.auth.admin"
+msgstr "use the admin functions"
+
 msgid "user.retrieve-username"
 msgstr "Retrieve username"
 
@@ -4047,6 +4182,9 @@ msgstr "Permissions"
 
 msgid "user.person.not-associated"
 msgstr "%1 is not associated with a person."
+
+msgid "user.form.error.registration-banned"
+msgstr "You are not currently allowed to register a new user account.  Please contact the site administrator if you believe this to be an error."
 
 msgid "user.form.error.username-registered"
 msgstr "That username is already registered."
@@ -4417,6 +4555,12 @@ msgstr "Template determining the rules for team matches."
 msgid "page.error.heading"
 msgstr "Error"
 
+msgid "page.error.forbidden.heading"
+msgstr "Forbidden"
+
+msgid "page.error.forbidden.message"
+msgstr "You are forbidden from accessing this website.  Please contact the site administrator if you feel this to be an error."
+
 msgid "page.error.not-found.heading"
 msgstr "Page not found"
 
@@ -4528,6 +4672,16 @@ msgstr "Analytics"
 
 msgid "cookie.types.analytics.description"
 msgstr "Cookies related to site visits, browser types, etc."
+
+### Ban types
+msgid "ban-type.ip-address"
+msgstr "IP address"
+
+msgid "ban-type.email-address"
+msgstr "Email address"
+
+msgid "ban-type.username"
+msgstr "Username"
 
 ### Genders
 msgid "gender.male.gender"
@@ -4757,6 +4911,9 @@ msgstr "Edited %1%2."
 msgid "system-event-log.description.delete"
 msgstr "Deleted %1%2."
 
+msgid "system-event-log.description.delete-expired"
+msgstr "Expired %1%2."
+
 msgid "system-event-log.description.upload"
 msgstr "Uploaded %1%2."
 
@@ -4983,6 +5140,12 @@ msgstr "filters"
 msgid "object.plural.search-all"
 msgstr "clubs, teams, people, matches, etc."
 
+msgid "object.singular.bans"
+msgstr "ban"
+
+msgid "object.plural.bans"
+msgstr "bans"
+
 ### Generic forms
 msgid "form.button.save"
 msgstr "Save"
@@ -5195,8 +5358,10 @@ msgid "email.html.contact-form"
 msgstr "Hi<br /><br />\n\n"
 "You have been sent a message through the contact form on %1 from %2.  If you reply to this email, the email you send will go to %2 at %3.  Their message is below:<br /><br />\n\n"
 "<blockquote>%4</blockquote>"
+"<span style="font-size: 0.7em;">This action was performed from IP address %5.  Find out more about this IP address <a href="http://www.ip-adress.com/ip_tracer/%5">here</a>.</span>"
 
 msgid "email.plain-text.contact-form"
 msgstr "Hi\n\n"
 "You have been sent a message through the contact form on %1 from %2.  If you reply to this email, the email you send will go to %2 at %3.  Their message is below:\n\n"
-msgstr "%4"
+"%4"
+"This action was performed from IP address %5.  Find out more about this IP address here: http://www.ip-adress.com/ip_tracer/%5ik."
