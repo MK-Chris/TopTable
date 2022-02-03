@@ -33,7 +33,7 @@ sub auto :Private {
   # Breadcrumbs links
   push( @{ $c->stash->{breadcrumbs} }, {
     # Clubs listing
-    path  => $c->uri_for("/info/privacy"),
+    path => $c->uri_for("/info/privacy"),
     label => $c->maketext("menu.text.privacy"),
   });
 }
@@ -47,9 +47,6 @@ View the privacy policy.
 sub view :Path("") :Args(0) {
   my ( $self, $c ) = @_;
   
-  # Load the messages
-  $c->load_status_msgs;
-  
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["privacy_view", $c->maketext("user.auth.view-privacy"), 1] );
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["privacy_edit", "", 0] );
   
@@ -60,15 +57,15 @@ sub view :Path("") :Args(0) {
   
   push(@title_links, {
     image_uri => $c->uri_for("/static/images/icons/0018-Pencil-icon-32.png"),
-    text      => $c->maketext("admin.edit.privacy"),
-    link_uri  => $c->uri_for_action("/info/privacy/edit"),
+    text => $c->maketext("admin.edit.privacy"),
+    link_uri => $c->uri_for_action("/info/privacy/edit"),
   }) if $c->stash->{authorisation}{privacy_edit};
   
   $c->stash({
-    template    => "html/info/privacy/view.ttkt",
+    template => "html/info/privacy/view.ttkt",
     title_links => \@title_links,
-    subtitle1   => $c->maketext("menu.text.privacy"),
-    privacy     => $privacy,
+    subtitle1 => $c->maketext("menu.text.privacy"),
+    privacy => $privacy,
   });
 }
 
@@ -81,20 +78,17 @@ Edit the privacy policy.
 sub edit :Local :Args(0) {
   my ( $self, $c ) = @_;
   
-  # Load the messages
-  $c->load_status_msgs;
-  
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["privacy_edit", $c->maketext("user.auth.edit-privacy"), 1] );
   
   $c->stash({
-    template    => "html/page-text/edit.ttkt",
-    external_scripts    => [
+    template => "html/page-text/edit.ttkt",
+    external_scripts => [
       $c->uri_for("/static/script/plugins/ckeditor/ckeditor.js"),
       $c->uri_for("/static/script/plugins/ckeditor/adapters/jquery.js"),
       $c->uri_for("/static/script/page_text/edit.js"),
     ],
-    subtitle1   => $c->maketext("menu.text.privacy"),
-    edit_text   => $c->model("DB::PageText")->get_text("privacy"),
+    subtitle1 => $c->maketext("menu.text.privacy"),
+    edit_text => $c->model("DB::PageText")->get_text("privacy"),
     form_action => $c->uri_for_action("/info/privacy/do_edit"),
   });
 }
@@ -112,15 +106,15 @@ sub do_edit :Path("do-edit") :Args(0) {
   
   # The error checking and creation is done in the TemplateLeagueTableRanking model
   my $details = $c->model("DB::PageText")->edit({
-    page_key    => "privacy",
-    page_text   => $c->request->parameters->{page_text},
+    page_key => "privacy",
+    page_text => $c->request->parameters->{page_text},
   });
   
   if ( scalar( @{ $details->{error} } ) ) {
     my $error = $c->build_message( $details->{error} );
     
     # Flash the entered values we've got so we can set them into the form
-    $c->flash->{page_text}  = $c->request->parameters->{page_text};
+    $c->flash->{page_text} = $c->request->parameters->{page_text};
     
     $c->response->redirect( $c->uri_for("/info/privacy/edit",
                           {mid => $c->set_status_msg( {error => $error} ) }) );

@@ -69,6 +69,28 @@ my @allowed_types = qw(
   application/xml
 );
 
+
+=head2 auto
+
+=cut
+
+sub auto :Private {
+  my ( $self, $c ) = @_;
+  
+  # Load the messages
+  $c->load_status_msgs;
+  
+  # The title bar will always have
+  $c->stash({subtitle1 => $c->maketext("menu.text.events") });
+  
+  # Breadcrumbs links
+  push( @{ $c->stash->{breadcrumbs} }, {
+    # Events listing
+    path  => $c->uri_for("/events"),
+    label => $c->maketext("menu.text.events"),
+  });
+}
+
 =head2 index
 
 =cut
@@ -88,9 +110,6 @@ Chain base for getting the image ID and checking it.
 
 sub base :Chained("/") :PathPart("files") :CaptureArgs(1) {
   my ( $self, $c, $id_or_key ) = @_;
-  
-  # Load the messages
-  $c->load_status_msgs;
   
   if ( my $file = $c->model("DB::UploadedFile")->find_id_or_url_key( $id_or_key ) ) {
     my $file_path = File::Spec->catfile( $c->config->{Paths}{file_downloads}, $file->filename );
@@ -135,9 +154,6 @@ sub upload :Local :Args(0) {
   my ( $self, $c ) = @_;
   
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["file_upload", $c->maketext("user.auth.upload-files"), 1] );
-  
-  # Load the messages
-  $c->load_status_msgs;
   
   # Stash the template and information we need
   $c->stash({

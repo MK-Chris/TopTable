@@ -3,6 +3,7 @@ use Moose;
 use namespace::autoclean;
 use HTML::Entities;
 use JSON;
+use Data::Printer;
 
 BEGIN { extends 'Catalyst::Controller'; }
 
@@ -46,23 +47,20 @@ Chain base for getting the contact reason ID or URL key and checking it.
 sub base :Chained("/") :PathPart("info/contact-reasons") :CaptureArgs(1) {
   my ( $self, $c, $id_or_key ) = @_;
   
-  # Load the messages
-  $c->load_status_msgs;
-  
   my $reason = $c->model("DB::ContactReason")->find_id_or_url_key( $id_or_key );
   
   if ( defined( $reason ) ) {
     my $encoded_name = encode_entities( $reason->name );
     
     $c->stash({
-      reason        => $reason,
-      encoded_name  => $encoded_name,
-      subtitle1     => $encoded_name,
+      reason => $reason,
+      encoded_name => $encoded_name,
+      subtitle1 => $encoded_name,
     });
     
     # Push the clubs list page on to the breadcrumbs
     push( @{ $c->stash->{breadcrumbs} }, {
-      path  => $c->uri_for_action("/info/contact-reasons/view", [$reason->url_key]),
+      path => $c->uri_for_action("/info/contact-reasons/view", [$reason->url_key]),
       label => $encoded_name,
     });
   } else {
@@ -91,9 +89,6 @@ sub base_list :Chained("/") :PathPart("info/contact-reasons") :CaptureArgs(0) {
       $c->uri_for("/static/script/standard/option-list.js"),
     ],
   });
-  
-  # Load the messages
-  $c->load_status_msgs;
 }
 
 =head2 list_first_page
@@ -146,20 +141,20 @@ sub retrieve_paged :Private {
   
   my $page_info   = $reasons->pager;
   my $page_links  = $c->forward( "TopTable::Controller::Root", "generate_pagination_links", [{
-    page_info             => $page_info,
-    page1_action          => "/info/contact-reasons/list_first_page",
-    specific_page_action  => "/info/contact-reasons/list_specific_page",
-    current_page          => $page_number,
+    page_info => $page_info,
+    page1_action  => "/info/contact-reasons/list_first_page",
+    specific_page_action => "/info/contact-reasons/list_specific_page",
+    current_page => $page_number,
   }] );
   
   # Set up the template to use
   $c->stash({
-    template            => "html/info/contact-reasons/list.ttkt",
+    template => "html/info/contact-reasons/list.ttkt",
     view_online_display => "Viewing contact reasons",
-    view_online_link    => 0,
-    reasons             => $reasons,
-    page_info           => $page_info,
-    page_links          => $page_links,
+    view_online_link => 0,
+    reasons => $reasons,
+    page_info => $page_info,
+    page_links => $page_links,
   });
 }
 
@@ -185,8 +180,8 @@ sub view :Chained("base") :PathPart("") :Args(0) {
     # Push edit / opening hour links if are authorised
     push(@title_links, {
       image_uri => $c->uri_for("/static/images/icons/0018-Pencil-icon-32.png"),
-      text      => $c->maketext("admin.delete-object", $encoded_name),
-      link_uri  => $c->uri_for_action("/info/contact-reasons/edit", [$reason->url_key]),
+      text => $c->maketext("admin.delete-object", $encoded_name),
+      link_uri => $c->uri_for_action("/info/contact-reasons/edit", [$reason->url_key]),
     }) if $c->stash->{authorisation}{contact_reason_edit};
     
     # Push a delete link if we're authorised and the venue can be deleted
@@ -199,11 +194,11 @@ sub view :Chained("base") :PathPart("") :Args(0) {
   
   # Set up the template to use
   $c->stash({
-    template            => "html/info/contact-reasons/view.ttkt",
-    title_links         => \@title_links,
+    template => "html/info/contact-reasons/view.ttkt",
+    title_links => \@title_links,
     view_online_display => sprintf( "Viewing contact reason: %s", $encoded_name ),
-    view_online_link    => 0,
-    external_scripts      => [
+    view_online_link => 0,
+    external_scripts => [
       $c->uri_for("/static/script/standard/option-list.js"),
     ],
   });
@@ -218,15 +213,12 @@ Display a form to collect information for creating a contact reason.
 sub create :Local {
   my ( $self, $c ) = @_;
   
-  # Load the messages
-  $c->load_status_msgs;
-  
   # Check that we are authorised to create clubs
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["contact_reason_create", $c->maketext("user.auth.create-contact-reason"), 1] );
   
   my $recipient_tokeninput_options = {
     jsonContainer => "json_search",
-    hintText      => encode_entities( $c->maketext("person.tokeninput.type") ),
+    hintText => encode_entities( $c->maketext("person.tokeninput.type") ),
     noResultsText => encode_entities( $c->maketext("tokeninput.text.no-results") ),
     searchingText => encode_entities( $c->maketext("tokeninput.text.searching") ),
   };
@@ -235,40 +227,40 @@ sub create :Local {
   if ( exists( $c->flash->{recipients} ) and ref( $c->flash->{recipients} ) eq "ARRAY" ) {
     foreach my $person ( @{ $c->flash->{recipients} } ) {
       push(@{ $recipient_tokeninput_options->{prePopulate} }, {
-        id    => $person->id,
-        name  => encode_entities( $person->display_name ),
+        id => $person->id,
+        name => encode_entities( $person->display_name ),
       });
     }
   }
   
   my $tokeninput_confs = [{
-    script    => $c->uri_for("/people/search"),
-    options   => encode_json( $recipient_tokeninput_options ),
-    selector  => "recipients",
+    script => $c->uri_for("/people/search"),
+    options => encode_json( $recipient_tokeninput_options ),
+    selector => "recipients",
   }];
   
   # Stash information for the template
   $c->stash({
-    template            => "html/info/contact-reasons/create-edit.ttkt",
-    tokeninput_confs    => $tokeninput_confs,
-    scripts             => [
+    template  => "html/info/contact-reasons/create-edit.ttkt",
+    tokeninput_confs => $tokeninput_confs,
+    scripts => [
       "tokeninput-standard",
     ],
-    external_scripts    => [
+    external_scripts => [
       $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js", {v => 2}),
     ],
-    external_styles     => [
+    external_styles => [
       $c->uri_for("/static/css/tokeninput/token-input-tt.css"),
     ],
-    form_action         => $c->uri_for("do-create"),
-    subtitle2           => $c->maketext("admin.create"),
+    form_action => $c->uri_for("do-create"),
+    subtitle2 => $c->maketext("admin.create"),
     view_online_display => "Creating contact reasons",
-    view_online_link    => 0,
+    view_online_link => 0,
   });
   
   # Breadcrumbs
   push(@{ $c->stash->{breadcrumbs} }, {
-    path  => $c->uri_for("/info/contact-reasons/create"),
+    path => $c->uri_for("/info/contact-reasons/create"),
     label => $c->maketext("admin.create"),
   });
 }
@@ -284,16 +276,16 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
   my $reason = $c->stash->{reason};
   
   # Don't cache this page.
-  $c->response->header("Cache-Control"  => "no-cache, no-store, must-revalidate");
-  $c->response->header("Pragma"         => "no-cache");
-  $c->response->header("Expires"        => 0);
+  $c->response->header("Cache-Control" => "no-cache, no-store, must-revalidate");
+  $c->response->header("Pragma" => "no-cache");
+  $c->response->header("Expires" => 0);
   
   # Check that we are authorised to create clubs
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["contact_reason_edit", $c->maketext("user.auth.edit-contact-reasons"), 1] );
   
   my $recipient_tokeninput_options = {
     jsonContainer => "json_search",
-    hintText      => encode_entities( $c->maketext("person.tokeninput.type") ),
+    hintText => encode_entities( $c->maketext("person.tokeninput.type") ),
     noResultsText => encode_entities( $c->maketext("tokeninput.text.no-results") ),
     searchingText => encode_entities( $c->maketext("tokeninput.text.searching") ),
   };
@@ -308,40 +300,40 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
       my $person = ( ref( $recipient ) eq "TopTable::DB::Model::Person" ) ? $recipient : $recipient->person;
       
       push(@{ $recipient_tokeninput_options->{prePopulate} }, {
-        id    => $person->id,
-        name  => encode_entities( $person->display_name ),
+        id => $person->id,
+        name => encode_entities( $person->display_name ),
       });
     }
   }
   
   my $tokeninput_confs = [{
-    script    => $c->uri_for("/people/search"),
-    options   => encode_json( $recipient_tokeninput_options ),
-    selector  => "recipients",
+    script => $c->uri_for("/people/search"),
+    options => encode_json( $recipient_tokeninput_options ),
+    selector => "recipients",
   }];
   
   # Stash information for the template
   $c->stash({
-    template            => "html/info/contact-reasons/create-edit.ttkt",
-    tokeninput_confs    => $tokeninput_confs,
-    scripts             => [
+    template => "html/info/contact-reasons/create-edit.ttkt",
+    tokeninput_confs => $tokeninput_confs,
+    scripts => [
       "tokeninput-standard",
     ],
-    external_scripts    => [
+    external_scripts => [
       $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js", {v => 2}),
     ],
-    external_styles     => [
+    external_styles => [
       $c->uri_for("/static/css/tokeninput/token-input-tt.css"),
     ],
-    form_action         => $c->uri_for("do-create"),
-    subtitle2           => $c->maketext("admin.edit"),
+    form_action => $c->uri_for("do-create"),
+    subtitle2 => $c->maketext("admin.edit"),
     view_online_display => "Editing contact reasons",
-    view_online_link    => 0,
+    view_online_link => 0,
   });
   
   # Breadcrumbs
   push(@{ $c->stash->{breadcrumbs} }, {
-    path  => $c->uri_for("/info/contact-reasons/edit", [$reason->url_key]),
+    path => $c->uri_for("/info/contact-reasons/edit", [$reason->url_key]),
     label => $c->maketext("admin.edit"),
   });
 }
@@ -366,15 +358,15 @@ sub delete :Chained("base") :PathPart("delete") :Args(0) {
   $c->forward("view");
   
   $c->stash({
-    subtitle2           => $c->maketext("admin.delete"),
-    template            => "html/info/contact-reasons/delete.ttkt",
+    subtitle2 => $c->maketext("admin.delete"),
+    template => "html/info/contact-reasons/delete.ttkt",
     view_online_display => sprintf( "Deleting %s", encode_entities( $reason->name ) ),
-    view_online_link    => 0,
+    view_online_link => 0,
   });
   
   # Breadcrumbs
   push(@{ $c->stash->{breadcrumbs} }, {
-    path  => $c->uri_for("/info/contact-reasons/delete", [$reason->url_key]),
+    path => $c->uri_for("/info/contact-reasons/delete", [$reason->url_key]),
     label => $c->maketext("admin.delete"),
   });
 }
@@ -391,7 +383,7 @@ sub do_create :Path("do-create") {
   # Check that we are authorised to create contact reasons
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["contact_reason_create", $c->maketext("user.auth.create-contact-reasons"), 1] );
   
-  $c->detach( "setup_reason", ["create"] );
+  $c->detach( "process_form", ["create"] );
 }
 
 =head2 do_edit
@@ -406,7 +398,7 @@ sub do_edit :Chained("base") :PathPart("do-edit") :Args(0) {
   
   # Check that we are authorised to create clubs
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["contact_reason_edit", $c->maketext("user.auth.edit-contact-reasons"), 1] );
-  $c->detach( "setup_reason", ["edit"] );
+  $c->detach( "process_form", ["edit"] );
 }
 
 =head2 do_delete
@@ -446,56 +438,56 @@ sub do_delete :Chained("base") :PathPart("do-delete") :Args(0) {
   }
 }
 
-=head2 setup_reason
+=head2 process_form
 
 Forwarded from docreate and doedit to do the reason creation / edit.
 
 =cut
 
-sub setup_reason :Private {
+sub process_form :Private {
   my ( $self, $c, $action ) = @_;
   my $reason = $c->stash->{reason};
-  
-  my @recipient_ids = split( ",", $c->request->parameters->{recipients} );
-  my @recipients;
-  push( @recipients, $c->model("DB::Person")->find( $_ ) ) foreach ( @recipient_ids );
+  my @processed_field_names = qw( name recipients );
   
   # The error checking and creation is done in the TemplateLeagueTableRanking model
-  my $details = $c->model("DB::ContactReason")->create_or_edit($action, {
-    reason      => $reason,
-    name        => $c->request->parameters->{name},
-    recipients  => \@recipients,
+  my $response = $c->model("DB::ContactReason")->create_or_edit($action, {
+    reason => $reason,
+    name => $c->req->param( "name" ),
+    recipient_ids => [split(",", $c->req->param( "recipients" ))],
+    logger => sub{ my $level = shift; $c->log->$level( @_ ); },
   });
   
-  if ( scalar( @{ $details->{error} } ) ) {
-    my $error = $c->build_message( $details->{error} );
+  # Set the status messages we need to show on redirect
+  my @errors = @{$response->{errors}};
+  my @warnings = @{$response->{warnings}};
+  my @info = @{$response->{info}};
+  my @success = @{$response->{success}};
+  my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});
+  my $redirect_uri;
+  
+  if ( $response->{completed} ) {
+    # Was completed, display the view page
+    $reason = $response->{reason};
+    $redirect_uri = $c->uri_for_action("/info/contact-reasons/view", [$reason->url_key], {mid => $mid});
     
-    # Flash the entered values we've got so we can set them into the form
-    $c->flash->{name}       = $c->request->parameters->{name};
-    $c->flash->{recipients} = \@recipients;
-    
-    my $redirect_uri;
+    # Completed, so we log an event
+    $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["contact-reason", $action, {id => $reason->id}, $reason->name] );
+  } else {
+    # Not complete - check if we need to redirect back to the create or view page
     if ( $action eq "create" ) {
-      $redirect_uri = $c->uri_for("/info/contact-reasons/create",
-                          {mid => $c->set_status_msg( {error => $error} ) });
+      $redirect_uri = $c->uri_for("/info/contact-reasons/create", {mid => $mid});
     } else {
-      $redirect_uri = $c->uri_for_action("/info/contact-reasons/edit", [ $reason->url_key ],
-                          {mid => $c->set_status_msg( {error => $error} ) });
+      $redirect_uri = $c->uri_for_action("/info/contact-reasons/edit", [$reason->url_key], {mid => $mid});
     }
     
-    $c->response->redirect( $redirect_uri );
-    $c->detach;
-    return;
-  } else {
-    my $reason = $details->{reason};
-    my $action_description = ( $action eq "create" ) ? $c->maketext("admin.message.created") : $c->maketext("admin.message.edited");
-    
-    $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["contact-reason", $action, {id => $reason->id}, $reason->name] );
-    $c->response->redirect( $c->uri_for_action("/info/contact-reasons/view", [$reason->url_key],
-                                {mid => $c->set_status_msg( {success => $c->maketext( "admin.forms.success", $reason->name, $action_description )}  ) }) );
-    $c->detach;
-    return;
+    # Flash the entered values we've got so we can set them into the form
+    map {$c->flash->{$_} = $response->{fields}{$_} } @processed_field_names;
   }
+  
+  # Now actually do the redirection
+  $c->response->redirect( $redirect_uri );
+  $c->detach;
+  return;
 }
 
 =encoding utf8

@@ -597,33 +597,47 @@ END; # End of check for no_menu
 
 <div id="content">
 [%
-# Status and error messages
-IF status_msg.success;
+# Set up a macro that we will call for each message type in turn.
+MACRO show_msgs(msg_type) BLOCK;
+  SET msgs_count = status_msg.$msg_type.list.size;
+  
+  IF msgs_count;
+    IF msgs_count == 1;
+      # One message, just display it without list tags
 -%]
-<div class="success-message"><span class="message-text">[% status_msg.success | html_line_break %]</span></div>
+<div class="[% msg_type %]-message"><span class="message-text">[% status_msg.$msg_type.list.0 | html_line_break %]</span></div>
 [%
+    ELSE;
+      # More than one, build an unordered list
+%]
+<div class="[% msg_type %]-message">
+  <span class="message-text">
+    <ul>
+[%
+      FOREACH msg IN status_msg.$msg_type.list;
+-%]
+      <li>[% msg | html_line_break %]</li>
+[%
+      END;
+-%]
+    </ul>
+  </span>
+</div>
+[%
+    END;
+  END;
 END;
-IF status_msg.error;
--%]
-<div class="error-message"><span class="message-text">[% status_msg.error | html_line_break %]</span></div>
-[%
-ELSIF prepare_error_div;
--%]
-<div class="error-message" style="display: none;"><span class="message-text">&nbsp;</span></div>
-[%
-END;
-IF status_msg.warning;
--%]
-<div class="warning-message"><span class="message-text">[% status_msg.warning | html_line_break %]</span></div>
-[%
-END;
-IF status_msg.info;
--%]
-<div class="info-message"><span class="message-text">[% status_msg.info | html_line_break %]</span></div>
-[%
-END;
+
+# Now call the macro for each one.
+show_msgs("success");
+show_msgs("error");
+show_msgs("warning");
+show_msgs("info");
+
 # Breadcrumbs
 INCLUDE "html/generic/breadcrumbs.ttkt";
+
+# Titles / subtitles
 IF subtitle1;
 -%]
 <h2>[%-
@@ -639,7 +653,8 @@ IF title_links.size;
     link;
   END;
 END;
--%]</h2>
+-%]
+</h2>
 [%
 END;
 IF subtitle2;
@@ -661,6 +676,6 @@ content;
 
 </div><!-- end content -->
 
-<div id="footer">[% c.maketext("footer.copyright") %] &copy; 2014-[% c.datetime.year %] Chris Welch</div><br /><br />
+<div id="footer">[% c.maketext("footer.copyright") %] &copy; 2014-[% c.datetime.year %] Chris Welch / [% c.config.name | html_entity %]</div><br /><br />
 </body>
 </html>

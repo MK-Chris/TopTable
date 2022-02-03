@@ -105,9 +105,6 @@ sub upload :Local :Args(0) {
   
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["image_upload", $c->maketext("user.auth.upload-images"), 1] );
   
-  # Load the messages
-  $c->load_status_msgs;
-  
   # Stash the template and information we need
   $c->stash({
     template            => "html/images/upload.ttkt",

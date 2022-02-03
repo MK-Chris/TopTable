@@ -93,9 +93,6 @@ sub base_list :Chained("/") :PathPart("reports") :Args(0) {
       $c->uri_for("/static/script/standard/option-list.js"),
     ],
   });
-  
-  # Load the messages
-  $c->load_status_msgs;
 }
 
 =head2 view

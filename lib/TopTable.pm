@@ -220,7 +220,9 @@ sub is_ajax {
 
 =head2 get_locale_with_uri
 
-Wraps around $c->get_locale (which is provided by CatalystX::I18N::Role::GetLocale) to search the URI first, the various attempts that $c->get_locale uses (session, user, browser, default from config). 
+Wraps around $c->get_locale (which is provided by CatalystX::I18N::Role::GetLocale) to search the URI first, the various attempts that $c->get_locale uses (session, user, browser, default from config).
+
+This calls check_and_set_locale, which sets a cookie if the user has selected preference cookies, so it should be called after we check the cookie settings.
 
 =cut
 
@@ -228,27 +230,53 @@ sub get_locale_with_uri {
   my ( $c ) = @_;
   
   # Try and get the language first from the URI, which overrides everything
-  my $language = $c->request->parameters->{lang} || undef;
+  my $locale = $c->req->param( "locale" );
+  $locale = $c->check_and_set_locale( $locale ) if defined( $locale );
+  return $locale if defined( $locale );
   
-  if ( defined( $language ) ) {
-    # Replace dashes with undescores (validation will fail with dashes)
-    $language =~ s/-/_/;
-    
-    # Check it's valid
-    $language = $c->check_locale( $language );
-  }
-  
-  # This separate if statement is checking the same as the last one because the value may have changed since the call to $c->check_locale
-  if ( defined( $language ) ) {
-    # Set the locale if we can
-    $c->locale( $language ) if $c->can("locale");
-    
-    # Return with the language we've set
-    return $language;
-  }
+  # Couldn't get from the query string, check the cookie
+  $locale = $c->request->cookie("toptable_locale")->value if defined( $c->request->cookie("toptable_locale") );
+  $locale = $c->check_and_set_locale( $locale ) if defined( $locale );
+  return $locale if defined( $locale );
   
   # Otherwise, call get_locale to try and detect via the session
-  return $c->get_locale;
+  $locale = $c->get_locale;
+  $locale = $c->check_and_set_locale( $locale ) if defined( $locale );
+  
+  return $locale;
+}
+
+=head2 check_and_set_locale
+
+Checks the given value is a valid locale, sets it if so.  Should be called *after* we get the cookie prefs, as this will set a cookie if preferences are selected.
+
+=cut
+
+sub check_and_set_locale {
+  my ( $c, $locale ) = @_;
+  return unless defined( $locale );
+  
+  # Replace dashes with undescores (validation will fail with dashes)
+  $locale =~ s/-/_/;
+  
+  # Check it's valid
+  $locale = $c->check_locale( $locale );
+  
+  # Check it's still defined, as a check will return undef if it's not valid
+  return unless defined( $locale );
+  
+  # Set the locale if we can
+  $c->locale( $locale ) if $c->can("locale");
+  
+  # Set the cookie if we are storing preferences in cookies
+  $c->response->cookies->{toptable_locale} = {
+    value => $locale,
+    expires => "+3M",
+    httponly => 1,
+  } if exists( $c->stash->{cookie_settings}{preferences} ) and $c->stash->{cookie_settings}{preferences};
+  
+  # Return with the language we've set
+  return $locale;
 }
 
 =head2 warn_on_non_https

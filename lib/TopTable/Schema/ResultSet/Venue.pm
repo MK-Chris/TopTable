@@ -146,21 +146,23 @@ Same as find(), but searches for both the id and key columns.  So we can use hum
 
 sub find_id_or_url_key {
   my ( $self, $id_or_url_key ) = @_;
-  my ( $where );
+  my $where;
   
   if ( $id_or_url_key =~ m/^\d+$/ ) {
-    # Numeric - assume it's the ID
-    $where = {
-      id => $id_or_url_key,
-    };
+    # Numeric - look in ID or URL key
+    $where = [{
+      id => $id_or_url_key
+    }, {
+      url_key => $id_or_url_key
+    }];
   } else {
     # Not numeric - must be the URL key
-    $where = {
-      url_key => $id_or_url_key,
-    };
+    $where = {url_key => $id_or_url_key};
   }
   
-  return $self->find( $where );
+  return $self->search($where, {
+    rows => 1,
+  })->single;
 }
 
 =head2 generate_url_key

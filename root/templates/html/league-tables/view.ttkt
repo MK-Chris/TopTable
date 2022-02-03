@@ -1,7 +1,3 @@
-[% # Note That the '-' at the beginning or end of TT code  -%]
-[% # "chomps" the whitespace/newline at that end of the    -%]
-[% # output (use View Source in browser to see the effect) -%]
-
 <div class="table-wrap">
   <div class="table-layout table-layout-centre">
 [%

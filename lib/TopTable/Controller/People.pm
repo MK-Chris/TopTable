@@ -97,9 +97,6 @@ sub base_list :Chained("/") :PathPart("people") :CaptureArgs(0) {
       $c->uri_for("/static/script/standard/option-list.js"),
     ],
   });
-  
-  # Load the messages
-  $c->load_status_msgs;
 }
 
 =head2 list_first_page
@@ -172,16 +169,11 @@ sub retrieve_paged :Private {
 
 =head2 base_no_object_specified
 
-Base URL matcher with no person specified (use in the create routines).  Doesn't actually do anything other than the URL matching and loading status messages.
+Base URL matcher with no person specified (use in the create routines).  Doesn't actually do anything other than the URL matching.
 
 =cut
 
-sub base_no_object_specified :Chained("/") :PathPart("people") :CaptureArgs(0) {
-  my ( $self, $c ) = @_;
-  
-  # Load the messages
-  $c->load_status_msgs;
-}
+sub base_no_object_specified :Chained("/") :PathPart("people") :CaptureArgs(0) {}
 
 =head2 view
 
@@ -1164,9 +1156,6 @@ Display a file upload box to upload a CSV file.
 sub import :Local {
   my ( $self, $c ) = @_;
   
-  # Load the messages
-  $c->load_status_msgs;
-  
   # Check that we are authorised to create people
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["person_create", $c->maketext("user.auth.create-people"), 1] );
   
@@ -1214,9 +1203,6 @@ Validates an imported CSV file, displaying the contents back to the user so they
 
 sub import_results :Path("import-results") {
   my ( $self, $c ) = @_;
-  
-  # Load the messages
-  $c->load_status_msgs;
   
   # Check that we are authorised to create people
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["person_create", $c->maketext("user.auth.create-people"), 1] );

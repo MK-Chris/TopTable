@@ -420,7 +420,7 @@ sub process_form :Private {
   
   if ( scalar(@errors) ) {
     # Build the error message
-    $status_msg->{error} = $c->build_message( \@errors );
+    $status_msg->{error} = \@errors;
     
     # Flash our form values, then redirect back to the form with an error
     $c->flash({

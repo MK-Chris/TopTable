@@ -24,9 +24,6 @@ Catalyst Controller.
 sub auto :Private {
   my ( $self, $c ) = @_;
   
-  # Load the messages
-  $c->load_status_msgs;
-  
   # The title bar will always have
   $c->stash({subtitle1 => $c->maketext("menu.text.templates-match")});
   

@@ -55,8 +55,11 @@ Retrieve all events that have been run in a given season.
 =cut
 
 sub events_in_season {
-  my ( $self, $parameters ) = @_;
-  my $season = $parameters->{season};
+  my ( $self, $params ) = @_;
+  my $season = $params->{season};
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $lang = $self->result_source->schema->lang;
+  $logger->( "debug", $lang->maketext("menu.title.league-tables", "Division Two") );
   
   return $self->search({
     "event_seasons.season" => $season->id,    

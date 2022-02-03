@@ -662,6 +662,9 @@ msgstr "There are no clubs to view."
 msgid "clubs.form.error.club-not-chosen"
 msgstr "Please specify a club for the team to belong to."
 
+msgid "clubs.form.error.club-not-specified"
+msgstr "You must specify a club to edit."
+
 msgid "clubs.form.error.club-invalid"
 msgstr "The club specified is invalid."
 
@@ -691,6 +694,9 @@ msgstr "The website is invalid."
 
 msgid "clubs.form.error.venue-invalid"
 msgstr "The venue is not valid."
+
+msgid "clubs.form.error.venue-blank"
+msgstr "You must select a venue."
 
 msgid "clubs.form.error.secretary-invalid"
 msgstr "The secretary is not a valid person."
@@ -1800,7 +1806,7 @@ msgstr "The number of times a fixture is repeated must be a number between 1 and
 msgid "fixtures-grids.form.matches.home-team-blank"
 msgstr "The home team for week %1, match %2 is blank."
 
-msgid "fixtures-grids.form.matches.home-team-blank"
+msgid "fixtures-grids.form.matches.away-team-blank"
 msgstr "The away team for week %1, match %2 is blank."
 
 msgid "fixtures-grids.form.matches.home-number-invalid"
@@ -1852,7 +1858,7 @@ msgid "fixtures-grids.form.create-fixtures.error.week-blank"
 msgstr "The date for league week number %1 has not been selected."
 
 msgid "fixtures-grids.form.create-fixtures.success"
-msgstr "Fixtures for the grid &#39;%1&#39; have been created for %2."
+msgstr "%1 fixtures for the grid '%2' have been created for %3."
 
 msgid "fixtures-grids.form.delete-fixtures.error.cant-delete"
 msgstr "You cannot delete fixtures in %1; it may have matches that have been completed or not have had matches created yet."
@@ -3630,7 +3636,7 @@ msgid "admin.reject-object"
 msgstr "Reject on %1"
 
 msgid "admin.form.invalid-action"
-msgstr "Invalid action (%1) passed; the action must be &#39;create&#39; or &#39;edit&#39;."
+msgstr "Invalid action (%1) passed; the action must be 'create' or 'edit'."
 
 msgid "admin.message.created"
 msgstr "created"

@@ -250,14 +250,14 @@ sub add_event :Private {
   
   # Set the event log
   my $details = $c->model("DB::SystemEventLog")->set_event_log({
-    object_type   => $object_type,
-    event_type    => $event_type,
-    object_ids    => $object_ids,
-    object_name   => $object_name,
-    user          => $c->user,
-    ip_address    => $c->request->address,
-    current_time  => $current_datetime,
-    logger        => sub{ my $level = shift; $c->log->$level( @_ ) },
+    object_type => $object_type,
+    event_type => $event_type,
+    object_ids => $object_ids,
+    object_name => $object_name,
+    user => $c->user,
+    ip_address => $c->request->address,
+    current_time => $current_datetime,
+    logger => sub{ my $level = shift; $c->log->$level( @_ ) },
   });
   
   return $details;

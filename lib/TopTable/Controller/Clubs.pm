@@ -659,7 +659,7 @@ sub do_create :Path("do-create") {
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["club_create", $c->maketext("user.auth.create-clubs"), 1] );
   
   # Forward to the create / edit routine
-  $c->detach( "setup_club", ["create"] );
+  $c->detach( "process_form", ["create"] );
 }
 
 =head2 do_edit
@@ -675,7 +675,7 @@ sub do_edit :Chained("base") :PathPart("do-edit") :Args(0) {
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["club_edit", $c->maketext("user.auth.edit-clubs"), 1] );
   
   # Forward to the create / edit routine
-  $c->detach( "setup_club", ["edit"] );
+  $c->detach( "process_form", ["edit"] );
 }
 
 =head2 do_delete
@@ -710,81 +710,55 @@ sub do_delete :Chained("base") :PathPart("do-delete") :Args(0) {
   }
 }
 
-=head2 setup_club
+=head2 process_form
 
 Forwarded from docreate and doedit to do the club creation / edit.
 
 =cut
 
-sub setup_club :Private {
-  my ( $self, $c ) = @_;
-  my $action  = $c->request->arguments->[0];
-  my $club    = $c->stash->{club};
-  
-  # Validate the venue / secretary
-  my $venue     = $c->model("DB::Venue")->find( $c->request->parameters->{venue} ) if $c->request->parameters->{venue};
-  my $secretary = $c->model("DB::Person")->find( $c->request->parameters->{secretary} ) if $c->request->parameters->{secretary};
+sub process_form :Private {
+  my ( $self, $c, $action ) = @_;
+  my $club = $c->stash->{club};
+  my @field_names = qw( full_name short_name abbreviated_name email_address website start_hour start_minute venue secretary );
   
   # The rest of the error checking is done in the Club model
-  my $actioned = $c->model("DB::Club")->create_or_edit($action, {
-    club              => $club,
-    full_name         => $c->request->parameters->{full_name},
-    short_name        => $c->request->parameters->{short_name},
-    abbreviated_name  => $c->request->parameters->{abbreviated_name},
-    email_address     => $c->request->parameters->{email_address},
-    website           => $c->request->parameters->{website},
-    start_hour        => $c->request->parameters->{start_hour},
-    start_minute      => $c->request->parameters->{start_minute},
-    venue             => $venue,
-    secretary         => $secretary,
+  my $response = $c->model("DB::Club")->create_or_edit($action, {
+    club => $club, # This will be undef if we're creating.
+    map {$_ => $c->req->params->{$_} } @field_names, # All the fields from the form
+    logger => sub{ my $level = shift; $c->log->$level( @_ ); },
   });
   
-  if ( scalar( @{ $actioned->{error} } ) > 0 ) {
-    my $error = $c->build_message( $actioned->{error} );
+  # Set the status messages we need to show on redirect
+  my @errors = @{$response->{errors}};
+  my @warnings = @{$response->{warnings}};
+  my @info = @{$response->{info}};
+  my @success = @{$response->{success}};
+  my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});
+  my $redirect_uri;
+  
+  if ( $response->{completed} ) {
+    # Was completed, display the view page
+    $club = $response->{club};
+    $redirect_uri = $c->uri_for_action("/clubs/view_current_season", [$club->url_key], {mid => $mid});
+    
+    # Completed, so we log an event
+    $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["club", $action, {id => $club->id}, $club->full_name] );
+  } else {
+    # Not complete - check if we need to redirect back to the create or view page
+    if ( $action eq "create" ) {
+      $redirect_uri = $c->uri_for("/clubs/create", {mid => $mid});
+    } else {
+      $redirect_uri = $c->uri_for_action("/clubs/edit", [$club->url_key], {mid => $mid});
+    }
     
     # Flash the entered values we've got so we can set them into the form
-    $c->flash->{full_name}        = $c->request->parameters->{full_name};
-    $c->flash->{short_name}       = $c->request->parameters->{short_name};
-    $c->flash->{abbreviated_name} = $c->request->parameters->{abbreviated_name};
-    $c->flash->{address1}         = $c->request->parameters->{address1};
-    $c->flash->{address2}         = $c->request->parameters->{address2};
-    $c->flash->{address3}         = $c->request->parameters->{address3};
-    $c->flash->{address4}         = $c->request->parameters->{address4};
-    $c->flash->{address5}         = $c->request->parameters->{address5};
-    $c->flash->{postcode}         = $c->request->parameters->{postcode};
-    $c->flash->{telephone}        = $c->request->parameters->{telephone};
-    $c->flash->{email_address}    = $c->request->parameters->{email_address};
-    $c->flash->{secretary}        = $secretary;
-    
-    my $redirect_uri;
-    if ( $action eq "create" ) {
-      # If we're creating, we'll just redirect straight back to the create form
-      $redirect_uri = $c->uri_for("/clubs/create",
-                            {mid => $c->set_status_msg( {error => $error} ) });
-    } else {
-      # If we're editing and we found an object to edit, we'll redirect to the edit form for that object
-      $redirect_uri = $c->uri_for_action("/clubs/edit", [ $club->url_key ],
-                          {mid => $c->set_status_msg( {error => $error} ) });
-    }
-    
-    $c->response->redirect( $redirect_uri );
-    $c->detach;
-    return;
-  } else {
-    my $action_description;
-    if ( $action eq "create" ) {
-      $club = $actioned->{club};
-      $action_description = $c->maketext("admin.message.created");
-    } else {
-      $action_description = $c->maketext("admin.message.edited");
-    }
-    
-    $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["club", $action, {id => $club->id}, $club->full_name] );
-    $c->response->redirect( $c->uri_for_action("/clubs/view_current_season", [$club->url_key],
-                                {mid => $c->set_status_msg( {success => $c->maketext( "admin.forms.success", encode_entities( $club->full_name ), $action_description )} ) }) );
-    $c->detach;
-    return;
+    map {$c->flash->{$_} = $response->{fields}{$_} } @field_names;
   }
+  
+  # Now actually do the redirection
+  $c->response->redirect( $redirect_uri );
+  $c->detach;
+  return;
 }
 
 =head2 search

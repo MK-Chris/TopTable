@@ -5,7 +5,7 @@ use DateTime;
 use DateTime::TimeZone;
 use LWP::UserAgent;
 use JSON;
-use Data::Dumper::Concise;
+use Data::Printer;
 use List::Util qw( min max );
 use Time::HiRes qw( gettimeofday tv_interval );
 use HTML::Entities;
@@ -54,9 +54,14 @@ Routines to run on every page load.
 sub begin :Private {
   my ( $self, $c ) = @_;
   
-  # Select the language if we have one - if not, the request headers sent by the browser will be used instead
-  # Ensure dashes are replaced with underscores
-  my $language = $c->get_locale_with_uri;
+  # Get and stash cookie preferences
+  my $cookie_settings = "[]";
+  $cookie_settings = $c->request->cookie("cookieControlPrefs")->value if defined( $c->request->cookie("cookieControlPrefs") );
+  $cookie_settings = ( defined( $cookie_settings ) ) ? decode_json( $cookie_settings ) : [];
+  $c->stash({cookie_settings => {map{ $_ => 1 } @{ $cookie_settings }}});
+  
+  # Get the locale - check URI and cookie settings first
+  my $locale = $c->get_locale_with_uri;
   
   # Only do session stuff if we're not processing a js file
   unless ( $c->request->path =~ /\.js$/ ) {
@@ -80,7 +85,7 @@ sub begin :Private {
     
     # Push the home element on to it if we're configured to
     push(@breadcrumbs, {
-      path  => "/",
+      path => "/",
       label => $c->maketext("menu.text.home"),
     }) unless $c->config->{breadcrumbs}{hide_home};
     
@@ -95,12 +100,6 @@ sub begin :Private {
   } else {
     Log::Log4perl::MDC->put( "user", "(Guest)" );
   }
-  
-  # Get and stash cookie preferences
-  my $cookie_settings = "[]";
-  $cookie_settings = $c->request->cookie("cookieControlPrefs")->value if defined( $c->request->cookie("cookieControlPrefs") );
-  $cookie_settings = ( defined( $cookie_settings ) ) ? decode_json( $cookie_settings ) : [];
-  $c->stash({cookie_settings => { map{ $_ => 1 } @{ $cookie_settings } },});
   
   # Housekeeping - unpin news articles where the pin expiry has passed, delete expired password reset / activation keys and cleanup invalid logins, delete expired bans
   $c->model("DB::NewsArticle")->unpin_expired_pins;
@@ -117,10 +116,7 @@ sub begin :Private {
     log_allowed => 0,
     log_banned => 1,
     logger => sub{ my $level = shift; $c->log->$level( @_ ); },
-    language => sub{ $c->maketext( @_ ); },
   });
-  
-  #$c->log->debug( Dumper( $banned->{log} ) );
   
   # Log our responses
   my @log_info = @{$banned->{log}{info}};
@@ -251,14 +247,14 @@ sub index_edit :Path("index-edit") {
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["index_edit", $c->maketext("user.auth.edit-index"), 1] );
   
   $c->stash({
-    template    => "html/page-text/edit.ttkt",
-    external_scripts    => [
+    template => "html/page-text/edit.ttkt",
+    external_scripts => [
       $c->uri_for("/static/script/plugins/ckeditor/ckeditor.js"),
       $c->uri_for("/static/script/plugins/ckeditor/adapters/jquery.js"),
       $c->uri_for("/static/script/page_text/edit.js"),
     ],
-    subtitle1   => $c->maketext("menu.text.index"),
-    edit_text   => $c->model("DB::PageText")->get_text("index"),
+    subtitle1 => $c->maketext("menu.text.index"),
+    edit_text => $c->model("DB::PageText")->get_text("index"),
     form_action => $c->uri_for_action("/do_index_edit"),
   });
 }
@@ -276,8 +272,8 @@ sub do_index_edit :Path("do-index-edit") :Args(0) {
   
   # The error checking and creation is done in the TemplateLeagueTableRanking model
   my $details = $c->model("DB::PageText")->edit({
-    page_key    => "index",
-    page_text   => $c->request->parameters->{page_text},
+    page_key => "index",
+    page_text => $c->request->parameters->{page_text},
   });
   
   if ( scalar( @{ $details->{error} } ) ) {
@@ -356,16 +352,18 @@ sub end :ActionClass("RenderView") {
   if ( !$c->stash->{no_wrapper} and !$c->is_ajax ) {
     ## Nav drop down menus
     # Current season, clubs in current season, archived seasons
-    my $current_season  = $c->model("DB::Season")->get_current;
-    my $clubs           = [ $c->model("DB::Club")->clubs_with_teams_in_season({
-      season            => $current_season,
-      get_teams         => $c->config->{Menu}{show_teams},
-      get_players       => $c->config->{Menu}{show_players},
+    my $current_season = $c->model("DB::Season")->get_current;
+    my $clubs = [ $c->model("DB::Club")->clubs_with_teams_in_season({
+      season => $current_season,
+      get_teams => $c->config->{Menu}{show_teams},
+      get_players => $c->config->{Menu}{show_players},
+      logger => sub{ my $level = shift; $c->log->$level( @_ ); },
     }) ] if defined( $current_season );
-    my $events          = [ $c->model("DB::Event")->events_in_season({
-      season            => $current_season,
+    my $events = [ $c->model("DB::Event")->events_in_season({
+      season => $current_season,
+      logger => sub{ my $level = shift; $c->log->$level( @_ ); },
     }) ] if defined( $current_season );
-    my $venues          = [ $c->model("DB::Venue")->all_venues ];
+    my $venues = [ $c->model("DB::Venue")->all_venues ];
     
     # Check admin authorisation for showing an admin menu
   $c->forward( "TopTable::Controller::Users", "check_authorisation", [[ qw( match_update user_approve_new admin_issue_bans ) ], "", 0] );
@@ -558,12 +556,12 @@ sub recaptcha :Private {
   $request->content("secret=$secret_key&response=$recaptcha_data");
   
   my $response = $ua->request( $request );
-  $c->log->debug( $response->content );
+  #$c->log->debug( $response->content );
   my $response_content = decode_json( $response->content );
   
   return {
-    request_success   => $response->is_success,
-    response_content  => $response_content,
+    request_success => $response->is_success,
+    response_content => $response_content,
   };
 }
 
@@ -577,7 +575,7 @@ sub json_error :Private {
   my ( $self, $c ) = @_;
   my ( $code, $reason ) = @{ $c->request->arguments };
   $reason ||= $c->maketext("ajax.error.unknown");
-  $code   ||= 500;
+  $code ||= 500;
   my $json_data = $c->stash->{json_data} || {};
   
   $c->response->status($code);
@@ -598,17 +596,17 @@ Handles pagination given parameters of a number of items, number of items per pa
 
 sub generate_pagination_links :Private {
   my ( $self, $c, $parameters ) = @_;
-  my $page_info                       = $parameters->{page_info};
-  my $current_page                    = $parameters->{current_page}; # Page attempted by the user
-  my $page1_action                    = $parameters->{page1_action};
-  my $page1_action_arguments          = $parameters->{page1_action_arguments};
-  my $specific_page_action            = $parameters->{specific_page_action};
-  my $specific_page_action_arguments  = $parameters->{specific_page_action_arguments};
+  my $page_info = $parameters->{page_info};
+  my $current_page = $parameters->{current_page}; # Page attempted by the user
+  my $page1_action = $parameters->{page1_action};
+  my $page1_action_arguments = $parameters->{page1_action_arguments};
+  my $specific_page_action = $parameters->{specific_page_action};
+  my $specific_page_action_arguments = $parameters->{specific_page_action_arguments};
   
   # Make our arguments arrayrefs if they're not already
-  $page1_action_arguments         = [] unless defined( $page1_action_arguments );
+  $page1_action_arguments = [] unless defined( $page1_action_arguments );
   $specific_page_action_arguments = [] unless defined( $specific_page_action_arguments );
-  $page1_action_arguments         = [ $page1_action_arguments ] if ref( $page1_action_arguments ) ne "ARRAY";
+  $page1_action_arguments = [ $page1_action_arguments ] if ref( $page1_action_arguments ) ne "ARRAY";
   $specific_page_action_arguments = [ $specific_page_action_arguments ] if ref( $specific_page_action_arguments ) ne "ARRAY";
   
   if ( ( $current_page > 1 and $page_info->last_page < $current_page ) or !defined( $current_page ) or !$current_page or $current_page !~ /^\d+$/ or $current_page < 1 ) {

@@ -28,6 +28,9 @@ Catalyst Controller.
 sub auto :Private {
   my ( $self, $c ) = @_;
   
+  # Load the messages
+  $c->load_status_msgs;
+  
   # The title bar will always have
   $c->stash({subtitle1 => $c->maketext("menu.text.venues")});
   
@@ -47,9 +50,6 @@ Chain base for getting the venue ID and checking it.
 
 sub base :Chained("/") PathPart("venues") CaptureArgs(1) {
   my ( $self, $c, $id_or_url_key ) = @_;
-  
-  # Load the messages
-  $c->load_status_msgs;
   
   my $venue = $c->model("DB::Venue")->find_id_or_url_key( $id_or_url_key );
   
@@ -95,9 +95,6 @@ sub base_list :Chained("/") :PathPart("venues") :CaptureArgs(0) {
       $c->uri_for("/static/script/standard/option-list.js"),
     ],
   });
-  
-  # Load the messages
-  $c->load_status_msgs;
 }
 
 =head2 list_first_page
@@ -233,9 +230,6 @@ Display a form to collect information for creating a venue
 
 sub create :Local {
   my ($self, $c) = @_;
-  
-  # Load the messages
-  $c->load_status_msgs;
   
   # Check that we are authorised to create venues
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["venue_create", $c->maketext("user.auth.create-venues"), 1] );

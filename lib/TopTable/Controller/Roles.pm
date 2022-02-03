@@ -91,9 +91,6 @@ sub base_list :Chained("/") :PathPart("roles") :CaptureArgs(0) {
       $c->uri_for("/static/script/standard/option-list.js"),
     ],
   );
-  
-  # Load the messages
-  $c->load_status_msgs;
 }
 
 =head2 list_first_page
@@ -216,9 +213,6 @@ Display a form to collect information for creating a role.
 
 sub create :Local {
   my ( $self, $c ) = @_;
-  
-  # Load the messages
-  $c->load_status_msgs;
   
   # Check that we are authorised to create clubs
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["role_create", $c->maketext("user.auth.create-roles"), 1] );

@@ -47,9 +47,6 @@ Chain base for getting the filter ID or URL key and checking it.
 sub base :Chained("/") :PathPart("league-averages/filters") :CaptureArgs(1) {
   my ( $self, $c, $id_or_key ) = @_;
   
-  # Load the messages
-  $c->load_status_msgs;
-  
   my $filter = $c->model("DB::AverageFilter")->find_id_or_url_key( $id_or_key );
   
   if ( defined( $filter ) ) {
@@ -88,9 +85,6 @@ sub base_list :Chained("/") :PathPart("league-averages/filters") :CaptureArgs(0)
       $c->uri_for("/static/script/standard/option-list.js"),
     ],
   });
-  
-  # Load the messages
-  $c->load_status_msgs;
 }
 
 =head2 list_first_page
@@ -217,26 +211,26 @@ sub view :Chained("base") :PathPart("") :Args(0) {
     # Push edit / opening hour links if are authorised
     push(@title_links, {
       image_uri => $c->uri_for("/static/images/icons/0018-Pencil-icon-32.png"),
-      text      => $c->maketext("admin.delete-object", $encoded_name),
-      link_uri  => $c->uri_for_action("/league-averages/filters/edit", [$filter->url_key]),
+      text => $c->maketext("admin.delete-object", $encoded_name),
+      link_uri => $c->uri_for_action("/league-averages/filters/edit", [$filter->url_key]),
     }) if $can_edit;
     
     # Push a delete link if we're authorised and the venue can be deleted
     push(@title_links, {
       image_uri => $c->uri_for("/static/images/icons/0005-Delete-icon-32.png"),
-      text      => $c->maketext("admin.delete-object", $encoded_name),
-      link_uri  => $c->uri_for_action("/league-averages/filters/delete", [$filter->url_key]),
+      text => $c->maketext("admin.delete-object", $encoded_name),
+      link_uri => $c->uri_for_action("/league-averages/filters/delete", [$filter->url_key]),
     }) if $can_delete;
   }
   
   # Set up the template to use
   $c->stash({
-    template            => "html/league-averages/filters/view.ttkt",
-    title_links         => \@title_links,
-    can_edit            => $can_edit,
-    can_delete          => $can_delete,
+    template => "html/league-averages/filters/view.ttkt",
+    title_links => \@title_links,
+    can_edit => $can_edit,
+    can_delete => $can_delete,
     view_online_display => sprintf( "Viewing average filter: %s", $encoded_name ),
-    view_online_link    => 0,
+    view_online_link => 0,
   });
 }
 
@@ -249,9 +243,6 @@ Display a form to collect information for creating an average filter.
 sub create :Local {
   my ( $self, $c ) = @_;
   
-  # Load the messages
-  $c->load_status_msgs;
-  
   # Check that we are authorised to create filters
   if ( $c->user_exists ) {
     # If we're logged in, we can definitely create user filters, but we need to know if we can create public ones, but just check, not redirect on failure
@@ -263,27 +254,27 @@ sub create :Local {
   
   # Stash information for the template
   $c->stash({
-    template            => "html/league-averages/filters/create-edit.ttkt",
-    external_scripts    => [
+    template => "html/league-averages/filters/create-edit.ttkt",
+    external_scripts => [
       $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
       $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
       $c->uri_for("/static/script/standard/chosen.js"),
       $c->uri_for("/static/script/standard/prettycheckable.js"),
       $c->uri_for("/static/script/league-averages/filters/create-edit.js"),
     ],
-    external_styles     => [
+    external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
       $c->uri_for("/static/css/prettycheckable/prettyCheckable.css"),
     ],
-    form_action         => $c->uri_for("do-create"),
-    subtitle2           => $c->maketext("admin.create"),
+    form_action => $c->uri_for("do-create"),
+    subtitle2 => $c->maketext("admin.create"),
     view_online_display => "Creating average filters",
-    view_online_link    => 0,
+    view_online_link => 0,
   });
   
   # Breadcrumbs
   push(@{ $c->stash->{breadcrumbs} }, {
-    path  => $c->uri_for("/league-averages/filters/create"),
+    path => $c->uri_for("/league-averages/filters/create"),
     label => $c->maketext("admin.create"),
   });
 }
@@ -299,9 +290,9 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
   my $filter = $c->stash->{filter};
   
   # Don't cache this page.
-  $c->response->header("Cache-Control"  => "no-cache, no-store, must-revalidate");
-  $c->response->header("Pragma"         => "no-cache");
-  $c->response->header("Expires"        => 0);
+  $c->response->header("Cache-Control" => "no-cache, no-store, must-revalidate");
+  $c->response->header("Pragma" => "no-cache");
+  $c->response->header("Expires" => 0);
   
   # Check that we are authorised to create filters
   if ( !defined( $filter->user ) ) {
@@ -314,24 +305,24 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
   
   # Stash information for the template
   $c->stash({
-    template            => "html/league-averages/filters/create-edit.ttkt",
-    external_scripts    => [
+    template => "html/league-averages/filters/create-edit.ttkt",
+    external_scripts => [
       $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
       $c->uri_for("/static/script/standard/chosen.js"),
       $c->uri_for("/static/script/league-averages/filters/create-edit.js"),
     ],
-    external_styles     => [
+    external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
     ],
-    form_action         => $c->uri_for("do-create"),
-    subtitle2           => $c->maketext("admin.create"),
+    form_action => $c->uri_for("do-create"),
+    subtitle2 => $c->maketext("admin.create"),
     view_online_display => "Creating average filters",
-    view_online_link    => 0,
+    view_online_link => 0,
   });
   
   # Breadcrumbs
   push(@{ $c->stash->{breadcrumbs} }, {
-    path  => $c->uri_for_action("/league-averages/filters/edit", [$filter->url_key]),
+    path => $c->uri_for_action("/league-averages/filters/edit", [$filter->url_key]),
     label => $c->maketext("admin.create"),
   });
 }
@@ -363,15 +354,15 @@ sub delete :Chained("base") :PathPart("delete") :Args(0) {
   $c->forward("view");
   
   $c->stash({
-    subtitle2           => $c->maketext("admin.delete"),
-    template            => "html/league-averages/filters/delete.ttkt",
+    subtitle2 => $c->maketext("admin.delete"),
+    template => "html/league-averages/filters/delete.ttkt",
     view_online_display => sprintf( "Deleting %s", $encoded_name ),
-    view_online_link    => 0,
+    view_online_link => 0,
   });
   
   # Breadcrumbs
   push(@{ $c->stash->{breadcrumbs} }, {
-    path  => $c->uri_for("/league-averages/filters/delete", [$filter->url_key]),
+    path => $c->uri_for("/league-averages/filters/delete", [$filter->url_key]),
     label => $c->maketext("admin.delete"),
   });
 }
@@ -394,7 +385,7 @@ sub do_create :Path("do-create") {
     $c->forward( "TopTable::Controller::Users", "check_authorisation", ["average_filter_create_public", "", 1] );
   }
   
-  $c->detach( "setup_template", ["create"] );
+  $c->detach( "process_form", ["create"] );
 }
 
 =head2 do_edit
@@ -416,7 +407,7 @@ sub do_edit :Chained("base") :PathPart("do-edit") :Args(0) {
     $c->forward( "TopTable::Controller::Users", "check_authorisation", ["average_filter_edit_all", $c->maketext("user.auth.edit-average-filter"), 1] );
   }
   
-  $c->detach( "setup_template", ["edit"] );
+  $c->detach( "process_form", ["edit"] );
 }
 
 =head2 do_delete
@@ -461,61 +452,58 @@ sub do_delete :Chained("base") :PathPart("do-delete") :Args(0) {
   }
 }
 
-=head2 setup_template
+=head2 process_form
 
 Forwarded from docreate and doedit to do the filter creation / edit.
 
 =cut
 
-sub setup_template :Private {
+sub process_form :Private {
   my ( $self, $c, $action ) = @_;
   my $filter = $c->stash->{filter};
-  my $user = $c->user if $action eq "create" and $c->user_exists and !$c->request->parameters->{public};
+  my $user = $c->user if $action eq "create" and $c->user_exists and !$c->req->param( "public" );
   my @field_names = qw( name player_type criteria_field operator criteria criteria_type );
   my @processed_field_names = qw( name show_active show_loan show_inactive criteria_field operator criteria criteria_type );
   
   # The error checking and creation is done in the TemplateLeagueTableRanking model
-  my $returned = $c->model("DB::AverageFilter")->create_or_edit($action, {
-    filter    => $filter,
-    language  => sub{ $c->maketext( @_ ); },
-    logger    => sub{ my $level = shift; $c->log->$level( @_ ); },
-    user      => $user,
-    map {$_ => $c->request->parameters->{$_} } @field_names,
+  my $response = $c->model("DB::AverageFilter")->create_or_edit($action, {
+    filter => $filter,
+    map {$_ => $c->req->params->{$_} } @field_names,
+    logger => sub{ my $level = shift; $c->log->$level( @_ ); },
+    user => $user,
   });
   
-  if ( scalar( @{ $returned->{fatal} } ) ) {
-    # A fatal error means we can't return to the form, so we go home instead,
-    $c->response->redirect( $c->uri_for("/",
-                              {mid => $c->set_status_msg( {error => $c->build_message( $returned->{fatal} )} )}));
-  } elsif ( scalar( @{ $returned->{error} } ) ) {
-    my $error = $c->build_message( $returned->{error} );
+  # Set the status messages we need to show on redirect
+  my @errors = @{$response->{errors}};
+  my @warnings = @{$response->{warnings}};
+  my @info = @{$response->{info}};
+  my @success = @{$response->{success}};
+  my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});
+  my $redirect_uri;
+  
+  if ( $response->{completed} ) {
+    # Was completed, display the view page
+    $filter = $response->{filter};
+    $redirect_uri = $c->uri_for_action("/league-averages/filters/view", [$filter->url_key], {mid => $mid});
     
-    # Flash the entered values we've got so we can set them into the form
-    map {$c->flash->{$_} = $returned->{sanitised_fields}{$_} } @processed_field_names;
-    
-    my $redirect_uri;
+    # Completed, so we log an event
+    $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["average-filter", $action, {id => $filter->id}, $filter->name] );
+  } else {
+    # Not complete - check if we need to redirect back to the create or view page
     if ( $action eq "create" ) {
-      $redirect_uri = $c->uri_for("/league-averages/filters/create",
-                          {mid => $c->set_status_msg( {error => $error} ) });
+      $redirect_uri = $c->uri_for("/league-averages/filters/create", {mid => $mid});
     } else {
-      $redirect_uri = $c->uri_for_action("/league-averages/filters/edit", [ $filter->url_key ],
-                          {mid => $c->set_status_msg( {error => $error} ) });
+      $redirect_uri = $c->uri_for_action("/league-averages/filters/edit", [$filter->url_key], {mid => $mid});
     }
     
-    $c->response->redirect( $redirect_uri );
-    $c->detach;
-    return;
-  } else {
-    my $filter = $returned->{filter};
-    my $encoded_name = encode_entities( $filter->name );
-    my $action_description = ( $action eq "create" ) ? $c->maketext("admin.message.created") : $c->maketext("admin.message.edited");
-    
-    $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["average-filter", $action, {id => $filter->id}, $filter->name] );
-    $c->response->redirect( $c->uri_for_action("/league-averages/filters/view", [$filter->url_key],
-                                {mid => $c->set_status_msg( {success => $c->maketext( "admin.forms.success", $encoded_name, $action_description )}  ) }) );
-    $c->detach;
-    return;
+    # Flash the entered values we've got so we can set them into the form
+    map {$c->flash->{$_} = $response->{fields}{$_} } @processed_field_names;
   }
+  
+  # Now actually do the redirection
+  $c->response->redirect( $redirect_uri );
+  $c->detach;
+  return;
 }
 
 

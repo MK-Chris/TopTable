@@ -28,9 +28,6 @@ Catalyst Controller.
 sub auto :Private {
   my ( $self, $c ) = @_;
   
-  # Load the messages
-  $c->load_status_msgs;
-  
   # The title bar will always have
   $c->stash({subtitle1 => $c->maketext("menu.text.templates-league-table-ranking")});
   
@@ -92,9 +89,6 @@ sub base_list :Chained("/") :PathPart("templates/league-table-ranking") :Capture
       $c->uri_for("/static/script/standard/option-list.js"),
     ],
   });
-  
-  # Load the messages
-  $c->load_status_msgs;
 }
 
 =head2 list_first_page
@@ -213,9 +207,6 @@ Display a form to collect information for creating a match template.  Unlike oth
 
 sub create :Local {
   my ( $self, $c ) = @_;
-  
-  # Load the messages
-  $c->load_status_msgs;
   
   # Check that we are authorised to create clubs
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["template_create", $c->maketext("user.auth.create-templates"), 1] );

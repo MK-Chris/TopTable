@@ -34,3 +34,4 @@ root/maintenance.html
 # DBIx::Class::DeploymentHandler
 /dbicdh
 lib/TopTable/Schema/Result/DbixClassDeploymenthandlerVersion.pm
+TopTable.code-workspace

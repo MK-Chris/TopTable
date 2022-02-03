@@ -91,9 +91,6 @@ Chain base for getting the meeting ID and checking it.
 sub base_by_id :Chained("/") :PathPart("meetings") :CaptureArgs(1) {
   my ( $self, $c, $id ) = @_;
   
-  # Load the messages
-  $c->load_status_msgs;
-  
   my $meeting = $c->model("DB::Meeting")->find_by_id( $id );
   
   if ( defined( $meeting ) ) {
@@ -139,9 +136,6 @@ sub base_list :Chained("/") :PathPart("meetings") :CaptureArgs(0) {
       $c->uri_for("/static/script/standard/option-list.js"),
     ],
   });
-  
-  # Load the messages
-  $c->load_status_msgs;
 }
 
 =head2 list_first_page
@@ -326,9 +320,6 @@ sub create :Local {
   my ( $self, $c ) = @_;
   my $event     = $c->stash->{event};
   my $is_event  = $c->stash->{is_event} || 0;
-  
-  # Load the messages
-  $c->load_status_msgs;
   
   # Check that we are authorised to create clubs
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["meeting_create", $c->maketext("user.auth.create-meetings"), 1] );

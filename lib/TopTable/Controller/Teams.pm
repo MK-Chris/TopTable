@@ -60,9 +60,6 @@ Chain base for getting the club ID and checking it.
 sub base_by_id :Chained("/") :PathPart("teams") :CaptureArgs(1) {
   my ($self, $c, $team_id) = @_;
   
-  # Load the messages
-  $c->load_status_msgs;
-  
   my $team = $c->model("DB::Team")->find_with_prefetches($team_id);
   
   if ( defined( $team ) ) {
@@ -93,9 +90,6 @@ Chain base for getting the club / team URL key and checking it.
 sub base_by_url_key :Chained("/") :PathPart("teams") :CaptureArgs(2) {
   my ( $self, $c, $club_url_key, $team_url_key ) = @_;
   
-  # Load the messages
-  $c->load_status_msgs;
-  
   my $club = $c->model("DB::Club")->find_url_key( $club_url_key );
   my $team = $c->model("DB::Team")->find_url_key( $club, $team_url_key ) if defined ( $club );
   
@@ -120,16 +114,11 @@ sub base_by_url_key :Chained("/") :PathPart("teams") :CaptureArgs(2) {
 
 =head2 base_no_object_specified
 
-Base URL matcher with no team specified (used in the create routines).  Doesn't actually do anything other than the URL matching and loading status messages.
+Base URL matcher with no team specified (used in the create routines).  Doesn't actually do anything other than the URL matching.
 
 =cut
 
-sub base_no_object_specified :Chained("/") :PathPart("teams") :CaptureArgs(0) {
-  my ( $self, $c ) = @_;
-  
-  # Load the messages
-  $c->load_status_msgs;
-}
+sub base_no_object_specified :Chained("/") :PathPart("teams") :CaptureArgs(0) {}
 
 =head2 list
 

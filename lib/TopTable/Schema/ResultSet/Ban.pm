@@ -84,15 +84,13 @@ sub create_or_edit {
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $response = {error => [], warning => []}; # Initial response
   my $banned_id_valid;
+  my $lang = $self->result_source->schema->lang;
   
   # Check the passed in user
-  push( @{$response->{error}}, {id => "admin.performing-user-invalid"}) unless ref( $banning_user ) eq "Catalyst::Authentication::Store::DBIx::Class::User";
+  push( @{$response->{error}}, $lang->maketext("admin.performing-user-invalid")) unless ref( $banning_user ) eq "Catalyst::Authentication::Store::DBIx::Class::User";
   
   if ( $action ne "create" and $action ne "edit" ) {
-    push(@{ $response->{error} }, {
-      id => "admin.form.invalid-action",
-      parameters => [$action],
-    });
+    push(@{ $response->{error} }, $lang->maketext("admin.form.invalid-action", $action));
     
     # This error is fatal, so we return straight away
     return $response;
@@ -103,21 +101,14 @@ sub create_or_edit {
     if ( defined( $ban ) and ( ref( $ban ) eq "TopTable::Model::DB::Ban" ) or ref( $ban ) eq "TopTable::Model::DB::BannedUser" ) {
       # Valid ban
       $valid_ban = 1;
-      $logger->( "debug", sprintf( "valid ban passed as object: %s", ref( $ban ) ) );
     } elsif ( defined( $ban_id ) ) {
       # Ban ID passed, check it's valid
       $ban = $ban_type->id eq "username" ? $self->result_source->schema->resultset("BannedUser")->find( $ban_id ) : $self->find( $ban_id );
       $valid_ban = 1 if defined( $ban );
-      
-      if ( defined( $ban ) ) {
-        $logger->( "debug", sprintf( "valid %s ban passed as id: %s", $ban_type->id, $ban_id ) );
-      } else {
-        $logger->( "debug", sprintf( "invalid %s ban passed as id: %s", $ban_type->id, $ban_id ) );
-      }
     }
     
     unless( $valid_ban ) {
-      push(@{ $response->{error} }, {id => "admin.bans.form.error.ban-invalid"});
+      push(@{ $response->{error} }, $lang->maketext("admin.bans.form.error.ban-invalid"));
       
       # Another fatal error
       return $response;
@@ -133,7 +124,7 @@ sub create_or_edit {
     $ban_type = $self->result_source->schema->resultset("LookupBanType")->find( $ban_type_id );
   }
   
-  push( @{$response->{error}}, {id => "admin.bans.form.error.no-ban-type-given"} ) unless defined( $ban_type );
+  push( @{$response->{error}}, $lang->maketext("admin.bans.form.error.no-ban-type-given") ) unless defined( $ban_type );
   
   # If there's no ban type or no authenticated user, it's fatal and we can't continue
   return $response if scalar( @{$response->{error}} );
@@ -175,7 +166,7 @@ sub create_or_edit {
   }
   
   # Now we've done the checks for a valid name, raise an error if the valid flag isn't set
-  push( @{$response->{error}}, {id => "admin.bans.form.error.invalid-$ban_type"} ) unless $banned_id_valid;
+  push( @{$response->{error}}, $lang->maketext("admin.bans.form.error.invalid-$ban_type") ) unless $banned_id_valid;
   
   if ( defined( $expires_date ) ) {
     # Check the expiry date - split into parts and then try creating a new DatTime out of them
@@ -194,7 +185,7 @@ sub create_or_edit {
         time_zone => $expires_timezone,
       );
     } catch {
-      push(@{ $response->{error} }, {id => "admin.bans.form.error.expiry-date-invalid"});
+      push(@{ $response->{error} }, $lang->maketext("admin.bans.form.error.expiry-date-invalid"));
       undef( $expires_date );
     } finally {
       $date_valid = 1 if defined( $expires_date );
@@ -204,23 +195,23 @@ sub create_or_edit {
     if ( ( defined( $expires_hour ) and $expires_hour ) or ( defined( $expires_minute ) and $expires_minute ) ) {
       if ( !defined( $expires_hour ) or $expires_hour !~ m/^(?:0[0-9]|1[0-9]|2[0-3])$/ ) {
         # Error, invalid hour passed
-        push(@{ $response->{error} }, {id => "admin.bans.form.error.expires-hour-invalid"});
+        push(@{ $response->{error} }, $lang->maketext("admin.bans.form.error.expires-hour-invalid"));
         $time_valid = 0;
       }
       
       if ( !defined( $expires_minute ) or $expires_minute !~ m/^(?:[0-5][0-9])$/ ) {
         # Error, invalid minute passed
-        push(@{ $response->{error} }, {id => "admin.bans.form.error.expires-minute-invalid"});
+        push(@{ $response->{error} }, $lang->maketext("admin.bans.form.error.expires-minute-invalid"));
         $time_valid = 0;
       }
       
       $expires_date->set( hour => $expires_hour, minute => $expires_minute ) if $time_valid;
     }
     
-    push(@{ $response->{error} }, {id => "admin.bans.form.error.expires-date-in-past"}) if $date_valid and $expires_date->subtract_datetime( DateTime->now( time_zone => $expires_timezone ) )->is_negative;
+    push(@{ $response->{error} }, $lang->maketext("admin.bans.form.error.expires-date-in-past")) if $date_valid and $expires_date->subtract_datetime( DateTime->now( time_zone => $expires_timezone ) )->is_negative;
   } else {
     # Check we don't have a time without a date
-    push(@{ $response->{error} }, {id => "admin.bans.form.error.expires-time-passed-without-date"}) if defined( $expires_hour ) or defined( $expires_minute ); 
+    push(@{ $response->{error} }, $lang->maketext("admin.bans.form.error.expires-time-passed-without-date")) if defined( $expires_hour ) or defined( $expires_minute ); 
   }
   
   # Sanitise the ban levels to 1 (1 if defined and returning a true value, or 0 for anything else).  Ban levels that are invalid for the current ban type have already been set to 0 by now, so no need to do that here
@@ -249,7 +240,7 @@ sub create_or_edit {
   }
   
   # Make sure we have at least one ban level
-  push(@{ $response->{error} }, {id => "admin.bans.form.error.no-levels-selected"}) unless $ban_access or $ban_registration or $ban_login or $ban_contact;
+  push(@{ $response->{error} }, $lang->maketext("admin.bans.form.error.no-levels-selected")) unless $ban_access or $ban_registration or $ban_login or $ban_contact;
   
   # Error checking done, create the ban if we don't have any errors
   if ( scalar( @{$response->{error}} ) == 0 ) {
@@ -338,7 +329,7 @@ sub is_banned {
   my $is_banned = 0; # Default to not banned
   my $now = DateTime->now( time_zone => "UTC" ); # Check we're not returning expired bans
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
-  my $lang = delete $params->{language} || sub { return wantarray ? @_ : "@_"; }; # Default to a sub that just returns everything, as we don't want errors if we haven't passed in a language sub.
+  my $lang = $self->result_source->schema->lang;
   
   # Pass the level back in the response
   my $response = {level => $level};
@@ -366,10 +357,10 @@ sub is_banned {
     if ( $ip_banned ) {
       # Banned by IP
       $is_banned = 1;
-      push(@log_info, $lang->( "admin.bans.lookup.banned", $lang->( "admin.bans.lookup.level.$level" ), $lang->( "admin.bans.lookup.type.ip" ), $ip_address )) if $log_banned;
+      push(@log_info, $lang->maketext( "admin.bans.lookup.banned", $lang->maketext( "admin.bans.lookup.level.$level" ), $lang->maketext( "admin.bans.lookup.type.ip" ), $ip_address )) if $log_banned;
     } else {
       # Allowed by IP
-      push(@log_info, $lang->( "admin.bans.lookup.allowed", $lang->( "admin.bans.lookup.level.$level" ), $lang->( "admin.bans.lookup.type.ip" ), $ip_address )) if $log_allowed;
+      push(@log_info, $lang->maketext( "admin.bans.lookup.allowed", $lang->maketext( "admin.bans.lookup.level.$level" ), $lang->maketext( "admin.bans.lookup.type.ip" ), $ip_address )) if $log_allowed;
     }
   }
   
@@ -388,10 +379,10 @@ sub is_banned {
     if ( $email_banned ) {
       # Banned by email
       $is_banned = 1;
-      push(@log_info, $lang->( "admin.bans.lookup.banned", $lang->( "admin.bans.lookup.level.$level" ), $lang->( "admin.bans.lookup.type.email" ), $email_address )) if $log_banned;
+      push(@log_info, $lang->maketext( "admin.bans.lookup.banned", $lang->maketext( "admin.bans.lookup.level.$level" ), $lang->maketext( "admin.bans.lookup.type.email" ), $email_address )) if $log_banned;
     } else {
       # Allowed by email
-      push(@log_info, $lang->( "admin.bans.lookup.allowed", $lang->( "admin.bans.lookup.level.$level" ), $lang->( "admin.bans.lookup.type.email" ), $email_address )) if $log_allowed;
+      push(@log_info, $lang->maketext( "admin.bans.lookup.allowed", $lang->maketext( "admin.bans.lookup.level.$level" ), $lang->maketext( "admin.bans.lookup.type.email" ), $email_address )) if $log_allowed;
     }
   }
   
@@ -418,10 +409,10 @@ sub is_banned {
       if ( $user_banned ) {
         # Banned by IP
         $is_banned = 1;
-        push(@log_info, $lang->( "admin.bans.lookup.banned", $lang->( "admin.bans.lookup.level.$level" ), $lang->( "admin.bans.lookup.type.username" ), $user->username )) if $log_banned;
+        push(@log_info, $lang->maketext( "admin.bans.lookup.banned", $lang->maketext( "admin.bans.lookup.level.$level" ), $lang->maketext( "admin.bans.lookup.type.username" ), $user->username )) if $log_banned;
       } else {
         # Allowed by IP
-        push(@log_info, $lang->( "admin.bans.lookup.allowed", $lang->( "admin.bans.lookup.level.$level" ), $lang->( "admin.bans.lookup.type.username" ), $user->username )) if $log_allowed;
+        push(@log_info, $lang->maketext( "admin.bans.lookup.allowed", $lang->maketext( "admin.bans.lookup.level.$level" ), $lang->maketext( "admin.bans.lookup.type.username" ), $user->username )) if $log_allowed;
       }
     } else {
       # Invalid user passed

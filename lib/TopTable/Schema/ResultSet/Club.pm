@@ -158,10 +158,12 @@ Retrieve all clubs (and prefetch their teams) with teams entering a given season
 =cut
 
 sub clubs_with_teams_in_season {
-  my ( $self, $parameters ) = @_;
-  my $season      = $parameters->{season};
-  my $get_teams   = $parameters->{get_teams};
-  my $get_players = $parameters->{get_players};
+  my ( $self, $params ) = @_;
+  my $season = $params->{season};
+  my $get_teams = $params->{get_teams};
+  my $get_players = $params->{get_players};
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $lang = $self->result_source->schema->lang;
   
   my ( $where, $attributes );
   if ( $get_teams and $get_players ) {
@@ -251,24 +253,26 @@ Same as find(), but searches for both the id and key columns.  So we can use hum
 
 sub find_id_or_url_key {
   my ( $self, $id_or_url_key ) = @_;
-  my ( $where );
+  my $where;
   
   if ( $id_or_url_key =~ m/^\d+$/ ) {
-    # Numeric - assume it's the ID
-    $where = {
-      id => $id_or_url_key,
-    };
+    # Numeric - look in ID or URL key
+    $where = [{
+      id => $id_or_url_key
+    }, {
+      "me.url_key" => $id_or_url_key
+    }];
   } else {
     # Not numeric - must be the URL key
-    $where = {
-      url_key => $id_or_url_key,
-    };
+    $where = {"me.url_key" => $id_or_url_key};
   }
   
-  return $self->find($where, {
-    prefetch  => [ qw( secretary venue ) ],
-  });
+  return $self->search($where, {
+    prefetch => [ qw( secretary venue ) ],
+    rows => 1,
+  })->single;
 }
+  
 
 =head2 generate_url_key
 
@@ -314,190 +318,216 @@ Provides the wrapper (including error checking) for adding / editing a club.
 =cut
 
 sub create_or_edit {
-  my ( $self, $action, $parameters ) = @_;
-  my ( $club_name_check );
-  my $return_value = {error => []};
-  
-  my $club              = $parameters->{club}             || undef;
-  my $full_name         = $parameters->{full_name}        || undef;
-  my $short_name        = $parameters->{short_name}       || undef;
-  my $abbreviated_name  = $parameters->{abbreviated_name} || undef;
-  my $email_address     = $parameters->{email_address}    || undef;
-  my $website           = $parameters->{website}          || undef;
-  my $start_hour        = $parameters->{start_hour}       || undef;
-  my $start_minute      = $parameters->{start_minute}     || undef;
-  my $venue             = $parameters->{venue}            || undef;
-  my $secretary         = $parameters->{secretary}        || undef;
-  
-  # Schema for looking up from other tables
+  my ( $self, $action, $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
   my $schema = $self->result_source->schema;
+  $schema->_set_maketext( TopTable::Maketext->get_handle( $locale ) ) unless defined( $schema->lang );
+  my $lang = $schema->lang;
+  
+  # Grab the fields
+  my $club = delete $params->{club};
+  my $full_name = delete $params->{full_name};
+  my $short_name = delete $params->{short_name};
+  my $abbreviated_name = delete $params->{abbreviated_name};
+  my $email_address = delete $params->{email_address};
+  my $website = delete $params->{website};
+  my $start_hour = delete $params->{start_hour} || undef;
+  my $start_minute = delete $params->{start_minute} || undef;
+  my $venue = delete $params->{venue};
+  my $secretary = delete $params->{secretary};
+  my $response = {
+    errors => [],
+    warnings => [],
+    info => [],
+    success => [],
+    fields => {
+      full_name  => $full_name,
+      short_name => $short_name,
+      abbreviated_name => $abbreviated_name,
+      email_address => $email_address,
+      website => $website,
+      start_hour => $start_hour,
+      start_minute => $start_minute,
+    },
+    completed => 0,
+  };
   
   if ($action ne "create" and $action ne "edit") {
     # Invalid action passed
-    push(@{ $return_value->{error} }, {
-      id          => "admin.form.invalid-action",
-      parameters  => [$action],
-    });
+    push(@{$response->{errors}}, $lang->maketext("admin.form.invalid-action", $action));
     
     # This error is fatal, so we return straight away
-    return $return_value;
+    return $response;
   } elsif ($action eq "edit") {
     # Check the club passed is valid
-    unless ( defined( $club ) and ref( $club ) eq "TopTable::Model::DB::Club" ) {
-      push(@{ $return_value->{error} }, {id => "clubs.form.error.club-invalid"});
-      
-      # Another fatal error
-      return $return_value;
+    if ( defined( $club ) ) {
+      if ( ref( $club ) ne "TopTable::Model::DB::Club" ) {
+        # This may not be an error, we may just need to find from an ID or URL key
+        $club = $self->find_id_or_url_key( $club );
+        
+        # Definitely error if we're now undef
+        push(@{$response->{errors}}, $lang->maketext("clubs.form.error.club-invalid")) unless defined( $club );
+        
+        # Another fatal error
+        return $response;
+      }
+    } else {
+      push(@{$response->{errors}}, $lang->maketext("clubs.form.error.club-not-specified"));
     }
   }
   
   # Error checking
   # Check the names were entered and don't exist already.
-  if ( defined($full_name) ) {
+  if ( defined( $full_name ) and $full_name ) {
     # Full name entered, check it.
-    if ($action eq "edit") {
-      $club_name_check = $self->find({}, {
-        where => {
-          full_name  => $full_name,
-          id        => {
-            "!=" => $club->id
-          }
-        }
-      });
-    } else {
-      $club_name_check = $self->find({full_name => $full_name});
-    }
-    
-    push(@{ $return_value->{error} }, {
-      id          => "clubs.form.error.full-name-exists",
-      parameters  => [$full_name],
-    }) if defined( $club_name_check );
+    push(@{$response->{errors}}, $lang->maketext("clubs.form.error.full-name-exists", $full_name)) if defined( $self->check_field({field => "full_name", value => $full_name, exclusion_obj => $club}) );
   } else {
     # Full name omitted.
-    push(@{ $return_value->{error} }, {id => "clubs.form.error.full-name-blank"});
+    push(@{$response->{errors}}, $lang->maketext("clubs.form.error.full-name-blank"));
   }
   
-  if ( defined( $short_name ) ) {
-    if ($action eq "edit") {
-      $club_name_check = $self->find({}, {
-        where => {
-          short_name  => $short_name,
-          id          => {
-            "!=" => $club->id
-          }
-        }
-      });
-    } else {
-      $club_name_check = $self->find({short_name => $short_name});
-    }
-    
-    push(@{ $return_value->{error} }, {
-      id          => "clubs.form.error.short-name-exists",
-      parameters  => [$short_name],
-    }) if defined( $club_name_check );
-  } else {
-    # Short name omitted.
-    push(@{ $return_value->{error} }, {id => "clubs.form.error.short-name-blank"});
-  }
-  
-  if ( defined($abbreviated_name) ) {
-    # Abbreviated name entered, check it.
-    if ($action eq "edit") {
-      $club_name_check = $self->find({}, {
-        where => {
-          abbreviated_name  => $abbreviated_name,
-          id        => {
-            "!=" => $club->id
-          }
-        }
-      });
-    } else {
-      $club_name_check = $self->find({abbreviated_name => $abbreviated_name});
-    }
-    
-    push(@{ $return_value->{error} }, {
-      id          => "clubs.form.error.abbreviated-name-exists",
-      parameters  => [$abbreviated_name],
-    }) if defined( $club_name_check );
+  if ( defined( $short_name ) and $short_name ) {
+    # Full name entered, check it.
+    push(@{$response->{errors}}, $lang->maketext("clubs.form.error.short-name-exists", $short_name)) if defined( $self->check_field({field => "short_name", value => $short_name, exclusion_obj => $club}) );
   } else {
     # Full name omitted.
-    push(@{ $return_value->{error} }, {id => "clubs.form.error.abbreviated-name-blank"});
+    push(@{$response->{errors}}, $lang->maketext("clubs.form.error.short-name-blank"));
+  }
+  
+  if ( defined( $abbreviated_name ) and $abbreviated_name ) {
+    # Full name entered, check it.
+    push(@{$response->{errors}}, $lang->maketext("clubs.form.error.abbreviated-name-exists", $abbreviated_name)) if defined( $self->check_field({field => "abbreviated_name", value => $abbreviated_name, exclusion_obj => $club}) );
+  } else {
+    # Full name omitted.
+    push(@{$response->{errors}}, $lang->maketext("clubs.form.error.abbreviated-name-blank"));
   }
   
   # Email address entered but invalid
-  push(@{ $return_value->{error} }, {id => "clubs.form.error.email-invalid"}) if $email_address and $email_address !~ m/^[-!#$%&\'*+\\.\/0-9=?A-Z^_`{|}~]+@([-0-9A-Z]+\.)+([0-9A-Z]){2,4}$/i;
+  push(@{$response->{errors}}, $lang->maketext("clubs.form.error.email-invalid")) if $email_address and $email_address !~ m/^[-!#$%&\'*+\\.\/0-9=?A-Z^_`{|}~]+@([-0-9A-Z]+\.)+([0-9A-Z]){2,4}$/i;
   
   # Website
-    # Website entered but invalid
-  push(@{ $return_value->{error} }, {id => "clubs.form.error.website-invalid"}) if $website and !$RE{URI}{HTTP}->matches( $website );
+  push(@{$response->{errors}}, $lang->maketext("clubs.form.error.website-invalid")) if $website and !$RE{URI}{HTTP}->matches( $website );
   
-  # The venue / secretary should be checked to ensure they're a valid venue / person object
-  push(@{ $return_value->{error} }, {id => "clubs.form.error.venue-invalid"}) unless defined( $venue ) and ref( $venue ) eq "TopTable::Model::DB::Venue";
-  push(@{ $return_value->{error} }, {id => "clubs.form.error.secretary-invalid"}) if defined( $secretary ) and ref( $secretary ) ne "TopTable::Model::DB::Person";
+  # The venue / secretary should be checked to ensure they're a valid venue / person object or a valid ID / URL key for a venue or person
+  if ( defined( $venue ) and $venue ) {
+    if ( ref( $venue ) ne "TopTable::Model::DB::Venue" ) {
+      # This may not be an error, we may just need to find from an ID or URL key
+      $venue = $schema->resultset("Venue")->find_id_or_url_key( $venue );
+      
+      # Definitely error if we're now undef
+      if  ( defined( $venue ) ) {
+        $response->{fields}{venue} = $venue;
+      } else {
+        push(@{$response->{errors}}, $lang->maketext("clubs.form.error.venue-invalid"));
+      }
+    }
+  } else {
+    push(@{$response->{errors}}, $lang->maketext("clubs.form.error.venue-blank"))
+  }
+  
+  if ( defined( $secretary ) and $secretary ) {
+    if ( ref( $secretary ) ne "TopTable::Model::DB::Person" ) {
+      # This may not be an error, we may just need to find from an ID or URL key
+      $secretary = $schema->resultset("Person")->find_id_or_url_key( $secretary );
+      
+      # Definitely error if we're now undef
+      if ( defined( $secretary ) ) {
+        $response->{fields}{secretary} = $secretary;
+      } else {
+        push(@{$response->{errors}}, $lang->maketext("clubs.form.error.secretary-invalid"));
+      }
+    }
+  } else {
+    # If the secretary is not passed in, that's not an error, just ensure it does into the DB as a null by undefing it.
+    undef( $secretary );
+  }
   
   # Check valid start time; if blank, we won't error; they'll just use the season default start time.
-  push(@{ $return_value->{error} }, {id => "clubs.form.error.start-hour-invalid"}) if defined( $start_hour ) and $start_hour !~ m/^(?:0[0-9]|1[0-9]|2[0-3])$/;
-  push(@{ $return_value->{error} }, {id => "clubs.form.error.start-minute-invalid"}) if defined( $start_minute ) and $start_minute !~ m/^(?:[0-5][0-9])$/;
+  push(@{$response->{errors}}, $lang->maketext("clubs.form.error.start-hour-invalid")) if defined( $start_hour ) and $start_hour !~ m/^(?:0[0-9]|1[0-9]|2[0-3])$/;
+  push(@{$response->{errors}}, $lang->maketext("clubs.form.error.start-minute-invalid")) if defined( $start_minute ) and $start_minute !~ m/^(?:[0-5][0-9])$/;
   
   # Check we don't have one and not the other
-  push(@{ $return_value->{error} }, {id => "clubs.form.error.start-time-not-complete"}) if ( defined( $start_hour ) and !defined( $start_minute ) ) or ( !defined( $start_hour ) and defined( $start_minute ) );
+  push(@{ $response->{errors} }, $lang->maketext("clubs.form.error.start-time-not-complete")) if ( defined( $start_hour ) and !defined( $start_minute ) ) or ( !defined( $start_hour ) and defined( $start_minute ) );
    
-  if ( scalar( @{ $return_value->{error} } ) == 0 ) {
+  if ( scalar( @{$response->{errors}} ) == 0 ) {
     # Grab the submitted values
     # Build the time string
     my $default_match_start = sprintf( "%s:%s", $start_hour, $start_minute ) if $start_hour and $start_minute;
     
     # Build the key from the short name
-    my $url_key;
-    if ( $action eq "edit" ) {
-      $url_key = $self->generate_url_key( $short_name, $club->id );
-    } else {
-      $url_key = $self->generate_url_key( $short_name );
-    }
+    my $url_key = $action eq "edit" ? $self->generate_url_key( $short_name, $club->id ) : $self->generate_url_key( $short_name );
     
     # Success, we need to create / edit the club.  We don't create any club_seasons here, as they may not
     # be entering teams into this season.  This will be done when teams are entered for the club.
     if ( $action eq "create" ) {
       $club = $self->create({
-        url_key             => $url_key,
-        full_name           => $full_name,
-        short_name          => $short_name,
-        abbreviated_name    => $abbreviated_name,
-        email_address       => $email_address,
-        website             => $website,
+        url_key => $url_key,
+        full_name => $full_name,
+        short_name => $short_name,
+        abbreviated_name => $abbreviated_name,
+        email_address => $email_address,
+        website => $website,
         default_match_start => $default_match_start,
-        venue               => $venue,
-        secretary           => $secretary,
+        venue => $venue,
+        secretary => $secretary,
       });
+      
+      $response->{completed} = 1;
+      push(@{$response->{success}}, $lang->maketext("admin.forms.success", $club->full_name, $lang->maketext("admin.message.created")));
     } else {
       $club->update({
-        url_key             => $url_key,
-        full_name           => $full_name,
-        short_name          => $short_name,
-        abbreviated_name    => $abbreviated_name,
-        email_address       => $email_address,
-        website             => $website,
+        url_key => $url_key,
+        full_name => $full_name,
+        short_name => $short_name,
+        abbreviated_name => $abbreviated_name,
+        email_address => $email_address,
+        website => $website,
         default_match_start => $default_match_start,
-        venue               => $venue,
-        secretary           => $secretary,
+        venue => $venue,
+        secretary => $secretary,
       });
       
       my $season = $schema->resultset("Season")->get_current;
       my $club_season = $club->get_season( $season ) if defined( $season );
       
       $club_season->update({
-        full_name           => $full_name,
-        short_name          => $short_name,
-        abbreviated_name    => $abbreviated_name,
-        venue               => $venue,
-        secretary           => $secretary,
+        full_name => $full_name,
+        short_name => $short_name,
+        abbreviated_name => $abbreviated_name,
+        venue => $venue,
+        secretary => $secretary,
       }) if defined $club_season;
+      
+      $response->{completed} = 1;
+      push(@{$response->{success}}, $lang->maketext("admin.forms.success", $club->full_name, $lang->maketext("admin.message.edited")));
     }
     
-    $return_value->{club} = $club;
+    $response->{club} = $club;
   }
   
-  return $return_value;
+  return $response;
+}
+
+sub check_field {
+  my ( $self, $params ) = @_;
+  my $field = delete $params->{field};
+  my $value = delete $params->{value};
+  my $exclusion_obj = delete $params->{exclusion_obj};
+  
+  if ( defined( $exclusion_obj ) ) {
+    # Find anything with this value, excluding the exclusion object passed in
+    return $self->find({}, {
+      where => {
+        $field => $value,
+        id => {"!=" => $exclusion_obj->id},
+      }
+    });
+  } else {
+    # Find anything with this value
+    return $self->find({$field => $value});
+  }
 }
 
 1;

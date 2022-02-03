@@ -39,9 +39,6 @@ Chain base for getting the type of team match (league or tournament), the home t
 sub base_by_ids :Chained("/") :PathPart("matches/team/game") :CaptureArgs(6) {
   my ( $self, $c, $match_home_team_id, $match_away_team_id, $match_scheduled_date_year, $match_scheduled_date_month, $match_scheduled_date_day, $game_number ) = @_;
   
-  # Load the messages
-  $c->load_status_msgs;
-  
   # Do the date checking; eval it to trap DateTime errors and pass them into $error
   my $scheduled_date;
   try {
@@ -71,9 +68,6 @@ Chain base for getting the type of team match (league or tournament), the home t
 
 sub base_by_url_keys :Chained("/") PathPart("matches/team/game") CaptureArgs(8) {
   my ( $self, $c, $match_home_club_url_key, $match_home_team_url_key, $match_away_club_url_key, $match_away_team_url_key, $match_scheduled_date_year, $match_scheduled_date_month, $match_scheduled_date_day, $game_number ) = @_;
-  
-  # Load the messages
-  $c->load_status_msgs;
   
   # Do the date checking; eval it to trap DateTime errors and pass them into $error
   my $scheduled_date;
