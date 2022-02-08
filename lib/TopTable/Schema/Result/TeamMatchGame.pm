@@ -2369,7 +2369,7 @@ sub update_doubles_pair {
             team    => $team->id,
           });
           
-          my $doubles_pair2 = $person2_season->search_related("doubles_pairs_person2_season_teams", {
+          my $doubles_pair2 = $person1_season->search_related("doubles_pairs_person2_season_teams", {
             season  => $season->id,
             person1 => $player2->id,
             team    => $team->id,
