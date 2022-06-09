@@ -257,6 +257,8 @@ __PACKAGE__->has_many(
 # Created by DBIx::Class::Schema::Loader v0.07043 @ 2015-11-14 12:15:45
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:RL+6yG+wW+3t/rmX+QkJZQ
 
+use HTML::Entities;
+
 =head2 url_keys
 
 Return the URL key for this object as an array ref (even if there's only one, an array ref is necessary so we can do the same for other objects with more than one array key field).
@@ -265,7 +267,7 @@ Return the URL key for this object as an array ref (even if there's only one, an
 
 sub url_keys {
   my ( $self ) = @_;
-  return [ $self->url_key ];
+  return [$self->url_key];
 }
 
 =head2 can_edit_or_delete
@@ -281,7 +283,7 @@ sub can_edit_or_delete {
   my $game_templates_using_template = $self->search_related("template_match_team_games")->count;
   return 0 if $game_templates_using_template;
   
-  # Now check league matche games
+  # Now check league match games
   my $league_match_games_using_template = $self->search_related("team_match_games")->count;
   return 0 if $league_match_games_using_template;
   
@@ -296,25 +298,41 @@ Checks the template can be deleted (via can_delete) and then performs the deleti
 =cut
 
 sub check_and_delete {
-  my ( $self ) = @_;
-  my $error = [];
+  my ( $self, $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  my $response = {
+    errors => [],
+    warnings => [],
+    info => [],
+    success => [],
+    completed => 0,
+  };
+  
+  my $enc_name = encode_entities($self->name);
   
   # Check we can delete
-  push(@{ $error }, {
-    id          => "templates.delete.error.not-allowed",
-    parameters  => [$self->name],
-  }) unless $self->can_edit_or_delete;
+  unless ( $self->can_edit_or_delete ) {
+    push(@{$response->{errors}}, $lang->maketext("templates.delete.error.not-allowed", $enc_name));
+    return $response;
+  }
   
   # Delete
-  my $ok = $self->delete unless scalar( @{ $error } );
+  my $ok = $self->delete;
   
   # Error if the delete was unsuccessful
-  push(@{ $error }, {
-    id          => "admin.delete.error.database",
-    parameters  => $self->name
-  }) unless $ok;
+  if ( $ok ) {
+    $response->{completed} = 1;
+    push(@{$response->{success}}, $lang->maketext("admin.forms.success", $enc_name, $lang->maketext("admin.message.deleted")));
+  } else {
+    push(@{$response->{errors}}, $lang->maketext("admin.delete.error.database", $enc_name));
+  }
   
-  return $error;
+  return $response;
 }
 
 =head2 search_display

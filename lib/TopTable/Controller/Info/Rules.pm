@@ -28,9 +28,9 @@ sub auto :Private {
   $c->stash({subtitle1 => $c->maketext("menu.text.rules") });
   
   # Breadcrumbs links
-  push( @{ $c->stash->{breadcrumbs} }, {
+  push(@{$c->stash->{breadcrumbs}}, {
     # Clubs listing
-    path  => $c->uri_for("/info/rules"),
+    path => $c->uri_for("/info/rules"),
     label => $c->maketext("menu.text.rules"),
   });
 }
@@ -43,8 +43,7 @@ Start of a chain for viewing the rules for a given season - does nothing else bu
 
 sub base :Chained("/") :PathPart("info/rules") :CaptureArgs(0) {
   my ( $self, $c ) = @_;
-  
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["season_view", $c->maketext("user.auth.view-seasons"), 1] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["season_view", $c->maketext("user.auth.view-seasons"), 1]);
 }
 
 =head2 view_current_season
@@ -55,7 +54,7 @@ View the current season's rules (or the last completed season if there is no cur
 
 sub view_current_season :Chained("base") :PathPart("") :Args(0) {
   my ( $self, $c ) = @_;
-  my $site_name = $c->stash->{encoded_site_name};
+  my $site_name = $c->stash->{enc_site_name};
   
   # Get and stash the current season
   my $season = $c->model("DB::Season")->get_current;
@@ -63,14 +62,14 @@ sub view_current_season :Chained("base") :PathPart("") :Args(0) {
   
   if ( defined( $season ) ) {
     $c->stash({
-      season            => $season,
-      page_description  => $c->maketext("description.rules.view-current"),
+      season => $season,
+      page_description => $c->maketext("description.rules.view-current"),
     });
     
     $c->detach( "view_finalise" );
   } else {
     # 404 - no seasons
-    $c->detach( qw/TopTable::Controller::Root default/ );
+    $c->detach(qw(TopTable::Controller::Root default));
     return;
   }
 }
@@ -86,25 +85,25 @@ sub view_specific_season :Chained("base") :PathPart("seasons") :Args(1) {
   
   my $season = $c->model("DB::Season")->find_id_or_url_key( $season_id_or_url_key );
   
-  if ( defined( $season ) ) {
+  if ( defined($season) ) {
     $c->stash({
-      season            => $season,
-      page_description  => $c->maketext("description.rules.view-specific"),
+      season => $season,
+      page_description => $c->maketext("description.rules.view-specific"),
     });
   
     # Push the season list URI and the current URI on to the breadcrumbs
-    push( @{ $c->stash->{breadcrumbs} }, {
-      path  => $c->uri_for_action("/info/rules/view_seasons_first_page"),
-      label => $c->maketext("menu.text.seasons"),
+    push(@{$c->stash->{breadcrumbs}}, {
+      path => $c->uri_for_action("/info/rules/view_seasons_first_page"),
+      label => $c->maketext("menu.text.season"),
     }, {
-      path  => $c->uri_for_action("/info/rules/view_specific_season", [$season->url_key]),
+      path => $c->uri_for_action("/info/rules/view_specific_season", [$season->url_key]),
       label => encode_entities( $season->name ),
     });
     
-    $c->detach( "view_finalise" );
+    $c->detach("view_finalise");
   } else {
     # 404 - no seasons
-    $c->detach( qw/TopTable::Controller::Root default/ );
+    $c->detach(qw(TopTable::Controller::Root default));
     return;
   }
 }
@@ -120,7 +119,7 @@ sub view_finalise :Private {
   my $season = $c->stash->{season};
   
   $c->stash({
-    template  => "html/info/rules/view.ttkt",
+    template => "html/info/rules/view.ttkt",
     subtitle1 => $c->maketext("menu.text.rules"),
     subtitle2 => encode_entities( $season->name ),
   });
@@ -136,9 +135,9 @@ sub view_seasons :Chained("base") :PathPart("seasons") :CaptureArgs(0) {
   my ( $self, $c ) = @_;
   
   # Push the current URI on to the breadcrumbs
-  push( @{ $c->stash->{breadcrumbs} }, {
-    path  => $c->uri_for_action("/info/rules/view_seasons_first_page"),
-    label => $c->maketext("menu.text.seasons"),
+  push(@{$c->stash->{breadcrumbs}}, {
+    path => $c->uri_for_action("/info/rules/view_seasons_first_page"),
+    label => $c->maketext("menu.text.season"),
   });
 }
 
@@ -152,7 +151,7 @@ sub view_seasons_first_page :Chained("view_seasons") :PathPart("") :Args(0) {
   my ( $self, $c ) = @_;
   
   $c->stash({canonical_uri => $c->uri_for_action("/info/rules/view_seasons_first_page")});
-  $c->detach( "retrieve_paged_seasons", [1] );
+  $c->detach("retrieve_paged_seasons", [1]);
 }
 
 =head2 view_seasons_specific_page
@@ -173,7 +172,7 @@ sub view_seasons_specific_page :Chained("view_seasons") :PathPart("page") :Args(
     $c->stash({canonical_uri => $c->uri_for_action("/info/rules/view_seasons_specific_page", [$page_number])});
   }
   
-  $c->detach( "retrieve_paged_seasons", [$page_number] );
+  $c->detach("retrieve_paged_seasons", [$page_number]);
 }
 
 =head2 retrieve_paged_seasons
@@ -186,28 +185,28 @@ sub retrieve_paged_seasons :Private {
   my ( $self, $c, $page_number ) = @_;
   
   my $seasons = $c->model("DB::Season")->page_records({
-    page_number       => $page_number,
-    results_per_page  => $c->config->{Pagination}{default_page_size},
+    page_number => $page_number,
+    results_per_page => $c->config->{Pagination}{default_page_size},
   });
   
-  my $page_info   = $seasons->pager;
-  my $page_links  = $c->forward( "TopTable::Controller::Root", "generate_pagination_links", [{
-    page_info                       => $page_info,
-    page1_action                    => "/info/rules/view_seasons_first_page",
-    specific_page_action            => "/info/rules/view_seasons_specific_page",
-    current_page                    => $page_number,
-  }] );
+  my $page_info = $seasons->pager;
+  my $page_links = $c->forward("TopTable::Controller::Root", "generate_pagination_links", [{
+    page_info => $page_info,
+    page1_action => "/info/rules/view_seasons_first_page",
+    specific_page_action => "/info/rules/view_seasons_specific_page",
+    current_page => $page_number,
+  }]);
   
   # Set up the template to use
   $c->stash({
-    template            => "html/info/rules/list-seasons.ttkt",
+    template => "html/info/rules/list-seasons.ttkt",
     view_online_display => "Viewing seasons to view the rules for",
-    view_online_link    => 1,
-    seasons             => $seasons,
-    subtitle1           => $c->maketext("menu.text.rules"),
-    subtitle2           => $c->maketext("menu.text.seasons"),
-    page_info           => $page_info,
-    page_links          => $page_links,
+    view_online_link => 1,
+    seasons => $seasons,
+    subtitle1 => $c->maketext("menu.text.rules"),
+    subtitle2 => $c->maketext("menu.text.season"),
+    page_info => $page_info,
+    page_links => $page_links,
   });
 }
 

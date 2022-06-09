@@ -3,7 +3,6 @@ package TopTable::Schema::ResultSet::SearchAllView;
 use strict;
 use warnings;
 use parent 'DBIx::Class::ResultSet';
-use Data::Dumper::Concise;
 
 
 =head2 search_by_name
@@ -14,13 +13,13 @@ Return search results based on a supplied full or partial club / team name.
 
 sub search_by_name {
   my ( $self, $params ) = @_;
-  my $q = delete $params->{q};
-  my $split_words = delete $params->{split_words} || 0;
-  my $season = delete $params->{season};
-  my $include_types = delete $params->{include_types};
+  my $q = $params->{q};
+  my $split_words = $params->{split_words} || 0;
+  my $season = $params->{season};
+  my $include_types = $params->{include_types};
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
-  my $page = delete $params->{page} || undef;
-  my $results_per_page = delete $params->{results} || undef;
+  my $page = $params->{page} || undef;
+  my $results_per_page = $params->{results} || undef;
   
   my ( $where );
   if ( $split_words ) {
@@ -30,8 +29,8 @@ sub search_by_name {
     # We do words on 'or' here so we can construct a 'club name + team name' in the search
     my @constructed_like = ("-and");
     foreach my $word ( @words ) {
-      my $constructed_like = { -like => "%$word%" };
-      push ( @constructed_like, $constructed_like );
+      my $constructed_like = {-like => "%$word%"};
+      push (@constructed_like, $constructed_like);
     }
     
     $where = [{
@@ -54,17 +53,17 @@ sub search_by_name {
   
   my $attrib = {
     order_by => [{
-      -asc => [ qw( search_priority ) ],
+      -asc => [qw( search_priority )],
     }, {
-      -desc => [ qw( match_complete date ) ],
+      -desc => [qw( match_complete date )],
     }]
   };
   
-  my $use_paging = ( defined( $page ) ) ? 1 : 0;
+  my $use_paging = defined($page) ? 1 : 0;
   
   if ( $use_paging ) {
     # Set a default for results per page if it's not provided or invalid
-    $results_per_page = 25 if !defined( $results_per_page ) or $results_per_page !~ m/^\d+$/;
+    $results_per_page = 25 if !defined($results_per_page) or $results_per_page !~ m/^\d+$/;
     
     # Default the page number to 1
     $page = 1 if $page !~ m/^\d+$/;
@@ -74,12 +73,12 @@ sub search_by_name {
     $attrib->{rows} = $results_per_page;
   }
   
-  if ( defined( $season ) ) {
+  if ( defined($season) ) {
     $where->[0]{season_id} = $season->id;
     $where->[1]{season_id} = $season->id;
   }
   
-  return $self->search( $where, $attrib );
+  return $self->search($where, $attrib);
 }
 
 1;

@@ -9,13 +9,13 @@ __PACKAGE__->config(
   
   # Set the location for TT files
   INCLUDE_PATH => [
-      TopTable->path_to( qw/ root custom-templates pdf / ),
-      TopTable->path_to( qw/ root templates pdf / ),
+      TopTable->path_to(qw( root custom-templates pdf )),
+      TopTable->path_to(qw( root templates pdf )),
   ],
   # Set to 1 for detailed timer stats in your HTML as comments
-  TIMER     => 0,
+  TIMER => 0,
   # Wrapper template
-  WRAPPER   => "html/wrappers/wraparoundthewrapper.ttkt",
+  WRAPPER => "html/wrappers/wraparoundthewrapper.ttkt",
 );
 
 =head1 NAME

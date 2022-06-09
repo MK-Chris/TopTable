@@ -3,7 +3,6 @@ use Moose;
 use namespace::autoclean;
 use DateTime;
 use DateTime::TimeZone;
-use Data::Dumper::Concise;
 use Log::Log4perl::Catalyst;
 
 use Catalyst::Runtime 5.80;
@@ -20,7 +19,7 @@ use Catalyst::Runtime 5.80;
 # Static::Simple: will serve static files from the application's root
 #                 directory
 
-use Catalyst qw/
+use Catalyst qw(
   Compress
   ConfigLoader
   Static::Simple
@@ -37,7 +36,7 @@ use Catalyst qw/
   +CatalystX::I18N::Role::DateTime
   +CatalystX::I18N::Role::NumberFormat
   +CatalystX::I18N::Role::GetLocale
-/;
+);
 with "CatalystX::DebugFilter";
 
   #Compress
@@ -53,11 +52,11 @@ use HTML::Entities;
 use JavaScript::Value::Escape;
 
 extends 'Catalyst';
-__PACKAGE__->apply_request_class_roles(qw/CatalystX::I18N::TraitFor::Request/);
-__PACKAGE__->apply_response_class_roles(qw/CatalystX::I18N::TraitFor::Response/);
+__PACKAGE__->apply_request_class_roles(qw(CatalystX::I18N::TraitFor::Request));
+__PACKAGE__->apply_response_class_roles(qw(CatalystX::I18N::TraitFor::Response));
 __PACKAGE__->log(Log::Log4perl::Catalyst->new("log.conf")) if -e __PACKAGE__->path_to("log.conf");
 
-our $VERSION = "3.00 Beta";
+our $VERSION = "3.50";
 
 # Configure the application.
 #
@@ -97,10 +96,10 @@ sub timezone :Private {
   my ( $c ) = @_;
   
   # If the user is logged in and there's a valid timezone specified, use that
-  return $c->user->timezone if $c->user_exists and defined( $c->user->timezone ) and DateTime::TimeZone->is_valid_name( $c->user->timezone );
+  return $c->user->timezone if $c->user_exists and defined($c->user->timezone) and DateTime::TimeZone->is_valid_name($c->user->timezone);
   
   # If we can't use the user timezone for whatever reason, use the default if possible
-  return $c->config->{DateTime}{default_timezone} if $c->config->{DateTime}{default_timezone} and DateTime::TimeZone->is_valid_name( $c->config->{DateTime}{default_timezone} );
+  return $c->config->{DateTime}{default_timezone} if $c->config->{DateTime}{default_timezone} and DateTime::TimeZone->is_valid_name($c->config->{DateTime}{default_timezone});
   
   # Finally, fall back to London if all else fails
   return "Europe/London";
@@ -113,96 +112,54 @@ Calls $c->datetime, but first checks that the given timezone is valid (if there 
 =cut
 
 sub datetime_tz {
-  my ( $c, $parameters ) = @_;
+  my ( $c, $params ) = @_;
   
-  if ( exists( $parameters->{time_zone} ) and $parameters->{time_zone} ) {
-    $parameters->{time_zone} = $c->config->{DateTime}{default_timezone} if !DateTime::TimeZone->is_valid_name( $parameters->{time_zone} );
+  if ( exists($params->{time_zone}) and $params->{time_zone} ) {
+    $params->{time_zone} = $c->config->{DateTime}{default_timezone} if !DateTime::TimeZone->is_valid_name($params->{time_zone});
   } else {
-    $parameters->{time_zone} = $c->config->{DateTime}{default_timezone};
+    $params->{time_zone} = $c->config->{DateTime}{default_timezone};
   }
   
-  return $c->datetime( %{ $parameters } );
+  return $c->datetime(%{$params});
 }
 
-=head2 build_message
+=head2 add_status_messages
 
-If passed an arrayref, splits it up into an HTML formatted unordered list; if just passed a string, it will just return the string.
+Add an array of status messages.
 
 =cut
 
-sub build_message {
-  my ( $c, $messages ) = @_;
+sub add_status_messages {
+  my ( $c, $msgs ) = @_;
+  my %msgs = %{$msgs};
   
-  # Return the first element if we only have one
-  if ( ref( $messages ) ne "ARRAY" or scalar( @{ $messages } ) == 1 ) {
-    my $message;
-    if ( ref( $messages ) eq "ARRAY" ) {
-      $message = $messages->[0];
-    } else {
-      $message = $messages;
-    }
+  # Loop through the hash keys - each hash key is a message type - usually error, warning, info, success
+  foreach my $type ( keys %msgs ) {
+    my $msg = $msgs{$type};
     
-    if ( ref( $message ) eq "HASH" ) {
-      # Hashref, grab the id and parameters
-      my @parameters = @{ $message->{parameters} } if exists $message->{parameters};
-      my $text = $c->maketext( $message->{id}, @parameters );
-      
-      # Escape javascript if necessary
-      #$text = javascript_value_escape( $text ) if $c->is_ajax;
-      return $text;
-    } else {
-      # Not a hashref, just return the value
-      # Escape javascript if necessary
-      #$message = javascript_value_escape( $message ) if $c->is_ajax;
-      return $message;
-    }
-  }
-  
-  my $return_message = "<ul>";
-  foreach my $message ( @{ $messages } ) {
-    # Get the parameters if there are any
+    # If there's nothing here, move on to the next type
+    next unless defined($msg);
     
-    if ( ref( $message ) eq "HASH" ) {
-      # Hashref, grab the id and parameters
-      my @parameters = @{ $message->{parameters} } if exists $message->{parameters};
-      my $text = $c->maketext( $message->{id}, @parameters );
-      
-      # Escape javascript if necessary
-      #$text = javascript_value_escape( $text ) if $c->is_ajax;
-      
-      $return_message .= sprintf( "  <li>%s</li>", $text );
+    # Make sure it's an array, if not already
+    $msg = [$msg] unless ref($msg) eq "ARRAY";
+    
+    # If there are no elements to this array, move on
+    next unless scalar @{$msg};
+    
+    # Make sure the status_msg exists in the hash
+    if ( exists($c->stash->{status_msg}) and ref($c->stash->{status_msg} eq "HASH" and exists($c->stash->{status_msg}{$type})) ) {
+      # Message type exists already, add to it
+      # Turn it into an array if it's not already
+      $c->stash->{status_msg}{$type} = [$c->stash->{status_msg}{$type}] unless ref($c->stash->{status_msg}{$type}) eq "ARRAY";
+      push(@{$c->stash->{status_msg}{$type}}, @{$msg});
     } else {
-      # Not a hashref, just do a 'maketext' on the value
-      # Escape javascript if necessary
-      #$message = javascript_value_escape( $message ) if $c->is_ajax;
-      
-      $return_message .= sprintf( "  <li>%s</li>", $message );
-    }
-  }
-  
-  $return_message .= "</ul>";
-  return $return_message;
-}
-
-=head2 add_status_message
-
-Adds a status message of type info, success, warning or error to the current page.  Checks and adds to the current message if there is one.
-
-=cut
-
-sub add_status_message {
-  my ( $c, $type, $message ) = @_;
-  $type = "info" if !defined( $type ) or $type eq "";
-  
-  if ( exists( $c->stash->{status_msg} ) and ref( $c->stash->{status_msg} ) eq "HASH" and exists( $c->stash->{status_msg}{$type} ) ) {
-    $c->stash->{status_msg}{$type} .= sprintf( "\n\n%s", $message );
-  } else {
-    if ( ref( $c->stash->{status_msg} ) eq "HASH" ) {
-      $c->stash->{status_msg}{$type} = $message;
-    } else {
-      $c->stash->{status_msg} = {
-        $type => $message,
-      };
+      if ( ref($c->stash->{status_msg}) eq "HASH" ) {
+        # We have status messages, but none of this type.  Set it up as an array so we can add to it in future
+        $c->stash->{status_msg}{$type} = $msg;
+      } else {
+        # We don't have any status messages at all - add it to the stash as a hash (keys are message $type) of arrays.
+        $c->stash->{status_msg} = {$type => $msg};
+      }
     }
   }
 }
@@ -215,7 +172,7 @@ Detect if this request is an AJAX one
 
 sub is_ajax {
   my ( $c ) = @_;
-  return ( defined( $c->req->header("X-Requested-With") ) and $c->req->header("X-Requested-With") eq "XMLHttpRequest" ) ? 1 : 0;
+  return ( defined($c->req->header("X-Requested-With")) and $c->req->header("X-Requested-With") eq "XMLHttpRequest" ) ? 1 : 0;
 }
 
 =head2 get_locale_with_uri
@@ -230,18 +187,18 @@ sub get_locale_with_uri {
   my ( $c ) = @_;
   
   # Try and get the language first from the URI, which overrides everything
-  my $locale = $c->req->param( "locale" );
-  $locale = $c->check_and_set_locale( $locale ) if defined( $locale );
-  return $locale if defined( $locale );
+  my $locale = $c->req->params->{locale};
+  $locale = $c->check_and_set_locale($locale) if defined($locale);
+  return $locale if defined($locale);
   
   # Couldn't get from the query string, check the cookie
-  $locale = $c->request->cookie("toptable_locale")->value if defined( $c->request->cookie("toptable_locale") );
-  $locale = $c->check_and_set_locale( $locale ) if defined( $locale );
-  return $locale if defined( $locale );
+  $locale = $c->req->cookie("toptable_locale")->value if defined($c->req->cookie("toptable_locale"));
+  $locale = $c->check_and_set_locale($locale) if defined($locale);
+  return $locale if defined($locale);
   
   # Otherwise, call get_locale to try and detect via the session
   $locale = $c->get_locale;
-  $locale = $c->check_and_set_locale( $locale ) if defined( $locale );
+  $locale = $c->check_and_set_locale($locale) if defined($locale);
   
   return $locale;
 }
@@ -254,26 +211,26 @@ Checks the given value is a valid locale, sets it if so.  Should be called *afte
 
 sub check_and_set_locale {
   my ( $c, $locale ) = @_;
-  return unless defined( $locale );
+  return unless defined($locale);
   
   # Replace dashes with undescores (validation will fail with dashes)
   $locale =~ s/-/_/;
   
   # Check it's valid
-  $locale = $c->check_locale( $locale );
+  $locale = $c->check_locale($locale);
   
   # Check it's still defined, as a check will return undef if it's not valid
-  return unless defined( $locale );
+  return unless defined($locale);
   
   # Set the locale if we can
-  $c->locale( $locale ) if $c->can("locale");
+  $c->locale($locale) if $c->can("locale");
   
   # Set the cookie if we are storing preferences in cookies
   $c->response->cookies->{toptable_locale} = {
     value => $locale,
     expires => "+3M",
     httponly => 1,
-  } if exists( $c->stash->{cookie_settings}{preferences} ) and $c->stash->{cookie_settings}{preferences};
+  } if exists($c->stash->{cookie_settings}{preferences}) and $c->stash->{cookie_settings}{preferences};
   
   # Return with the language we've set
   return $locale;
@@ -289,11 +246,11 @@ sub warn_on_non_https {
   my ( $c ) = @_;
   
   # If we are set to warn when not secure and we're not secure
-  if ( $c->config->{Users}{warn_on_password_entry_non_https} and !$c->request->secure ) {
+  if ( $c->config->{Users}{warn_on_password_entry_non_https} and !$c->req->secure ) {
     # Grab the URI and make a clone of it, then set the scheme to HTTPS so we can display a link.
-    my $uri = $c->request->uri->clone;
-    $uri->scheme( "https" );
-    $c->add_status_message( "warning", $c->maketext("msg.insecure-password-form", $uri) );
+    my $uri = $c->req->uri->clone;
+    $uri->scheme("https");
+    $c->add_status_messages({warning => $c->maketext("msg.insecure-password-form", $uri)});
   }
 }
 

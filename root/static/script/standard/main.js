@@ -10,26 +10,10 @@ $(document).ready(function(){
 	// do not highlight the home item
 	.find('> li:first > a').removeClass('current');
   
-  /* Collapse mobile menu until clicked */
-  $(function() {
-    $('#menu-button').click(function() {
-      var $this = $(this), $menu = $("#main-menu");
-      
-      if (!$this.hasClass('collapsed')) {
-        $menu.addClass('collapsed');
-        $this.addClass('collapsed');
-      } else {
-        $menu.removeClass('collapsed');
-        $this.removeClass('collapsed');
-      }
-      return false;
-    }).click();
-  });
-  
   /*
     jQueryUI buttons
   */
-  $( "input[type=submit]:not(.button-approve, .button-deny), input[type=button], button" ).button();
+  $( "input[type=submit]:not(.button-approve, .button-deny, .button-reset), input[type=button]:not(.button-approve, .button-deny, .button-reset), button" ).button();
   
   /*
    Active / inactive input fields

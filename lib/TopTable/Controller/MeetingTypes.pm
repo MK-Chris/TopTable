@@ -32,11 +32,11 @@ sub auto :Private {
   $c->load_status_msgs;
   
   # The title bar will always have
-  $c->stash({subtitle1 => $c->maketext("menu.text.meeting-types")});
+  $c->stash({subtitle1 => $c->maketext("menu.text.meetingtype")});
   
-  push( @{ $c->stash->{breadcrumbs} }, {
-    path  => $c->uri_for("/meeting-types"),
-    label => $c->maketext("menu.text.meeting-types"),
+  push(@{$c->stash->{breadcrumbs}}, {
+    path => $c->uri_for("/meeting-types"),
+    label => $c->maketext("menu.text.meetingtype"),
   });
 }
 
@@ -52,21 +52,21 @@ sub base :Chained("/") :PathPart("meeting-types") :CaptureArgs(1) {
   my $meeting_type = $c->model("DB::MeetingType")->find_id_or_url_key( $id_or_key );
   
   if ( defined( $meeting_type ) ) {
-    my $encoded_type = encode_entities( $meeting_type->name );
+    my $encoded_type = encode_entities($meeting_type->name);
     
     $c->stash({
-      meeting_type  => $meeting_type,
-      encoded_type  => $encoded_type,
-      subtitle1     => $encoded_type,
+      meeting_type => $meeting_type,
+      encoded_type => $encoded_type,
+      subtitle1 => $encoded_type,
     });
     
     # Push the clubs list page on to the breadcrumbs
-    push( @{ $c->stash->{breadcrumbs} }, {
-      path  => $c->uri_for_action("/meeting-types/view_first_page", [$meeting_type->url_key]),
+    push(@{$c->stash->{breadcrumbs}}, {
+      path => $c->uri_for_action("/meeting-types/view_first_page", [$meeting_type->url_key]),
       label => $encoded_type,
     });
   } else {
-    $c->detach( qw/TopTable::Controller::Root default/ );
+    $c->detach(qw(TopTable::Controller::Root default));
   }
 }
 
@@ -78,18 +78,18 @@ Chain base for the list of meeting types.
 
 sub base_list :Chained("/") :PathPart("meeting-types") :CaptureArgs(0) {
   my ( $self, $c ) = @_;
-  my $site_name = $c->stash->{encoded_site_name};
+  my $site_name = $c->stash->{enc_site_name};
   
   # Check that we are authorised to view clubs
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["meeting_view", $c->maketext("user.auth.view-meetings"), 1] );
   
   # Check the authorisation to edit clubs we can display the link if necessary
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( meeting_type_edit meeting_type_delete meeting_type_create) ], "", 0] );
+  $c->forward( "TopTable::Controller::Users", "check_authorisation", [[qw( meetingtype_edit meetingtype_delete meetingtype_create )], "", 0] );
   
   # Page description
   $c->stash({
     page_description => $c->maketext("description.meeting-types.list", $site_name),
-    external_scripts  => [
+    external_scripts => [
       $c->uri_for("/static/script/standard/option-list.js"),
     ],
   });
@@ -105,7 +105,7 @@ sub list_first_page :Chained("base_list") :PathPart("") :Args(0) {
   my ( $self, $c ) = @_;
   
   $c->stash({canonical_uri => $c->uri_for_action("/meeting-types/list_first_page")});
-  $c->detach( "retrieve_paged", [1] );
+  $c->detach("retrieve_paged", [1]);
 }
 
 =head2 list_specific_page
@@ -126,7 +126,7 @@ sub list_specific_page :Chained("base_list") :PathPart("page") :Args(1) {
     $c->stash({canonical_uri => $c->uri_for_action("/meeting-types/list_specific_page", [$page_number])});
   }
   
-  $c->detach( "retrieve_paged", [$page_number] );
+  $c->detach("retrieve_paged", [$page_number]);
 }
 
 =head2 retrieve_paged
@@ -139,26 +139,26 @@ sub retrieve_paged :Private {
   my ( $self, $c, $page_number ) = @_;
   
   my $meeting_types = $c->model("DB::MeetingType")->page_records({
-    page_number       => $page_number,
-    results_per_page  => $c->config->{Pagination}{default_page_size},
+    page_number => $page_number,
+    results_per_page => $c->config->{Pagination}{default_page_size},
   });
   
-  my $page_info   = $meeting_types->pager;
-  my $page_links  = $c->forward( "TopTable::Controller::Root", "generate_pagination_links", [{
-    page_info             => $page_info,
-    page1_action          => "/meeting-types/list_first_page",
-    specific_page_action  => "/meeting-types/list_specific_page",
-    current_page          => $page_number,
+  my $page_info = $meeting_types->pager;
+  my $page_links = $c->forward( "TopTable::Controller::Root", "generate_pagination_links", [{
+    page_info => $page_info,
+    page1_action => "/meeting-types/list_first_page",
+    specific_page_action => "/meeting-types/list_specific_page",
+    current_page => $page_number,
   }] );
   
   # Set up the template to use
   $c->stash({
-    template            => "html/meeting-types/list.ttkt",
+    template => "html/meeting-types/list.ttkt",
     view_online_display => "Viewing meeting types",
-    view_online_link    => 1,
-    meeting_types       => $meeting_types,
-    page_info           => $page_info,
-    page_links          => $page_links,
+    view_online_link => 1,
+    meeting_types => $meeting_types,
+    page_info => $page_info,
+    page_links => $page_links,
   });
 }
 
@@ -173,7 +173,7 @@ sub view_first_page :Chained("base") :PathPart("") :Args(0) {
   my $meeting_type = $c->stash->{meeting_type};
   
   $c->stash({canonical_uri => $c->uri_for_action("/meeting-types/view_first_page", [$meeting_type->url_key])});
-  $c->forward( "retrieve_paged_meetings", [1] );
+  $c->forward("retrieve_paged_meetings", [1]);
 }
 
 =head2 view_specific_page
@@ -195,7 +195,7 @@ sub view_specific_page :Chained("base") :PathPart("page") :Args(1) {
     $c->stash({canonical_uri => $c->uri_for_action("/meeting-types/view_specific_page", [$meeting_type->url_key, $page_number])});
   }
   
-  $c->detach( "retrieve_paged_meetings", [$page_number] );
+  $c->detach("retrieve_paged_meetings", [$page_number]);
 }
 
 =head2 retrieve_paged_meetings
@@ -209,32 +209,32 @@ sub retrieve_paged_meetings :Private {
   my $meeting_type = $c->stash->{meeting_type};
   
   # Check that we are authorised to view clubs
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["meeting_view", $c->maketext("user.auth.view-meetings"), 1] );
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", [[ qw( meeting_type_edit meeting_type_delete ) ], "", 0] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["meeting_view", $c->maketext("user.auth.view-meetings"), 1]);
+  $c->forward("TopTable::Controller::Users", "check_authorisation", [[ qw( meetingtype_edit meetingtype_delete ) ], "", 0]);
   
   my $meetings = $c->model("DB::Meeting")->page_records({
-    page_number       => $page_number,
-    results_per_page  => $c->config->{Pagination}{default_page_size},
-    meeting_type      => $meeting_type,
+    page_number => $page_number,
+    results_per_page => $c->config->{Pagination}{default_page_size},
+    meeting_type => $meeting_type,
   });
   
-  my $page_info   = $meetings->pager;
-  my $page_links  = $c->forward( "TopTable::Controller::Root", "generate_pagination_links", [{
-    page_info                       => $page_info,
-    page1_action                    => "/meeting-types/view_first_page",
-    page1_action_arguments          => [$meeting_type->url_key],
-    specific_page_action            => "/meeting-types/view_specific_page",
-    specific_page_action_arguments  => [$meeting_type->url_key],
-    current_page                    => $page_number,
-  }] );
+  my $page_info = $meetings->pager;
+  my $page_links = $c->forward( "TopTable::Controller::Root", "generate_pagination_links", [{
+    page_info => $page_info,
+    page1_action => "/meeting-types/view_first_page",
+    page1_action_arguments => [$meeting_type->url_key],
+    specific_page_action => "/meeting-types/view_specific_page",
+    specific_page_action_arguments => [$meeting_type->url_key],
+    current_page => $page_number,
+  }]);
   
   # Set up the template to use
   $c->stash({
     view_online_display => "Viewing meeting types",
-    view_online_link    => 1,
-    meetings            => $meetings,
-    page_info           => $page_info,
-    page_links          => $page_links,
+    view_online_link => 1,
+    meetings => $meetings,
+    page_info => $page_info,
+    page_links => $page_links,
   });
   
   $c->detach("view_finalise") unless exists( $c->stash->{delete_screen} );
@@ -248,37 +248,37 @@ Finalise the view, having retrieved the meetings for this meeting type.
 
 sub view_finalise :Private {
   my ( $self, $c ) = @_;
-  my $meeting_type  = $c->stash->{meeting_type};
-  my $encoded_type  = $c->stash->{encoded_type};
-  my $site_name     = $c->stash->{encoded_site_name};
+  my $meeting_type = $c->stash->{meeting_type};
+  my $encoded_type = $c->stash->{encoded_type};
+  my $site_name = $c->stash->{enc_site_name};
   
   # Set up the title links if we need them
   my @title_links = ();
   
-  unless ( exists( $c->stash->{delete_screen} ) ) {
+  unless ( exists($c->stash->{delete_screen}) ) {
     # Push edit link if we are authorised
     push(@title_links, {
       image_uri => $c->uri_for("/static/images/icons/0018-Pencil-icon-32.png"),
-      text      => $c->maketext("admin.edit-object", $encoded_type),
-      link_uri  => $c->uri_for_action("/meeting-types/edit", [$meeting_type->url_key]),
-    }) if $c->stash->{authorisation}{meeting_type_edit};
+      text => $c->maketext("admin.edit-object", $encoded_type),
+      link_uri => $c->uri_for_action("/meeting-types/edit", [$meeting_type->url_key]),
+    }) if $c->stash->{authorisation}{meetingtype_edit};
     
     # Push a delete link if we're authorised and the club can be deleted
     push(@title_links, {
       image_uri => $c->uri_for("/static/images/icons/0005-Delete-icon-32.png"),
-      text      => $c->maketext("admin.delete-object", $encoded_type),
-      link_uri  => $c->uri_for_action("/meeting-types/delete", [$meeting_type->url_key]),
-    }) if $c->stash->{authorisation}{meeting_type_delete} and $meeting_type->can_delete;
+      text => $c->maketext("admin.delete-object", $encoded_type),
+      link_uri => $c->uri_for_action("/meeting-types/delete", [$meeting_type->url_key]),
+    }) if $c->stash->{authorisation}{meetingtype_delete} and $meeting_type->can_delete;
   }
   
   # Set up the template to use
   $c->stash({
-    template            => "html/meeting-types/view.ttkt",
-    title_links         => \@title_links,
-    subtitle1           => $meeting_type->name,
+    template => "html/meeting-types/view.ttkt",
+    title_links => \@title_links,
+    subtitle1 => $meeting_type->name,
     view_online_display => sprintf( "Viewing %s", $encoded_type ),
-    view_online_link    => 0,
-    page_description    => $c->maketext("description.meeting-types.view", $encoded_type, $site_name),
+    view_online_link => 0,
+    page_description => $c->maketext("description.meeting-types.view", $encoded_type, $site_name),
   });
 }
 
@@ -292,19 +292,19 @@ sub create :Local {
   my ($self, $c) = @_;
   
   # Check that we are authorised to create clubs
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["meeting_type_create", $c->maketext("user.auth.create-meeting-types"), 1] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["meetingtype_create", $c->maketext("user.auth.create-meeting-types"), 1]);
   
   # Stash everything we need in the template
   $c->stash({
-    template            => "html/meeting-types/create-edit.ttkt",
-    form_action         => $c->uri_for("do-create"),
-    subtitle2           => $c->maketext("admin.create"),
+    template => "html/meeting-types/create-edit.ttkt",
+    form_action => $c->uri_for("do-create"),
+    subtitle2 => $c->maketext("admin.create"),
     view_online_display => "Creating meeting types",
-    view_online_link    => 0,
+    view_online_link => 0,
   });
   
-  push(@{ $c->stash->{breadcrumbs} }, {
-    path  => $c->uri_for("/meeting-types/create"),
+  push(@{$c->stash->{breadcrumbs}}, {
+    path => $c->uri_for("/meeting-types/create"),
     label => $c->maketext("admin.create"),
   })
 }
@@ -320,19 +320,19 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
   my $meeting_type = $c->stash->{meeting_type};
   
   # Check that we are authorised to create clubs
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["meeting_type_edit", $c->maketext("user.auth.edit-meeting-types"), 1] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["meetingtype_edit", $c->maketext("user.auth.edit-meeting-types"), 1]);
   
   # Stash everything we need in the template
   $c->stash({
-    template            => "html/meeting-types/create-edit.ttkt",
-    form_action         => $c->uri_for_action("/meeting-types/do_edit", [$meeting_type->url_key]),
-    subtitle2           => $c->maketext("admin.edit"),
+    template => "html/meeting-types/create-edit.ttkt",
+    form_action => $c->uri_for_action("/meeting-types/do_edit", [$meeting_type->url_key]),
+    subtitle2 => $c->maketext("admin.edit"),
     view_online_display => "Editing meeting types",
-    view_online_link    => 0,
+    view_online_link => 0,
   });
   
-  push(@{ $c->stash->{breadcrumbs} }, {
-    path  => $c->uri_for("/meeting-types/create"),
+  push(@{$c->stash->{breadcrumbs}}, {
+    path => $c->uri_for("/meeting-types/create"),
     label => $c->maketext("admin.edit"),
   });
 }
@@ -348,11 +348,11 @@ sub delete :Chained("base") :PathPart("delete") :Args(0) {
   my $meeting_type = $c->stash->{meeting_type};
   
   # Check that we are authorised to delete clubs
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["meeting_type_delete", $c->maketext("user.auth.delete-meeting-types"), 1] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["meetingtype_delete", $c->maketext("user.auth.delete-meeting-types"), 1]);
   
   unless ( $meeting_type->can_delete ) {
     $c->response->redirect( $c->uri_for_action("/meeting-types/view_first_page", [$meeting_type->url_key],
-                                {mid => $c->set_status_msg( {error => $c->maketext( "meeting-types.delete.error.cannot-delete", encode_entities($meeting_type->name) )} ) }) );
+                                {mid => $c->set_status_msg({error => $c->maketext( "meeting-types.delete.error.cannot-delete", encode_entities($meeting_type->name))})}));
     $c->detach;
     return;
   }
@@ -364,15 +364,15 @@ sub delete :Chained("base") :PathPart("delete") :Args(0) {
   $c->forward("view_first_page");
   
   $c->stash({
-    subtitle2           => $c->maketext("admin.delete"),
-    template            => "html/meeting-types/delete.ttkt",
+    subtitle2 => $c->maketext("admin.delete"),
+    template => "html/meeting-types/delete.ttkt",
     view_online_display => sprintf( "Deleting %s", $meeting_type->name ),
-    view_online_link    => 0,
+    view_online_link => 0,
   });
   
   # Push the breadcrumbs links
-  push( @{ $c->stash->{breadcrumbs} }, {
-    path  => $c->uri_for_action("/meeting-types/delete", [$meeting_type->url_key]),
+  push(@{$c->stash->{breadcrumbs}}, {
+    path => $c->uri_for_action("/meeting-types/delete", [$meeting_type->url_key]),
     label => $c->maketext("admin.delete"),
   });
 }
@@ -387,8 +387,8 @@ sub do_create :Path("do-create") {
   my ( $self, $c ) = @_;
   
   # Check that we are authorised to create seasons
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["meeting_type_create", $c->maketext("user.auth.create-meeting-types"), 1] );
-  $c->detach( "setup_meeting_type", ["create"] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["meetingtype_create", $c->maketext("user.auth.create-meeting-types"), 1]);
+  $c->detach("process_form", ["create"]);
 }
 
 =head2 do_edit
@@ -401,8 +401,8 @@ sub do_edit :Chained("base") :PathPart("do-edit") :Args(0) {
   my ( $self, $c, $template_id ) = @_;
   
   # Check that we are authorised to create clubs
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["meeting_type_edit", $c->maketext("user.auth.edit-meeting-types"), 1] );
-  $c->detach( "setup_meeting_type", ["edit"] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["meetingtype_edit", $c->maketext("user.auth.edit-meeting-types"), 1]);
+  $c->detach("process_form", ["edit"]);
 }
 
 =head2 do_delete
@@ -414,86 +414,87 @@ Processes the season deletion after the user has submitted the form.
 sub do_delete :Chained("base") :PathPart("do-delete") :Args(0) {
   my ( $self, $c ) = @_;
   my $meeting_type = $c->stash->{meeting_type};
-  my $meeting_type_name = $meeting_type->name;
+  my $name = $meeting_type->name;
   
   # Check that we are authorised to delete clubs
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["meeting_type_delete", $c->maketext("user.auth.delete-meeting-types"), 1] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["meetingtype_delete", $c->maketext("user.auth.delete-meeting-types"), 1]);
   
-  my $error = $meeting_type->check_and_delete;
+  my $response = $meeting_type->check_and_delete;
   
-  if ( scalar( @{ $error } ) ) {
-    # Error deleting
-    $c->response->redirect( $c->uri_for_action("/meeting-type/view_first_page", [ $meeting_type->url_key ],
-                                {mid => $c->set_status_msg( {error => $c->build_message($error)} ) }) );
-    $c->detach;
-    return;
+  # Set the status messages we need to show on redirect
+  my @errors = @{$response->{errors}};
+  my @warnings = @{$response->{warnings}};
+  my @info = @{$response->{info}};
+  my @success = @{$response->{success}};
+  my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});
+  my $redirect_uri;
+  
+  if ( $response->{completed} ) {
+    # Was completed, display the list page
+    $redirect_uri = $c->uri_for_action("/meeting-types/list_first_page", {mid => $mid});
+    
+    # Completed, so we log an event
+    $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["meeting-type", "delete", {id => undef}, $name]);
   } else {
-    # Success
-    $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["meeting-type", "delete", {id => undef}, $meeting_type_name] );
-    $c->response->redirect( $c->uri_for("/meeting-types",
-                                {mid => $c->set_status_msg( {success => $c->maketext( "admin.forms.success", $meeting_type_name, $c->maketext("admin.message.deleted") )} ) }) );
-    $c->detach;
-    return;
+    # Not complete
+    $redirect_uri = $c->uri_for_action("/meeting-types/view_first_page", [$meeting_type->url_key], {mid => $mid});
   }
+  
+  # Now actually do the redirection
+  $c->response->redirect($redirect_uri);
+  $c->detach;
+  return;
 }
 
-=head2 setup_meeting_type
+=head2 process_form
 
-Forwarded to from docreate / doedit - sets up the meeting type and adds / updates the database with the new details.
+Forwarded to from do_create / do_edit - sets up the meeting type and adds / updates the database with the new details.
 
 =cut
 
-sub setup_meeting_type :Private {
+sub process_form :Private {
   my ( $self, $c, $action ) = @_;
   my $meeting_type = $c->stash->{meeting_type};
+  my @field_names = qw( name );
   
   # Call the DB routine to do the error checking and creation
-  my $details = $c->model("DB::MeetingType")->create_or_edit($action, {
-    meeting_type          => $meeting_type,
-    name                  => $c->request->parameters->{name},
+  my $response = $c->model("DB::MeetingType")->create_or_edit($action, {
+    logger => sub{ my $level = shift; $c->log->$level( @_ ); },
+    meeting_type => $meeting_type,
+    map {$_ => $c->req->params->{$_}} @field_names, # All the fields from the form - put this last because otherwise the following elements are seen as part of the map
   });
   
-  if ( scalar( @{ $details->{error} } ) ) {
-    my $error = $c->build_message( $details->{error} );
-    # Flash the entered values we've got so we can set them into the form
-    $c->flash->{name}           = $c->request->parameters->{name};
+  # Set the status messages we need to show on redirect
+  my @errors = @{$response->{errors}};
+  my @warnings = @{$response->{warnings}};
+  my @info = @{$response->{info}};
+  my @success = @{$response->{success}};
+  my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});
+  my $redirect_uri;
+  
+  if ( $response->{completed} ) {
+    # Was completed, display the view page
+    $meeting_type = $response->{meeting_type};
+    $redirect_uri = $c->uri_for_action("/meeting-types/view_first_page", [$meeting_type->url_key], {mid => $mid});
     
-    my $redirect_uri;
-    if ( $action eq "create" ) {
-      # If we're creating, we'll just redirect straight back to the create form
-      $redirect_uri = $c->uri_for("/meeting-types/create",
-                            {mid => $c->set_status_msg( {error => $error} ) });
-    } else {
-      if ( defined($details->{meeting_type}) ) {
-        # If we're editing and we found an object to edit, we'll redirect to the edit form for that object
-        $redirect_uri = $c->uri_for_action("/meeting-types/edit", [ $details->{meeting_type}->url_key ],
-                              {mid => $c->set_status_msg( {error => $error} ) });
-      } else {
-        # If we're editing and we didn't an object to edit, we'll redirect to the list of objects
-        $redirect_uri = $c->uri_for("/meeting-types",
-                              {mid => $c->set_status_msg( {error => $error} ) });
-      }
-    }
-    
-    $c->response->redirect( $redirect_uri );
-    $c->detach;
-    return;
-  } else {
-    my $meeting_type  = $details->{meeting_type};
-    my $encoded_type  = encode_entities( $meeting_type->name );
-    my $action_description;
-    
-    if ( $action eq "create" ) {
-      $meeting_type = $details->{meeting_type};
-      $action_description = $c->maketext("admin.message.created");
-    } else {
-      $action_description = $c->maketext("admin.message.edited");
-    }
-    
+    # Completed, so we log an event
     $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["meeting-type", $action, {id => $meeting_type->id}, $meeting_type->name] );
-    $c->response->redirect( $c->uri_for_action("/meeting-types/view_first_page", [$meeting_type->url_key],
-                                {mid => $c->set_status_msg( {success => $c->maketext( "admin.forms.success", $encoded_type, $action_description )} ) }) );
+  } else {
+    # Not complete - check if we need to redirect back to the create or view page
+    if ( $action eq "create" ) {
+      $redirect_uri = $c->uri_for("/meeting-types/create", {mid => $mid});
+    } else {
+      $redirect_uri = $c->uri_for_action("/meeting-types/create", [$meeting_type->url_key], {mid => $mid});
+    }
+    
+    # Flash the entered values we've got so we can set them into the form
+    $c->flash->{$_} = $response->{fields}{$_} foreach @field_names;
   }
+  
+  # Now actually do the redirection
+  $c->response->redirect($redirect_uri);
+  $c->detach;
+  return;
 }
 
 =encoding utf8

@@ -1,3 +1,22 @@
+[%
+IF c.flash.show_flashed;
+  SET active = c.flash.active;
+ELSE;
+  IF venue.defined;
+    SET active = venue.active;
+  ELSE;
+    # Ticked by default
+    SET active = 1;
+  END;
+END;
+
+IF active;
+  SET active_checked = ' checked="checked"';
+ELSE;
+  SET active_checked = '';
+END;
+-%]
+
 <form method="post" action="[% form_action %]">
 
 <div id="map-container">
@@ -112,6 +131,9 @@ END;
   <div class="clear-fix"></div>
 </div>
 
+<input type="checkbox" id="active" name="active" data-label="[% c.maketext("venues.field.active") %]" value="1"[% active_checked %] />
+<div class="clear-fix"></div>
+
 <div id="map-canvas-form"[% map_visible %]></div>
 </fieldset>
 <input type="submit" name="Submit" value="[% c.maketext("form.button.save") %]" />
@@ -119,5 +141,4 @@ END;
 </div><!-- End map container -->
 
 </form>
-
-<div class="clear-fix"></div>
+<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=[% c.config.Google.Maps.api_key %]&amp;callback=initMap" async></script>

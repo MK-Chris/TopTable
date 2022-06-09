@@ -17,7 +17,7 @@ $(document).ready(function() {
   /*
     Handle pinned article expiry fields being enabled / disabled
   */
-  $("#pinned_article").on("change", function() {
+  $("#pin_article").on("change", function() {
     if ( $(this).prop("checked") ) {
       // Article is to be pinned, enable expiry fields
       $(".pin_expiry").prop("disabled", false);

@@ -3,9 +3,8 @@ package TopTable::Schema::ResultSet::TeamMatch;
 use strict;
 use warnings;
 use base 'DBIx::Class::ResultSet';
-use Data::Dumper;
 
-__PACKAGE__->load_components(qw{Helper::ResultSet::SetOperations});
+__PACKAGE__->load_components(qw(Helper::ResultSet::SetOperations));
 
 =head2 season_matches
 
@@ -40,7 +39,7 @@ sub season_matches {
     $where = {"scheduled_week.season" => $season->id};
   }
   
-  return $self->search( $where, { join  => "scheduled_week",});
+  return $self->search($where, { join  => "scheduled_week",});
 }
 
 =head2 team_home_matches
@@ -53,10 +52,10 @@ sub team_home_matches {
   my ( $self, $season, $team ) = @_;
   
   return $self->search({
-    home_team               => $team->id,
+    home_team => $team->id,
     "scheduled_week.season" => $season->id,
   }, {
-    prefetch  => "scheduled_week",
+    prefetch => "scheduled_week",
   });
 }
 
@@ -77,7 +76,7 @@ sub match_counts_by_month {
         count => "me.scheduled_date"
       },
       "scheduled_date"],
-      as => [ qw(number_of_matches scheduled_date) ],
+      as => [qw(number_of_matches scheduled_date)],
       join => {scheduled_week => "season"},
       group_by => {month => "scheduled_date"},
       order_by => {-asc => "scheduled_date"},
@@ -100,7 +99,7 @@ sub match_counts_by_month {
     };
   }
   
-  return $self->search( $where, $attributes );
+  return $self->search($where, $attributes);
 }
 
 =head2 match_counts_by_week
@@ -172,6 +171,30 @@ sub match_counts_by_venue {
   });
 }
 
+=head2 match_counts_by_month
+
+Returns, in date order, all of the months that have matches within a season and the number of matches.  
+
+=cut
+
+sub match_counts_by_division {
+  my ( $self, $season ) = @_;
+  
+  return $self->search({
+    "season.id" => $season->id,
+  }, {
+    select => [{
+      count => "me.scheduled_date"
+    },
+    "division"],
+    as => [qw( number_of_matches division )],
+    prefetch => {division_season => "division"},
+    join => {scheduled_week => "season"},
+    group_by => "division.id",
+    order_by => {-asc => "division.rank"},
+  });
+}
+
 =head2 matches_for_team
 
 A search for matches involving the specified team in the specified season.
@@ -179,9 +202,9 @@ A search for matches involving the specified team in the specified season.
 =cut
 
 sub matches_for_team {
-  my ( $self, $parameters ) = @_;
-  my $team    = $parameters->{team};
-  my $season  = $parameters->{season};
+  my ( $self, $params ) = @_;
+  my $team = $params->{team};
+  my $season = $params->{season};
   my ( $page_number, $results_per_page );
   
   # These attributes are constant
@@ -199,9 +222,9 @@ sub matches_for_team {
   };
   
   # If we have a page number and a number of results per page, paginate
-  if ( exists( $parameters->{page_number} ) or exists( $parameters->{results_per_page} ) ) {
-    $page_number = delete $parameters->{page_number};
-    $results_per_page = delete $parameters->{results_per_page};
+  if ( exists( $params->{page_number} ) or exists( $params->{results_per_page} ) ) {
+    $page_number = delete $params->{page_number};
+    $results_per_page = delete $params->{results_per_page};
     
     # Set a default for results per page if it's not provided or invalid
     $results_per_page = 25 if !defined($results_per_page) or $results_per_page !~ m/^\d+$/;
@@ -229,12 +252,12 @@ A search for matches involving the specified division in the specified season.
 =cut
 
 sub matches_in_division {
-  my ( $self, $parameters ) = @_;
-  my $division = $parameters->{division};
-  my $season = $parameters->{season};
-  my $page_number = $parameters->{page_number};
-  my $results_per_page = $parameters->{results_per_page};
-  my $attributes = {
+  my ( $self, $params ) = @_;
+  my $division = $params->{division};
+  my $season = $params->{season};
+  my $page_number = $params->{page_number};
+  my $results_per_page = $params->{results_per_page};
+  my $attrib = {
     prefetch  => [ qw( venue ), {
       team_season_home_team_season => [ qw( team ), {club_season => "club"}],
     }, {
@@ -252,14 +275,14 @@ sub matches_in_division {
     $results_per_page = 25 if !defined($results_per_page) or $results_per_page !~ m/^\d+$/;
     $page_number = 1 if !defined($page_number) or $page_number !~ m/^\d+$/;
     
-    $attributes->{page} = $page_number;
-    $attributes->{rows} = $results_per_page;
+    $attrib->{page} = $page_number;
+    $attrib->{rows} = $results_per_page;
   }
   
   return $self->search({
     "me.season" => $season->id,
     "me.division" => $division->id,
-  }, $attributes);
+  }, $attrib);
 }
 
 =head2 matches_in_date_range
@@ -356,7 +379,7 @@ sub incomplete_matches {
     "me.cancelled" => 0,
     played_date => undef,
     scheduled_date => {
-      "<=" => sprintf( "%s %s", $date_cutoff->ymd, $date_cutoff->hms ),
+      "<=" => sprintf("%s %s", $date_cutoff->ymd, $date_cutoff->hms),
     }
   }, {
     "me.season" => $season->id,

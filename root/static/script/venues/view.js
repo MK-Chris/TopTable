@@ -30,7 +30,7 @@ $(document).ready(function(){
   $("div#tabs").responsiveTabs({
     startCollapsed: false,
     activate: function() {
-      google.maps.event.trigger(map, "resize");
+      //google.maps.event.trigger(map, "resize");
       map.setCenter(map_location);
     }
   });

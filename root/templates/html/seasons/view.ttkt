@@ -31,19 +31,19 @@
       </tr>
       <tr>
         <th scope="row">[% c.maketext("seasons.statistics.rearranged-matches") %]</th>
-        <td>[% rearranged_matches %]</td>
+        <td><a href="[% c.uri_for_action("/reports/view_specific_season", ["rearranged-matches", season.url_key]) %]">[% rearranged_matches %]</a></td>
       </tr>
       <tr>
         <th scope="row">[% c.maketext("seasons.statistics.cancelled-matches") %]</th>
-        <td>[% cancelled_matches %]</td>
-      </tr>
-      <tr>
-        <th scope="row">[% c.maketext("seasons.statistics.matches-with-incomplete-teams") %]</th>
-        <td>[% matches_with_incomplete_teams %]</td>
+        <td><a href="[% c.uri_for_action("/reports/view_specific_season", ["cancelled-matches", season.url_key]) %]">[% cancelled_matches %]</a></td>
       </tr>
       <tr>
         <th scope="row">[% c.maketext("seasons.statistics.matches-with-loan-players") %]</th>
-        <td>[% matches_with_loan_players %]</td>
+        <td><a href="[% c.uri_for_action("/reports/view_specific_season", ["loan-players", season.url_key]) %]">[% matches_with_loan_players %]</a></td>
+      </tr>
+      <tr>
+        <th scope="row">[% c.maketext("seasons.statistics.matches-with-incomplete-teams") %]</th>
+        <td><a href="[% c.uri_for_action("/reports/view_specific_season", ["missing-players", season.url_key]) %]">[% matches_with_incomplete_teams %]</a></td>
       </tr>
     </table>
   </div>
@@ -51,19 +51,19 @@
   <div class="column right">
   [%
   IF season.complete;
-    SET team_uri      = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "teams"]);
-    SET month_uri     = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "months"]);
-    SET week_uri      = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "weeks"]);
-    SET day_uri       = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "days"]);
-    SET venue_uri     = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "venues"]);
-    SET division_uri  = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "divisions"]);
+    SET team_uri = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "teams"]);
+    SET month_uri = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "months"]);
+    SET week_uri = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "weeks"]);
+    SET day_uri = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "days"]);
+    SET venue_uri = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "venues"]);
+    SET division_uri = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "divisions"]);
   ELSE;
-    SET team_uri      = c.uri_for_action("/fixtures-results/filter_view_current_season", ["teams"]);
-    SET month_uri     = c.uri_for_action("/fixtures-results/filter_view_current_season", ["months"]);
-    SET week_uri      = c.uri_for_action("/fixtures-results/filter_view_current_season", ["weeks"]);
-    SET day_uri       = c.uri_for_action("/fixtures-results/filter_view_current_season", ["days"]);
-    SET venue_uri     = c.uri_for_action("/fixtures-results/filter_view_current_season", ["venues"]);
-    SET division_uri  = c.uri_for_action("/fixtures-results/filter_view_current_season", ["divisions"]);
+    SET team_uri = c.uri_for_action("/fixtures-results/filter_view_current_season", ["teams"]);
+    SET month_uri = c.uri_for_action("/fixtures-results/filter_view_current_season", ["months"]);
+    SET week_uri = c.uri_for_action("/fixtures-results/filter_view_current_season", ["weeks"]);
+    SET day_uri = c.uri_for_action("/fixtures-results/filter_view_current_season", ["days"]);
+    SET venue_uri = c.uri_for_action("/fixtures-results/filter_view_current_season", ["venues"]);
+    SET division_uri = c.uri_for_action("/fixtures-results/filter_view_current_season", ["divisions"]);
   END;
   -%]
     <h4>[% c.maketext("menu.text.fixtures-results") %]</h4>
@@ -110,17 +110,17 @@
 [%
 FOREACH division IN divisions;
   IF season.complete;
-    SET grid_uri                = c.uri_for_action("/fixtures-grids/view_specific_season", [division.division_seasons.fixtures_grid.url_key, season.url_key]);
-    SET tables_uri              = c.uri_for_action("/league-tables/view_specific_season", [division.url_key, season.url_key]);
-    SET singles_uri             = c.uri_for_action("/league-averages/view_specific_season", ["singles", division.url_key, season.url_key]);
+    SET grid_uri = c.uri_for_action("/fixtures-grids/view_specific_season", [division.division_seasons.fixtures_grid.url_key, season.url_key]);
+    SET tables_uri = c.uri_for_action("/league-tables/view_specific_season", [division.url_key, season.url_key]);
+    SET singles_uri = c.uri_for_action("/league-averages/view_specific_season", ["singles", division.url_key, season.url_key]);
     SET doubles_individuals_uri = c.uri_for_action("/league-averages/view_specific_season", ["doubles-individuals", division.url_key, season.url_key]);
-    SET doubles_pairs_uri       = c.uri_for_action("/league-averages/view_specific_season", ["doubles-pairs", division.url_key, season.url_key]);
+    SET doubles_pairs_uri = c.uri_for_action("/league-averages/view_specific_season", ["doubles-pairs", division.url_key, season.url_key]);
   ELSE;
-    SET grid_uri                = c.uri_for_action("/fixtures-grids/view_current_season", [division.division_seasons.fixtures_grid.url_key]);
-    SET tables_uri              = c.uri_for_action("/league-tables/view_current_season", [division.url_key]);
-    SET singles_uri             = c.uri_for_action("/league-averages/view_current_season", ["singles", division.url_key]);
+    SET grid_uri = c.uri_for_action("/fixtures-grids/view_current_season", [division.division_seasons.fixtures_grid.url_key]);
+    SET tables_uri = c.uri_for_action("/league-tables/view_current_season", [division.url_key]);
+    SET singles_uri = c.uri_for_action("/league-averages/view_current_season", ["singles", division.url_key]);
     SET doubles_individuals_uri = c.uri_for_action("/league-averages/view_current_season", ["doubles-individuals", division.url_key]);
-    SET doubles_pairs_uri       = c.uri_for_action("/league-averages/view_current_season", ["doubles-pairs", division.url_key]);
+    SET doubles_pairs_uri = c.uri_for_action("/league-averages/view_current_season", ["doubles-pairs", division.url_key]);
   END;
 -%]
     <tr>

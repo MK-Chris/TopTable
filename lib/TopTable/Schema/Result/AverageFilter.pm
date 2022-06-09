@@ -248,6 +248,17 @@ __PACKAGE__->belongs_to(
 # Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-11-11 23:19:45
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:9iX/k6gsyeRqDCnA+aHsgA
 
+=head2 can_delete
+
+Performs the checks we need to ensure the object is deletable.  Currently this will always return 1, but could be added to in future; mainly at the moment, it's here so we can call ->can_delete before deleting, which ensures consistency across other DB result classes.
+
+=cut
+
+sub can_delete {
+  my ( $self ) = @_;
+  return 1;
+}
+
 =head2 check_and_delete
 
 Performs the deletion of the filter; currently no checks to perform, but this may change.
@@ -255,19 +266,40 @@ Performs the deletion of the filter; currently no checks to perform, but this ma
 =cut
 
 sub check_and_delete{
-  my ( $self ) = @_;
-  my $error = [];
+  my ( $self, $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  my $response = {
+    errors => [],
+    warnings => [],
+    info => [],
+    success => [],
+    completed => 0,
+  };
+  
+  # Check we can delete
+  my $enc_name = encode_entities($self->name);
+  unless ( $self->can_delete ) {
+    push(@{$response->{errors}}, $lang->maketext("average-filters.delete.error.cannot-delete", $enc_name));
+    return $response;
+  }
   
   # Delete
-  my $ok = $self->delete unless scalar( @{ $error } );
+  my $ok = $self->delete;
   
   # Error if the delete was unsuccessful
-  push(@{ $error }, {
-    id          => "admin.delete.error.database",
-    parameters  => $self->name
-  }) unless $ok;
+  if ( $ok ) {
+    $response->{completed} = 1;
+    push(@{$response->{success}}, $lang->maketext("admin.forms.success", $enc_name, $lang->maketext("admin.message.deleted")));
+  } else {
+    push(@{$response->{errors}}, $lang->maketext("admin.delete.error.database", $enc_name));
+  }
   
-  return $error;
+  return $response;
 }
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

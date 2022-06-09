@@ -713,9 +713,6 @@ __PACKAGE__->belongs_to(
 # Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-11-20 08:25:35
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:KoSQIlkT6Rp63Tnb3MW/TQ
 
-#
-# Enable automatic date handling
-#
 __PACKAGE__->add_columns(
     "last_updated",
     { data_type => "datetime", timezone => "UTC", set_on_create => 1, set_on_update => 1, datetime_undef_if_invalid => 1, is_nullable => 0, },
@@ -729,15 +726,13 @@ Get the averages position of this person for the team / season association.
 
 sub averages_position {
   my ( $self ) = @_;
-  my $season    = $self->season;
+  my $season = $self->season;
   
-  my $division = $self->team->find_related("team_seasons", {
-    season => $season->id,
-  })->division;
+  my $division = $self->team->find_related("team_seasons", {season => $season->id})->division;
   
   my @people = $self->result_source->resultset->get_people_in_division_in_singles_averages_order({
-    season    => $season,
-    division  => $division,
+    season => $season,
+    division => $division,
   });
   
   # Loop through our people, counting up, until we find this person's ID

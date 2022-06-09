@@ -31,10 +31,10 @@ sub auto :Private {
   $c->stash({subtitle1 => $c->maketext("menu.title.officials") });
   
   # Breadcrumbs links
-  push( @{ $c->stash->{breadcrumbs} }, {
+  push(@{$c->stash->{breadcrumbs}}, {
     # Clubs listing
     path  => $c->uri_for("/info/officials"),
-    label => $c->maketext("menu.text.officials"),
+    label => $c->maketext("menu.text.committee"),
   });
 }
 
@@ -58,7 +58,7 @@ View the current season's league officials (or the last completed season if ther
 
 sub view_current_season :Chained("base") :PathPart("") :Args(0) {
   my ( $self, $c ) = @_;
-  my $site_name = $c->stash->{encoded_site_name};
+  my $site_name = $c->stash->{enc_site_name};
   
   # Get and stash the current season
   my $season = $c->model("DB::Season")->get_current;
@@ -73,7 +73,7 @@ sub view_current_season :Chained("base") :PathPart("") :Args(0) {
     $c->detach( "view_finalise" );
   } else {
     # 404 - no seasons
-    $c->detach( qw/TopTable::Controller::Root default/ );
+    $c->detach(qw(TopTable::Controller::Root default));
     return;
   }
 }
@@ -86,7 +86,7 @@ Load and view the specified season's officials.
 
 sub view_specific_season :Chained("base") :PathPart("seasons") :Args(1) {
   my ( $self, $c, $season_id_or_url_key ) = @_;
-  my $site_name = $c->stash->{encoded_site_name};
+  my $site_name = $c->stash->{enc_site_name};
   
   my $season = $c->model("DB::Season")->find_id_or_url_key( $season_id_or_url_key );
   
@@ -101,9 +101,9 @@ sub view_specific_season :Chained("base") :PathPart("seasons") :Args(1) {
     });
   
     # Push the season list URI and the current URI on to the breadcrumbs
-    push( @{ $c->stash->{breadcrumbs} }, {
+    push(@{$c->stash->{breadcrumbs}}, {
       path  => $c->uri_for_action("/info/officials/view_seasons_first_page"),
-      label => $c->maketext("menu.text.seasons"),
+      label => $c->maketext("menu.text.season"),
     }, {
       path  => $c->uri_for_action("/info/officials/view_specific_season", [$season->url_key]),
       label => encode_entities( $season->name ),
@@ -112,7 +112,7 @@ sub view_specific_season :Chained("base") :PathPart("seasons") :Args(1) {
     $c->detach( "view_finalise" );
   } else {
     # 404 - no seasons
-    $c->detach( qw/TopTable::Controller::Root default/ );
+    $c->detach(qw(TopTable::Controller::Root default));
     return;
   }
 }
@@ -145,9 +145,9 @@ sub view_seasons :Chained("base") :PathPart("seasons") :CaptureArgs(0) {
   my ( $self, $c ) = @_;
   
   # Push the current URI on to the breadcrumbs
-  push( @{ $c->stash->{breadcrumbs} }, {
+  push(@{$c->stash->{breadcrumbs}}, {
     path  => $c->uri_for_action("/info/officials/view_seasons_first_page"),
-    label => $c->maketext("menu.text.seasons"),
+    label => $c->maketext("menu.text.season"),
   });
 }
 
@@ -193,7 +193,7 @@ Performs the lookups for clubs with the given page number.
 
 sub retrieve_paged_seasons :Private {
   my ( $self, $c, $page_number ) = @_;
-  my $site_name = $c->stash->{encoded_site_name};
+  my $site_name = $c->stash->{enc_site_name};
   
   my $seasons = $c->model("DB::Season")->page_records({
     page_number       => $page_number,
@@ -215,7 +215,7 @@ sub retrieve_paged_seasons :Private {
     view_online_link    => 1,
     seasons             => $seasons,
     subtitle1           => $c->maketext("menu.title.officials"),
-    subtitle2           => $c->maketext("menu.text.seasons"),
+    subtitle2           => $c->maketext("menu.text.season"),
     page_info           => $page_info,
     page_links          => $page_links,
     page_description    => $c->maketext("description.officials.list-seasons", $site_name),

@@ -155,21 +155,21 @@ Generate a URI to redirect for subscription to, for example, Google Calendar.
 =cut
 
 sub generate_uri {
-  my ( $self, $parameters ) = @_;
-  my $download_uri              = $parameters->{download_uri};
-  my $calendar_name             = $parameters->{calendar_name};
+  my ( $self, $params ) = @_;
+  my $download_uri = $params->{download_uri};
+  my $calendar_name = $params->{calendar_name};
   
   # Get the default URI
-  my $uri           = $self->uri;
-  my $scheme        = $self->calendar_scheme;
+  my $uri = $self->uri;
+  my $scheme = $self->calendar_scheme;
   
   # Alter the scheme if required
-  $download_uri->scheme( $scheme ) if defined( $scheme ) and $download_uri->scheme ne $scheme;
+  $download_uri->scheme($scheme) if defined($scheme) and $download_uri->scheme ne $scheme;
   
   # URI escape if we need to
   if ( $self->uri_escape_replacements ) {
-    $calendar_name = uri_escape_utf8( $calendar_name );
-    $download_uri = uri_escape_utf8( $download_uri );
+    $calendar_name = uri_escape_utf8($calendar_name);
+    $download_uri = uri_escape_utf8($download_uri);
   }
   
   # Now put it in the redirect URI

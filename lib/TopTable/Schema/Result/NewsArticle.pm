@@ -280,6 +280,8 @@ __PACKAGE__->belongs_to(
 # Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-02-25 13:33:57
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:8zisShUlpf2+Ioaw+UDikw
 
+use HTML::Entities;
+
 =head2 date_updated_tz
 
 Return the log_created time with the correct timezone.
@@ -290,15 +292,13 @@ sub date_updated_tz {
   my ( $self, $tz ) = @_;
   
   # Set the timezone if we have one specified
-  $self->date_updated->set_time_zone( $tz ) if $tz;
+  $self->date_updated->set_time_zone($tz) if $tz;
   
   # Return the new time
   return $self->date_updated;
 }
 
-#
 # Enable automatic date handling
-#
 __PACKAGE__->add_columns(
     "date_updated",
     { data_type => "datetime", timezone => "UTC", set_on_create => 1, set_on_update => 0, datetime_undef_if_invalid => 1, is_nullable => 0,},
@@ -315,34 +315,34 @@ sub current_details {
   my $return_value;
   
   my $edits = $self->search_related("news_articles", {}, {
-    order_by => {
-      -desc => "date_updated",
-    },
+    order_by => {-desc => "date_updated"},
   });
   
   if ( $edits->count > 0 ) {
     my $latest_edit = $edits->search({}, {
-      rows      => 1,
-      order_by  => {
-        -desc   => "date_updated",
-      },
+      rows => 1,
+      order_by => {-desc => "date_updated"},
     })->single;
     
     $return_value = {
+      pinned => $latest_edit->pinned,
+      pinned_expires => $latest_edit->pinned_expires,
       updated_by_user => $latest_edit->updated_by_user,
-      ip_address      => $latest_edit->ip_address,
-      date_updated    => $latest_edit->date_updated_tz( $tz ),
-      headline        => $latest_edit->headline,
+      ip_address => $latest_edit->ip_address,
+      date_updated => $latest_edit->date_updated_tz($tz),
+      headline => $latest_edit->headline,
       article_content => $latest_edit->article_content,
       number_of_edits => $edits->count,
     };
   } else {
     # If there are no edits, just return the current column's values
     $return_value = {
+      pinned => $self->pinned,
+      pinned_expires => $self->pinned_expires,
       updated_by_user => $self->updated_by_user,
-      ip_address      => $self->ip_address,
-      date_updated    => $self->date_updated_tz( $tz ),
-      headline        => $self->headline,
+      ip_address => $self->ip_address,
+      date_updated => $self->date_updated_tz($tz),
+      headline => $self->headline,
       article_content => $self->article_content,
       number_of_edits => 0,
     };
@@ -364,7 +364,64 @@ sub article_description {
   my $current_article_text = $self->current_details->{article_content};
   
   # Return a substring of the article
-  return substr( $current_article_text, 0, 150 );
+  return substr($current_article_text, 0, 150);
+}
+
+=head2 can_delete
+
+Performs the checks we need to ensure the news article is deletable.  Currently this will always return 1, but could be added to in future; mainly at the moment, it's here so we can call ->can_delete before deleting, which ensures consistency across other DB result classes.
+
+=cut
+
+sub can_delete {
+  my ( $self ) = @_;
+  return 1;
+}
+
+=head2 check_and_delete
+
+Performs the deletion of a ban.
+
+=cut
+
+sub check_and_delete {
+  my ( $self, $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  my $response = {
+    errors => [],
+    warnings => [],
+    info => [],
+    success => [],
+    completed => 0,
+  };
+  
+  # Check we can delete
+  unless ( $self->can_delete ) {
+    push(@{$response->{errors}}, $lang->maketext("news.delete.error.cannot-delete", encode_entities($self->current_details->{headline})));
+    return $response;
+  }
+  
+  # Get the name for messaging, then delete
+  my $name = $self->current_details->{headline};
+  
+  # Delete previous edits
+  my $ok = $self->delete_related("news_articles");
+  $ok = $self->delete if $ok;
+  
+  # Error if the delete was unsuccessful
+  if ( $ok ) {
+    $response->{completed} = 1;
+    push(@{$response->{success}}, $lang->maketext("admin.forms.success", encode_entities($name), $lang->maketext("admin.message.deleted")));
+  } else {
+    push(@{$response->{errors}}, $lang->maketext("admin.delete.error.database", encode_entities($name)));
+  }
+  
+  return $response;
 }
 
 

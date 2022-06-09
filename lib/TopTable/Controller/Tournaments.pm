@@ -23,7 +23,7 @@ Catalyst Controller to handle tournaments; these methods are all private and for
 
 sub index :Path :Args(0) {
   my ( $self, $c ) = @_;
-  $c->detach( qw/ TopTable::Controller::Root default / );
+  $c->detach(qw(TopTable::Controller::Root default));
 }
 
 

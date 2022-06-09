@@ -12,7 +12,7 @@
 -%]
       <th class="event-user">[% c.maketext("system-event-log.heading.user") %]</th>
 [%
-      IF authorisation.view_users_ip;
+      IF authorisation.user_view_ip;
 -%]
       <th class="event-ip">[% c.maketext("system-event-log.heading.ip") %]</th>
 [%

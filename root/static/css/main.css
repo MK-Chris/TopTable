@@ -21,7 +21,7 @@ html,body,h1,h2,div,span,object,iframe,p,blockquote,pre,abbr,address,cite,code,d
   outline: 0;
 }
 
-h3,h4,h5,h6, {
+h3,h4,h5,h6 {
   margin-top: 5px;
   margin-bottom: 0;
   margin-right: 0;
@@ -39,38 +39,41 @@ nav {
   margin-right: auto;
 }
 
+div.data-only {display: none;}
+
 /* _Typography */
 h1, h2, h3, h4, h5 {font-weight: normal;}
 
 h1 {
-  font-size: 3em;
+  font-size: 2.5em;
   line-height: 1;
   margin-bottom: 0.5em;
 }
 
 h2 {
-  font-size: 2em;
+  font-size: 2.2em;
   line-height: 1;
   margin-bottom: 0.75em;
 }
 
 h3 {
-  font-size: 1.5em;
+  font-size: 2em;
   line-height: 1;
   margin-bottom: 1em;
 }
 
 h4 {
-  font-size: 1.2em;
+  font-size: 1.5em;
   line-height: 1;
   margin-bottom: 0.3em;
   margin-top: 0.8em;
 }
 
 h5 {
-  font-size: 1.13em;
-  /*font-weight: bold;*/
-  margin-bottom: 1.5em;
+  font-size: 1.15em;
+  font-weight: bold;
+  margin-top: 0.8em;
+  margin-bottom: 0.3em;
 }
 
 h6 {
@@ -151,8 +154,9 @@ a, a:active, a:visited {
   text-decoration: underline;
 }
 
-td.loan-player, a.loan-player, a.loan-player:active, a.loan-player:visited {color: #4cb1e0;}
-td.inactive-player, a.inactive-player, a.inactive-player:active, a.inactive-player:visited {color: #ff0000;}
+div.match-player-notice{margin-top: 5px;}
+tr.loan-player, tr.loan-player a, td.loan-player, td.loan-player > a, a.loan-player, a.loan-player:active, a.loan-player:visited {color: #4cb1e0;}
+tr.inactive-player, tr.inactive-player a, td.inactive-player, td.inactive-player > a, a.inactive-player, a.inactive-player:active, a.inactive-player:visited {color: #ff0000;}
 div.loan-player-key {background: #4cb1e0;}
 div.inactive-player-key {background: #ff0000;}
 div.loan-player-key, div.inactive-player-key {
@@ -415,7 +419,7 @@ ul.option-list {
 
 div.list-item {
   padding: 4px;
-  margin 2px;
+  margin: 2px;
 }
 
 ul.option-list {
@@ -581,6 +585,16 @@ input.button-approve {
 
 input.button-deny {
   background-image: url("../images/icons/0006-Cross-icon-32.png");
+  background-size: cover;
+  border: none;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  color: transparent;
+}
+
+input.button-reset {
+  background-image: url("../images/icons/0005-Delete-icon-32.png");
   background-size: cover;
   border: none;
   width: 32px;
@@ -992,7 +1006,7 @@ div.doubles_home_player_selection, div.doubles_away_player_selection {
 #add_games_div, #add_divisions_div {display: none;}
 .team_inactive {display: none;}
 .nav_list {text-align: center;}
-td.numeric, th.numeric, dd.numeric {text-align: right;}
+td.numeric, th.numeric, dd.numeric {text-align: right !important;}
 td.game-number, th.game-number {text-align: center;}
 .match_score {float: right;}
 span.game-result {font-weight: bold;}
@@ -1001,6 +1015,12 @@ td.leg-scores {clear: both;}
 span.leg-score {
   display: inline-block;
   width: 50px;
+}
+
+span.leg-score-link {
+  display: inline-block;
+  width: 50px;
+  text-decoration: underline;
 }
 
 /*

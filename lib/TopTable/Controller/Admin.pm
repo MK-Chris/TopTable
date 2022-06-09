@@ -28,12 +28,12 @@ sub auto :Private {
   $c->load_status_msgs;
   
   # The title bar will always have
-  $c->stash({subtitle1 => $c->maketext("menu.admin.text.title") });
+  $c->stash({subtitle1 => $c->maketext("menu.text.admin") });
   
   # Breadcrumbs links
-  push( @{ $c->stash->{breadcrumbs} }, {
-    path  => $c->uri_for("/admin"),
-    label => $c->maketext("menu.admin.text.title"),
+  push(@{$c->stash->{breadcrumbs}}, {
+    path => $c->uri_for("/admin"),
+    label => $c->maketext("menu.text.admin"),
   });
 }
 

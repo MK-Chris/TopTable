@@ -9,20 +9,20 @@ $(document).ready(function(){
   */
   $("textarea").ckeditor({
     toolbarGroups: [
-    	{ name: 'document', groups: [ 'mode', 'document', 'doctools' ] },
-    	{ name: 'clipboard', groups: [ 'clipboard', 'undo' ] },
-    	{ name: 'editing', groups: [ 'find', 'selection', 'editing' ] },
-    	{ name: 'basicstyles', groups: [ 'basicstyles', 'cleanup' ] },
+    	{name: 'document', groups: ['mode', 'document', 'doctools']},
+    	{name: 'clipboard', groups: ['clipboard', 'undo']},
+    	{name: 'editing', groups: ['find', 'selection', 'editing']},
+    	{name: 'basicstyles', groups: ['basicstyles', 'cleanup']},
     	'/',
-    	{ name: 'paragraph', groups: [ 'list', 'indent', 'blocks', 'align', 'bidi', 'paragraph' ] },
-    	{ name: 'links', groups: [ 'links' ] },
-    	{ name: 'insert', groups: [ 'insert' ] },
+    	{name: 'paragraph', groups: ['list', 'indent', 'blocks', 'align', 'bidi', 'paragraph']},
+    	{name: 'links', groups: ['links']},
+    	{name: 'insert', groups: ['insert']},
     	'/',
-    	{ name: 'styles', groups: [ 'styles' ] },
-    	{ name: 'colors', groups: [ 'colors' ] },
-    	{ name: 'tools', groups: [ 'tools' ] },
-    	{ name: 'others', groups: [ 'others' ] },
-    	{ name: 'about', groups: [ 'about' ] }
+    	{name: 'styles', groups: ['styles']},
+    	{name: 'colors', groups: ['colors']},
+    	{name: 'tools', groups: ['tools']},
+    	{name: 'others', groups: ['others']},
+    	{name: 'about', groups: ['about']}
     ],
     removeButtons: 'Form,Checkbox,Radio,TextField,Textarea,Select,Button,ImageButton,HiddenField,spellchecker,Save,NewPage,Maximize',
     extraPlugins: 'lineutils,widget,oembed,enterkey',
@@ -56,22 +56,21 @@ $(document).ready(function(){
     /*
       Variable declaration
     */
-    var current_divisions;  // Current number of games
-    var new_divisions;      // New number of games after adding one to the above number
-    var html;               // The HTML with the new fields to be appended to the games div
+    var current_divisions; // Current number of divisions
+    var new_divisions; // New number of divisions after adding one to the above number
+    var html; // The HTML with the new fields to be appended to the divisions div
     
     /*
       Work out the current / new number of divisions.
     */
     current_divisions = $("div.division").length;
-    new_divisions     = current_divisions + 1;
+    new_divisions = current_divisions + 1;
     
     /*
       Set the HTML that will be appended to the games div
     */
     html = '<fieldset>\n';
-    html += '  <legend>[% c.maketext("divisions.form.legend.division-rank") %] ' + new_divisions + '</legend>\n';
-    html += '  <input type="hidden" id="division_id' + new_divisions + '" name="division_id' + new_divisions + '" value="new" />\n\n';
+    html += '  <legend>[% c.maketext("divisions.form.legend.division-rank") %] ' + new_divisions + '</legend>\n\n';
     
     html += '  <div class="form-column-single">\n';
     html += '    <input type="checkbox" id="use_division' + new_divisions + '" name="use_division' + new_divisions + '" class="use-division" data-rank="' + new_divisions + '" data-label="Use division" checked="checked" />\n';
@@ -82,7 +81,7 @@ $(document).ready(function(){
     html += '      <div class="label-field-container">\n';
     html += '        <label for="division_name' + new_divisions + '">[% c.maketext("divisions.form.field.name") %]</label>\n';
     html += '        <div class="field-container">\n';
-    html += '          <input type="text" id="division_name' + new_divisions + '" name="division_name" value="" />\n';
+    html += '          <input type="text" id="division_name' + new_divisions + '" name="division_name' + new_divisions + '" value="" />\n';
     html += '        </div>\n';
     html += '        <div class="clear-fix"></div>\n';
     html += '      </div>\n\n';
@@ -90,10 +89,10 @@ $(document).ready(function(){
     html += '      <div class="label-field-container">\n';
     html += '        <label for="fixtures_grid' + new_divisions + '">[% c.maketext("divisions.form.field.fixtures-grid") %]</label>\n';
     html += '        <div class="field-container">\n';
-    html += '          <select id="fixtures_grid' + new_divisions + '" name="fixtures_grid" data-placeholder="[% c.maketext("divisions.form.field.fixtures-grid") %]">\n';
+    html += '          <select id="fixtures_grid' + new_divisions + '" name="fixtures_grid' + new_divisions + '" data-placeholder="[% c.maketext("divisions.form.field.fixtures-grid") %]">\n';
     html += '            <option value=""></option>\n';
 [%
-FOREACH grid IN fixtures_grids;
+WHILE (grid = fixtures_grids.next);
 -%]
     html += '            <option value="[% grid.id %]">[% grid.name %]</option>\n';
 [%
@@ -109,10 +108,10 @@ END;
     html += '      <div class="label-field-container">\n';
     html += '        <label for="league_match_template' + new_divisions + '">[% c.maketext("divisions.form.field.league-match-template") %]</label>\n';
     html += '        <div class="field-container">\n';
-    html += '          <select id="league_match_template' + new_divisions + '" name="league_match_template" data-placeholder="[% c.maketext("divisions.form.field.league-match-template") %]">\n';
+    html += '          <select id="league_match_template' + new_divisions + '" name="league_match_template' + new_divisions + '" data-placeholder="[% c.maketext("divisions.form.field.league-match-template") %]">\n';
     html += '            <option value=""></option>\n';
 [%
-FOREACH template IN match_templates;
+WHILE (template = match_templates.next);
 -%]
     html += '            <option value="[% template.id %]">[% template.name %]</option>\n';
 [%
@@ -125,10 +124,10 @@ END;
     html += '      <div class="label-field-container">\n';
     html += '        <label class="normal" for="league_table_ranking_template' + new_divisions + '">[% c.maketext("divisions.form.field.league-ranking-template") %]</label>\n';
     html += '        <div class="field-container">\n';
-    html += '          <select id="league_table_ranking_template' + new_divisions + '" name="league_table_ranking_template" data-placeholder="[% c.maketext("divisions.form.field.league-ranking-template") %]">\n';
+    html += '          <select id="league_table_ranking_template' + new_divisions + '" name="league_table_ranking_template' + new_divisions + '" data-placeholder="[% c.maketext("divisions.form.field.league-ranking-template") %]">\n';
     html += '            <option value=""></option>\n';
 [%
-FOREACH template IN ranking_templates;
+WHILE (template = ranking_templates.next);
 -%]
     html += '            <option value="[% template.id %]">[% template.name %]</option>\n';
 [%

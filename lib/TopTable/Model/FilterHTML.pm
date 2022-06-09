@@ -3,7 +3,7 @@ package TopTable::Model::FilterHTML;
 use Moose;
 use namespace::clean -except => 'meta';
 
-extends qw/ Catalyst::Model /;
+extends qw( Catalyst::Model );
 
 
 use HTML::Restrict;
@@ -34,48 +34,49 @@ sub filter {
 	# Create a HTML::Restrict object
 	my $hr = HTML::Restrict->new;
   
-  if ( defined( $type ) and $type eq "textarea" ) {
+  if ( defined($type) and $type eq "textarea" ) {
   	$hr->set_rules({
-  		b           => [],
-  		strong      => [],
-  		i           => [],
-  		em          => [],
-      u           => [],
-      strike      => [],
-      sub         => [],
-      sup         => [],
-  		small       => [],
-  		p           => [],
-  		br          => [ qw ( / ) ],
-  		a           => [ qw( href title ) ],
-  		img         => [ qw( src alt title width height / ) ],
-      ul          => [ qw( style start ) ],
-      ol          => [ qw( style start ) ],
-      li          => [],
-      div         => [ qw( style ) ],
-      span        => [ qw( style contenteditable class ) ],
-      table       => [ qw( width ) ],
-      tbody       => [],
-      tr          => [],
-      td          => [],
-      hr          => [ qw( / ) ],
-      blockquote  => [],
-      h1          => [],
-      h2          => [],
-      h3          => [],
-      h4          => [],
-      h5          => [],
-      h6          => [],
-      a           => [ qw( href target rel ) ],
-      img         => [ qw( class alt title width height src / ) ],
-      iframe      => [ qw( width height src ) ],
+  		b => [],
+  		strong => [],
+  		i => [],
+  		em => [],
+      u => [],
+      strike => [],
+      s => [],
+      sub => [],
+      sup => [],
+  		small => [],
+  		p => [],
+  		br => [qw( / )],
+  		a => [qw( href title )],
+  		img => [qw( src alt title width height / )],
+      ul => [qw( style start )],
+      ol => [qw( style start )],
+      li => [],
+      div => [qw( style )],
+      span => [qw( style contenteditable class )],
+      table => [qw( width )],
+      tbody => [],
+      tr => [],
+      td => [],
+      hr => [qw( / )],
+      blockquote => [],
+      h1 => [],
+      h2 => [],
+      h3 => [],
+      h4 => [],
+      h5 => [],
+      h6 => [],
+      a => [qw( href target rel )],
+      img => [qw( class alt title width height src / )],
+      iframe => [qw( width height src )],
   	});
     
-    $hr->set_uri_schemes([ qw( undef http https  mailto ) ]);
+    $hr->set_uri_schemes([qw( undef http https  mailto )]);
   }
   
 	# Pass the HTML through it
-	my $filtered = $hr->process( $html ) if $html;
+	my $filtered = $hr->process($html) if $html;
   
 	# Return the filtered HTML
 	return $filtered;

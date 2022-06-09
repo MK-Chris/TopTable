@@ -3,7 +3,6 @@ package TopTable::Schema::ResultSet::ClubTeamView;
 use strict;
 use warnings;
 use parent 'DBIx::Class::ResultSet';
-use Data::Dumper::Concise;
 
 
 =head2 search_by_name

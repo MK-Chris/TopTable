@@ -32,7 +32,7 @@ c.maketext("roles.system.notice") %]<br />
     <a href="[% c.uri_for_action("/roles/edit", [role.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", name_html) %]" title="[% c.maketext("admin.edit-object", name_html) %]" /></a>
 [%
     END;
-    IF authorisation.role_delete;
+    IF authorisation.role_delete AND role.can_delete;
 -%]
     <a href="[% c.uri_for_action("/roles/delete", [role.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", name_html) %]" title="[% c.maketext("admin.delete-object", name_html) %]" /></a>
 [%

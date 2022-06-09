@@ -734,24 +734,20 @@ __PACKAGE__->many_to_many("roles", "user_roles", "role");
 use Digest::SHA qw( sha256_hex );
 use Time::HiRes;
 use DateTime;
+use HTML::Entities;
 
 # Have the 'password' column use a SHA-1 hash and 20-byte salt
 # with RFC 2307 encoding; Generate the 'check_password" method
 # Also enable automatic date handling
 __PACKAGE__->add_columns(
     "password" => {
-        data_type         => "text",
-        is_nullable       => 0,
-        passphrase        => "rfc2307",
-        #passphrase_class  => "SaltedDigest",
-        #passphrase_args   => {
-        #    algorithm     => "SHA-1",
-        #    salt_random   => 20.
-        #},
-        passphrase_class  => "BlowfishCrypt",
-        passphrase_args   => {
-            cost          => 14,
-            salt_random   => 1,
+        data_type => "text",
+        is_nullable => 0,
+        passphrase => "rfc2307",
+        passphrase_class => "BlowfishCrypt",
+        passphrase_args => {
+            cost => 14,
+            salt_random => 1,
         },
         passphrase_check_method => "check_password",
     },
@@ -775,7 +771,7 @@ Return the URL key for this object as an array ref (even if there's only one, an
 
 sub url_keys {
   my ( $self ) = @_;
-  return [ $self->url_key ];
+  return [$self->url_key];
 }
 
 =head2 can_delete
@@ -798,25 +794,42 @@ Checks that the venue can be deleted (via can_delete) and then performs the dele
 =cut
 
 sub check_and_delete {
-  my ( $self ) = @_;
-  my $error = [];
+  my ( $self, $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  my $response = {
+    errors => [],
+    warnings => [],
+    info => [],
+    success => [],
+    completed => 0,
+  };
+  
+  # Get the name for messaging
+  my $name = encode_entities($self->username);
   
   # Check we can delete
-  push(@{ $error }, {
-    id          => "users.delete.error.not-allowed",
-    parameters  => [$self->username],
-  }) unless $self->can_delete;
+  unless ( $self->can_delete ) {
+    push(@{$response->{errors}}, $lang->maketext("user.delete.error.cannot-delete", $name));
+    return $response;
+  }
   
   # Delete
-  my $ok = $self->delete unless scalar( @{ $error } );
+  my $ok = $self->delete;
   
   # Error if the delete was unsuccessful
-  push(@{ $error }, {
-    id          => "admin.delete.error.database",
-    parameters  => $self->username,
-  }) unless $ok;
+  if ( $ok ) {
+    $response->{completed} = 1;
+    push(@{$response->{success}}, $lang->maketext("admin.forms.success", $name, $lang->maketext("admin.message.deleted")));
+  } else {
+    push(@{$response->{errors}}, $lang->maketext("admin.delete.error.database", $name));
+  }
   
-  return $error;
+  return $response;
 }
 
 =head2 approve
@@ -827,11 +840,22 @@ Approve the user
 
 sub approve {
   my ( $self, $params ) = @_;
-  my $error = [];
-  my $approver = delete $params->{approver};
+  # Setup schema / logging
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  my $approver = $params->{approver};
+  my $response = {
+    errors => [],
+    warnings => [],
+    info => [],
+    success => [],
+    completed => 0,
+  };
   
-  if ( ref( $approver ) eq "Catalyst::Authentication::Store::DBIx::Class::User" ) {
+  if ( ref($approver) eq "Catalyst::Authentication::Store::DBIx::Class::User" ) {
     # We have passed in the logged in user
     # Update to approved
     # Also activated / null the activation key - even if the user hasn't activated, assume the admin knows best.
@@ -845,13 +869,18 @@ sub approve {
     });
     
     # Error if the delete was unsuccessful
-    push(@{ $error }, {id => "admin.update.error.database"}) unless $ok;
+    if ( $ok ) {
+      $response->{completed} = 1;
+      push(@{$response->{success}}, $lang->maketext("users.approve.user-approved", encode_entities($self->username)));
+    } else {
+      push(@{$response->{errors}}, $lang->maketext("admin.update.error.database"));
+    }
   } else {
     # No user passed in
-    push( @{ $error }, {id => "admin.performing-user-invalid"});
+    push(@{$response->{errors}}, $lang->maketext("admin.performing-user-invalid"));
   }
   
-  return $error;
+  return $response;
 }
 
 =head2 reject
@@ -862,18 +891,34 @@ Disapprove the user (delete).
 
 sub reject {
   my ( $self, $params ) = @_;
-  my $error = [];
-  my $approver = delete $params->{approver};
+  # Setup schema / logging
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  my $approver = $params->{approver};
+  my $response = {
+    errors => [],
+    warnings => [],
+    info => [],
+    success => [],
+    completed => 0,
+  };
   
   # We have passed in the logged in user
   # Update to approved
   my $ok = $self->delete;
   
   # Error if the delete was unsuccessful
-  push(@{ $error }, {id => "admin.delete.error.database"}) unless $ok;
+  if ( $ok ) {
+    $response->{completed} = 1;
+    push(@{$response->{success}}, $lang->maketext("users.approve.user-rejected", encode_entities($self->username)));
+  } else {
+    push(@{$response->{errors}}, $lang->maketext("admin.delete.error.database"));
+  }
   
-  return $error;
+  return $response;
 }
 
 =head2 display_name
@@ -885,11 +930,9 @@ Display the person's name instead if there's a person associated
 sub display_name {
   my ( $self ) = @_;
   
-  my $person = $self->find_related("person", {}, {
-    rows => 1,
-  });
+  my $person = $self->search_related("person", undef, {rows => 1})->single;
   
-  if ( defined( $person ) ) {
+  if ( defined($person) ) {
     return $person->display_name;
   } else {
     return $self->username;
@@ -905,12 +948,10 @@ Display the user with the person's name in brackets if there is a person associa
 sub display_user_and_name {
   my ( $self ) = @_;
   
-  my $person = $self->find_related("person", {}, {
-    rows => 1,
-  });
+  my $person = $self->find_related("person", undef, {rows => 1});
   
   if ( defined( $person ) ) {
-    return sprintf( "%s (%s)", $self->username, $person->display_name );
+    return sprintf("%s (%s)", $self->username, $person->display_name);
   } else {
     return $self->username;
   }
@@ -923,22 +964,49 @@ Sets the user to 'activated' and clears out the activation key.
 =cut
 
 sub activate {
-  my ( $self, $person ) = @_;
+  my ( $self, $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  my $person = $params->{person};
+  my $response = {
+    errors => [],
+    warnings => [],
+    info => [],
+    success => [],
+    completed => 0,
+  };
   
   # Check we're activating with a person ID or no person at all
-  $person = ( defined( $person ) ) ? $person->id : undef;
+  $person = defined($person) ? $person->id : undef;
   
   my $ok = $self->update({
-    person              => $person,
-    activated           => 1,
-    activation_key      => undef,
-    activation_expires  => undef,
+    person => $person,
+    activated => 1,
+    activation_key => undef,
+    activation_expires => undef,
   });
   
-  my @errors = ();
-  push(@errors, {id => "user.activation.error.failed"}) unless $ok;
+  if ( $ok ) {
+    if ( $self->approved ) {
+      # Auto-approval must be in place
+      push(@{$response->{success}}, $lang->maketext("user.activation.success-login"));
+    } else {
+      # Manual approval
+      push(@{$response->{success}}, $lang->maketext("user.activation.success-approval-needed"));
+    }
+    
+    
+    $response->{completed} = 1;
+  } else {
+    push(@{$response->{errors}}, $lang->maketext("user.activation.error.failed"));
+  }
   
-  return \@errors;
+  
+  return $response;
 }
 
 =head2 set_password_reset_key
@@ -948,20 +1016,37 @@ Generate a password reset key.
 =cut
 
 sub set_password_reset_key {
-  my ( $self ) = @_;
-  my @errors;
+  my ( $self, $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  my $person = $params->{person};
+  my $response = {
+    errors => [],
+    warnings => [],
+    info => [],
+    success => [],
+    completed => 0,
+  };
   
   # Get the expiry
-  my $expires = DateTime->now( time_zone  => "UTC" )->add( hours => 1 );
+  my $expires = DateTime->now(time_zone  => "UTC")->add(hours => 1);
   
   my $ok = $self->update({
-    password_reset_key      => sha256_hex( $self->username . Time::HiRes::time . int(rand(100)) ),
-    password_reset_expires  => sprintf("%s %s", $expires->ymd, $expires->hms),
+    password_reset_key => sha256_hex($self->username . Time::HiRes::time . int(rand(100))),
+    password_reset_expires => sprintf("%s %s", $expires->ymd, $expires->hms),
   });
   
-  push(@errors, {id => "user.forgot-password.error.failed-to-set-key"}) unless $ok;
+  if ( $ok ) {
+    $response->{completed} = 1;
+  } else {
+    push(@{$response->{errors}}, $lang->maketext("user.forgot-password.error.failed-to-set-key"));
+  }
   
-  return \@errors;
+  return $response;
 }
 
 =head2 reset_password
@@ -971,44 +1056,62 @@ Check and reset the user's password, given a new password and a confirm password
 =cut
 
 sub reset_password {
-  my ( $self, $password, $confirm_password ) = @_;
-  my @errors;
+  my ( $self, $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  my $person = $params->{person};
+  my $response = {
+    errors => [],
+    warnings => [],
+    info => [],
+    success => [],
+    completed => 0,
+  };
   
-  if ( $password ) {
+  # Grab the fields
+  my $password = $params->{password} || undef;
+  my $confirm_password = $params->{confirm_password} || "";
+  
+  if ( defined($password) ) {
     # Check the passwords match
     if ( $password ne $confirm_password ) {
       # Non-matching passwords
-      push(@errors, {id => "user.form.error.password-confirm-mismatch"});
+      push(@{$response->{errors}}, $lang->maketext("user.form.error.password-confirm-mismatch"));
     } else {
       # Check password strength
-      if ( length( $password ) < 8 ) {
+      if ( length($password) < 8 ) {
         # Password too short
-        push(@errors, {
-          id          => "user.form.error.password-too-short",
-          parameters  => [8],
-        });
+        push(@{$response->{errors}}, $lang->maketext("user.form.error.password-too-short", 8));
       } else {
         # Check password complexity
-        push(@errors, {id => "user.form.error.password-complexity"}) unless $password =~ /[A-Z]/ and $password =~ /[a-z]/ and $password =~ /\d/;
+        push(@{$response->{errors}}, $lang->maketext("user.form.error.password-complexity")) unless $password =~ /[A-Z]/ and $password =~ /[a-z]/ and $password =~ /\d/;
       }
     }
   } else {
     # Password is blank
-    push(@errors, {id => "user.form.error.password-blank"});
+    push(@{$response->{errors}}, $lang->maketext("user.form.error.password-blank"));
   }
   
   # Update if there are no errors.  Ensure the password reset key is removed.
-  if ( scalar( @errors ) == 0 ) {
+  if ( scalar( @{$response->{errors}} ) == 0 ) {
     my $ok = $self->update({
-      password                => $password,
-      password_reset_key      => undef,
-      password_reset_expires  => undef,
+      password => $password,
+      password_reset_key => undef,
+      password_reset_expires => undef,
     });
     
-    push(@errors, {id => "user.reset-password.error.failed-to-reset"}) unless $ok;
+    if ( $ok ) {
+      $response->{completed} = 1;
+    } else {
+      push(@{$response->{errors}}, $lang->maketext("user.reset-password.error.failed-to-reset"));
+    }
   }
   
-  return \@errors;
+  return $response;
 }
 
 =head2 plays_for
@@ -1018,20 +1121,20 @@ Returns true if the user plays for the specified team in the specified season.
 =cut
 
 sub plays_for {
-  my ( $self, $parameters ) = @_;
-  my $team    = $parameters->{team};
-  my $season  = $parameters->{season};
+  my ( $self, $params ) = @_;
+  my $team = $params->{team};
+  my $season = $params->{season};
   
   # Get the person associated with this user
   my $person = $self->person;
   
   # Return false straight away if there's no person associated
-  return 0 unless defined( $person );
+  return 0 unless defined($person);
   
   # Otherwise return the value of the same routine in the Person model
   return $person->plays_for({
-    team    => $team,
-    season  => $season,
+    team => $team,
+    season => $season,
   });
 }
 
@@ -1042,14 +1145,14 @@ Returns true if the user is captain for the specified team in the specified seas
 =cut
 
 sub captain_for {
-  my ( $self, $parameters ) = @_;
-  my $team_season = $parameters->{team};
+  my ( $self, $params ) = @_;
+  my $team_season = $params->{team};
   
   # Get the person associated with this user
   my $person = $self->person;
   
   # Return false straight away if there's no person associated
-  return 0 unless defined( $person );
+  return 0 unless defined($person);
   
   # Otherwise return the value of the same routine in the Person model
   return $person->captain_for({team => $team_season});
@@ -1062,14 +1165,14 @@ Returns true if the user is secretary for the specified club in the specified se
 =cut
 
 sub secretary_for {
-  my ( $self, $parameters ) = @_;
-  my $club = $parameters->{club};
+  my ( $self, $params ) = @_;
+  my $club = $params->{club};
   
   # Get the person associated with this user
   my $person = $self->person;
   
   # Return false straight away if there's no person associated
-  return 0 unless defined( $person );
+  return 0 unless defined($person);
   
   # Otherwise return the value of the same routine in the Person model
   return $person->secretary_for({club => $club});
@@ -1083,19 +1186,17 @@ Checks if the user has the given role.
 
 sub has_role {
   my ( $self, $role ) = @_;
-  
-  return ( defined( $self->find_related("user_roles", {role => $role->id}) ) ) ? 1 : 0;
+  return defined($self->find_related("user_roles", {role => $role->id})) ? 1 : 0;
 }
 
 =head2 all_roles
 
-Return the roles that this user is a member of.  If sep is specified, a string is returned with all roles separated by that string; if not, we return either an array or resultset, depending on context.
+Return the roles that this user is a member of.
 
 =cut
 
 sub all_roles {
   my ( $self ) = @_;
-  
   return $self->roles;
 }
 
@@ -1112,7 +1213,7 @@ sub search_display {
     id => $self->id,
     name => $self->username,
     url_keys => $self->url_keys,
-    type => "user"
+    type => "user",
   };
 }
 
@@ -1124,8 +1225,7 @@ Return the long registered date.
 
 sub registered_long_date {
   my ( $self ) = @_;
-  
-  return sprintf( "%s, %s %s %s", ucfirst( $self->registered_date->day_name ), $self->registered_date->day, $self->registered_date->month_name, $self->registered_date->year );
+  return sprintf("%s, %s %s %s", ucfirst($self->registered_date->day_name), $self->registered_date->day, $self->registered_date->month_name, $self->registered_date->year);
 }
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

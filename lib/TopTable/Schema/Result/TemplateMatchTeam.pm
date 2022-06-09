@@ -243,7 +243,23 @@ Return the URL key for this object as an array ref (even if there's only one, an
 
 sub url_keys {
   my ( $self ) = @_;
-  return [ $self->url_key ];
+  return [$self->url_key];
+}
+
+=head2 games
+
+Return the games (TemplateMatchTeamGame) associated with this template in the order they're played in.
+
+=cut
+
+sub games {
+  my ( $self ) = @_;
+    return $self->search_related("template_match_team_games", undef, {
+    prefetch => "individual_match_template",
+    order_by => {
+      -asc => "match_game_number"
+    },
+  });
 }
 
 =head2 can_edit_or_delete
@@ -274,18 +290,41 @@ Checks the template can be deleted (via can_delete) and then performs the deleti
 =cut
 
 sub check_and_delete {
-  my ( $self ) = @_;
+  my ( $self, $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  my $response = {
+    errors => [],
+    warnings => [],
+    info => [],
+    success => [],
+    completed => 0,
+  };
+  
+  my $enc_name = encode_entities($self->name);
   
   # Check we can delete
-  my $error .= sprintf( "%s cannot be deleted because there are seasons or matches assigned to it.\n", $self->name ) if !$self->can_edit_or_delete;
+  unless ( $self->can_edit_or_delete ) {
+    push(@{$response->{errors}}, $lang->maketext("templates.delete.error.not-allowed", $enc_name));
+    return $response;
+  }
   
   # Delete
-  my $ok = $self->delete if !$error;
+  my $ok = $self->delete;
   
   # Error if the delete was unsuccessful
-  $error .= sprintf( "Error deleting %s", $self->full_name ) if !$ok;
+  if ( $ok ) {
+    $response->{completed} = 1;
+    push(@{$response->{success}}, $lang->maketext("admin.forms.success", $enc_name, $lang->maketext("admin.message.deleted")));
+  } else {
+    push(@{$response->{errors}}, $lang->maketext("admin.delete.error.database", $enc_name));
+  }
   
-  return $error;
+  return $response;
 }
 
 =head2 search_display

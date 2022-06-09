@@ -84,12 +84,13 @@ END;
 
 <title>[% page_title %]</title>
 
-<link rel="stylesheet" href="[% c.uri_for('/static/css/main.css') %]?v11" type="text/css" media="screen" />
-<link rel="stylesheet" href="[% c.uri_for('/static/css/main-print.css') %]?v11" type="text/css" media="print" />
+<link rel="stylesheet" href="[% c.uri_for('/static/css/main.css') %]?v13" type="text/css" media="screen" />
+<link rel="stylesheet" href="[% c.uri_for('/static/css/main-print.css') %]?v13" type="text/css" media="print" />
 <link rel="stylesheet" href="[% c.uri_for('/static/css/jqueryui/jquery-ui.structure.min.css') %]" type="text/css" media="screen" />
 <link rel="stylesheet" href="[% c.uri_for('/static/css/jqueryui/jquery-ui.theme.min.css') %]" type="text/css" media="screen" />
-<link rel="stylesheet" href="[% c.uri_for('/static/css/smartmenus/sm-core-css.css') %]" type="text/css" media="screen" />
-<link rel="stylesheet" href="[% c.uri_for('/static/css/smartmenus/sm-blue/sm-blue.css') %]" type="text/css" media="screen" />
+<link rel="stylesheet" href="[% c.uri_for('/static/css/smartmenus/sm-core-css-v1.1.1.css') %]" type="text/css" media="screen" />
+<link rel="stylesheet" href="[% c.uri_for('/static/css/smartmenus/sm-blue/sm-blue-v1.1.1.css') %]" type="text/css" media="screen" />
+<link rel="stylesheet" href="[% c.uri_for('/static/css/smartmenus/sm-menu-toggle.css') %]" type="text/css" media="screen" />
 [%
 # Cookie notice only if it's not a bot
 UNLESS c.request.browser_detect.robot;
@@ -110,13 +111,15 @@ END;
 <script type="text/javascript" src="[% c.uri_for("/static/script/jquery-1.12.4.min.js") %]"></script>
 <!--<script type="text/javascript" src="[% c.uri_for("/static/script/jquery-3.4.1.min.js") %]"></script>-->
 <script type="text/javascript" src="[% c.uri_for("/static/script/plugins/jquery-ui/jquery-ui-1-11-4.min.js") %]"></script>
-<script type="text/javascript" src="[% c.uri_for('/static/script/plugins/smartmenus/jquery.smartmenus.min.js') %]"></script>
+<script type="text/javascript" src="[% c.uri_for('/static/script/plugins/smartmenus/jquery.smartmenus.min.v1.1.1.js') %]"></script>
+<script type="text/javascript" src="[% c.uri_for('/static/script/plugins/smartmenus/sm-menu-toggle.js') %]"></script>
+<script type="text/javascript" src="[% c.uri_for('/static/script/plugins/smartmenus/sm-menu-resize.js') %]"></script>
 <script type="text/javascript" src="[% c.uri_for('/static/script/plugins/cookie/jquery.cookie.js') %]"></script>
 <script type="text/javascript" src="[% c.uri_for('/static/script/plugins/touch-punch/jquery.ui.touch-punch.min.js') %]"></script>
 <script type="text/javascript" src="[% c.uri_for('/static/plugins/jquery-scrollto/jquery-scrollto.js') %]"></script>
 <script type="text/javascript" src="[% c.uri_for('/static/script/plugins/ihavecookies/jquery.ihavecookies.min.js') %]"></script>
 
-<script type="text/javascript" src="[% c.uri_for("/static/script/standard/main.js", {v => 2}) %]"></script>
+<script type="text/javascript" src="[% c.uri_for("/static/script/standard/main.js", {v => 4}) %]"></script>
 [%
 IF external_scripts;
   FOREACH script IN external_scripts;
@@ -138,11 +141,13 @@ INCLUDE "html/calling-scripts.ttkt";
 IF !no_menu;
 %]
 <!-- START MENU -->
-<nav id="main-nav">
-<a id="menu-button"></a>
+<nav id="main-nav"><!-- Mobile menu toggle button (hamburger/x icon) -->
+<div id="nav-lang" class="data-only" data-more="[% c.maketext("menu.text.more") %]"></div>
+<input id="main-menu-state" class="nav" type="checkbox" />
+<label class="main-menu-btn" for="main-menu-state"><span class="main-menu-btn-icon"></span> [% c.maketext("menu.text.toggle") %]</label>
 <ul id="main-menu" class="sm sm-blue collapsed">
-  <li class="left"><a href="[% c.uri_for("/") %]" title="[% c.maketext("menu.title.home") %]">[% c.maketext("menu.text.home") %]</a></li>
-  <li><a href="[% c.uri_for("/news") %]" title="[% c.maketext("menu.title.news") %]">[% c.maketext("menu.text.news") %]</a>
+  <li><a href="[% c.uri_for("/") %]" title="[% c.maketext("menu.title.home") %]">[% c.maketext("menu.text.home") %]</a></li>
+  <li><a href="[% c.uri_for("/news") %]" title="[% c.maketext("menu.title.news") %]">[% c.maketext("menu.text.news") %]</a></li>
 [%
 IF nav_current_season;
   season_html = FILTER html_entity; nav_current_season.name; END;
@@ -151,11 +156,11 @@ IF nav_current_season;
     <a href="[% c.uri_for_action("/fixtures-results/root_current_season") %]" title="[% c.maketext("menu.title.fixtures-results", season_html) %]">[% c.maketext("menu.text.fixtures-results") %]</a>
     <ul>
       <li class="fixtures fixtures-team"><a href="[% c.uri_for_action("/fixtures-results/filter_view_current_season", ["teams"]) %]" title="[% c.maketext("menu.title.fixtures-results-by-team", season_html) %]">[% c.maketext("menu.text.fixtures-results-by-team")  %]</a></li>
+      <li class="fixtures fixtures-division"><a href="[% c.uri_for_action("/fixtures-results/filter_view_current_season", ["divisions"]) %]" title="[% c.maketext("menu.title.fixtures-results-by-division", season_html) %]">[% c.maketext("menu.text.fixtures-results-by-division") %]</a></li>
+      <li class="fixtures fixtures-venue"><a href="[% c.uri_for_action("/fixtures-results/filter_view_current_season", ["venues"]) %]" title="[% c.maketext("menu.title.fixtures-results-by-venue", season_html) %]">[% c.maketext("menu.text.fixtures-results-by-venue") %]</a></li>
       <li class="fixtures fixtures-month"><a href="[% c.uri_for_action("/fixtures-results/filter_view_current_season", ["months"]) %]" title="[% c.maketext("menu.title.fixtures-results-by-month", season_html) %]">[% c.maketext("menu.text.fixtures-results-by-month") %]</a></li>
       <li class="fixtures fixtures-week"><a href="[% c.uri_for_action("/fixtures-results/filter_view_current_season", ["weeks"]) %]" title="[% c.maketext("menu.title.fixtures-results-by-week", season_html) %]">[% c.maketext("menu.text.fixtures-results-by-week") %]</a></li>
       <li class="fixtures fixtures-day"><a href="[% c.uri_for_action("/fixtures-results/filter_view_current_season", ["days"]) %]" title="[% c.maketext("menu.title.fixtures-results-by-day", season_html) %]">[% c.maketext("menu.text.fixtures-results-by-day") %]</a></li>
-      <li class="fixtures fixtures-venue"><a href="[% c.uri_for_action("/fixtures-results/filter_view_current_season", ["venues"]) %]" title="[% c.maketext("menu.title.fixtures-results-by-venue", season_html) %]">[% c.maketext("menu.text.fixtures-results-by-venue") %]</a></li>
-      <li class="fixtures fixtures-division"><a href="[% c.uri_for_action("/fixtures-results/filter_view_current_season", ["divisions"]) %]" title="[% c.maketext("menu.title.fixtures-results-by-division", season_html) %]">[% c.maketext("menu.text.fixtures-results-by-division") %]</a></li>
     </ul>
   </li>
   <li class="statistics">
@@ -234,7 +239,7 @@ IF nav_current_season;
     </ul>
   </li>
   <li>
-    <a href="[% c.uri_for("/events") %]" title="[% c.maketext("menu.title.events", season_html) %]">[% c.maketext("menu.text.events") %]</a>
+    <a href="[% c.uri_for("/events") %]" title="[% c.maketext("menu.title.events", season_html) %]">[% c.maketext("menu.text.event") %]</a>
     <ul>
 [%
   IF nav_events.size;
@@ -256,7 +261,7 @@ IF nav_current_season;
 -%]
     </ul>
   </li>
-  <li class="clubs"><a href="[% c.uri_for("/clubs") %]" title="[% c.maketext("menu.title.clubs", season_html) %]">[% c.maketext("menu.text.clubs") %]</a>
+  <li class="clubs"><a href="[% c.uri_for("/clubs") %]" title="[% c.maketext("menu.title.clubs", season_html) %]">[% c.maketext("menu.text.club") %]</a>
     <ul>
 [%
   IF authorisation.club_view;
@@ -338,9 +343,12 @@ IF nav_current_season;
   END;
 -%]
   <li>
-    <a href="[% c.uri_for("/reports") %]" title="[% c.maketext("menu.title.reports") %]">[% c.maketext("menu.text.reports") %]</a>
+    <a href="[% c.uri_for("/reports") %]" title="[% c.maketext("menu.title.reports") %]">[% c.maketext("menu.text.report") %]</a>
     <ul>
       <li><a href="[% c.uri_for_action("/reports/view_current_season", ["loan-players"]) %]" title="[% c.maketext("reports.name.loan-players") %]">[% c.maketext("reports.name.loan-players") %]</a></li>
+      <li><a href="[% c.uri_for_action("/reports/view_current_season", ["rearranged-matches"]) %]" title="[% c.maketext("reports.name.rearranged-matches") %]">[% c.maketext("reports.name.rearranged-matches") %]</a></li>
+      <li><a href="[% c.uri_for_action("/reports/view_current_season", ["cancelled-matches"]) %]" title="[% c.maketext("reports.name.cancelled-matches") %]">[% c.maketext("reports.name.cancelled-matches") %]</a></li>
+      <li><a href="[% c.uri_for_action("/reports/view_current_season", ["missing-players"]) %]" title="[% c.maketext("reports.name.missing-players") %]">[% c.maketext("reports.name.missing-players") %]</a></li>
     </ul>
   </li>
 [%
@@ -349,21 +357,21 @@ END;
   <li>
     <a href="[% c.uri_for("/info") %]" title="[% c.maketext("menu.title.info") %]">[% c.maketext("menu.text.info") %]</a>
     <ul>
-      <li><a href="[% c.uri_for("/info/officials") %]" title="[% c.maketext("menu.title.officials") %]">[% c.maketext("menu.text.officials") %]</a></li>
+      <li><a href="[% c.uri_for("/info/officials") %]" title="[% c.maketext("menu.title.officials") %]">[% c.maketext("menu.text.committee") %]</a></li>
       <li><a href="[% c.uri_for("/info/rules") %]" title="[% c.maketext("menu.title.rules") %]">[% c.maketext("menu.text.rules") %]</a></li>
       <li><a href="[% c.uri_for("/info/contact") %]" title="[% c.maketext("menu.title.contact") %]">[% c.maketext("menu.text.contact") %]</a></li>
       <li><a href="[% c.uri_for("/info/privacy") %]" title="[% c.maketext("menu.title.privacy") %]">[% c.maketext("menu.text.privacy") %]</a></li>
 [%
   IF authorisation.meeting_view;
 -%]
-      <li><a href="[% c.uri_for("/meetings") %]" title="[% c.maketext("menu.title.meetings") %]">[% c.maketext("menu.text.meetings") %]</a></li>
+      <li><a href="[% c.uri_for("/meetings") %]" title="[% c.maketext("menu.title.meetings") %]">[% c.maketext("menu.text.meeting") %]</a></li>
 [%
   END;
 -%]
     </ul>
   </li>
   <li class="venues">
-    <a href="[% c.uri_for_action("/venues/list_first_page") %]" title="[% c.maketext("menu.title.venues-list") %]">[% c.maketext("menu.text.venues-list") %]</a>
+    <a href="[% c.uri_for_action("/venues/list_first_page") %]" title="[% c.maketext("menu.title.venue-list") %]">[% c.maketext("menu.text.venue-list") %]</a>
     <ul>
 [%
     FOREACH venue IN nav_venues;
@@ -381,7 +389,7 @@ END;
     </ul>
   </li>
   <li>
-    <a href="[% c.uri_for("/seasons") %]" title="[% c.maketext("menu.title.seasons") %]">[% c.maketext("menu.text.seasons") %]</a>
+    <a href="[% c.uri_for("/seasons") %]" title="[% c.maketext("menu.title.seasons") %]">[% c.maketext("menu.text.season") %]</a>
     <ul>
 [% # Loop through archived seasons
     IF archived_seasons_count;
@@ -394,11 +402,11 @@ END;
             <a href="[% c.uri_for_action("/fixtures-results/root_specific_season", [season.url_key]) %]" title="[% c.maketext("menu.title.results", season_html) %]">[% c.maketext("menu.text.results") %]</a>
             <ul>
               <li><a href="[% c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "teams"]) %]" title="[% c.maketext("menu.title.results-by-team", season_html) %]">[% c.maketext("menu.text.fixtures-results-by-team") %]</a></li>
+              <li><a href="[% c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "divisions"]) %]" title="[% c.maketext("menu.title.results-by-division", season_html) %]">[% c.maketext("menu.text.fixtures-results-by-division") %]</a></li>
+              <li><a href="[% c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "venues"]) %]" title="[% c.maketext("menu.title.results-by-venue", season_html) %]">[% c.maketext("menu.text.fixtures-results-by-venue") %]</a></li>
               <li><a href="[% c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "months"]) %]" title="[% c.maketext("menu.title.results-by-month", season_html) %]">[% c.maketext("menu.text.fixtures-results-by-month") %]</a></li>
               <li><a href="[% c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "weeks"]) %]" title="[% c.maketext("menu.title.results-by-week", season_html) %]">[% c.maketext("menu.text.fixtures-results-by-week") %]</a></li>
               <li><a href="[% c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "days"]) %]" title="[% c.maketext("menu.title.results-by-day", season_html) %]">[% c.maketext("menu.text.fixtures-results-by-day") %]</a></li>
-              <li><a href="[% c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "venues"]) %]" title="[% c.maketext("menu.title.results-by-venue", season_html) %]">[% c.maketext("menu.text.fixtures-results-by-venue") %]</a></li>
-              <li><a href="[% c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "divisions"]) %]" title="[% c.maketext("menu.title.results-by-division", season_html) %]">[% c.maketext("menu.text.fixtures-results-by-division") %]</a></li>
             </ul>
           </li>
           <li>
@@ -476,11 +484,14 @@ END;
               </li>
             </ul>
           </li>
-          <li><a href="[% c.uri_for("/event") %]" title="[% c.maketext("menu.title.events", season_html) | html_entity %]">[% c.maketext("menu.text.events") %]</a></li>
+          <li><a href="[% c.uri_for("/event") %]" title="[% c.maketext("menu.title.events", season_html) | html_entity %]">[% c.maketext("menu.text.event") %]</a></li>
           <li>
-            <a href="javascript:void(0)" title="[% c.maketext("menu.title.reports") %]">[% c.maketext("menu.text.reports") %]</a>
+            <a href="javascript:void(0)" title="[% c.maketext("menu.title.reports") %]">[% c.maketext("menu.text.report") %]</a>
             <ul>
               <li><a href="[% c.uri_for_action("/reports/view_specific_season", ["loan-players", season.url_key]) %]" title="[% c.maketext("reports.name.loan-players") %]">[% c.maketext("reports.name.loan-players") %]</a></li>
+              <li><a href="[% c.uri_for_action("/reports/view_specific_season", ["rearranged-matches", season.url_key]) %]" title="[% c.maketext("reports.name.rearranged-matches") %]">[% c.maketext("reports.name.rearranged-matches") %]</a></li>
+              <li><a href="[% c.uri_for_action("/reports/view_specific_season", ["cancelled-matches", season.url_key]) %]" title="[% c.maketext("reports.name.cancelled-matches") %]">[% c.maketext("reports.name.cancelled-matches") %]</a></li>
+              <li><a href="[% c.uri_for_action("/reports/view_specific_season", ["missing-players", season.url_key]) %]" title="[% c.maketext("reports.name.missing-players") %]">[% c.maketext("reports.name.missing-players") %]</a></li>
             </ul>
           </li>
         </ul>
@@ -502,9 +513,13 @@ END;
     </ul>
   </li>
 [%
+# The admin menu is dependent on these permissions, even though we may have permissions to view some other things off the menu (like templates), we don't necessarily show
+# a menu option for it unless these permissions are present.
+# Not an ideal solution, but I can't think of a better way, as basically anyone could have permissions to view templates quite legitimately and we don't want an admin
+# menu option for everyone.
 IF authorisation.match_update OR authorisation.user_approve_new OR authorisation.admin_issue_bans;
 -%]
-  <li><a href="[% c.uri_for("/admin") %]" title="[% c.maketext("menu.admin.text.title") %]">[% c.maketext("menu.admin.text.title") %]</a>
+  <li><a href="[% c.uri_for("/admin") %]" title="[% c.maketext("menu.text.admin") %]">[% c.maketext("menu.text.admin") %]</a>
     <ul>
 [%
   IF authorisation.match_update;
@@ -520,7 +535,7 @@ IF authorisation.match_update OR authorisation.user_approve_new OR authorisation
   IF authorisation.user_approve_new;
 -%]
       <li>
-        <a href="javascript:void(0)" title="[% c.maketext("menu.text.users") %]">[% c.maketext("menu.text.users") %]</a>
+        <a href="javascript:void(0)" title="[% c.maketext("menu.text.user") %]">[% c.maketext("menu.text.user") %]</a>
         <ul>
           <li><a href="[% c.uri_for_action("/users/approval_list") %]" title="[% c.maketext("user.list-to-approve") %]">[% c.maketext("user.list-to-approve") %]</a></li>
         </ul>
@@ -543,6 +558,39 @@ IF authorisation.match_update OR authorisation.user_approve_new OR authorisation
       </li>
 [%
   END;
+  IF authorisation.role_create OR authorisation.role_edit OR authorisation.role_delete;
+-%]
+      <li><a href="[% c.uri_for("/roles") %]" title="[% c.maketext("menu.text.roles") %]">[% c.maketext("menu.text.roles") %]</a></li>
+[%
+  END;
+  IF authorisation.template_view;
+-%]
+      <li>
+        <a href="[% c.uri_for("/templates") %]" title="[% c.maketext("menu.text.template") %]">[% c.maketext("menu.text.template") %]</a>
+        <ul>
+          <li>
+            <a href="[% c.uri_for("/templates/match") %]" title="[% c.maketext("menu.text.template-match") %]">[% c.maketext("menu.text.template-match-breadcrumbs-nav") %]</a>
+            <ul>
+              <li><a href="[% c.uri_for("/templates/match/individual") %]" title="[% c.maketext("menu.text.template-invididual-match") %]">[% c.maketext("menu.text.template-invididual-match-breadcrumbs-nav") %]</a></li>
+              <li><a href="[% c.uri_for("/templates/match/team") %]" title="[% c.maketext("menu.text.template-team-match") %]">[% c.maketext("menu.text.template-team-match-breadcrumbs-nav") %]</a></li>
+            </ul>
+          </li>
+          <li><a href="[% c.uri_for("/templates/league-table-ranking") %]" title="[% c.maketext("menu.text.template-league-table-ranking") %]">[% c.maketext("menu.text.template-league-table-ranking-breadcrumbs-nav") %]</a></li>
+        </ul>
+      </li>
+[%
+  END;
+  IF authorisation.person_create;
+-%]
+      <li>
+        <a href="[% c.uri_for("/people") %]" title="[% c.maketext("menu.text.person") %]">[% c.maketext("menu.text.person") %]</a>
+        <ul>
+          <li><a href="[% c.uri_for("/people/create") %]" title="[% c.maketext("admin.create-object", c.maketext("object.singular.people")) %]">[% c.maketext("admin.create") %]</a></li>
+          <li><a href="[% c.uri_for("/people/import") %]" title="[% c.maketext("admin.import-object", c.maketext("object.plural.people")) %]">[% c.maketext("admin.import") %]</a></li>
+        </ul>
+      </li>
+[%
+  END;
 -%]
     </ul>
   </li>
@@ -550,17 +598,17 @@ IF authorisation.match_update OR authorisation.user_approve_new OR authorisation
 END;
 IF c.user_exists;
 -%]
-  <li>
-    <a href="[% c.uri_for("/logout") %]" title="[% c.maketext("user.logout") %] [% c.user.display_name | html_entity %]" class="right-menu-tip">[% c.maketext("user.logout") %] [ <b>[% c.user.username | html_entity %]</b> ]</a>
+  <li data-sm-reverse="true">
+    <a href="[% c.uri_for("/logout") %]" title="[% c.maketext("user.logout") %] [% c.user.display_name | html_entity %]">[% c.maketext("user.logout") %] [ <b>[% c.user.username | html_entity %]</b> ]</a>
     <ul>
-      <li><a href="[% c.uri_for_action("/users/view", [c.user.url_key]) %]" title="[% c.maketext("menu.title.user.profile") %]" class="right-menu-tip">[% c.maketext("menu.text.user.profile") %]</a></li>
+      <li><a href="[% c.uri_for_action("/users/view", [c.user.url_key]) %]" title="[% c.maketext("menu.title.user.profile") %]">[% c.maketext("menu.text.user.profile") %]</a></li>
     </ul>
   </li>
 [%
 ELSE;
 %]
-  <li>
-    <a href="[% c.uri_for("/login") %]" title="[% c.maketext("user.login") %] / [% c.maketext("user.register") %]" class="right-menu-tip">[% c.maketext("user.login") %] / [% c.maketext("user.register") %]</a>
+  <li data-sm-reverse="true">
+    <a href="[% c.uri_for("/login") %]" title="[% c.maketext("user.login") %] / [% c.maketext("user.register") %]">[% c.maketext("user.login") %] / [% c.maketext("user.register") %]</a>
     <ul class="mega-menu">
       <div class="no-cookies">
       <form method="post" action="[% c.uri_for_action("/users/do_login") %]">

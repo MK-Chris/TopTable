@@ -83,13 +83,15 @@ sub get_tables_last_updated_timestamp {
   my $division = delete $params->{division};
   my $season = delete $params->{season};
   
-  return $self->find({
+  my $last_updated_team = $self->find({
     season => $season->id,
     division => $division->id,
   }, {
     rows => 1,
     order_by => {-desc => "last_updated"}
-  })->last_updated;
+  });
+  
+  return $last_updated_team->last_updated if defined($last_updated_team);
 }
 
 =head2 grid_positions_filled

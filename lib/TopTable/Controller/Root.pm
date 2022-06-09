@@ -41,7 +41,7 @@ sub auto :Private {
   # Only do timezone stuff if we're not processing a js file
   $c->stash({
     timezone => $c->timezone,
-    encoded_site_name => encode_entities( $c->config->{name} ),
+    enc_site_name => encode_entities($c->config->{name}),
   });
 }
 
@@ -56,15 +56,15 @@ sub begin :Private {
   
   # Get and stash cookie preferences
   my $cookie_settings = "[]";
-  $cookie_settings = $c->request->cookie("cookieControlPrefs")->value if defined( $c->request->cookie("cookieControlPrefs") );
-  $cookie_settings = ( defined( $cookie_settings ) ) ? decode_json( $cookie_settings ) : [];
-  $c->stash({cookie_settings => {map{ $_ => 1 } @{ $cookie_settings }}});
+  $cookie_settings = $c->req->cookie("cookieControlPrefs")->value if defined( $c->req->cookie("cookieControlPrefs") );
+  $cookie_settings = ( defined($cookie_settings) ) ? decode_json($cookie_settings) : [];
+  $c->stash({cookie_settings => {map{ $_ => 1} @{$cookie_settings}}});
   
   # Get the locale - check URI and cookie settings first
   my $locale = $c->get_locale_with_uri;
   
   # Only do session stuff if we're not processing a js file
-  unless ( $c->request->path =~ /\.js$/ ) {
+  unless ( $c->req->path =~ /\.js$/ ) {
     # Delete the current session if there is one and it's expired
     $c->session_expires;
     
@@ -75,7 +75,7 @@ sub begin :Private {
     $c->session;
     
     # Update user IP / browser combination; we do this here so we can stash and use the user agent later on if needed
-    my $user_agent = $c->model("DB::UserAgent")->update_user_agents( $c->request->browser_detect->user_agent, $c->user, $c->request->address );
+    my $user_agent = $c->model("DB::UserAgent")->update_user_agents($c->req->browser_detect->user_agent, $c->user, $c->req->address);
     
     # Stash the user agent object for later on
     $c->stash({user_agent => $user_agent});
@@ -93,41 +93,40 @@ sub begin :Private {
     $c->stash({breadcrumbs => \@breadcrumbs});
   }
   
-  Log::Log4perl::MDC->put( "ip", $c->request->address );
+  Log::Log4perl::MDC->put("ip", $c->req->address);
   
   if ( defined( $c->user ) ) {
-    Log::Log4perl::MDC->put( "user", $c->user->username );
+    Log::Log4perl::MDC->put("user", $c->user->username);
   } else {
-    Log::Log4perl::MDC->put( "user", "(Guest)" );
+    Log::Log4perl::MDC->put("user", "(Guest)");
   }
   
   # Housekeeping - unpin news articles where the pin expiry has passed, delete expired password reset / activation keys and cleanup invalid logins, delete expired bans
   $c->model("DB::NewsArticle")->unpin_expired_pins;
-  $c->model("DB::InvalidLogin")->reset_expired_counts( $c->config->{Google}{reCAPTCHA}{invalid_login_time_threshold} );
-  $c->model("DB::User")->reset_expired_invalid_login_counts( $c->config->{Google}{reCAPTCHA}{invalid_login_time_threshold} );
-  $c->model("DB::Session")->reset_expired_invalid_login_counts( $c->config->{Google}{reCAPTCHA}{invalid_login_time_threshold} );
+  $c->model("DB::InvalidLogin")->reset_expired_counts($c->config->{Google}{reCAPTCHA}{invalid_login_time_threshold});
+  $c->model("DB::User")->reset_expired_invalid_login_counts($c->config->{Google}{reCAPTCHA}{invalid_login_time_threshold});
+  $c->model("DB::Session")->reset_expired_invalid_login_counts($c->config->{Google}{reCAPTCHA}{invalid_login_time_threshold});
   $c->model("DB::User")->delete_expired_keys;
   $c->model("DB::Ban")->delete_expired_bans;
   
   # Check we're not banned from accessing the site; if we are, go straight for the forbidden page
   my $banned = $c->model("DB::Ban")->is_banned({
-    ip_address => $c->request->address,
+    ip_address => $c->req->address,
     level => "access",
     log_allowed => 0,
     log_banned => 1,
     logger => sub{ my $level = shift; $c->log->$level( @_ ); },
+    line => __LINE__,
+    caller => __PACKAGE__,
   });
   
   # Log our responses
-  my @log_info = @{$banned->{log}{info}};
-  my @log_warning = @{$banned->{log}{warning}};
-  my @log_error = @{$banned->{log}{error}};
-  map( $c->log->error( $c->build_message( $_ ) ), @log_error );
-  map( $c->log->warning( $c->build_message( $_ ) ), @log_warning );
-  map( $c->log->info( $c->build_message( $_ ) ), @log_info );
+  $c->log->error($_) foreach @{$banned->{errors}};
+  $c->log->warning($_) foreach @{$banned->{warnings}};
+  $c->log->info($_) foreach @{$banned->{info}};
   
   if ( $banned->{is_banned} ) {
-    $c->detach( "forbidden" );
+    $c->detach("forbidden");
     return;
   }
 }
@@ -144,22 +143,22 @@ sub index :Path :Args(0) {
   # Load the messages
   $c->load_status_msgs;
   
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", [[qw( index_edit match_update match_cancel news_article_create news_article_edit_all news_article_delete_all )], "", 0] );
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["news_article_edit_own", "", 0] ) if $c->user_exists and !$c->stash->{authorisation}{news_article_edit_all}; # Only do this if the user is logged in and we can't edit all articles
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["news_article_delete_own", "", 0] ) if $c->user_exists and !$c->stash->{authorisation}{news_article_delete_all}; # Only do this if the user is logged in and we can't delete all articles
+  $c->forward("TopTable::Controller::Users", "check_authorisation", [[qw( index_edit match_update match_cancel news_create news_edit_all news_delete_all )], "", 0]);
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["news_edit_own", "", 0]) if $c->user_exists and !$c->stash->{authorisation}{news_edit_all}; # Only do this if the user is logged in and we can't edit all articles
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["news_delete_own", "", 0]) if $c->user_exists and !$c->stash->{authorisation}{news_delete_all}; # Only do this if the user is logged in and we can't delete all articles
   
   # Set up the title links if we need them
   my @title_links = ();
   
   push(@title_links, {
     image_uri => $c->uri_for("/static/images/icons/0018-Pencil-icon-32.png"),
-    text      => $c->maketext("admin.edit.index"),
-    link_uri  => $c->uri_for_action("/index_edit"),
+    text => $c->maketext("admin.edit.index"),
+    link_uri => $c->uri_for_action("/index_edit"),
   }) if $c->stash->{authorisation}{index_edit};
   
   # Recent events
   my $events_to_show = $c->config->{Index}{recent_updates_visible};
-  $events_to_show = 5 if !defined( $events_to_show ) or $events_to_show !~ m/^\d+$/;
+  $events_to_show = 5 if !defined($events_to_show) or $events_to_show !~ m/^\d+$/;
   
   my @events = $c->model("DB::SystemEventLog")->page_records({
     public_only => 1,
@@ -172,14 +171,14 @@ sub index :Path :Args(0) {
   # Today's matches (if there's a current season)
   my $current_season = $c->model("DB::Season")->get_current;
   my $online_users_last_active_limit = $c->datetime_tz({time_zone => "UTC"})->subtract(minutes => 15);
-  my $online_user_count = $c->model("DB::Session")->get_all_online_users( $online_users_last_active_limit )->count;
+  my $online_user_count = $c->model("DB::Session")->get_online_users({datetime_limit => $online_users_last_active_limit})->count;
   
   my ( $matches, $matches_today );
   
-  if ( defined( $current_season ) ) {
+  if ( defined($current_season) ) {
     $matches = $c->model("DB::TeamMatch")->matches_on_date({
-      season  => $current_season,
-      date    => $c->datetime,
+      season => $current_season,
+      date => $c->datetime,
     });
     
     $matches_today = $matches->count;
@@ -244,7 +243,7 @@ sub index_edit :Path("index-edit") {
   # Load the messages
   $c->load_status_msgs;
   
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["index_edit", $c->maketext("user.auth.edit-index"), 1] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["index_edit", $c->maketext("user.auth.edit-index"), 1]);
   
   $c->stash({
     template => "html/page-text/edit.ttkt",
@@ -267,33 +266,41 @@ Process the privacy policy edit form.
 
 sub do_index_edit :Path("do-index-edit") :Args(0) {
   my ( $self, $c ) = @_;
+  my $page_text = $c->req->params->{page_text};
   
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["index_edit", $c->maketext("user.auth.edit-index"), 1] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["index_edit", $c->maketext("user.auth.edit-index"), 1]);
   
   # The error checking and creation is done in the TemplateLeagueTableRanking model
-  my $details = $c->model("DB::PageText")->edit({
+  my $response = $c->model("DB::PageText")->edit({
     page_key => "index",
-    page_text => $c->request->parameters->{page_text},
+    page_text => $page_text,
   });
   
-  if ( scalar( @{ $details->{error} } ) ) {
-    my $error = $c->build_message( $details->{error} );
+  # Set the status messages we need to show on redirect
+  my @errors = @{$response->{errors}};
+  my @warnings = @{$response->{warnings}};
+  my @info = @{$response->{info}};
+  my @success = @{$response->{success}};
+  my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});
+  my $redirect_uri;
+  
+  if ( $response->{completed} ) {
+    # Was completed, display the view page
+    $redirect_uri = $c->uri_for("/", {mid => $mid});
     
-    # Flash the entered values we've got so we can set them into the form
-    $c->flash->{page_text}  = $c->request->parameters->{page_text};
-    
-    $c->response->redirect( $c->uri_for("/",
-                          {mid => $c->set_status_msg( {error => $error} ) }) );
-    $c->detach;
-    return;
+    # Completed, so we log an event
+    $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["index", "edit"]);
   } else {
-    
-    $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["index", "edit"] );
-    $c->response->redirect( $c->uri_for("/",
-                                {mid => $c->set_status_msg( {success => $c->maketext( "admin.forms.success", $c->maketext("menu.text.privacy"), $c->maketext("admin.message.edited") )}  ) }) );
-    $c->detach;
-    return;
+    # Flash the entered values we've got so we can set them into the form
+    $redirect_uri = $c->uri_for_action("/index_edit", {mid => $mid});
+    $c->flash->{show_flashed} = 1;
+    $c->flash->{page_text} = $page_text;
   }
+  
+  # Now actually do the redirection
+  $c->response->redirect($redirect_uri);
+  $c->detach;
+  return;
 }
 
 =head2 forbidden
@@ -316,7 +323,7 @@ sub forbidden :Path {
     no_menu => 1,
   });
   
-  $c->response->status( 403 );
+  $c->response->status(403);
 }
 
 =head2 default
@@ -338,7 +345,7 @@ sub default :Path {
     hide_breadcrumbs => 1, # Hide the breadcrumbs
   });
   
-  $c->response->status( 404 );
+  $c->response->status(404);
 }
 
 =head2 end
@@ -353,22 +360,20 @@ sub end :ActionClass("RenderView") {
     ## Nav drop down menus
     # Current season, clubs in current season, archived seasons
     my $current_season = $c->model("DB::Season")->get_current;
-    my $clubs = [ $c->model("DB::Club")->clubs_with_teams_in_season({
+    my $clubs = [$c->model("DB::Club")->clubs_with_teams_in_season({
       season => $current_season,
-      get_teams => $c->config->{Menu}{show_teams},
-      get_players => $c->config->{Menu}{show_players},
-      logger => sub{ my $level = shift; $c->log->$level( @_ ); },
-    }) ] if defined( $current_season );
-    my $events = [ $c->model("DB::Event")->events_in_season({
+      get_teams => $c->config->{Menu}{show_teams} || 0,
+      get_players => $c->config->{Menu}{show_players} || 0,
+    })] if defined($current_season);
+    my $events = [$c->model("DB::Event")->events_in_season({
       season => $current_season,
-      logger => sub{ my $level = shift; $c->log->$level( @_ ); },
-    }) ] if defined( $current_season );
-    my $venues = [ $c->model("DB::Venue")->all_venues ];
+    })] if defined($current_season);
+    my $venues = [$c->model("DB::Venue")->active_venues];
     
     # Check admin authorisation for showing an admin menu
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", [[ qw( match_update user_approve_new admin_issue_bans ) ], "", 0] );
-  
-  my $nav_ban_types = $c->model("DB::LookupBanType")->all_types if $c->stash->{authorisation}{admin_issue_bans};
+    $c->forward("TopTable::Controller::Users", "check_authorisation", [[qw( match_update user_approve_new admin_issue_bans template_view person_create person_view role_create role_edit role_delete )], "", 0]);
+    
+    my $nav_ban_types = $c->model("DB::LookupBanType")->all_types if $c->stash->{authorisation}{admin_issue_bans};
     
     # See if we need to stash the search script; first grab the external scripts
     my $scripts = $c->stash->{scripts} || [];
@@ -377,15 +382,15 @@ sub end :ActionClass("RenderView") {
     
     if ( $c->config->{Search}{enable_search_bar} ) {
       # Add the site search autocomplete script, as this is only added here, so we don't need to check we've not already added it
-      push( @{ $scripts }, "site-search-autocomplete" );
+      push(@{$scripts}, "site-search-autocomplete");
       
-      unless ( $c->stash->{search_scripts_added} ) {
+      unless ($c->stash->{search_scripts_added}) {
         # Add the search scripts and tyles if they're not already stashed (we don't want to include them twice)
-        push( @{ $external_scripts }, $c->uri_for("/static/script/plugins/uri/URI.js") );
-        push( @{ $external_scripts }, $c->uri_for("/static/script/plugins/autocomplete/jquery.easy-autocomplete.js") );
+        push(@{$external_scripts}, $c->uri_for("/static/script/plugins/uri/URI.js"));
+        push(@{$external_scripts}, $c->uri_for("/static/script/plugins/autocomplete/jquery.easy-autocomplete.js"));
         
-        push( @{ $external_styles }, $c->uri_for("/static/css/autocomplete/easy-autocomplete.min.css") );
-        push( @{ $external_styles }, $c->uri_for("/static/css/autocomplete/easy-autocomplete.themes.min.css") );
+        push(@{$external_styles}, $c->uri_for("/static/css/autocomplete/easy-autocomplete.min.css"));
+        push(@{$external_styles}, $c->uri_for("/static/css/autocomplete/easy-autocomplete.themes.min.css"));
         
         $c->stash({autocomplete_list => "json_search"});
       }
@@ -393,12 +398,12 @@ sub end :ActionClass("RenderView") {
     
     $c->stash({
       # Set the first part of the title and the wrapper
-      title   => encode_entities( $c->config->{name} ),
+      title => encode_entities( $c->config->{name} ),
       wrapper => "html/wrappers/responsive.ttkt",
       
       # Nav elements
       nav_current_season => $current_season,
-      archived_seasons  => [ $c->model("DB::Season")->get_archived ],
+      archived_seasons => [ $c->model("DB::Season")->get_archived ],
       archived_seasons_count => $c->model("DB::Season")->get_archived->count,
       nav_clubs => $clubs,
       nav_venues => $venues,
@@ -412,7 +417,7 @@ sub end :ActionClass("RenderView") {
     });
     
     # Check the authorisation for showing / creating clubs, events, seasons, venues, meetings, teams and people.
-    $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( club_view club_create event_view event_create season_view season_create venue_view venue_create meeting_view team_create team_view person_create person_view ) ], "", 0 ] );
+    $c->forward("TopTable::Controller::Users", "check_authorisation", [ [ qw( club_view club_create event_view event_create season_view season_create venue_view venue_create meeting_view team_create team_view ) ], "", 0 ]);
   }
   
   unless ( $c->stash->{no_wrapper} or $c->is_ajax ) {
@@ -447,46 +452,46 @@ sub end :ActionClass("RenderView") {
       $session_data->{last_invalid_login} = undef;
     }
     
-    if ( !exists( $c->stash->{skip_view_online} ) and exists( $c->stash->{view_online_display} ) and $c->request->path !~ /\.js$/ ) {
+    if ( !exists( $c->stash->{skip_view_online} ) and exists( $c->stash->{view_online_display} ) and $c->req->path !~ /\.js$/ ) {
       # The title bar will always have
       # Set last active date to UTC
       $session_data->{user} = $user;
-      $session_data->{ip_address} = $c->request->address;
+      $session_data->{ip_address} = $c->req->address;
       $session_data->{user_agent} = $c->stash->{user_agent}->id;
       $session_data->{locale} = $c->locale;
-      $session_data->{path} = $c->request->path;
+      $session_data->{path} = $c->req->path;
       $session_data->{view_online_display} = $c->stash->{view_online_display};
       $session_data->{view_online_link} = $c->stash->{view_online_link};
       $session_data->{hide_online} = $hide_online;
-      $session_data->{secure} = $c->request->secure;
-      $session_data->{query_string} = $c->request->uri->query;
-      $session_data->{client_hostname} = $c->request->hostname;
-      $session_data->{referrer} = $c->request->referer;
+      $session_data->{secure} = $c->req->secure;
+      $session_data->{query_string} = $c->req->uri->query;
+      $session_data->{client_hostname} = $c->req->hostname;
+      $session_data->{referrer} = $c->req->referer;
     }
     
-    $session_data->{last_active} = sprintf( "%s %s", $last_active_datetime->ymd, $last_active_datetime->hms );
+    $session_data->{last_active} = sprintf("%s %s", $last_active_datetime->ymd, $last_active_datetime->hms);
     
     # Check a session exists
-    if ( defined( $session ) ) {
+    if ( defined($session) ) {
       # If it does update it
-      $session->update( $session_data );
+      $session->update($session_data);
     } elsif ( $c->sessionid ) {
       # If not, create it - we need the session ID to be added to the hash for this
       $session_data->{id} = "session:" . $c->sessionid;
-      $c->model("DB::Session")->create( $session_data );
+      $c->model("DB::Session")->create($session_data);
     }
     
     # Add IE rendering header
-    $c->response->headers->header("X-UA-Compatible", "IE=edge,chrome=1");
+    $c->res->header("X-UA-Compatible", "IE=edge,chrome=1");
     
     # Add X-Frame-Options header to avoid clickjacking - https://www.owasp.org/index.php/Clickjacking_Defense_Cheat_Sheet
-    $c->response->headers->header("X-Frame-Options", "SAMEORIGIN");
+    $c->res->header("X-Frame-Options", "SAMEORIGIN");
     
     # Filter meta description for HTML
-    $c->stash({meta_description => $c->model("FilterHTML")->filter( $c->stash->{page_description} )}) if exists( $c->stash->{page_description} ) and defined( $c->stash->{page_description} );
+    $c->stash({meta_description => $c->model("FilterHTML")->filter($c->stash->{page_description})}) if exists($c->stash->{page_description}) and defined($c->stash->{page_description});
     
     # Error handling
-    if ( scalar( @{ $c->error } ) ) {
+    if ( scalar @{$c->error} ) {
       # Errors, make sure we print a prettier page
 
       # Set up the template to use
@@ -504,7 +509,7 @@ sub end :ActionClass("RenderView") {
       });
       
       # Log the errors, then clear them
-      $c->log->error( $_ ) foreach @{ $c->error };
+      $c->log->error($_) foreach @{$c->error};
       $c->clear_errors;
     }
     
@@ -512,18 +517,18 @@ sub end :ActionClass("RenderView") {
     my $page_title;
     if ( $c->stash->{no_subtitles_in_title} ) {
       # Some pages (i.e., the index page) we may only want the site title to show in the title bar
-      $page_title = encode_entities( $c->config->{name} );
+      $page_title = encode_entities($c->config->{name});
     } else {
       # Define an array for page title bits and push on the various subtitles we have if we have them
       my @page_title_bits = ();
-      push( @page_title_bits, $c->stash->{subtitle1} ) if $c->stash->{subtitle1};
-      push( @page_title_bits, $c->stash->{subtitle2} ) if $c->stash->{subtitle2};
-      push( @page_title_bits, $c->stash->{subtitle3} ) if $c->stash->{subtitle3};
+      push(@page_title_bits, $c->stash->{subtitle1} ) if $c->stash->{subtitle1};
+      push(@page_title_bits, $c->stash->{subtitle2} ) if $c->stash->{subtitle2};
+      push(@page_title_bits, $c->stash->{subtitle3} ) if $c->stash->{subtitle3};
       
-      push( @page_title_bits, encode_entities( $c->config->{name} ) );
+      push(@page_title_bits, encode_entities($c->config->{name}));
       
       # Now join them up for the title bar text
-      $page_title = join( " &#8226; ", @page_title_bits );
+      $page_title = join(" &#8226; ", @page_title_bits);
     }
     
     # Stash it for use in the web page title bar
@@ -542,50 +547,33 @@ sub recaptcha :Private {
   my ( $error );
   
   # First verify that we're dealing with a human if we need to
-  my $recaptcha_data  = $c->request->parameters->{"g-recaptcha-response"} || "";
-  my $secret_key      = $c->config->{Google}{reCAPTCHA}{secret_key};
+  my $recaptcha_data = $c->req->params->{"g-recaptcha-response"} || "";
+  my $secret_key = $c->config->{Google}{reCAPTCHA}{secret_key};
+  $c->log->debug("recaptcha");
   
   # Create the user agent
   my $ua = LWP::UserAgent->new;
-  $ua->agent( "TopTable/" . $c->toptable_version );
+  $ua->agent("TopTable/" . $c->toptable_version);
+  $c->log->debug("lwp setup");
   
   # Create the request object
-  my $request = HTTP::Request->new(POST => $c->config->{Google}{reCAPTCHA}{verify_uri} );
+  my $request = HTTP::Request->new(POST => $c->config->{Google}{reCAPTCHA}{verify_uri});
   $request->content_type("application/x-www-form-urlencoded");
-  #$request->content("secret=$secret_key&response=$recaptcha_data&remoteip=" . $c->request->address);
+  #$request->content("secret=$secret_key&response=$recaptcha_data&remoteip=" . $c->req->address);
   $request->content("secret=$secret_key&response=$recaptcha_data");
   
-  my $response = $ua->request( $request );
-  #$c->log->debug( $response->content );
-  my $response_content = decode_json( $response->content );
+  my $response = $ua->request($request);
+  $c->log->debug("sent request");
+  $c->log->debug($response->code);
+  $c->log->debug($response->content);
+  my $response_content = decode_json($response->content);
+  $c->log->debug("got content");
   
+  #$c->log->debug("return: " . np($response_content));
   return {
     request_success => $response->is_success,
     response_content => $response_content,
   };
-}
-
-=head2 json_error
-
-Handles JSON errors and stashes them into json_error.
-
-=cut
-
-sub json_error :Private {
-  my ( $self, $c ) = @_;
-  my ( $code, $reason ) = @{ $c->request->arguments };
-  $reason ||= $c->maketext("ajax.error.unknown");
-  $code ||= 500;
-  my $json_data = $c->stash->{json_data} || {};
-  
-  $c->response->status($code);
-  
-  # Error text is rendered as JSON as well
-  $json_data->{json_error} = $reason;
-  $c->stash({json_data => $json_data});
-  
-  # Detach to the JSON view
-  $c->detach( $c->view("JSON") );
 }
 
 =head2 generate_pagination_links
@@ -625,7 +613,7 @@ sub generate_pagination_links :Private {
       $c->detach;
       return;
     } else {
-      $c->add_status_message( "error", $c->maketext("pagination.page-invalid-no-redirect", $current_page) );
+      $c->add_status_messages({error => $c->maketext("pagination.page-invalid-no-redirect", $current_page)});
     }
   }
   
@@ -635,14 +623,14 @@ sub generate_pagination_links :Private {
     # More than five pages, we'll display a subset
     
     # Work out the start and end page
-    my $first_listed_page = min( max( 1, $page_info->current_page - 4 ), $page_info->last_page - 5 );
-    my $last_listed_page  = max( min( $page_info->last_page, $page_info->current_page + 4 ), 6 );
+    my $first_listed_page = min(max(1, $page_info->current_page - 4), $page_info->last_page - 5);
+    my $last_listed_page  = max(min($page_info->last_page, $page_info->current_page + 4), 6);
     
-    push( @page_links, $_ ) foreach ( $first_listed_page .. $last_listed_page - 1 );
+    push(@page_links, $_) foreach ( $first_listed_page .. $last_listed_page - 1 );
     
     # If the first page number isn't one, we need to make sure it is now; similarly, if the last item is not the last page, we need to add it
-    unshift( @page_links, 1 ) unless $page_links[0] == 1;
-    push( @page_links, $page_info->last_page ) unless $page_links[-1] == $page_info->last_page;
+    unshift(@page_links, 1) unless $page_links[0] == 1;
+    push(@page_links, $page_info->last_page) unless $page_links[-1] == $page_info->last_page;
   } else {
     # All page numbers will go into the array if we have five or less
     @page_links = ( 1 .. $page_info->last_page );
@@ -666,8 +654,8 @@ sub generate_pagination_links :Private {
     
     # Return a hashref
     {
-      number    => $_,
-      action    => $action,
+      number => $_,
+      action => $action,
       arguments => \@arguments,
     };
   } @page_links;
@@ -691,28 +679,28 @@ sub generate_pagination_links_qs :Private {
   my $action_params = $params->{params};
   
   # Make our arguments arrayrefs if they're not already
-  $page1_arguments = [] unless defined( $page1_arguments );
-  $specific_page_arguments = [] unless defined( $specific_page_arguments );
-  $page1_arguments = [ $page1_arguments ] if ref( $page1_arguments ) ne "ARRAY";
-  $specific_page_arguments = [ $specific_page_arguments ] if ref( $specific_page_arguments ) ne "ARRAY";
+  $page1_arguments = [] unless defined($page1_arguments);
+  $specific_page_arguments = [] unless defined($specific_page_arguments);
+  $page1_arguments = [$page1_arguments] if ref( $page1_arguments) ne "ARRAY";
+  $specific_page_arguments = [$specific_page_arguments] if ref($specific_page_arguments) ne "ARRAY";
   
-  if ( ( $page > 1 and $page_info->last_page < $page ) or !defined( $page ) or !$page or $page !~ /^\d+$/ or $page < 1 ) {
+  if ( ( $page > 1 and $page_info->last_page < $page ) or !defined($page) or !$page or $page !~ /^\d+$/ or $page < 1 ) {
     # Trying to access a page past the end or an invalid page number
     if ( $action ) {
       if ( $page1_arguments ) {
         # Add arguments
-        $action_params->{mid} = $c->set_status_msg( {warning => $c->maketext("pagination.page-invalid-redirect", $page)} );
-        $c->response->redirect( $c->uri_for_action($action, $page1_arguments, $action_params) );
+        $action_params->{mid} = $c->set_status_msg({warning => $c->maketext("pagination.page-invalid-redirect", $page)});
+        $c->response->redirect($c->uri_for_action($action, $page1_arguments, $action_params));
       } else {
         # No arguments
-        $action_params->{mid} = $c->set_status_msg( {warning => $c->maketext("pagination.page-invalid-redirect", $page)} );
-        $c->response->redirect( $c->uri_for_action($action, undef, $action_params) );
+        $action_params->{mid} = $c->set_status_msg({warning => $c->maketext("pagination.page-invalid-redirect", $page)});
+        $c->response->redirect($c->uri_for_action($action, undef, $action_params));
       }
       
       $c->detach;
       return;
     } else {
-      $c->add_status_message( "error", $c->maketext("pagination.page-invalid-no-redirect", $page) );
+      $c->add_status_messages({error => $c->maketext("pagination.page-invalid-no-redirect", $page)});
     }
   }
   
@@ -722,14 +710,14 @@ sub generate_pagination_links_qs :Private {
     # More than five pages, we'll display a subset
     
     # Work out the start and end page
-    my $first_listed_page = min( max( 1, $page_info->current_page - 4 ), $page_info->last_page - 5 );
-    my $last_listed_page  = max( min( $page_info->last_page, $page_info->current_page + 4 ), 6 );
+    my $first_listed_page = min(max(1, $page_info->current_page - 4), $page_info->last_page - 5);
+    my $last_listed_page  = max(min($page_info->last_page, $page_info->current_page + 4), 6);
     
-    push( @page_links, $_ ) foreach ( $first_listed_page .. $last_listed_page - 1 );
+    push(@page_links, $_) foreach ( $first_listed_page .. $last_listed_page - 1 );
     
     # If the first page number isn't one, we need to make sure it is now; similarly, if the last item is not the last page, we need to add it
-    unshift( @page_links, 1 ) unless $page_links[0] == 1;
-    push( @page_links, $page_info->last_page ) unless $page_links[-1] == $page_info->last_page;
+    unshift(@page_links, 1) unless $page_links[0] == 1;
+    push(@page_links, $page_info->last_page) unless $page_links[-1] == $page_info->last_page;
   } else {
     # All page numbers will go into the array if we have five or less
     @page_links = ( 1 .. $page_info->last_page );
@@ -743,14 +731,14 @@ sub generate_pagination_links_qs :Private {
     # Check the page number to build our arguments
     if ( $_ == 1 ) {
       # Page 1, just add the page 1 action arguments that were passed in
-      @arguments = @{ $page1_arguments };
+      @arguments = @{$page1_arguments};
     } else {
       # Specific page, add in our action arguments, then push the page number on to the end
-      @arguments = @{ $specific_page_arguments };
+      @arguments = @{$specific_page_arguments};
     }
     
     # Make sure we have a key for each page so the page number doesn't get trashed
-    my %page_params = %{ $action_params };
+    my %page_params = %{$action_params};
     $page_params{page} = $_;
     $page_params{results} = $page_info->entries_per_page unless $page_info->entries_per_page == $c->config->{Pagination}{default_page_size};
     
@@ -791,7 +779,7 @@ sub get_day_in_same_week {
   $target = ( $target - $start_of_week + 7 ) % 7;
 
   # Then adjust the current day
-  return $dt->clone->add( days => $target - $wday );
+  return $dt->clone->add(days => $target - $wday);
 }
 
 =head1 AUTHOR

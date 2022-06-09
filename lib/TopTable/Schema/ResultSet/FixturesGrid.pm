@@ -13,10 +13,8 @@ Return all fixtures grids sorted by name.
 sub all_grids {
   my ( $self ) = @_;
   
-  return $self->search({}, {
-    order_by => {
-      -asc => "name",
-    },
+  return $self->search(undef, {
+    order_by => {-asc => qw( name )},
   });
 }
 
@@ -89,8 +87,8 @@ Returns a paginated resultset of fixtures grids.
 
 sub page_records {
   my ( $self, $parameters ) = @_;
-  my $page_number       = $parameters->{page_number} || 1;
-  my $results_per_page  = $parameters->{results_per_page} || 25;
+  my $page_number = $parameters->{page_number} || 1;
+  my $results_per_page = $parameters->{results_per_page} || 25;
   
   # Set a default for results per page if it's not provided or invalid
   $results_per_page = 25 if !defined($results_per_page) or $results_per_page !~ m/^\d+$/;
@@ -98,12 +96,10 @@ sub page_records {
   # Default the page number to 1
   $page_number = 1 if !defined($page_number) or $page_number !~ m/^\d+$/;
   
-  return $self->search({}, {
-    page      => $page_number,
-    rows      => $results_per_page,
-    order_by  => {
-      -asc => "name",
-    },
+  return $self->search(undef, {
+    page => $page_number,
+    rows => $results_per_page,
+    order_by => {-asc => qw( name )},
   });
 }
 
@@ -286,7 +282,7 @@ sub create_or_edit {
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
   my $schema = $self->result_source->schema;
-  $schema->_set_maketext( TopTable::Maketext->get_handle( $locale ) ) unless defined( $schema->lang );
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
   my $lang = $schema->lang;
   
   # Grab the fields

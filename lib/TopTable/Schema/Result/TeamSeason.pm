@@ -790,13 +790,38 @@ __PACKAGE__->has_many(
 # Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-11-20 08:35:59
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:OlBX367bZ/PbRrSljNUtTg
 
-#
-# Enable automatic date handling
-#
 __PACKAGE__->add_columns(
     "last_updated",
     { data_type => "datetime", timezone => "UTC", set_on_create => 1, set_on_update => 1, datetime_undef_if_invalid => 1, is_nullable => 1, },
 );
+
+=head2 league_position
+
+Returns the team's league position within the season.
+
+=cut
+
+sub league_position {
+  my ( $self ) = @_;
+  
+  my $teams_in_division = $self->result_source->schema->resultset("TeamSeason")->get_teams_in_division_in_league_table_order({
+    season => $self->season,
+    division => $self->division_season->division,
+  });
+  
+  my $pos = 0;
+  
+  # Now we need to loop throug the array, counting up as we go
+  while ( my $division_team = $teams_in_division->next ) {
+    # Increment our count
+    $pos++;
+    
+    # Exit the loop once we find this team
+    last if $division_team->team->id == $self->team->id;
+  }
+  
+  return $pos;
+}
 
 =head2 get_players
 
@@ -809,9 +834,7 @@ sub get_players {
   
   return $self->search_related("person_seasons", undef, {
     prefetch => "person",
-    order_by => {
-      -asc => [ qw( person.surname person.first_name ) ],
-    }
+    order_by => {-asc => [qw( person.surname person.first_name )]}
   });
 }
 
@@ -827,7 +850,7 @@ sub cancelled_matches {
   my $home_matches = $self->search_related("team_matches_home_team_seasons", {cancelled => 1});
   my $away_matches = $self->search_related("team_matches_away_team_seasons", {cancelled => 1});
   
-  return $home_matches->union( $away_matches );
+  return $home_matches->union($away_matches);
 }
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

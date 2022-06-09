@@ -21,7 +21,10 @@ sub ACCEPT_CONTEXT {
   
   # We have to check the ref of $c here because this model seems to get called by Catalyst as part of the instantiation, before my code kicks in
   # and in these cases, $c is the string "TopTable", not a ref to the TopTable object.
-  $self->schema->_set_maketext( TopTable::Maketext->get_handle( $c->locale ) ) if ref( $c ) eq "TopTable";
+  if ( ref($c) eq "TopTable" ) {
+    $self->schema->_set_maketext(TopTable::Maketext->get_handle($c->locale));
+  }
+  
   return $self;
 }
 

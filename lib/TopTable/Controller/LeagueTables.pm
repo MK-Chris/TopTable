@@ -34,9 +34,8 @@ sub auto :Private {
   # Set up average types
   $c->stash({subtitle1 => $c->maketext("menu.text.league-tables")});
   
-  push( @{ $c->stash->{breadcrumbs} }, {
-    # Divisions listing
-    path  => $c->uri_for("/league-tables"),
+  push(@{$c->stash->{breadcrumbs}}, {
+    path => $c->uri_for("/league-tables"),
     label => $c->maketext("menu.text.league-tables"),
   });
 }
@@ -56,18 +55,17 @@ sub base :Chained("/") :PathPart("league-tables") :CaptureArgs(1) {
     my $encoded_division_name = encode_entities( $division->name );
     
     $c->stash({
-      division              => $division,
+      division => $division,
       encoded_division_name => $encoded_division_name,
     });
     
     # Push the divisions list page and this division on to the breadcrumbs
-    push( @{ $c->stash->{breadcrumbs} }, {
-      # Table view page (current season)
-      path  => $c->uri_for_action("/league-tables/view_current_season", [$division->url_key]),
+    push(@{$c->stash->{breadcrumbs}}, {
+      path => $c->uri_for_action("/league-tables/view_current_season", [$division->url_key]),
       label => $encoded_division_name,
     });
   } else {
-    $c->detach( qw/TopTable::Controller::Root default/ );
+    $c->detach(qw(TopTable::Controller::Root default));
   }
 }
 
@@ -79,11 +77,11 @@ Chain base for the list of divisions.  Matches /league-tables
 
 sub base_list :Chained("/") :PathPart("league-tables") :CaptureArgs(0) {
   my ( $self, $c ) = @_;
-  my $site_name = $c->stash->{encoded_site_name};
+  my $site_name = $c->stash->{enc_site_name};
   
   $c->stash({
-    page_description  => $c->maketext("description.league-tables.list-divisions", $site_name),
-    external_scripts  => [
+    page_description => $c->maketext("description.league-tables.list-divisions", $site_name),
+    external_scripts => [
       $c->uri_for("/static/script/standard/option-list.js"),
     ],
   });
@@ -98,8 +96,8 @@ List the divisions on the first page.
 sub list_first_page :Chained("base_list") :PathPart("") :Args(0) {
   my ( $self, $c ) = @_;
   
-  $c->detach( "retrieve_paged", [1] );
   $c->stash({canonical_uri => $c->uri_for_action("/league-tables/list_first_page")});
+  $c->detach("retrieve_paged", [1]);
 }
 
 =head2 list_specific_page
@@ -112,7 +110,7 @@ sub list_specific_page :Chained("base_list") :PathPart("page") :Args(1) {
   my ( $self, $c, $page_number ) = @_;
   
   # If the page number is less then 1, not defined, false, or not a number, set it to 1
-  $page_number = 1 if !defined( $page_number ) or !$page_number or $page_number !~ /^\d+$/ or $page_number < 1;
+  $page_number = 1 if !defined($page_number) or !$page_number or $page_number !~ /^\d+$/ or $page_number < 1;
   
   if ( $page_number == 1 ) {
     $c->stash({canonical_uri => $c->uri_for_action("/league-tables/list_first_page")});
@@ -120,7 +118,7 @@ sub list_specific_page :Chained("base_list") :PathPart("page") :Args(1) {
     $c->stash({canonical_uri => $c->uri_for_action("/league-tables/list_specific_page", [$page_number])});
   }
   
-  $c->detach( "retrieve_paged", [$page_number] );
+  $c->detach("retrieve_paged", [$page_number]);
 }
 
 =head2 retrieve_paged
@@ -133,26 +131,26 @@ sub retrieve_paged :Private {
   my ( $self, $c, $page_number ) = @_;
   
   my $divisions = $c->model("DB::Division")->page_records({
-    page_number       => $page_number,
-    results_per_page  => $c->config->{Pagination}{default_page_size},
+    page_number => $page_number,
+    results_per_page => $c->config->{Pagination}{default_page_size},
   });
   
-  my $page_info   = $divisions->pager;
-  my $page_links  = $c->forward( "TopTable::Controller::Root", "generate_pagination_links", [{
-    page_info             => $page_info,
-    page1_action          => "/league-tables/list_first_page",
-    specific_page_action  => "/league-tables/list_specific_page",
-    current_page          => $page_number,
+  my $page_info = $divisions->pager;
+  my $page_links = $c->forward( "TopTable::Controller::Root", "generate_pagination_links", [{
+    page_info => $page_info,
+    page1_action => "/league-tables/list_first_page",
+    specific_page_action => "/league-tables/list_specific_page",
+    current_page => $page_number,
   }] );
   
   # Set up the template to use
   $c->stash({
-    template            => "html/league-tables/list.ttkt",
+    template => "html/league-tables/list.ttkt",
     view_online_display => "Viewing League Tables",
-    view_online_link    => 1,
-    divisions           => $divisions,
-    page_info           => $page_info,
-    page_links          => $page_links,
+    view_online_link => 1,
+    divisions => $divisions,
+    page_info => $page_info,
+    page_links => $page_links,
   });
 }
 
@@ -162,9 +160,7 @@ Perform the permissions checks for viewing a division.  The actual viewing routi
 
 =cut
 
-sub view :Chained("base") :PathPart("") :CaptureArgs(0) {
-  my ( $self, $c ) = @_;
-}
+sub view :Chained("base") :PathPart("") :CaptureArgs(0) {}
 
 
 =head2 view_current_season
@@ -177,34 +173,34 @@ sub view_current_season :Chained("view") :PathPart("") :Args(0) {
   my ( $self, $c ) = @_;
   my $division = $c->stash->{division};
   my $division_name = $c->stash->{encoded_division_name};
-  my $site_name     = $c->stash->{encoded_site_name};
+  my $site_name = $c->stash->{enc_site_name};
   
   # No season ID, try to find the current season
   my $season = $c->model("DB::Season")->get_current;
-  $season = $c->model("DB::Season")->last_complete_season unless defined( $season ); # No current season season, try and find the last season.
+  $season = $c->model("DB::Season")->last_complete_season unless defined($season); # No current season season, try and find the last season.
     
-  if ( defined( $season ) ) {
-    my $division_season = $division->get_season( $season );
+  if ( defined($season) ) {
+    my $division_season = $division->get_season($season);
     
     if ( defined( $division_season ) ) {
-      my $encoded_season_name = encode_entities( $season->name );
+      my $encoded_season_name = encode_entities($season->name);
       
       $c->stash({
-        season              => $season,
+        season => $season,
         encoded_season_name => $encoded_season_name,
-        page_description    => $c->maketext("description.league-tables.view-current", $division_name, $site_name),
+        page_description => $c->maketext("description.league-tables.view-current", $division_name, $site_name),
       });
     } else {
       # Division is not used for this season
-      $c->detach( qw/TopTable::Controller::Root default/ );
+      $c->detach(qw(TopTable::Controller::Root default));
     }
   } else {
     # No seasons to display
-    $c->detach( qw/TopTable::Controller::Root default/ );
+    $c->detach(qw(TopTable::Controller::Root default));
   }
   
   # Forward to the routine that stashes the team's season
-  $c->detach( "view_finalise" );
+  $c->detach("view_finalise");
 }
 
 =head2 view_specific_season
@@ -217,45 +213,40 @@ sub view_specific_season :Chained("view") :PathPart("seasons") :Args(1) {
   my ( $self, $c, $season_id_or_url_key ) = @_;
   my $division = $c->stash->{division};
   my $division_name = $c->stash->{encoded_division_name};
-  my $site_name     = $c->stash->{encoded_site_name};
+  my $site_name = $c->stash->{enc_site_name};
   
-  my $season = $c->model("DB::Season")->find_id_or_url_key( $season_id_or_url_key );
+  my $season = $c->model("DB::Season")->find_id_or_url_key($season_id_or_url_key);
     
-  if ( defined( $season ) ) {
-    my $division_season = $division->get_season( $season );
+  if ( defined($season) ) {
+    my $division_season = $division->get_season($season);
     
     if ( defined( $division_season ) ) {
-      my $encoded_season_name = encode_entities( $season->name );
+      my $encoded_season_name = encode_entities($season->name);
       
       $c->stash({
-        season              => $season,
+        season => $season,
         encoded_season_name => $encoded_season_name,
-        specific_season     => 1,
-        page_description    => $c->maketext("description.league-tables.view-specific", $division_name, $site_name, $encoded_season_name),
+        specific_season => 1,
+        page_description => $c->maketext("description.league-tables.view-specific", $division_name, $site_name, $encoded_season_name),
       });
       
       # Push the current URI on to the breadcrumbs
-      push( @{ $c->stash->{breadcrumbs} }, {
-        path  => $c->uri_for_action("/league-tables/view_seasons_first_page", [$division->url_key]),
-        label => $c->maketext("menu.text.seasons"),
+      push(@{$c->stash->{breadcrumbs}}, {
+        path => $c->uri_for_action("/league-tables/view_seasons_first_page", [$division->url_key]),
+        label => $c->maketext("menu.text.season"),
       }, {
-        path  => $c->uri_for_action("/league-tables/view_specific_season", [$division->url_key, $season->url_key]),
+        path => $c->uri_for_action("/league-tables/view_specific_season", [$division->url_key, $season->url_key]),
         label => $encoded_season_name,
       });
       
       # Forward to the routine that stashes the team's season
-      $c->detach( "view_finalise" );
+      $c->detach("view_finalise");
     } else {
       # Division is not used for this season
-      $c->detach( qw/TopTable::Controller::Root default/ );
+      $c->detach(qw(TopTable::Controller::Root default));
     }
   } else {
-    # Invalid season - the message says we are attempting to find the current season, which
-    # is correct, as the redirect is to the same page, but with no season ID specified, which
-    # should try and match the current season (or if there is no current season the latest season).
-    $c->response->redirect( $c->uri_for_action("/league-tables/view_current_season", [$division->url_key],
-                                {mid => $c->set_status_msg( {error => "The season identifier $season_id_or_url_key is invalid; attempting to find the current season (or if unavailable, the latest season this team played in) instead."} ) }) );
-    $c->detach;
+    $c->detach(qw(TopTable::Controller::Root default));
     return;
   }
 }
@@ -268,15 +259,15 @@ A private function that retrieves the tables we need for display for the given s
 
 sub view_finalise :Private {
   my ( $self, $c ) = @_;
-  my $division              = $c->stash->{division};
-  my $season                = $c->stash->{season};
+  my $division = $c->stash->{division};
+  my $season = $c->stash->{season};
   my $encoded_division_name = $c->stash->{encoded_division_name};
-  my $encoded_season_name   = $c->stash->{encoded_season_name};
+  my $encoded_season_name = $c->stash->{encoded_season_name};
   
   # See if we are authorised to edit / delete so we can display the relevant links
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( team_edit team_delete ) ], "", 0] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", [ [ qw( team_edit team_delete ) ], "", 0]);
   
-  my $canonical_uri = ( $season->complete )
+  my $canonical_uri = $season->complete
     ? $c->uri_for_action("league-tables/view_specific_season", [$division->url_key, $season->url_key])
     : $c->uri_for_action("league-tables/view_current_season", [$division->url_key]);
   
@@ -288,26 +279,26 @@ sub view_finalise :Private {
   
   # Stash the common details
   $c->stash({
-    template            => "html/league-tables/view.ttkt",
-    subtitle2           => $encoded_division_name,
-    subtitle3           => $encoded_season_name,
-    divisions           => [ $season->divisions ],
-    view_online_display => sprintf( "Viewing %s league tables for %s", $division->name, $season->name ),
-    view_online_link    => 1,
-    league_tables       => $league_tables,
-    last_updated        => $c->model("DB::TeamSeason")->get_tables_last_updated_timestamp({
+    template => "html/league-tables/view.ttkt",
+    subtitle1 => $c->maketext("stats.table-title.division", $encoded_division_name),
+    subtitle2 => $encoded_season_name,
+    divisions => [ $season->divisions ],
+    view_online_display => sprintf("Viewing %s table for %s", $division->name, $season->name),
+    view_online_link => 1,
+    league_tables => $league_tables,
+    last_updated => $c->model("DB::TeamSeason")->get_tables_last_updated_timestamp({
       season => $season,
       division => $division,
     }),
-    canonical_uri       => $canonical_uri,
-    external_scripts    => [
+    canonical_uri => $canonical_uri,
+    external_scripts => [
       $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/league-tables/view.js", {v => 2}),
     ],
-    external_styles     => [
+    external_styles => [
       $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/fixedColumns.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
@@ -324,23 +315,23 @@ Retrieve and display a list of seasons that this club has entered teams into.
 
 sub view_seasons :Chained("view") :PathPart("seasons") :CaptureArgs(0) {
   my ( $self, $c ) = @_;
-  my $division      = $c->stash->{division};
+  my $division = $c->stash->{division};
   my $division_name = $c->stash->{encoded_division_name};
-  my $site_name     = $c->stash->{encoded_site_name};
+  my $site_name = $c->stash->{enc_site_name};
   
   # Stash the template; the data will be retrieved when we know what page we're on
   $c->stash({
-    template          => "html/clubs/list-seasons.ttkt",
-    page_description  => $c->maketext("description.league-tables.list-seasons", $division_name, $site_name),
-    external_scripts  => [
+    template => "html/clubs/list-seasons.ttkt",
+    page_description => $c->maketext("description.league-tables.list-seasons", $division_name, $site_name),
+    external_scripts => [
       $c->uri_for("/static/script/standard/option-list.js"),
     ],
   });
   
   # Push the current URI on to the breadcrumbs
-  push( @{ $c->stash->{breadcrumbs} }, {
-    path  => $c->uri_for_action("/league-tables/view_seasons_first_page", [$division->url_key]),
-    label => $c->maketext("menu.text.seasons"),
+  push(@{$c->stash->{breadcrumbs}}, {
+    path => $c->uri_for_action("/league-tables/view_seasons_first_page", [$division->url_key]),
+    label => $c->maketext("menu.text.season"),
   });
 }
 
@@ -355,7 +346,7 @@ sub view_seasons_first_page :Chained("view_seasons") :PathPart("") :Args(0) {
   my $division = $c->stash->{division};
   
   $c->stash({canonical_uri => $c->uri_for_action("/league-tables/view_seasons_first_page", [$division->url_key])});
-  $c->detach( "retrieve_paged_seasons", [1] );
+  $c->detach("retrieve_paged_seasons", [1]);
 }
 
 =head2 view_seasons_specific_page
@@ -377,7 +368,7 @@ sub view_seasons_specific_page :Chained("view_seasons") :PathPart("page") :Args(
     $c->stash({canonical_uri => $c->uri_for_action("/league-tables/view_seasons_specific_page", [$division->url_key])});
   }
   
-  $c->detach( "retrieve_paged_seasons", [$page_number] );
+  $c->detach("retrieve_paged_seasons", [$page_number]);
 }
 
 =head2 retrieve_paged_seasons
@@ -391,29 +382,29 @@ sub retrieve_paged_seasons :Private {
   my $division = $c->stash->{division};
   
   my $seasons = $c->model("DB::Season")->page_records({
-    club              => $division,
-    page_number       => $page_number,
-    results_per_page  => $c->config->{Pagination}{default_page_size},
+    club => $division,
+    page_number => $page_number,
+    results_per_page => $c->config->{Pagination}{default_page_size},
   });
   
-  my $page_info   = $seasons->pager;
-  my $page_links  = $c->forward( "TopTable::Controller::Root", "generate_pagination_links", [{
-    page_info                       => $page_info,
-    page1_action                    => "/league-tables/view_seasons_first_page",
-    page1_action_arguments          => [$division->url_key],
-    specific_page_action            => "/league-tables/view_seasons_specific_page",
-    specific_page_action_arguments  => [$division->url_key],
-    current_page                    => $page_number,
-  }] );
+  my $page_info = $seasons->pager;
+  my $page_links = $c->forward("TopTable::Controller::Root", "generate_pagination_links", [{
+    page_info => $page_info,
+    page1_action => "/league-tables/view_seasons_first_page",
+    page1_action_arguments => [$division->url_key],
+    specific_page_action => "/league-tables/view_seasons_specific_page",
+    specific_page_action_arguments => [$division->url_key],
+    current_page => $page_number,
+  }]);
   
   # Set up the template to use
   $c->stash({
-    template            => "html/league-tables/list-seasons.ttkt",
+    template => "html/league-tables/list-seasons.ttkt",
     view_online_display => sprintf( "Viewing seasons for ", $division->name ),
-    view_online_link    => 1,
-    seasons             => $seasons,
-    page_info           => $page_info,
-    page_links          => $page_links,
+    view_online_link => 1,
+    seasons => $seasons,
+    page_info => $page_info,
+    page_links => $page_links,
   });
 }
 

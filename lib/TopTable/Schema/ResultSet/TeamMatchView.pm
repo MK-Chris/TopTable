@@ -3,7 +3,6 @@ package TopTable::Schema::ResultSet::TeamMatchView;
 use strict;
 use warnings;
 use parent 'DBIx::Class::ResultSet';
-use Data::Dumper::Concise;
 
 
 =head2 search_by_name
@@ -14,12 +13,12 @@ Return search results based on a supplied full or partial club / team name.
 
 sub search_by_name {
   my ( $self, $params ) = @_;
-  my $q = delete $params->{q};
-  my $split_words = delete $params->{split_words} || 0;
-  my $season = delete $params->{season};
+  my $q = $params->{q};
+  my $split_words = $params->{split_words} || 0;
+  my $season = $params->{season};
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
-  my $page = delete $params->{page} || undef;
-  my $results_per_page = delete $params->{results} || undef;
+  my $page = $params->{page} || undef;
+  my $results_per_page = $params->{results} || undef;
   
   # Don't delete these, as the GUI may need them
   my $include_complete = $params->{include_complete} || 0;
@@ -41,7 +40,7 @@ sub search_by_name {
   ( $include_complete, $include_incomplete, $include_cancelled ) = ( 1, 1, 1 ) unless $include_complete or $include_incomplete or $include_cancelled;
   
   # Initialise our where clause
-  my ( $where );
+  my $where;
   
   if ( $include_complete and $include_incomplete and $include_cancelled ) {
     # Search everything, don't include criteria, just setup an empty hashref to add the rest of the where clause
@@ -77,16 +76,16 @@ sub search_by_name {
     # We do words on 'or' here so we can construct a 'club name + team name' in the search
     my @constructed_like = ("-and");
     foreach my $word ( @words ) {
-      my $constructed_like = { -like => "%$word%" };
-      push ( @constructed_like, $constructed_like );
+      my $constructed_like = {-like => "%$word%"};
+      push (@constructed_like, $constructed_like);
     }
     
-    if ( ref( $where ) eq "ARRAY" ) {
+    if ( ref($where) eq "ARRAY" ) {
       # Loop through and add to each element of the array
-      for ( my $i = 0; $i < scalar @{ $where }; $i++ ) {
+      for ( my $i = 0; $i < scalar @{$where}; $i++ ) {
         $where->[$i]{match_name} = \@constructed_like;
       }
-    } elsif ( ref( $where ) eq "HASH" ) {
+    } elsif ( ref($where) eq "HASH" ) {
       # Add an element to the hash
       $where->{match_name} = \@constructed_like;
     } else {
@@ -96,12 +95,12 @@ sub search_by_name {
   } else {
     # Don't split words up before performing a like
     
-    if ( ref( $where ) eq "ARRAY" ) {
+    if ( ref($where) eq "ARRAY" ) {
       # Loop through and add to each element of the array
       for ( my $i = 0; $i < scalar @{ $where }; $i++ ) {
         $where->[$i]{match_name} = {-like => "%$q%"};
       }
-    } elsif ( ref( $where ) eq "HASH" ) {
+    } elsif ( ref($where) eq "HASH" ) {
       # Add an element to the hash
       $where->{match_name} = {-like => "%$q%"};
     } else {
@@ -111,13 +110,13 @@ sub search_by_name {
   }
   
   # Add the season if we need to
-  if ( defined( $season ) ) {
-    if ( ref( $where ) eq "ARRAY" ) {
+  if ( defined($season) ) {
+    if ( ref($where) eq "ARRAY" ) {
       # Loop through and add to each element of the array
-      for ( my $i = 0; $i < scalar @{ $where }; $i++ ) {
+      for ( my $i = 0; $i < scalar @{$where}; $i++ ) {
         $where->[$i]{season_id} = $season->id;
       }
-    } elsif ( ref( $where ) eq "HASH" ) {
+    } elsif ( ref($where) eq "HASH" ) {
       # Add an element to the hash
       $where->{season_id} = $season->id;
     } else {
@@ -128,17 +127,17 @@ sub search_by_name {
   
   my $attrib = {
     order_by => [{
-      -desc => [ qw( complete scheduled_date ) ],
+      -desc => [qw( complete scheduled_date )],
     }, {
-      -asc => [ qw( match_name ) ],
+      -asc => [qw( match_name )],
     }],
   };
   
-  my $use_paging = ( defined( $page ) ) ? 1 : 0;
+  my $use_paging = ( defined($page) ) ? 1 : 0;
   
   if ( $use_paging ) {
     # Set a default for results per page if it's not provided or invalid
-    $results_per_page = 25 if !defined( $results_per_page ) or $results_per_page !~ m/^\d+$/;
+    $results_per_page = 25 if !defined($results_per_page) or $results_per_page !~ m/^\d+$/;
     
     # Default the page number to 1
     $page = 1 if $page !~ m/^\d+$/;
@@ -148,7 +147,7 @@ sub search_by_name {
     $attrib->{rows} = $results_per_page;
   }
   
-  return $self->search( $where, $attrib );
+  return $self->search($where, $attrib);
 }
 
 1;

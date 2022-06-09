@@ -161,7 +161,7 @@ Return the URL key for this object as an array ref (even if there's only one, an
 
 sub ids {
   my ( $self ) = @_;
-  return split( ",", $self->id );
+  return split(",", $self->id);
 }
 
 =head2 url_keys
@@ -172,7 +172,7 @@ Return the URL key for this object as an array ref (even if there's only one, an
 
 sub url_keys {
   my ( $self ) = @_;
-  return [ split( ",", $self->url_keys_csv ) ];
+  return [split(",", $self->url_keys_csv)];
 }
 
 =head2 search_display

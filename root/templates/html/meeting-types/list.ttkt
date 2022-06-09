@@ -17,12 +17,12 @@ IF meeting_types.count;
   <li>
     <a href="[% c.uri_for_action("/meeting-types/view_first_page", [meeting_type.url_key]) %]">[% name_html %]</a>
 [%
-    IF authorisation.meeting_type_edit;
+    IF authorisation.meetingtype_edit;
 -%]
     <a href="[% c.uri_for_action("/meeting-types/edit" [meeting_type.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", name_html) %]" title="[% c.maketext("admin.edit-object", name_html) %]" /></a>
 [%
     END;
-    IF authorisation.meeting_type_delete AND meeting_type.can_delete;
+    IF authorisation.meetingtype_delete AND meeting_type.can_delete;
 -%]
     <a href="[% c.uri_for_action("/meeting-types/delete" [meeting_type.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", name_html) %]" title="[% c.maketext("admin.delete-object", name_html) %]" /></a>
 [%
@@ -46,7 +46,7 @@ ELSE;
 END;
 -%]
 [%
-IF authorisation.meeting_type_create;
+IF authorisation.meetingtype_create;
 -%]
 <a class="bold" href="[% c.uri_for("/meeting-types/create") %]"><img src="[% c.uri_for("/static/images/icons/0009-Add-icon-48.png") %]" title="[% c.maketext("admin.create-object", c.maketext("object.singular.meeting-types")) %]" /></a><br />
 [%

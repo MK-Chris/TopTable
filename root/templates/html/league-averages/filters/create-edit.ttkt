@@ -90,7 +90,7 @@ END;
     <div class="clear-fix"></div>
   </div>
 [%
-IF authorisation.average_filter_create_public;
+IF authorisation.averagefilter_create_public;
 -%]
   <input type="checkbox" name="public" id="public" data-label="[% c.maketext("average-filters.public") %]"[% PUBLIC_CHECKED %] />
 [%

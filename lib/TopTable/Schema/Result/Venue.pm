@@ -121,6 +121,12 @@ __PACKAGE__->table("venues");
   is_nullable: 1
   size: [11,8]
 
+=head2 active
+
+  data_type: 'tinyint'
+  default_value: 1
+  is_nullable: 0
+
 =cut
 
 __PACKAGE__->add_columns(
@@ -155,6 +161,8 @@ __PACKAGE__->add_columns(
   { data_type => "float", is_nullable => 1, size => [10, 8] },
   "coordinates_longitude",
   { data_type => "float", is_nullable => 1, size => [11, 8] },
+  "active",
+  { data_type => "tinyint", default_value => 1, is_nullable => 0 },
 );
 
 =head1 PRIMARY KEY
@@ -291,8 +299,10 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-01-27 15:12:25
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:yslnt/QIuWO5lz61uCJY5w
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2022-06-07 12:04:02
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:LEfkflIy5qtqTfbOqHHUnA
+
+use HTML::Entities;
 
 =head2 url_keys
 
@@ -302,7 +312,7 @@ Return the URL key for this object as an array ref (even if there's only one, an
 
 sub url_keys {
   my ( $self ) = @_;
-  return [ $self->url_key ];
+  return [$self->url_key];
 }
 
 =head2 full_address
@@ -313,16 +323,15 @@ Type: Row-level helper method to get the address with blank lines removed.
 
 sub full_address {
     my ( $self, $separator ) = @_;
-    my @full_address = ();
     $separator ||= "\n";
+    my @addr_fields = qw( address1 address2 address3 address4 address5 postcode );
     
     # Add each address line if it's not blank
-    push(@full_address, $self->address1) if $self->address1 ne "";
-    push(@full_address, $self->address2) if $self->address2 ne "";
-    push(@full_address, $self->address3) if $self->address3 ne "";
-    push(@full_address, $self->address4) if $self->address4 ne "";
-    push(@full_address, $self->address5) if $self->address5 ne "";
-    push(@full_address, $self->postcode) if $self->postcode ne "";
+    my @full_address = ();
+    foreach my $addr_line ( @addr_fields ) {
+      my $field = $self->$addr_line;
+      push(@full_address, $field) if defined($field) and $field ne "";
+    }
     
     # Return the string joined with linefeeds. 
     return join($separator, @full_address);
@@ -349,6 +358,23 @@ sub can_delete {
   return 1;
 }
 
+=head2 can_deactivate
+
+Performs the logic checks to see if the venue can be deactivated; returns true if it can or false if it can't.  A venue can be deactivated if it has no clubs *currently* using it.
+
+=cut
+
+sub can_deactivate {
+  my ( $self ) = @_;
+  
+  # First check clubs using venue, as this will be quicker than checking the number of matches.
+  my $clubs_using_venue = $self->search_related("clubs")->count;
+  return 0 if $clubs_using_venue;
+  
+  # If we get this far, we can deactivated.
+  return 1;
+}
+
 =head2 check_and_delete
 
 Checks that the venue can be deleted (via can_delete) and then performs the deletion.
@@ -356,25 +382,42 @@ Checks that the venue can be deleted (via can_delete) and then performs the dele
 =cut
 
 sub check_and_delete {
-  my ( $self ) = @_;
-  my $error = [];
+  my ( $self, $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  my $response = {
+    errors => [],
+    warnings => [],
+    info => [],
+    success => [],
+    completed => 0,
+  };
+  
+  # Get the name for messaging
+  my $name = encode_entities($self->full_name);
   
   # Check we can delete
-  push(@{ $error }, {
-    id          => "venues.delete.error.not-allowed",
-    parameters  => [$self->name],
-  }) unless $self->can_delete;
+  unless ( $self->can_delete ) {
+    push(@{$response->{errors}}, $lang->maketext("venues.delete.error.cannot-delete", $name));
+    return $response;
+  }
   
   # Delete
-  my $ok = $self->delete unless scalar( @{ $error } );
+  my $ok = $self->delete;
   
   # Error if the delete was unsuccessful
-  push(@{ $error }, {
-    id          => "admin.delete.error.database",
-    parameters  => $self->name
-  }) unless $ok;
+  if ( $ok ) {
+    $response->{completed} = 1;
+    push(@{$response->{success}}, $lang->maketext("admin.forms.success", $name, $lang->maketext("admin.message.deleted")));
+  } else {
+    push(@{$response->{errors}}, $lang->maketext("admin.delete.error.database", $name));
+  }
   
-  return $error;
+  return $response;
 }
 
 =head2 get_full_timetable_by_day
@@ -385,17 +428,12 @@ Returns a hashref of timetable information for the venue with each key relating 
 
 sub get_full_timetable_by_day {
   my ( $self ) = @_;
-  my @db_timetables = $self->search_related("venue_timetables", {}, {
-    prefetch => {
-      venue_timetable_days => "day",
-    }, {
-      order_by => {
-        -asc => [ qw( day.weekday_number start_time end_time ) ],
-      },
-    }
+  my @db_timetables = $self->search_related("venue_timetables", undef, {
+    prefetch => {venue_timetable_days => "day"},
+    order_by => {-asc => [qw( start_time end_time )]},
   });
   
-  if ( scalar( @db_timetables ) ) {
+  if ( scalar @db_timetables ) {
     # We have some timetables, loop through and set them into days
     my $venue_timetable = {};
     foreach my $timetable_item ( @db_timetables ) {
@@ -404,9 +442,9 @@ sub get_full_timetable_by_day {
       # Loop through each day that this timetable item is active for
       while ( my $day = $days->next ) {
         # Check if this day exists in the hash already; if not, create it as a new key
-        if ( exists( $venue_timetable->{$day->day->weekday_number} ) ) {
+        if ( exists($venue_timetable->{$day->day->weekday_number}) ) {
           # Key exists, push this item on to it
-          push( @{ $venue_timetable->{$day->day->weekday_number} }, {
+          push(@{$venue_timetable->{$day->day->weekday_number}}, {
             session => $timetable_item,
           });
         } else {
@@ -445,12 +483,8 @@ sub get_full_timetable_by_session {
 #   });
   
   my @db_timetables = $self->search_related("venue_timetables", {}, {
-    prefetch => {
-      venue_timetable_days => "day",
-    },
-    order_by => {
-      -asc => [ qw( start_time end_time ) ],
-    },
+    prefetch => {venue_timetable_days => "day"},
+    order_by => {-asc => [qw( start_time end_time )]},
   });
   
   if ( scalar( @db_timetables ) ) {

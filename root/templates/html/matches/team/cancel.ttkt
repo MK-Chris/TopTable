@@ -4,8 +4,8 @@
 <fieldset>
   <legend>[% c.maketext("matches.cancel.form.legend.details") %]</legend>
 [%
-IF form_errored;
-  SET cancel_check        = c.flash.cancel;
+IF show_flashed;
+  SET cancel_check = c.flash.cancel;
   SET home_points_awarded = c.flash.home_points_awarded;
   SET away_points_awarded = c.flash.away_points_awarded;
 ELSE;

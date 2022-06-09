@@ -2,7 +2,6 @@ package TopTable::Controller::Matches::Team::Game;
 use Moose;
 use namespace::autoclean;
 use JSON;
-use Data::Dumper;
 use Try::Tiny;
 
 BEGIN { extends 'Catalyst::Controller'; }
@@ -26,7 +25,7 @@ Catalyst Controller for team match games; provides URLs for what will usually be
 
 sub index :Path :Args(0) {
   my ( $self, $c ) = @_;
-  $c->detach( qw/TopTable::Controller::Root default/ );
+  $c->detach(qw(TopTable::Controller::Root default));
   return;
 }
 
@@ -42,21 +41,21 @@ sub base_by_ids :Chained("/") :PathPart("matches/team/game") :CaptureArgs(6) {
   # Do the date checking; eval it to trap DateTime errors and pass them into $error
   my $scheduled_date;
   try {
-    $scheduled_date =  $c->datetime(
-      year  => $match_scheduled_date_year,
+    $scheduled_date = $c->datetime(
+      year => $match_scheduled_date_year,
       month => $match_scheduled_date_month,
-      day   => $match_scheduled_date_day,
+      day => $match_scheduled_date_day,
     );
   } catch {
-    $c->detach( qw/TopTable::Controller::Root default/ );
+    $c->detach(qw(TopTable::Controller::Root default));
   };
   
-  my $game = $c->model("DB::TeamMatchGame")->game_in_match_by_scheduled_game_number_by_ids( $match_home_team_id, $match_away_team_id, $scheduled_date, $game_number );
+  my $game = $c->model("DB::TeamMatchGame")->game_in_match_by_scheduled_game_number_by_ids($match_home_team_id, $match_away_team_id, $scheduled_date, $game_number);
   
-  if ( defined( $game ) ) {
+  if ( defined($game) ) {
     $c->stash({game => $game});
   } else {
-    $c->detach( qw/TopTable::Controller::Root default/ );
+    $c->detach(qw(TopTable::Controller::Root default));
   }
 }
 
@@ -72,103 +71,23 @@ sub base_by_url_keys :Chained("/") PathPart("matches/team/game") CaptureArgs(8) 
   # Do the date checking; eval it to trap DateTime errors and pass them into $error
   my $scheduled_date;
   try {
-    $scheduled_date =  $c->datetime(
-      year  => $match_scheduled_date_year,
+    $scheduled_date = $c->datetime(
+      year => $match_scheduled_date_year,
       month => $match_scheduled_date_month,
-      day   => $match_scheduled_date_day,
+      day => $match_scheduled_date_day,
     );
   } catch {
-    $c->detach( qw/TopTable::Controller::Root default/ );
+    $c->detach(qw(TopTable::Controller::Root default));
   };
   
-  my $game = $c->model("DB::TeamMatchGame")->game_in_match_by_scheduled_game_number_by_url_keys( $match_home_club_url_key, $match_home_team_url_key, $match_away_club_url_key, $match_away_team_url_key, $scheduled_date, $game_number );
+  my $game = $c->model("DB::TeamMatchGame")->game_in_match_by_scheduled_game_number_by_url_keys($match_home_club_url_key, $match_home_team_url_key, $match_away_club_url_key, $match_away_team_url_key, $scheduled_date, $game_number);
   
-  if ( defined( $game ) ) {
+  if ( defined($game) ) {
     $c->stash({game => $game});
   } else {
-    $c->detach( "TopTable::Controller::Root", "default" );
+    $c->detach(qw(TopTable::Controller::Root default));
     return;
   }
-}
-
-=head2 update_umpire_by_ids
-
-Provides the URL for update_umpire chaining to base_by_ids; forward to the real routine.
-
-=cut
-
-sub update_umpire_by_ids :Chained("base_by_ids") :PathPart("umpire") :Args(0) {
-  my ( $self, $c ) = @_;
-  $c->detach( "update_umpire" );
-}
-
-=head2 update_umpire_by_url_keys
-
-Provides the URL for update_umpire chaining to base_by_ids; forward to the real routine.
-
-=cut
-
-sub update_umpire_by_url_keys :Chained("base_by_url_keys") :PathPart("umpire") :Args(0) {
-  my ( $self, $c ) = @_;
-  $c->detach( "update_umpire" );
-}
-
-=head2 update_umpire
-
-Update the umpire; either add or remove the umpire, depending on whether anyone is specified or not.
-
-=cut
-
-sub update_umpire :Private {
-  my ( $self, $c ) = @_;
-  my $game          = $c->stash->{game};
-  my $content_type  = $c->request->parameters->{"content-type"} || "html";
-  my $person_id = $c->request->parameters->{person} || undef;
-  my ( $person, $action );
-  
-  if ( defined( $person_id ) ) {
-    # We have a person, look them up and ensure the action is 'add'
-    $action = "add";
-    $person = $c->model("DB::Person")->find( $person_id );
-  } else {
-    # Nobody specified; remove.
-    $action = "remove";
-  }
-  
-  my $details = $game->update_umpire({
-    action => $action,
-    person => $person,
-  });
-  
-  if ( scalar( @{ $details->{error} } ) ) {
-    my $error = $c->build_message( $details->{error} );
-    
-    if ( $c->is_ajax ) {
-      # Stash the original player so any select lists or inputs can be reset to their old values
-      $c->stash({json_umpire => $details->{original_umpire}});
-      $c->detach( "TopTable::Controller::Root", "json_error", [400, $error] );
-    } else {
-      $c->log->error( $error );
-    }
-  } else {
-    # Set the success message to pass back based on whether we're adding or removing an umpire
-    my $message;
-    if ( $action eq "add" ) {
-      # Adding an umpire
-      $message = $c->maketext("matches.umpire.add.success", $person->display_name, $game->scheduled_game_number);
-    } else {
-      # Removing an umpire
-      $message = $c->maketext("matches.umpire.remove.success", $game->scheduled_game_number);
-    }
-    
-    $c->stash({
-      json_data => {json_message => $message}
-    });
-  }
-  
-  # Detach to the JSON view
-  $c->detach( $c->view("JSON") ) if $c->is_ajax;
-  return;
 }
 
 =head2 doubles_pair_by_ids
@@ -181,7 +100,7 @@ This method chains to base_by_ids in order to do the URI matching, it detaches t
 
 sub doubles_pair_by_ids :Chained("base_by_ids") :PathPart("set-doubles") :Args(0) {
   my ( $self, $c ) = @_;
-  $c->detach( "doubles_pair" );
+  $c->detach("doubles_pair");
 }
 
 =head2 doubles_pair_by_url_keys
@@ -194,7 +113,7 @@ This method chains to base_by_url_keys in order to do the URI matching, it detac
 
 sub doubles_pair_by_url_keys :Chained("base_by_url_keys") :PathPart("set-doubles") :Args(0) {
   my ( $self, $c ) = @_;
-  $c->detach( "doubles_pair" );
+  $c->detach("doubles_pair");
 }
 
 =head2 doubles_pair
@@ -207,47 +126,100 @@ This private method is detached to from doubles_pair_by_ids or doubles_pair_by_u
 
 sub doubles_pair :Private {
   my ( $self, $c ) = @_;
-  my $game        = $c->stash->{game};
-  my $location    = $c->request->parameters->{location};
-  my @player_ids  = split(",", $c->request->parameters->{player_ids});
+  my $game = $c->stash->{game};
+  
+  # Check that we are authorised to update scorecards
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["match_update", $c->maketext("user.auth.update-matches"), 1]);
   
   # Get the players
-  my @players = map{ $c->model("DB::Person")->find( $_ ); } @player_ids;
-  
-  my $actioned = $game->update_doubles_pair({
-    location  => $location,
-    players   => \@players,
+  my $response = $game->update_doubles_pair({
+    location => $c->req->params->{location},
+    players => [split(",", $c->req->params->{player_ids})],
   });
   
-  if ( scalar( @{ $actioned->{error} } ) ) {
-    my $error = $c->build_message( $actioned->{error} );
-    
-    if ( $c->is_ajax ) {
-      # Stash the original player so any select lists or inputs can be reset to their old values
-      $c->detach( "TopTable::Controller::Root", "json_error", [400, $error] );
-    } else {
-      $c->log->error( $error );
-    }
-  } else {
-    # Set the success message to pass back based on whether we're adding or removing the pair
-    my $message;
-    if ( scalar( @players )  ) {
-      # Adding a doubles pair
-      $message = $c->maketext("matches.game.update-doubles.add.success", $players[0]->display_name, $players[1]->display_name, $location, $game->scheduled_game_number);
-    } else {
-      # Removing a doubles pair
-      $message = $c->maketext("matches.game.update-doubles.remove.success", $location);
-    }
-    
-    $c->stash({
-      json_data => {json_message => $message}, # Stash the message to display, so we can provide it in the correct language to the client script
-      json_player => $actioned->{original_player}
-    });
-  }
+  # Set the status messages we need to show back to the user
+  my @errors = @{$response->{errors}};
+  my @warnings = @{$response->{warnings}};
+  my @info = @{$response->{info}};
+  my @success = @{$response->{success}};
   
-  # Detach to the JSON view
-  $c->detach( $c->view("JSON") ) if $c->is_ajax;
-  return;
+  if ( $c->is_ajax ) {
+    # Stash the messages
+    $c->stash({json_data => {messages => {error => \@errors, warning => \@warnings, info => \@info, success => \@success}}});
+    
+    # Change the response code if we didn't complete
+    $c->res->status(400) unless $response->{completed};
+    
+    # Detach to the JSON view
+    $c->detach($c->view("JSON"));
+    return;
+  }
+}
+
+=head2 reset_score_by_ids
+
+Reset a game score for the game stashed in base_by_ids.
+
+=cut
+
+sub reset_score_by_ids :Chained("base_by_ids") :PathPart("reset-game-score") :Args(0) {
+  my ( $self, $c ) = @_;
+  $c->detach("reset_score");
+}
+
+=head2 reset_score_by_url_keys
+
+Reset a game score for the game stashed in base_by_url_keys.
+
+=cut
+
+sub reset_score_by_url_keys :Chained("base_by_url_keys") :PathPart("reset-game-score") :Args(0) {
+  my ( $self, $c ) = @_;
+  $c->detach("reset_score");
+}
+
+=head2 reset_score
+
+Show the form fields for updating a match.
+
+=cut
+
+sub reset_score :Private {
+  my ( $self, $c ) = @_;
+  my $game = $c->stash->{game};
+  
+  # Check that we are authorised to update scorecards
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["match_update", $c->maketext("user.auth.update-matches"), 1]);
+  
+  # Reset the score by calling update_score with a delete parameter set to true
+  my $response = $game->update_score({
+    delete => 1,
+    logger => sub{ my $level = shift; $c->log->$level( @_ ); }
+  });
+  
+  # Set the status messages we need to show back to the user
+  my @errors = @{$response->{errors}};
+  my @warnings = @{$response->{warnings}};
+  my @info = @{$response->{info}};
+  my @success = @{$response->{success}};
+  my @match_scores = @{$response->{match_scores}};
+  
+  if ( $c->is_ajax ) {
+    # Stash the messages
+    $c->stash({
+      json_data => {
+        messages => {error => \@errors, warning => \@warnings, info => \@info, success => \@success},
+        match_scores => \@match_scores,
+      }
+    });
+    
+    # Change the response code if we didn't complete
+    $c->res->status(400) unless $response->{completed};
+    
+    # Detach to the JSON view
+    $c->detach($c->view("JSON"));
+    return;
+  }
 }
 
 

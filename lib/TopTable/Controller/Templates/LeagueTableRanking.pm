@@ -29,12 +29,12 @@ sub auto :Private {
   my ( $self, $c ) = @_;
   
   # The title bar will always have
-  $c->stash({subtitle1 => $c->maketext("menu.text.templates-league-table-ranking")});
+  $c->stash({subtitle1 => $c->maketext("menu.text.template-league-table-ranking")});
   
   # Breadcrumbs
-  push(@{ $c->stash->{breadcrumbs} }, {
-    path  => $c->uri_for("/templates/league-table-ranking"),
-    label => $c->maketext("menu.text.templates-league-table-ranking-breadcrumbs"),
+  push(@{$c->stash->{breadcrumbs}}, {
+    path => $c->uri_for("/templates/league-table-ranking"),
+    label => $c->maketext("menu.text.template-league-table-ranking-breadcrumbs-nav"),
   });
 }
 
@@ -50,21 +50,21 @@ sub base :Chained("/") PathPart("templates/league-table-ranking") CaptureArgs(1)
   my $tt_template = $c->model("DB::TemplateLeagueTableRanking")->find_id_or_url_key( $id_or_key );
   
   if ( defined( $tt_template ) ) {
-    my $encoded_name = encode_entities( $tt_template->name );
+    my $enc_name = encode_entities($tt_template->name);
     
     $c->stash({
-      tt_template   => $tt_template,
-      encoded_name  => $encoded_name,
-      subtitle1     => $encoded_name,
+      tt_template => $tt_template,
+      enc_name => $enc_name,
+      subtitle1 => $enc_name,
     });
     
     # Breadcrumbs
-    push( @{ $c->stash->{breadcrumbs} }, {
-      path  => $c->uri_for_action("/templates/league-table-ranking/view", [$tt_template->url_key]),
-      label => $encoded_name,
+    push(@{$c->stash->{breadcrumbs}}, {
+      path => $c->uri_for_action("/templates/league-table-ranking/view", [$tt_template->url_key]),
+      label => $enc_name,
     });
   } else {
-    $c->detach( qw/TopTable::Controller::Root default/ );
+    $c->detach(qw(TopTable::Controller::Root default));
   }
 }
 
@@ -79,13 +79,13 @@ sub base_list :Chained("/") :PathPart("templates/league-table-ranking") :Capture
   my ( $self, $c ) = @_;
   
   # Check that we are authorised to view templates
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["template_view", $c->maketext("user.auth.view-templates"), 1] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["template_view", $c->maketext("user.auth.view-templates"), 1]);
   
   # Check the authorisation to edit templates we can display the link if necessary
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( template_edit template_delete template_create) ], "", 0] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", [[qw( template_edit template_delete template_create)], "", 0]);
   
   $c->stash({
-    external_scripts  => [
+    external_scripts => [
       $c->uri_for("/static/script/standard/option-list.js"),
     ],
   });
@@ -100,7 +100,7 @@ List the templates on the first page.
 sub list_first_page :Chained("base_list") :PathPart("") :Args(0) {
   my ( $self, $c ) = @_;
   
-  $c->detach( "retrieve_paged", [1] );
+  $c->detach("retrieve_paged", [1]);
   $c->stash({canonical_uri => $c->uri_for_action("/templates/league-table-ranking/list_first_page")});
 }
 
@@ -118,7 +118,7 @@ sub list_specific_page :Chained("base_list") :PathPart("page") :Args(1) {
   } else {
     $c->stash({canonical_uri => $c->uri_for_action("/templates/league-table-ranking/list_specific_page", [$page_number])});
   }
-  $c->detach( "retrieve_paged", [$page_number] );
+  $c->detach("retrieve_paged", [$page_number]);
 }
 
 =head2 retrieve_paged
@@ -131,26 +131,26 @@ sub retrieve_paged :Private {
   my ( $self, $c, $page_number ) = @_;
   
   my $ranking_templates = $c->model("DB::TemplateLeagueTableRanking")->page_records({
-    page_number       => $page_number,
-    results_per_page  => $c->config->{Pagination}{default_page_size},
+    page_number => $page_number,
+    results_per_page => $c->config->{Pagination}{default_page_size},
   });
   
-  my $page_info   = $ranking_templates->pager;
-  my $page_links  = $c->forward( "TopTable::Controller::Root", "generate_pagination_links", [{
-    page_info             => $page_info,
-    page1_action          => "/templates/league-table-ranking/list_first_page",
-    specific_page_action  => "/templates/league-table-ranking/list_specific_page",
-    current_page          => $page_number,
+  my $page_info = $ranking_templates->pager;
+  my $page_links = $c->forward( "TopTable::Controller::Root", "generate_pagination_links", [{
+    page_info => $page_info,
+    page1_action => "/templates/league-table-ranking/list_first_page",
+    specific_page_action => "/templates/league-table-ranking/list_specific_page",
+    current_page => $page_number,
   }] );
   
   # Set up the template to use
   $c->stash({
-    template            => "html/templates/league-table-ranking/list.ttkt",
+    template => "html/templates/league-table-ranking/list.ttkt",
     view_online_display => "Viewing ranking templates",
-    view_online_link    => 1,
-    ranking_templates   => $ranking_templates,
-    page_info           => $page_info,
-    page_links          => $page_links,
+    view_online_link => 1,
+    ranking_templates => $ranking_templates,
+    page_info => $page_info,
+    page_links => $page_links,
   });
 }
 
@@ -160,12 +160,12 @@ sub retrieve_paged :Private {
 
 sub view :Chained("base") :PathPart("") :Args(0) {
   my ( $self, $c ) = @_;
-  my $tt_template   = $c->stash->{tt_template};
-  my $encoded_name  = $c->stash->{encoded_name};
+  my $tt_template = $c->stash->{tt_template};
+  my $enc_name  = $c->stash->{enc_name};
   
   # Check that we are authorised to view
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["template_view", $c->maketext("user.auth.view-templates"), 1] );
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", [[ qw( template_edit template_delete ) ], "", 0] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["template_view", $c->maketext("user.auth.view-templates"), 1]);
+  $c->forward("TopTable::Controller::Users", "check_authorisation", [[qw( template_edit template_delete )], "", 0]);
   
   # Set up the title links if we need them
   my @title_links = ();
@@ -174,26 +174,26 @@ sub view :Chained("base") :PathPart("") :Args(0) {
     # Push edit / opening hour links if are authorised
     push(@title_links, {
       image_uri => $c->uri_for("/static/images/icons/0018-Pencil-icon-32.png"),
-      text      => $c->maketext("admin.delete-object", $encoded_name),
-      link_uri  => $c->uri_for_action("/templates/league-table-ranking/edit", [$tt_template->url_key]),
+      text => $c->maketext("admin.delete-object", $enc_name),
+      link_uri => $c->uri_for_action("/templates/league-table-ranking/edit", [$tt_template->url_key]),
     }) if $c->stash->{authorisation}{template_edit} and $tt_template->can_edit_or_delete;
     
     # Push a delete link if we're authorised and the venue can be deleted
     push(@title_links, {
       image_uri => $c->uri_for("/static/images/icons/0005-Delete-icon-32.png"),
-      text      => $c->maketext("admin.delete-object", $encoded_name),
-      link_uri  => $c->uri_for_action("/templates/league-table-ranking/delete", [$tt_template->url_key]),
+      text => $c->maketext("admin.delete-object", $enc_name),
+      link_uri => $c->uri_for_action("/templates/league-table-ranking/delete", [$tt_template->url_key]),
     }) if $c->stash->{authorisation}{template_delete} and $tt_template->can_edit_or_delete;
   }
   
   # Set up the template to use
   $c->stash({
-    template            => "html/templates/league-table-ranking/view.ttkt",
-    title_links         => \@title_links,
-    subtitle1           => $tt_template->name,
+    template => "html/templates/league-table-ranking/view.ttkt",
+    title_links => \@title_links,
+    subtitle1 => $tt_template->name,
     view_online_display => sprintf( "Viewing ranking template: %s", $tt_template->name ),
-    view_online_link    => 0,
-    external_scripts    => [
+    view_online_link => 0,
+    external_scripts => [
       $c->uri_for("/static/script/standard/vertical-table.js"),
     ],
   });
@@ -209,28 +209,28 @@ sub create :Local {
   my ( $self, $c ) = @_;
   
   # Check that we are authorised to create clubs
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["template_create", $c->maketext("user.auth.create-templates"), 1] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["template_create", $c->maketext("user.auth.create-templates"), 1]);
   
   # Get venues and people to list
   $c->stash({
-    template            => "html/templates/league-table-ranking/create-edit.ttkt",
-    external_scripts    => [
+    template => "html/templates/league-table-ranking/create-edit.ttkt",
+    external_scripts => [
       $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
       $c->uri_for("/static/script/standard/prettycheckable.js"),
       $c->uri_for("/static/script/templates/league-table-ranking/create-edit.js"),
     ],
-    external_styles     => [
+    external_styles => [
       $c->uri_for("/static/css/prettycheckable/prettyCheckable.css"),
     ],
-    form_action         => $c->uri_for("do-create"),
-    subtitle2           => $c->maketext("admin.create"),
+    form_action => $c->uri_for("do-create"),
+    subtitle2 => $c->maketext("admin.create"),
     view_online_display => "Creating ranking templates",
-    view_online_link    => 0,
+    view_online_link => 0,
   });
   
   # Breadcrumbs
-  push(@{ $c->stash->{breadcrumbs} }, {
-    path  => $c->uri_for("/templates/league-table-ranking/create"),
+  push(@{$c->stash->{breadcrumbs}}, {
+    path => $c->uri_for("/templates/league-table-ranking/create"),
     label => $c->maketext("admin.create"),
   });
 }
@@ -243,44 +243,44 @@ Display a form with the existing information for editing an individual match tem
 
 sub edit :Chained("base") :PathPart("edit") :Args(0) {
   my ($self, $c) = @_;
-  my $tt_template   = $c->stash->{tt_template};
-  my $encoded_name  = $c->stash->{encoded_name};
+  my $tt_template = $c->stash->{tt_template};
+  my $enc_name = $c->stash->{enc_name};
   
   unless ( $tt_template->can_edit_or_delete ) {
-    $c->response->redirect( $c->uri_for_action("/templates/league-table-ranking/view", [$tt_template->url_key],
-                                {mid => $c->set_status_msg( {error => $c->maketext("templates.edit.error.not-allowed", $tt_template->name)} ) }) );
+    $c->response->redirect($c->uri_for_action("/templates/league-table-ranking/view", [$tt_template->url_key],
+                                {mid => $c->set_status_msg({error => $c->maketext("templates.edit.error.not-allowed", $enc_name)})}));
     $c->detach;
     return;
   }
   
   # Don't cache this page.
-  $c->response->header("Cache-Control"  => "no-cache, no-store, must-revalidate");
-  $c->response->header("Pragma"         => "no-cache");
-  $c->response->header("Expires"        => 0);
+  $c->response->header("Cache-Control" => "no-cache, no-store, must-revalidate");
+  $c->response->header("Pragma" => "no-cache");
+  $c->response->header("Expires" => 0);
   
   # Check that we are authorised to create clubs
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["template_edit", $c->maketext("user.auth.edit-templates"), 1] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["template_edit", $c->maketext("user.auth.edit-templates"), 1]);
   
   # Get venues to list
   $c->stash({
-    template            => "html/templates/league-table-ranking/create-edit.ttkt",
-    subtitle2           => $c->maketext("admin.edit"),
-    external_scripts    => [
+    template => "html/templates/league-table-ranking/create-edit.ttkt",
+    subtitle2 => $c->maketext("admin.edit"),
+    external_scripts => [
       $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
       $c->uri_for("/static/script/standard/prettycheckable.js"),
       $c->uri_for("/static/script/templates/league-table-ranking/create-edit.js"),
     ],
-    external_styles     => [
+    external_styles => [
       $c->uri_for("/static/css/prettycheckable/prettyCheckable.css"),
     ],
-    form_action         => $c->uri_for_action("/templates/league-table-ranking/do_edit", [$tt_template->url_key]),
-    view_online_display => sprintf( "Editing ranking template %s", $encoded_name ),
-    view_online_link    => 0,
+    form_action => $c->uri_for_action("/templates/league-table-ranking/do_edit", [$tt_template->url_key]),
+    view_online_display => sprintf( "Editing ranking template %s", $enc_name ),
+    view_online_link => 0,
   });
   
   # Breadcrumbs
-  push(@{ $c->stash->{breadcrumbs} }, {
-    path  => $c->uri_for("/templates/league-table-ranking/edit", [$tt_template->url_key]),
+  push(@{$c->stash->{breadcrumbs}}, {
+    path => $c->uri_for("/templates/league-table-ranking/edit", [$tt_template->url_key]),
     label => $c->maketext("admin.edit"),
   });
 }
@@ -293,15 +293,15 @@ Display the form to delete a template.
 
 sub delete :Chained("base") :PathPart("delete") :Args(0) {
   my ( $self, $c ) = @_;
-  my $tt_template   = $c->stash->{tt_template};
-  my $encoded_name  = $c->stash->{encoded_name};
+  my $tt_template = $c->stash->{tt_template};
+  my $enc_name = $c->stash->{enc_name};
   
   # Check that we are authorised to delete venues
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["template_delete", $c->maketext("user.auth.delete-templates"), 1] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["template_delete", $c->maketext("user.auth.delete-templates"), 1]);
   
   unless ( $tt_template->can_edit_or_delete ) {
-    $c->response->redirect( $c->uri_for_action("/templates/league-table-ranking/view", [$tt_template->url_key],
-                                {mid => $c->set_status_msg( {error => $c->maketext("templates.delete.error.not-allowed", $tt_template->name )} ) }) );
+    $c->response->redirect($c->uri_for_action("/templates/league-table-ranking/view", [$tt_template->url_key],
+                                {mid => $c->set_status_msg({error => $c->maketext("templates.delete.error.not-allowed", $enc_name)})}));
     $c->detach;
     return;
   }
@@ -313,15 +313,15 @@ sub delete :Chained("base") :PathPart("delete") :Args(0) {
   $c->forward("view");
   
   $c->stash({
-    subtitle2           => $c->maketext("admin.delete"),
-    template            => "html/templates/league-table-ranking/delete.ttkt",
-    view_online_display => sprintf( "Deleting %s", $encoded_name ),
-    view_online_link    => 0,
+    subtitle2 => $c->maketext("admin.delete"),
+    template => "html/templates/league-table-ranking/delete.ttkt",
+    view_online_display => sprintf( "Deleting %s", $enc_name ),
+    view_online_link => 0,
   });
   
   # Breadcrumbs
-  push(@{ $c->stash->{breadcrumbs} }, {
-    path  => $c->uri_for("/templates/league-table-ranking/delete", [$tt_template->url_key]),
+  push(@{$c->stash->{breadcrumbs}}, {
+    path => $c->uri_for("/templates/league-table-ranking/delete", [$tt_template->url_key]),
     label => $c->maketext("admin.delete"),
   });
 }
@@ -336,9 +336,8 @@ sub do_create :Path("do-create") {
   my ( $self, $c ) = @_;
   
   # Check that we are authorised to create clubs
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["template_create", $c->maketext("user.auth.create-templates"), 1] );
-  
-  $c->detach( "setup_template", ["create"] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["template_create", $c->maketext("user.auth.create-templates"), 1]);
+  $c->detach("process_form", ["create"]);
 }
 
 =head2 do_edit
@@ -350,20 +349,21 @@ Process the form for editing an individual match template.
 sub do_edit :Chained("base") :PathPart("do-edit") :Args(0) {
   my ($self, $c, $template_id) = @_;
   my $tt_template = $c->stash->{tt_template};
+  my $enc_name = $c->stash->{enc_name};
   
   # Check that we are authorised to create clubs
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["template_edit", $c->maketext("user.auth.edit-templates"), 1] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["template_edit", $c->maketext("user.auth.edit-templates"), 1]);
   
   unless ( $tt_template->can_edit_or_delete ) {
-    $c->response->redirect( $c->uri_for_action("/templates/league-table-ranking/view", [$tt_template->url_key],
-                                {mid => $c->set_status_msg( {error => $c->maketext( "templates.edit.error.not-allowed", $tt_template->name )} ) }) );
+    $c->response->redirect($c->uri_for_action("/templates/league-table-ranking/view", [$tt_template->url_key],
+                                {mid => $c->set_status_msg({error => $c->maketext("templates.edit.error.not-allowed", $enc_name)})}));
     $c->detach;
     return;
   }
   
   # Check that we are authorised to create clubs
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["template_edit", $c->maketext("user.auth.edit-templates"), 1] );
-  $c->detach( "setup_template", ["edit"] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["template_edit", $c->maketext("user.auth.edit-templates"), 1]);
+  $c->detach("process_form", ["edit"]);
 }
 
 =head2 do_delete
@@ -374,86 +374,95 @@ Processes the deletion of the template.
 
 sub do_delete :Chained("base") :PathPart("do-delete") :Args(0) {
   my ( $self, $c ) = @_;
-  my $tt_template   = $c->stash->{tt_template};
-  my $encoded_name  = $c->stash->{encoded_name};
+  my $tt_template = $c->stash->{tt_template};
+  my $enc_name = $c->stash->{enc_name};
   
   # Check that we are authorised to delete venues
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["template_delete", $c->maketext("user.auth.delete-templates"), 1] );
   
-  # Get the name so we can refer to it after the item is deleted
+  # Save away the venue name, as if there are no errors and it can be deleted, we will need to
+  # reference the name in the message back to the user.
   my $tt_template_name = $tt_template->name;
   
   # Hand off to the model to do some checking
-  my $error = $tt_template->check_and_delete;
+  #my $deletion_result = $c->model("DB::Venue")->check_and_delete( $venue );
+  my $response = $tt_template->check_and_delete;
   
-  if ( scalar( @{ $error } ) ) {
-    # Error deleting, go back to deletion page
-    $c->response->redirect( $c->uri_for_action("/templates/league-table-ranking/view", [$tt_template->url_key],
-                                {mid => $c->set_status_msg( {error => $c->build_message($error)} ) }) );
-    $c->detach;
-    return;
+  # Set the status messages we need to show on redirect
+  my @errors = @{$response->{errors}};
+  my @warnings = @{$response->{warnings}};
+  my @info = @{$response->{info}};
+  my @success = @{$response->{success}};
+  my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});
+  my $redirect_uri;
+  
+  if ( $response->{completed} ) {
+    # Was completed, display the list page
+    $redirect_uri = $c->uri_for("/templates/league-table-ranking", {mid => $mid});
+    
+    # Completed, so we log an event
+    $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["template-ranking", "delete", {id => undef}, $tt_template_name]);
   } else {
-    # Success, log a deletion and return to the venue list
-    $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["template-ranking", "delete", {id => undef}, $tt_template_name] );
-    $c->response->redirect( $c->uri_for("/templates/league-table-ranking",
-                                {mid => $c->set_status_msg( {success => $c->maketext( "admin.forms.success", $encoded_name, $c->maketext("admin.message.deleted") )} ) }) );
-    $c->detach;
-    return;
+    # Not complete
+    $redirect_uri = $c->uri_for_action("/templates/league-table-ranking/view", [$tt_template->url_key], {mid => $mid});
   }
+  
+  # Now actually do the redirection
+  $c->response->redirect($redirect_uri);
+  $c->detach;
+  return;
 }
 
-=head2 setup_template
+=head2 process_form
 
 Forwarded from docreate and doedit to do the template creation / edit.
 
 =cut
 
-sub setup_template :Private {
+sub process_form :Private {
   my ( $self, $c, $action ) = @_;
   my $tt_template = $c->stash->{tt_template};
+  my @field_names = qw( name assign_points points_per_win points_per_draw points_per_loss );
   
   # The error checking and creation is done in the TemplateLeagueTableRanking model
-  my $details = $c->model("DB::TemplateLeagueTableRanking")->create_or_edit($action, {
-    tt_template     => $tt_template,
-    name            => $c->request->parameters->{name},
-    assign_points   => $c->request->parameters->{assign_points},
-    points_per_win  => $c->request->parameters->{points_per_win},
-    points_per_draw => $c->request->parameters->{points_per_draw},
-    points_per_loss => $c->request->parameters->{points_per_loss},
+  my $response = $c->model("DB::TemplateLeagueTableRanking")->create_or_edit($action, {
+    logger => sub{ my $level = shift; $c->log->$level( @_ ); },
+    tt_template => $tt_template, # This will be undef if we're creating.
+    map {$_ => $c->req->params->{$_}} @field_names, # All the fields from the form - put this last because otherwise the following elements are seen as part of the map
   });
   
-  if ( scalar( @{ $details->{error} } ) ) {
-    my $error = $c->build_message( $details->{error} );
+  # Set the status messages we need to show on redirect
+  my @errors = @{$response->{errors}};
+  my @warnings = @{$response->{warnings}};
+  my @info = @{$response->{info}};
+  my @success = @{$response->{success}};
+  my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});
+  my $redirect_uri;
+  
+  if ( $response->{completed} ) {
+    # Was completed, display the view page
+    $tt_template = $response->{tt_template};
+    $redirect_uri = $c->uri_for_action("/templates/league-table-ranking/view", [$tt_template->url_key], {mid => $mid});
     
-    # Flash the entered values we've got so we can set them into the form
-    $c->flash->{name}             = $c->request->parameters->{name};
-    $c->flash->{assign_points}    = $c->request->parameters->{assign_points};
-    $c->flash->{points_per_win}   = $c->request->parameters->{points_per_win};
-    $c->flash->{points_per_draw}  = $c->request->parameters->{points_per_draw};
-    $c->flash->{points_per_loss}  = $c->request->parameters->{points_per_loss};
-    
-    my $redirect_uri;
+    # Completed, so we log an event
+    $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["template-league-table-ranking", $action, {id => $tt_template->id}, $tt_template->name]);
+  } else {
+    # Not complete - check if we need to redirect back to the create or view page
     if ( $action eq "create" ) {
-      $redirect_uri = $c->uri_for("/templates/league-table-ranking/create",
-                          {mid => $c->set_status_msg( {error => $error} ) });
+      $redirect_uri = $c->uri_for("/templates/league-table-ranking/create", {mid => $mid});
     } else {
-      $redirect_uri = $c->uri_for_action("/templates/league-table-ranking/edit", [ $tt_template->url_key ],
-                          {mid => $c->set_status_msg( {error => $error} ) });
+      $redirect_uri = $c->uri_for_action("/templates/league-table-ranking/edit", [$tt_template->url_key], {mid => $mid});
     }
     
-    $c->response->redirect( $redirect_uri );
-    $c->detach;
-    return;
-  } else {
-    my $tt_template = $details->{tt_template};
-    my $action_description = ( $action eq "create" ) ? $c->maketext("admin.message.created") : $c->maketext("admin.message.edited");
-    
-    $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["template-league-table-ranking", $action, {id => $tt_template->id}, $tt_template->name] );
-    $c->response->redirect( $c->uri_for_action("/templates/league-table-ranking/view", [$tt_template->url_key],
-                                {mid => $c->set_status_msg( {success => $c->maketext( "admin.forms.success", $tt_template->name, $action_description )}  ) }) );
-    $c->detach;
-    return;
+    # Flash the entered values we've got so we can set them into the form
+    $c->flash->{show_flashed} = 1;
+    $c->flash->{$_} = $response->{fields}{$_} foreach @field_names;
   }
+  
+  # Now actually do the redirection
+  $c->response->redirect($redirect_uri);
+  $c->detach;
+  return;
 }
 
 =head2 search
@@ -466,20 +475,18 @@ sub search :Local :Args(0) {
   my ( $self, $c ) = @_;
   
   # Check that we are authorised to view templates
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["template_view", $c->maketext("user.auth.view-templates"), 1] );
-  
-  my $q = $c->req->param( "q" ) || undef;
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["template_view", $c->maketext("user.auth.view-templates"), 1]);
   
   $c->stash({
     db_resultset => "TemplateLeagueTableRanking",
-    query_params => {q => $q},
+    query_params => {q => $c->req->param("q")},
     view_action => "/templates/league-table-ranking/view",
     search_action => "/templates/league-table-ranking/search",
     placeholder => $c->maketext( "search.form.placeholder", $c->maketext("object.plural.templates.league-table-ranking") ),
   });
   
   # Do the search
-  $c->forward( "TopTable::Controller::Search", "do_search" );
+  $c->forward("TopTable::Controller::Search", "do_search");
 }
 
 =encoding utf8

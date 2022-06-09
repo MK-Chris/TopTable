@@ -1,0 +1,1 @@
+<div class="data-only" id="dt-lang" data-dt-paging-all="[% c.maketext("paging.show-all") %]" data-dt-filter="[% c.maketext("people.games.filter-type") %]" data-dt-rows-singular="[% c.maketext("reports.rows-singular") %]" data-dt-rows-plural="[% c.maketext("reports.rows-plural") %]"></div>

@@ -245,11 +245,24 @@ __PACKAGE__->has_many(
 # Created by DBIx::Class::Schema::Loader v0.07049 @ 2022-01-16 23:47:11
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:6hFX4P7NG0Y72HKrCrFvrg
 
+use HTML::Entities;
+
 # Enable automatic date handling
 __PACKAGE__->add_columns(
     "created",
     { data_type => "datetime", timezone => "UTC", set_on_create => 1, set_on_update => 0, datetime_undef_if_invalid => 1, is_nullable => 0,},
 );
+
+=head2 can_delete
+
+Performs the checks we need to ensure the ban is deletable.  Currently this will always return 1, but could be added to in future; mainly at the moment, it's here so we can call ->can_delete before deleting, which ensures consistency across other DB result classes.
+
+=cut
+
+sub can_delete {
+  my ( $self ) = @_;
+  return 1;
+}
 
 =head2 check_and_delete
 
@@ -258,19 +271,40 @@ Performs the deletion of a ban.
 =cut
 
 sub check_and_delete {
-  my ( $self ) = @_;
-  my $error = [];
+  my ( $self, $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  my $response = {
+    errors => [],
+    warnings => [],
+    info => [],
+    success => [],
+    completed => 0,
+  };
   
-  # Delete
-  my $ok = $self->delete unless scalar( @{ $error } );
+  # Check we can delete
+  unless ( $self->can_delete ) {
+    push(@{$response->{errors}}, $lang->maketext("lubs.delete.error.cannot-delete", $self->banned_id->username));
+    return $response;
+  }
+  
+  # Get the name for messaging, then delete
+  my $name = encode_entities($self->banned_id->username);
+  my $ok = $self->delete;
   
   # Error if the delete was unsuccessful
-  push(@{ $error }, {
-    id => "admin.delete.error.database",
-    parameters => $self->banned_id,
-  }) unless $ok;
+  if ( $ok ) {
+    $response->{completed} = 1;
+    push(@{$response->{success}}, $lang->maketext("admin.forms.success", $name, $lang->maketext("admin.message.deleted")));
+  } else {
+    push(@{$response->{errors}}, $lang->maketext("admin.delete.error.database", $name));
+  }
   
-  return $error;
+  return $response;
 }
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

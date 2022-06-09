@@ -281,11 +281,11 @@ __PACKAGE__->has_many(
 # Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-11-20 08:25:35
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:qgunySBHcrxmHwLIwL4BKA
 
-use Data::Dumper::Concise;
+use HTML::Entities;
 
 =head2 get_seasons
 
-Get person_seasons for this person (all seasons this person has entered).
+Get team_seasons for this team (all seasons this team has entered).
 
 =cut
 
@@ -294,30 +294,30 @@ sub get_seasons {
   my $page_number = $params->{page_number} || undef;
   my $results_per_page = $params->{results_per_page} || undef;
   
-  my $attr = {
-    prefetch => ["season", "home_night", {
+  my $attrib = {
+    prefetch => [qw( season home_night ), {
       captain => "person_seasons",
       club_season => "club",
       division_season => "division",
     }],
     order_by => [{
-      -asc => [ qw( season.complete ) ]
+      -asc => [qw( season.complete )],
     }, {
-      -desc => [ qw( season.start_date season.end_date ) ]
+      -desc => [qw( season.start_date season.end_date )],
     }],
   };
   
-  if ( defined( $results_per_page ) ) {
+  if ( defined($results_per_page) ) {
     # If we're passing in a number of results per page and it's numeric, add that in to the query (along with a 
     # page number - which defaults to 1 if it's not passed in, or it's garbage).
     if ( $results_per_page !~ /^\d+$/ ) {
       $page_number = 1 unless defined( $page_number ) and $page_number =~ /^\d+$/;
-      $attr->{page} = $page_number;
-      $attr->{rows} = $results_per_page;
+      $attrib->{page} = $page_number;
+      $attrib->{rows} = $results_per_page;
     }
   }
   
-  return $self->search_related("team_seasons", undef, $attr);
+  return $self->search_related("team_seasons", undef, $attrib);
 }
 
 =head2 get_players
@@ -327,16 +327,15 @@ Retrieve an arrayref of players registered for this team for the given season.
 =cut
 
 sub get_players {
-  my ( $self, $parameters ) = @_;
-  my $season = $parameters->{season};
+  my ( $self, $params ) = @_;
+  my $season = $params->{season};
   
   return $self->search_related("team_seasons")->search_related("person_seasons", {
-    "me.season" => $season->id,
+    "person_seasons.season" => $season->id,
+    "person_seasons.team_membership_type" => "active",
   }, {
     prefetch => "person",
-    order_by => {
-      -asc => [ qw( person.surname person.first_name ) ],
-    }
+    order_by => {-asc => [qw( person.surname person.first_name )]}
   });
 }
 
@@ -352,15 +351,11 @@ sub loan_players {
   my $where = [{
     "me.home_team" => $self->id,
     "me.location" => "home",
-    "me.loan_team" => {
-      "<>" => undef,
-    },
+    "me.loan_team" => {"<>" => undef},
   }, {
     "me.away_team" => $self->id,
     "me.location" => "away",
-    "me.loan_team" => {
-      "<>" => undef,
-    },
+    "me.loan_team" => {"<>" => undef},
   }];
   
   if ( defined( $season ) ) {
@@ -371,12 +366,12 @@ sub loan_players {
   return $self->result_source->schema->resultset("TeamMatchPlayer")->search($where, {
     prefetch => ["player", {
       team_match  => [{
-        team_season_home_team_season  => ["team", {club_season => "club"}],
+        team_season_home_team_season => [qw( team ), {club_season => "club"}],
       }, {
-        team_season_away_team_season => ["team", {club_season => "club"}],
+        team_season_away_team_season => [qw( team ), {club_season => "club"}],
       }],
     }],
-    order_by => {-asc => [ qw( me.scheduled_date me.home_team me.away_team ) ]},
+    order_by => {-asc => [qw( me.scheduled_date me.home_team me.away_team )]},
   });
 }
 
@@ -387,8 +382,8 @@ Retrieve the captain registered for this team for the given season.
 =cut
 
 sub get_captain {
-  my ( $self, $parameters ) = @_;
-  my $season = $parameters->{season};
+  my ( $self, $params ) = @_;
+  my $season = $params->{season};
   
   return $self->search_related("team_seasons", {
     season => $season->id,
@@ -410,11 +405,11 @@ sub get_season {
   return $self->search_related("team_seasons", {
     "me.season" => $season->id,
   }, {
-    prefetch  => ["captain", {
+    prefetch => [qw( captain ), {
       division_season => "division",
-      club_season     => "club"
+      club_season => "club"
     }],
-    rows      => 1,
+    rows => 1,
   })->single;
 }
 
@@ -432,12 +427,10 @@ sub last_competed_season {
   
   $self->search_related("team_seasons", $where, {
     rows => 1,
-    prefetch => [ qw( season home_night ), {
+    prefetch => [qw( season home_night ), {
       division_season => "division",
     }],
-    order_by => {
-      -desc => [ qw( start_date end_date ) ]
-    }
+    order_by => {-desc => [qw( start_date end_date )]}
   })->single;
 }
 
@@ -454,7 +447,7 @@ sub last_season_entered {
     "team_seasons.team" => $self->id,
   }, {
     join => "team_seasons",
-    order_by => {-desc => [ qw( me.start_date me.end_date ) ]},
+    order_by => {-desc => [qw( me.start_date me.end_date )]},
     rows => 1,
   })->single;
 }
@@ -490,16 +483,14 @@ sub can_delete {
   # Now get a list of seasons the team has competed in
   my @season_associations = $self->search_related("team_seasons", {}, {
     prefetch => "season",
-    order_by => {
-      -desc => [ qw( season.complete season.start_date season.end_date ) ],
-    },
+    order_by => {-desc => [ qw( season.complete season.start_date season.end_date ) ]},
   });
   
   # Get the last season this team competed in
-  if ( scalar( @season_associations ) == 0 ) {
+  if ( scalar @season_associations == 0 ) {
     # Team hasn't got any season associations, so it's okay to delete
     return 1;
-  } elsif ( scalar( @season_associations ) == 1 and $season_associations[0] ) {
+  } elsif ( scalar @season_associations == 1 and $season_associations[0] ) {
     # If there are seasons, we need to check if we have matches created for that team
     my $last_season = $season_associations[0]->season;
     
@@ -532,35 +523,53 @@ Checks we can delete the team (via can_delete) and then performs the deletion.
 =cut
 
 sub check_and_delete {
-  my ( $self, $parameters ) = @_;
-  my $lang = $parameters->{language};
-  my $error = [];
-  my $club = $self->club;
+  my ( $self, $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
   my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  my $response = {
+    errors => [],
+    warnings => [],
+    info => [],
+    success => [],
+    completed => 0,
+  };
   
-  # Get the current season if there is one.
-  my $season = $schema->resultset("Season")->get_current;
+  # Get the name for messaging
+  my $name = encode_entities(sprintf("%s %s", $self->club->short_name, $self->name));
   
   # Check we can delete
-  push(@{ $error }, $lang->("seasons.delete.error.matches-exist", $club->short_name, $self->name)) unless $self->can_delete;
+  unless ( $self->can_delete ) {
+    push(@{$response->{errors}}, $lang->maketext("clubs.delete.error.cannot-delete", $name));
+    return $response;
+  }
   
-  # Start a transaction
-  my $transaction = $schema->txn_scope_guard;
+  # Get the club and the current season if there is one.
+  my $club = $self->club;
+  my $season = $schema->resultset("Season")->get_current;
   
   # Delete
-  $self->delete_related("team_seasons");
-  my $ok = $self->delete if !scalar @{ $error };
+  my $transaction = $schema->txn_scope_guard;
   
-  # Delete the related club season if there's a current season and no teams assigned to this club for it any more.
-  $club->delete_related("club_seasons", {"me.season" => $season->id}) if defined( $season ) and $club->get_team_seasons({season => $season})->count == 0;
+  my $ok = $self->delete_related("team_seasons");
+  $ok = $self->delete if $ok;
+  $club->delete_related("club_seasons", {"me.season" => $season->id}) if $ok and defined($season) and $club->get_team_seasons({season => $season})->count == 0;
   
   # Commit
   $transaction->commit;
   
   # Error if the delete was unsuccessful
-  push(@{ $error }, $lang->("admin.delete.error.database", $self->name, $ok)) unless $ok;
+  if ( $ok ) {
+    $response->{completed} = 1;
+    push(@{$response->{success}}, $lang->maketext("admin.forms.success", $name, $lang->maketext("admin.message.deleted")));
+  } else {
+    push(@{$response->{errors}}, $lang->maketext("admin.delete.error.database", $name));
+  }
   
-  return $error;
+  return $response;
 }
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

@@ -91,9 +91,6 @@ __PACKAGE__->set_primary_key("ip_address");
 # Created by DBIx::Class::Schema::Loader v0.07043 @ 2015-09-04 12:04:55
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:+9R+LOVWNiCWG1eUnZ01nw
 
-#
-# Enable automatic date handling
-#
 __PACKAGE__->add_columns(
     "last_invalid_login",
     { data_type => "datetime", timezone => "UTC", set_on_create => 1, set_on_update => 1, datetime_undef_if_invalid => 1, is_nullable => 0,},

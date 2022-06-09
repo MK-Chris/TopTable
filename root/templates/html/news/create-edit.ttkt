@@ -10,45 +10,45 @@
     <div class="clear-fix"></div>
   </div>
 [%
-IF authorisation.news_article_pin;
+IF authorisation.news_pin;
   USE zeroes = format("%02d");
   IF c.flash.errored_form;
-    pinned_article    = c.flash.pinned_article;
-    pin_expiry_date   = c.flash.pin_expiry_date;
-    pin_expiry_hour   = c.flash.pin_expiry_hour;
+    pin_article = c.flash.pin_article;
+    pin_expiry_date = c.flash.pin_expiry_date;
+    pin_expiry_hour = c.flash.pin_expiry_hour;
     pin_expiry_minute = c.flash.pin_expiry_minute;
   ELSE;
-    pinned_article    = article.pinned;
+    pin_article = article.current_details.pinned;
     
     IF article.current_details.pinned_expires.defined;
-      pin_expiry_date   = article.current_details.pinned_expires.dmy("/");
-      pin_expiry_hour   = zeroes( article.current_details.pinned_expires.hour );
-      pin_expiry_minute = zeroes( article.current_details.pinned_expires.minute );
+      pin_expiry_date = article.current_details.pinned_expires.dmy("/");
+      pin_expiry_hour = zeroes(article.current_details.pinned_expires.hour);
+      pin_expiry_minute = zeroes(article.current_details.pinned_expires.minute);
     END;
   END;
   
-  IF pinned_article;
-    CHECKED_TEXT  = ' checked="checked"';
-    DISABLED_TEXT = '';
-    DISPLAY_TEXT  = '';
+  IF pin_article;
+    pin_checked = ' checked="checked"';
+    expiry_disabled = '';
+    pin_details_display = '';
   ELSE;
-    CHECKED_TEXT  = '';
-    DISABLED_TEXT = ' disabled="disabled"';
-    DISPLAY_TEXT  = ' style="display: none;"';
+    pin_checked = '';
+    expiry_disabled = ' disabled="disabled"';
+    pin_details_display = ' style="display: none;"';
   END;
 END;
 
-IF authorisation.news_article_pin;
+IF authorisation.news_pin;
 -%]
   <div class="form-column-single">
-    <input type="checkbox" id="pinned_article" name="pinned_article" class="pin-article" value="1" data-label="[% c.maketext("news.form.field.pin-article") %]" data-labelPosition="right"[% CHECKED_TEXT %] />
+    <input type="checkbox" id="pin_article" name="pin_article" class="pin-article" value="1" data-label="[% c.maketext("news.form.field.pin-article") %]" data-labelPosition="right"[% pin_checked %] />
   </div>
   
-  <div id="pin-article-details"[% DISPLAY_TEXT %]>
+  <div id="pin-article-details"[% pin_details_display %]>
     <div class="label-field-container">
       <label for="pin_expiry_date">[% c.maketext("news.form.field.pin-article-expiry-date") %]</label>
       <div class="field-container">
-        <input type="text" id="pin_expiry_date" name="pin_expiry_date" class="date_picker pin_expiry" autocomplete="off" value="[% pin_expiry_date | html_entity %]"[% DISABLED_TEXT %] />
+        <input type="text" id="pin_expiry_date" name="pin_expiry_date" class="date_picker pin_expiry" autocomplete="off" value="[% pin_expiry_date | html_entity %]"[% expiry_disabled %] />
       </div>
       <div class="clear-fix"></div>
     </div>
@@ -56,7 +56,7 @@ IF authorisation.news_article_pin;
     <div class="label-field-container">
       <label for="pin_expiry_hour">[% c.maketext("news.form.field.pin-expiry-time") %]</label>
       <div class="field-container">
-        <select class="time pin_expiry" id="pin_expiry_hour" name="pin_expiry_hour" data-placeholder="[% c.maketext("news.form.field.hour") %]"[% DISABLED_TEXT %]>
+        <select class="time pin_expiry" id="pin_expiry_hour" name="pin_expiry_hour" data-placeholder="[% c.maketext("news.form.field.hour") %]"[% expiry_disabled %]>
           <option value=""></option>
 [%
   SET counter = 0;
@@ -69,19 +69,19 @@ IF authorisation.news_article_pin;
     
     # Now set selected text if needed;
     IF counter_display == pin_expiry_hour;
-      SET SELECTED = ' selected="selected"';
+      SET selected = ' selected="selected"';
     ELSE;
-      SET SELECTED = '';
+      SET selected = '';
     END;
 -%]
-          <option value="[% counter_display %]"[% SELECTED %]>[% counter_display %]</option>
+          <option value="[% counter_display %]"[% selected %]>[% counter_display %]</option>
 [%
     SET counter = counter + 1;
   END;
 -%]
         </select>
         :
-        <select class="time pin_expiry" id="pin_expiry_minute" name="pin_expiry_minute" data-placeholder="[% c.maketext("news.form.field.minute") %]"[% DISABLED_TEXT %]>
+        <select class="time pin_expiry" id="pin_expiry_minute" name="pin_expiry_minute" data-placeholder="[% c.maketext("news.form.field.minute") %]"[% expiry_disabled %]>
           <option value=""></option>
 [%
   SET counter = 0;
@@ -94,12 +94,12 @@ IF authorisation.news_article_pin;
     END;
     # Now set selected text if needed;
     IF counter_display == pin_expiry_minute;
-      SET SELECTED = ' selected="selected"';
+      SET selected = ' selected="selected"';
     ELSE;
-      SET SELECTED = '';
+      SET selected = '';
     END;
 -%]
-          <option value="[% counter_display %]"[% SELECTED %]>[% counter_display %]</option>
+          <option value="[% counter_display %]"[% selected %]>[% counter_display %]</option>
 [%
     SET counter = counter + 1;
   END;

@@ -5,9 +5,8 @@ use warnings;
 use base 'DBIx::Class::ResultSet';
 use HTML::Entities;
 use Set::Object;
-use Data::Dumper;
 
-__PACKAGE__->load_components(qw{Helper::ResultSet::SetOperations});
+__PACKAGE__->load_components(qw(Helper::ResultSet::SetOperations));
 
 =head2 all_roles
 
@@ -21,13 +20,13 @@ sub all_roles {
   my ( $self, $parameters ) = @_;
   my $include_anonymous = $parameters->{include_anonymous};
   
-  my $where = ( $include_anonymous ) ? {} : {anonymous => 0};
+  my $where = $include_anonymous ? {} : {anonymous => 0};
   
   return $self->search($where, {
     order_by => [{
-      -desc => [ qw( system sysadmin anonymous ) ],
+      -desc => [qw( system sysadmin anonymous )],
     }, {
-      -asc  => [ qw( name ) ],
+      -asc  => [qw( name )],
     }],
   });
 }
@@ -40,22 +39,22 @@ Retrieve a paginated list of contact reasons.  If an object is specified (i.e., 
 
 sub page_records {
   my ( $self, $parameters ) = @_;
-  my $page_number       = $parameters->{page_number} || 1;
-  my $results_per_page  = $parameters->{results_per_page} || 25;
+  my $page_number = $parameters->{page_number} || 1;
+  my $results_per_page = $parameters->{results_per_page} || 25;
   
   # Set a default for results per page if it's not provided or invalid
-  $results_per_page = 25 if !defined( $results_per_page ) or $results_per_page !~ m/^\d+$/;
+  $results_per_page = 25 if !defined($results_per_page) or $results_per_page !~ m/^\d+$/;
   
   # Default the page number to 1
   $page_number = 1 if !defined($page_number) or $page_number !~ m/^\d+$/;
   
   return $self->search({}, {
-    page      => $page_number,
-    rows      => $results_per_page,
+    page => $page_number,
+    rows => $results_per_page,
     order_by => [{
-      -desc => [ qw( system sysadmin anonymous ) ],
+      -desc => [qw( system sysadmin anonymous )],
     }, {
-      -asc  => [ qw( name ) ],
+      -asc  => [qw( name )],
     }],
   });
 }
@@ -79,17 +78,23 @@ Same as find(), but searches for both the id and key columns.  So we can use hum
 
 sub find_id_or_url_key {
   my ( $self, $id_or_url_key ) = @_;
-  my ( $where );
+  my $where;
   
   if ( $id_or_url_key =~ m/^\d+$/ ) {
-    # Numeric - assume it's the ID
-    $where = {id => $id_or_url_key};
+    # Numeric - look in ID or URL key
+    $where = [{
+      "me.id" => $id_or_url_key
+    }, {
+      "me.url_key" => $id_or_url_key
+    }];
   } else {
     # Not numeric - must be the URL key
-    $where = {url_key => $id_or_url_key};
+    $where = {"me.url_key" => $id_or_url_key};
   }
   
-  return $self->find( $where, );
+  return $self->search($where, {
+    rows => 1,
+  })->single;
 }
 
 =head2 generate_url_key
@@ -118,10 +123,10 @@ sub generate_url_key {
     }
     
     # Check if that key already exists
-    my $key_check = $self->find_url_key( $url_key );
+    my $key_check = $self->find_url_key($url_key);
     
     # If not, return it
-    return $url_key if !defined( $key_check ) or ( defined($exclude_id) and $key_check->id == $exclude_id );
+    return $url_key if !defined($key_check) or ( defined($exclude_id) and $key_check->id == $exclude_id );
     
     # Otherwise, we need to increment the count for the next loop round
     $count++;
@@ -135,181 +140,197 @@ Provides the wrapper (including error checking) for adding / editing a role.
 =cut
 
 sub create_or_edit {
-  my ( $self, $action, $parameters, $c ) = @_;
-  my ( $role_name_check );
-  my $return_value = {error => [], warning => []};
+  my ( $self, $action, $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
   
-  my $role              = $parameters->{role};
-  my $name              = $parameters->{name};
-  my $members           = $parameters->{members};
-  my $permission_values = $parameters->{fields};
+  # Grab the fields
+  # Non-permissions fields
+  my $role = $params->{role} || undef;
+  my $name = $params->{name} || undef;
+  my $members = $params->{members} || [];
+  
+  my $response = {
+    errors => [],
+    warnings => [],
+    info => [],
+    success => [],
+    fields => {
+      name => $name,
+    },
+    completed => 0,
+    new_members => [],
+    existing_members => [],
+    removed_members => [],
+    members => [], # validated full list of members
+  };
+  
+  # Default to 1 - if we're editing the sysadmin role, all we can do is set members, permissions should *always* be set to 1, so we won't allow them to be edited.
+  # Sysadmin users are god.
+  # If we're editing the registered users or anonymous roles, these can't have members set
+  my $can_set_permissions = 1;
+  my $can_edit_members = 1;
   
   if ( $action ne "create" and $action ne "edit" ) {
     # Invalid action passed
-    push(@{ $return_value->{error} }, {
-      id          => "admin.form.invalid-action",
-      parameters  => [$action],
-    });
+    push(@{$response->{errors}}, $lang->maketext("admin.form.invalid-action", $action));
     
     # This error is fatal, so we return straight away
-    return $return_value;
+    return $response;
   } elsif ( $action eq "edit" ) {
-    unless ( defined( $role ) and ref( $role ) eq "TopTable::Model::DB::Role" ) {
-      # Editing a meeting type that doesn't exist.
-      push(@{ $return_value->{error} }, {id => "roles.form.error.role-invalid"});
-      
-      # Another fatal error
-      return $return_value;
+    if ( defined($role) ) {
+      if ( ref($role) ne "TopTable::Model::DB::Role" ) {
+        # This may not be an error, we may just need to find from an ID or URL key
+        $role = $self->find_id_or_url_key($role);
+        
+        # Definitely error if we're now undef
+        if ( defined($role) ) {
+          $can_set_permissions = 0 if $role->sysadmin;
+          $can_edit_members = 0 if $role->anonymous or $role->apply_on_registration;
+        } else {
+          push(@{$response->{errors}}, $lang->maketext("roles.form.error.role-invalid")) unless defined($role);
+          
+          # Another fatal error
+          return $response;
+        }
+        
+      }
+    } else {
+      push(@{$response->{errors}}, $lang->maketext("roles.form.error.role-not-specified"));
     }
+  } else {
+    # Create - not a sytem role, we can definitely accept permissions
   }
   
   # Error checking
   # Check the names were entered and don't exist already - if it's a system role, it can't be renamed, so we don't do this check.
-  if ( $action eq "create" or ( $action eq "edit" and $role->system ) ) {
-    if ( $name ) {
-      # Full name entered, check it.
+  if ( $action eq "create" or ( $action eq "edit" and !$role->system ) ) {
+    if ( defined($name) ) {
+      my $role_name_check;
+      # Name entered, check it.
       if ( $action eq "edit" ) {
         $role_name_check = $self->find({}, {
           where => {
-            name  => $name,
-            id    => {
-              "!=" => $role->id,
-            }
+            name => $name,
+             => {"!=" => $role->id}
           }
         });
       } else {
         $role_name_check = $self->find({name => $name});
       }
       
-      push(@{ $return_value->{error} }, {
-        id          => "roles.form.error.name-exists",
-        parameters  => [ encode_entities( $name ) ],
-      }) if defined( $role_name_check );
+      push(@{$response->{errors}}, $lang->maketext("roles.form.error.name-exists", encode_entities($name))) if defined($role_name_check);
     } else {
       # Name omitted.
-      push(@{ $return_value->{error} }, {id => "roles.form.error.name-blank"});
+      push(@{$response->{errors}}, $lang->maketext("roles.form.error.name-blank"));
     }
   }
   
+  # Check the members are valid - this doesn't duplicate work when we set the members, as if they are already objects (which this will ensure),
+  # the set_members routine will just check they're the correct reference.  Doing it here means we generate the errors / warnings even if there are
+  # other errors to show (set_members is only called if there are no errors in the processing of the role)
+  # Loop through and check each one
+  my $invalid_members = 0;
+  my @validated_members = ();
+  foreach my $member ( @{$members} ) {
+    if ( defined($member) ) {
+      if ( ref($member) ne "TopTable::Model::DB::User" ) {
+        $member = $schema->resultset("User")->find_id_or_url_key($member);
+        
+        if ( defined($member) ) {
+          push(@validated_members, $member);
+        } else {
+          $invalid_members++;
+        }
+      }
+    } else {
+      $invalid_members++;
+    }
+  }
+  
+  if ( $action eq "edit" and $role->sysadmin and scalar @validated_members == 0 ) {
+    push(@{$response->{errors}}, $lang->maketext("roles.form.error.cant-remove-all-sysadmins"));
+    return $response;
+  }
+  
+  # Replace the members with the validated members
+  $members = \@validated_members;
+  $response->{fields}{members} = $members;
+  
+  # Warn if we had invalid users
+  push(@{$response->{warnings}}, $lang->maketext("roles.form.warning.users-invalid", $invalid_members)) if $invalid_members;
+  
   # Check permissions - first get the list of possible fields from result_source
-  my $column_names = Set::Object->new( $self->result_source->columns );
+  my $columns = Set::Object->new($self->result_source->columns);
   
   # Delete the ones we're not bothered about - leave only permissions fields
-  $column_names->delete( qw( id url_key name system sysadmin anonymous apply_on_registration ) );
+  $columns->delete(qw( id url_key name system sysadmin anonymous apply_on_registration ));
   
-  # Map them to a hash with the column names as keys and the values passed in $field_values as values
-  my %fields = map{ $_ => $permission_values->{$_} || 0 } @$column_names;
+  # Map them to a hash with the column names as keys and the values passed in $params as values.  If we can't set permissions (because this is the sysadmin account),
+  # we just won't set these into the hash
+  my %fields = $can_set_permissions ? map{$_ => $params->{$_} || 0} @$columns : ();
   
   # Loop through and check that all the permissions are 1 or 0
-  $fields{$_} = ( $fields{$_} ) ? 1 : 0 foreach ( keys %fields );
+  $response->{fields}{$_} = $fields{$_} ? 1 : 0 foreach keys %fields;
   
-  # Check members - first make it an array if it isn't already
-#   $members = [ $members ] unless ref( $members ) eq "ARRAY";
-#   
-#   # Set into an object so we can delete objects easily
-#   my @members = @$members;
-#   $members    = Set::Object->new( @members );
-#   
-#   # Loop through and check each one
-#   my $invalid_members = 0;
-#   foreach my $member ( @members ) {
-#     $member = $self->result_source->schema->resultset("User")->find({id => $member});
-#     
-#     if ( defined( $member ) ) {
-#       $members->insert( $member );
-#     } else {
-#       $invalid_members++;
-#       
-#       # Delete from the member IDs
-#       $members->delete( $member );
-#     }
-#   }
-#   
-#   # Set the array of member IDs again from the object (which has now had invalid IDs deleted)
-#   @members = @$members;
-#   
-#   push( @{ $return_value->{warning} }, {
-#     id          => "roles.form.warning.users-invalid",
-#     parameters  => [$invalid_members],
-#   });
-  
-  if ( scalar( @{ $return_value->{error} } ) == 0 ) {
+  if ( scalar @{$response->{errors}} == 0 ) {
     # Generate a new URL key
     my $url_key;
-    if ( $action eq "edit" and $role->system == 0 ) {
-      $url_key = $self->generate_url_key( $name, $role->id );
+    if ( $action eq "edit" and !$role->system ) {
+      $url_key = $self->generate_url_key($name, $role->id);
     } elsif ( $action eq "create" ) {
-      $url_key = $self->generate_url_key( $name );
-    }
-    
-    # Sort out the fields we need to insert
-    if ( $action eq "create" or $role->system == 0 ) {
-      $fields{name}     = $name;
-      $fields{url_key}  = $url_key;
+      $url_key = $self->generate_url_key($name);
     }
     
     # Success, we need to do the database operations
-    # Start a transaction so we don't have a partially updated database
-    my $transaction = $self->result_source->schema->txn_scope_guard;
-    
     if ( $action eq "create" ) {
-      # Now we have to map the member IDs into hashrefs
-#       @members = map( {user => $_}, @members );
-      
       # Take the fields hash (which currently just has the permissions in) and add in the other fields
-      $fields{name}       = $name;
-      $fields{url_key}    = $url_key;
-#       $fields{user_roles} = \@members;
+      $fields{name} = $name;
+      $fields{url_key} = $url_key;
       
-      $role = $self->create( \%fields );
+      $role = $self->create(\%fields);
+      $response->{completed} = 1;
+      push(@{$response->{success}}, $lang->maketext("admin.forms.success", encode_entities($role->name), $lang->maketext("admin.message.created")));
     } else {
       # Editing
       # Take the fields hash (which currently just has the permissions in) and add in the other fields
-      $fields{name}       = $name;
-      $fields{url_key}    = $url_key;
+      my $role_name = $role->name;
+      
+      if ( $role->system ) {
+        # System roles are defined in the language codes
+        $role_name = $lang->maketext("roles.name.$role_name");
+      } else {
+        # Only add the name / URL key if it's not a system role
+        $fields{name} = $name;
+        $fields{url_key} = $url_key;
+        $role_name = encode_entities($role_name);
+      }
       
       # Do the update
-      $role->update( \%fields );
-      
-#       # Get the current roles so we can compare to the list of users submitted with the form
-#       my @current_members = $role->search_related("user_roles", {}, {
-#         prefetch => "user",
-#       });
-#       
-#       # Map the ID only so that we can compare IDs to the IDs in the @roles
-#       @current_members    = map( $_->user->id, @current_members );
-#       
-#       # From those two arrays we can now work out what to add and remove: currently @members contains all
-#       # the roles we need to add; @current_members contains the current members.  We can use Set::Object
-#       # to return a list of what's in @current_members and not in @members (members to remove) and also
-#       # what's in @members and not in @current_members (members to add).  Anything in both is a role
-#       # that is currently assigned and should stay assigned, so doesn't need to be touched.
-#       my $current_members   = Set::Object->new( @current_members );
-#       my $new_members       = Set::Object->new( @members );
-#       my $members_to_add    = $new_members->difference( $current_members );
-#       my $members_to_remove = $current_members->difference( $new_members );
-#       
-#       # Get the arrays back
-#       my @members_to_add    = @$members_to_add;
-#       my @members_to_remove = @$members_to_remove;
-#       
-#       # Now do the SQL operations themselves
-#       $role->delete_related("user_roles", {
-#         user => {
-#           -in => \@members_to_remove,
-#         },
-#       }) if scalar @members_to_remove;
-#       
-#       $role->create_related("user_roles", {user => $_}) foreach @members_to_add;
+      $role->update(\%fields);
+      $response->{completed} = 1;
+      push(@{$response->{success}}, $lang->maketext("admin.forms.success", $role_name, $lang->maketext("admin.message.edited")));
     }
     
-    # Commit the database transactions
-    $transaction->commit;
+    if ( defined($role) and !$role->apply_on_registration ) {
+      # Set the members for the role using the IDs / objects passed in.  The set_members routine does all the checks
+      my $members_response = $role->set_members($members);
+      
+      # Push all messages from the setting of the member list into the response we send back
+      push(@{$response->{errors}}, @{$members_response->{errors}});
+      push(@{$response->{warnings}}, @{$members_response->{warnings}});
+      push(@{$response->{info}}, @{$members_response->{info}});
+      push(@{$response->{success}}, @{$members_response->{success}});
+    }
     
-    $return_value->{role} = $role;
+    $response->{role} = $role;
   }
   
-  return $return_value;
+  return $response;
 }
 
 1;

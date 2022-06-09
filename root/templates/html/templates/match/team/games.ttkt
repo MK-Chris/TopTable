@@ -1,0 +1,140 @@
+<h4>[% team_match_template.name %]</h4>
+<form method="post" action="[% form_action %]">
+<div id="games">
+[%
+# Need scalar to call a DB method in scalar context
+USE scalar;
+# Work out if we need to get the games from flashed values, DB or something else
+IF c.flash.show_flashed;
+  # Get games from the flashed values
+  SET games = c.flash.games;
+  SET num_of_games = games.size;
+  CALL c.log.debug("flashed games: " _ num_of_games);
+ELSE;
+  # Get games from the DB, if there are any
+  SET games = tt_template.games;
+  SET num_of_games = tt_template.scalar.games.count;
+  CALL c.log.debug("DB games: " _ num_of_games);
+  
+  UNLESS num_of_games > 0;
+    # Nothing in the DB, try and grab the params for number of games
+    
+    IF games_param > 0 AND games_param < 100;
+      # Numeric, use that
+      num_of_games = games_param;
+      CALL c.log.debug("param games: " _ num_of_games);
+    ELSE;
+      # Not a 1 or 2 digit number, default to 1
+      num_of_games = 1;
+      CALL c.log.debug("default games: " _ num_of_games);
+    END;
+  END;
+END;
+
+SET i = 0;
+WHILE (i < num_of_games);
+  # Get the various fields for this game
+  SET ind_match_tpl = games.item(i).individual_match_template;
+  SET doubles = games.item(i).doubles_game;
+  SET home_player = games.item(i).singles_home_player_number;
+  SET away_player = games.item(i).singles_away_player_number;
+  SET game_number = games.item(i).match_game_number OR (i + 1);
+-%]
+<fieldset>
+  <legend>
+    [% c.maketext("templates.team-match.games.form.legend.game") %] [% game_number %]
+    <a class="delete-link" data-game="[% game_number %]" href="javascript:void(0)"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" width="16" height="16" alt="[% c.maketext("templates.team-match.games.delete", game_number) %]" title="[% c.maketext("templates.team-match.games.delete", game_number) %]" ></a>
+  </legend>
+  
+  <div class="label-field-container">
+    <label for="individual_match_template[% game_number %]">[% c.maketext("templates.team-match.games.field.game-template") %]</label>
+    <div class="field-container">
+      <select id="individual_match_template[% game_number %]" name="ind_match_tpl" class="individual_match_template" data-placeholder="[% c.maketext("templates.team-match.games.field.game-template") %]">
+        <option value=""></option>
+[%
+  FOREACH ind_match IN individual_match_templates;
+    # Set selected text if needed;
+    IF ind_match_tpl.id == ind_match.id;
+      SET ind_match_selected = ' selected="selected"';
+    ELSE;
+      SET ind_match_selected = '';
+    END;
+-%]
+        <option value="[% ind_match.id %]"[% ind_match_selected %]>[% ind_match.name | html_entity %]</option>
+[%
+  END;
+-%]
+      </select>
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+[%
+  # Check the checked value of the doubles game;
+  IF doubles;
+    doubles_checked = ' checked="checked"';
+    singles_disabled = ' disabled="disabled"';
+  ELSE;
+    doubles_checked = '';
+    singles_disabled = '';
+  END;
+-%]
+  
+  <input type="checkbox" id="doubles_game[% game_number %]" name="doubles[% game_number %]" class="doubles" data-label="[% c.maketext("templates.team-match.games.field.doubles-game") %]" data-game="[% game_number %]" value="1"[% doubles_checked %] />
+  
+  <div class="label-field-container">
+    <label for="singles_home_player_number[% game_number %]">[% c.maketext("templates.team-match.games.field.singles-players") %]</label>
+    <div class="field-container">
+      <select id="singles_home_player_number[% game_number %]" class="game-[% game_number %] player-number" name="home_player[% game_number %]"[% singles_disabled %] data-placeholder="[% c.maketext("templates.team-match.games.form.field.home-player") %]">
+        <option value=""></option>
+[%
+  # Loop through until we reach the number of singles players in a match
+  SET n = 1;
+  WHILE (n <= tt_template.singles_players_per_team);
+  # set selected text if needed;
+    IF home_player == n;
+      SET home_selected = ' selected="selected"';
+    ELSE;
+      SET home_selected = '';
+    END;
+-%]
+        <option value="[% n %]"[% home_selected %]>[% n %]</option>
+[%
+  n = n + 1;
+  END;
+-%]
+      </select>
+      [% c.maketext("matches.versus-abbreviation") %]
+      <select id="singles_away_player_number[% game_number %]" class="game-[% game_number %] player-number" name="away_player[% game_number %]"[% singles_disabled %] data-placeholder="[% c.maketext("templates.team-match.games.form.field.away-player") %]">
+        <option value=""></option>
+[%
+  # Loop through until we reach the number of singles players in a match
+  SET n = 1 + tt_template.singles_players_per_team;
+  WHILE (n <= (tt_template.singles_players_per_team * 2));
+  # set selected text if needed;
+    IF away_player == n;
+      SET away_selected = ' selected="selected"';
+    ELSE;
+      SET away_selected = '';
+    END;
+-%]
+        <option value="[% n %]"[% away_selected %]>[% n %]</option>
+[%
+  n = n + 1;
+  END;
+-%]
+      </select>
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+</fieldset>
+[%
+  SET i = i + 1;
+END;
+-%]
+</div>
+<div id="add-games">
+  <a href="#" class="bold" id="add-game"><img id="add-game-img" src="[% c.uri_for('/static/images/icons/0009-Add-icon-48.png') %]" title="[% c.maketext("templates.team-match.games.add") %]" /></a><br /><br />
+</div>
+
+<input type="submit" id="submit" name="submit" value="[% c.maketext("form.button.save") %]" />
+</form>

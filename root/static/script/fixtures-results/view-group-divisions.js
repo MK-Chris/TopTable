@@ -9,11 +9,12 @@ $(document).ready(function() {
     "pageLength": 25,
     //pagingType: "full_numbers",
     "lengthChange": true,
-    "lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
+    "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
     "info": true,
     "fixedHeader": true,
     "searching": true,
-    "order": [4, "asc"],
+    "orderFixed": {"pre": [4, "asc"]},
+    "order": [3, "asc"],
     "ordering": true,
     "rowGroup": {
       "dataSrc": 4
@@ -38,6 +39,7 @@ $(document).ready(function() {
     }, {
       // Score
       "responsivePriority": 4,
+      "orderable": false,
       "targets": 8
     }, {
       // Division name

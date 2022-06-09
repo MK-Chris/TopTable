@@ -152,7 +152,7 @@ Performs the logic checks to see if the meeting type can be deleted; returns tru
 sub can_delete {
   my ( $self ) = @_;
   
-  # First check clubs using venue, as this will be quicker than checking the number of matches.
+  # Check if there are meetings using this meeting type.
   my $meetings = $self->search_related("meetings")->count;
   return 0 if $meetings;
   
@@ -167,25 +167,40 @@ Checks that the meeting type can be deleted (via can_delete) and then performs t
 =cut
 
 sub check_and_delete {
-  my ( $self ) = @_;
-  my $error = [];
+  my ( $self, $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  my $response = {
+    errors => [],
+    warnings => [],
+    info => [],
+    success => [],
+    completed => 0,
+  };
   
   # Check we can delete
-  push(@{ $error }, {
-    id          => "meeting-types.delete.error.not-allowed",
-    parameters  => [$self->name],
-  }) unless $self->can_delete;
+  unless ( $self->can_delete ) {
+    push(@{$response->{errors}}, $lang->maketext("meeting-types.delete.error.not-allowed", $self->name));
+    return $response;
+  }
   
-  # Delete
-  my $ok = $self->delete unless scalar( @{ $error } );
+  # Get the name for messaging, then delete
+  my $name = $self->name;
+  my $ok = $self->delete;
   
   # Error if the delete was unsuccessful
-  push(@{ $error }, {
-    id          => "admin.delete.error.database",
-    parameters  => $self->name
-  }) unless $ok;
+  if ( $ok ) {
+    $response->{completed} = 1;
+    push(@{$response->{success}}, $lang->maketext("admin.forms.success", $name, $lang->maketext("admin.message.deleted")));
+  } else {
+    push(@{$response->{errors}}, $lang->maketext("admin.delete.error.database", $name));
+  }
   
-  return $error;
+  return $response;
 }
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

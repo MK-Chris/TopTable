@@ -90,9 +90,6 @@ __PACKAGE__->set_primary_key("page_key");
 # Created by DBIx::Class::Schema::Loader v0.07046 @ 2018-09-01 15:50:59
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:okEGjdi6RdUvb2AfEv8kyg
 
-#
-# Enable automatic date handling
-#
 __PACKAGE__->add_columns(
     "last_updated",
     { data_type => "datetime", timezone => "UTC", set_on_create => 1, set_on_update => 0, datetime_undef_if_invalid => 1, is_nullable => 0,},

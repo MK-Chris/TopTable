@@ -273,74 +273,89 @@ __PACKAGE__->belongs_to(
 
 use HTTP::BrowserDetect;
 
-#
-# Set the timezone to UTC
-#
 __PACKAGE__->add_columns(
     "last_active",
     { data_type => "datetime", timezone => "UTC", datetime_undef_if_invalid => 1, is_nullable => 1, },
 );
 
-# Return the browser string from the HTTP::BrowserDetect object
+=head2 browser_detected
+
+Return the browser string from the HTTP::BrowserDetect object.
+
+=cut
+
 sub browser_detected {
-  my ( $self ) = @_;
-  my $browser_string;
+  my ( $self, $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
   
-  if ( defined( $self->user_agent ) ) {
-    my $browser = HTTP::BrowserDetect->new( $self->user_agent->string );
+  my $browser_string;
+  if ( defined($self->user_agent) ) {
+    # Get the browser from the user agent string
+    my $browser = HTTP::BrowserDetect->new($self->user_agent->string);
     
-    if ( defined( $browser ) ) {
-      if ( defined( $browser->robot ) ) {
-        $browser_string = $browser->robot_string;
-        
-        if ( defined( $browser->robot_version ) and $browser->robot_version ne "" ) {
-          $browser_string .= " " . $browser->robot_version;
-        }
-        
-        $browser_string .= " (bot)";
+    if ( defined($browser) ) {
+      # User agent string was recognised by HTTP::BrowserDetect
+      if ( defined($browser->robot) ) {
+        # Browser is a bot
+        $browser_string = encode_entities($browser->robot_string);
+        $browser_string .= sprintf(" %s", $browser->robot_version) if defined($browser->robot_version) and $browser->robot_version;
+        $browser_string .= sprintf(" (%s)", lc($lang->maketext("user-agent.bot")));
       } else {
+        # Not a bot, genuine user
         $browser_string = $browser->browser_string;
-        
-        if ( defined( $browser->browser_version ) and $browser->browser_version ne "" ) {
-          $browser_string .= " " . $browser->browser_version;
-        }
+        $browser_string .= sprintf(" %s", $browser->browser_version);
       }
     } else {
-      $browser_string = "Unknown";
+      # We have a user agent, but don't recognise it
+      $browser_string = $lang->maketext("user-agent.unknown");
     }
   } else {
-    $browser_string = "No user agent string";
+    $browser_string = $lang->maketext("user-agent.none");
   }
   
   
   return $browser_string;
 }
 
-# Return the OS string from the HTTP::BrowserDetect object
+=head2 os_detected
+
+Return the OS string from the HTTP::BrowserDetect object.
+
+=cut
+
 sub os_detected {
-  my ( $self ) = @_;
-  my $os_string;
+  my ( $self, $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
   
-  if ( defined( $self->user_agent ) ) {
-    my $browser = HTTP::BrowserDetect->new( $self->user_agent->string );
+  my $os_string;
+  if ( defined($self->user_agent) ) {
+    # Get the OS from the user agent string
+    my $browser = HTTP::BrowserDetect->new($self->user_agent->string);
     
-    if ( defined( $browser ) ) {
-      if ( defined( $browser->robot ) ) {
-        $os_string = "Bot";
+    if ( defined($browser) ) {
+      # User agent string was recognised by HTTP::BrowserDetect
+      if ( defined($browser->robot) ) {
+        $os_string = $lang->maketext("user-agent.bot");
       } else {
-        $os_string = $browser->os_string;
-        
-        if ( defined( $browser->os_version ) and $browser->os_version ne "" ) {
-          $os_string .= " " . $browser->os_version;
-        }
+        $os_string = encode_entities($browser->os_string);
+        $os_string .= sprintf(" %s", encode_entities($browser->os_version)) if defined($browser->os_version) and $browser->os_version;
       }
     } else {
-      $os_string = "Unknown";
+      $os_string = $lang->maketext("user-agent.unknown");
     }
   } else {
-    $os_string = "No user agent string";
+    $os_string = $lang->maketext("user-agent.none");
   }
-  
   
   return $os_string;
 }

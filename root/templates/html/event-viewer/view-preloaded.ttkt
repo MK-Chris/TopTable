@@ -12,7 +12,7 @@
 -%]
       <th class="event-user">[% c.maketext("system-event-log.heading.user") %]</th>
 [%
-      IF authorisation.view_users_ip;
+      IF authorisation.user_view_ip;
 %]
       <th class="event-ip">[% c.maketext("system-event-log.heading.ip") %]</th>
 [%
@@ -96,7 +96,7 @@
 -%]
       <td class="event-user">[% event.user.person.display_name OR event.user.username OR "Guest" %]</td>
 [%
-      IF authorisation.view_users_ip;
+      IF authorisation.user_view_ip;
 %]
       <td class="event-ip">[% event.ip_address %]</th>
 [%

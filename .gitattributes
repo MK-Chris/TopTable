@@ -1,0 +1,3 @@
+# .gitattributes file which reclassifies '.ttkt' files as HTML and '.ttjs' files as JavaScript (they are actually Template Toolkit HTML and JavaScript files, but that's not recognised):
+*.ttkt linguist-language=HTML
+*.ttjs linguist-language=JavaScript

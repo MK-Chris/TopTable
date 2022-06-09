@@ -1,6 +1,6 @@
 <ul class="option-list">
   <li>
-    <a href="[% c.uri_for("/info/officials") %]">[% c.maketext("menu.text.officials") %]</a>
+    <a href="[% c.uri_for("/info/officials") %]">[% c.maketext("menu.text.committee") %]</a>
   </li>
   <li>
     <a href="[% c.uri_for("/info/rules") %]">[% c.maketext("menu.text.rules") %]</a>
@@ -15,7 +15,7 @@
 IF authorisation.meeting_view;
 -%]
   <li>
-    <a href="[% c.uri_for("/info/meetings") %]">[% c.maketext("menu.text.meetings") %]</a>
+    <a href="[% c.uri_for("/info/meetings") %]">[% c.maketext("menu.text.meeting") %]</a>
   </li>
 [%
 END;

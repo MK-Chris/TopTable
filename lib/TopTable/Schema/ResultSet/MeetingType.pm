@@ -14,9 +14,7 @@ sub all_meeting_types {
   my ( $self ) = @_;
   
   return $self->search({}, {
-    order_by => {
-      -asc => "name",
-    },
+    order_by => {-asc => "name"},
   });
 }
 
@@ -28,8 +26,8 @@ Retrieve a paginated list of seasons.  If an object is specified (i.e., club, te
 
 sub page_records {
   my ( $self, $parameters ) = @_;
-  my $page_number       = $parameters->{page_number} || 1;
-  my $results_per_page  = $parameters->{results_per_page} || 25;
+  my $page_number = $parameters->{page_number} || 1;
+  my $results_per_page = $parameters->{results_per_page} || 25;
   
   # Set a default for results per page if it's not provided or invalid
   $results_per_page = 25 if !defined( $results_per_page ) or $results_per_page !~ m/^\d+$/;
@@ -38,11 +36,9 @@ sub page_records {
   $page_number = 1 if !defined($page_number) or $page_number !~ m/^\d+$/;
   
   return $self->search({}, {
-    page      => $page_number,
-    rows      => $results_per_page,
-    order_by  => {
-      -asc    => [qw( name )]
-    },
+    page => $page_number,
+    rows => $results_per_page,
+    order_by => {-asc => [qw( name )]},
   });
 }
 
@@ -124,56 +120,68 @@ Provides the wrapper (including error checking) for adding / editing a meeting t
 =cut
 
 sub create_or_edit {
-  my ( $self, $action, $parameters ) = @_;
-  my ( $meeting_type_name_check );
-  my $return_value = {error => []};
+  my ( $self, $action, $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
   
-  my $meeting_type  = $parameters->{meeting_type};
-  my $name          = $parameters->{name};
+  # Grab the fields
+  my $meeting_type = delete $params->{meeting_type};
+  my $name = delete $params->{name};
+  my $response = {
+    errors => [],
+    warnings => [],
+    info => [],
+    success => [],
+    fields => {name => $name},
+    completed => 0,
+  };
   
   if ( $action ne "create" and $action ne "edit" ) {
     # Invalid action passed
-    push(@{ $return_value->{error} }, {
-      id          => "admin.form.invalid-action",
-      parameters  => [$action],
-    });
+    push(@{$response->{errors}}, $lang->maketext("admin.form.invalid-action", $action));
     
     # This error is fatal, so we return straight away
-    return $return_value;
+    return $response;
   } elsif ( $action eq "edit" ) {
-    unless ( defined( $meeting_type ) and ref( $meeting_type ) eq "TopTable::Model::DB::MeetingType" ) {
-      # Editing a meeting type that doesn't exist.
-      push(@{ $return_value->{error} }, {id => "meeting-types.form.error.meeting-type-invalid"});
+    if ( ref( $meeting_type ) ne "TopTable::Model::DB::MeetingType" ) {
+      # This may not be an error, we may just need to find from an ID or URL key
+      $meeting_type = $self->find_id_or_url_key( $meeting_type );
+      
+      # Definitely error if we're now undef
+      push(@{$response->{errors}}, $lang->maketext("meeting-types.form.error.meeting-type-invalid")) unless defined( $meeting_type );
       
       # Another fatal error
-      return $return_value;
+      return $response;
     }
   }
   
   # Error checking
   # Check the names were entered and don't exist already.
   if ( $name ) {
-    # Full name entered, check it.
+    # Name entered, check it.
+    my $meeting_type_name_check;
     if ( $action eq "edit" ) {
       $meeting_type_name_check = $self->find({}, {
         where => {
           name  => $name,
-          id    => {
-            "!=" => $meeting_type->id,
-          }
+          id    => {"!=" => $meeting_type->id}
         }
       });
     } else {
       $meeting_type_name_check = $self->find({name => $name});
     }
     
-    push(@{ $return_value->{error} }, {id => "meeting-types.form.error.name-exists"}) if defined( $meeting_type_name_check );
+    push(@{$response->{errors}}, $lang->maketext("meeting-types.form.error.name-exists")) if defined( $meeting_type_name_check );
   } else {
     # Name omitted.
-    push(@{ $return_value->{error} }, {id => "meeting-types.form.error.name-blank"});
+    push(@{$response->{errors}}, $lang->maketext("meeting-types.form.error.name-blank"));
   }
   
-  if ( scalar( @{ $return_value->{error} } ) == 0 ) {
+  if ( scalar( @{$response->{errors}} ) == 0 ) {
     # Generate a new URL key
     my $url_key;
     if ( $action eq "edit" ) {
@@ -185,20 +193,26 @@ sub create_or_edit {
     # Success, we need to create the meeting type
     if ( $action eq "create" ) {
       $meeting_type = $self->create({
-        name                  => $name,
-        url_key               => $url_key,
+        name => $name,
+        url_key => $url_key,
       });
+      
+      $response->{completed} = 1;
+      push(@{$response->{success}}, $lang->maketext("admin.forms.success", $meeting_type->name, $lang->maketext("admin.message.created")));
     } else {
       $meeting_type->update({
-        name                  => $name,
-        url_key               => $url_key,
+        name => $name,
+        url_key => $url_key,
       });
+      
+      $response->{completed} = 1;
+      push(@{$response->{success}}, $lang->maketext("admin.forms.success", $meeting_type->name, $lang->maketext("admin.message.edited")));
     }
     
-    $return_value->{meeting_type} = $meeting_type;
+    $response->{meeting_type} = $meeting_type;
   }
   
-  return $return_value;
+  return $response;
 }
 
 1;

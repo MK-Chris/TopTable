@@ -1,7 +1,6 @@
 package TopTable::Controller::LeagueAverages;
 use Moose;
 use namespace::autoclean;
-use Data::Dumper::Concise;
 use HTML::Entities;
 
 BEGIN { extends 'Catalyst::Controller'; }
@@ -34,18 +33,18 @@ sub auto :Private {
   
   # Set up average types
   $c->stash({
-    subtitle1     => $c->maketext("menu.text.league-averages"),
+    subtitle1 => $c->maketext("menu.text.league-averages"),
     average_types => {
-      "singles"             => $c->maketext("menu.text.league-averages-singles"),
+      "singles" => $c->maketext("menu.text.league-averages-singles"),
       "doubles-individuals" => $c->maketext("menu.text.league-averages-doubles-individuals"),
-      "doubles-pairs"       => $c->maketext("menu.text.league-averages-doubles-pairs"),
-      "doubles-teams"       => $c->maketext("menu.text.league-averages-doubles-teams"),
+      "doubles-pairs" => $c->maketext("menu.text.league-averages-doubles-pairs"),
+      "doubles-teams" => $c->maketext("menu.text.league-averages-doubles-teams"),
     },
   });
   
   # Push the clubs list page on to the breadcrumbs
-  push( @{ $c->stash->{breadcrumbs} }, {
-    path  => $c->uri_for("/league-averages"),
+  push(@{$c->stash->{breadcrumbs}}, {
+    path => $c->uri_for("/league-averages"),
     label => $c->maketext("menu.text.league-averages"),
   });
 }
@@ -64,13 +63,13 @@ sub base :Chained("/") :PathPart("league-averages") :CaptureArgs(1) {
     $c->stash({averages_type => $averages_type});
     
     # Push the current URI on to the breadcrumbs
-    push( @{ $c->stash->{breadcrumbs} }, {
-      path  => $c->uri_for_action("/league-averages/list_first_page", [$averages_type]),
+    push(@{$c->stash->{breadcrumbs}}, {
+      path => $c->uri_for_action("/league-averages/list_first_page", [$averages_type]),
       label => $c->stash->{average_types}{$averages_type},
     });
   } else {
     # Invalid, 404
-    $c->detach(qw/TopTable::Controller::Root default/);
+    $c->detach(qw(TopTable::Controller::Root default));
     return;
   }
 }
@@ -83,15 +82,15 @@ Display the options (different types of averages) for viewing.
 
 sub base_options :Chained("/") :PathPart("league-averages") :Args(0) {
   my ( $self, $c ) = @_;
-  my $site_name = $c->stash->{encoded_site_name};
+  my $site_name = $c->stash->{enc_site_name};
   
   # Stash the details
   $c->stash({
-    template            => "html/league-averages/view-options.ttkt",
+    template => "html/league-averages/view-options.ttkt",
     view_online_display => "Viewing league averages",
-    view_online_link    => 1,
-    page_description    => $c->maketext("description.league-averages.options", $site_name),
-    external_scripts      => [
+    view_online_link => 1,
+    page_description => $c->maketext("description.league-averages.options", $site_name),
+    external_scripts => [
       $c->uri_for("/static/script/standard/option-list.js"),
     ],
   });
@@ -105,11 +104,11 @@ Chain base for the list of divisions.
 
 sub list_divisions :Chained("base") :PathPart("") :CaptureArgs(0) {
   my ( $self, $c ) = @_;
-  my $site_name = $c->stash->{encoded_site_name};
+  my $site_name = $c->stash->{enc_site_name};
   
   $c->stash({
-    page_description  => $c->maketext("description.league-averages.list-divisions", $site_name),
-    external_scripts  => [
+    page_description => $c->maketext("description.league-averages.list-divisions", $site_name),
+    external_scripts => [
       $c->uri_for("/static/script/standard/option-list.js"),
     ],
   });
@@ -123,7 +122,7 @@ List the divisions on the first page.
 
 sub list_first_page :Chained("list_divisions") :PathPart("") :Args(0) {
   my ( $self, $c ) = @_;
-  $c->detach( "retrieve_paged", [1] );
+  $c->detach("retrieve_paged", [1]);
 }
 
 =head2 list_specific_page
@@ -144,7 +143,7 @@ sub list_specific_page :Chained("list_divisions") :PathPart("page") :Args(1) {
     $c->stash({canonical_uri => $c->uri_for_action("/league-averages/list_specific_page", [$page_number])});
   }
   
-  $c->detach( "retrieve_paged", [$page_number] );
+  $c->detach("retrieve_paged", [$page_number]);
 }
 
 =head2 retrieve_paged
@@ -158,28 +157,28 @@ sub retrieve_paged :Private {
   my $averages_type = $c->stash->{averages_type};
   
   my $divisions = $c->model("DB::Division")->page_records({
-    page_number       => $page_number,
-    results_per_page  => $c->config->{Pagination}{default_page_size},
+    page_number => $page_number,
+    results_per_page => $c->config->{Pagination}{default_page_size},
   });
   
-  my $page_info   = $divisions->pager;
-  my $page_links  = $c->forward( "TopTable::Controller::Root", "generate_pagination_links", [{
-    page_info                       => $page_info,
-    page1_action                    => "/league-averages/list_first_page",
-    page1_action_arguments          => $averages_type,
-    specific_page_action            => "/league-averages/list_specific_page",
+  my $page_info = $divisions->pager;
+  my $page_links = $c->forward( "TopTable::Controller::Root", "generate_pagination_links", [{
+    page_info => $page_info,
+    page1_action => "/league-averages/list_first_page",
+    page1_action_arguments => $averages_type,
+    specific_page_action => "/league-averages/list_specific_page",
     specific_page_action_arguments  => $averages_type,
-    current_page                    => $page_number,
+    current_page => $page_number,
   }] );
   
   # Set up the template to use
   $c->stash({
-    template            => "html/league-averages/list-divisions.ttkt",
+    template => "html/league-averages/list-divisions.ttkt",
     view_online_display => sprintf( "Viewing League Averages (%s)", $averages_type),
-    view_online_link    => 1,
-    divisions           => $divisions,
-    page_info           => $page_info,
-    page_links          => $page_links,
+    view_online_link => 1,
+    divisions => $divisions,
+    page_info => $page_info,
+    page_links => $page_links,
   });
 }
 
@@ -193,18 +192,18 @@ sub view :Chained("base") :PathPart("") :CaptureArgs(1) {
   my ( $self, $c, $division_id_or_key ) = @_;
   my $averages_type = $c->stash->{averages_type};
   my $division = $c->model("DB::Division")->find_id_or_url_key( $division_id_or_key );
-  $c->detach( qw/TopTable::Controller::Root default/ ) unless defined( $division );
+  $c->detach(qw(TopTable::Controller::Root default)) unless defined( $division );
   
   my $encoded_division_name = encode_entities( $division->name );
   
   $c->stash({
-    division              => $division,
+    division => $division,
     encoded_division_name => $encoded_division_name,
   });
   
   # Breadcrumbs
-  push( @{ $c->stash->{breadcrumbs} }, {
-    path  => $c->uri_for_action("/league-averages/view_current_season", [$averages_type, $division->url_key]),
+  push(@{$c->stash->{breadcrumbs}}, {
+    path => $c->uri_for_action("/league-averages/view_current_season", [$averages_type, $division->url_key]),
     label => $encoded_division_name,
   });
 }
@@ -217,34 +216,34 @@ Chained from the view routine, this will obtain the current (or last complete, i
 
 sub view_current_season :Chained("view") :PathPart("") :Args(0) {
   my ( $self, $c ) = @_;
-  my $division      = $c->stash->{division};
+  my $division = $c->stash->{division};
   my $averages_type = $c->stash->{averages_type};
   my $division_name = $c->stash->{encoded_division_name};
-  my $site_name     = $c->stash->{encoded_site_name};
+  my $site_name = $c->stash->{enc_site_name};
   
   # No season ID, try to find the current season
   my $season = $c->model("DB::Season")->get_current;
   $season = $c->model("DB::Season")->last_complete_season unless defined( $season ); # No current season season, try and find the last season.
   
   if ( defined( $season ) ) {
-    my $division_season = $division->get_season( $season );
+    my $division_season = $division->get_season($season);
     
     if ( defined( $division_season ) ) {
-      my $encoded_season_name = encode_entities( $season->name );
+      my $encoded_season_name = encode_entities($season->name);
       
       $c->stash({
-        season              => $season,
+        season => $season,
         encoded_season_name => $encoded_season_name,
-        division_season     => $division_season,
-        page_description    => $c->maketext("description.league-averages.view-current", lc( $c->maketext( sprintf("menu.text.league-averages-%s", $averages_type) ) ), $division_name, $site_name),
+        division_season => $division_season,
+        page_description => $c->maketext("description.league-averages.view-current", lc( $c->maketext( sprintf("menu.text.league-averages-%s", $averages_type) ) ), $division_name, $site_name),
       });
     } else {
       # Division is not used for this season
-      $c->detach( qw/TopTable::Controller::Root default/ );
+      $c->detach(qw(TopTable::Controller::Root default));
     }
   } else {
     # No seasons to display
-    $c->detach( qw/TopTable::Controller::Root default/ );
+    $c->detach(qw(TopTable::Controller::Root default));
   }
   
   # Forward to the routine that stashes the team's season
@@ -259,51 +258,51 @@ Chained from the view routine, this will obtain the current (or last complete, i
 
 sub view_specific_season :Chained("view") :PathPart("seasons") :Args(1) {
   my ( $self, $c, $season_id_or_url_key ) = @_;
-  my $division      = $c->stash->{division};
+  my $division = $c->stash->{division};
   my $averages_type = $c->stash->{averages_type};
   my $division_name = $c->stash->{encoded_division_name};
-  my $site_name     = $c->stash->{encoded_site_name};
+  my $site_name = $c->stash->{enc_site_name};
   
-  my $season = $c->model("DB::Season")->find_id_or_url_key( $season_id_or_url_key );
+  my $season = $c->model("DB::Season")->find_id_or_url_key($season_id_or_url_key);
     
-  if ( defined( $season ) ) {
-    my $division_season = $division->get_season( $season );
+  if ( defined($season) ) {
+    my $division_season = $division->get_season($season);
     
-    if ( defined( $division_season ) ) {
-      my $encoded_season_name = encode_entities( $season->name );
+    if ( defined($division_season) ) {
+      my $encoded_season_name = encode_entities($season->name);
       
       $c->stash({
-        season              => $season,
+        season => $season,
         encoded_season_name => $encoded_season_name,
-        specific_season     => 1,
-        division_season     => $division_season,
-        page_description    => $c->maketext("description.league-averages.view-specific", lc( $c->maketext( sprintf("menu.text.league-averages-%s", $averages_type) ) ), $division_name, $site_name, $encoded_season_name),
+        specific_season => 1,
+        division_season => $division_season,
+        page_description => $c->maketext("description.league-averages.view-specific", lc($c->maketext( sprintf("menu.text.league-averages-%s", $averages_type))), $division_name, $site_name, $encoded_season_name),
       });
       
       # Push the season list URI and the current URI on to the breadcrumbs
-      push( @{ $c->stash->{breadcrumbs} }, {
-        path  => $c->uri_for_action("/league-averages/view_seasons_first_page", [$averages_type, $division->url_key]),
-        label => $c->maketext("menu.text.seasons"),
+      push(@{$c->stash->{breadcrumbs}}, {
+        path => $c->uri_for_action("/league-averages/view_seasons_first_page", [$averages_type, $division->url_key]),
+        label => $c->maketext("menu.text.season"),
       }, {
-        path  => $c->uri_for_action("/league-averages/view_specific_season", [$averages_type, $division->url_key, $season->url_key]),
+        path => $c->uri_for_action("/league-averages/view_specific_season", [$averages_type, $division->url_key, $season->url_key]),
         label => $encoded_season_name,
       });
     } else {
       # Division is not used for this season
-      $c->detach( qw/TopTable::Controller::Root default/ );
+      $c->detach(qw(TopTable::Controller::Root default));
     }
   } else {
     # Invalid season - the message says we are attempting to find the current season, which
     # is correct, as the redirect is to the same page, but with no season ID specified, which
     # should try and match the current season (or if there is no current season the latest season).
-    $c->response->redirect( $c->uri_for_action("/league-averages/averages", [$division->url_key, $averages_type],
-                                {mid => $c->set_status_msg({error => $c->maketext("seasons.invalid-find-current", $season_id_or_url_key)} ) }) );
+    $c->response->redirect($c->uri_for_action("/league-averages/averages", [$division->url_key, $averages_type],
+                                {mid => $c->set_status_msg({error => $c->maketext("seasons.invalid-find-current", $season_id_or_url_key)})}));
     $c->detach;
     return;
   }
   
   # Forward to the routine that stashes the team's season
-  $c->detach( "view_finalise" );
+  $c->detach("view_finalise");
 }
 
 =head2 view_finalise
@@ -314,62 +313,62 @@ A private function that retrieves the averages we need for display for the given
 
 sub view_finalise :Private {
   my ( $self, $c ) = @_;
-  my $averages_type         = $c->stash->{averages_type};
-  my $division              = $c->stash->{division};
-  my $season                = $c->stash->{season};
+  my $averages_type = $c->stash->{averages_type};
+  my $division = $c->stash->{division};
+  my $season = $c->stash->{season};
   my $encoded_division_name = $c->stash->{encoded_division_name};
-  my $encoded_season_name   = $c->stash->{encoded_season_name};
+  my $encoded_season_name = $c->stash->{encoded_season_name};
   my $config = {
-    season    => $season,
-    division  => $division,
+    season => $season,
+    division => $division,
   };
   
   my ( $defined_filter, $filter_id, $player_types, $custom_filter, $criteria_field, $operator, $criteria_type, $criteria, $filtered );
-  unless ( exists( $c->request->parameters->{clear} ) ) {
-    if ( exists( $c->request->parameters->{defined_filter} ) ) {
+  unless ( defined($c->req->params->{clear}) ) {
+    if ( defined($c->req->params->{defined_filter}) ) {
       # Defined filter, validate it and get the values from the database
       
       $defined_filter = 1;
-      $filter_id      = $c->request->parameters->{filter_id};
+      $filter_id = $c->req->params->{filter_id};
       
-      my $filter = $c->model("DB::AverageFilter")->find( $filter_id );
+      my $filter = $c->model("DB::AverageFilter")->find($filter_id);
       
       if ( defined( $filter ) ) {
         $config->{player_type} = [];
-        push( @{ $config->{player_type} }, "active" )   if $filter->show_active;
-        push( @{ $config->{player_type} }, "loan" )     if $filter->show_loan;
-        push( @{ $config->{player_type} }, "inactive" ) if $filter->show_inactive;
+        push(@{$config->{player_type}}, "active") if $filter->show_active;
+        push(@{$config->{player_type}}, "loan") if $filter->show_loan;
+        push(@{$config->{player_type}}, "inactive") if $filter->show_inactive;
         $config->{criteria_field} = $filter->criteria_field;
-        $config->{criteria_type}  = $filter->criteria_type;
-        $config->{operator}       = $filter->operator;
-        $config->{criteria}       = $filter->criteria;
-        $filtered                 = 1;
+        $config->{criteria_type} = $filter->criteria_type;
+        $config->{operator} = $filter->operator;
+        $config->{criteria} = $filter->criteria;
+        $filtered = 1;
       }
-    } elsif ( exists( $c->request->parameters->{custom_filter} ) ) {
+    } elsif ( exists($c->req->params->{custom_filter}) ) {
       # Custom filter, just get the values from the form
-      $config->{player_type}    = $c->request->parameters->{player_type};
-      $config->{criteria_type}  = $c->request->parameters->{criteria_type};
-      $config->{criteria_field} = $c->request->parameters->{criteria_field};
-      $config->{operator}       = $c->request->parameters->{operator};
-      $config->{criteria}       = $c->request->parameters->{criteria};
+      $config->{player_type} = $c->req->params->{player_type};
+      $config->{criteria_type} = $c->req->params->{criteria_type};
+      $config->{criteria_field} = $c->req->params->{criteria_field};
+      $config->{operator} = $c->req->params->{operator};
+      $config->{criteria} = $c->req->params->{criteria};
       $custom_filter = 1;
-      $player_types             = $c->request->parameters->{player_type};
-      $criteria_field           = $c->request->parameters->{criteria_field};
-      $criteria_type            = $c->request->parameters->{criteria_type};
-      $operator                 = $c->request->parameters->{operator};
-      $criteria                 = $c->request->parameters->{criteria};
-      $filtered                 = 1;
+      $player_types = $c->req->params->{player_type};
+      $criteria_field = $c->req->params->{criteria_field};
+      $criteria_type = $c->req->params->{criteria_type};
+      $operator = $c->req->params->{operator};
+      $criteria = $c->req->params->{criteria};
+      $filtered = 1;
       
       # Arrayref the player type if it isn't already
-      $player_types = [ $player_types ] unless ref( $player_types ) eq "ARRAY";
+      $player_types = [$player_types] unless ref($player_types) eq "ARRAY";
     }
   }
   
   $config->{logger} = sub{ my $level = shift; $c->log->$level( @_ ); };
   
-  if ( defined( $averages_type ) and $averages_type eq "singles" ) {
+  if ( defined($averages_type) and $averages_type eq "singles" ) {
     # Singles averages
-    my $singles_averages = $c->model("DB::PersonSeason")->get_people_in_division_in_singles_averages_order( $config );
+    my $singles_averages = $c->model("DB::PersonSeason")->get_people_in_division_in_singles_averages_order($config);
     $c->stash({
       singles_averages => $singles_averages,
         singles_last_updated => $c->model("DB::PersonSeason")->get_tables_last_updated_timestamp({
@@ -379,10 +378,10 @@ sub view_finalise :Private {
     });
     
     # Check if we're authorised to display edit / delete links next to names
-    $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( person_edit person_delete team_edit team_delete ) ], "", 0] );
-  } elsif ( defined( $averages_type ) and $averages_type eq "doubles-individuals" ) {
+    $c->forward("TopTable::Controller::Users", "check_authorisation", [ [ qw( person_edit person_delete team_edit team_delete ) ], "", 0]);
+  } elsif ( defined($averages_type) and $averages_type eq "doubles-individuals" ) {
     # Doubles averages (invidual)
-    my $doubles_ind_averages = $c->model("DB::PersonSeason")->get_people_in_division_in_doubles_individual_averages_order( $config );
+    my $doubles_ind_averages = $c->model("DB::PersonSeason")->get_people_in_division_in_doubles_individual_averages_order($config);
     $c->stash({
       doubles_individual_averages => $doubles_ind_averages,
       doubles_ind_last_updated => $c->model("DB::PersonSeason")->get_tables_last_updated_timestamp({
@@ -392,10 +391,10 @@ sub view_finalise :Private {
     });
     
     # Check if we're authorised to display edit / delete links next to names
-    $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( person_edit person_delete team_edit team_delete ) ], "", 0] );
-  } elsif ( defined( $averages_type ) and $averages_type eq "doubles-pairs" ) {
+    $c->forward("TopTable::Controller::Users", "check_authorisation", [ [ qw( person_edit person_delete team_edit team_delete ) ], "", 0]);
+  } elsif ( defined($averages_type) and $averages_type eq "doubles-pairs" ) {
     # Doubles averages (pairs)
-    my $doubles_pairs_averages = $c->model("DB::DoublesPair")->get_doubles_pairs_in_division_in_averages_order( $config );
+    my $doubles_pairs_averages = $c->model("DB::DoublesPair")->get_doubles_pairs_in_division_in_averages_order($config);
     $c->stash({
       doubles_pair_averages => $doubles_pairs_averages,
       doubles_pairs_last_updated => $c->model("DB::DoublesPair")->get_tables_last_updated_timestamp({
@@ -405,10 +404,10 @@ sub view_finalise :Private {
     });
     
     # Check if we're authorised to display edit / delete links next to names
-    $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( person_edit person_delete team_edit team_delete ) ], "", 0] );
+    $c->forward("TopTable::Controller::Users", "check_authorisation", [ [ qw( person_edit person_delete team_edit team_delete ) ], "", 0]);
   } elsif ( defined( $averages_type ) and $averages_type eq "doubles-teams" ) {
     # Team doubles records
-    my $doubles_teams_averages = $c->model("DB::TeamSeason")->get_doubles_teams_in_division_in_averages_order( $config );
+    my $doubles_teams_averages = $c->model("DB::TeamSeason")->get_doubles_teams_in_division_in_averages_order($config);
     $c->stash({
       doubles_team_averages => $doubles_teams_averages,
       doubles_teams_last_updated => $c->model("DB::TeamSeason")->get_tables_last_updated_timestamp({
@@ -418,20 +417,20 @@ sub view_finalise :Private {
     });
     
     # Check if we're authorised to display edit / delete links next to names
-    $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( team_edit team_delete ) ], "", 0] );
+    $c->forward("TopTable::Controller::Users", "check_authorisation", [ [ qw( team_edit team_delete ) ], "", 0]);
   }
   
-  my $canonical_uri = ( $season->complete )
+  my $canonical_uri = $season->complete
     ? $c->uri_for_action("/league-averages/view_specific_season", [$averages_type, $division->url_key, $season->url_key])
     : $c->uri_for_action("/league-averages/view_current_season", [$averages_type, $division->url_key]);
   
   # Stash the details
   $c->stash({
-    template            => sprintf( "html/league-averages/view_%s.ttkt", $averages_type ),
-    subtitle1           => $encoded_division_name,
-    subtitle2           => sprintf( "%s - %s", $c->maketext("menu.text.league-averages"), $c->stash->{average_types}{ $averages_type } ),
-    subtitle3           => $encoded_season_name,
-    external_scripts    => [
+    template => sprintf("html/league-averages/view_%s.ttkt", $averages_type),
+    subtitle1 => $c->maketext("stats.average-title.division", $encoded_division_name, $c->stash->{average_types}{$averages_type}),
+    #subtitle2 => sprintf("%s - %s", $c->maketext("menu.text.league-averages"), $c->stash->{average_types}{$averages_type}),
+    subtitle2 => $encoded_season_name,
+    external_scripts => [
       $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
       $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
       $c->uri_for("/static/script/standard/chosen.js"),
@@ -441,9 +440,9 @@ sub view_finalise :Private {
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
-      sprintf( $c->uri_for("/static/script/league-averages/view-%s.js"), $averages_type ),
+      sprintf($c->uri_for("/static/script/league-averages/view-%s.js"), $averages_type),
     ],
-    external_styles     => [
+    external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
       $c->uri_for("/static/css/prettycheckable/prettyCheckable.css"),
       $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
@@ -451,20 +450,20 @@ sub view_finalise :Private {
       $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
     ],
-    view_online_display => sprintf( "Viewing %s %s for %s", $division->name, $c->stash->{average_types}{ $averages_type }, $season->name ),
-    view_online_link    => 1,
-    divisions           => [ $season->divisions ],
-    criteria_field      => $criteria_field,
-    defined_filter      => $c->request->parameters->{defined_filter},
-    custom_filter       => $custom_filter,
-    player_types        => $player_types,
-    operator            => $operator,
-    criteria            => $criteria,
-    criteria_type       => $criteria_type,
-    filter_id           => $filter_id,
-    filtered            => $filtered,
-    defined_filters     => [ $c->model("DB::AverageFilter")->all_filters({user => $c->user}) ],
-    canonical_uri       => $canonical_uri,
+    view_online_display => sprintf("Viewing %s %s for %s", $division->name, $c->stash->{average_types}{$averages_type}, $season->name),
+    view_online_link => 1,
+    divisions => [$season->divisions],
+    criteria_field => $criteria_field,
+    defined_filter => $c->req->params->{defined_filter},
+    custom_filter => $custom_filter,
+    player_types => $player_types,
+    operator => $operator,
+    criteria => $criteria,
+    criteria_type => $criteria_type,
+    filter_id => $filter_id,
+    filtered => $filtered,
+    defined_filters => [ $c->model("DB::AverageFilter")->all_filters({user => $c->user}) ],
+    canonical_uri => $canonical_uri,
   });
 }
 
@@ -476,24 +475,24 @@ Retrieve and display a list of seasons that this division has averages to view f
 
 sub view_seasons :Chained("view") :PathPart("seasons") :CaptureArgs(0) {
   my ( $self, $c ) = @_;
-  my $division      = $c->stash->{division};
+  my $division = $c->stash->{division};
   my $averages_type = $c->stash->{averages_type};
   my $division_name = $c->stash->{encoded_division_name};
-  my $site_name     = $c->stash->{encoded_site_name};
+  my $site_name = $c->stash->{enc_site_name};
   
   # Stash the template; the data will be retrieved when we know what page we're on
   $c->stash({
-    template          => "html/divisions/averages-list-seasons.ttkt",
-    page_description  => $c->maketext("description.league-averages.list-seasons", $division_name, $site_name),
+    template => "html/divisions/averages-list-seasons.ttkt",
+    page_description => $c->maketext("description.league-averages.list-seasons", $division_name, $site_name),
+    external_scripts => [
+      $c->uri_for("/static/script/standard/option-list.js"),
+    ],
   });
   
   # Push the current URI on to the breadcrumbs
-  push( @{ $c->stash->{breadcrumbs} }, {
-    path  => $c->uri_for_action("/league-averages/view_seasons_first_page", [$division->url_key, $averages_type]),
-    label => $c->maketext("menu.text.seasons"),
-    external_scripts      => [
-      $c->uri_for("/static/script/standard/option-list.js"),
-    ],
+  push(@{$c->stash->{breadcrumbs}}, {
+    path => $c->uri_for_action("/league-averages/view_seasons_first_page", [$division->url_key, $averages_type]),
+    label => $c->maketext("menu.text.season"),
   });
 }
 
@@ -505,11 +504,11 @@ List the clubs on the first page.
 
 sub view_seasons_first_page :Chained("view_seasons") :PathPart("") :Args(0) {
   my ( $self, $c ) = @_;
-  my $division      = $c->stash->{division};
+  my $division = $c->stash->{division};
   my $averages_type = $c->stash->{averages_type};
   
   $c->stash({canonical_uri => $c->uri_for_action("/league-averages/view_seasons_first_page", [$averages_type, $division->url_key])});
-  $c->detach( "retrieve_paged_seasons", [1] );
+  $c->detach("retrieve_paged_seasons", [1]);
 }
 
 =head2 view_seasons_specific_page
@@ -520,7 +519,7 @@ List the clubs on the specified page.
 
 sub view_seasons_specific_page :Chained("view_seasons") :PathPart("page") :Args(1) {
   my ( $self, $c, $page_number ) = @_;
-  my $division      = $c->stash->{division};
+  my $division = $c->stash->{division};
   my $averages_type = $c->stash->{averages_type};
   
   # If the page number is less then 1, not defined, false, or not a number, set it to 1
@@ -532,7 +531,7 @@ sub view_seasons_specific_page :Chained("view_seasons") :PathPart("page") :Args(
     $c->stash({canonical_uri => $c->uri_for_action("/league-averages/view_seasons_specific_page", [$averages_type, $division->url_key])});
   }
   
-  $c->detach( "retrieve_paged_seasons", [$page_number] );
+  $c->detach("retrieve_paged_seasons", [$page_number]);
 }
 
 =head2 retrieve_paged_seasons
@@ -543,33 +542,33 @@ Performs the lookups for clubs with the given page number.
 
 sub retrieve_paged_seasons :Private {
   my ( $self, $c, $page_number ) = @_;
-  my $division      = $c->stash->{division};
+  my $division = $c->stash->{division};
   my $averages_type = $c->stash->{averages_type};
   
   my $seasons = $c->model("DB::Season")->page_records({
-    division          => $division,
-    page_number       => $page_number,
-    results_per_page  => $c->config->{Pagination}{default_page_size},
+    division => $division,
+    page_number => $page_number,
+    results_per_page => $c->config->{Pagination}{default_page_size},
   });
   
-  my $page_info   = $seasons->pager;
-  my $page_links  = $c->forward( "TopTable::Controller::Root", "generate_pagination_links", [{
-    page_info                       => $page_info,
-    page1_action                    => "/clubs/view_seasons_first_page",
-    page1_action_arguments          => [$averages_type, $division->url_key],
-    specific_page_action            => "/clubs/view_seasons_specific_page",
-    specific_page_action_arguments  => [$averages_type, $division->url_key],
-    current_page                    => $page_number,
+  my $page_info = $seasons->pager;
+  my $page_links = $c->forward("TopTable::Controller::Root", "generate_pagination_links", [{
+    page_info => $page_info,
+    page1_action => "/clubs/view_seasons_first_page",
+    page1_action_arguments => [$averages_type, $division->url_key],
+    specific_page_action => "/clubs/view_seasons_specific_page",
+    specific_page_action_arguments => [$averages_type, $division->url_key],
+    current_page => $page_number,
   }] );
   
   # Set up the template to use
   $c->stash({
-    template            => "html/league-averages/list-seasons.ttkt",
-    view_online_display => sprintf( "Viewing seasons for ", $division->name ),
-    view_online_link    => 1,
-    seasons             => $seasons,
-    page_info           => $page_info,
-    page_links          => $page_links,
+    template => "html/league-averages/list-seasons.ttkt",
+    view_online_display => sprintf("Viewing seasons for ", $division->name),
+    view_online_link => 1,
+    seasons => $seasons,
+    page_info => $page_info,
+    page_links => $page_links,
   });
 }
 

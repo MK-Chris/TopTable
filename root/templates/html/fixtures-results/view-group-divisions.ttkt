@@ -70,7 +70,7 @@ IF matches.count;
       [% date.day_of_week | ucfirst | html_entity %]
     </td>
     <td data-label="[% c.maketext("teams.fixtures.date") %]">
-      <a href="[% fixtures_day_uri %]">[% c.i18n_datetime_format_date.format_datetime(date) | html_entity %]</a>
+      <a href="[% fixtures_day_uri %]">[% c.i18n_datetime_format_date.format_datetime(date) %]</a>
     </td>
     <td data-label="[% c.maketext("teams.fixtures.date") %]">
       [% date.ymd %]

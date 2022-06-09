@@ -1,62 +1,68 @@
-[% # This is a TT comment. -%]
-
-[% # Note That the '-' at the beginning or end of TT code  -%]
-[% # "chomps" the whitespace/newline at that end of the    -%]
-[% # output (use View Source in browser to see the effect) -%]
-
-[% # Some basic HTML with a loop to display clubs -%]
+[%
+IF authorisation.team_create;
+-%]
+<a href="[% c.uri_for_action("/teams/create_no_club") %]"><img src="[% c.uri_for("/static/images/icons/0009-Add-icon-48.png") %]" title="[% c.maketext("admin.create-object", c.maketext("object.singular.teams")) %]" /></a><br />
+[%
+END;
+SET i = 0;
+IF teams.count;
+%]
 <div id="accordion">
 [%
-SET i = 0;
-FOREACH team IN teams;
-  club_html = FILTER html_entity; team.club.full_name; END;
-  team_html = FILTER html_entity; team.name; END;
-  
-  SET i = i + 1;
-  IF team.club.id != LAST_ID;
-    IF i > 1;
+  WHILE (team = teams.next);
+    team_html = FILTER html_entity; team.name; END;
+    
+    SET i = i + 1;
+    IF team.club.id != last_club;
+      IF i > 1;
 -%]
   </ul>
   </div>
   <!-- END individual club container -->
 [%
-    END;
+      END;
 -%]
 
-  <h3>[% club_html %]</h3>
+  <h3>[% team.club.full_name | html_entity %]</h3>
   <!-- START individual club container -->
   <div>
   <ul class="option-list">
 [%
-    SET LAST_ID = team.club.id;
-  END;
+      SET last_club = team.club.id;
+    END;
 -%]
     <li>
       <a href="[% c.uri_for_action("/teams/view_current_season_by_url_key", [team.club.url_key, team.url_key]) %]">[% team_html %]</a>
 [%
-  IF authorisation.team_edit;
+    IF authorisation.team_edit;
 -%]
       <a href="[% c.uri_for_action("/teams/edit_by_url_key", [team.club.url_key, team.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", team_html) %]" title="[% c.maketext("admin.edit-object", team_html) %]" /></a>
 [%
-  END;
-  IF authorisation.team_delete AND team.can_delete;
+    END;
+    IF authorisation.team_delete AND team.can_delete;
 -%]
       <a href="[% c.uri_for_action("/teams/delete_by_url_key", [team.club.url_key, team.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", team_html) %]" title="[% c.maketext("admin.delete-object", team_html) %]" /></a>
 [%
-  END;
+    END;
 -%]
     </li>
 [%
-END;
+  END;
 -%]
   </div>
   <!-- END individual club container -->
 </div>
 <!-- END accordion div -->
 [%
+ELSE;
+-%]
+[% c.maketext("teams.list.none") %]<br /><br />
+[%
+END;
+
 IF authorisation.team_create;
 -%]
-<a href="[% c.uri_for_action("/teams/create_no_club") %]"><img src="[% c.uri_for("/static/images/icons/0009-Add-icon-48.png") %]" title="[% c.maketext("admin.create-object", c.maketext("object.singular.team")) %]" /></a><br />
+<a href="[% c.uri_for_action("/teams/create_no_club") %]"><img src="[% c.uri_for("/static/images/icons/0009-Add-icon-48.png") %]" title="[% c.maketext("admin.create-object", c.maketext("object.singular.teams")) %]" /></a><br />
 [%
-END
+END;
 -%]

@@ -4,7 +4,6 @@ use strict;
 use warnings;
 use base 'DBIx::Class::ResultSet';
 use HTML::Entities;
-use Data::Printer;
 
 =head2 all_reasons
 
@@ -14,10 +13,7 @@ Search for all meeting types ordered by name.
 
 sub all_reasons {
   my ( $self ) = @_;
-  
-  return $self->search({}, {
-    order_by => {-asc => "name"},
-  });
+  return $self->search({}, {order_by => {-asc => "name"}});
 }
 
 =head2 page_records
@@ -147,7 +143,7 @@ sub create_or_edit {
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
   my $schema = $self->result_source->schema;
-  $schema->_set_maketext( TopTable::Maketext->get_handle( $locale ) ) unless defined( $schema->lang );
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
   my $lang = $schema->lang;
   
   # Grab the fields
@@ -285,7 +281,7 @@ sub create_or_edit {
       });
       
       $response->{completed} = 1;
-      push(@{$response->{success}}, $lang->maketext("admin.forms.success", $reason->name, $lang->maketext("admin.message.created")));
+      push(@{$response->{success}}, $lang->maketext("admin.forms.success", encode_entities($reason->name), $lang->maketext("admin.message.created")));
     } else {
       $reason->update({
         name => $name,
@@ -305,7 +301,7 @@ sub create_or_edit {
       }
       
       $response->{completed} = 1;
-      push(@{$response->{success}}, $lang->maketext("admin.forms.success", $reason->name, $lang->maketext("admin.message.edited")));
+      push(@{$response->{success}}, $lang->maketext("admin.forms.success", encode_entities($reason->name), $lang->maketext("admin.message.edited")));
     }
     
     # Commit the database transactions

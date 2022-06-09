@@ -1,3 +1,15 @@
+[%
+IF c.flash.show_flashed;
+  SET game_type_selected = c.flash.game_type.id;
+  SET serve_type_selected = c.flash.serve_type.id;
+  CALL c.log.debug("show flashed");
+ELSE;
+  SET game_type_selected = tt_template.game_type.id;
+  SET serve_type_selected = tt_template.serve_type.id;
+  CALL c.log.debug("no flashed");
+END;
+%]
+
 <form method="post" action="[% form_action %]">
 <fieldset id="template_details">
   <legend>[% c.maketext("templates.form.legend.template-rules") %]</legend>
@@ -19,13 +31,13 @@
 # Loop through game types
 FOREACH game_type IN game_types;
   # Set selected text if needed;
-  IF c.flash.game_type == game_type.id;
-    SET GAME_TYPE_SELECTED = ' selected="selected"';
+  IF game_type_selected == game_type.id;
+    SET selected_text = ' selected="selected"';
   ELSE;
-    SET GAME_TYPE_SELECTED = '';
+    SET selected_text = '';
   END;
 -%]
-        <option value="[% game_type.id %]"[% GAME_TYPE_SELECTED %] title="[% c.maketext("game-type.description." _ game_type.id) %]">[% c.maketext("game-type.name." _ game_type.id) %]</option>
+        <option value="[% game_type.id %]"[% selected_text %] title="[% c.maketext("game-type.description." _ game_type.id) %]">[% c.maketext("game-type.name." _ game_type.id) %]</option>
 [%
 END;
 -%]
@@ -73,21 +85,21 @@ END;
         <option value=""></option>
 [%
 # Disable number of serve fields if needed
-IF c.flash.serve_type == 3;
-  SET SERVE_NUMBERS_DISABLED = '';
+IF serve_type_selected == "static";
+  SET disabled_text = '';
 ELSE;
-  SET SERVE_NUMBERS_DISABLED = ' disabled="disabled"';
+  SET disabled_text = ' disabled="disabled"';
 END;
 
 # Loop through serve types
 FOREACH serve_type IN serve_types;
-  IF c.flash.serve_type == serve_type.id;
-    SET SERVES_SELECTED = ' selected="selected"';
+  IF serve_type_selected == serve_type.id;
+    SET selected_text = ' selected="selected"';
   ELSE;
-    SET SERVES_SELECTED = '';
+    SET selected_text = '';
   END;
 -%]
-        <option value="[% serve_type.id %]"[% SERVES_SELECTED %] title="[% c.maketext("serve-type.description." _ serve_type.id) %]">[% c.maketext("serve-type.name." _ serve_type.id) %]</option>
+        <option value="[% serve_type.id %]"[% selected_text %] title="[% c.maketext("serve-type.description." _ serve_type.id) %]">[% c.maketext("serve-type.name." _ serve_type.id) %]</option>
 [%
 END;
 -%]
@@ -99,7 +111,7 @@ END;
   <div class="label-field-container">
     <label for="serves">[% c.maketext("templates.individual-match.field.serves") %]</label>
     <div class="field-container">
-      <input type="number" id="serves" name="serves"[% SERVE_NUMBERS_DISABLED %] min="1" value="[% c.flash.serves OR tt_template.serves %]" />
+      <input type="number" id="serves" name="serves"[% disabled_text %] min="1" value="[% c.flash.serves OR tt_template.serves %]" />
     </div>
     <div class="clear-fix"></div>
   </div>
@@ -107,7 +119,7 @@ END;
   <div class="label-field-container">
     <label for="serves_deuce">[% c.maketext("templates.individual-match.field.serves-deuce") %]</label>
     <div class="field-container">
-      <input type="number" id="serves_deuce" name="serves_deuce"[% SERVE_NUMBERS_DISABLED %] min="1" value="[% c.flash.serves_deuce OR tt_template.serves_deuce %]" />
+      <input type="number" id="serves_deuce" name="serves_deuce"[% disabled_text %] min="1" value="[% c.flash.serves_deuce OR tt_template.serves_deuce %]" />
     </div>
     <div class="clear-fix"></div>
   </div>

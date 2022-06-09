@@ -31,7 +31,7 @@ sub auto :Private {
   # The title bar will always have
   $c->stash({subtitle2 => $c->maketext("menu.admin.text.bans")});
   
-  push( @{ $c->stash->{breadcrumbs} }, {
+  push(@{$c->stash->{breadcrumbs}}, {
     path  => $c->uri_for("/admin/bans"),
     label => $c->maketext("menu.admin.text.bans"),
   });
@@ -80,7 +80,7 @@ sub base :Chained("/") :PathPart("admin/bans") :CaptureArgs(1) {
     });
     
     # Push the clubs list page on to the breadcrumbs
-    push( @{ $c->stash->{breadcrumbs} }, {
+    push(@{$c->stash->{breadcrumbs}}, {
       # Club view page (current season)
       path  => $c->uri_for_action("/admin/bans/list", [$ban_type->id]),
       label => $ban_type_name,
@@ -88,7 +88,7 @@ sub base :Chained("/") :PathPart("admin/bans") :CaptureArgs(1) {
   } else {
     # 404
     #$c->log->debug( sprintf( "couldn't find ban type: '%s'", $ban_type_id ) );
-    $c->detach( qw/TopTable::Controller::Root default/ );
+    $c->detach(qw(TopTable::Controller::Root default));
     return;
   }
 }
@@ -152,17 +152,15 @@ sub base_item :Chained("base") :PathPart("") :CaptureArgs( 1 ) {
     id => $ban_id,
   });
   
-  unless ( defined( $ban ) ) {
+  unless ( defined($ban) ) {
     # 404
-    $c->detach( qw/TopTable::Controller::Root default/ );
+    $c->detach(qw(TopTable::Controller::Root default));
     return;
   }
   
-  my $encoded_name = $ban_type->id eq "username" ? encode_entities( $ban->banned->username ) : encode_entities( $ban->banned_id );
-  
   $c->stash({
     ban => $ban,
-    encoded_name => $encoded_name,
+    enc_name => $ban_type->id eq "username" ? encode_entities($ban->banned->username) : encode_entities($ban->banned_id),
   });
 }
 
@@ -238,7 +236,7 @@ sub issue :Chained("base") :PathPart("issue") :Args(0) {
     };
     
     # Check if we need to prepopulate
-    if ( exists( $c->flash->{show_flashed} ) and $c->flash->{show_flashed} and exists( $c->flash->{banned_user} ) ) {
+    if ( exists($c->flash->{show_flashed}) and $c->flash->{show_flashed} and exists($c->flash->{banned_user}) ) {
       my $banned_user = $c->flash->{banned_user};
       $tokeninput_opts->{prePopulate} = [{id => $banned_user->id, name => encode_entities( $banned_user->username ) }];
     }
@@ -269,7 +267,7 @@ sub issue :Chained("base") :PathPart("issue") :Args(0) {
   });
   
   # Push the breadcrumbs links
-  push( @{ $c->stash->{breadcrumbs} }, {
+  push(@{$c->stash->{breadcrumbs}}, {
     path => $c->uri_for("/admin/bans/create"),
     label => $c->maketext("admin.create"),
   });
@@ -283,7 +281,7 @@ Process the form to create a ban
 
 sub create :Chained("base") :PathPart("create") :Args(0) {
   my ( $self, $c ) = @_;
-  $c->forward( "process_form", ["create"] );
+  $c->forward("process_form", ["create"]);
 }
 
 =head2 edit
@@ -292,7 +290,7 @@ Display a form to collect information for editing an existing ban of the stashed
 
 =cut
 
-sub edit :Chained("base_item") :PathPart("edit") :Args( 0 ) {
+sub edit :Chained("base_item") :PathPart("edit") :Args(0) {
   my ( $self, $c ) = @_;
   my $ban_type = $c->stash->{ban_type};
   my $ban = $c->stash->{ban};
@@ -322,18 +320,18 @@ sub edit :Chained("base_item") :PathPart("edit") :Args( 0 ) {
       jsonContainer => "json_search",
       tokenLimit => 1,
       hintText => $c->maketext("person.tokeninput.type"),
-      noResultsText => encode_entities( $c->maketext("tokeninput.text.no-results") ),
-      searchingText => encode_entities( $c->maketext("tokeninput.text.searching") ),
+      noResultsText => $c->maketext("tokeninput.text.no-results"),
+      searchingText => $c->maketext("tokeninput.text.searching"),
     };
     
     # Check if we need to prepopulate
-    if ( exists( $c->flash->{show_flashed} ) and $c->flash->{show_flashed} and exists( $c->flash->{banned_user} ) ) {
+    if ( exists($c->flash->{show_flashed}) and $c->flash->{show_flashed} and exists($c->flash->{banned_user}) ) {
       my $banned_user = $c->flash->{banned_user};
-      $tokeninput_opts->{prePopulate} = [{id => $banned_user->id, name => encode_entities( $banned_user->username ) }];
+      $tokeninput_opts->{prePopulate} = [{id => $banned_user->id, name => encode_entities($banned_user->username)}];
     } elsif ( !exists( $c->flash->{show_flashed} ) or !$c->flash->{show_flashed} ) {
       # Prepopulate with the values from the DB
       my $banned_user = $ban->banned;
-      $tokeninput_opts->{prePopulate} = [{id => $banned_user->id, name => encode_entities( $banned_user->username ) }];
+      $tokeninput_opts->{prePopulate} = [{id => $banned_user->id, name => encode_entities($banned_user->username)}];
     }
     
     $scripts = ["tokeninput-standard"];
@@ -344,8 +342,8 @@ sub edit :Chained("base_item") :PathPart("edit") :Args( 0 ) {
     }];
     
     # Push the external scripts / styles
-    push( @{ $ext_scripts }, $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js", {v => 2}) );
-    push( @{ $ext_styles }, $c->uri_for("/static/css/tokeninput/token-input-tt.css") );
+    push(@{$ext_scripts}, $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js", {v => 2}));
+    push(@{$ext_styles}, $c->uri_for("/static/css/tokeninput/token-input-tt.css"));
   }
   
   # Stash our values for TT
@@ -362,7 +360,7 @@ sub edit :Chained("base_item") :PathPart("edit") :Args( 0 ) {
   });
   
   # Push the breadcrumbs links
-  push( @{ $c->stash->{breadcrumbs} }, {
+  push(@{$c->stash->{breadcrumbs}}, {
     path => $c->uri_for("/admin/bans/edit", [$ban->id]),
     label => $c->maketext("admin.create"),
   });
@@ -387,88 +385,54 @@ Process the form to issue a new ban or edit an existing one.
 
 sub process_form :Private {
   my ( $self, $c, $action ) = @_;
+  my @field_names = qw( banned_id expires_date expires_hour expires_minute ban_access ban_registration ban_login ban_contact );
   my $ban_type = $c->stash->{ban_type};
   my $ban = $c->stash->{ban};
-  my $banned_id = $c->req->param( "banned_id" );
-  my $expires_date = $c->req->param( "expires_date" );
-  my $expires_hour = $c->req->param( "expires_hour" );
-  my $expires_minute = $c->req->param( "expires_minute" );
-  my $ban_access = $c->req->param( "ban_access" );
-  my $ban_registration = $c->req->param( "ban_registration" );
-  my $ban_login = $c->req->param( "ban_login" );
-  my $ban_contact = $c->req->param( "ban_contact" );
   
-  my $response = $c->model("DB::Ban")->create_or_edit({
-    action => $action,
+  my $response = $c->model("DB::Ban")->create_or_edit($action, {
+    logger => sub{ my $level = shift; $c->log->$level( @_ ); },
     ban => $ban,
     ban_type => $ban_type,
-    banned_id => $banned_id,
-    expires_date => $expires_date,
-    expires_hour => $expires_hour,
-    expires_minute => $expires_minute,
-    expires_timezone => $c->timezone,
-    ban_access => $ban_access,
-    ban_registration => $ban_registration,
-    ban_login => $ban_login,
-    ban_contact => $ban_contact,
     banning_user => $c->user,
-    logger => sub{ my $level = shift; $c->log->$level( @_ ); },
+    map {$_ => $c->req->params->{$_}} @field_names, # All the fields from the form - put this last because otherwise the following elements are seen as part of the map
   });
   
-  my $status_msg = {};
-  my @errors = @{$response->{error}};
+  # Set the status messages we need to show on redirect
+  my @errors = @{$response->{errors}};
+  my @warnings = @{$response->{warnings}};
+  my @info = @{$response->{info}};
+  my @success = @{$response->{success}};
+  my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});
+  my $redirect_uri;
   
-  if ( scalar(@errors) ) {
-    # Build the error message
-    $status_msg->{error} = \@errors;
+  if ( $response->{completed} ) {
+    # Was completed, display the view page
+    $ban = $response->{ban};
+    $redirect_uri = $c->uri_for_action("/admin/bans/view", [$ban_type->id, $ban->id], {mid => $mid});
     
-    # Flash our form values, then redirect back to the form with an error
-    $c->flash({
-      show_flashed => 1,
-      banned_id => $banned_id,
-      expires_date => $expires_date,
-      expires_hour => $expires_hour,
-      expires_minute => $expires_minute,
-      ban_access => $ban_access,
-      ban_registration => $ban_registration,
-      ban_login => $ban_login,
-      ban_contact => $ban_contact,
-    });
-    
-    $c->flash->{banned_user} = $response->{banned_user} if exists( $response->{banned_user} );
-    
-    my $redirect_uri;
-    if ( $action eq "create" ) {
-      $redirect_uri = $c->uri_for_action("/admin/bans/issue", [$ban_type->id],
-                                {mid => $c->set_status_msg( $status_msg ) });
-    } else {
-      $redirect_uri = $c->uri_for_action("/admin/bans/edit", [$ban_type->id, $ban->id],
-                                {mid => $c->set_status_msg( $status_msg ) });
-    }
-    
-    $c->response->redirect( $redirect_uri );
-    $c->detach;
-    return;
-  } else {
-    # Success, log the creation and redirect to the view page
-    my $action_description;
-    if ( $action eq "create" ) {
-      $ban = $response->{ban};
-      $action_description = $c->maketext("admin.message.created");
-    } else {
-      $action_description = $c->maketext("admin.message.edited");
-    }
+    # Completed, so we log an event
     
     my $object_type = $ban_type->id eq "user" ? "banned-user" : "ban";
-    
     my $banned_id = $ban_type->id eq "username" ? $ban->banned->username : $ban->banned_id;
-    $c->forward( "TopTable::Controller::SystemEventLog", "add_event", [$object_type, $action, {type => $ban_type->id, id => $ban->id}, $banned_id] );
+    $c->forward("TopTable::Controller::SystemEventLog", "add_event", [$object_type, $action, {type => $ban_type->id, id => $ban->id}, $banned_id]);
+  } else {
+    # Not complete - check if we need to redirect back to the create or view page
+    if ( $action eq "create" ) {
+      $redirect_uri = $c->uri_for_action("/admin/bans/issue", [$ban_type->id], {mid => $mid});
+    } else {
+      $redirect_uri = $c->uri_for_action("/admin/bans/edit", [$ban_type->id, $ban->id], {mid => $mid});
+    }
     
-    $c->response->redirect( $c->uri_for_action("/admin/bans/view", [$ban_type->id, $ban->id],
-                                {mid => $c->set_status_msg( {success => $c->maketext( "admin.bans.form.success", encode_entities( $banned_id ), $action_description )} ) }) );
-    $c->detach;
-    return;
+    # Flash the entered values we've got so we can set them into the form
+    $c->flash->{show_flashed} = 1;
+    $c->flash->{$_} = $response->{fields}{$_} foreach @field_names;
+    $c->flash->{banned_user} = $response->{banned_user} if exists($response->{banned_user});
   }
+  
+  # Now actually do the redirection
+  $c->response->redirect( $redirect_uri );
+  $c->detach;
+  return;
 }
 
 =head2 delete
@@ -503,25 +467,33 @@ sub do_delete :Chained("base_item") :PathPart("do-delete") :Args( 0 ) {
   my ( $self, $c ) = @_;
   my $ban_type = $c->stash->{ban_type};
   my $ban = $c->stash->{ban};
-  my $ban_name = $ban->banned_id;
+  my $name = $ban_type->id eq "username" ? $ban->banned_id->username : $ban->banned_id;
   
-  my $error = $ban->check_and_delete;
+  my $response = $ban->check_and_delete;
   
-  if ( scalar( @{ $error } ) ) {
-    # Error deleting
-    $c->response->redirect( $c->uri_for_action("/admin/bans/view", [ $ban_type->id, $ban->id ],
-                                {mid => $c->set_status_msg( {error => $c->build_message($error)} ) }) );
-    $c->detach;
-    return;
+  # Set the status messages we need to show on redirect
+  my @errors = @{$response->{errors}};
+  my @warnings = @{$response->{warnings}};
+  my @info = @{$response->{info}};
+  my @success = @{$response->{success}};
+  my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});
+  my $redirect_uri;
+  
+  if ( $response->{completed} ) {
+    # Was completed, display the list page
+    $redirect_uri = $c->uri_for_action("/admin/bans/list", [$ban_type->id], {mid => $mid});
+    
+    # Completed, so we log an event
+    $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["ban", "delete", {type => undef, id => undef}, $name] );
   } else {
-    # Success
-    my $object_type = $ban_type->id eq "user" ? "banned-user" : "ban";
-    $c->forward( "TopTable::Controller::SystemEventLog", "add_event", [$object_type, "delete", {id => undef}, $ban_name] );
-    $c->response->redirect( $c->uri_for_action("/admin/bans/list", [$ban_type->id],
-                                {mid => $c->set_status_msg( {success => $c->maketext( "admin.forms.success", encode_entities( $ban_name ), $c->maketext("admin.message.deleted") )} ) }) );
-    $c->detach;
-    return;
+    # Not complete
+    $redirect_uri = $c->uri_for_action("/admin/bans/view", [$ban_type->id], {mid => $mid});
   }
+  
+  # Now actually do the redirection
+  $c->response->redirect( $redirect_uri );
+  $c->detach;
+  return;
 }
 
 

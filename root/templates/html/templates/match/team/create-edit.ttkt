@@ -1,3 +1,11 @@
+[%
+IF c.flash.show_flashed;
+  SET winner_type_selected = c.flash.winner_type.id;
+ELSE;
+  SET winner_type_selected = tt_template.winner_type.id;
+END;
+%]
+
 <form method="post" action="[% form_action %]">
 <fieldset>
   <legend>[% c.maketext("templates.form.legend.template-rules") %]</legend>
@@ -25,15 +33,15 @@
         <option value=""></option>
 [%
 # Loop through match score types
-FOREACH winner_type IN winner_types; 
+WHILE (winner_type = winner_types.next);
   # set selected text if needed;
   IF c.flash.winner_type == winner_type.id;
-    SET SELECTED = ' selected="selected"';
+    SET winner_type_selected = ' selected="selected"';
   ELSE;
-    SET SELECTED = '';
+    SET winner_type_selected = '';
   END;
 -%]
-        <option value="[% winner_type.id %]"[% SELECTED %] title="[% c.maketext("winner-type.description." _ winner_type.id) | html_entity %]">[% c.maketext("winner-type.name." _ winner_type.id) %]</option>
+        <option value="[% winner_type.id %]"[% winner_type_selected %] title="[% c.maketext("winner-type.description." _ winner_type.id) | html_entity %]">[% c.maketext("winner-type.name." _ winner_type.id) %]</option>
 [%
 END;
 -%]

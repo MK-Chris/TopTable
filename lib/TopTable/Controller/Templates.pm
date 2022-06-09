@@ -25,11 +25,11 @@ sub auto :Private {
   $c->load_status_msgs;
   
   # The title bar will always have
-  $c->stash({subtitle1 => $c->maketext("menu.text.templates")});
+  $c->stash({subtitle1 => $c->maketext("menu.text.template")});
   
   push(@{ $c->stash->{breadcrumbs} }, {
     path  => $c->uri_for("/templates"),
-    label => $c->maketext("menu.text.templates"),
+    label => $c->maketext("menu.text.template"),
   });
 }
 
@@ -50,7 +50,7 @@ sub index :Path :Args(0) {
     template            => "html/templates/options.ttkt",
     view_online_display => "Viewing templates",
     view_online_link    => 0,
-    subtitle1           => $c->maketext("menu.text.templates"),
+    subtitle1           => $c->maketext("menu.text.template"),
     external_scripts    => [
       $c->uri_for("/static/script/standard/option-list.js"),
     ],
