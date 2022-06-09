@@ -7,6 +7,28 @@ IF authorisation.person_contact_view;
   <div id="person-address">
     <h5>[% c.maketext("people.form.field.address") %]</h5>
     <address>[% person.scalar.full_address | html_entity | html_line_break %]</address><br />
+[%
+  IF person.home_telephone;
+-%]
+    <b>[% c.maketext("people.form.field.home-phone") %]:</b> [% person.home_telephone | html_entity %]<br />
+[%
+  END;
+  IF person.mobile_telephone;
+-%]
+    <b>[% c.maketext("people.form.field.mobile-phone") %]:</b> [% person.mobile_telephone | html_entity %]<br />
+[%
+  END;
+  IF person.work_telephone;
+-%]
+    <b>[% c.maketext("people.form.field.work-phone") %]:</b> [% person.work_telephone | html_entity %]<br />
+[%
+  END;
+  IF person.email_address;
+-%]
+    <b>[% c.maketext("people.form.field.email") %]:</b> <a href="mailto:[% person.email_address | html_entity %]">[% person.email_address | html_entity %]</a><br />
+[%
+  END;
+-%] <br />
   </div>
 </div>
 [%
