@@ -3,7 +3,7 @@
 [% # output (use View Source in browser to see the effect) -%]
 
 <div class="links-list">
-  <div class="list-header">[% c.maketext("menu.text.divisions") %]</div>
+  <div class="list-header">[% c.maketext("menu.text.division") %]</div>
 [%
 SET i = 1;
 FOREACH division_season IN divisions;

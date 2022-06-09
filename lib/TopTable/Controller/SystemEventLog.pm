@@ -1,7 +1,6 @@
 package TopTable::Controller::SystemEventLog;
 use Moose;
 use namespace::autoclean;
-use Data::Dumper::Concise;
 
 BEGIN { extends 'Catalyst::Controller'; }
 
@@ -31,12 +30,12 @@ sub auto :Private {
   $c->load_status_msgs;
   
   # The title bar will always have
-  $c->stash({subtitle1 => $c->maketext("menu.text.system-event-log")});
+  $c->stash({subtitle1 => $c->maketext("menu.text.eventlog")});
   
   # Breadcrumbs
-  push(@{ $c->stash->{breadcrumbs} }, {
-    path  => $c->uri_for("/event-log"),
-    label => $c->maketext("menu.text.system-event-log"),
+  push(@{$c->stash->{breadcrumbs}}, {
+    path => $c->uri_for("/event-log"),
+    label => $c->maketext("menu.text.eventlog"),
   });
 }
 
@@ -48,10 +47,10 @@ Base routine for the event log listing.  Checks the authorisation.
 
 sub base :Chained("/") :PathPart("event-viewer") :CaptureArgs(0) {
   my ( $self, $c ) = @_;
-  my $site_name = $c->stash->{encoded_site_name};
+  my $site_name = $c->stash->{enc_site_name};
   
   # Check that we are authorised to view clubs
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["system_event_log_view_all", "view administrative updates", 0] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["eventlog_view_all", "view administrative updates", 0]);
   
   # Page description
   $c->stash({page_description => $c->maketext("description.event-log.list", $site_name)});
@@ -66,7 +65,7 @@ List the events.
 sub render_list_page :Chained("base") :PathPart("") :Args(0) {
   my ( $self, $c ) = @_;
   
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", [[ qw( view_users_ip ) ], "", 0] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", [[qw( user_view_ip )], "", 0]);
   
   # Set up the template to use
   $c->stash({
@@ -104,25 +103,25 @@ Load the specified page of events.
 
 sub load_events_js :Path("load.js") :Args(0) {
   my ( $self, $c ) = @_;
-  my $start = $c->req->param( "start" );
-  my $page_length = $c->req->param( "pagelength" );
-  my $max_results = $c->req->param( "length" ) || $c->config->{Pagination}{default_page_size}; # Not necessarily the same as page length - we could be caching subsuquent pages
-  my $draw = $c->req->param( "draw" );
-  my $order_col = $c->req->param( "order[0][column]" ) || undef;
-  my $order_dir = $c->req->param( "order[0][dir]" ) || undef;
-  my $search_val = $c->req->param( "search[value]" ) || undef;
+  my $start = $c->req->params->{start};
+  my $page_length = $c->req->params->{pagelength};
+  my $max_results = $c->req->params->{length} || $c->config->{Pagination}{default_page_size}; # Not necessarily the same as page length - we could be caching subsuquent pages
+  my $draw = $c->req->params->{draw};
+  my $order_col = $c->req->params->{"order[0][column]"} || undef;
+  my $order_dir = $c->req->params->{"order[0][dir]"} || undef;
+  my $search_val = $c->req->params->{"search[value]"} || undef;
   
   # Sanity checks on parameters
-  $draw = 1 unless defined( $draw ) and $draw =~ /^\d+$/;
-  $order_dir = "asc" unless defined( $order_dir ) and ($order_dir eq "asc" or $order_dir eq "desc");
+  $draw = 1 unless defined($draw) and $draw =~ /^\d+$/;
+  $order_dir = "asc" unless defined($order_dir) and ($order_dir eq "asc" or $order_dir eq "desc");
   
   # Get the name to order by
   $order_col = $c->req->param( "columns[$order_col][name]" );
   
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", [[ qw( view_users_ip system_event_log_view_all admin_issue_bans ) ], "", 0] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", [[ qw( user_view_ip eventlog_view_all admin_issue_bans ) ], "", 0]);
   
   # Work out if we can view all events or just public ones
-  my $public_only = ( $c->stash->{authorisation}{system_event_log_view_all} and !exists( $c->request->parameters->{"suppress-private"} ) ) ? 0 : 1;
+  my $public_only = ( $c->stash->{authorisation}{eventlog_view_all} and !exists($c->req->params->{"suppress-private"}) ) ? 0 : 1;
   
   my @events = $c->model("DB::SystemEventLog")->page_records({
     public_only => $public_only,
@@ -132,7 +131,7 @@ sub load_events_js :Path("load.js") :Args(0) {
     order_col => $order_col,
     order_dir => $order_dir,
     search_val => $search_val,
-    search_ips => $c->stash->{authorisation}{view_users_ip},
+    search_ips => $c->stash->{authorisation}{user_view_ip},
     logger => sub{ my $level = shift; $c->log->$level( @_ ); },
   });
   
@@ -144,15 +143,15 @@ sub load_events_js :Path("load.js") :Args(0) {
     # Add an array to add the row columns to
     my @row = ();
     
-    my $user = defined( $event->user ) ? sprintf( '<a href="%s">%s</a>', $c->uri_for_action("/users/view", [$event->user->url_key]), $event->user->display_name ) : $c->maketext("system-event-log.guest");
-    push( @row, $user ) unless $c->stash->{exclude_event_user};
-    push( @row, $event->ip_address ) if $c->stash->{authorisation}{view_users_ip};
+    my $user = defined($event->user) ? sprintf('<a href="%s">%s</a>', $c->uri_for_action("/users/view", [$event->user->url_key]), $event->user->display_name) : $c->maketext("system-event-log.guest");
+    push(@row, $user) unless $c->stash->{exclude_event_user};
+    push(@row, $event->ip_address) if $c->stash->{authorisation}{user_view_ip};
     
-    my $updated = $event->log_updated_tz( $c->stash->{timezone} );
-    push( @row, sprintf( "%s %s", $updated->dmy("/"), $updated->hms ) );
-    push( @row, ucfirst( $c->maketext( sprintf( "object.plural.%s", $event->system_event_log_type->plural_objects ) ) ) );
+    my $updated = $event->log_updated_tz($c->stash->{timezone});
+    push(@row, sprintf("%s %s", $updated->dmy("/"), $updated->hms));
+    push(@row, ucfirst($c->maketext(sprintf("object.plural.%s", $event->system_event_log_type->plural_objects))));
     
-    my $display_desc = $event->display_description( 3, 35 );
+    my $display_desc = $event->display_description(3, 35);
     my $display_obj_text = ""; # Set the object text to blank when we start a new row
     
     # Loop through all our display objects
@@ -162,9 +161,9 @@ sub load_events_js :Path("load.js") :Args(0) {
       
       # If this is not the first loop through, we'll need to add a comma or "and", depending on some criteria...
       if ( $obj_count > 1 ) {
-        if ( $obj_count == scalar( @{$display_desc->{for_display}} ) and scalar( @{$display_desc->{for_tooltip}} ) <= 1 ) {
+        if ( $obj_count == scalar @{$display_desc->{for_display}} and scalar @{$display_desc->{for_tooltip}} <= 1 ) {
           # If we're on the last display object and there are no tooltip objects, we need "and"
-          $display_obj_text .= sprintf( " %s ", $c->maketext("system-event-log.and") );
+          $display_obj_text .= sprintf(" %s ", $c->maketext("system-event-log.and"));
         } else {
           # Otherwise, it'll be a comma
           $display_obj_text .= ", ";
@@ -179,7 +178,7 @@ sub load_events_js :Path("load.js") :Args(0) {
     }
     
     my $tooltip_link_text = "";
-    if ( scalar( @{$display_desc->{for_tooltip}} > 1 ) ) {
+    if ( scalar @{$display_desc->{for_tooltip}} > 1 ) {
       # Keep count of our tooltip objects
       $obj_count = 0;
       
@@ -195,30 +194,30 @@ sub load_events_js :Path("load.js") :Args(0) {
         $tooltip_obj_text .= "<br />" if $obj_count > 1;
         
         # Set this name into the tooltip
-        $tooltip_obj_text .= "<a class='tip' href='" . $c->uri_for_action( $event->system_event_log_type->view_action_for_uri, $tooltip_obj->{ids} ) . "'>" . $tooltip_obj->{name} . "</a>";
+        $tooltip_obj_text .= "<a class='tip' href='" . $c->uri_for_action($event->system_event_log_type->view_action_for_uri, $tooltip_obj->{ids}) . "'>" . $tooltip_obj->{name} . "</a>";
       }
       
       # Set our 'others'
-      $tooltip_obj_text .= "<br />" . $c->maketext("system-event-log.others", scalar(@{$display_desc->{other}}) ) if scalar(@{$display_desc->{other}});
+      $tooltip_obj_text .= "<br />" . $c->maketext("system-event-log.others", scalar(@{$display_desc->{other}}) ) if scalar @{$display_desc->{other}};
       
       # Set up the text to be displayed and the tooltip in the final display text
-      $tooltip_link_text = $c->maketext("system-event-log.other-objects", $tooltip_obj_text, ( scalar @{$display_desc->{for_tooltip}} + scalar @{$display_desc->{other}} ), $c->maketext("object.plural." . $event->system_event_log_type->plural_objects) );
+      $tooltip_link_text = $c->maketext("system-event-log.other-objects", $tooltip_obj_text, ( scalar @{$display_desc->{for_tooltip}} + scalar @{$display_desc->{other}} ), $c->maketext("object.plural." . $event->system_event_log_type->plural_objects));
     } else {
       # Nothing to show in the tooltip, replace the text with nothing
       $tooltip_link_text = "";
     }
     
-    push( @row, ucfirst( $c->maketext( $event->system_event_log_type->description, $display_obj_text, $tooltip_link_text ) ) );
+    push(@row, ucfirst($c->maketext($event->system_event_log_type->description, $display_obj_text, $tooltip_link_text)));
     
     # Now we have all the columns in our row, push on to the data array
-    push( @data, \@row );
+    push(@data, \@row);
   }
   
   my $total_records = $c->model("DB::SystemEventLog")->page_records({public_only => $public_only})->count;
-  my $filtered_records = ( defined( $search_val ) ) ? $c->model("DB::SystemEventLog")->page_records({
+  my $filtered_records = ( defined($search_val) ) ? $c->model("DB::SystemEventLog")->page_records({
     public_only => $public_only,
     search_val => $search_val,
-    search_ips => $c->stash->{authorisation}{view_users_ip}
+    search_ips => $c->stash->{authorisation}{user_view_ip}
   })->count : $total_records; # If there's a search value, we need a filtered count too; if there's not the filtered count IS the same as the total count
   
   # Set up the stash
@@ -233,7 +232,7 @@ sub load_events_js :Path("load.js") :Args(0) {
   });
   
   # Detach to the JSON view
-  $c->detach( $c->view("JSON") );
+  $c->detach($c->view("JSON"));
 }
 
 =head2 add_event
@@ -244,20 +243,20 @@ Private sub to add events to the event log.
 
 sub add_event :Private {
   my ( $self, $c ) = @_;
-  my ( $object_type, $event_type, $object_ids, $object_name ) = @{ $c->request->arguments };
+  my ( $object_type, $event_type, $object_ids, $object_name ) = @{$c->req->args};
   
   my $current_datetime = $c->datetime_tz({time_zone => "UTC"});
   
   # Set the event log
   my $details = $c->model("DB::SystemEventLog")->set_event_log({
-    object_type   => $object_type,
-    event_type    => $event_type,
-    object_ids    => $object_ids,
-    object_name   => $object_name,
-    user          => $c->user,
-    ip_address    => $c->request->address,
-    current_time  => $current_datetime,
-    logger        => sub{ my $level = shift; $c->log->$level( @_ ) },
+    object_type => $object_type,
+    event_type => $event_type,
+    object_ids => $object_ids,
+    object_name => $object_name,
+    user => $c->user,
+    ip_address => $c->req->address,
+    current_time => $current_datetime,
+    logger => sub{ my $level = shift; $c->log->$level( @_ ) },
   });
   
   return $details;

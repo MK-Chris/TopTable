@@ -894,9 +894,7 @@ use Data::ICal::TimeZone;
 use DateTime;
 use DateTime::Format::ICal;
 
-#
 # Enable automatic date handling
-#
 __PACKAGE__->add_columns(
     "updated_since",
     { data_type => "datetime", timezone => "UTC", set_on_create => 0, set_on_update => 1, datetime_undef_if_invalid => 1, is_nullable => 1, },
@@ -910,7 +908,7 @@ Returns a hashref with the URL keys in the order we need to use them to generate
 
 sub url_keys {
   my ( $self ) = @_;
-  return [ $self->team_season_home_team_season->club_season->club->url_key, $self->team_season_home_team_season->team->url_key, $self->team_season_away_team_season->club_season->club->url_key, $self->team_season_away_team_season->team->url_key, $self->scheduled_date->year, sprintf("%02d", $self->scheduled_date->month), sprintf("%02d", $self->scheduled_date->day) ];
+  return [$self->team_season_home_team_season->club_season->club->url_key, $self->team_season_home_team_season->team->url_key, $self->team_season_away_team_season->club_season->club->url_key, $self->team_season_away_team_season->team->url_key, $self->scheduled_date->year, sprintf("%02d", $self->scheduled_date->month), sprintf("%02d", $self->scheduled_date->day)];
 }
 
 =head2 actual_start_time
@@ -921,7 +919,7 @@ Return the match start time.  Uses start_time by default, or scheduled_start_tim
 
 sub actual_start_time {
   my ( $self ) = @_;
-  return ( defined( $self->start_time ) ) ? substr($self->start_time, 0, 5) : substr($self->scheduled_start_time, 0, 5);
+  return defined($self->start_time) ? substr($self->start_time, 0, 5) : substr($self->scheduled_start_time, 0, 5);
 }
 
 =head2 actual_date
@@ -933,7 +931,7 @@ Row-level helper method to get the match played date if there is one, or the sch
 sub actual_date {
   my ( $self ) = @_;
   
-  if ( defined( $self->played_date ) ) {
+  if ( defined($self->played_date) ) {
     return $self->played_date;
   } else {
     return $self->scheduled_date;
@@ -950,7 +948,18 @@ sub rescheduled {
   my ( $self ) = @_;
   
   # Return 1 if played date is defined and different from the scheduled date.
-  return ( defined( $self->played_date ) and $self->played_date->ymd ne $self->scheduled_date->ymd ) ? 1 : 0;
+  return ( defined($self->played_date) and $self->played_date->ymd ne $self->scheduled_date->ymd ) ? 1 : 0;
+}
+
+=head2 players_absent
+
+Returns the number of players missing from the match.
+
+=cut
+
+sub players_absent {
+  my ( $self ) = @_;
+  return $self->search_related("team_match_players", {player_missing => 1})->count;
 }
 
 =head2 games_reordered
@@ -963,12 +972,10 @@ sub games_reordered {
   my ( $self ) = @_;
   
   my $reordered_games = $self->search_related("team_match_games", undef, {
-    where => {
-      actual_game_number => \'!= scheduled_game_number',
-    },
+    where => {actual_game_number => \'!= scheduled_game_number'},
   })->count;
   
-  return ( $reordered_games ) ? 1 : 0;
+  return $reordered_games ? 1 : 0;
 }
 
 =head2 get_team_seasons
@@ -981,8 +988,8 @@ sub get_team_seasons {
   my ( $self ) = @_;
   my $season = $self->season;
   my $team_seasons = {
-    home  => $self->team_season_home_team_season,
-    away  => $self->team_season_away_team_season,
+    home => $self->team_season_home_team_season,
+    away => $self->team_season_away_team_season,
   };
   
   return $team_seasons;
@@ -995,26 +1002,58 @@ Validate and update the played date.
 =cut
 
 sub update_played_date {
-  my ( $self, $played_date ) = @_;
-  my ( $date_day, $date_month, $date_year ) = split("/", $played_date);
-  my $error = [];
-  
-  try {
-    $played_date = DateTime->new(
-      year  => $date_year,
-      month => $date_month,
-      day   => $date_day,
-    );
-  } catch {
-    push(@{ $error }, {id => "matches.update-match-date.error.date-invalid"});
+  my ( $self, $played_date, $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  my $response = {
+    errors => [],
+    warnings => [],
+    info => [],
+    success => [],
+    completed => 0,
   };
   
-  if ( scalar( @{ $error } ) == 0 ) {
-    my $ok = $self->update({played_date => $played_date});
-    push(@{ $error }, {id => "matches.update-match-date.error.database-update-failed"}) if !$ok;
+  if ( defined($played_date) ) {
+    # Do the date checking; eval it to trap DateTime errors and pass them into $error
+    if ( ref($played_date) eq "HASH" ) {
+      # Hashref, get the year, month, day
+      my $year = $played_date->{year};
+      my $month = $played_date->{month};
+      my $day = $played_date->{day};
+      
+      # Make sure the date is valid
+      try {
+        $played_date = DateTime->new(
+          year => $year,
+          month => $month,
+          day => $day,
+        );
+      } catch {
+        push(@{$response->{errors}}, $lang->maketext("matches.update-match-date.error.date-invalid"));
+      };
+    } elsif ( ref($played_date) ne "DateTime" ) {
+      push(@{$response->{errors}}, $lang->maketext("matches.update-match-date.error.date-invalid"));
+    }
+  } else {
+    push(@{$response->{errors}}, $lang->maketext("matches.update-match-date.error.date-invalid"));
   }
   
-  return $error;
+  if ( scalar @{$response->{errors}} == 0 ) {
+    my $ok = $self->update({played_date => $played_date});
+    
+    if ( $ok ) {
+      push(@{$response->{success}}, $lang->maketext("matches.update-match-date.success"));
+      $response->{completed} = 1;
+    } else {
+      push(@{$response->{errors}}, $lang->maketext("matches.update-match-date.error.database-update-failed"));
+    }
+  }
+  
+  return $response;
 }
 
 =head2 update_venue
@@ -1024,19 +1063,49 @@ Validate and update the venue for a match.
 =cut
 
 sub update_venue {
-  my ( $self, $venue ) = @_;
-  my $error = [];
+  my ( $self, $venue, $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  my $response = {
+    errors => [],
+    warnings => [],
+    info => [],
+    success => [],
+    completed => 0,
+  };
   
-  if ( defined( $venue ) and ref( $venue ) eq "TopTable::Model::DB::Venue" ) {
-    # All good, venue is valid
-    my $ok = $self->update({venue => $venue->id});
-    push(@{ $error }, {id => "matches.update-match-date.error.database-update-failed"}) unless $ok;
+  if ( defined($venue) ) {
+    # Venue has been submitted, check it's valid
+    $venue = $schema->resultset("Venue")->find_id_or_url_key($venue) unless ref($venue) eq "TopTable::Model::DB::Venue";
+    
+    if ( defined($venue) ) {
+      push(@{$response->{errors}}, $lang->maketext("matches.update-venue.error.venue-inactive")) unless $venue->active;
+      
+      if ( scalar @{$response->{errors}} == 0 ) {
+        my $ok = $self->update({venue => $venue->id});
+        
+        if ( $ok ) {
+          push(@{$response->{success}}, $lang->maketext("matches.update-venue.success"));
+          $response->{completed} = 1;
+        } else {
+          push(@{$response->{errors}}, $lang->maketext("matches.update-match-date.error.database-update-failed"));
+        }
+      }
+    } else {
+      # Error, invalid
+      push(@{$response->{errors}}, $lang->maketext("matches.update-venue.error.venue-invalid"));
+    }
+    
   } else {
     # Error, invalid venue
-    push(@{ $error }, {id => "matches.update-venue.error.venue-invalid"});
+    push(@{$response->{errors}}, $lang->maketext("matches.update-venue.error.venue-blank"));
   }
   
-  return $error;
+  return $response;
 }
 
 =head2 update_playing_order
@@ -1046,14 +1115,26 @@ Updates the playing order (i.e., re-orders the the games within a match from the
 =cut
 
 sub update_playing_order {
-  my ( $self, $parameters ) = @_;
-  my $return_value = {error => []};
+  my ( $self, $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  my $response = {
+    errors => [],
+    warnings => [],
+    info => [],
+    success => [],
+    completed => 0,
+  };
   
   # Get the games
   my @games = $self->team_match_games;
   
   # Get the total number of games so we can check we don't go over this number
-  my $total_games = scalar( @games );
+  my $total_games = scalar @games;
   
   # Store the numbers we've seen
   my %game_numbers;
@@ -1061,39 +1142,35 @@ sub update_playing_order {
   # Loop through and get the new order for each game.
   foreach my $game ( @games ) {
     # Get the new game number
-    my $actual_game_number = $parameters->{ "game-" . $game->scheduled_game_number };
+    my $actual_game_number = $params->{"game-" . $game->scheduled_game_number};
     
     if ( $actual_game_number =~ m/^\d{1,2}$/ and $actual_game_number > $total_games ) {
       # Number invalid
-      push(@{ $return_value->{error} }, {
-        id          => "matches.update-playing-order.error.game-number-invalid",
-        parameters  => [$actual_game_number, $game->scheduled_game_number, $total_games],
-      });
-    } elsif ( exists( $game_numbers{$actual_game_number} ) ) {
+      push(@{$response->{errors}}, $lang->maketext("matches.update-playing-order.error.game-number-invalid", $actual_game_number, $game->scheduled_game_number, $total_games));
+    } elsif ( exists($game_numbers{$actual_game_number}) ) {
       # Number already specified
-      push(@{ $return_value->{error} }, {
-        id          => "matches.update-playing-order.error.game-specified-multiple",
-        parameters  => [$actual_game_number, $game->scheduled_game_number, $game_numbers{$actual_game_number}],
-      });
+      push(@{$response->{errors}}, $lang->maketext("matches.update-playing-order.error.game-specified-multiple", $actual_game_number, $game->scheduled_game_number, $game_numbers{$actual_game_number}));
     } else {
       $game_numbers{$actual_game_number} = $game->scheduled_game_number;
     }
   }
   
-  if ( scalar( @{ $return_value->{error} } ) == 0 ) {
+  if ( scalar @{$response->{errors}} == 0 ) {
     # If we get no errors, loop through again and this time update it
     foreach my $game ( @games ) {
       # Get the new game number
-      my $actual_game_number = $parameters->{ "game-" . $game->scheduled_game_number };
+      my $actual_game_number = $params->{"game-" . $game->scheduled_game_number};
       
-      $game->update({actual_game_number => $actual_game_number,});
+      $game->update({actual_game_number => $actual_game_number});
     }
     
     # Stash the new match scores
-    $return_value->{match_scores} = $self->calculate_match_score;
+    $response->{match_scores} = $self->calculate_match_score;
+    $response->{completed} = 1;
+    push(@{$response->{success}}, $lang->maketext("matches.update-playing-order.success"));
   }
   
-  return $return_value;
+  return $response;
 }
 
 =head2 calculate_match_score
@@ -1118,10 +1195,8 @@ sub calculate_match_score {
   
   # Get the games for the given match
   my @games = $self->search_related("team_match_games", undef, {
-    prefetch  => qw( individual_match_template ),
-    order_by  => {
-      -asc  => "actual_game_number",
-    }
+    prefetch => qw( individual_match_template ),
+    order_by => {-asc => "actual_game_number"}
   });
   
   # Now loop through the games
@@ -1130,7 +1205,7 @@ sub calculate_match_score {
       # Match scores are determined by the number of games won
       if ( $game->complete ) {
         # If the game is complete, but wasn't started, it must be a walkover - check the winner field.
-        if ( defined( $game->winner ) ) {
+        if ( defined($game->winner) ) {
           if ( $game->winner->id == $home_team->team->id ) {
             # Awarded to the home team
             $_home_won++;
@@ -1158,12 +1233,12 @@ sub calculate_match_score {
         if ( defined( $game->winner ) ) {
           # Get the number of points required to win a leg - this will be added to the winner's score for each leg
           my $game_rules = $game->individual_match_template;
-          my $minimum_points_win  = $game_rules->minimum_points_win;
-          my $legs_per_game       = $game_rules->legs_per_game;
+          my $minimum_points_win = $game_rules->minimum_points_win;
+          my $legs_per_game = $game_rules->legs_per_game;
           
           if ( $game_rules->game_type->id eq "best-of" ) {
             $legs_per_game = ( $game_rules->legs_per_game / 2 ) + 1; # Best of x legs - halve it and + 1
-            $legs_per_game = int( $legs_per_game ); # Truncate any decimal placeas
+            $legs_per_game = int($legs_per_game); # Truncate any decimal placeas
           }
           
           if ( $self->winner->id == $home_team->id ) {
@@ -1186,11 +1261,13 @@ sub calculate_match_score {
     }
     
     # Add the score after this match to the array
-    push( @{ $match_scores }, {
+    push(@{$match_scores}, {
       scheduled_game_number => $game->scheduled_game_number,
-      home_won              => $home_won,
-      away_won              => $away_won,
-      drawn                 => $drawn,
+      home_won => $home_won,
+      away_won => $away_won,
+      drawn => $drawn,
+      complete => $game->complete,
+      game_in_progress => $game->game_in_progress,
     });
     
     # Check if the database running score is correct; if not, update it
@@ -1203,27 +1280,6 @@ sub calculate_match_score {
   return $match_scores;
 }
 
-=head2 games_in_scheduled_order
-
-Returns all the games associated with this match in scheduled order.
-
-=cut
-
-sub games_in_scheduled_order {
-  my ( $self ) = @_;
-  
-  return $self->search_related("team_match_games", {}, {
-    prefetch => ["umpire", {
-      individual_match_template => [
-        qw( game_type serve_type )
-      ],
-      team_match_legs => [
-        qw( first_server next_point_server )
-      ]},
-    ]
-  });
-}
-
 =head2 check_match_started
 
 Check whether a match has started by whether at least one game is marked as complete or not - this can be used to determine whether or not to mark the match itself as started.  Returns true if at least one game is complete, or false if no games are.
@@ -1233,13 +1289,8 @@ Check whether a match has started by whether at least one game is marked as comp
 sub check_match_started {
   my ( $self ) = @_;
   
-  # Find games in this match that have been both started and completed (if they are complete but haven't been
-  # started, that means at least one of the players is missing, so it technically can't denote that the match
-  # is started).
-  my $complete_games = $self->search_related("team_match_games", {
-    started   => 1,
-    complete  => 1,
-  })->count;
+  # Find games in this match that have been completed
+  my $complete_games = $self->search_related("team_match_games", {complete => 1})->count;
   
   if ( $complete_games ) {
     # We have found some completed games, so return true
@@ -1260,9 +1311,7 @@ sub check_match_complete {
   my ( $self ) = @_;
   
   # Loop through the current resultset and push into the array of incomplete games if this one is not complete yet
-  my $incomplete_games = $self->search_related("team_match_games", {
-    complete => 0,
-  })->count;
+  my $incomplete_games = $self->search_related("team_match_games", {complete => 0})->count;
   
   if ( $incomplete_games ) {
     # We have found some incomplete games, so return false
@@ -1282,67 +1331,55 @@ Takes an optional $location parameter, which can specify whether only home or aw
 =cut
 
 sub eligible_players {
-  my ( $self, $parameters ) = @_;
-  my $location = $parameters->{location} || undef;
+  my ( $self, $params ) = @_;
+  my $location = $params->{location} || undef;
   undef( $location ) if defined( $location ) and $location ne "home" and $location ne "away";
   my ( @home_players, @away_players );
   my ( $home_team, $away_team ) = ( $self->team_season_home_team_season, $self->team_season_away_team_season );
   
   # Check whether we need to get the home players
-  if ( !defined( $location ) or $location eq "home" ) {
+  if ( !defined($location) or $location eq "home" ) {
     # Get the registered home players
     @home_players = $self->team_season_home_team_season->search_related("person_seasons", undef, {
-      order_by => {
-        -asc => [ qw/ surname first_name/ ],
-      }
+      order_by => {-asc => [qw( surname first_name )]}
     })->all;
     
     # Get players set for the match and push them on to the array if they've played up
     my @set_players = $self->search_related("team_match_players", {
       location => "home",
-      loan_team => {
-        "!=" => undef,
-      },
+      loan_team => {"!=" => undef},
       "person_seasons.season" => $self->season->id,
     }, {
-      prefetch => {
-        player => "person_seasons"
-      },
+      prefetch => {player => "person_seasons"},
     });
     
-    push(@home_players, $_->player->person_seasons) foreach ( @set_players );
+    push(@home_players, $_->player->person_seasons) foreach @set_players;
   }
   
   # Check whether we need to get the home players
-  if ( !defined( $location ) or $location eq "away" ) {
+  if ( !defined($location) or $location eq "away" ) {
     # Get the registered away players
     @away_players = $self->team_season_away_team_season->search_related("person_seasons", undef, {
-      order_by => {
-        -asc => [ qw/ surname first_name/ ],
-      }
+      order_by => {-asc => [qw( surname first_name )]}
     })->all;
     
     # Get players set for the match and push them on to the array if they've played up
     my @set_players = $self->search_related("team_match_players", {
       location => "away",
-      loan_team => {
-        "!=" => undef,
-      },
+      loan_team => {"!=" => undef},
       "person_seasons.season" => $self->season->id,
     }, {
-      prefetch => {
-        player => "person_seasons"
-      },
+      prefetch => {player => "person_seasons"},
     });
     
-    push(@away_players, $_->player->person_seasons) foreach ( @set_players );
+    push(@away_players, $_->player->person_seasons) foreach @set_players;
   }
   
   # Decide what to return
-  if ( defined( $location ) and $location eq "home" ) {
+  if ( defined($location) and $location eq "home" ) {
     # Home team only
     return \@home_players;
-  } elsif ( defined( $location ) and $location eq "away" ) {
+  } elsif ( defined($location) and $location eq "away" ) {
     # Away team only
     return \@away_players;
   } else {
@@ -1359,18 +1396,18 @@ Returns a list of players in the match, along with their 'person' and 'person_se
 =cut
 
 sub players {
-  my ( $self, $parameters ) = @_;
-  my $location = $parameters->{location} || undef; # home or away
-  my $where = {
-    "person_seasons.season" => $self->season->id,
-  };
+  my ( $self, $params ) = @_;
+  my $location = $params->{location} || "home"; # home or away - default to home
+  $location = "home" unless $location eq "home" or $location eq "away"; # Sanity check
+  my $where = {"person_seasons.season" => $self->season->id};
   
-  $where->{location} = $location if defined( $location );
+  # Make sure we bring back the membership of the correct team
+  $where->{"person_seasons.team"} = $location eq "home" ? $self->home_team : $self->away_team;
+  
+  $where->{location} = $location if defined($location);
   
   return $self->search_related("team_match_players", $where, {
-    prefetch => {
-      player => "person_seasons"
-    },
+    prefetch => {player => "person_seasons"},
   });
 }
 
@@ -1381,18 +1418,30 @@ Validates and then updates the details given in the scorecard.
 =cut
 
 sub update_scorecard {
-  my ( $self, $parameters ) = @_;
-  my %game_scores   = ();
-  my $return_value = {error => []};
-  my $log = $parameters->{logger};
+  my ( $self, $params ) = @_;
+  # Setup schema / logging
+  my $logger = $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  my $response = {
+    errors => [],
+    warnings => [],
+    info => [],
+    success => [],
+    completed => 0,
+  };
+  
+  my %game_scores = ();
   
   # Single game if the 'game' and 'leg' parameters are provided
-  my $single_game = ( exists( $parameters->{game} ) ) ? 1 : 0;
+  my $single_game = $params->{game} ? 1 : 0;
   
   # Initial error check that the match is in the current season
   if ( $self->season->complete ) {
-    push(@{ $return_value->{error} }, {id => "matches.update.error.season-complete"});
-    return $return_value;
+    push(@{$response->{errors}}, $lang->maketext("matches.update.error.season-complete"));
+    return $response;
   }
   
   # Store the season into a more easily accessible variable
@@ -1403,34 +1452,40 @@ sub update_scorecard {
   my ( $original_home_team_score, $original_away_team_score, $original_home_team_legs, $original_away_team_legs, $original_home_team_points, $original_away_team_points ) = ( $self->home_team_match_score, $self->away_team_match_score, $self->home_team_legs_won, $self->away_team_legs_won, $self->home_team_points_won, $self->away_team_points_won );
   
   # Check if we're just updating a single leg or a full match
-  my $game;
+  my $game_response;
   if ( $single_game ) {
-    my $game_number = delete $parameters->{game};
+    my $game_number = delete $params->{game};
     my $game = $self->team_match_games->find({
       scheduled_game_number => $game_number,
     }, {
       prefetch => [qw( team_match_legs individual_match_template )],
     });
     
-    if ( defined( $game ) ) {
+    if ( defined($game) ) {
       # Update the game
-      $return_value = $game->update_score( $parameters );
+      $game_response = $game->update_score($params);
+      $response->{completed} = $game_response->{completed};
+      $response->{match_originally_complete} = $game_response->{match_originally_complete};
+      $response->{match_complete} = $game_response->{match_complete};
+      $response->{match_scores} = $game_response->{match_scores};
+      push(@{$response->{errors}}, @{$game_response->{errors}});
+      push(@{$response->{warnings}}, @{$game_response->{warnings}});
+      push(@{$response->{info}}, @{$game_response->{info}});
+      push(@{$response->{success}}, @{$game_response->{success}});
     } else {
-      push(@{ $return_value->{error} }, {id => "matches.update-single.error.game-invalid"});
+      push(@{$response->{errors}}, $lang->maketext("matches.update-single.error.game-invalid"));
     }
   } else {
     my $games = $self->team_match_games;
     while ( my $game = $games->next ) {
-      my $game_result = $game->update_score({
+      $game_response = $game->update_score({
         
       });
-      
-      # Push the errors from this game on if there are any.
-      push( @{ $return_value->{error} }, $game_result->{error} ) if scalar( @{ $game_result->{error} } );
     }
   }
   
-  return $return_value;
+  
+  return $response;
 }
 
 =head2 cancel
@@ -1440,28 +1495,38 @@ Cancels the match, removing any previous scores and players.
 =cut
 
 sub cancel {
-  my ( $self, $parameters ) = @_;
-  my $return_value = {
-    error => [],
-    cancellation_allowed => 1, # Default to allowed, set to 0 if the season is complete
+  my ( $self, $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  my $response = {
+    errors => [],
+    warnings => [],
+    info => [],
+    success => [],
+    completed => 0,
+    can_complete => 1, # Default to allowed, set to if the season is complete
   };
   
-  # Can't cancel a completed match
+  # Can't cancel a match in a completed season
   if ( $self->season->complete ) {
-    push(@{ $return_value->{error} }, {id => "matches.cancel.error.season-complete"});
-    $return_value->{cancellation_allowed} = 0;
-    return $return_value;
+    push(@{$response->{errors}}, $lang->maketext("matches.cancel.error.season-complete"));
+    $response->{can_complete} = 0;
+    return $response;
   }
   
   # Grab and error check the points
-  my $home_points_awarded = $parameters->{home_points_awarded} || 0;
-  my $away_points_awarded = $parameters->{away_points_awarded} || 0;
+  my $home_points_awarded = $params->{home_points_awarded} || 0;
+  my $away_points_awarded = $params->{away_points_awarded} || 0;
   
-  push(@{ $return_value->{error} }, {id => "matches.cancel.error.home-points-not-numeric"}) if $home_points_awarded !~  /^-?\d+$/;
-  push(@{ $return_value->{error} }, {id => "matches.cancel.error.away-points-not-numeric"}) if $away_points_awarded !~  /^-?\d+$/;
+  push(@{$response->{errors}}, $lang->maketext("matches.cancel.error.home-points-not-numeric")) if $home_points_awarded !~  /^-?\d+$/;
+  push(@{$response->{errors}}, $lang->maketext("matches.cancel.error.away-points-not-numeric")) if $away_points_awarded !~  /^-?\d+$/;
   
   # Return with errors if we have them
-  return $return_value if scalar( @{ $return_value->{error} } );
+  return $response if scalar @{$response->{errors}};
   
   # Transaction so if we fail, nothing is updated
   my $transaction = $self->result_source->schema->txn_scope_guard;
@@ -1477,50 +1542,50 @@ sub cancel {
   
   my ( $points_field, $points_against_field );
   if ( $league_table_ranking_template->assign_points ) {
-    $points_field         = "table_points";
+    $points_field = "table_points";
   } else {
-    $points_field         = "games_won";
+    $points_field = "games_won";
     $points_against_field = "games_lost";
   }
   
   # Get and update the team season objects
-  my $season    = $self->season;
+  my $season = $self->season;
   my ( $home_team, $away_team ) = ( $self->team_season_home_team_season, $self->team_season_away_team_season );
   
   # If the match was previously cancelled and we're just changing the values, we need to alter the awarded points
   if ( $self->cancelled ) {
     # Remove played / won / lost counts (they'll be added to again further down)
     # To be removed in a future update when we don't update matches played / won / lost / drawn for cancellations
-    $home_team->matches_played( $home_team->matches_played - 1 );
-    $away_team->matches_played( $away_team->matches_played - 1 );
+    $home_team->matches_played($home_team->matches_played - 1);
+    $away_team->matches_played($away_team->matches_played - 1);
     
     if ( $self->home_team_match_score > $self->away_team_match_score ) {
       # Home points awarded are more than away points awarded, so the home team has "won"
-      $home_team->matches_won( $home_team->matches_won - 1 );
-      $away_team->matches_lost( $away_team->matches_lost - 1 );
+      $home_team->matches_won($home_team->matches_won - 1);
+      $away_team->matches_lost($away_team->matches_lost - 1);
     } elsif ( $self->home_team_match_score < $self->away_team_match_score ) {
       # Away points awarded are more than home points awarded, so the away team has "won"
-      $away_team->matches_won( $away_team->matches_won - 1 );
-      $home_team->matches_lost( $home_team->matches_lost  -1 );
+      $away_team->matches_won($away_team->matches_won - 1);
+      $home_team->matches_lost($home_team->matches_lost  -1);
     } else {
       # Points awarded are equal, so this is a draw
-      $away_team->matches_drawn( $away_team->matches_drawn - 1 );
-      $home_team->matches_drawn( $home_team->matches_drawn - 1 );
+      $away_team->matches_drawn($away_team->matches_drawn - 1);
+      $home_team->matches_drawn($home_team->matches_drawn - 1);
     }
     
     # Update the awarded points in the relevant field - also points against if required - the points against should be awarded what the opposite team have been awarded
     # i.e., the away team's points against will be $home_points_awarded
-    $home_team->$points_field( $home_team->$points_field - $self->home_team_match_score );
-    $away_team->$points_field( $away_team->$points_field - $self->away_team_match_score );
+    $home_team->$points_field($home_team->$points_field - $self->home_team_match_score);
+    $away_team->$points_field($away_team->$points_field - $self->away_team_match_score);
     
-    if ( defined( $points_against_field ) ) {
-      $home_team->$points_against_field( $home_team->$points_against_field - $self->away_team_match_score );
-      $away_team->$points_against_field( $away_team->$points_against_field - $self->home_team_match_score );
+    if ( defined($points_against_field) ) {
+      $home_team->$points_against_field($home_team->$points_against_field - $self->away_team_match_score);
+      $away_team->$points_against_field($away_team->$points_against_field - $self->home_team_match_score);
     }
   } else {
     # It wasn't previously cancelled, so we need to add one to the matches_cancelled count
-    $home_team->matches_cancelled( $home_team->matches_cancelled + 1 );
-    $away_team->matches_cancelled( $away_team->matches_cancelled + 1 );
+    $home_team->matches_cancelled($home_team->matches_cancelled + 1);
+    $away_team->matches_cancelled($away_team->matches_cancelled + 1);
   }
     
   # Get a list of the players in this match and remove them; this includes the action of removing the score as well.
@@ -1534,46 +1599,48 @@ sub cancel {
   $self->update({
     home_team_match_score => $home_points_awarded,
     away_team_match_score => $away_points_awarded,
-    cancelled             => 1,
+    cancelled => 1,
   });
   
   # Update the awarded points in the relevant field - also points against if required - the points against should be awarded what the opposite team have been awarded
   # i.e., the away team's points against will be $home_points_awarded
-  $home_team->$points_field( $home_team->$points_field + $home_points_awarded );
-  $away_team->$points_field( $away_team->$points_field + $away_points_awarded );
+  $home_team->$points_field($home_team->$points_field + $home_points_awarded);
+  $away_team->$points_field($away_team->$points_field + $away_points_awarded);
   
-  if ( defined( $points_against_field ) ) {
-    $home_team->$points_against_field( $home_team->$points_against_field + $away_points_awarded );
-    $away_team->$points_against_field( $away_team->$points_against_field + $home_points_awarded );
+  if ( defined($points_against_field) ) {
+    $home_team->$points_against_field($home_team->$points_against_field + $away_points_awarded);
+    $away_team->$points_against_field($away_team->$points_against_field + $home_points_awarded);
   }
   
   # Update the values we know what to update straight off
   # To be removed in a future update when we don't update matches played / won / lost / drawn for cancellations
-  $home_team->matches_played( $home_team->matches_played + 1 );
-  $away_team->matches_played( $away_team->matches_played + 1 );
+  $home_team->matches_played($home_team->matches_played + 1);
+  $away_team->matches_played($away_team->matches_played + 1);
   
   if ( $home_points_awarded > $away_points_awarded ) {
     # Home points awarded are more than away points awarded, so the home team has "won"
-    $home_team->matches_won( $home_team->matches_won + 1 );
-    $away_team->matches_lost( $away_team->matches_lost + 1 );
+    $home_team->matches_won($home_team->matches_won + 1);
+    $away_team->matches_lost($away_team->matches_lost + 1);
   } elsif ( $home_points_awarded < $away_points_awarded ) {
     # Away points awarded are more than home points awarded, so the away team has "won"
-    $away_team->matches_won( $away_team->matches_won + 1 );
-    $home_team->matches_lost( $home_team->matches_lost + 1 );
+    $away_team->matches_won($away_team->matches_won + 1);
+    $home_team->matches_lost($home_team->matches_lost + 1);
   } else {
     # Points awarded are equal, so this is a draw
-    $away_team->matches_drawn( $away_team->matches_drawn + 1 );
-    $home_team->matches_drawn( $home_team->matches_drawn + 1 );
+    $away_team->matches_drawn($away_team->matches_drawn + 1);
+    $home_team->matches_drawn($home_team->matches_drawn + 1);
   }
   
   # Do the update
   $home_team->update;
   $away_team->update;
+  push(@{$response->{success}}, $lang->maketext("matches.cancel.success"));
+  $response->{completed} = 1;
   
   # Commit the transaction
   $transaction->commit;
   
-  return $return_value;
+  return $response;
 }
 
 =head2 uncancel
@@ -1583,24 +1650,34 @@ Undo a match cancellation, remove the points awarded.
 =cut
 
 sub uncancel {
-  my ( $self ) = @_;
-  my $return_value = {
-    error => [],
-    cancellation_allowed => 1, # Default to allowed, set to 0 if the season is complete
+  my ( $self, $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  my $response = {
+    errors => [],
+    warnings => [],
+    info => [],
+    success => [],
+    completed => 0,
+    can_complete => 1, # Default to allowed, set to if the season is complete
   };
   
-  # Can't cancel a completed match
+  # Can't uncancel a match match in a completed season
   if ( $self->season->complete ) {
-    push(@{ $return_value->{error} }, {id => "matches.uncancel.error.season-complete"});
-    $return_value->{cancellation_allowed} = 0;
-    return $return_value;
+    push(@{$response->{errors}}, $lang->maketext("matches.uncancel.error.season-complete"));
+    $response->{can_complete} = 0;
+    return $response;
   }
   
-  # Can't cancel a completed match
+  # Can't uncancel a match that isn't cancelled
   unless ( $self->cancelled ) {
-    push(@{ $return_value->{error} }, {id => "matches.uncancel.error.not-cancelled"});
-    $return_value->{cancellation_allowed} = 0;
-    return $return_value;
+    push(@{$response->{errors}}, $lang->maketext("matches.uncancel.error.not-cancelled"));
+    $response->{can_complete} = 0;
+    return $response;
   }
   
   # Grab the points that were previously awarded so we can remove them from the home team / away team season totals
@@ -1614,11 +1691,11 @@ sub uncancel {
   $self->update({
     home_team_match_score => 0,
     away_team_match_score => 0,
-    cancelled             => 0,
+    cancelled => 0,
   });
   
   # Get and update the team season objects
-  my $season    = $self->season;
+  my $season = $self->season;
   my ( $home_team, $away_team ) = ( $self->team_season_home_team_season, $self->team_season_away_team_season );
   
   my $league_table_ranking_template = $self->division_season->league_table_ranking_template;
@@ -1626,50 +1703,52 @@ sub uncancel {
   # Fields to update the points values for - depends on whether we assign points for win / loss / draw or
   my ( $points_field, $points_against_field );
   if ( $league_table_ranking_template->assign_points ) {
-    $points_field         = "table_points";
+    $points_field = "table_points";
   } else {
-    $points_field         = "games_won";
+    $points_field = "games_won";
     $points_against_field = "games_lost";
   }
   
   # Update the awarded points in the relevant field - also points against if required - the points against should be awarded what the opposite team have been awarded
   # i.e., the away team's points against will be $home_points_awarded
-  $home_team->$points_field( $home_team->$points_field - $home_points_awarded );
-  $away_team->$points_field( $away_team->$points_field - $away_points_awarded );
+  $home_team->$points_field($home_team->$points_field - $home_points_awarded);
+  $away_team->$points_field($away_team->$points_field - $away_points_awarded);
   
-  if ( defined( $points_against_field ) ) {
-    $home_team->$points_against_field( $home_team->$points_against_field - $away_points_awarded );
-    $away_team->$points_against_field( $away_team->$points_against_field - $home_points_awarded );
+  if ( defined($points_against_field) ) {
+    $home_team->$points_against_field($home_team->$points_against_field - $away_points_awarded);
+    $away_team->$points_against_field($away_team->$points_against_field - $home_points_awarded);
   }
   
   # Update the values we know what to update straight off
-  $home_team->matches_played( $home_team->matches_played - 1 );
-  $away_team->matches_played( $away_team->matches_played - 1 );
-  $home_team->matches_cancelled( $home_team->matches_cancelled - 1 );
-  $away_team->matches_cancelled( $away_team->matches_cancelled - 1 );
+  $home_team->matches_played($home_team->matches_played - 1);
+  $away_team->matches_played($away_team->matches_played - 1);
+  $home_team->matches_cancelled($home_team->matches_cancelled - 1);
+  $away_team->matches_cancelled($away_team->matches_cancelled - 1);
   
   if ( $home_points_awarded > $away_points_awarded ) {
     # Home points awarded are more than away points awarded, so the home team has "won"
-    $home_team->matches_won( $home_team->matches_won - 1 );
-    $away_team->matches_lost( $away_team->matches_lost - 1 );
+    $home_team->matches_won($home_team->matches_won - 1);
+    $away_team->matches_lost($away_team->matches_lost - 1);
   } elsif ( $home_points_awarded < $away_points_awarded ) {
     # Away points awarded are more than home points awarded, so the away team has "won"
-    $away_team->matches_won( $away_team->matches_won - 1 );
-    $home_team->matches_lost( $home_team->matches_lost - 1 );
+    $away_team->matches_won($away_team->matches_won - 1);
+    $home_team->matches_lost($home_team->matches_lost - 1);
   } else {
     # Points awarded are equal, so this is a draw
-    $away_team->matches_drawn( $away_team->matches_drawn - 1 );
-    $home_team->matches_drawn( $home_team->matches_drawn - 1 );
+    $away_team->matches_drawn($away_team->matches_drawn - 1);
+    $home_team->matches_drawn($home_team->matches_drawn - 1);
   }
   
   # Do the update
   $home_team->update;
   $away_team->update;
+  push(@{$response->{success}}, $lang->maketext("matches.uncancel.success"));
+  $response->{completed} = 1;
   
   # Commit the transaction
   $transaction->commit;
   
-  return $return_value;
+  return $response;
 }
 
 =head2 result
@@ -1679,69 +1758,75 @@ Return a hash of details containing various results.  If a location is supplied 
 =cut
 
 sub result {
-  my ( $self, $location ) = @_;
+  my ( $self, $location, $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
   my %return_value = ();
   
   # Check the match status
   if ( $self->started ) {
     # Match has at least been started
-    $return_value{score}  = sprintf( "%d-%d", $self->home_team_match_score, $self->away_team_match_score );
+    $return_value{score}  = sprintf("%d-%d", $self->home_team_match_score, $self->away_team_match_score);
     
     # Check if we're complete or not
     if ( $self->complete ) {
       # Complete - result is win, loss or draw
-      if ( $self->home_team_match_score > $self->away_team_match_score and defined( $location ) ) {
+      if ( $self->home_team_match_score > $self->away_team_match_score and defined($location) ) {
         # Home win
         if ( $location eq "home" ) {
           # Team specified is home, so this is a win
-          $return_value{result} = {id => "matches.result.win"};
+          $return_value{result} = $lang->maketext("matches.result.win");
         } elsif ( $location eq "away" ) {
           # Team specified is away, so this is a loss
-          $return_value{result} = {id => "matches.result.loss"};
+          $return_value{result} = $lang->maketext("matches.result.loss");
         }
-      } elsif ( $self->away_team_match_score > $self->home_team_match_score and defined( $location ) ) {
+      } elsif ( $self->away_team_match_score > $self->home_team_match_score and defined($location) ) {
         # Away win
         if ( $location eq "home" ) {
           # Team specified is home, so this is a loss
-          $return_value{result} = {id => "matches.result.loss"};
+          $return_value{result} = $lang->maketext("matches.result.loss");
         } elsif ( $location eq "away" ) {
           # Team specified is away, so this is a win
-          $return_value{result} = {id => "matches.result.win"};
+          $return_value{result} = $lang->maketext("matches.result.win");
         }
       } elsif ( $self->home_team_match_score == $self->away_team_match_score ) {
         # Draw - regardless of which team is specified
-        $return_value{result} = {id => "matches.result.draw"};
+        $return_value{result} = $lang->maketext("matches.result.draw");
       }
     } else {
       # Not complete - result is winning, losing or drawing
       # Complete - result is win, loss or draw
-      if ( $self->home_team_match_score > $self->away_team_match_score and defined( $location ) ) {
+      if ( $self->home_team_match_score > $self->away_team_match_score and defined($location) ) {
         # Home winning
         if ( $location eq "home" ) {
           # Team specified is home, so they're winning
-          $return_value{result} = {id => "matches.result.winning"};
+          $return_value{result} = $lang->maketext("matches.result.winning");
         } elsif ( $location eq "away" ) {
           # Team specified is away, so they're losing
-          $return_value{result} = {id => "matches.result.losing"};
+          $return_value{result} = $lang->maketext("matches.result.losing");
         }
-      } elsif ( $self->away_team_match_score > $self->home_team_match_score and defined( $location ) ) {
+      } elsif ( $self->away_team_match_score > $self->home_team_match_score and defined($location) ) {
         # Away win
         if ( $location eq "home" ) {
           # Team specified is home, so they're losing
-          $return_value{result} = {id => "matches.result.losing"};
+          $return_value{result} = $lang->maketext("matches.result.losing");
         } elsif ( $location eq "away" ) {
           # Team specified is away, so they're winning
-          $return_value{result} = {id => "matches.result.winning"};
+          $return_value{result} = $lang->maketext("matches.result.winning");
         }
       } elsif ( $self->home_team_match_score == $self->away_team_match_score ) {
         # Draw - regardless of which team is specified
-        $return_value{result} = {id => "matches.result.drawing"};
+        $return_value{result} = $lang->maketext("matches.result.drawing");
       }
     }
   } elsif ( $self->cancelled ) {
     # Match was cancelled
-    $return_value{result} = {id => "matches.result.cancelled"};
-    $return_value{score}  = sprintf( "%d-%d", $self->home_team_match_score, $self->away_team_match_score );
+    $return_value{result} = $lang->maketext("matches.result.cancelled");
+    $return_value{score}  = sprintf("%d-%d", $self->home_team_match_score, $self->away_team_match_score);
   } else {
     # Match hasn't been updated yet
     return undef;
@@ -1757,53 +1842,56 @@ Generate a hashref of data that can be easily manipulated into iCal format.  Tak
 =cut
 
 sub generate_ical_data {
-  my ( $self, $parameters ) = @_;
+  my ( $self, $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
   my ( $home_team, $away_team ) = ( $self->team_season_home_team_season, $self->team_season_away_team_season );
-  
-  # Get the versus abbreviation
-  my $lang = &{ $parameters->{get_language_components} };
   
   # Split the start time for setting the hour and minute
   my ( $start_hour, $start_minute ) = split( ":", $self->actual_start_time );
   
   # Get the URI
-  my $uri = $parameters->{get_uri}($self->url_keys);
+  my $uri = $params->{get_uri}($self->url_keys);
   
-  my $description = ( defined( $self->tournament_round ) )
+  my $description = defined( $self->tournament_round)
     ? undef
-    : sprintf( "%s: %s\n%s: %s\n%s: %s\n%s", $lang->{competition_heading}, $lang->{competition_league}, $lang->{division_heading}, $self->division_season->name, $lang->{season_heading}, $self->season->name, $uri );
+    : sprintf("%s: %s\n%s: %s\n%s: %s\n%s", $lang->maketext("matches.field.competition"), $lang->maketext("matches.field.competition.value.league"), $lang->maketext("matches.field.division"), $self->division_season->name, $lang->("matches.field.season"), $self->season->name, $uri);
   
-  my $timezone  = $self->season->timezone;
-  my $now_tz    = DateTime->now( time_zone => $timezone );
+  my $timezone = $self->season->timezone;
+  my $now_tz = DateTime->now(time_zone => $timezone);
   
   # Current date / time in UTC
-  my $now_utc = DateTime->now( time_zone => "UTC" );
+  my $now_utc = DateTime->now(time_zone => "UTC");
   
-  my ( $home_club_name, $away_club_name ) = ( defined( $parameters->{abbreviated_club_names} ) and $parameters->{abbreviated_club_names} )
+  my ( $home_club_name, $away_club_name ) = defined($params->{abbreviated_club_names}) and $params->{abbreviated_club_names}
     ? ( $home_team->club_season->abbreviated_name, $away_team->club_season->abbreviated_name )
     : ( $home_team->club_season->short_name, $away_team->club_season->short_name );
   
   # Add a colon and space to the end of the prefix if the user didn't provide either a colon or hyphen after it (followed by optional space)
-  $parameters->{summary_prefix} .= ": " if exists( $parameters->{summary_prefix} ) and defined( $parameters->{summary_prefix} ) and $parameters->{summary_prefix} ne "" and $parameters->{summary_prefix} !~ m/[-:]\s?$/;
+  $params->{summary_prefix} .= ": " if exists($params->{summary_prefix}) and defined($params->{summary_prefix}) and $params->{summary_prefix} ne "" and $params->{summary_prefix} !~ m/[-:]\s?$/;
   
   # Set the prefix to a blank space if it doesn't exist or is undef
-  $parameters->{summary_prefix} = "" unless exists( $parameters->{summary_prefix} ) and defined( $parameters->{summary_prefix} );
+  $params->{summary_prefix} = "" unless exists($params->{summary_prefix}) and defined($params->{summary_prefix});
   
-  my $event           = Data::ICal::Entry::Event->new;
+  my $event = Data::ICal::Entry::Event->new;
   #my $event_timezone  = Data::ICal::TimeZone->new( timezone => $timezone );
   $event->add_properties(
-    uid             => sprintf( "matches.team.%s-%s.%s-%s.%s@%s", $home_team->club_season->club->url_key, $home_team->team->url_key, $away_team->club_season->club->url_key, $away_team->team->url_key, $self->actual_date->ymd("-"), &{ $parameters->{get_host} } ),
-    summary         => sprintf( "%s%s %s %s %s %s", $parameters->{summary_prefix}, $home_club_name, $home_team->name, $lang->{versus}, $away_club_name, $away_team->name ),
-    status          => ( $self->cancelled ) ? "CANCELLED" : "CONFIRMED",
-    description     => $description,
-    dtstart         => DateTime::Format::ICal->format_datetime( $self->actual_date->set( hour => $start_hour, minute => $start_minute ) ),
-    duration        => DateTime::Format::ICal->format_duration( DateTime::Duration->new( minutes => &{ $parameters->{get_duration} } ) ),
-    location        => $self->venue->full_address(", "),
-    geo             => sprintf( "%s;%s", $self->venue->coordinates_latitude, $self->venue->coordinates_longitude ),
-    url             => $uri,
-    created         => DateTime::Format::ICal->format_datetime( $now_utc ),
-    "last-modified" => DateTime::Format::ICal->format_datetime( $now_utc ),
-    dtstamp         => DateTime::Format::ICal->format_datetime( $now_utc ),
+    uid => sprintf("matches.team.%s-%s.%s-%s.%s@%s", $home_team->club_season->club->url_key, $home_team->team->url_key, $away_team->club_season->club->url_key, $away_team->team->url_key, $self->actual_date->ymd("-"), &{$params->{get_host}}),
+    summary => sprintf("%s%s %s %s %s %s", $params->{summary_prefix}, $home_club_name, $home_team->name, $lang->{versus}, $away_club_name, $away_team->name),
+    status => $self->cancelled ? "CANCELLED" : "CONFIRMED",
+    description => $description,
+    dtstart => DateTime::Format::ICal->format_datetime( $self->actual_date->set(hour => $start_hour, minute => $start_minute)),
+    duration => DateTime::Format::ICal->format_duration(DateTime::Duration->new(minutes => &{$params->{get_duration}})),
+    location => $self->venue->full_address(", "),
+    geo => sprintf("%s;%s", $self->venue->coordinates_latitude, $self->venue->coordinates_longitude),
+    url => $uri,
+    created => DateTime::Format::ICal->format_datetime($now_utc),
+    "last-modified" => DateTime::Format::ICal->format_datetime($now_utc),
+    dtstamp => DateTime::Format::ICal->format_datetime($now_utc),
   );
   
   return $event;
@@ -1818,11 +1906,9 @@ Retrieve the reports for this match (reports is plural because it also retrieves
 sub get_reports {
   my ( $self ) = @_;
   
-  return $self->search_related("team_match_reports", {}, {
+  return $self->search_related("team_match_reports", undef, {
     prefetch => "author",
-    order_by => {
-      -desc => "published",
-    },
+    order_by => {-desc => "published"},
   });
 }
 
@@ -1835,12 +1921,10 @@ Retrieve the original report for this match (useful for getting the author of th
 sub get_original_report {
   my ( $self ) = @_;
   
-  return $self->search_related("team_match_reports", {}, {
-    prefetch  => "author",
-    order_by  => {
-      -asc    => "published",
-    },
-    rows      => 1,
+  return $self->search_related("team_match_reports", undef, {
+    prefetch => "author",
+    order_by => {-asc => "published"},
+    rows => 1,
   })->single;
 }
 
@@ -1853,12 +1937,10 @@ Retrieve the original report for this match (useful for getting the author of th
 sub get_latest_report {
   my ( $self ) = @_;
   
-  return $self->search_related("team_match_reports", {}, {
-    prefetch  => "author",
-    order_by  => {
-      -desc   => "published",
-    },
-    rows      => 1,
+  return $self->search_related("team_match_reports", undef, {
+    prefetch => "author",
+    order_by => {-desc => "published"},
+    rows => 1,
   })->single;
 }
 
@@ -1873,28 +1955,26 @@ sub can_report {
   my $season = $self->season;
   
   # Just return false if the season is complete - no one can submit or edit a report in a completed season.
-  return 0 if $season->complete or !defined( $user ) or ref( $user ) ne "Catalyst::Authentication::Store::DBIx::Class::User";
+  return 0 if $season->complete or !defined($user) or ref($user) ne "Catalyst::Authentication::Store::DBIx::Class::User";
   
   # Check the user is authorised to do this - first of all we check if there are any reports already
   my $original_report = $self->get_original_report;
   
   # The roles the user has will always be the same regardless of the original; need roles depends on the situation
-  my $have_roles = Set::Object->new( $user->roles );
+  my $have_roles = Set::Object->new($user->roles);
   my @need_roles;
   
-  if ( defined( $original_report ) ) {
+  if ( defined($original_report) ) {
     # We have an original report, so we need to check if the current user is the original author before we can get the
     # roles that will be allowed to edit.
     
     # Work out which field name we're looking for
-    my $auth_column = ( $original_report->author->id == $user->id ) ? "match_report_edit_own" : "match_report_edit_all";
+    my $auth_column = $original_report->author->id == $user->id ? "matchreport_edit_own" : "matchreport_edit_all";
     
     @need_roles = $self->result_source->schema->resultset("Role")->search({
       $auth_column => 1
     }, {
-      order_by => {
-        -asc => [ qw( name ) ],
-      },
+      order_by => {-asc => [qw( name )]},
     });
   } else {
     # There is no report yet, so we need to check if the user is associated with any clubs or teams before we can get the
@@ -1910,23 +1990,21 @@ sub can_report {
       $user->captain_for({team => $away_team, season => $season}) or
       $user->secretary_for({club => $home_club}) or
       $user->secretary_for({club => $away_club})
-      ) ? "match_report_create_associated"
-        : "match_report_create";
+      ) ? "matchreport_create_associated"
+        : "matchreport_create";
     
     @need_roles = $self->result_source->schema->resultset("Role")->search({
       $auth_column => 1
     }, {
-      order_by => {
-        -asc => [ qw( name ) ],
-      },
+      order_by => {-asc => [qw( name )]},
     });
   }
   
   # Extract the name column for each returned value
-  @need_roles = map( $_->name, @need_roles );
+  @need_roles = map($_->name, @need_roles);
   
-  my $need_roles = Set::Object->new( @need_roles );
-  if ( $have_roles->intersection( $need_roles )->size > 0 ) {
+  my $need_roles = Set::Object->new(@need_roles);
+  if ( $have_roles->intersection($need_roles)->size > 0 ) {
     return 1;
   } else {
     return 0;
@@ -1940,30 +2018,49 @@ Add a report to the match.
 =cut
 
 sub add_report {
-  my ( $self, $parameters ) = @_;
-  my %return_value = (errors => []);
-  my $report  = $parameters->{report};
-  my $user    = $parameters->{user};
-  my $lang    = $parameters->{lang};
-  my $raw_report = TopTable->model("FilterHTML")->filter( $report );
+  my ( $self, $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  
+  my $report = $params->{report};
+  my $user = $params->{user};
+  my $response = {
+    errors => [],
+    warnings => [],
+    info => [],
+    success => [],
+    completed => 0,
+  };
+  
+  
+  my $raw_report = TopTable->model("FilterHTML")->filter($report);
   $raw_report =~ s/^\s+|\s+$//g;
   
-  push( @{ $return_value{errors} }, $lang->("matches.report.error.not-authorised", $user->username) ) unless $self->can_report( $user );
-  push( @{ $return_value{errors} }, $lang->("matches.report.error.report-blank") ) unless $raw_report;
+  push(@{$response->{errors}}, $lang->maketext("matches.report.error.not-authorised", $user->username)) unless $self->can_report($user);
+  push(@{$response->{errors}}, $lang->maketext("matches.report.error.report-blank")) unless $raw_report;
   
   # No errors so far, try and add a report
-  unless ( scalar( @{ $return_value{errors} } ) ) {
+  unless ( scalar @{$response->{errors}} ) {
     # Determine whether we're creating or editing
     my $original_report = $self->get_original_report;
-    $return_value{action} = ( defined( $original_report ) ) ? "edit" : "create";
     
+    my ( $action, $action_desc ) = defined($original_report) ? qw( edit edited ) : qw( create created );
+    
+    $response->{action} = $action;
     my $report = $self->create_related("team_match_reports", {
-      author  => $user->id,
-      report  => TopTable->model("FilterHTML")->filter( $report, "textarea" ),
+      author => $user->id,
+      report => TopTable->model("FilterHTML")->filter($report, "textarea"),
     });
+    
+    push(@{$response->{success}}, $lang->maketext("matches.report.success", $lang->maketext("admin.message.$action_desc")));
+    $response->{completed} = 1;
   }
   
-  return \%return_value;
+  return $response;
 }
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

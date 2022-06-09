@@ -1,7 +1,7 @@
 package TopTable::Controller::FixturesGrids;
 use Moose;
 use namespace::autoclean;
-use Data::Dumper;
+use Data::Printer;
 use HTML::Entities;
 
 BEGIN { extends 'Catalyst::Controller'; }
@@ -33,12 +33,12 @@ sub auto :Private {
   $c->load_status_msgs;
   
   # The title bar will always have
-  $c->stash({subtitle1 => $c->maketext("menu.text.fixtures-grids")});
+  $c->stash({subtitle1 => $c->maketext("menu.text.fixtures-grid")});
   
-  push( @{ $c->stash->{breadcrumbs} }, {
+  push(@{$c->stash->{breadcrumbs}}, {
     # Listing
-    path  => $c->uri_for("/fixtures-grids"),
-    label => $c->maketext("menu.text.fixtures-grids"),
+    path => $c->uri_for("/fixtures-grids"),
+    label => $c->maketext("menu.text.fixtures-grid"),
   });
 }
 
@@ -55,21 +55,21 @@ sub base :Chained("/") :PathPart("fixtures-grids") :CaptureArgs(1) {
   
   if ( defined($grid) ) {
     # Encode the name for future use later in the chain (saves encoding multiple times, which is expensive)
-    my $encoded_name = encode_entities( $grid->name );
+    my $enc_name = encode_entities($grid->name);
     
     $c->stash({
-      grid          => $grid,
-      encoded_name  => $encoded_name,
+      grid => $grid,
+      enc_name => $enc_name,
     });
     
     # Push the list page on to the breadcrumbs
-    push( @{ $c->stash->{breadcrumbs} }, {
+    push(@{$c->stash->{breadcrumbs} }, {
       # View page (current season)
-      path  => $c->uri_for_action("/fixtures-grids/view_current_season", [$grid->url_key]),
-      label => $encoded_name,
+      path => $c->uri_for_action("/fixtures-grids/view_current_season", [$grid->url_key]),
+      label => $enc_name,
     });
   } else {
-    $c->detach( qw/TopTable::Controller::Root default/ );
+    $c->detach(qw(TopTable::Controller::Root default));
   }
 }
 
@@ -82,24 +82,21 @@ Chain base for the list of fixtures grids.  Matches /fixtures-grids
 
 sub base_list :Chained("/") :PathPart("fixtures-grids") :CaptureArgs(0) {
   my ( $self, $c ) = @_;
-  my $site_name = $c->stash->{encoded_site_name};
+  my $site_name = $c->stash->{enc_site_name};
   
   # Check that we are authorised to view fixtures grids
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["fixtures_view", $c->maketext("user.auth.view-fixtures-grids"), 1] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["fixtures_view", $c->maketext("user.auth.view-fixtures-grids"), 1]);
   
   # Check the authorisation to edit fixtures so we can display the link if necessary
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( fixtures_edit fixtures_delete fixtures_create) ], "", 0] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", [ [ qw( fixtures_edit fixtures_delete fixtures_create) ], "", 0]);
   
   # Page description
   $c->stash({
     page_description => $c->maketext("description.fixtures-grids.list", $site_name),
-    external_scripts      => [
+    external_scripts => [
       $c->uri_for("/static/script/standard/option-list.js"),
     ],
   });
-  
-  # Load the messages
-  $c->load_status_msgs;
 }
 
 =head2 list_first_page
@@ -111,8 +108,8 @@ List the fixtures grids on the first page.
 sub list_first_page :Chained("base_list") :PathPart("") :Args(0) {
   my ( $self, $c ) = @_;
   
-  $c->detach( "retrieve_paged", [1] );
   $c->stash({canonical_uri => $c->uri_for_action("/fixtures-grids/list_first_page")});
+  $c->detach("retrieve_paged", [1]);
 }
 
 =head2 list_specific_page
@@ -133,7 +130,7 @@ sub list_specific_page :Chained("base_list") :PathPart("page") :Args(1) {
     $c->stash({canonical_uri => $c->uri_for_action("/fixtures-grids/list_specific_page", [$page_number])});
   }
   
-  $c->detach( "retrieve_paged", [$page_number] );
+  $c->detach("retrieve_paged", [$page_number]);
 }
 
 =head2 retrieve_paged
@@ -146,26 +143,26 @@ sub retrieve_paged :Private {
   my ( $self, $c, $page_number ) = @_;
   
   my $grids = $c->model("DB::FixturesGrid")->page_records({
-    page_number       => $page_number,
-    results_per_page  => $c->config->{Pagination}{default_page_size},
+    page_number => $page_number,
+    results_per_page => $c->config->{Pagination}{default_page_size},
   });
   
-  my $page_info   = $grids->pager;
-  my $page_links  = $c->forward( "TopTable::Controller::Root", "generate_pagination_links", [{
-    page_info             => $page_info,
-    page1_action          => "/fixtures-grids/list_first_page",
-    specific_page_action  => "/fixtures-grids/list_specific_page",
-    current_page          => $page_number
-  }] );
+  my $page_info = $grids->pager;
+  my $page_links = $c->forward("TopTable::Controller::Root", "generate_pagination_links", [{
+    page_info => $page_info,
+    page1_action => "/fixtures-grids/list_first_page",
+    specific_page_action => "/fixtures-grids/list_specific_page",
+    current_page => $page_number
+  }]);
   
   # Set up the template to use
   $c->stash({
-    template            => "html/fixtures-grids/list.ttkt",
+    template => "html/fixtures-grids/list.ttkt",
     view_online_display => "Viewing fixtures grids",
-    view_online_link    => 1,
-    grids               => $grids,
-    page_info           => $page_info,
-    page_links          => $page_links,
+    view_online_link => 1,
+    grids => $grids,
+    page_info => $page_info,
+    page_links => $page_links,
   });
 }
 
@@ -178,8 +175,8 @@ sub view :Chained("base") :PathPart("") :CaptureArgs(0) {
   my $grid = $c->stash->{grid};
   
   # Check that we are authorised to view fixtures grids
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["fixtures_view", $c->maketext("user.auth.view-fixtures-grids"), 1] );
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", [[ qw( fixtures_edit fixtures_delete ) ], "", 0] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["fixtures_view", $c->maketext("user.auth.view-fixtures-grids"), 1]);
+  $c->forward("TopTable::Controller::Users", "check_authorisation", [[ qw( fixtures_edit fixtures_delete ) ], "", 0]);
 }
 
 
@@ -191,25 +188,25 @@ Get and stash the current season (or last complete one if it doesn't exist) for 
 
 sub view_current_season :Chained("view") :PathPart("") :Args(0) {
   my ( $self, $c ) = @_;
-  my $grid      = $c->stash->{grid};
-  my $site_name = $c->stash->{encoded_site_name};
-  my $grid_name = $c->stash->{encoded_name};
+  my $grid = $c->stash->{grid};
+  my $site_name = $c->stash->{enc_site_name};
+  my $enc_name = $c->stash->{enc_name};
   
   # No season ID, try to find the current season
   my $season = $c->model("DB::Season")->get_current;
-  $season = $c->model("DB::Season")->last_complete_season unless defined( $season ); # No current season season, try and find the last season.
+  $season = $c->model("DB::Season")->last_complete_season unless defined($season); # No current season season, try and find the last season.
   
-  if ( defined( $season ) ) {
+  if ( defined($season) ) {
     $c->stash({
-      season              => $season,
-      view_online_display => sprintf( "Viewing %s", $grid_name ),
-      view_online_link    => 1,
-      page_description    => $c->maketext("description.fixtures-grids.view-current", $grid_name, $site_name),
+      season => $season,
+      view_online_display => sprintf("Viewing %s", $enc_name),
+      view_online_link => 1,
+      page_description => $c->maketext("description.fixtures-grids.view-current", $enc_name, $site_name),
     });
   } else {
     $c->stash({
-      view_online_display => sprintf( "Viewing %s", $grid_name ),
-      view_online_link    => 1,
+      view_online_display => sprintf("Viewing %s", $enc_name),
+      view_online_link => 1,
     });
   }
   
@@ -225,42 +222,42 @@ View a fixtures grid with a specific season's details.
 
 sub view_specific_season :Chained("view") :PathPart("seasons") :Args(1) {
   my ( $self, $c, $season_id_or_url_key ) = @_;
-  my $grid      = $c->stash->{grid};
-  my $site_name = $c->stash->{encoded_site_name};
-  my $grid_name = $c->stash->{encoded_name};
+  my $grid = $c->stash->{grid};
+  my $site_name = $c->stash->{enc_site_name};
+  my $enc_name = $c->stash->{enc_name};
   
   # Check that we are authorised to view teams
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["fixtures_view", $c->maketext("user.auth.view-fixtures-grids"), 1] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["fixtures_view", $c->maketext("user.auth.view-fixtures-grids"), 1]);
     
-  my $season = $c->model("DB::Season")->find_id_or_url_key( $season_id_or_url_key );
+  my $season = $c->model("DB::Season")->find_id_or_url_key($season_id_or_url_key);
   
   if ( defined($season) ) {
-    my $encoded_season_name = encode_entities( $season->name );
+    my $enc_season_name = encode_entities($season->name);
     
     $c->stash({
-      season              => $season,
-      specific_season     => 1,
-      subtitle2           => $encoded_season_name,
-      encoded_season_name => $encoded_season_name,
-      view_online_display => sprintf( "Viewing %s for %s", $grid->name, $season->name ),
-      view_online_link    => 1,
-      page_description    => $c->maketext("description.fixtures-grids.view-specific", $grid_name, $site_name, $encoded_season_name),
+      season => $season,
+      specific_season => 1,
+      subtitle2 => $enc_season_name,
+      enc_season_name => $enc_season_name,
+      view_online_display => sprintf("Viewing %s for %s", $grid->name, $season->name),
+      view_online_link => 1,
+      page_description => $c->maketext("description.fixtures-grids.view-specific", $enc_name, $site_name, $enc_season_name),
     });
     
     # Push the season list URI and the current URI on to the breadcrumbs
-    push( @{ $c->stash->{breadcrumbs} }, {
-      path  => $c->uri_for_action("/fixtures-grids/view_seasons_first_page", [$grid->url_key]),
-      label => $c->maketext("menu.text.seasons"),
+    push(@{$c->stash->{breadcrumbs}}, {
+      path => $c->uri_for_action("/fixtures-grids/view_seasons_first_page", [$grid->url_key]),
+      label => $c->maketext("menu.text.season"),
     }, {
-      path  => $c->uri_for_action("/fixtures-grids/view_specific_season", [$grid->url_key, $season->url_key]),
-      label => $encoded_season_name,
+      path => $c->uri_for_action("/fixtures-grids/view_specific_season", [$grid->url_key, $season->url_key]),
+      label => $enc_season_name,
     });
   } else {
     # Invalid season - the message says we are attempting to find the current season, which
     # is correct, as the redirect is to the same page, but with no season ID specified, which
     # should try and match the current season (or if there is no current season the latest season).
-    $c->response->redirect( $c->uri_for_action("/fixtures-grids/view_current_season", [$grid->url_key],
-                                {mid => $c->set_status_msg( {error => $c->maketext("seasons.invalid-find-current", $season_id_or_url_key)} ) }) );
+    $c->response->redirect($c->uri_for_action("/fixtures-grids/view_current_season", [$grid->url_key],
+                                {mid => $c->set_status_msg({error => $c->maketext("seasons.invalid-find-current", $season_id_or_url_key)})}));
     $c->detach;
     return;
   }
@@ -279,52 +276,52 @@ Finalise the view routine, whether we were given a season or not
 
 sub view_finalise :Private {
   my ( $self, $c ) = @_;
-  my $grid          = $c->stash->{grid};
-  my $season        = $c->stash->{season};
-  my $encoded_name  = $c->stash->{encoded_name};
+  my $grid = $c->stash->{grid};
+  my $season = $c->stash->{season};
+  my $enc_name = $c->stash->{enc_name};
   
   # Grab the weeks / matches
-  my $grid_weeks  = $c->model("DB::FixturesGrid")->get_grid_matches( $grid )->first;
-  my $weeks       = $grid_weeks->fixtures_grid_weeks;
+  my $grid_weeks = $c->model("DB::FixturesGrid")->get_grid_matches( $grid )->first;
+  my $weeks = $grid_weeks->fixtures_grid_weeks;
   
   # Get the list of divisions using this grid in the season specified - if we don't have a season, don't do this
-  my $divisions   = [$c->model("DB::Division")->divisions_and_teams_in_season_by_grid_position( $season, $grid )] if exists( $c->stash->{season} );
+  my $divisions = [$c->model("DB::Division")->divisions_and_teams_in_season_by_grid_position($season, $grid)] if exists($c->stash->{season});
   
   # Set up the title links if we need them
   my @title_links = ();
   
-  unless ( exists( $c->stash->{delete_screen} ) ) {
+  unless ( exists($c->stash->{delete_screen}) ) {
     # Push edit link if we are authorised
     push(@title_links, {
       image_uri => $c->uri_for("/static/images/icons/0018-Pencil-icon-32.png"),
-      text      => $c->maketext("admin.edit-object", $encoded_name),
-      link_uri  => $c->uri_for_action("/fixtures-grids/edit", [$grid->url_key]),
+      text => $c->maketext("admin.edit-object", $enc_name),
+      link_uri => $c->uri_for_action("/fixtures-grids/edit", [$grid->url_key]),
     }) if $c->stash->{authorisation}{fixtures_edit};
     
     # Push a delete link if we're authorised and the grid can be deleted
     push(@title_links, {
       image_uri => $c->uri_for("/static/images/icons/0005-Delete-icon-32.png"),
-      text      => $c->maketext("admin.delete-object", $encoded_name),
-      link_uri  => $c->uri_for_action("/fixtures-grids/delete", [$grid->url_key]),
+      text => $c->maketext("admin.delete-object", $enc_name),
+      link_uri => $c->uri_for_action("/fixtures-grids/delete", [$grid->url_key]),
     }) if $c->stash->{authorisation}{fixtures_delete} and $grid->can_delete;
   }
   
-  my $canonical_uri = ( $season->complete )
+  my $canonical_uri = ( defined($season) and $season->complete )
     ? $c->uri_for_action("/fixtures-grids/view_specific_season", [$grid->url_key, $season->url_key])
     : $c->uri_for_action("/fixtures-grids/view_current_season", [$grid->url_key]);
   
   # Set up the template to use
   $c->stash({
-    template            => "html/fixtures-grids/view.ttkt",
-    title_links         => \@title_links,
-    subtitle1           => $encoded_name,
-    weeks               => [$weeks->all],
-    divisions           => $divisions,
-    season              => $season,
-    view_online_display => sprintf( "Viewing %s", $grid->name ),
-    view_online_link    => 1,
-    canonical_uri       => $canonical_uri,
-    external_scripts      => [
+    template => "html/fixtures-grids/view.ttkt",
+    title_links => \@title_links,
+    subtitle1 => $enc_name,
+    weeks => [$weeks->all],
+    divisions => $divisions,
+    season => $season,
+    view_online_display => sprintf("Viewing %s", $grid->name),
+    view_online_link => 1,
+    canonical_uri => $canonical_uri,
+    external_scripts => [
       $c->uri_for("/static/script/standard/option-list.js"),
       $c->uri_for("/static/script/standard/vertical-table.js"),
     ],
@@ -340,23 +337,23 @@ Retrieve and display a list of seasons that this fixtures grid has been used for
 
 sub view_seasons :Chained("view") :PathPart("seasons") :CaptureArgs(0) {
   my ( $self, $c ) = @_;
-  my $grid      = $c->stash->{grid};
-  my $site_name = $c->stash->{encoded_site_name};
-  my $grid_name = $c->stash->{encoded_name};
+  my $grid = $c->stash->{grid};
+  my $site_name = $c->stash->{enc_site_name};
+  my $enc_name = $c->stash->{enc_name};
   
   # Stash the template; the data will be retrieved when we know what page we're on
   $c->stash({
-    template          => "html/fixtures-grids/list-seasons.ttkt",
-    page_description  => $c->maketext("description.fixtures-grids.list-seasons", $grid_name, $site_name),
-    external_scripts      => [
+    template => "html/fixtures-grids/list-seasons.ttkt",
+    page_description => $c->maketext("description.fixtures-grids.list-seasons", $enc_name, $site_name),
+    external_scripts => [
       $c->uri_for("/static/script/standard/option-list.js"),
     ],
   });
   
   # Push the current URI on to the breadcrumbs
-  push( @{ $c->stash->{breadcrumbs} }, {
-    path  => $c->uri_for_action("/fixtures-grids/view_seasons_first_page", [$grid->url_key]),
-    label => $c->maketext("menu.text.seasons"),
+  push(@{$c->stash->{breadcrumbs}}, {
+    path => $c->uri_for_action("/fixtures-grids/view_seasons_first_page", [$grid->url_key]),
+    label => $c->maketext("menu.text.season"),
   });
 }
 
@@ -371,7 +368,7 @@ sub view_seasons_first_page :Chained("view_seasons") :PathPart("") :Args(0) {
   my $grid = $c->stash->{grid};
   
   $c->stash({canonical_uri => $c->uri_for_action("/fixtures-grids/view_seasons_first_page", [$grid->url_key])});
-  $c->detach( "retrieve_paged_seasons", [1] );
+  $c->detach("retrieve_paged_seasons", [1]);
 }
 
 =head2 view_seasons_specific_page
@@ -394,7 +391,7 @@ sub view_seasons_specific_page :Chained("view_seasons") :PathPart("page") :Args(
   }
   
   $c->stash({canonical_uri => $c->uri_for_action("/fixtures-grids/view_seasons_specific_page", [$page_number])});
-  $c->detach( "retrieve_paged_seasons", [$page_number] );
+  $c->detach("retrieve_paged_seasons", [$page_number]);
 }
 
 =head2 retrieve_paged_seasons
@@ -408,27 +405,27 @@ sub retrieve_paged_seasons :Private {
   my $grid = $c->stash->{grid};
   
   my $seasons = $c->model("DB::Season")->page_records({
-    fixutres_grid     => $grid,
-    page_number       => $page_number,
-    results_per_page  => $c->config->{Pagination}{default_page_size},
+    fixutres_grid => $grid,
+    page_number => $page_number,
+    results_per_page => $c->config->{Pagination}{default_page_size},
   });
   
-  my $page_info   = $seasons->pager;
-  my $page_links  = $c->forward( "TopTable::Controller::Root", "generate_pagination_links", [{
-    page_info             => $page_info,
-    page1_action          => "/fixtures-grids/view_seasons_first_page",
-    specific_page_action  => "/fixtures-grids/view_seasons_specific_page",
-    current_page          => $page_number,
+  my $page_info = $seasons->pager;
+  my $page_links = $c->forward( "TopTable::Controller::Root", "generate_pagination_links", [{
+    page_info => $page_info,
+    page1_action => "/fixtures-grids/view_seasons_first_page",
+    specific_page_action => "/fixtures-grids/view_seasons_specific_page",
+    current_page => $page_number,
   }] );
   
   # Set up the template to use
   $c->stash({
-    template            => "html/fixtures-grids/list-seasons.ttkt",
+    template => "html/fixtures-grids/list-seasons.ttkt",
     view_online_display => sprintf( "Viewing seasons for ", $grid->name ),
-    view_online_link    => 1,
-    seasons             => $seasons,
-    page_info           => $page_info,
-    page_links          => $page_links,
+    view_online_link => 1,
+    seasons => $seasons,
+    page_info => $page_info,
+    page_links => $page_links,
   });
 }
 
@@ -441,27 +438,24 @@ Display a form to collect information for creating a fixtures grid.
 sub create :Local {
   my ($self, $c) = @_;
   
-  # Load the messages
-  $c->load_status_msgs;
-  
   # Check that we are authorised to create fixtures grids
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["fixtures_create", $c->maketext("user.auth.create-fixtures-grids"), 1] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["fixtures_create", $c->maketext("user.auth.create-fixtures-grids"), 1]);
   
   # Get venues and people to list
   $c->stash({
-    template            => "html/fixtures-grids/create-edit.ttkt",
-    form_action         => $c->uri_for("do-create"),
-    external_scripts    => [
+    template => "html/fixtures-grids/create-edit.ttkt",
+    form_action => $c->uri_for("do-create"),
+    external_scripts => [
       $c->uri_for("/static/script/fixtures-grids/create-edit.js"),
     ],
-    subtitle2           => $c->maketext("admin.create"),
+    subtitle2 => $c->maketext("admin.create"),
     view_online_display => "Creating fixtures grids",
-    view_online_link    => 0,
+    view_online_link => 0,
   });
   
   # Push the breadcrumbs links
-  push( @{ $c->stash->{breadcrumbs} }, {
-    path  => $c->uri_for("/fixtures-grids/create"),
+  push(@{$c->stash->{breadcrumbs}}, {
+    path => $c->uri_for("/fixtures-grids/create"),
     label => $c->maketext("admin.create"),
   });
 }
@@ -474,33 +468,33 @@ Display a form to with the existing information for editing a fixtures grid.
 
 sub edit :Chained("base") :PathPart("edit") :Args(0) {
   my ($self, $c) = @_;
-  my $grid          = $c->stash->{grid};
-  my $encoded_name  = $c->stash->{encoded_name};
+  my $grid = $c->stash->{grid};
+  my $enc_name = $c->stash->{enc_name};
   
   # Don't cache this page.
-  $c->response->header("Cache-Control"  => "no-cache, no-store, must-revalidate");
-  $c->response->header("Pragma"         => "no-cache");
-  $c->response->header("Expires"        => 0);
+  $c->res->header("Cache-Control" => "no-cache, no-store, must-revalidate");
+  $c->res->header("Pragma" => "no-cache");
+  $c->res->header("Expires" => 0);
   
   # Check that we are authorised to create fixtures grids
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["fixtures_edit", $c->maketext("user.auth.edit-fixtures-grids"), 1] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["fixtures_edit", $c->maketext("user.auth.edit-fixtures-grids"), 1]);
   
   # Get venues to list
   $c->stash({
-    subtitle1           => $encoded_name,
-    subtitle2           => $c->maketext("admin.edit"),
-    template            => "html/fixtures-grids/create-edit.ttkt",
-    form_action         => $c->uri_for_action("/fixtures-grids/do_edit", [$grid->url_key]),
-    external_scripts    => [
+    subtitle1 => $enc_name,
+    subtitle2 => $c->maketext("admin.edit"),
+    template => "html/fixtures-grids/create-edit.ttkt",
+    form_action => $c->uri_for_action("/fixtures-grids/do_edit", [$grid->url_key]),
+    external_scripts => [
       $c->uri_for("/static/script/fixtures-grids/create-edit.js"),
     ],
-    view_online_display => sprintf( "Editing %s", $encoded_name ),
-    view_online_link    => 0,
+    view_online_display => sprintf("Editing %s", $enc_name),
+    view_online_link => 0,
   });
   
   # Push the breadcrumbs links
-  push( @{ $c->stash->{breadcrumbs} }, {
-    path  => $c->uri_for_action("/fixtures-grids/edit", [$grid->url_key]),
+  push(@{$c->stash->{breadcrumbs}}, {
+    path => $c->uri_for_action("/fixtures-grids/edit", [$grid->url_key]),
     label => $c->maketext("admin.edit"),
   });
 }
@@ -513,15 +507,15 @@ Display the form for deleting a fixtures grid.
 
 sub delete :Chained("base") :PathPart("delete") :Args(0) {
   my ( $self, $c ) = @_;
-  my $grid          = $c->stash->{grid};
-  my $encoded_name  = $c->stash->{encoded_name};
+  my $grid = $c->stash->{grid};
+  my $enc_name = $c->stash->{enc_name};
   
   # Check that we are authorised to delete grids
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["fixtures_delete", $c->maketext("user.auth.delete-fixtures-grids"), 1] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["fixtures_delete", $c->maketext("user.auth.delete-fixtures-grids"), 1]);
   
-  if ( !$grid->can_delete ) {
-    $c->response->redirect( $c->uri_for_action("/fixtures-grids/view_current_season", [$grid->url_key],
-                                {mid => $c->set_status_msg( {error => $c->maketext( "fixtures-grids.delete.error.cant-delete", $grid->name )} ) }) );
+  unless ( $grid->can_delete ) {
+    $c->response->redirect($c->uri_for_action("/fixtures-grids/view_current_season", [$grid->url_key],
+                                {mid => $c->set_status_msg({error => $c->maketext("fixtures-grids.delete.error.cant-delete", $grid->name)})}));
     $c->detach;
     return;
   }
@@ -533,16 +527,16 @@ sub delete :Chained("base") :PathPart("delete") :Args(0) {
   $c->forward("view_current_season");
   
   $c->stash({
-    subtitle1           => $encoded_name,
-    subtitle2           => $c->maketext("admin.delete"),
-    template            => "html/fixtures-grids/delete.ttkt",
-    view_online_display => sprintf( "Deleting %s", $encoded_name ),
-    view_online_link    => 0,
+    subtitle1 => $enc_name,
+    subtitle2 => $c->maketext("admin.delete"),
+    template => "html/fixtures-grids/delete.ttkt",
+    view_online_display => sprintf("Deleting %s", $enc_name),
+    view_online_link => 0,
   });
   
   # Push the breadcrumbs links
-  push( @{ $c->stash->{breadcrumbs} }, {
-    path  => $c->uri_for_action("/fixtures-grids/delete", [$grid->url_key]),
+  push(@{$c->stash->{breadcrumbs}}, {
+    path => $c->uri_for_action("/fixtures-grids/delete", [$grid->url_key]),
     label => $c->maketext("admin.delete"),
   });
 }
@@ -557,8 +551,8 @@ sub do_create :Path("do-create") {
   my ( $self, $c ) = @_;
   
   # Check that we are authorised to create fixtures grids
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["fixtures_create", $c->maketext("user.auth.create-fixtures-grids"), 1] );
-  $c->detach( "setup_grid", ["create"] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["fixtures_create", $c->maketext("user.auth.create-fixtures-grids"), 1]);
+  $c->detach("process_form", ["create"]);
 }
 
 =head2 do_edit
@@ -571,8 +565,8 @@ sub do_edit :Chained("base") :PathPart("do-edit") :Args(0) {
   my ( $self, $c ) = @_;
   
   # Check that we are authorised to create fixtures
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["fixtures_edit", $c->maketext("user.auth.edit-fixtures-grids"), 1] );
-  $c->detach( "setup_grid", ["edit"] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["fixtures_edit", $c->maketext("user.auth.edit-fixtures-grids"), 1]);
+  $c->detach("process_form", ["edit"]);
 }
 
 =head2 do_delete
@@ -583,85 +577,89 @@ Process the deletion form.
 
 sub do_delete :Chained("base") :PathPart("do-delete") :Args(0) {
   my ( $self, $c ) = @_;
-  my $grid      = $c->stash->{grid};
+  my $grid = $c->stash->{grid};
   my $grid_name = $grid->name; # Unavailable after we delete, so save it away now
   
   # Check that we are authorised to delete grids
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["fixtures_delete", $c->maketext("user.auth.delete-fixtures-grids"), 1] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["fixtures_delete", $c->maketext("user.auth.delete-fixtures-grids"), 1]);
   
   # Hand off to the model to do some checking
   #my $deletion_result = $c->model("DB::Venue")->check_and_delete( $venue );
-  my $error = $grid->check_and_delete;
+  my $response = $grid->check_and_delete;
   
-  if ( scalar( @{ $error } ) ) {
-    # Error deleting, go back to deletion page
-    $c->response->redirect( $c->uri_for_action("/fixtures-grids/view_current_season", [$grid->url_key],
-                                {mid => $c->set_status_msg( {error => $c->build_message($error)} ) }) );
-    $c->detach;
-    return;
+  # Set the status messages we need to show on redirect
+  my @errors = @{$response->{errors}};
+  my @warnings = @{$response->{warnings}};
+  my @info = @{$response->{info}};
+  my @success = @{$response->{success}};
+  my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});
+  my $redirect_uri;
+  
+  if ( $response->{completed} ) {
+    # Was completed, display the list page
+    $redirect_uri = $c->uri_for("/fixtures-grids", {mid => $mid});
+    
+    # Completed, so we log an event
+    $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["fixtures-grid", "delete", {id => undef}, $grid_name]);
   } else {
-    # Success, log a deletion and return to the venue list
-    $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["fixtures-grid", "delete", {id => undef}, $grid_name] );
-    $c->response->redirect( $c->uri_for("/fixtures-grids",
-                                {mid => $c->set_status_msg( {success => $c->maketext( "admin.forms.success", $grid_name, $c->maketext("admin.message.deleted") )} ) }) );
-    $c->detach;
-    return;
+    # Not complete
+    $redirect_uri = $c->uri_for_action("/fixtures-grids/view_current_season", [$grid->url_key], {mid => $mid});
   }
+  
+  # Now actually do the redirection
+  $c->response->redirect($redirect_uri);
+  $c->detach;
+  return;
 }
 
-=head2 setup_grid
+=head2 process_form
 
 Forwarded from docreate and doedit to do the template creation / edit.
 
 =cut
 
-sub setup_grid :Private {
+sub process_form :Private {
   my ( $self, $c, $action ) = @_;
   my $grid = $c->stash->{grid};
+  my @field_names = qw( name maximum_teams fixtures_repeated );
   
-  # Success, we need to create the fixtures grid
-  my $actioned = $c->model("DB::FixturesGrid")->create_or_edit($action, {
-    grid              => $grid,
-    name              => $c->request->parameters->{name},
-    maximum_teams     => $c->request->parameters->{maximum_teams},
-    fixtures_repeated => $c->request->parameters->{fixtures_repeated},
+  # The rest of the error checking is done in the Club model
+  my $response = $c->model("DB::FixturesGrid")->create_or_edit($action, {
+    grid => $grid, # This will be undef if we're creating.
+    map {$_ => $c->req->params->{$_}} @field_names, # All the fields from the form
+    logger => sub{ my $level = shift; $c->log->$level( @_ ); },
   });
   
-  $grid = $actioned->{grid} if exists( $actioned->{grid} );
-  if ( scalar( @{ $actioned->{error} } ) ) {
-    my $error = $c->build_message( $actioned->{error} );
+  my @errors = @{$response->{errors}};
+  my @warnings = @{$response->{warnings}};
+  my @info = @{$response->{info}};
+  my @success = @{$response->{success}};
+  my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});
+  my $redirect_uri;
+  
+  if ( $response->{completed} ) {
+    # Was completed, display the view page
+    $grid = $response->{grid};
+    $redirect_uri = $c->uri_for_action("/fixtures-grids/view_current_season", [$grid->url_key], {mid => $mid});
+    
+    # Completed, so we log an event
+    $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["fixtures-grid", $action, {id => $grid->id}, $grid->name]);
+  } else {
+    # Not complete - check if we need to redirect back to the create or view page
+    if ( $action eq "create" ) {
+      $redirect_uri = $c->uri_for("/fixtures-grids/create", {mid => $mid});
+    } else {
+      $redirect_uri = $c->uri_for_action("/fixtures-grids/edit", [$grid->url_key], {mid => $mid});
+    }
     
     # Flash the entered values we've got so we can set them into the form
-    $c->flash->{name}               = $c->request->parameters->{name};
-    $c->flash->{maximum_teams}      = $c->request->parameters->{maximum_teams};
-    $c->flash->{fixtures_repeated}  = $c->request->parameters->{fixtures_repeated};
-    
-    my $redirect_uri;
-    if ( $action eq "create" ) {
-      $redirect_uri = $c->uri_for("/fixtures-grids/create",
-                          {mid => $c->set_status_msg( {error => $error} ) });
-    } else {
-      $redirect_uri = $c->uri_for_action("/fixtures-grids/edit", [ $grid->url_key ],
-                          {mid => $c->set_status_msg( {error => $error} ) });
-    }
-    
-    $c->response->redirect( $redirect_uri );
-    $c->detach;
-    return;
-  } else {
-    my $action_description;
-    if ( $action eq "create" ) {
-      $action_description = $c->maketext("admin.message.created");
-    } else {
-      $action_description = $c->maketext("admin.message.edited");
-    }
-    
-    $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["fixtures-grid", $action, {id => $grid->id}, $grid->name] );
-    $c->response->redirect( $c->uri_for_action("/fixtures-grids/view_current_season", [$grid->url_key],
-                                {mid => $c->set_status_msg( {success => $c->maketext( "admin.forms.success", $grid->name, $action_description )} ) }) );
-    $c->detach;
-    return;
+    $c->flash->{$_} = $response->{fields}{$_} foreach @field_names;
   }
+  
+  # Now actually do the redirection
+  $c->response->redirect($redirect_uri);
+  $c->detach;
+  return;
 }
 
 =head2 matches
@@ -672,49 +670,46 @@ Display a form to change the grid week details.
 
 sub matches :Chained("base") :PathPart("matches") :Args(0) {
   my ( $self, $c ) = @_;
-  my $grid          = $c->stash->{grid};
-  my $encoded_name  = $c->stash->{encoded_name};
+  my $grid = $c->stash->{grid};
+  my $enc_name = $c->stash->{enc_name};
   
   # Don't cache this page.
-  $c->response->header("Cache-Control"  => "no-cache, no-store, must-revalidate");
-  $c->response->header("Pragma"         => "no-cache");
-  $c->response->header("Expires"        => 0);
+  $c->response->header("Cache-Control" => "no-cache, no-store, must-revalidate");
+  $c->response->header("Pragma" => "no-cache");
+  $c->response->header("Expires" => 0);
   
   # Check that we are authorised to create fixtures grids
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["fixtures_edit", $c->maketext("user.auth.edit-fixtures-grids"), 1] );
   
   # Grab the weeks / matches
-  my $grid_weeks = $c->model("DB::FixturesGrid")->get_grid_matches( $grid );
-  #$grid = $grid_weeks->first;
   my $weeks = $grid->fixtures_grid_weeks;
   
   # Get venues to list
   $c->stash({
-    template            => "html/fixtures-grids/matches.ttkt",
-    subtitle1           => $encoded_name,
-    subtitle2           => $c->maketext("fixtures-grids.matches"),
-    external_scripts    => [
+    template => "html/fixtures-grids/matches.ttkt",
+    subtitle1 => $enc_name,
+    subtitle2 => $c->maketext("fixtures-grids.matches"),
+    external_scripts => [
       $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
       $c->uri_for("/static/script/standard/chosen.js"),
       $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
       $c->uri_for("/static/script/standard/prettycheckable.js"),
       $c->uri_for("/static/script/fixtures-grids/matches.js"),
     ],
-    external_styles     => [
+    external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
       $c->uri_for("/static/css/prettycheckable/prettyCheckable.css"),
     ],
-    form_action         => $c->uri_for_action("/fixtures-grids/set_matches", [$grid->url_key]),
-    view_online_display => sprintf( "Configuring weeks for %s", $encoded_name ),
-    view_online_link    => 0,
-    grid                => $grid,
-    weeks               => [$weeks->all],
-    flashed_weeks       => $c->flash->{weeks},
+    form_action => $c->uri_for_action("/fixtures-grids/set_matches", [$grid->url_key]),
+    view_online_display => sprintf("Configuring weeks for %s", $enc_name),
+    view_online_link => 0,
+    weeks => [$weeks->all],
+    flashed_weeks => $c->flash->{weeks},
   });
   
   # Push the breadcrumbs links
-  push( @{ $c->stash->{breadcrumbs} }, {
-    path  => $c->uri_for_action("/fixtures-grids/matches", [$grid->url_key]),
+  push(@{$c->stash->{breadcrumbs}}, {
+    path => $c->uri_for_action("/fixtures-grids/matches", [$grid->url_key]),
     label => $c->maketext("fixtures-grids.matches"),
   });
 }
@@ -730,53 +725,51 @@ sub set_matches :Chained("base") :PathPart("set-matches") :Args(0) {
   my $grid = $c->stash->{grid};
   
   # Check that we are authorised to create fixtures grids
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["fixtures_edit", $c->maketext("user.auth.edit-fixtures-grids"), 1] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["fixtures_edit", $c->maketext("user.auth.edit-fixtures-grids"), 1]);
   
   # Loop through and get our home / away hash keys for each match
-  my ( %match_teams );
-  foreach my $key ( keys %{ $c->request->parameters } ) {
+  my %match_teams;
+  foreach my $key ( keys %{$c->req->params} ) {
     # Check the key matches the name we're looking for: "week_[number]_match_[number]_home" or "week_[number]_match_[number]_away"
     # The resulting hash is made up of $fixtures_weeks{$week_number}{$match_number}{home} or $fixtures_weeks{$week_number}{$match_number}{away}
-    $match_teams{$1}{$2}{$3} = $c->request->parameters->{$key} if $key =~ /^week_(\d{1,2})_match_(\d{1,2})_(home|away)$/;
+    $match_teams{$1}{$2}{$3} = $c->req->params->{$key} if $key =~ /^week_(\d{1,2})_match_(\d{1,2})_(home|away)$/;
   }
-  
-  my $actioned = $grid->set_matches({
-    repeat_fixtures => $c->request->parameters->{repeat_fixtures},
-    match_teams     => \%match_teams,
-    language        => sub{ $c->maketext( @_ ); },
+    
+  my $response = $grid->set_matches({
+    logger => sub{ my $level = shift; $c->log->$level( @_ ); },
+    repeat_fixtures => $c->req->params->{repeat_fixtures},
+    match_teams => \%match_teams,
   });
   
-  $grid = $actioned->{grid} if exists( $actioned->{grid} );
-  if ( scalar( @{ $actioned->{error} } ) ) {
-    my $error = $c->build_message( $actioned->{error} );
+  # Set the status messages we need to show on redirect
+  my @errors = @{$response->{errors}};
+  my @warnings = @{$response->{warnings}};
+  my @info = @{$response->{info}};
+  my @success = @{$response->{success}};
+  my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});
+  my $redirect_uri;
+  
+  if ( $response->{completed} ) {
+    # Was completed, display the view page
+    $redirect_uri = $c->uri_for_action("/fixtures-grids/view_current_season", [$grid->url_key], {mid => $mid});
     
-    # If we've errored, we need to flash all the values - we didn't do this originally, as we didn't know if there was an error or not.
-    $c->flash->{weeks}            = $actioned->{weeks};
-    $c->flash->{repeat_fixtures}  = $actioned->{repeat_fixtures};
-    
-    my $redirect_uri;
-    if ( $grid ) {
-      $redirect_uri = $c->uri_for_action("/fixtures-grids/matches", [ $grid->url_key ],
-                                {mid => $c->set_status_msg( {error => $error} ) } );
-    } else {
-      $redirect_uri = $c->uri_for("/fixtures-grids",
-                                {mid => $c->set_status_msg( {error => $error} ) } );
-    }
-    
-    $c->response->redirect( $redirect_uri );
-    $c->detach;
-    return;
+    # Completed, so we log an event
+    $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["fixtures-grid", "matches", {id => $grid->id}, $grid->name]);
   } else {
-    # TEMP for testing, so we don't keep having to reselect
-    $c->flash->{weeks}            = $actioned->{weeks};
-    $c->flash->{repeat_fixtures}  = $actioned->{repeat_fixtures};
+    # Not complete - redirect back to the matches page
+    $redirect_uri = $c->uri_for_action("/fixtures-grids/matches", [$grid->url_key], {mid => $mid});
     
-    $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["fixtures-grid", "matches", {id => $grid->id}, $grid->name] );
-    $c->response->redirect( $c->uri_for_action("/fixtures-grids/view_current_season", [ $grid->url_key ],
-                              {mid => $c->set_status_msg( {success => $c->maketext("fixtures-grids.form.matches.success")} ) }) );
-    $c->detach;
-    return;
+    # Flash the entered values we've got so we can set them into the form
+    $c->flash({
+      repeat_fixtures => $response->{fields}{repeat_fixtures},
+      weeks => $response->{fields}{weeks},
+    });
   }
+  
+  # Now actually do the redirection
+  $c->response->redirect($redirect_uri);
+  $c->detach;
+  return;
 }
 
 =head2 teams
@@ -787,16 +780,16 @@ Display a form to change the team allocations for each division assigned to that
 
 sub teams :Chained("base") :PathPart("teams") :Args(0) {
   my ( $self, $c ) = @_;
-  my $grid          = $c->stash->{grid};
-  my $encoded_name  = $c->stash->{encoded_name};
+  my $grid = $c->stash->{grid};
+  my $enc_name = $c->stash->{enc_name};
   
   # Don't cache this page.
-  $c->response->header("Cache-Control"  => "no-cache, no-store, must-revalidate");
-  $c->response->header("Pragma"         => "no-cache");
-  $c->response->header("Expires"        => 0);
+  $c->response->header("Cache-Control" => "no-cache, no-store, must-revalidate");
+  $c->response->header("Pragma" => "no-cache");
+  $c->response->header("Expires" => 0);
   
   # Check that we are authorised to create fixtures grids
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["fixtures_edit", $c->maketext("user.auth.edit-fixtures-grids"), 1] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["fixtures_edit", $c->maketext("user.auth.edit-fixtures-grids"), 1]);
   
   # Get the current season, so we know which teams and divisions we have.
   my $current_season = $c->model("DB::Season")->get_current;
@@ -804,8 +797,8 @@ sub teams :Chained("base") :PathPart("teams") :Args(0) {
   # Check we have a current season
   unless ( defined($current_season) ) {
     # Error, no current season
-    $c->response->redirect( $c->uri_for("/seasons/create",
-                                {mid => $c->set_status_msg( {error => $c->maketext("fixtures-grids.teams.error.no-current-season") } ) }) );
+    $c->response->redirect($c->uri_for("/seasons/create",
+                                {mid => $c->set_status_msg({error => $c->maketext("fixtures-grids.teams.error.no-current-season")})}));
     $c->detach;
     return;
   }
@@ -813,28 +806,28 @@ sub teams :Chained("base") :PathPart("teams") :Args(0) {
   # Check the season hasn't had matches created already
   if ( $c->model("DB::TeamMatch")->season_matches($current_season, {grid => $grid})->count > 0 ) {
     # Error, matches set already
-    $c->response->redirect( $c->uri_for_action("/fixtures-grids/view_current_season", [$grid->url_key],
-                                {mid => $c->set_status_msg( {error => $c->maketext("fixtures-grids.teams.error.matches-already-set") } ) }) );
+    $c->response->redirect($c->uri_for_action("/fixtures-grids/view_current_season", [$grid->url_key],
+                                {mid => $c->set_status_msg({error => $c->maketext("fixtures-grids.teams.error.matches-already-set")})}));
     $c->detach;
     return;
   }
   
   $c->stash({
-    template            => "html/fixtures-grids/teams.ttkt",
-    subtitle1           => $encoded_name,
-    subtitle2           => $c->maketext("fixtures-grids.allocate-teams"),
-    external_scripts    => [
+    template => "html/fixtures-grids/teams.ttkt",
+    subtitle1 => $enc_name,
+    subtitle2 => $c->maketext("fixtures-grids.allocate-teams"),
+    external_scripts => [
       $c->uri_for("/static/script/fixtures-grids/teams.js"),
     ],
-    form_action         => $c->uri_for_action("/fixtures-grids/set_teams", [$grid->url_key]),
+    form_action => $c->uri_for_action("/fixtures-grids/set_teams", [$grid->url_key]),
     view_online_display => "Allocating teams for fixtures grid " . $grid->name,
-    view_online_link    => 0,
-    divisions           => [ $c->model("DB::DivisionSeason")->divisions_and_teams_in_season_by_grid_position($current_season, $grid) ],
+    view_online_link => 0,
+    divisions => [$c->model("DB::DivisionSeason")->divisions_and_teams_in_season_by_grid_position($current_season, $grid)],
   });
   
   # Push the breadcrumbs links
-  push( @{ $c->stash->{breadcrumbs} }, {
-    path  => $c->uri_for_action("/fixtures-grids/teams", [$grid->url_key]),
+  push(@{$c->stash->{breadcrumbs}}, {
+    path => $c->uri_for_action("/fixtures-grids/teams", [$grid->url_key]),
     label => $c->maketext("fixtures-grids.teams"),
   });
 }
@@ -850,7 +843,7 @@ sub set_teams :Chained("base") :PathPart("set-teams") :Args(0) {
   my $grid = $c->stash->{grid};
   
   # Check that we are authorised to create fixtures grids
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["fixtures_edit", $c->maketext("user.auth.edit-fixtures-grids"), 1] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["fixtures_edit", $c->maketext("user.auth.edit-fixtures-grids"), 1]);
   
   # Get the current season, so we know which teams and divisions we have.
   my $current_season = $c->model("DB::Season")->get_current;
@@ -858,8 +851,8 @@ sub set_teams :Chained("base") :PathPart("set-teams") :Args(0) {
   # Check we have a current season
   unless ( defined($current_season) ) {
     # Error, no current season
-    $c->response->redirect( $c->uri_for("/seasons/create",
-                                {mid => $c->set_status_msg( {error => $c->maketext("fixtures-grids.teams.error.no-current-season") } ) }) );
+    $c->response->redirect($c->uri_for("/seasons/create",
+                                {mid => $c->set_status_msg({error => $c->maketext("fixtures-grids.teams.error.no-current-season")})}));
     $c->detach;
     return;
   }
@@ -867,50 +860,55 @@ sub set_teams :Chained("base") :PathPart("set-teams") :Args(0) {
   # Check the season hasn't had matches created already
   if ( $c->model("DB::TeamMatch")->season_matches($current_season, {grid => $grid})->count > 0 ) {
     # Error, matches set already
-    $c->response->redirect( $c->uri_for_action("/fixtures_grids/view_current_season", [$grid->url_key],
-                                {mid => $c->set_status_msg( {error => $c->maketext("fixtures-grids.teams.error.matches-already-set") } ) }) );
+    $c->response->redirect($c->uri_for_action("/fixtures_grids/view_current_season", [$grid->url_key],
+                                {mid => $c->set_status_msg({error => $c->maketext("fixtures-grids.teams.error.matches-already-set")})}));
     $c->detach;
     return;
   }
   
   # Loop through all the request parameters and get all the divisions
   my %divisions;
-  foreach my $key ( keys %{ $c->request->parameters } ) {
-    $divisions{$key} = $c->request->parameters->{$key} if $key =~ /division-positions-\d+/;
+  foreach my $key ( keys %{ $c->req->params } ) {
+    $divisions{$key} = [split(",", $c->req->params->{$key})] if $key =~ /division-positions-\d+/;
   }
   
-  my $returned = $grid->set_teams({
-    season    => $current_season,
-    divisions => \%divisions,
-    language  => sub{ $c->maketext( @_ ); },
-  });
+  my $response = $grid->set_teams({divisions => \%divisions});
   
-  $grid = $returned->{grid} if exists( $returned->{grid} );
-  if ( scalar( @{ $returned->{error} } ) ) {
-    my $error = $c->build_message( $returned->{error} );
+  # Set the status messages we need to show on redirect
+  my @errors = @{$response->{errors}};
+  my @warnings = @{$response->{warnings}};
+  my @info = @{$response->{info}};
+  my @success = @{$response->{success}};
+  my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});
+  my $redirect_uri;
+  
+  if ( $response->{completed} ) {
+    # Was completed, display the view page
+    $redirect_uri = $c->uri_for_action("/fixtures-grids/view_current_season", [$grid->url_key], {mid => $mid});
     
-    # If we've errored, we need to flash all the values.
-    $c->flash->{divisions} = $returned->{submitted_data};
-    
-    my $redirect_uri;
-    if ( $returned->{grid} ) {
-      $redirect_uri = $c->uri_for_action("/fixtures-grids/teams", [$grid->url_key],
-                                {mid => $c->set_status_msg( {error => $error} ) } );
-    } else {
-      $redirect_uri = $c->uri_for("/fixtures-grids",
-                                {mid => $c->set_status_msg( {error => $error} ) } );
-    }
-    
-    $c->response->redirect( $redirect_uri );
-    $c->detach;
-    return;
+    # Completed, so we log an event
+    $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["fixtures-grid", "teams", {id => $grid->id}, $grid->name]);
   } else {
-    $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["fixtures-grid", "teams", {id => $grid->id}, $grid->name] );
-    $c->response->redirect( $c->uri_for_action("/fixtures-grids/view_current_season", [$grid->url_key],
-                                {mid => $c->set_status_msg( {success => $c->maketext( "fixtures-grids.form.teams.success", $grid->name )} ) } ) );
-    $c->detach;
-    return;
+    # Not complete - redirect back to the matches page
+    if ( $response->{can_complete} ) {
+      # The errors given *don't* prevent us from setting teams for this grid, so redirect back to the form with the flashed values
+      $redirect_uri = $c->uri_for_action("/fixtures-grids/teams", [$grid->url_key], {mid => $mid});
+      
+      # Flash the entered values we've got so we can set them into the form
+      $c->flash({
+        repeat_fixtures => $response->{fields}{repeat_fixtures},
+        weeks => $response->{fields}{weeks},
+      });
+    } else {
+      # The errors given *do* prevent us from setting teams for this grid, so redirect back to the grid view page
+      $redirect_uri = $c->uri_for_action("/fixtures-grids/view_current_season", [$grid->url_key], {mid => $mid});
+    }
   }
+  
+  # Now actually do the redirection
+  $c->response->redirect($redirect_uri);
+  $c->detach;
+  return;
 }
 
 =head2 create_fixtures
@@ -921,25 +919,25 @@ Display a list of teams and their grid positions along with a list of weeks with
 
 sub create_fixtures :Chained("base") :PathPart("create-fixtures") :Args(0) {
   my ( $self, $c ) = @_;
-  my $grid          = $c->stash->{grid};
-  my $encoded_name  = $c->stash->{encoded_name};
+  my $grid = $c->stash->{grid};
+  my $enc_name = $c->stash->{enc_name};
   
   # Don't cache this page.
-  $c->response->header("Cache-Control"  => "no-cache, no-store, must-revalidate");
-  $c->response->header("Pragma"         => "no-cache");
-  $c->response->header("Expires"        => 0);
+  $c->response->header("Cache-Control" => "no-cache, no-store, must-revalidate");
+  $c->response->header("Pragma" => "no-cache");
+  $c->response->header("Expires" => 0);
   
   # Check that we are authorised to create fixtures grids
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["fixtures_create", $c->maketext("user.auth.create-fixtures"), 1] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["fixtures_create", $c->maketext("user.auth.create-fixtures"), 1]);
   
   # Get the current season, so we know which teams and divisions we have.
   my $current_season = $c->model("DB::Season")->get_current;
   
   # Check we have a current season
-  unless ( defined( $current_season ) ) {
+  unless ( defined($current_season) ) {
     # Error, no current season
     $c->response->redirect( $c->uri_for("/seasons/create",
-                                {mid => $c->set_status_msg( {error => "fixtures-grids.form.create-fixtures.error.no-current-season"} ) }) );
+                                {mid => $c->set_status_msg({error => "fixtures-grids.form.create-fixtures.error.no-current-season"})}));
     $c->detach;
     return;
   }
@@ -948,24 +946,24 @@ sub create_fixtures :Chained("base") :PathPart("create-fixtures") :Args(0) {
   if ( $c->model("DB::TeamMatch")->season_matches($current_season, {grid => $grid})->count > 0 ) {
     # Error, matches set already
     $c->response->redirect( $c->uri_for("/",
-                                {mid => $c->set_status_msg( {error => "fixtures-grids.form.create-fixtures.error.fixtures-already-exist"} ) }) );
+                                {mid => $c->set_status_msg({error => "fixtures-grids.form.create-fixtures.error.fixtures-already-exist"})}));
     $c->detach;
     return;
   }
   
-  if ( $c->model("DB::FixturesGrid")->incomplete_matches( $grid )->count > 0 ) {
+  if ( $c->model("DB::FixturesGrid")->incomplete_matches($grid)->count > 0 ) {
     # Error, matches set already
-    $c->response->redirect( $c->uri_for_action("/fixtures-grids/matches", [$grid->url_key],
-                                {mid => $c->set_status_msg( {error => "fixtures-grids.form.create-fixtures.error.matches-incomplete"} ) }) );
+    $c->response->redirect($c->uri_for_action("/fixtures-grids/matches", [$grid->url_key],
+                                {mid => $c->set_status_msg({error => "fixtures-grids.form.create-fixtures.error.matches-incomplete"})}));
     $c->detach;
     return;
   }
   
   # Get the list of teams who've entered - we need to make sure everything's been completed and ready for matches to be created.
-  if ( $c->model("DB::FixturesGrid")->incomplete_grid_positions( $grid, $current_season ) > 0 ) {
+  if ( $c->model("DB::FixturesGrid")->incomplete_grid_positions($grid, $current_season) > 0 ) {
     # Error, team positions incomplete
     $c->response->redirect( $c->uri_for_action("/fixtures-grids/teams", [$grid->url_key],
-                                {mid => $c->set_status_msg( {error => "fixtures-grids.form.create-fixtures.error.teams-incomplete"} ) }) );
+                                {mid => $c->set_status_msg( {error => "fixtures-grids.form.create-fixtures.error.teams-incomplete"})}));
     $c->detach;
     return;
   }
@@ -976,42 +974,42 @@ sub create_fixtures :Chained("base") :PathPart("create-fixtures") :Args(0) {
   while ( my $season_week = $season_weeks->next ) {
     # Set the locale so we get proper strings
     my $date = $season_week->week_beginning_date;
-    $date->set_locale( $c->locale );
+    $date->set_locale($c->locale);
     
     push(@season_weeks, {
-      week_beginning_text => sprintf( "%d %s %d", $date->day, $date->month_name, $date->year ),
+      week_beginning_text => sprintf("%d %s %d", $date->day, $date->month_name, $date->year),
       week_beginning_date => $date,
-      id                  => $season_week->id,
+      id => $season_week->id,
     });
   }
   
   $c->stash({
-    template            => "html/fixtures-grids/create-fixtures.ttkt",
-    subtitle1           => $encoded_name,
-    subtitle2           => $c->maketext("fixtures-grids.create-fixtures"),
-    external_scripts    => [
+    template => "html/fixtures-grids/create-fixtures.ttkt",
+    subtitle1 => $enc_name,
+    subtitle2 => $c->maketext("fixtures-grids.create-fixtures"),
+    external_scripts => [
       $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
       $c->uri_for("/static/script/standard/chosen.js"),
       $c->uri_for("/static/script/fixtures-grids/create-fixtures.js"),
     ],
-    external_styles     => [
+    external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
     ],
-    form_action         => $c->uri_for_action("/fixtures-grids/do_create_fixtures", [$grid->url_key]),
+    form_action => $c->uri_for_action("/fixtures-grids/do_create_fixtures", [$grid->url_key]),
     view_online_display => "Creating fixtures for grid " . $grid->name,
-    view_online_link    => 0,
-    grid_weeks          => [ $c->model("DB::FixturesGridWeek")->search({grid => $grid->id}) ],
-    season_weeks        => \@season_weeks,
+    view_online_link => 0,
+    grid_weeks => [$c->model("DB::FixturesGridWeek")->search({grid => $grid->id})],
+    season_weeks => \@season_weeks,
   });
   
   # Push the breadcrumbs links
-  push( @{ $c->stash->{breadcrumbs} }, {
-    path  => $c->uri_for_action("/fixtures-grids/create_fixtures", [$grid->url_key]),
+  push(@{$c->stash->{breadcrumbs}}, {
+    path => $c->uri_for_action("/fixtures-grids/create_fixtures", [$grid->url_key]),
     label => $c->maketext("fixtures-grids.create-fixtures"),
   });
   
   # Append a warning message that will always appear on this page
-  $c->add_status_message( "warning", $c->maketext("fixtures-grids.form.create-fixtures.warning") );
+  $c->add_status_messages({warning => $c->maketext("fixtures-grids.form.create-fixtures.warning")});
 }
 
 =head2 do_create_fixtures
@@ -1025,16 +1023,16 @@ sub do_create_fixtures :Chained("base") :PathPart("do-create-fixtures") :Args(0)
   my $grid = $c->stash->{grid};
   
   # Check that we are authorised to create fixtures
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["fixtures_create", $c->maketext("user.auth.create-fixtures"), 1] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["fixtures_create", $c->maketext("user.auth.create-fixtures"), 1]);
   
   # Check we have a current season
-  my $current_season  = $c->model("DB::Season")->get_current;
+  my $current_season = $c->model("DB::Season")->get_current;
   
   # Check we have a current season
-  unless ( defined( $current_season ) ) {
+  unless ( defined($current_season) ) {
     # Error, no current season
-    $c->response->redirect( $c->uri_for("/seasons/create",
-                                {mid => $c->set_status_msg( {error => "fixtures-grids.form.create-fixtures.error.no-current-season"} ) }) );
+    $c->response->redirect($c->uri_for("/seasons/create",
+                                {mid => $c->set_status_msg({error => "fixtures-grids.form.create-fixtures.error.no-current-season"})}));
     $c->detach;
     return;
   }
@@ -1042,59 +1040,55 @@ sub do_create_fixtures :Chained("base") :PathPart("do-create-fixtures") :Args(0)
   # Check the season hasn't had matches created already.
   if ( $c->model("DB::TeamMatch")->season_matches($current_season, {grid => $grid})->count > 0 ) {
     # Error, matches set already
-    $c->response->redirect( $c->uri_for("/",
-                                {mid => $c->set_status_msg( {error => "fixtures-grids.form.create-fixtures.error.fixtures-already-exist"} ) }) );
+    $c->response->redirect($c->uri_for("/",
+                                {mid => $c->set_status_msg({error => "fixtures-grids.form.create-fixtures.error.fixtures-already-exist"})}));
     $c->detach;
     return;
   }
   
   # Get all the weeks submitted
-  my $season_weeks;
-  foreach ( keys %{ $c->request->parameters } ) {
-    $season_weeks->{$_} = $c->request->parameters->{$_} if m/^week_\d{1,2}$/;
+  my %weeks = ();
+  foreach ( keys %{$c->req->params } ) {
+    $weeks{$_} = $c->req->params->{$_} if m/^week_\d{1,2}$/;
   }
   
-  my $actioned = $c->model("DB::TeamMatch")->check_and_populate({
-    season        => $current_season,
-    grid          => $grid,
-    season_weeks  => $season_weeks,
-  });
+  my $response = $grid->create_matches({logger => sub{ my $level = shift; $c->log->$level( @_ ); }, weeks => \%weeks});
   
-  $grid = $actioned->{grid} if exists( $actioned->{grid} );
-  if ( scalar( @{ $actioned->{error} } ) ) {
-    my $error = $c->build_message( $actioned->{error} );
+  # Set the status messages we need to show on redirect
+  my @errors = @{$response->{errors}};
+  my @warnings = @{$response->{warnings}};
+  my @info = @{$response->{info}};
+  my @success = @{$response->{success}};
+  my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});
+  my $redirect_uri;
+  
+  if ( $response->{completed} ) {
+    # Was completed, display the view page
+    $redirect_uri = $c->uri_for_action("/fixtures-results/root_current_season", {mid => $mid});
     
-    my $redirect_uri;
-    if ( defined( $grid ) ) {
-      if ( $actioned->{create_fixtures_allowed} ) {
-        # If we get some week allocations to flash back, we can go back to the form
-        $c->flash->{week_allocations} = $actioned->{week_allocations};
-        
-        # Return to the form displaying errors
-        $redirect_uri = $c->uri_for_action("/fixtures-grids/create_fixtures", [$grid->url_key],
-                                {mid => $c->set_status_msg( {error => $error} ) });
-      } else {
-        # If there are no values to flash back, we have to assume we can't show the form - redirect back to the grid view page
-        $redirect_uri = $c->uri_for_action("/fixtures-grids/view_current_season", [$grid->url_key],
-                                {mid => $c->set_status_msg( {error => $error} ) });
-      }
-    } else {
-      # We don't even have a grid defined, just redirect back to the fixtures grid list
-      $redirect_uri = $c->uri_for("/fixtures-grids",
-                              {mid => $c->set_status_msg( {error => $error} ) });
-    }
-    
-    $c->response->redirect( $redirect_uri );
-    $c->detach;
-    return;
+    # Completed, so we log an event
+    $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["team-match", "create", $response->{match_ids}, $response->{match_names}]);
   } else {
-    # Success, log that matches have been created
-    $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["team-match", "create", $actioned->{match_ids}, $actioned->{match_names}] );
-    $c->response->redirect( $c->uri_for_action("/fixtures-results/root_current_season",
-                                {mid => $c->set_status_msg( {success => $c->maketext( "fixtures-grids.form.create-fixtures.success", $grid->name, $current_season->name )} ) }) );
-    $c->detach;
-    return;
+    # Not complete - redirect back to the matches page
+    if ( $response->{can_complete} ) {
+      # The errors given *don't* prevent us from setting teams for this grid, so redirect back to the form with the flashed values
+      $redirect_uri = $c->uri_for_action("/fixtures-grids/create_fixtures", [$grid->url_key], {mid => $mid});
+      
+      # Flash the entered values we've got so we can set them into the form
+      $c->flash({
+        repeat_fixtures => $response->{fields}{repeat_fixtures},
+        weeks => $response->{fields}{weeks},
+      });
+    } else {
+      # The errors given *do* prevent us from setting teams for this grid, so redirect back to the grid view page
+      $redirect_uri = $c->uri_for_action("/fixtures-grids/view_current_season", [$grid->url_key], {mid => $mid});
+    }
   }
+  
+  # Now actually do the redirection
+  $c->response->redirect($redirect_uri);
+  $c->detach;
+  return;
 }
 
 =head2 delete_fixtures
@@ -1108,29 +1102,29 @@ sub delete_fixtures :Chained("base") :PathPart("delete-fixtures") :Args(0) {
   my $grid = $c->stash->{grid};
   
   # Check that we are authorised to delete fixtures
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["fixtures_delete", $c->maketext("user.auth.delete-fixtures"), 1] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["fixtures_delete", $c->maketext("user.auth.delete-fixtures"), 1]);
   
   unless ( $grid->can_delete_fixtures ) {
-    $c->response->redirect( $c->uri_for_action("/fixtures-grids/view_current_season", [$grid->url_key],
-                                {mid => $c->set_status_msg( {error => $c->maketext( "fixtures-grids.form.delete-fixtures.error.cant-delete", $grid->name )} ) }) );
+    $c->response->redirect($c->uri_for_action("/fixtures-grids/view_current_season", [$grid->url_key],
+                                {mid => $c->set_status_msg({error => $c->maketext("fixtures-grids.form.delete-fixtures.error.cant-delete", $grid->name)})}));
     $c->detach;
     return;
   }
   
   $c->stash({
-    template            => "html/fixtures-grids/delete-fixtures.ttkt",
-    subtitle2           => $grid->name,
-    subtitle3           => $c->maketext("fixtures-grids.delete-fixtures"),
-    form_action         => $c->uri_for_action("/fixtures-grids/do_delete_fixtures", [$grid->url_key]),
+    template => "html/fixtures-grids/delete-fixtures.ttkt",
+    subtitle2 => $grid->name,
+    subtitle3 => $c->maketext("fixtures-grids.delete-fixtures"),
+    form_action => $c->uri_for_action("/fixtures-grids/do_delete_fixtures", [$grid->url_key]),
     view_online_display => sprintf( "Deleting fixtures for grid %s", $grid->name ),
-    view_online_link    => 0,
+    view_online_link => 0,
   });
   
-  $c->add_status_message( "warning", $c->maketext("fixtures-grids.form.delete-fixtures.warning") );
+  $c->add_status_messages({warning => $c->maketext("fixtures-grids.form.delete-fixtures.warning")});
   
   # Push the breadcrumbs links
-  push( @{ $c->stash->{breadcrumbs} }, {
-    path  => $c->uri_for_action("/fixtures-grids/delete_fixtures", [$grid->url_key]),
+  push(@{$c->stash->{breadcrumbs}}, {
+    path => $c->uri_for_action("/fixtures-grids/delete_fixtures", [$grid->url_key]),
     label => $c->maketext("fixtures-grids.delete-fixtures"),
   });
 }
@@ -1143,34 +1137,44 @@ Processes the deletion of fixtures that have been created for the grid in the cu
 
 sub do_delete_fixtures :Chained("base") :PathPart("do-delete-fixtures") :Args(0) {
   my ( $self, $c ) = @_;
-  my $grid          = $c->stash->{grid};
-  my $encoded_name  = $c->stash->{encoded_name};
+  my $grid = $c->stash->{grid};
+  my $enc_name = $c->stash->{enc_name};
   
   # Check that we are authorised to delete fixtures
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["fixtures_delete", $c->maketext("user.auth.delete-fixtures"), 1] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["fixtures_delete", $c->maketext("user.auth.delete-fixtures"), 1]);
   
   unless ( $grid->can_delete_fixtures ) {
-    $c->response->redirect( $c->uri_for_action("/fixtures-grids/view_current_season", [$grid->url_key],
-                                {mid => $c->set_status_msg( {error => $c->maketext( "fixtures-grids.form.delete-fixtures.error.cant-delete", $grid->name )} ) }) );
+    $c->response->redirect($c->uri_for_action("/fixtures-grids/view_current_season", [$grid->url_key],
+                                {mid => $c->set_status_msg({error => $c->maketext("fixtures-grids.form.delete-fixtures.error.cant-delete", $grid->name)})}));
     $c->detach;
     return;
   }
   
-  my $actioned = $grid->delete_fixtures;
+  my $response = $grid->delete_matches;
   
-  if ( scalar( @{ $actioned->{error} } ) ) {
-    my $error = $c->build_message( $actioned->{error} );
-    $c->response->redirect( $c->uri_for_action("/fixtures-grids/view_current_season", [$grid->url_key],
-                                {mid => $c->set_status_msg( {error => $error} ) }) );
-    $c->detach;
-    return;
+  # Set the status messages we need to show on redirect
+  my @errors = @{$response->{errors}};
+  my @warnings = @{$response->{warnings}};
+  my @info = @{$response->{info}};
+  my @success = @{$response->{success}};
+  my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});
+  my $redirect_uri;
+  
+  if ( $response->{completed} ) {
+    # Was completed, display the view page
+    $redirect_uri = $c->uri_for_action("/fixtures-grids/view_current_season", [$grid->url_key], {mid => $mid});
+    
+    # Completed, so we log an event
+    $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["team-match", "delete", $response->{match_ids}, $response->{match_names}]);
   } else {
-    $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["team-match", "delete", $actioned->{match_ids}, $actioned->{match_names}] );
-    $c->response->redirect( $c->uri_for_action("/fixtures-grids/view_current_season", [$grid->url_key],
-                                {mid => $c->set_status_msg( {success => $c->maketext( "fixture-grids.form.delete-fixtures.success", $actioned->{rows}, $encoded_name )} ) }) );
-    $c->detach;
-    return; 
+    # The errors given *do* prevent us from setting teams for this grid, so redirect back to the grid view page
+    $redirect_uri = $c->uri_for_action("/fixtures-grids/view_current_season", [$grid->url_key], {mid => $mid});
   }
+  
+  # Now actually do the redirection
+  $c->response->redirect($redirect_uri);
+  $c->detach;
+  return;
 }
 
 =head2 search
@@ -1185,18 +1189,16 @@ sub search :Local :Args(0) {
   # Check that we are authorised to view fixtures grids
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["fixtures_view", $c->maketext("user.auth.view-fixtures-grids"), 1] );
   
-  my $q = $c->req->param( "q" ) || undef;
-  
   $c->stash({
     db_resultset => "FixturesGrid",
-    query_params => {q => $q},
+    query_params => {q => $c->req->params->{q}},
     view_action => "/fixtures-grids/view_current_season",
     search_action => "/fixtures-grids/search",
-    placeholder => $c->maketext( "search.form.placeholder", $c->maketext("object.plural.fixtures-grids") ),
+    placeholder => $c->maketext("search.form.placeholder", $c->maketext("object.plural.fixtures-grids")),
   });
   
   # Do the search
-  $c->forward( "TopTable::Controller::Search", "do_search" );
+  $c->forward("TopTable::Controller::Search", "do_search");
 }
 
 =encoding utf8

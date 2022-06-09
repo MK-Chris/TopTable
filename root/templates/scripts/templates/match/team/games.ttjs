@@ -16,15 +16,15 @@ $(document).ready(function() {
     /*
       Variable declaration
     */
-    var current_games;  // Current number of games
-    var new_games;      // New number of games after adding one to the above number
-    var html;           // The HTML with the new fields to be appended to the games div
+    var current_games; // Current number of games
+    var new_games; // New number of games after adding one to the above number
+    var html; // The HTML with the new fields to be appended to the games div
     
     /*
       Work out the current / new number of games.
     */
     current_games = $("fieldset").length;
-    new_games     = current_games + 1;
+    new_games = current_games + 1;
     
     /*
       Set the HTML that will be appended to the games div
@@ -34,39 +34,48 @@ $(document).ready(function() {
     html += '<div class="label-field-container">\n';
     html += ' <label for="individual_match_template' + new_games + '">[% c.maketext("templates.team-match.games.field.game-template") %]</label>\n';
     html += ' <div class="field-container">\n';
-    html += '   <select id="individual_match_template' + new_games + '" name="individual_match_template" class="individual_match_template" data-placeholder="[% c.maketext("templates.team-match.games.field.game-template") %]">\n';
+    html += '   <select id="individual_match_template' + new_games + '" name="ind_match_tpl" class="individual_match_template" data-placeholder="[% c.maketext("templates.team-match.games.field.game-template") %]">\n';
     html += '     <option value=""></option>\n';
-[% FOREACH ind_match IN individual_match_templates -%]
+[%
+FOREACH ind_match IN individual_match_templates;
+-%]
     html += '     <option value="[% ind_match.id %]">[% ind_match.name %]</option>\n';
-[% END -%]
+[%
+END;
+-%]
     html += '   </select>\n';
     html += ' </div>\n';
     html += ' <div class="clear-fix"></div>\n';
     html += '</div>\n\n';
-    html += '<input type="checkbox" id="doubles_game' + new_games + '" name="doubles_game' + new_games + '" class="doubles" data-label="[% c.maketext("templates.team-match.games.field.doubles-game") %]" data-game="' + new_games + '" value="1" />\n\n';
+    html += '<input type="checkbox" id="doubles_game' + new_games + '" name="doubles' + new_games + '" class="doubles" data-label="[% c.maketext("templates.team-match.games.field.doubles-game") %]" data-game="' + new_games + '" value="1" />\n\n';
     html += '<div class="label-field-container">\n';
     html += ' <label for="singles_home_player_number' + new_games + '">[% c.maketext("templates.team-match.games.field.singles-players") %]</label>\n';
     html += ' <div class="field-container">\n';
-    html += '   <select id="singles_home_player_number' + new_games + '" class="game-' + new_games + ' player-number" name="singles_home_player_number' + new_games + '" data-placeholder="[% c.maketext("templates.team-match.games.form.field.home-player") %]">\n';
+    html += '   <select id="singles_home_player_number' + new_games + '" class="game-' + new_games + ' player-number" name="home_player' + new_games + '" data-placeholder="[% c.maketext("templates.team-match.games.form.field.home-player") %]">\n';
     html += '     <option value=""></option>\n';
 [% # Loop through until we reach the number of singles players in a match
 SET n = 1;
-WHILE n <= team_match_template.singles_players_per_team
+WHILE n <= team_match_template.singles_players_per_team;
 -%]
     html += '     <option value="[% n %]">[% n %]</option>\n';
-[% n = n + 1;
-END -%]
+[%
+n = n + 1;
+END;
+-%]
     html += '   </select>\n';
     html += '   v\n';
-    html += '   <select id="singles_away_player_number' + new_games + '" class="game-' + new_games + ' player-number" name="singles_away_player_number' + new_games + '" data-placeholder="[% c.maketext("templates.team-match.games.form.field.away-player") %]">\n';
+    html += '   <select id="singles_away_player_number' + new_games + '" class="game-' + new_games + ' player-number" name="away_player' + new_games + '" data-placeholder="[% c.maketext("templates.team-match.games.form.field.away-player") %]">\n';
     html += '     <option value=""></option>\n';
-[% # Loop through until we reach the number of singles players in a match
+[%
+# Loop through until we reach the number of singles players in a match
 SET n = 1 + team_match_template.singles_players_per_team;
 WHILE n <= (team_match_template.singles_players_per_team * 2);
 -%]
     html += '     <option value="[% n %]"[% SELECTED_TEXT %]>[% n %]</option>\n';
-[% n = n + 1;
-END -%]
+[%
+n = n + 1;
+END;
+-%]
     html += '   </select>\n';
     html += ' </div>\n';
     html += ' <div class="clear-fix"></div>\n';
@@ -98,8 +107,6 @@ END -%]
   });
   
   $("#games").on("change", "input.doubles", function() {
-    // We need parent() in this because the prettyCheckable encloses our checkbox in a div,
-    // so we need to break out of that before using nextAll.
     var t = $(this);
     if ( t.prop("checked") == false ) {
       $("select.game-" + t.data("game")).prop("disabled", false);
@@ -109,6 +116,19 @@ END -%]
       $("select.game-" + t.data("game")).prop("disabled", true);
       $("select.game-" + t.data("game")).trigger("chosen:updated");
     }
+  });
+  
+  /*
+    Delete games.  Each icon should delete its own game and any following it
+  */
+  $("a.delete-link").on("click", function() {
+    var this_fldset = $(this).parent().parent();
+    
+    // Remove the fieldsets that follow this one
+    this_fldset.nextAll("fieldset").remove();
+    
+    // Remove this fieldset
+    this_fldset.remove();
   });
   
   /*

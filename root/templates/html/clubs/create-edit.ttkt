@@ -1,3 +1,21 @@
+[%
+IF c.flash.show_flashed;
+  SET venue = c.flash.venue;
+ELSE;
+  IF club.defined;
+    SET venue = club.venue;
+  ELSE;
+    
+  END;
+END;
+
+IF active;
+  SET active_checked = ' checked="checked"';
+ELSE;
+  SET active_checked = '';
+END;
+-%]
+
 <form method="post" action="[% form_action %]">
 <fieldset>
   <legend>[% c.maketext("clubs.legend.details") %]</legend>
@@ -101,15 +119,15 @@ END;
       <select id="venue" name="venue" data-placeholder="[% c.maketext("clubs.field.venue") %]">
         <option value=""></option>
 [%
-FOREACH venue IN venues;
+FOREACH lookup_venue IN venues;
   # Set selected text if needed;
-  IF c.flash.venue != "" AND c.flash.venue == venue.id;
-    SET SELECTED = ' selected="selected"';
+  IF venue.id == lookup_venue.id;
+    SET selected = ' selected="selected"';
   ELSE;
-    SET SELECTED = '';
+    SET selected = '';
   END;
 -%]
-        <option value="[% venue.id %]"[% SELECTED %]>[% venue.name %]</option>
+        <option value="[% lookup_venue.id %]"[% selected %]>[% lookup_venue.name | html_entity %]</option>
 [%
 END;
 -%]

@@ -13,12 +13,7 @@ Search for all meeting types ordered by name.
 
 sub all_reasons {
   my ( $self ) = @_;
-  
-  return $self->search({}, {
-    order_by => {
-      -asc => "name",
-    },
-  });
+  return $self->search({}, {order_by => {-asc => "name"}});
 }
 
 =head2 page_records
@@ -29,8 +24,8 @@ Retrieve a paginated list of contact reasons.  If an object is specified (i.e., 
 
 sub page_records {
   my ( $self, $parameters ) = @_;
-  my $page_number       = $parameters->{page_number} || 1;
-  my $results_per_page  = $parameters->{results_per_page} || 25;
+  my $page_number = $parameters->{page_number} || 1;
+  my $results_per_page = $parameters->{results_per_page} || 25;
   
   # Set a default for results per page if it's not provided or invalid
   $results_per_page = 25 if !defined( $results_per_page ) or $results_per_page !~ m/^\d+$/;
@@ -39,11 +34,9 @@ sub page_records {
   $page_number = 1 if !defined($page_number) or $page_number !~ m/^\d+$/;
   
   return $self->search({}, {
-    page      => $page_number,
-    rows      => $results_per_page,
-    order_by  => {
-      -asc    => [qw( name )]
-    },
+    page => $page_number,
+    rows => $results_per_page,
+    order_by => {-asc => "name"},
   });
 }
 
@@ -57,11 +50,9 @@ sub check {
   my ( $self, $query ) = @_;
   
   return $self->find({
-    id  => $query,
+    id => $query,
   }, {
-    prefetch => {
-      contact_reason_recipients => "person",
-    },
+    prefetch => {contact_reason_recipients => "person"},
   });
 }
 
@@ -77,9 +68,7 @@ sub find_url_key {
   return $self->find({
     url_key => $url_key,
   }, {
-    prefetch => {
-      contact_reason_recipients => "person",
-    }
+    prefetch => {contact_reason_recipients => "person"}
   });
 }
 
@@ -102,9 +91,7 @@ sub find_id_or_url_key {
   }
   
   return $self->find( $where, {
-    prefetch => {
-      contact_reason_recipients => "person",
-    }
+    prefetch => {contact_reason_recipients => "person"}
   });
 }
 
@@ -151,30 +138,43 @@ Provides the wrapper (including error checking) for adding / editing a contact r
 =cut
 
 sub create_or_edit {
-  my ( $self, $action, $parameters ) = @_;
-  my ( $reason_name_check );
-  my $return_value = {error => []};
+  my ( $self, $action, $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
   
-  my $reason      = $parameters->{reason};
-  my $name        = $parameters->{name};
-  my $recipients  = $parameters->{recipients};
+  # Grab the fields
+  my $reason = $params->{reason};
+  my $name = $params->{name};
+  my $recipients = $params->{recipients};
+  my $recipient_ids = $params->{recipient_ids};
+  my $response = {
+    errors => [],
+    warnings => [],
+    info => [],
+    success => [],
+    fields => {
+      name  => $name, # Don't need to do anything to sanitise the name, so just pass it back in
+    },
+    completed => 0,
+  };
   
   if ( $action ne "create" and $action ne "edit" ) {
     # Invalid action passed
-    push(@{ $return_value->{error} }, {
-      id          => "admin.form.invalid-action",
-      parameters  => [$action],
-    });
+    push(@{ $response->{errors} }, $lang->maketext("admin.form.invalid-action", $action));
     
     # This error is fatal, so we return straight away
-    return $return_value;
+    return $response;
   } elsif ( $action eq "edit" ) {
     unless ( defined( $reason ) and ref( $reason ) eq "TopTable::Model::DB::MeetingType" ) {
       # Editing a meeting type that doesn't exist.
-      push(@{ $return_value->{error} }, {id => "meeting-types.form.error.meeting-type-invalid"});
+      push(@{ $response->{errors} }, $lang->maketext("meeting-types.form.error.meeting-type-invalid"));
       
       # Another fatal error
-      return $return_value;
+      return $response;
     }
   }
   
@@ -182,36 +182,45 @@ sub create_or_edit {
   # Check the names were entered and don't exist already.
   if ( $name ) {
     # Full name entered, check it.
+    my $reason_name_check;
+    
     if ( $action eq "edit" ) {
       $reason_name_check = $self->find({}, {
         where => {
-          name  => $name,
-          id    => {
-            "!=" => $reason->id,
-          }
+          name => $name,
+          id => {"!=" => $reason->id}
         }
       });
     } else {
       $reason_name_check = $self->find({name => $name});
     }
     
-    push(@{ $return_value->{error} }, {id => "contact-reasons.form.error.name-exists"}) if defined( $reason_name_check );
+    push(@{ $response->{errors} }, $lang->maketext("contact-reasons.form.error.name-exists")) if defined( $reason_name_check );
   } else {
     # Name omitted.
-    push(@{ $return_value->{error} }, {id => "contact-reasons.form.error.name-blank"});
+    push(@{ $response->{errors} }, $lang->maketext("contact-reasons.form.error.name-blank"));
   }
   
   # Check recipients - first set to an arrayref if it's not already, so we know we can loop
-  $recipients = [ $recipients ] unless ref( $recipients ) eq "ARRAY";
+  $recipients = [ $recipients ] if defined( $recipients ) and ref( $recipients ) ne "ARRAY";
+  $recipient_ids = [ $recipient_ids ] if defined( $recipient_ids ) and ref( $recipient_ids ) ne "ARRAY";
   
-  # Keep a count of invalid recipients for the error message
-  my $invalid_recipients  = 0;
+  if ( !defined( $recipients ) or scalar(@{$recipients}) == 0 ) {
+    # Make sure $recipients is an arrayref so we can push on to it
+    $recipients = [];
+    
+    # No already defined recipients, check recipient IDs
+    if ( defined( $recipient_ids ) ) {
+      # Now find the person for each ID given - just use the ID if we can't find anything; this means
+      # we can raise an error when we then look for valid people in @$recipients
+      push(@{$recipients}, $self->result_source->schema->resultset("Person")->find( $_ ) || $_ ) foreach ( @{$recipient_ids} );
+    }
+  }
   
-  # Keep a list of recipients already specified so we don't add duplicates
-  my %recipient_ids = ();
-  
-  # Final list of recipients
-  my @recipient_list = ();
+  my $invalid_recipients  = 0; # Keep a count of invalid recipients for the error message
+  my %recipient_ids = (); # Keep a list of recipients already specified so we don't add duplicates
+  my @recipient_list = (); # Final list of recipients
+  my @field_recipients = (); # List of recipients to go in the fields part of the response
   
   if ( scalar( @{ $recipients } ) ) {
     # We have recipients, check them
@@ -227,11 +236,11 @@ sub create_or_edit {
             $recipient_ids{$recipient->id} = 1;
           } else {
             # No email address, error
-            push(@{ $return_value->{error} }, {
-              id          => "contact-reasons.form.error.no-email-for-person",
-              parameters  => [ encode_entities( $recipient->display_name ) ],
-            });
+            push(@{ $response->{errors} }, $lang->maketext("contact-reasons.form.error.no-email-for-person", $recipient->display_name));
           }
+          
+          # Push on to the fields
+          push(@field_recipients, $recipient);
         }
       } else {
         # Not a valid person
@@ -239,20 +248,19 @@ sub create_or_edit {
       }
     }
     
+    # Add the final recipients into the field list to return back
+    $response->{fields}{recipients} = \@field_recipients;
+    
     if ( $invalid_recipients ) {
       my $message_id = ( $invalid_recipients == 1 ) ? "contact-reasons.form.error.invalid-recipients-single" : "contact-reasons.form.error.invalid-recipients-multiple";
-      
-      push(@{ $return_value->{error} }, {
-        id          => $message_id,
-        parameters  => [$invalid_recipients],
-      });
+      push(@{ $response->{errors} }, $lang->maketext($message_id, $invalid_recipients));
     }
   } else {
     # No recipients, error
-    push(@{ $return_value->{error} }, {id => "contact-reasons.form.error.no-recipients"});
+    push(@{ $response->{errors} }, $lang->maketext("contact-reasons.form.error.no-recipients"));
   }
   
-  if ( scalar( @{ $return_value->{error} } ) == 0 ) {
+  if ( scalar( @{ $response->{errors} } ) == 0 ) {
     # Generate a new URL key
     my $url_key;
     if ( $action eq "edit" ) {
@@ -267,36 +275,42 @@ sub create_or_edit {
     
     if ( $action eq "create" ) {
       $reason = $self->create({
-        name                      => $name,
-        url_key                   => $url_key,
+        name => $name,
+        url_key => $url_key,
         contact_reason_recipients => \@recipient_list,
       });
+      
+      $response->{completed} = 1;
+      push(@{$response->{success}}, $lang->maketext("admin.forms.success", encode_entities($reason->name), $lang->maketext("admin.message.created")));
     } else {
       $reason->update({
-        name    => $name,
+        name => $name,
         url_key => $url_key,
       });
       
       # If we're updating, we need to delete all recipients that were previously there, then recreate them if necessary
-      my $previous_attendees = $reason->search_related("contact_reason_recipients")->delete;
+      my $previous_recipients = $reason->search_related("contact_reason_recipients")->delete;
       
       # Loop through the attendees / apologies and add any that need adding
       foreach my $recipient ( @recipient_list ) {
         # Create the new attendee unless they exist already - we don't need to check whether they're an apology here, as that was all changed in the previous loop
         $reason->create_related("contact_reason_recipients", {
-          person    => $recipient->{person}->id,
+          person => $recipient->{person}->id,
           apologies => $recipient->{apologies},
         });
       }
+      
+      $response->{completed} = 1;
+      push(@{$response->{success}}, $lang->maketext("admin.forms.success", encode_entities($reason->name), $lang->maketext("admin.message.edited")));
     }
     
     # Commit the database transactions
     $transaction->commit;
     
-    $return_value->{reason} = $reason;
+    $response->{reason} = $reason;
   }
   
-  return $return_value;
+  return $response;
 }
 
 1;

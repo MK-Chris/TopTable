@@ -16,52 +16,48 @@ A hash is used for the user agent finding, as this is quicker than searching a t
 
 sub update_user_agents {
   my ( $self, $user_agent_string, $user, $ip_address ) = @_;
-  my $user_agent_hash = sha256_hex( $user_agent_string );
-  my $user_agent      = $self->find({sha256_hash => $user_agent_hash});
+  my $user_agent_hash = sha256_hex($user_agent_string);
+  my $user_agent = $self->find({sha256_hash => $user_agent_hash});
   my $now = DateTime->now(time_zone => "UTC");
   
-  if ( defined( $user_agent ) ) {
+  if ( defined($user_agent) ) {
     # User agent has been seen before, update the last seen value
-    $user_agent->update({
-      last_seen => $now->ymd . " " . $now->hms,
-    });
+    $user_agent->update({last_seen => $now->ymd . " " . $now->hms});
     
     # If we have a user, check if this user has used this user agent / IP combination before
-    if ( defined( $user ) and ref( $user ) eq "Catalyst::Authentication::Store::DBIx::Class::User" ) {
+    if ( defined($user) and ref($user) eq "Catalyst::Authentication::Store::DBIx::Class::User" ) {
       my $user_ip_browser = $user_agent->find_related("user_ip_addresses_browsers", {
-        user_id     => $user->id,
-        ip_address  => $ip_address,
-        user_agent  => $user_agent,
+        user_id => $user->id,
+        ip_address => $ip_address,
+        user_agent => $user_agent,
       });
       
-      if ( defined( $user_ip_browser ) ) {
+      if ( defined($user_ip_browser) ) {
         # We've seen this IP / user agent combination before, update the last_seen
-        $user_ip_browser->update({
-          last_seen => $now->ymd . " " . $now->hms,
-        });
+        $user_ip_browser->update({last_seen => $now->ymd . " " . $now->hms});
       } else {
         # Not seen before, create a new row
         $user_agent->create_related("user_ip_addresses_browsers", {
-          user_id     => $user->id,
-          ip_address  => $ip_address,
-          user_agent  => $user_agent,
+          user_id => $user->id,
+          ip_address => $ip_address,
+          user_agent => $user_agent,
         });
       }
     }
   } else {
     # This is a new user agent we've not seen before, add it to the database
     my $create_hash = {
-      string      => $user_agent_string,
+      string => $user_agent_string,
       sha256_hash => $user_agent_hash,
     };
     
     # If we have a user defined, we'll also create a row for that
     $create_hash->{user_ip_addresses_browsers} = [{
-      user_id     => $user->id,
-      ip_address  => $ip_address,
-    }] if defined( $user );
+      user_id => $user->id,
+      ip_address => $ip_address,
+    }] if defined($user);
     
-    $user_agent = $self->create( $create_hash );
+    $user_agent = $self->create($create_hash);
   }
   
   return $user_agent;

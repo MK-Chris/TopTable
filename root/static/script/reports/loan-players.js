@@ -9,7 +9,7 @@ $(document).ready(function() {
     "pageLength": 25,
     //pagingType: "full_numbers",
     "lengthChange": true,
-    "lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
+    "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, $("#dt-lang").data("dt-paging-all")]],
     "info": true,
     "fixedHeader": true,
     "colReorder": {
@@ -22,9 +22,9 @@ $(document).ready(function() {
         var rowsText;
         
         if (rows.count() == 1) {
-          rowsText = "row";
+          rowsText = $("#dt-lang").data("dt-rows-singular");
         } else {
-          rowsText = "rows";
+          rowsText = $("#dt-lang").data("dt-rows-plural");
         }
         
         return group + " (" + rows.count() + " " + rowsText + ")";
@@ -32,19 +32,44 @@ $(document).ready(function() {
     },
     "columnDefs": [{
       "visible": false,
-      "targets": [4, 6, 9, 11]
+      "targets": [1, 5, 7, 10, 12]
     }, {
-      "orderData": 4,
+      // Player name
+      "orderData": 1,
+      "responsivePriority": 1,
+      "targets": 0
+    }, {
+      // Played up for
+      "responsivePriority": 2,
+      "targets": 2
+    }, {
+      // Played up against
+      "responsivePriority": 3,
       "targets": 3
     }, {
-      "orderData": 6,
-      "targets": 5
+      // Division
+      "orderData": 5,
+      "responsivePriority": 4,
+      "targets": 4
     }, {
-      "orderData": 9,
+      // Date
+      "orderData": 7,
+      "responsivePriority": 5,
+      "targets": 6
+    }, {
+      // On loan from (team)
+      "responsivePriority": 6,
       "targets": 8
     }, {
-      "orderData": 11,
-      "targets": 10
+      // On loan from (division)
+      "orderData": 10,
+      "responsivePriority": 7,
+      "targets": 9
+    }, {
+      // Games won
+      "orderData": 12,
+      "responsivePriority": 8,
+      "targets": 11
     }]
   });
   
@@ -67,20 +92,26 @@ $(document).ready(function() {
     
     // Set the previous column to visible.
     var $previous_value = $this.data("previous-value");
-    report_table.column($previous_value).visible(true);
+    if ( $previous_value !== "" ) report_table.column($previous_value).visible(true);
     
     if ( $this.val() === "" ) {
       // No grouping, disable grouping and redraw the table
       report_table.columns.adjust();
       report_table.rowGroup().disable().draw();
+      
+      // The fixed order is now also removed so that we don't just order within the group
+      report_table.order.fixed([]);
     } else {
       // Group by select value's column index
-      report_table.column( $this.val() ).visible(false);
+      report_table.column($this.val()).visible(false);
       report_table.columns.adjust();
       
       var rowGroupData = $this.val();
-      if (rowGroupData == 10) rowGroupData = 11;
-      report_table.rowGroup().dataSrc( rowGroupData );
+      if (rowGroupData == 11) rowGroupData = 12;
+      
+      // Add a fixed order so that we can only sort within the group
+      report_table.order.fixed({"pre": [rowGroupData, "asc"]});
+      report_table.rowGroup().dataSrc(rowGroupData);
       report_table.rowGroup().enable().draw();
     }
     

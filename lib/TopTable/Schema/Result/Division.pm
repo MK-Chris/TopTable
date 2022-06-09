@@ -99,6 +99,18 @@ __PACKAGE__->set_primary_key("id");
 
 =head1 UNIQUE CONSTRAINTS
 
+=head2 C<rank>
+
+=over 4
+
+=item * L</rank>
+
+=back
+
+=cut
+
+__PACKAGE__->add_unique_constraint("rank", ["rank"]);
+
 =head2 C<url_key>
 
 =over 4
@@ -159,8 +171,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-02-03 10:04:05
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:LDGauLeNZKMTw8uNt3m44A
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2022-05-09 09:13:06
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:iCIN+62ENvTzDRCVUfKetg
 
 =head2 url_keys
 
@@ -170,7 +182,7 @@ Return the URL key for this object as an array ref (even if there's only one, an
 
 sub url_keys {
   my ( $self ) = @_;
-  return [ $self->url_key ];
+  return [$self->url_key];
 }
 
 =head2 get_season
@@ -183,9 +195,9 @@ sub get_season {
   my ( $self, $season ) = @_;
   
   return $self->search_related("division_seasons", {
-    season  => $season->id,
+    season => $season->id,
   }, {
-    rows    => 1,
+    rows => 1,
   })->single;
 }
 
@@ -201,9 +213,7 @@ sub last_season_used {
   my $div_season = $self->search_related("division_seasons", undef, {
     join => "season",
     rows => 1,
-    order_by => {
-      -desc => [qw( season.start_date season.end_date )]
-    },
+    order_by => {-desc => [qw( season.start_date season.end_date )]},
   })->single;
   
   return defined( $div_season ) ? $div_season->season : undef;
@@ -217,12 +227,12 @@ Return a list of teams in the given season.
 
 sub teams {
   my ( $self, $params ) = @_;
-  my $season = delete $params->{season};
+  my $season = $params->{season};
   
   my $div_season = $self->find_related("division_seasons", {season => $season});
   
   # Return 0 if this division wasn't used for this season.
-  return undef unless defined( $div_season );
+  return undef unless defined($div_season);
   
   return $div_season->search_related("team_seasons");
 }

@@ -48,7 +48,7 @@ END;
 [%
 IF authorisation.template_create;
 -%]
-<a href="[% c.uri_for('/templates/ranking/create') %]"><img src="[% c.uri_for('/static/images/icons/0009-Add-icon-48.png') %]" title="[% c.maketext("admin.create-object", c.maketext("object.singular.templates.league-table-ranking")) %]" /></a><br /><br />
+<a href="[% c.uri_for("/templates/league-table-ranking/create") %]"><img src="[% c.uri_for("/static/images/icons/0009-Add-icon-48.png") %]" title="[% c.maketext("admin.create-object", c.maketext("object.singular.templates.league-table-ranking")) %]" /></a><br /><br />
 [%
 END;
 %]

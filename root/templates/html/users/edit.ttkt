@@ -1,4 +1,3 @@
-[% USE Dumper; %]
 <form method="post" action="[% form_action %]">
 <div class="form-column">
   <fieldset>
@@ -279,7 +278,6 @@ IF authorisation.role_edit;
     END;
     
     IF c.flash.roles;
-      CALL c.log.debug( Dumper.dump( c.flash.roles ) );
       FOREACH FLASHED_ROLE IN c.flash.roles;
         IF FLASHED_ROLE == ROLE_ID;
           SET ROLE_SELECTED = ' selected="selected"';

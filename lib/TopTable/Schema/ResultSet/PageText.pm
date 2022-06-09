@@ -3,6 +3,7 @@ package TopTable::Schema::ResultSet::PageText;
 use strict;
 use warnings;
 use base 'DBIx::Class::ResultSet';
+use HTML::Entities;
 
 =head2 get_text
 
@@ -23,29 +24,44 @@ Edit the page text for a given page
 =cut
 
 sub edit {
-  my ( $self, $parameters ) = @_;
+  my ( $self, $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
   
-  my $page_key      = $parameters->{page_key} || undef;
-  my $page_text     = $parameters->{page_text} || undef;
-  my $return_value  = {error => []};
+  # Grab the fields
+  my $page_key = $params->{page_key};
+  my $page_text = $params->{page_text};
+  my $response = {
+    errors => [],
+    warnings => [],
+    info => [],
+    success => [],
+    fields => {},
+    completed => 0,
+  };
   
-  if ( defined( $page_key ) ) {
+  if ( defined($page_key) ) {
     # Filter the HTML from the page text
     $page_text = TopTable->model("FilterHTML")->filter( $page_text, "textarea" );
     $page_text = "" unless defined( $page_text );
+    $response->{fields}{page_text} = $page_text;
     
     my $page = $self->update_or_create({
-      page_key  => $page_key,
+      page_key => $page_key,
       page_text => $page_text,
     });
     
+    $response->{completed} = 1;
+    push(@{$response->{success}}, $lang->maketext("admin.forms.success", $lang->maketext("menu.text.$page_key"), $lang->maketext("admin.message.edited")));
   } else {
-    push(@{ $return_value->{error} }, {
-      id => "page_text.form.error.page-key-missing",
-    });
+    push(@{$response->{errors}}, $lang->maketext("page_text.form.error.page-key-missing"));
   }
   
-  return $return_value;
+  return $response;
 }
 
 1;

@@ -2,7 +2,7 @@
 [%
 IF bans.count;
 %]
-<table id="bans-list">
+<table id="bans-list" class="stripe hover order-column row-border">
   <thead>
     <tr>
       <th>[% c.maketext("ban-type." _ ban_type.id) %]</th>

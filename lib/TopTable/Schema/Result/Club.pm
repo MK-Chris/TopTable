@@ -300,6 +300,8 @@ __PACKAGE__->belongs_to(
 # Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-02-25 14:03:10
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:+Yc7CDZg1S/4z4MftGCdJw
 
+use HTML::Entities;
+
 =head2 url_keys
 
 Return the URL key for this object as an array ref (even if there's only one, an array ref is necessary so we can do the same for other objects with more than one array key field).
@@ -308,7 +310,7 @@ Return the URL key for this object as an array ref (even if there's only one, an
 
 sub url_keys {
   my ( $self ) = @_;
-  return [ $self->url_key ];
+  return [$self->url_key];
 }
 
 
@@ -321,11 +323,8 @@ Get a club_season object for this club with the specified season.
 sub get_season {
   my ( $self, $season ) = @_;
   
-  return undef unless defined ( $season );
-  
-  return $self->find_related("club_seasons", {
-    season => $season->id,
-  });
+  return undef unless defined ($season);
+  return $self->find_related("club_seasons", {season => $season->id});
 }
 
 =head2 get_seasons
@@ -339,26 +338,26 @@ sub get_seasons {
   my $page_number = $parameters->{page_number} || undef;
   my $results_per_page = $parameters->{results_per_page} || undef;
   
-  my $attributes = {
-    prefetch => [ qw ( season secretary venue ) ],
+  my $attrib = {
+    prefetch => [ qw( season secretary venue )],
     order_by => [{
-      -asc => [ qw( season.complete ) ]
+      -asc => [qw( season.complete )],
     }, {
-      -desc => [ qw( season.start_date season.end_date ) ]
+      -desc => [qw( season.start_date season.end_date )],
     }],
   };
   
-  if ( defined( $results_per_page ) ) {
+  if ( defined($results_per_page) ) {
     # If we're passing in a number of results per page and it's numeric, add that in to the query (along with a 
     # page number - which defaults to 1 if it's not passed in, or it's garbage).
     if ( $results_per_page !~ /^\d+$/ ) {
-      $page_number = 1 unless defined( $page_number ) and $page_number =~ /^\d+$/;
-      $attributes->{page} = $page_number;
-      $attributes->{rows} = $results_per_page;
+      $page_number = 1 unless defined($page_number) and $page_number =~ /^\d+$/;
+      $attrib->{page} = $page_number;
+      $attrib->{rows} = $results_per_page;
     }
   }
   
-  return $self->search_related("club_seasons", undef, $attributes);
+  return $self->search_related("club_seasons", undef, $attrib);
 }
 
 =head2 get_team_seasons
@@ -371,17 +370,16 @@ sub get_team_seasons {
   my ( $self, $parameters ) = @_;
   my $season = $parameters->{season} || undef;
   
-  my $query = ( defined( $season ) ) ? {"me.season" => $season->id} : undef;
+  my $where = defined($season) ? {"me.season" => $season->id} : undef;
   
-  return $self->search_related("club_seasons", $query, {
-    prefetch  => "season",
-    group_by  => [qw( season )],
-  })->search_related("team_seasons", $query, {
-    prefetch  => "season",
-    group_by  => [qw( season )],
+  return $self->search_related("club_seasons", $where, {
+    prefetch => "season",
+    group_by => [qw( season )],
+  })->search_related("team_seasons", $where, {
+    prefetch => "season",
+    group_by => [qw( season )],
   });
 }
-
 
 =head2 can_delete
 
@@ -395,7 +393,7 @@ sub can_delete {
   my $teams = $self->search_related("club_seasons")->search_related("team_seasons")->count;
   
   # Return true if the number of teams is zero, otherwise false.
-  return ( $teams == 0 ) ? 1 : 0;
+  return $teams == 0 ? 1 : 0;
 }
 
 =head2 check_and_delete
@@ -405,25 +403,42 @@ Checks the club can be deleted (via can_delete) and then performs the deletion.
 =cut
 
 sub check_and_delete {
-  my ( $self ) = @_;
-  my $error = [];
+  my ( $self, $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  my $response = {
+    errors => [],
+    warnings => [],
+    info => [],
+    success => [],
+    completed => 0,
+  };
+  
+  # Get the name for messaging
+  my $name = encode_entities($self->full_name);
   
   # Check we can delete
-  push(@{ $error }, {
-    id          => "clubs.delete.error.cannot-delete",
-    parameters  => [$self->name],
-  }) unless $self->can_delete;
+  unless ( $self->can_delete ) {
+    push(@{$response->{errors}}, $lang->maketext("clubs.delete.error.cannot-delete", $name));
+    return $response;
+  }
   
   # Delete
-  my $ok = $self->delete unless scalar( @{ $error } );
+  my $ok = $self->delete;
   
   # Error if the delete was unsuccessful
-  push(@{ $error }, {
-    id          => "admin.delete.error.database",
-    parameters  => $self->name
-  }) unless $ok;
+  if ( $ok ) {
+    $response->{completed} = 1;
+    push(@{$response->{success}}, $lang->maketext("admin.forms.success", $name, $lang->maketext("admin.message.deleted")));
+  } else {
+    push(@{$response->{errors}}, $lang->maketext("admin.delete.error.database", $name));
+  }
   
-  return $error;
+  return $response;
 }
 
 =head2 last_season_entered
@@ -438,9 +453,7 @@ sub last_season_entered {
   my $club_season = $self->search_related("club_seasons", undef, {
     join => "season",
     rows => 1,
-    order_by => {
-      -desc => [qw( season.start_date season.end_date )]
-    },
+    order_by => {-desc => [qw( season.start_date season.end_date )]},
   })->single;
   
   return defined( $club_season ) ? $club_season->season : undef;
@@ -455,24 +468,24 @@ Return the current list of teams (or, at least, the teams for the last season en
 sub teams_in_club {
   my ( $self, $params ) = @_;
   my ( $where, $sort_hash );
-  my $season      = $params->{season} || undef;
+  my $season = $params->{season} || undef;
   my $sort_column = $params->{sort};
-  my $order       = $params->{order};
+  my $order = $params->{order};
   
   # Sanitist the sort order
-  $sort_column  = "name" unless defined( $sort_column ) and ( $sort_column eq "name" or $sort_column eq "captain" or $sort_column eq "division" or $sort_column eq "home-night" );
-  $order        = "asc" unless defined( $order ) and ( $order eq "asc" or $order eq "desc" );
-  $order        = "-$order"; # The 'order_by' hash key needs to start with a '-'
+  $sort_column = "name" unless defined( $sort_column ) and ( $sort_column eq "name" or $sort_column eq "captain" or $sort_column eq "division" or $sort_column eq "home-night" );
+  $order = "asc" unless defined( $order ) and ( $order eq "asc" or $order eq "desc" );
+  $order = "-$order"; # The 'order_by' hash key needs to start with a '-'
   
   # If there's no season specified, we won't have a captain, a division or a home night, so we must just be sorting by name
   $sort_column = "name" unless defined( $season );
   
   # Build the hashref that will give us the database columns to sort by
   my %db_columns = (
-    name => [ qw( me.name ) ],
-    captain => [ qw( captain.surname captain.first_name ) ],
-    division => [ qw( division.rank ) ],
-    "home-night" => [ qw( home_night.weekday_number ) ],
+    name => [qw( me.name )],
+    captain => [qw( captain.surname captain.first_name )],
+    division => [qw( division.rank )],
+    "home-night" => [qw( home_night.weekday_number )],
   );
   
   # Build the sort hash
@@ -491,7 +504,7 @@ sub teams_in_club {
     }
   }
   
-  if ( defined( $season ) ) {
+  if ( defined($season) ) {
     # We have a season passed in, so we need to go through club_seasons and team_seasons
     my $club_season = $self->search_related("club_seasons", {
       season => $season->id
@@ -502,15 +515,15 @@ sub teams_in_club {
     return undef unless defined( $club_season );
     
     return $club_season->search_related("team_seasons", undef, {
-      prefetch  => ["season", "captain", "home_night", {division_season => "division"}],
-      order_by  => $sort_instruction,
+      prefetch => [qw( season captain home_night ), {division_season => "division"}],
+      order_by => $sort_instruction,
     });
     
   } else {
     # No season defined, just search the currently registered teams
     return $self->search_related("teams", undef, {
       prefetch  => {
-        "team_seasons" => ["season", "captain", "home_night", {division_season => "division", club_season => "club"}],
+        team_seasons => [qw( season captain home_night ), {division_season => "division", club_season => "club"}],
       },
       order_by  => [{
         -asc   => ["me.name"]
@@ -533,7 +546,7 @@ sub players_in_club {
   my ( $where, $attrib );
   
   # Get a list of teams, then map the IDs into the array
-  if ( defined( $season ) ) {
+  if ( defined($season) ) {
     $where = {"team_seasons.season" => $season->id};
     $attrib = {join => "team_seasons"};
   }
@@ -541,24 +554,19 @@ sub players_in_club {
   my @teams = $self->search_related("teams", $where, $attrib);
   my @team_ids = map( $_->id , @teams );
   
-  if ( defined( $season ) ) {
+  if ( defined($season) ) {
     $where = {
       "person_seasons.team" => {-in => \@team_ids},
       "person_seasons.season" => $season->id,
     };
     
-    $attrib = {
-      join => "person_seasons",
-    };
+    $attrib = {join => "person_seasons"};
   } else {
-    $where = {
-      team => {-in => \@team_ids},
-    };
-    
-    undef( $attrib );
+    $where = {team => {-in => \@team_ids}};
+    undef($attrib);
   }
   
-  return $self->result_source->schema->resultset("Person")->search( $where, $attrib );
+  return $self->result_source->schema->resultset("Person")->search($where, $attrib);
 }
 
 =head2 search_display

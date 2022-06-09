@@ -21,7 +21,7 @@
       pages: [% c.config.Tables.pages_to_retrieve OR 5 %] // number of pages to cache
     }),
 [%
-IF authorisation.view_users_ip;
+IF authorisation.user_view_ip;
 -%]
     "order": [[2, "desc"]],
     "columns": [{

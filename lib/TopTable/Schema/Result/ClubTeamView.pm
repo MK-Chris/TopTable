@@ -130,7 +130,7 @@ Return the URL key for this object as an array ref (even if there's only one, an
 
 sub url_keys {
   my ( $self ) = @_;
-  return [ $self->club_url_key, $self->team_url_key ];
+  return [$self->club_url_key, $self->team_url_key];
 }
 
 =head2 last_season_entered
@@ -146,7 +146,7 @@ sub last_season_entered {
     "team_seasons.team" => $self->team_id,
   }, {
     join => "team_seasons",
-    order_by => {-desc => [ qw( me.start_date me.end_date ) ]},
+    order_by => {-desc => [qw( me.start_date me.end_date )]},
     rows => 1,
   })->single;
 }

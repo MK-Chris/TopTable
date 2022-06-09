@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use base 'DBIx::Class::ResultSet';
 
-__PACKAGE__->load_components(qw{Helper::ResultSet::SetOperations});
+__PACKAGE__->load_components(qw(Helper::ResultSet::SetOperations));
 
 =head2 get_doubles_pairs_in_division_in_averages_order
 
@@ -13,13 +13,14 @@ Retrieve doubles pairs in a given season / division in averages order.  If the $
 =cut
 
 sub get_doubles_pairs_in_division_in_averages_order {
-  my ( $self, $parameters ) = @_;
-  my $division        = $parameters->{division};
-  my $season          = $parameters->{season};
-  my $team            = $parameters->{team};
-  my $criteria_field  = $parameters->{criteria_field} || undef;
-  my $operator        = $parameters->{operator} || undef;
-  my $criteria        = $parameters->{criteria} || undef;
+  my ( $self, $params ) = @_;
+  my $division = $params->{division};
+  my $season = $params->{season};
+  my $team = $params->{team};
+  my $criteria_field = $params->{criteria_field} || undef;
+  my $operator = $params->{operator} || undef;
+  my $criteria = $params->{criteria};
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   
   my $where = {
     "me.season" => $season->id,
@@ -27,12 +28,12 @@ sub get_doubles_pairs_in_division_in_averages_order {
   };
   
   # Set up the team if there is one
-  if ( defined( $team ) ) {
+  if ( defined($team) ) {
     $where->{"team_season.team"} = $team->id;
   }
   
-  if ( defined( $criteria_field ) and defined( $operator ) and defined( $criteria ) and ( $operator eq "<" or $operator eq "<=" or $operator eq "=" or $operator eq ">=" or $operator eq ">" ) and $criteria =~ /^\d+$/ ) {
-    $where->{ sprintf( "me.games_%s", $criteria_field ) } = {
+  if ( defined($criteria_field) and defined($operator) and defined($criteria) and ( $operator eq "<" or $operator eq "<=" or $operator eq "=" or $operator eq ">=" or $operator eq ">" ) and $criteria =~ /^\d+$/ ) {
+    $where->{sprintf("me.games_%s", $criteria_field)} = {
       $operator => $criteria,
     };
   }
@@ -46,9 +47,9 @@ sub get_doubles_pairs_in_division_in_averages_order {
       }],
     }],
     order_by  => [{
-      -desc => [ qw( me.average_game_wins me.games_played me.games_won ) ],
+      -desc => [qw( me.average_game_wins me.games_played me.games_won )],
     }, {
-      -asc  => [ qw( person_season_person1_season_team.surname person_season_person1_season_team.first_name person_season_person2_season_team.surname person_season_person2_season_team.first_name ) ],
+      -asc  => [qw( person_season_person1_season_team.surname person_season_person1_season_team.first_name person_season_person2_season_team.surname person_season_person2_season_team.first_name )],
     }],
   });
 }
@@ -61,9 +62,9 @@ For a given season and division, return the last updated date / time.
 
 sub get_tables_last_updated_timestamp {
   my ( $self, $params ) = @_;
-  my $division = delete $params->{division};
-  my $season = delete $params->{season};
-  my $team = delete $params->{team} || undef;
+  my $division = $params->{division};
+  my $season = $params->{season};
+  my $team = $params->{team} || undef;
   
   my $where = {season => $season->id};
   $where->{"me.team"} = $team->id if defined( $team );
@@ -75,7 +76,7 @@ sub get_tables_last_updated_timestamp {
     order_by => {-desc => "last_updated"}
   });
   
-  return defined( $doubles_pair ) ? $doubles_pair->last_updated : undef;
+  return defined($doubles_pair) ? $doubles_pair->last_updated : undef;
 }
 
 =head2 find_pair
@@ -85,10 +86,10 @@ Finds a doubles pair given two people (in an arrayref), a team and a season.  Pe
 =cut
 
 sub find_pair {
-  my ( $self, $parameters ) = @_;
-  my ( $person1, $person2 ) = ( @{ $parameters->{people} } );
-  my $season  = $parameters->{season};
-  my $team    = $parameters->{team};
+  my ( $self, $params ) = @_;
+  my ( $person1, $person2 ) = ( @{$params->{people}} );
+  my $season = $params->{season};
+  my $team = $params->{team};
   
   return $self->search([{
     person1 => $person1->id,
@@ -114,10 +115,10 @@ Finds doubles pairs involving the given person
 =cut
 
 sub pairs_involving_person {
-  my ( $self, $parameters ) = @_;
-  my $person  = $parameters->{person};
-  my $season  = $parameters->{season};
-  my $team    = $parameters->{team};
+  my ( $self, $params ) = @_;
+  my $person = $params->{person};
+  my $season = $params->{season};
+  my $team = $params->{team};
   
   my $where = [{
     person1 => $person->id,
@@ -126,19 +127,19 @@ sub pairs_involving_person {
   }];
   
   # If we have a season, pass that into the where queries
-  if ( defined( $season ) ) {
+  if ( defined($season) ) {
     $where->[0]{"me.season"} = $season->id;
     $where->[1]{"me.season"} = $season->id;
   }
   
   # If we have a team, pass that into the where queries
-  if ( defined( $team ) ) {
+  if ( defined($team) ) {
     $where->[0]{team} = $team->id;
     $where->[1]{team} = $team->id;
   }
   
   return $self->search($where, {
-    prefetch  => ["person_season_person1_season_team", "person_season_person2_season_team", "season", {
+    prefetch => ["person_season_person1_season_team", "person_season_person2_season_team", "season", {
       team_season  => ["team", {club_season => "club"}]
     }],
   });

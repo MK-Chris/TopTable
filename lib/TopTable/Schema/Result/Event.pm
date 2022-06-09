@@ -179,9 +179,7 @@ Get a single specified season associated with this event.
 sub single_season {
   my ( $self, $season ) = @_;
   
-  return $self->find_related("event_seasons", {
-    season  => $season->id,
-  });
+  return $self->find_related("event_seasons", {season => $season->id});
 }
 
 =head2 can_delete
@@ -195,6 +193,49 @@ sub can_delete {
   
   ## NEEDS WRITING
   return 1;
+}
+
+=head2 check_and_delete
+
+Checks the club can be deleted (via can_delete) and then performs the deletion.
+
+=cut
+
+sub check_and_delete {
+  my ( $self, $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  my $response = {
+    errors => [],
+    warnings => [],
+    info => [],
+    success => [],
+    completed => 0,
+  };
+  
+  # Check we can delete
+  unless ( $self->can_delete ) {
+    push(@{$response->{errors}}, $lang->maketext("events.delete.error.cannot-delete", $self->name));
+    return $response;
+  }
+  
+  # Get the name for messaging, then delete
+  my $name = $self->name;
+  my $ok = $self->delete;
+  
+  # Error if the delete was unsuccessful
+  if ( $ok ) {
+    $response->{completed} = 1;
+    push(@{$response->{success}}, $lang->maketext("admin.forms.success", $name, $lang->maketext("admin.message.deleted")));
+  } else {
+    push(@{$response->{errors}}, $lang->maketext("admin.delete.error.database", $name));
+  }
+  
+  return $response;
 }
 
 =head2 can_edit_event_type
@@ -220,24 +261,20 @@ sub can_edit_event_type {
   # Now search for the event-type specific stuff, if there are any
   if ( $self->event_type->id eq "single-tournament" ) {
     my $tournament_matches_started = $self->search_related("tournaments", {
-      "team_matches.started"  => 1,
+      "team_matches.started" => 1,
       "team_matches.complete" => 1,
     }, {
-      join  => {
-        tournament_seasons => {
-          tournament_rounds => "team_matches",
-        }
+      join => {
+        tournament_seasons => {tournament_rounds => "team_matches"}
       }
     });
     
     return 0 if defined( $tournament_matches_started );
   } elsif ( $self->event_type->id eq "meeting" ) {
     my $meetings_attended = $self->search_related("event_seasons", {}, {
-      select => [ "name", {count => "meeting_attendees.person"} ],
-      as => [ qw( name attendees ) ],
-      join => {
-        meetings => "meeting_attendees",
-      },
+      select => ["name", {count => "meeting_attendees.person"}],
+      as => [qw( name attendees )],
+      join => {meetings => "meeting_attendees"},
       group_by => "id",
       rows => 1,
     })->single;

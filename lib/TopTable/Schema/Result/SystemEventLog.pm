@@ -61,7 +61,7 @@ __PACKAGE__->table("system_event_log");
   data_type: 'varchar'
   is_foreign_key: 1
   is_nullable: 0
-  size: 20
+  size: 40
 
 =head2 user_id
 
@@ -106,7 +106,7 @@ __PACKAGE__->add_columns(
   "object_type",
   { data_type => "varchar", is_foreign_key => 1, is_nullable => 0, size => 40 },
   "event_type",
-  { data_type => "varchar", is_foreign_key => 1, is_nullable => 0, size => 20 },
+  { data_type => "varchar", is_foreign_key => 1, is_nullable => 0, size => 40 },
   "user_id",
   {
     data_type => "integer",
@@ -202,6 +202,21 @@ Related object: L<TopTable::Schema::Result::SystemEventLogClub>
 __PACKAGE__->has_many(
   "system_event_log_clubs",
   "TopTable::Schema::Result::SystemEventLogClub",
+  { "foreign.system_event_log_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+=head2 system_event_log_contact_forms
+
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::SystemEventLogContactForm>
+
+=cut
+
+__PACKAGE__->has_many(
+  "system_event_log_contact_forms",
+  "TopTable::Schema::Result::SystemEventLogContactForm",
   { "foreign.system_event_log_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
@@ -488,7 +503,7 @@ __PACKAGE__->belongs_to(
   "system_event_log_type",
   "TopTable::Schema::Result::SystemEventLogType",
   { event_type => "event_type", object_type => "object_type" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "CASCADE" },
 );
 
 =head2 system_event_log_users
@@ -542,10 +557,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2022-01-16 23:47:11
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:DZxtHJYMjxrnV47d5BqvPg
-
-use Data::Dumper::Concise;
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2022-06-07 12:01:29
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:B+ok/ErcgLyVf9WwKUC9Pg
 
 # Enable automatic date handling
 __PACKAGE__->add_columns(
@@ -565,7 +578,7 @@ sub log_created_tz {
   my ( $self, $tz ) = @_;
   
   # Set the timezone if we have one specified
-  $self->log_created->set_time_zone( $tz ) if $tz;
+  $self->log_created->set_time_zone($tz) if $tz;
   
   # Return the new time
   return $self->log_created;
@@ -581,7 +594,7 @@ sub log_updated_tz {
   my ( $self, $tz ) = @_;
   
   # Set the timezone if we have one specified
-  $self->log_updated->set_time_zone( $tz ) if $tz;
+  $self->log_updated->set_time_zone($tz) if $tz;
   
   # Return the new time
   return $self->log_updated;
@@ -597,8 +610,8 @@ sub display_description {
   my ( $self, $maximum_items_display, $maximum_items_tooltip, $params ) = @_;
   
   # Maximum objects to display in the main text - default to 2 if not specified or invalid (non-numeric or less than 0)
-  $maximum_items_display = 2 if !defined( $maximum_items_display ) or $maximum_items_display !~ /^\d+$/ or $maximum_items_display < 0;
-  $maximum_items_tooltip = 10 if !defined( $maximum_items_tooltip ) or $maximum_items_tooltip !~ /^\d+$/ or $maximum_items_tooltip < 0;
+  $maximum_items_display = 2 if !defined($maximum_items_display) or $maximum_items_display !~ /^\d+$/ or $maximum_items_display < 0;
+  $maximum_items_tooltip = 10 if !defined($maximum_items_tooltip) or $maximum_items_tooltip !~ /^\d+$/ or $maximum_items_tooltip < 0;
   #my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   
   # Returned objects will be a hashref like this:
@@ -623,7 +636,7 @@ sub display_description {
   };
   
   # Get the SytemEventLog relation - this will tend to be the object type prefixed with "system_event_log_" and suffixed with "s" 
-  my $object_relation = sprintf( "system_event_log_%ss", $self->object_type );
+  my $object_relation = sprintf("system_event_log_%ss", $self->object_type);
   
   # Dashes will have underscores instead
   $object_relation =~ s/-/_/g;
@@ -641,16 +654,12 @@ sub display_description {
   }
   
   # Get this event's objects to loop through
-  my $objects = $self->search_related($object_relation, {}, {
-    order_by => {
-      -desc => "log_updated",
-    },
+  my $objects = $self->search_related($object_relation, undef, {
+    order_by => {-desc => qw( log_updated )},
   });
   
   # Get an array of columns on this event's related objects - we only need to do this on a single record, as all columns will be the same
-  my @columns = $objects->search({}, {
-    rows => 1,
-  })->single->columns;
+  my @columns = $objects->search(undef, {rows => 1})->single->columns;
   
   my $i = 0;
   while ( my $object = $objects->next ) {
@@ -676,7 +685,7 @@ sub display_description {
     my $ids = [];
     
     # Push 'league' on to the IDs so the URL is correct for league matches
-    push( @{ $ids }, "league" ) if $self->object_type eq "league-team-match";
+    push(@{$ids}, "league") if $self->object_type eq "league-team-match";
     
     foreach my $column ( @columns ) {
       if ( $column =~ /^object_([a-z_]+)$/ ) {
@@ -688,43 +697,43 @@ sub display_description {
         # The pushed values is a list, as we may push more than one (if we have a date, for example)
         my @pushed_values = ();
         # Need to do some checks on what type of column this is
-        if ( !ref( $object->$column ) ) {
+        if ( !ref($object->$column) ) {
           # The column is a straight link to an ID somewhere, just push the column value
-          push( @pushed_values, $object->$column );
-        } elsif ( ref( $object->$column ) eq "DateTime" ) {
+          push(@pushed_values, $object->$column);
+        } elsif ( ref($object->$column) eq "DateTime" ) {
           # A DateTime object needs to be returned in all its components (year, month, day)
-          push( @pushed_values, $object->$column->year, $object->$column->month, $object->$column->day );
-        } elsif ( ref( $object->$column ) =~ /^TopTable::Model::DB::[A-Z][A-Za-z]+/ ) {
+          push(@pushed_values, $object->$column->year, $object->$column->month, $object->$column->day);
+        } elsif ( ref($object->$column) =~ /^TopTable::Model::DB::[A-Z][A-Za-z]+/ ) {
           # The column is a link to another column with a relationship (this table probably has multiple primary keys linking elsewhere)
           # In this case, we need to use the value in memory from the match as the relationship accessor for the actual value
           # We now need to check the ref of that to see what type of object it is
-          if ( !ref( $object->$column->$column_relation_accessor ) ) {
-            push( @pushed_values, $object->$column->id );
-          } elsif ( ref( $object->$column->$column_relation_accessor ) eq "DateTime" ) {
+          if ( !ref($object->$column->$column_relation_accessor) ) {
+            push(@pushed_values, $object->$column->id);
+          } elsif ( ref($object->$column->$column_relation_accessor) eq "DateTime" ) {
             # A DateTime object needs to be returned in all its components (year, month, day)
-            push( @pushed_values, $object->$column->$column_relation_accessor->year, $object->$column->$column_relation_accessor->month, $object->$column->$column_relation_accessor->day );
-          } elsif ( ref( $object->$column->$column_relation_accessor ) =~ /^TopTable::Model::DB::[A-Z][A-Za-z]+/ ) {
+            push(@pushed_values, $object->$column->$column_relation_accessor->year, $object->$column->$column_relation_accessor->month, $object->$column->$column_relation_accessor->day);
+          } elsif ( ref($object->$column->$column_relation_accessor) =~ /^TopTable::Model::DB::[A-Z][A-Za-z]+/ ) {
             # The object refers to another DB table - in this case, the accessor will always be 'id'
-            push( @pushed_values, $object->$column->$column_relation_accessor->id );
+            push(@pushed_values, $object->$column->$column_relation_accessor->id);
           }
         }
         
         # Push the value we need on to the IDs array
-        push( @{ $ids }, @pushed_values );
+        push(@{$ids}, @pushed_values);
       }
     }
     
     # Push the name and ID(s) on to the specified hash's array
-    push( @{ $returned_objects->{$hash_key} }, {
+    push(@{$returned_objects->{$hash_key}}, {
       ids => $ids,
       name => $object->name,
     });
   }
   
   # If we only have one tooltip element, it's pointless, so move it on to for_display and empty for_tooltip.
-  if ( @{ $returned_objects->{for_tooltip} } == 1 ) {
-    push( @{ $returned_objects->{for_display} }, ${ $returned_objects->{for_tooltip} }[0] );
-    @{ $returned_objects->{for_tooltip} } = [];
+  if (@{$returned_objects->{for_tooltip}} == 1 ) {
+    push(@{$returned_objects->{for_display}}, ${$returned_objects->{for_tooltip}}[0] );
+    @{$returned_objects->{for_tooltip}} = [];
   }
   
   return $returned_objects;

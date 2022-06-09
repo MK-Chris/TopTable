@@ -13,10 +13,8 @@ Return all fixtures grids sorted by name.
 sub all_grids {
   my ( $self ) = @_;
   
-  return $self->search({}, {
-    order_by => {
-      -asc => "name",
-    },
+  return $self->search(undef, {
+    order_by => {-asc => qw( name )},
   });
 }
 
@@ -89,8 +87,8 @@ Returns a paginated resultset of fixtures grids.
 
 sub page_records {
   my ( $self, $parameters ) = @_;
-  my $page_number       = $parameters->{page_number} || 1;
-  my $results_per_page  = $parameters->{results_per_page} || 25;
+  my $page_number = $parameters->{page_number} || 1;
+  my $results_per_page = $parameters->{results_per_page} || 25;
   
   # Set a default for results per page if it's not provided or invalid
   $results_per_page = 25 if !defined($results_per_page) or $results_per_page !~ m/^\d+$/;
@@ -98,12 +96,10 @@ sub page_records {
   # Default the page number to 1
   $page_number = 1 if !defined($page_number) or $page_number !~ m/^\d+$/;
   
-  return $self->search({}, {
-    page      => $page_number,
-    rows      => $results_per_page,
-    order_by  => {
-      -asc => "name",
-    },
+  return $self->search(undef, {
+    page => $page_number,
+    rows => $results_per_page,
+    order_by => {-asc => qw( name )},
   });
 }
 
@@ -218,21 +214,23 @@ Same as find(), but searches for both the id and key columns.  So we can use hum
 
 sub find_id_or_url_key {
   my ( $self, $id_or_url_key ) = @_;
-  my ( $where );
+  my $where;
   
   if ( $id_or_url_key =~ m/^\d+$/ ) {
-    # Numeric - assume it's the ID
-    $where = {
-      id => $id_or_url_key,
-    };
+    # Numeric - look in ID or URL key
+    $where = [{
+      id => $id_or_url_key
+    }, {
+      "me.url_key" => $id_or_url_key
+    }];
   } else {
     # Not numeric - must be the URL key
-    $where = {
-      url_key => $id_or_url_key,
-    };
+    $where = {"me.url_key" => $id_or_url_key};
   }
   
-  return $self->find( $where );
+  return $self->search($where, {
+    rows => 1,
+  })->single;
 }
 
 =head2 generate_url_key
@@ -279,28 +277,42 @@ Provides the wrapper (including error checking) for adding / editing a fixtures 
 =cut
 
 sub create_or_edit {
-  my ( $self, $action, $parameters ) = @_;
-  my $return_value = {error => []};
-  my ( $grid_name_check );
+  my ( $self, $action, $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
   
-  my $grid              = $parameters->{grid};
-  my $name              = $parameters->{name};
-  my $maximum_teams     = $parameters->{maximum_teams};
-  my $fixtures_repeated = $parameters->{fixtures_repeated};
+  # Grab the fields
+  my $grid = delete $params->{grid};
+  my $name = delete $params->{name};
+  my $maximum_teams = delete $params->{maximum_teams};
+  my $fixtures_repeated = delete $params->{fixtures_repeated};
+  my $response = {
+    errors => [],
+    warnings => [],
+    info => [],
+    success => [],
+    fields => {
+      name => $name,
+      maximum_teams => $maximum_teams,
+      fixtures_repeated => $fixtures_repeated,
+    },
+    completed => 0,
+  };
   
   if ($action ne "create" and $action ne "edit") {
     # Invalid action passed
-    push(@{ $return_value->{error} }, {
-      id          => "admin.form.invalid-action",
-      parameters  => [$action],
-    });
+    push(@{$response->{errors}}, $lang->maketext("admin.form.invalid-action", $action));
     
-    return $return_value;
+    return $response;
   } elsif ($action eq "edit") {
     unless ( defined( $grid ) and ref( $grid ) eq "TopTable::Model::DB::FixturesGrid" ) {
       # Editing a fixtures grid that doesn't exist.
-      push(@{ $return_value->{error} }, {id => "fixtures-grids.form.error.grid-invalid"});
-      return $return_value;
+      push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.error.grid-invalid"));
+      return $response;
     }
   }
   
@@ -308,33 +320,32 @@ sub create_or_edit {
   # Check the names were entered and don't exist already.
   if ( $name ) {
     # Full name entered, check it.
+    my $grid_name_check;
     if ( $action eq "edit" ) {
       $grid_name_check = $self->find({}, {
         where => {
           name  => $name ,
-          id    => {
-            "!=" => $grid->id
-          }
+          id    => {"!=" => $grid->id}
         }
       });
     } else {
       $grid_name_check = $self->find({name => $name});
     }
     
-    push(@{ $return_value->{error} }, {id => "fixtures-grids.form.error.grid-exists"}) if defined( $grid_name_check );
+    push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.error.grid-exists")) if defined( $grid_name_check );
   } else {
     # Full name omitted.
-    push(@{ $return_value->{error} }, {id => "fixtures-grids.form.error.name-blank"});
+    push(@{ $response->{errors} }, $lang->maketext("fixtures-grids.form.error.name-blank"));
   }
   
   # Check the maximum teams is a valid numeric value (2-98, even only).
-  push(@{ $return_value->{error} }, {id => "fixtures-grids.form.error.maximum-teams-invalid"}) if !$maximum_teams or $maximum_teams !~ m/^\d{1,2}$/ or $maximum_teams < 2 or $maximum_teams > 98 or $maximum_teams % 2 == 1;
+  push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.error.maximum-teams-invalid")) if !$maximum_teams or $maximum_teams !~ m/^\d{1,2}$/ or $maximum_teams < 2 or $maximum_teams > 98 or $maximum_teams % 2 == 1;
   
   # Check the number of weeks is valid; this needs to be a valid numeric figure and
   # less than 52, as a season will definitely not last a year.
-  push(@{ $return_value->{error} }, {id => "fixtures-grids.form.error.repeat-fixtures-invalid"}) if !$fixtures_repeated or $fixtures_repeated !~ m/^\d$/ or $fixtures_repeated < 1;
+  push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.error.repeat-fixtures-invalid")) if !$fixtures_repeated or $fixtures_repeated !~ m/^\d$/ or $fixtures_repeated < 1;
   
-  if ( scalar( @{ $return_value->{error} } ) == 0 ) {
+  if ( scalar( @{$response->{errors}} ) == 0 ) {
     # Generate a URL key
     my $url_key;
     if ( $action eq "edit" ) {
@@ -347,10 +358,10 @@ sub create_or_edit {
     # (minus 1) multiplied by the number of times a fixture is repeated; for example if teams play each other
     # team three times and there are a maximum of eight teams per division, number of weeks we will have is:
     # (8 - 1) * 3 = 21.
-    my $number_of_weeks   = ( $maximum_teams - 1 ) * $fixtures_repeated;
+    my $number_of_weeks = ( $maximum_teams - 1 ) * $fixtures_repeated;
     
     # Number of matches per divsion per week is the maximum teams per division divided by 2.
-    my $matches_per_week  = $maximum_teams / 2;
+    my $matches_per_week = $maximum_teams / 2;
     
     # Array used to populate multiple rows of data; each row will be a hashref containing the data we wish to insert.
     # This array will be passed as a reference, but keeping it a normal array right now makes the loop more readable.
@@ -358,16 +369,16 @@ sub create_or_edit {
     
     # Loop through all of our weeks building a hashref 
     for my $i ( 1 .. $number_of_weeks ) {
-      my @matches   = ();
+      my @matches  = ();
       # Now loop through the week's matches
       for my $x ( 1 .. $matches_per_week ) {
-        push( @matches, {match_number => $x,} );
+        push(@matches, {match_number => $x,});
       }
       
       # The hashref contains the grid ID and week number; the home and
       # away team numbers are populated later.  The grid ID is populated in the create
       push( @week_data, {
-        week                  => $i,
+        week => $i,
         fixtures_grid_matches => \@matches,
       });
     }
@@ -375,36 +386,42 @@ sub create_or_edit {
     if ( $action eq "create" ) {
       # Create the grid
       $grid = $self->create({
-        name                => $name,
-        url_key             => $url_key,
-        maximum_teams       => $maximum_teams,
-        fixtures_repeated   => $fixtures_repeated,
+        name => $name,
+        url_key => $url_key,
+        maximum_teams => $maximum_teams,
+        fixtures_repeated => $fixtures_repeated,
         fixtures_grid_weeks => \@week_data,
       });
+      
+      $response->{completed} = 1;
+      push(@{$response->{success}}, $lang->maketext("admin.forms.success", $grid->name, $lang->maketext("admin.message.created")));
     } else {
       # Delete the grid weeks and matches
-      my @weeks   = $grid->fixtures_grid_weeks->all;
+      my @weeks = $grid->fixtures_grid_weeks->all;
       my @matches = map $_->fixtures_grid_matches->all, @weeks;
       $_->delete foreach ( @matches );
       $_->delete foreach ( @weeks );
       
       # Update the existing grid
       $grid->update({
-        name                => $name,
-        url_key             => $url_key,
-        maximum_teams       => $maximum_teams,
-        fixtures_repeated   => $fixtures_repeated,
+        name => $name,
+        url_key => $url_key,
+        maximum_teams => $maximum_teams,
+        fixtures_repeated => $fixtures_repeated,
       });
       
       foreach my $week ( @week_data ) {
         $grid->create_related("fixtures_grid_weeks", $week);
       }
+      
+      $response->{completed} = 1;
+      push(@{$response->{success}}, $lang->maketext("admin.forms.success", $grid->name, $lang->maketext("admin.message.edited")));
     }
     
-    $return_value->{grid} = $grid;
+    $response->{grid} = $grid;
   }
   
-  return $return_value;
+  return $response;
 }
 
 1;

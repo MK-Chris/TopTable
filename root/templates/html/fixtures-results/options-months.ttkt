@@ -9,8 +9,8 @@
 USE zeroes = format("%02d");
 FOREACH playing_month IN display_options;
   SET date = playing_month.scheduled_date;
-  CALL date.set_locale( c.locale );
-  SET month = zeroes( date.month )
+  CALL date.set_locale(c.locale);
+  SET month = zeroes(date.month)
 -%]
   <li>
 [%

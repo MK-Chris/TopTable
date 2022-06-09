@@ -1,7 +1,6 @@
 package TopTable::Controller::Search;
 use Moose;
 use namespace::autoclean;
-use Data::Dumper::Concise;
 
 BEGIN { extends 'Catalyst::Controller'; }
 
@@ -26,36 +25,35 @@ Main site search - search everything we have a search for (uses a view).
 
 sub index :Path :Args(0) {
   my ( $self, $c ) = @_;
-  my $q = $c->req->param( "q" ) || undef;
   
   # Check what we're authorised to view (and therefore search for)
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( club_view fixtures_view match_view person_view season_view team_view user_view venue_view template_view ) ], "", 0] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", [[qw( club_view fixtures_view match_view person_view season_view team_view user_view venue_view template_view )], "", 0]);
   
   # Now set the 'include' array - divisions are automatically in
   my @include_types = ("division");
-  push( @include_types, "club") if $c->stash->{authorisation}{club_view};
-  push( @include_types, "fixtures-grid") if $c->stash->{authorisation}{fixtures_view};
-  push( @include_types, "team-match") if $c->stash->{authorisation}{match_view};
-  push( @include_types, "person") if $c->stash->{authorisation}{person_view};
-  push( @include_types, "season") if $c->stash->{authorisation}{season_view};
-  push( @include_types, "team") if $c->stash->{authorisation}{team_view};
-  push( @include_types, "user") if $c->stash->{authorisation}{user_view};
-  push( @include_types, "venue") if $c->stash->{authorisation}{venue_view};
-  push( @include_types, qw/ template-league-table-ranking template-match-individual template-match-team / ) if $c->stash->{authorisation}{template_view};
+  push(@include_types, "club") if $c->stash->{authorisation}{club_view};
+  push(@include_types, "fixtures-grid") if $c->stash->{authorisation}{fixtures_view};
+  push(@include_types, "team-match") if $c->stash->{authorisation}{match_view};
+  push(@include_types, "person") if $c->stash->{authorisation}{person_view};
+  push(@include_types, "season") if $c->stash->{authorisation}{season_view};
+  push(@include_types, "team") if $c->stash->{authorisation}{team_view};
+  push(@include_types, "user") if $c->stash->{authorisation}{user_view};
+  push(@include_types, "venue") if $c->stash->{authorisation}{venue_view};
+  push(@include_types, qw( template-league-table-ranking template-match-individual template-match-team )) if $c->stash->{authorisation}{template_view};
   
   $c->stash({
     db_resultset => "SearchAllView",
     query_params => {
-      q => $q,
+      q => $c->req->params->{q},
       include_types => \@include_types
     },
     search_action => "/search/index",
     search_all => 1,
-    placeholder => $c->maketext( "search.form.placeholder", $c->maketext("object.plural.search-all") ),
+    placeholder => $c->maketext("search.form.placeholder", $c->maketext("object.plural.search-all")),
   });
   
   # Do the search
-  $c->forward( "TopTable::Controller::Search", "do_search" );
+  $c->forward("TopTable::Controller::Search", "do_search");
 }
 
 =head2 do_search :Private
@@ -80,27 +78,26 @@ sub do_search {
   
   if ( $c->is_ajax ) {
     # AJAX request
-    if ( defined( $q ) and $q ne "" ) {
+    if ( defined($q) and $q ne "" ) {
       # We have a query
       # As it's an AJAX request, don't split words up, as it can mess with the autocomplete / tokeninput highlighting.
       $query_params->{split_words} = 0;
-      my $search_results = $c->model("DB::$db_resultset")->search_by_name( $query_params );
+      my $search_results = $c->model("DB::$db_resultset")->search_by_name($query_params);
       
       # Return results in JSON
-      my $json_search  = [];
+      my $json_search = [];
       
       # Loop through and push it on to the $json_search arrayref
       while ( my $result = $search_results->next ) {
         # Grab the display parameters
-        my %display = %{ $result->search_display };
+        my %display = %{$result->search_display};
+        my $type = $display{type};
         
         my $obj_action;
-        if ( defined( $view_action ) ) {
+        if ( defined($view_action) ) {
           $obj_action = $view_action;
         } else {
           # Check type to get view action
-          my $type = $display{type};
-          
           if ( $type eq "person" ) {
             $obj_action = "/people/view_current_season";
           } elsif ( $type eq "team" ) {
@@ -127,15 +124,24 @@ sub do_search {
             $obj_action = "/users/view";
           } else {
             # Log an error, invalid type
-            $c->log->error( "Invalid search type: $type" );
+            $c->log->error("Invalid search type: $type");
             next;
           }
         }
         
         my $json_result = {id => $display{id}, url => $c->uri_for_action($obj_action, $display{url_keys})->as_string};
-        $json_result->{name} = ( $result->result_source->schema->source($db_resultset)->has_column( "date" ) and defined( $result->date ) ) ? sprintf( "%s (%s)", $display{name}, $result->date->dmy("/") ) : $display{name};
+        $json_result->{name} = ( $result->result_source->schema->source($db_resultset)->has_column("date") and defined($result->date) ) ? sprintf("%s (%s)", $display{name}, $result->date->dmy("/")) : $display{name};
         
-        push( @{$json_search}, $json_result );
+        
+        if ( $type eq "person" and $db_resultset ne "SearchAllView" ) {
+          # Additional formatting options for people
+          $json_result->{initial_and_surname} = $result->initial_and_surname;
+          $json_result->{initials} = $result->initials;
+          $json_result->{first_name} = $result->first_name;
+          $json_result->{surname} = $result->surname;
+        }
+        
+        push(@{$json_search}, $json_result);
       }
       
       # Set up the stash
@@ -145,21 +151,22 @@ sub do_search {
       });
       
       # Detach to the JSON view
-      $c->detach( $c->view("JSON") );
+      $c->detach($c->view("JSON"));
       return;
     } else {
       # Error, as we should always have a query via AJAX
       my $error = $c->maketext("search.error.no-query");
-      $c->log->error( $error );
-      $c->detach( "TopTable::Controller::Root", "json_error", [ 400, $error ] );
+      $c->log->error($error);
+      $c->res->status(400);
+      $c->stash({json_data => {messages => {error => $error}}});
       return;
     }
   } else {
     # HTML request
     # Check external scripts / styles
-    if ( scalar @{ $external_scripts } ) {
+    if ( scalar @{$external_scripts} ) {
       # We already have scripts stashed for this search page, add to them
-      push( @{ $external_scripts },
+      push(@{$external_scripts},
         $c->uri_for("/static/script/plugins/uri/URI.js"),
         $c->uri_for("/static/script/plugins/autocomplete/jquery.easy-autocomplete.js"),
       );
@@ -170,9 +177,9 @@ sub do_search {
       ];
     }
     
-    if ( scalar @{ $external_styles } ) {
+    if ( scalar @{$external_styles} ) {
       # We already have scripts stashed for this search page, add to them
-      push( @{ $external_styles },
+      push(@{$external_styles},
         $c->uri_for("/static/css/autocomplete/easy-autocomplete.min.css"),
         $c->uri_for("/static/css/autocomplete/easy-autocomplete.themes.min.css"),
       );
@@ -199,22 +206,22 @@ sub do_search {
       search_scripts_added => 1,
     });
     
-    if ( defined( $q ) and $q ne "" ) {
+    if ( defined($q) and $q ne "" ) {
       # We have a query, display results
       # Add page options as we're not AJAXing
       my $page = $c->req->param( "page" ) || undef;
-      $page = 1 if !defined( $page ) or !$page or $page !~ /^\d+$/ or $page < 1;
+      $page = 1 if !defined($page) or !$page or $page !~ /^\d+$/ or $page < 1;
       
       my $results_per_page = $c->req->param( "results" );
-      $results_per_page = $c->config->{Pagination}{default_page_size} if !defined( $results_per_page ) or !$results_per_page or $results_per_page !~ /^\d+$/ or $results_per_page < 1;
+      $results_per_page = $c->config->{Pagination}{default_page_size} if !defined($results_per_page) or !$results_per_page or $results_per_page !~ /^\d+$/ or $results_per_page < 1;
       $query_params->{page} = $page;
       $query_params->{results} = $results_per_page;
       $query_params->{split_words} = 1;
-      my $search_results = $c->model("DB::$db_resultset")->search_by_name( $query_params );
+      my $search_results = $c->model("DB::$db_resultset")->search_by_name($query_params);
       
       # Generate pagination links
       my $page_info = $search_results->pager;
-      my $page_links  = $c->forward( "TopTable::Controller::Root", "generate_pagination_links_qs",
+      my $page_links  = $c->forward("TopTable::Controller::Root", "generate_pagination_links_qs",
       [{
         page_info => $page_info,
         action => $search_action,
@@ -224,7 +231,7 @@ sub do_search {
       
       # Stash the values we need when we have a query value
       $c->stash({
-        search_results => [ $search_results->all ],
+        search_results => [$search_results->all],
         view_online_link => 1,
         q => $q,
         page_info => $page_info,

@@ -450,7 +450,7 @@ Return the URL key for this object as an array ref (even if there's only one, an
 
 sub url_keys {
   my ( $self ) = @_;
-  return [ $self->url_key ];
+  return [$self->url_key];
 }
 
 =head2 number_of_weeks
@@ -463,7 +463,7 @@ sub number_of_weeks {
   my ( $self ) = @_;
   
   my $season_weeks;
-  for (my $dt = $self->start_date->clone; $dt <= $self->end_date; $dt->add( weeks => 1 ) ) {
+  for (my $dt = $self->start_date->clone; $dt <= $self->end_date; $dt->add(weeks => 1) ) {
     $season_weeks++;
   }
   
@@ -478,7 +478,7 @@ Return the long start date for the season.
 
 sub start_date_long {
   my ( $self ) = @_;
-  return sprintf( "%s, %s %s %s", ucfirst( $self->start_date->day_name ), $self->start_date->day, $self->start_date->month_name, $self->start_date->year );
+  return sprintf("%s, %s %s %s", ucfirst($self->start_date->day_name), $self->start_date->day, $self->start_date->month_name, $self->start_date->year);
 }
 
 =head2 end_date_long
@@ -489,7 +489,7 @@ Return the long end date for the season.
 
 sub end_date_long {
   my ( $self ) = @_;
-  return sprintf( "%s, %s %s %s", ucfirst( $self->end_date->day_name ), $self->end_date->day, $self->end_date->month_name, $self->end_date->year );
+  return sprintf("%s, %s %s %s", ucfirst($self->end_date->day_name), $self->end_date->day, $self->end_date->month_name, $self->end_date->year);
 }
 
 =head2 all_clubs
@@ -502,9 +502,7 @@ sub all_clubs {
   my ( $self ) = @_;
   
   return $self->search_related("club_seasons", undef, {
-    order_by  => {
-      -asc    => [ qw( full_name ) ],
-    },
+    order_by  => {-asc => [qw( full_name )]},
   });
 }
 
@@ -518,10 +516,8 @@ sub all_teams {
   my ( $self ) = @_;
   
   return $self->search_related("team_seasons", undef, {
-    join      => "club_season",
-    order_by  => {
-      -asc    => [ qw( club_season.short_name me.name ) ],
-    },
+    join => "club_season",
+    order_by => {-asc => [qw( club_season.short_name me.name )]},
   });
 }
 
@@ -533,42 +529,58 @@ Return a list of players who have entered this season.
 
 sub all_players {
   my ( $self ) = @_;
-  
-  # There will be a better way of doing this, as this could count an inactive player without an active counterpart, but this will do for now.  
-  return $self->search_related("person_seasons", {
-    team_membership_type => "active",
-  });
+  return $self->search_related("person_seasons", {team_membership_type => "active"});
 }
 
 =head2 league_matches
 
-Return a list of teams who have entered this season.
+Return a list of mamtches for a given season.  If the 'mode' is given, only those relevant matches are returned; the modes are:
+
+* cancelled - any cancelled match.
+* rearranged - any matches where the played_date is not null and doesn't match the scheduled_date
+* incomplete-team - any matches where at least one player is missing
+* loan-players - any matches that had at least one loan player
 
 =cut
 
 sub league_matches {
-  my ( $self, $parameters ) = @_;
-  my $mode = delete $parameters->{mode} || undef;
-  my $where       = {};
-  my $attributes  = {};
+  my ( $self, $params ) = @_;
+  my $mode = $params->{mode} || undef;
   
-  if ( defined( $mode ) ) {
+  # A lot of these are only used to get a count, in which case we don't need to do expensive prefetches - so we make it a manual option.
+  my $prefetch = $params->{prefetch} || 0;
+  my $where = {};
+  my $attrib = {};
+  
+  if ( defined($mode) ) {
     if ( $mode eq "cancelled" ) {
       $where->{cancelled} = 1;
     } elsif ( $mode eq "rearranged" ) {
       my $compare_field = "played_date";
       $where->{scheduled_date} = {"!=" => \$compare_field};
-    } elsif ( $mode eq "incomplete-teams" ) {
+    } elsif ( $mode eq "missing-players" ) {
       $where->{"team_match_players.player_missing"} = 1;
-      $attributes->{join} = "team_match_players";
+      $attrib->{join} = "team_match_players";
     } elsif ( $mode eq "loan-players" ) {
       $where->{"team_match_players.loan_team"} = {"!=" => undef};
-      $attributes->{join} = "team_match_players";
-    } 
+      $attrib->{join} = "team_match_players";
+    }
+    
+    # We only prefetch if there's a mode defined, we don't want to do lots of prefetches for all the matches in a season
+    if ( $prefetch ) {
+      $attrib->{prefetch} = [qw( venue ), {
+        division_season => [qw( division )],
+        team_season_home_team_season => [qw( team ), {
+          club_season => [qw( club )],
+        }],
+        team_season_away_team_season => [qw( team ), {
+          club_season => [qw( club )],
+        }],
+      }];
+    }
   }
   
-  
-  return $self->search_related("team_matches", $where, $attributes);
+  return $self->search_related("team_matches", $where, $attrib);
 }
 
 =head2 divisions
@@ -581,10 +593,8 @@ sub divisions {
   my ( $self ) = @_;
   
   return $self->search_related("division_seasons", undef, {
-    prefetch  => "division",
-    order_by  => {
-      -asc    => [qw( rank )],
-    }
+    prefetch => "division",
+    order_by => {-asc => [qw( rank )]}
   });
 }
 
@@ -614,37 +624,52 @@ Update the season to show that it's now complete (if possible).
 =cut
 
 sub check_and_complete {
-  my ( $self, $parameters ) = @_;
-  my $lang  = $parameters->{lang};
-  my $encoded_name = encode_entities( $self->name );
-  my $error = [];
+  my ( $self, $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
   
-  # Check we can delete
+  # Encode the name for messaging
+  my $enc_name = encode_entities($self->name);
+  my $response = {
+    errors => [],
+    warnings => [],
+    info => [],
+    success => [],
+    completed => 0,
+  };
+  
+  # Check we can complete
   if ( $self->complete ) {
-    push( @{ $error }, $lang->("seasons.complete.error.season-complete", $encoded_name) );
-    return $error;
+    push(@{$response->{errors}}, $lang->maketext("seasons.complete.error.season-complete", $enc_name));
+    return $response;
   }
   
-  if ( $self->result_source->schema->resultset("TeamMatch")->incomplete_and_not_cancelled({season => $self})->count > 0 ) {
-    push( @{ $error }, $lang->("seasons.complete.error.matches-incomplete", $encoded_name) );
-    return $error;
+  if ( $schema->resultset("TeamMatch")->incomplete_and_not_cancelled({season => $self})->count > 0 ) {
+    push(@{$response->{errors}}, $lang->maketext("seasons.complete.error.matches-incomplete", $enc_name));
+    return $response;
   }
   
   # Delete
-  my $ok = $self->update({complete => 1}) if !scalar( @{ $error } );
+  my $ok = $self->update({complete => 1}) if scalar @{$response->{errors}} == 0;
   
   # Error if the delete was unsuccessful
-  push(@{ $error }, {
-    id          => "seasons.complete.error.database",
-    parameters  => $self->name
-  }) unless $ok;
+  if ( $ok ) {
+    $response->{completed} = 1;
+    push(@{$response->{success}}, $lang->maketext("seasons.complete.success", $enc_name));
+  } else {
+    push(@{$response->{errors}}, $lang->maketext("seasons.complete.error.database", $enc_name));
+  }
   
-  return $error;
+  return $response;
 }
 
 =head2 can_uncomplete
 
-This is here so we can call it from controllers, but there's no routine to uncomplete yet, so at the momen this just returns false.
+This is here so we can call it from controllers, but there's no routine to uncomplete yet, so at the moment this just returns false.
 
 =cut
 
@@ -661,9 +686,9 @@ Performs some logic checks to see whether or not a season can be deleted.  A sea
 
 sub can_delete {
  my ( $self ) = @_;
- my $matches = $self->search_related("team_matches")->count;
  
- return ( $matches == 0 ) ? 1 : 0;
+ my $matches = $self->search_related("team_matches")->count;
+ return $matches == 0 ? 1 : 0;
 }
 
 =head2 check_and_delete
@@ -679,14 +704,26 @@ Checks the club can be deleted (via can_delete) and then performs the deletion.
 =cut
 
 sub check_and_delete {
-  my ( $self ) = @_;
-  my $error = [];
+  my ( $self, $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  
+  # Encode the name for messaging
+  my $enc_name = encode_entities($self->name);
+  my $response = {
+    errors => [],
+    warnings => [],
+    info => [],
+    success => [],
+    completed => 0,
+  };
   
   # Check we can delete
-  push(@{ $error }, {
-    id          => "seasons.delete.error.matches-exist",
-    parameters  => [$self->name],
-  }) unless $self->can_delete;
+  push(@{$response->{errors}}, $lang->maketext("seasons.delete.error.matches-exist", $enc_name)) unless $self->can_delete;
   
   # Order of the first three is important; person seasons must come before team seasons, which must come before club seasons
   my @relations = qw( person_seasons team_seasons club_seasons division_seasons doubles_pairs event_seasons fixtures_weeks );
@@ -695,27 +732,26 @@ sub check_and_delete {
   
   my $ok;
   foreach my $relation ( @relations ) {
-    $ok = $self->delete_related( $relation );
+    $ok = $self->delete_related($relation);
     
     # Error if the delete was unsuccessful
-    push(@{ $error }, {
-      id          => "admin.delete.error.database",
-      parameters  => [$self->name, ref( $relation )],
-    }) unless $ok;
+    push(@{$response->{errors}}, $lang->maketext("admin.delete.error.database", $enc_name, ref($relation))) unless $ok;
   }
   
   # Delete
   $ok = $self->delete;
   
   # Error if the delete was unsuccessful
-  push(@{ $error }, {
-    id          => "admin.delete.error.database",
-    parameters  => [$self->name, ref( $self )],
-  }) unless $ok;
+  if ( $ok ) {
+    $response->{completed} = 1;
+    push(@{$response->{success}}, $lang->maketext("admin.forms.success", $enc_name, $lang->maketext("admin.message.deleted")));
+  } else {
+    push(@{$response->{errors}}, $lang->maketext("admin.delete.error.database", $enc_name, ref($self)));
+  }
   
   $transaction->commit;
   
-  return $error;
+  return $response;
 }
 
 =head2 search_display

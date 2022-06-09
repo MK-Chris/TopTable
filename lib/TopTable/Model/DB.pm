@@ -13,6 +13,21 @@ __PACKAGE__->config(
     }
 );
 
+use TopTable::Maketext;
+use Data::Printer;
+
+sub ACCEPT_CONTEXT {
+  my ( $self, $c ) = @_;
+  
+  # We have to check the ref of $c here because this model seems to get called by Catalyst as part of the instantiation, before my code kicks in
+  # and in these cases, $c is the string "TopTable", not a ref to the TopTable object.
+  if ( ref($c) eq "TopTable" ) {
+    $self->schema->_set_maketext(TopTable::Maketext->get_handle($c->locale));
+  }
+  
+  return $self;
+}
+
 =head1 NAME
 
 TopTable::Model::DB - Catalyst DBIC Schema Model

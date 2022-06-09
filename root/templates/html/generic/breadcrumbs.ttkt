@@ -1,5 +1,5 @@
 [%
-IF breadcrumbs.size >= c.config.breadcrumbs.display_threshold AND c.config.breadcrumbs.show_breadcrumbs and !hide_breadcrumbs;
+IF !hide_breadcrumbs AND breadcrumbs.size >= c.config.breadcrumbs.display_threshold AND c.config.breadcrumbs.show_breadcrumbs;
 -%]
 <ul id="breadcrumbs">
 [%

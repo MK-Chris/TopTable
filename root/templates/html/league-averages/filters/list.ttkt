@@ -32,12 +32,12 @@ IF filters.count;
     ([% user_html %])
 [%
     END;
-    IF (authorisation.average_filter_edit_all) OR (authorisation.average_filter_edit_public AND !filter.user.defined) OR (c.user.id == filter.user.id);
+    IF (authorisation.averagefilter_edit_all) OR (authorisation.averagefilter_edit_public AND !filter.user.defined) OR (c.user.id == filter.user.id);
 -%]
     <a href="[% c.uri_for_action("/league-averages/filters/edit", [filter.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", name_html) %]" title="[% c.maketext("admin.edit-object", name_html) %]" /></a>
 [%
     END;
-    IF (authorisation.average_filter_delete_all) OR (authorisation.average_filter_delete_public AND !filter.user.defined) OR (c.user.id == filter.user.id);
+    IF (authorisation.averagefilter_delete_all) OR (authorisation.averagefilter_delete_public AND !filter.user.defined) OR (c.user.id == filter.user.id);
 -%]
     <a href="[% c.uri_for_action("/league-averages/filters/delete", [filter.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", name_html) %]" title="[% c.maketext("admin.delete-object", name_html) %]" /></a>
 [%
@@ -61,7 +61,7 @@ ELSE;
 END;
 -%]
 [%
-IF authorisation.average_filter_create_public OR c.user_exists;
+IF authorisation.averagefilter_create_public OR c.user_exists;
 -%]
 <a href="[% c.uri_for('/league-averages/filters/create') %]"><img src="[% c.uri_for('/static/images/icons/0009-Add-icon-48.png') %]" title="[% c.maketext("admin.create-object", c.maketext("object.singular.average-filters")) %]" /></a><br /><br />
 [%

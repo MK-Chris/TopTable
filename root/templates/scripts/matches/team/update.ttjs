@@ -1,7 +1,7 @@
 [%
 USE zeroes = format("%02d");
-SET match_month = zeroes( match.scheduled_date.month );
-SET match_day   = zeroes( match.scheduled_date.day )
+SET match_month = zeroes(match.scheduled_date.month);
+SET match_day = zeroes(match.scheduled_date.day)
 %]
 "use strict";
 $(document).ready(function() {
@@ -15,36 +15,59 @@ $(document).ready(function() {
       return false;
     }
   });*/
+  
+  /**
+   *  Teams for easy access
+   *
+   */
+   var match_teams = {
+     home: {
+       id: [% match.team_season_home_team_season.team.id %],
+       name: "[% match.team_season_home_team_season.club_season.short_name | html_entity %] [% match.team_season_home_team_season.name | html_entity %]"
+     }, away: {
+       id: [% match.team_season_away_team_season.team.id %],
+       name: "[% match.team_season_away_team_season.club_season.short_name | html_entity %] [% match.team_season_away_team_season.name | html_entity %]"
+     }
+   };
 
   /**
    *  Rules for each game and the running score.  These are presented in 'scheduled' played order, rather than actual order
    *
    */
-  var match_games = [
-[%-
+  var match_games = {
+[%
 FOREACH game IN match.team_match_games;
+  SET home_player_missing = game.home_player_missing;
+  SET away_player_missing = game.away_player_missing;
+  SET home_player_missing = "undefined" IF !home_player_missing.defined OR home_player_missing == "";
+  SET away_player_missing = "undefined" IF !away_player_missing.defined OR away_player_missing == "";
+  
   IF game.actual_game_number == 1;
--%]{
-[%-
+-%]
+    "[% game.scheduled_game_number %]": {
+[%
   ELSE;
--%], {
-[%-
+-%]
+, "[% game.scheduled_game_number %]": {
+[%
   END;
 -%]
-
-    // Game rules and details
-    scheduled_game_number: [% game.scheduled_game_number %],
-    actual_game_number: [% game.actual_game_number %],
-    doubles_game: Boolean([% game.doubles_game %]),
-    home_doubles_pair: [% game.home_doubles_pair.id OR "undefined" %],
-    away_doubles_pair: [% game.away_doubles_pair.id OR "undefined" %],
-    game_type: "[% game.individual_match_template.game_type.id %]",
-    serve_type: "[% game.individual_match_template.serve_type.id %]",
-    minimum_points_win: [% game.individual_match_template.minimum_points_win %],
-    clear_points_win: [% game.individual_match_template.clear_points_win %],
-    legs_per_game: [% game.individual_match_template.legs_per_game %],
-    
-    // Scores
+      // Game rules and details
+      scheduled_game_number: [% game.scheduled_game_number %],
+      //actual_game_number: [% game.actual_game_number OR "undefined" %],
+      doubles_game: Boolean([% game.doubles_game %]),
+      home_doubles_pair: [% game.home_doubles_pair.id OR "undefined" %],
+      away_doubles_pair: [% game.away_doubles_pair.id OR "undefined" %],
+      game_type: "[% game.individual_match_template.game_type.id %]",
+      serve_type: "[% game.individual_match_template.serve_type.id %]",
+      minimum_points_win: [% game.individual_match_template.minimum_points_win %],
+      clear_points_win: [% game.individual_match_template.clear_points_win %],
+      legs_per_game: [% game.individual_match_template.legs_per_game %],
+      home_player_missing: [% home_player_missing %],
+      away_player_missing: [% away_player_missing %],
+      can_enter_score: Boolean([% game.both_players_set %]),
+      
+      // Results
 [%-
   IF match.team_match_template.winner_type.id == "points";
     SET home_game_score = game.home_team_points_won;
@@ -55,25 +78,29 @@ FOREACH game IN match.team_match_games;
   END;
 -%]
 
-    home_team_legs: [% game.home_team_legs_won %],
-    away_team_legs: [% game.away_team_legs_won %],
-    home_team_points: [% game.home_team_points_won %],
-    away_team_points: [% game.away_team_points_won %],
-    home_team_game_score: [% home_game_score %],
-    away_team_game_score: [% away_game_score %],
-    home_team_match_score: [% game.home_team_match_score %],
-    away_team_match_score: [% game.away_team_match_score %],
-    game_complete: Boolean( [% game.complete %] )
-  }
+      home_team_legs: [% game.home_team_legs_won %],
+      away_team_legs: [% game.away_team_legs_won %],
+      home_team_points: [% game.home_team_points_won %],
+      away_team_points: [% game.away_team_points_won %],
+      home_team_game_score: [% home_game_score %],
+      away_team_game_score: [% away_game_score %],
+      home_team_match_score: [% game.home_team_match_score OR 0 %],
+      away_team_match_score: [% game.away_team_match_score OR 0 %],
+      game_complete: Boolean([% game.complete %]),
+      game_awarded: Boolean([% game.awarded OR 0 %]),
+      game_void: Boolean([% game.void OR 0 %]),
+      game_winner: [% game.winner.id OR "undefined" %]
+    }
 [%-
 END;
 -%]
-];
+}
   
   // Disable changing the accordion and AJAX score changes
-  var disable_accordion_change  = false;
-  var disable_ajax              = false;
-  var score_sent                = false;
+  var disable_accordion_change = false;
+  var disable_ajax = false;
+  var score_sent = false;
+  var disable_running_score_call = false;
   
   /**
    *  Set the focussed field / active accordion on page load
@@ -137,12 +164,18 @@ END;
    *  it will be unset by the 'beforeActivate' event of the accordion function so that the next time we click, it works okay.
    *
    */
+  var games_active_accordion = [% games_active_accordion %];
   var disable_accordion_activation = 0;
+  var active_game_number;
   $("#match-games").accordion({
     header: "> div > h3",
     collapsible: true,
-    active: [% games_active_accordion %],
+    active: games_active_accordion,
     heightStyle: "content",
+    create: function( event, ui ) {
+      // Store the active game number so we can refer to the correct fields
+      active_game_number = ui.header.data("scheduled-game-number");
+    },
     beforeActivate: function( event, ui ) {
       if ( disable_accordion_activation ) {
         // Don't activate this accordion branch if we're reordering.
@@ -151,6 +184,8 @@ END;
         disable_accordion_activation = false;
         return false;
       }
+      
+      active_game_number = ui.newHeader.data("scheduled-game-number");
     }
   }).sortable({
     axis: "y",
@@ -159,36 +194,31 @@ END;
     update: function( event, ui ) {
       // IE doesn't register the blur when sorting
       // so trigger focusout handlers to remove .ui-state-focus
-      ui.item.children("h3").triggerHandler( "focusout" );
-      
-      // Refresh accordion to handle new order
-      $(this).accordion( "refresh" );
+      ui.item.children("h3").triggerHandler("focusout");
       
       // Get the new order of game numbers
-      var game_numbers_array =  $(this).sortable("toArray", {
-        attribute: "data-scheduled-game-number"
-      });
+      var game_numbers_array =  $(this).sortable("toArray", {attribute: "data-scheduled-game-number"});
+      var accordion_ids_array =  $(this).sortable("toArray", {attribute: "data-accordion-id"});
       
       // Iterate over and set the actual game number
       var actual_game_number = 0;
-      $.each( game_numbers_array, function( index, scheduled_game_number ) {
+      $.each(game_numbers_array, function(index, scheduled_game_number) {
         // Increment the game number
         actual_game_number++;
         var object_index = scheduled_game_number - 1;
         
         // Set the 'actual game number' in both the form and the games array
-        $("#game_" + scheduled_game_number + "_actual_game_number").val( actual_game_number );
-        match_games[object_index].actual_game_number = actual_game_number;
+        $("#game_" + scheduled_game_number + "_actual_game_number").val(actual_game_number);
+        //match_games[object_index].actual_game_number = actual_game_number;
       });
-      
-      // The running scores need to be recalculated so that we can 
-      update_running_scores();
       
       // Build our post request so we can AJAX the updated game numbers
       var post_request = {};
       $("input.actual_game_number").each(function() {
         post_request["game-" + $(this).data("scheduled-game-number")] = $(this).val();
       });
+      
+      $(this).accordion("refresh");
       
       $.ajax({
         url: "[% c.uri_for_action('/matches/team/update_playing_order_by_ids', [match.team_season_home_team_season.team.id, match.team_season_away_team_season.team.id, match.scheduled_date.year, match_month, match_day]) %]",
@@ -203,6 +233,9 @@ END;
             position: "top-center",
             type: "success"
           });
+          
+          // The running scores need to be recalculated so that we can display the correct scores after each game
+          update_running_scores(response.match_scores);
         },
         error: function(xhr, ajax_options, thrown_error) {
           $().toastmessage("showToast", {
@@ -217,26 +250,85 @@ END;
       // Finally, set up the variable to cancel the accordion activation
       disable_accordion_activation = true;
     }
-  });
+  }); // End of accordion / sortable init
+  
+  /**
+   *  Change event for changing the date
+   *
+   */
+  $("form").on("change", "input.date_picker", function() {
+    $.ajax({
+      url: "[% c.uri_for_action("/matches/team/change_played_date_by_ids", [match.team_season_home_team_season.team.id, match.team_season_away_team_season.team.id, match.scheduled_date.year, match_month, match_day]) %]",
+      type: "POST",
+      dataType: "json",
+      data: {date: $(this).val()},
+      success: function(response) {
+        show_messages(response);
+      },
+      error: function(xhr, ajax_options, thrown_error) { 
+        if ( typeof xhr.responseJSON === "undefined" ) {
+          $().toastmessage("showToast", {
+            text: "<br />" + thrown_error + ": [% c.maketext("ajax.error.refresh-advice") %]",
+            sticky: true,
+            position: "top-center",
+            type: "error"
+          });
+        } else {
+          show_messages(xhr.responseJSON);
+        }
+      }
+    });
+  }); // End of date change handler
+  
+  /**
+   *  Generate an AJAX request when changing the venue selection
+   *   
+   */
+  $("#venue").on("change", function() {
+    $.ajax({
+      url: "[% c.uri_for_action("/matches/team/change_venue_by_ids", [match.team_season_home_team_season.team.id, match.team_season_away_team_season.team.id, match.scheduled_date.year, match_month, match_day]) %]",
+      type: "POST",
+      dataType: "json",
+      data: {venue: $(this).val()},
+      success: function(response) {
+        show_messages(response);
+      },
+      error: function(xhr, ajax_options, thrown_error) { 
+        if ( typeof xhr.responseJSON === "undefined" ) {
+          $().toastmessage("showToast", {
+            text: "<br />" + thrown_error + ": [% c.maketext("ajax.error.refresh-advice") %]",
+            sticky: true,
+            position: "top-center",
+            type: "error"
+          });
+        } else {
+          show_messages(xhr.responseJSON);
+        }
+      }
+    });
+  }); // End of venue change handler
   
   /**
    *  GAME SCORES
+   *  Read the scores for the given game and check they're valid.  If there is a complete score (someone has won the requisite number of legs,
+   *  or the correct number of legs have been played, or an 'award' button has been clicked), the score is submitted to the server for updating in the DB,
+   *  otherwise if it's valid but incomplete, the next leg is shown.  If it's invalid, nothing happens.  After submission, if there are no errors, the accordion
+   *  is moved to the next game if there is one, or if there's a URI passed back, we redirect to that URI.
    *
    */
+  var total_games = [% match.team_match_games.size %];
   $("input.game-score").on("blur", function() {
     // Get the game number
     var t = $(this);
-    var game_number = parseInt( t.data("game") );
-    var leg_number  = parseInt( t.data("leg") )
-    var games_index = game_number - 1;
+    var game_number = parseInt(t.data("game"));
+    var leg_number = parseInt(t.data("leg"));
     
     // Store our template rules
-    var minimum_points_win  = match_games[games_index].minimum_points_win;
-    var clear_points_win    = match_games[games_index].clear_points_win;
-    var game_type           = match_games[games_index].game_type;
-    var legs_per_game       = match_games[games_index].legs_per_game;
-    var doubles_game        = match_games[games_index].doubles_game;
-    var total_games         = match_games.length;
+    var minimum_points_win = match_games[game_number].minimum_points_win;
+    var clear_points_win = match_games[game_number].clear_points_win;
+    var game_type = match_games[game_number].game_type;
+    var legs_per_game = match_games[game_number].legs_per_game;
+    var doubles_game = match_games[game_number].doubles_game;
     var singles_game;
     var home_player_number;
     var away_player_number;
@@ -257,7 +349,7 @@ IF match.team_match_template.winner_type.id != "points";
 -%]
     if ( game_type == "best-of" ) {
       // Best of x legs - half it, parseInt it and + 1
-      legs_required_to_win = parseInt( legs_per_game / 2 ) + 1;
+      legs_required_to_win = parseInt( legs_per_game / 2) + 1;
     } else {
       // Static - number of legs required is irrelevant 
       legs_required_to_win = undefined;
@@ -269,14 +361,14 @@ END;
     // Now loop through all of the legs, to validate the score
     var loop_leg = 0;
     var winner;
-    var winning_score     = 0;
-    var losing_score      = 0;
-    var home_game_score   = 0;
-    var away_game_score   = 0;
-    var home_legs         = 0;
-    var away_legs         = 0;
-    var home_points       = 0;
-    var away_points       = 0;
+    var winning_score = 0;
+    var losing_score = 0;
+    var home_game_score = 0;
+    var away_game_score = 0;
+    var home_legs = 0;
+    var away_legs = 0;
+    var home_points = 0;
+    var away_points = 0;
     var winner_game_score = 0;
     var winner_legs;
     var home_field;
@@ -285,12 +377,11 @@ END;
     var clear_points;
     var legs_played;
     var leg_to_hide;
-    var active_accordion;
     var next_game_number;
-    while (loop_leg <= legs_per_game) {
+    while ( loop_leg <= legs_per_game ) {
       loop_leg++;
-      home_field  = $("#game_" + game_number + "_leg_" + loop_leg + "_home");
-      away_field  = $("#game_" + game_number + "_leg_" + loop_leg + "_away");
+      home_field = $("#game_" + game_number + "_leg_" + loop_leg + "_home");
+      away_field = $("#game_" + game_number + "_leg_" + loop_leg + "_away");
       
       // Set up the next leg number if there is one
       if ( loop_leg < legs_per_game ) {
@@ -300,23 +391,23 @@ END;
       }
       
       // Score checks
-      if ( $.isNumeric( $(home_field).val() ) && $.isNumeric( $(away_field).val() ) && $(home_field).val() >= 0 && $(away_field).val() >= 0 ) {
+      if ( $.isNumeric($(home_field).val()) && $.isNumeric($(away_field).val()) && $(home_field).val() >= 0 && $(away_field).val() >= 0 ) {
         // Both scores are numeric and greater than zero (minus scores don't make sense)
-        if ( parseInt( $(home_field).val() ) > parseInt( $(away_field).val() ) ) {
+        if ( parseInt($(home_field).val()) > parseInt($(away_field).val()) ) {
           // The current winner is the home team
-          winner        = "home";
-          winning_score = parseInt( $(home_field).val() );
-          losing_score  = parseInt( $(away_field).val() );
-        } else if ( parseInt( $(home_field).val() ) < parseInt( $(away_field).val() ) ) {
+          winner = "home";
+          winning_score = parseInt($(home_field).val());
+          losing_score = parseInt($(away_field).val());
+        } else if ( parseInt($(home_field).val()) < parseInt($(away_field).val()) ) {
           // The current winner is the away team
-          winner        = "away";
-          winning_score = parseInt( $(away_field).val() );
-          losing_score  = parseInt( $(home_field).val() );
+          winner = "away";
+          winning_score = parseInt($(away_field).val());
+          losing_score = parseInt($(home_field).val());
         } else {
           // Scores are equal
           winner = "";
-          winning_score = 0;
-          losing_score  = 0;
+          winning_score = parseInt($(home_field).val());
+          losing_score = parseInt($(home_field).val());
         }
         
         // Now we need to make sure the scores are valid - first save away the points difference between winning and losing scores
@@ -338,8 +429,8 @@ END;
           }
           
           // Store the number of legs the winner of this game has won - for easy access without making our ifs more complex
-          home_points += parseInt( $(home_field).val() );
-          away_points += parseInt( $(away_field).val() );
+          home_points += parseInt($(home_field).val());
+          away_points += parseInt($(away_field).val());
           
           if ( game_awarded ) {
             // If the game has been awarded, we may need to change the winner
@@ -349,6 +440,17 @@ END;
             } else {
               // The home team wins (awarded)
               winner = "away";
+            }
+            
+            // Disable, hide and set to zero any legs after this one.
+            var leg_to_hide = loop_leg + 1;
+            while( leg_to_hide <= legs_per_game ) {
+              $("#game_" + game_number + "_leg_" + leg_to_hide + "_home").val(0);
+              $("#game_" + game_number + "_leg_" + leg_to_hide + "_away").val(0);
+              $("#game_" + game_number + "_leg_" + leg_to_hide + "_home").prop("disabled", true);
+              $("#game_" + game_number + "_leg_" + leg_to_hide + "_away").prop("disabled", true);
+              $("#game_" + game_number + "_leg_" + leg_to_hide + "_score").hide();
+              leg_to_hide++;
             }
           } else {
             // If the score is valid, we can't award the game at this point, as someone has already won, so we hide the award buttonset
@@ -362,17 +464,17 @@ IF match.team_match_template.winner_type.id == "points";
   # Game score is taken on points, so we add both the home and away score up.
 -%]
           // Increment the points totals of each side, as the game score is taken on points
-          home_game_score += parseInt( $(home_field).val() );
-          away_game_score += parseInt( $(away_field).val() );
+          home_game_score += parseInt($(home_field).val());
+          away_game_score += parseInt($(away_field).val());
           
           if ( winner == "home" ) {
             winner_game_score = home_game_score;
-            home_legs         = home_game_score;
-            winner_legs       = home_legs;
+            home_legs = home_game_score;
+            winner_legs = home_legs;
           } else {
-            away_legs         = away_game_score;
-            winner_legs       = away_legs;
             winner_game_score = away_game_score;
+            away_legs = away_game_score;
+            winner_legs = away_legs;
           }
 [%
 ELSE;
@@ -381,13 +483,13 @@ ELSE;
           // The game score is taken from the legs or games, so this game's score is incremented for whomever won this leg
           if ( winner == "home" ) {
             home_game_score++;
-            home_legs         = home_game_score;
-            winner_legs       = home_legs;
+            home_legs = home_game_score;
+            winner_legs = home_legs;
             winner_game_score = home_game_score;
           } else {
             away_game_score++;
-            away_legs         = away_game_score;
-            winner_legs       = away_legs;
+            away_legs = away_game_score;
+            winner_legs = away_legs;
             winner_game_score = away_game_score;
           }
 [%
@@ -398,10 +500,10 @@ END;
           legs_played = home_legs + away_legs;
           
           // Update the legs / points for the game in the array
-          match_games[games_index].home_team_legs    = home_legs;
-          match_games[games_index].away_team_legs    = away_legs;
-          match_games[games_index].home_team_points  = home_points;
-          match_games[games_index].away_team_points  = away_points;
+          match_games[game_number].home_team_legs = home_legs;
+          match_games[game_number].away_team_legs = away_legs;
+          match_games[game_number].home_team_points = home_points;
+          match_games[game_number].away_team_points = away_points;
           
           // Check whether this win means that the winner of this leg has won the game
           if ( (typeof legs_required_to_win !== "undefined" && winner_legs === legs_required_to_win) || (typeof legs_required_to_win === "undefined" && legs_played === legs_per_game) || ( game_awarded ) ) {
@@ -409,18 +511,42 @@ END;
             // a static number of games - or the game was awarded, in which case we don't play any further games.
             
             // Update the game score in the div heading and the games array
-            if ( doubles_game ) {
-              $("#game_" + game_number + "_score").text(" - " + home_game_score + "-" + away_game_score);
-            } else {
-              $("#game_" + game_number + "_score").text(home_game_score + "-" + away_game_score);
+            if ( game_awarded === false || (winning_score || losing_score) ) {
+              if ( doubles_game ) {
+                $("#game_" + game_number + "_score").text(" - " + home_game_score + "-" + away_game_score);
+              } else {
+                $("#game_" + game_number + "_score").text(home_game_score + "-" + away_game_score);
+              }
             }
             
-            match_games[games_index].home_team_game_score = home_game_score;
-            match_games[games_index].away_team_game_score = away_game_score;
-            match_games[games_index].game_complete        = true;
+            // Disable, hide and set to zero any legs after this one as we don't need them.
+            var leg_to_hide = loop_leg + 1;
+            while( leg_to_hide <= legs_per_game ) {
+              $("#game_" + game_number + "_leg_" + leg_to_hide + "_home").val(0);
+              $("#game_" + game_number + "_leg_" + leg_to_hide + "_away").val(0);
+              $("#game_" + game_number + "_leg_" + leg_to_hide + "_home").prop("disabled", true);
+              $("#game_" + game_number + "_leg_" + leg_to_hide + "_away").prop("disabled", true);
+              $("#game_" + game_number + "_leg_" + leg_to_hide + "_score").hide();
+              leg_to_hide++;
+            }
+            
+            match_games[game_number].home_team_game_score = home_game_score;
+            match_games[game_number].away_team_game_score = away_game_score;
+            match_games[game_number].game_complete = true;
+            match_games[game_number].game_awarded = game_awarded;
+            
+            if ( t.data("player-location") === "away" ) {
+              if ( winner === "home" ) {
+                match_games[game_number].game_winner = match_teams.home.id;
+              } else if ( winner === "away" ) {
+                match_games[game_number].game_winner = match_teams.away.id;
+              } else {
+                match_games[game_number].game_winner = undefined;
+              }
+            }
             
             // Send the update if we're on the away score
-            if ( disable_ajax === false && t.data("player-location") == "away" ) {
+            if ( disable_ajax === false && t.data("player-location") === "away" ) {
               var ajax_parameters = {"game": game_number};
               
               var leg_played = 1;
@@ -433,8 +559,8 @@ END;
               if ( game_awarded ) {
                 // Game has been awarded, so add this to the AJAX parameters.  We also need to indicate the winner, as this isn't necessarily
                 // the person who has scored the most points (also the points totals may be equal).
-                ajax_parameters["awarded"]  = 1;
-                ajax_parameters["winner"]   = winner;
+                ajax_parameters["awarded"] = 1;
+                ajax_parameters["winner"] = winner;
               }
               
               $.ajax({
@@ -454,79 +580,59 @@ END;
                   score_sent = false;
                 },
                 success: function(response) {
-                  var originally_complete = Boolean( response.match_originally_complete );
-                  var complete            = Boolean( response.json_match_complete );
-                  if ( originally_complete === false && complete ) {
-                    window.location.href = "[% c.uri_for_action("/matches/team/view_by_url_keys", [match.team_season_home_team_season.club_season.club.url_key, match.team_season_home_team_season.team.url_key, match.team_season_away_team_season.club_season.club.url_key, match.team_season_away_team_season.team.url_key, match.scheduled_date.year, match_month, match_day], {mid => c.set_status_msg({success => c.maketext("matches.game.update-score.success-match-complete") }) }) %]";
+                  if ( response.redirect_uri ) {
+                    window.location.href = response.redirect_uri;
                   } else {
-                    $().toastmessage("showToast", {
-                      text: "[% c.maketext("matches.game.update-score.success-game-complete") %]",
-                      sticky: false,
-                      position: "top-center",
-                      type: "success"
-                    });
+                    show_messages(response);
                     
                     // Move on to the next one (if there is one)
-                    if ( game_number < total_games && t.data("player-location") == "away" ) {
-                      // Hide any fields from the next legs that may have been shown if the score has been edited to have less legs
-                      // Loop through all the next legs to hide and zero them
-                      leg_to_hide = loop_leg + 1;
-                      while( leg_to_hide <= legs_per_game ) {
-                        $("#game_" + game_number + "_leg_" + leg_to_hide + "_home").val(0);
-                        $("#game_" + game_number + "_leg_" + leg_to_hide + "_away").val(0);
-                        $("#game_" + game_number + "_leg_" + leg_to_hide + "_home").prop("disabled", true);
-                        $("#game_" + game_number + "_leg_" + leg_to_hide + "_away").prop("disabled", true);
-                        $("#game_" + game_number + "_leg_" + leg_to_hide + "_score").hide();
-                        leg_to_hide++;
-                      }
-                      
+                    if ( active_game_number < total_games && t.data("player-location") == "away" ) {
                       if ( disable_accordion_change === false ) {
-                        // Get the currently active accordion and increase it
-                        active_accordion = $("#match-games").accordion("option", "active");
-                        active_accordion++;
-                        
-                        // Now set the new active accordion
-                        $("#match-games").accordion("option", "active", active_accordion);
+                        // Get the currently active accordion and increase item
+                        move_to_next_playable_game();
                       }
                       
                       // Focus on the home score for the first leg of the next game
-                      var next_games_index = games_index + 1;
-                      if ( typeof match_games[next_games_index] !== "undefined" ) {
-                        // Get the next game number
-                        next_game_number = game_number + 1;
-                        
+                      if ( typeof match_games[active_game_number] !== "undefined" ) {
                         // There is another game after this
-                        if ( match_games[next_games_index].doubles_game ) {
+                        if ( match_games[active_game_number].doubles_game ) {
                           // Doubles game, check if either doubles pair is blank  
-                          if ( typeof match_games[next_games_index].home_doubles_pair === "undefined" ) {
+                          if ( typeof match_games[active_game_number].home_doubles_pair === "undefined" ) {
                             // No home doubles pair, focus on that
-                            $("#game_" + next_game_number + "_home_doubles_pairing").trigger("chosen:open");
-                          } else if ( typeof match_games[next_games_index].away_doubles_pair === "undefined" ) {
+                            $("#game_" + active_game_number + "_home_doubles_pairing").trigger("chosen:open");
+                          } else if ( typeof match_games[active_game_number].away_doubles_pair === "undefined" ) {
                             // No away doubles pair, focus on that
-                            $("#game_" + next_game_number + "_away_doubles_pairing").trigger("chosen:open");
+                            $("#game_" + active_game_number + "_away_doubles_pairing").trigger("chosen:open");
                           } else {
                             // If we have both doubles pairs, focus on the home score in leg 1
-                            $("#game_" + next_game_number + "_leg_1_home").focus();
+                            $("#game_" + active_game_number + "_leg_1_home").focus();
                           }
                         } else {
                           // Singles game, focus on the score
-                          $("#game_" + next_game_number + "_leg_1_home").focus();
+                          $("#game_" + active_game_number + "_leg_1_home").focus();
                         }
                       }
                       
-                      //if ( match_games[games_index + 1].doubles_game )
-                      next_game_number = game_number + 1;  
-                      $("#game_" + next_game_number + "_leg_1_home").focus();
+                      $("#game_" + active_game_number + "_leg_1_home").focus();
                     }
+                  }
+                  
+                  // After the game has been updated, we need to update the running scores
+                  if ( disable_running_score_call === false ) {
+                    update_running_scores(response.match_scores);
                   }
                 },
                 error: function(xhr, ajax_options, thrown_error) {
-                  $().toastmessage("showToast", {
-                    text: thrown_error + ": " + xhr.responseJSON.json_error,
-                    sticky: true,
-                    position: "top-center",
-                    type: "error"
-                  });
+                  if ( typeof xhr.responseJSON === "undefined" ) {
+                    $().toastmessage("showToast", {
+                      text: "<br />" + thrown_error + ": [% c.maketext("ajax.error.refresh-advice") %]",
+                      sticky: true,
+                      position: "top-center",
+                      type: "error"
+                    });
+                  } else {
+                    show_messages(xhr.responseJSON);
+                  }
                 }
               });
               
@@ -542,21 +648,20 @@ END;
               // Select the next home score if this is an away score
               if ( t.data("player-location") == "away" ) {
                 $("#game_" + game_number + "_leg_" + next_leg + "_home").focus();
-              } else {
-                //away_field.focus();
               }
             }
             
             // Update the game score in the div heading and the games array
             if ( doubles_game ) {
-              $("#game_" + game_number + "_score").text(" - " + home_legs + "-" + away_legs);
+              $("#game_" + game_number + "_score").text(": " + home_legs + "-" + away_legs);
             } else {
               $("#game_" + game_number + "_score").text(home_legs + "-" + away_legs);
             }
             
-            match_games[games_index].home_team_game_score = home_game_score;
-            match_games[games_index].away_team_game_score = away_game_score;
-            match_games[games_index].game_complete        = false;
+            match_games[game_number].home_team_game_score = home_game_score;
+            match_games[game_number].away_team_game_score = away_game_score;
+            match_games[game_number].game_complete = false;
+            match_games[game_number].game_awarded = false;
           }
         } else {
           // Not a valid win, disable, hide and set to zero any legs after this one.
@@ -585,11 +690,13 @@ END;
             $("#game_" + game_number + "_away_team_legs_won").val(0);
           
             // Update the legs / points for the game in the array to 0
-            match_games[games_index].home_team_legs    = 0;
-            match_games[games_index].away_team_legs    = 0;
-            match_games[games_index].home_team_points  = 0;
-            match_games[games_index].away_team_points  = 0;
-            match_games[games_index].game_complete    = false;
+            match_games[game_number].home_team_legs = 0;
+            match_games[game_number].away_team_legs = 0;
+            match_games[game_number].home_team_points = 0;
+            match_games[game_number].away_team_points = 0;
+            match_games[game_number].game_complete = false;
+            match_games[game_number].game_awarded = false;
+            match_games[game_number].game_winner = undefined;
           }
           
           break;
@@ -625,170 +732,163 @@ END;
             $("#game_" + game_number + "_score").text("v");
           }
           
-          match_games[games_index].home_team_game_score = 0;
-          match_games[games_index].away_team_game_score = 0;
-          match_games[games_index].game_complete      = false;
+          match_games[game_number].home_team_game_score = 0;
+          match_games[game_number].away_team_game_score = 0;
+          match_games[game_number].game_complete = false;
+          match_games[game_number].game_awarded = false;
+          match_games[game_number].game_winner = undefined;
         }
         
         break;
       }
     }
-    
-    // After the game has been updated, we need to update the running scores
-    update_running_scores();
-  });
+  }); // End of game scores
+  
   
   /**
-   *  Loop through the match in actual played (rather than scheduled order) to work out the running score after each game.
-   *
-   */
-  function update_running_scores() {
-    // Take a copy of the match_games array
-    var match_games_played_order = match_games.slice();
-    
-    // Now sort it by actual game number (played order)
-    match_games_played_order.sort(function(a, b) {
-      return a.actual_game_number - b.actual_game_number;
-    });
-    
-    // Loop through the newly sorted array
-    var home_team_match_score = 0;
-    var away_team_match_score = 0;
-    // [% match.team_match_template.winner_type.id %]
-    $.each(match_games_played_order, function( index, game ) {
-      if ( game.game_complete ) {
-        // The game is complete, add the match score up and set the span text
-[%
-IF match.team_match_template.winner_type.id == "games";
-  # Number of games won makes up the running total
--%]
-        if ( game.home_team_legs > game.away_team_legs ) {
-          home_team_match_score++;
-        } else {
-          away_team_match_score++;
-        }
-[%
-ELSIF match.team_match_template.winner_type.id == "legs";
-  # Number of legs won makes up the running total
--%]
-        home_team_match_score += game.home_team_legs;
-        away_team_match_score += game.away_team_legs;
-[%
-ELSE;
-  # Number of points won makes up the running total
--%]
-        home_team_match_score += game.home_team_points;
-        away_team_match_score += game.away_team_points;
-[%
-END;
--%]
-        game.home_team_match_score = home_team_match_score;
-        game.away_team_match_score = away_team_match_score;
-        $("#game_" + game.scheduled_game_number + "_match_score").text("Match score: " + home_team_match_score + "-" + away_team_match_score);
-      } else {
-        // The game is not complete, do not do any adding, set the games array variables to 0 and the span text to blank
-        game.home_team_match_score = 0;
-        game.away_team_match_score = 0;
-        $("#game_" + game.scheduled_game_number + "_match_score").text("");
-      }
-    });
-  }
-  
-  /**
-   *  Handle awards button clicks
+   *  Handle award button clicks
    *
    */
   $("input.award-game").on("change", function() {
-    var $this_button  = $(this);
-    var game_number   = $this_button.data("game-number");
-    var leg_number    = $this_button.data("leg-number");
-    var location      = $this_button.data("location");
-    var opposite_location;
-    
-    // Work out the 'opposite' button - i.e., if the 
-    if ( location === "home" ) {
-      opposite_location = "away";
-    } else {
-      opposite_location = "home";
+    if ( disable_ajax === false ) {
+      var $this_button = $(this);
+      var game_number = $this_button.data("game-number");
+      var leg_number = $this_button.data("leg-number");
+      var location = $this_button.data("location");
+      var opposite_location;
+      
+      // Generate the correct URI.  We have to have this because the URI is generated by the server and can't be done with a JS variable
+      var reset_uri;
+      switch(game_number) {
+[%
+FOREACH award_game = match.team_match_games;
+-%]
+        case [% award_game.scheduled_game_number %]:
+          reset_uri = "[% c.uri_for_action('/matches/team/game/reset_score_by_ids', [match.team_season_home_team_season.team.id, match.team_season_away_team_season.team.id, match.scheduled_date.year, match_month, match_day, award_game.scheduled_game_number]) %]";
+          break;
+[%
+END;
+-%]
+      }
+      
+      // Work out the 'opposite' button - i.e., if the 
+      if ( location === "home" ) {
+        opposite_location = "away";
+      } else {
+        opposite_location = "home";
+      }
+      
+      if ( $this_button.prop("checked") ) {
+        // If this button is checked, ensure the opposite one is not
+        $("#game_" + game_number + "_leg_" + leg_number + "_" + opposite_location + "_award").prop("checked", false);
+        $("#game_" + game_number + "_leg_" + leg_number + "_award").buttonset("refresh");
+      }
+      
+      // Now check that ONE of the buttons is checked, so that we can work out whether to trigger an update, or send the AJAX request to reset (delete) the existing score
+      if ( $this_button.prop("checked") || $("#game_" + game_number + "_leg_" + leg_number + "_" + opposite_location + "_award").prop("checked") ) {
+        // One of the award fields is now checked, so trigger the update to calculate the scores / tables / etc.
+        $("#game_" + game_number + "_leg_" + leg_number + "_away").trigger("blur");
+      } else {
+        // None of the fields is checked, we must have unchecked the field - send the request to reset the score
+        $.ajax({
+          url: reset_uri,
+          type: "POST",
+          dataType: "json",
+          success: function(response) {
+            show_messages(response);
+            update_running_scores(response.match_scores);
+          },
+          error: function(xhr, ajax_options, thrown_error) {
+            if ( typeof xhr.responseJSON === "undefined" ) {
+              $().toastmessage("showToast", {
+                text: "<br />" + thrown_error + ": [% c.maketext("ajax.error.refresh-advice") %]",
+                sticky: true,
+                position: "top-center",
+                type: "error"
+              });
+            } else {
+              show_messages(xhr.responseJSON);
+            }
+          }
+        });
+      }
     }
-    
-    if ( $this_button.prop("checked") ) {
-      // If this button is checked, ensure the opposite one is not
-      $("#game_" + game_number + "_leg_" + leg_number + "_" + opposite_location + "_award").prop("checked", false);
-      $("#game_" + game_number + "_leg_" + leg_number + "_award").buttonset("refresh");
-    }
-    
-    // Trigger a change in one of the fields for this leg; this is so we can recalculate the correct scores.
-    $("#game_" + game_number + "_leg_" + leg_number + "_away").trigger("blur");
-  });
+  }); // End of award button click handler
   
   /**
-   *  Change event for changing the date
+   *  Handle reset score button clicks
    *
    */
-  $("form").on("change", "input.date_picker", function() {
+  $("input.button-reset").on("click", function() {
+    var game_number = $(this).data("game");
+    
+    // Generate the correct URI.  We have to have this because the URI is generated by the server and can't be done with a JS variable
+    var reset_uri;
+    switch(game_number) {
+[%
+FOREACH award_game = match.team_match_games;
+-%]
+      case [% award_game.scheduled_game_number %]:
+        reset_uri = "[% c.uri_for_action('/matches/team/game/reset_score_by_ids', [match.team_season_home_team_season.team.id, match.team_season_away_team_season.team.id, match.scheduled_date.year, match_month, match_day, award_game.scheduled_game_number]) %]";
+        break;
+[%
+END;
+-%]
+    }
+    
     $.ajax({
-      url: "[% c.uri_for_action("/matches/team/change_played_date_by_ids", [match.team_season_home_team_season.team.id, match.team_season_away_team_season.team.id, match.scheduled_date.year, match_month, match_day]) %]",
+      url: reset_uri,
       type: "POST",
       dataType: "json",
-      data: {date: $(this).val()},
       success: function(response) {
-        $().toastmessage("showToast", {
-          text: "<br />[% c.maketext("matches.update-match-date.success") %]",
-          sticky: false,
-          position: "top-center",
-          type: "success"
-        });
+        show_messages(response);
+        
+        // Zero scores in input fields
+        $("#game_" + game_number + "_leg_1_home").val("0");
+        $("#game_" + game_number + "_leg_1_away").val("0");
+        
+        // Trigger a change so that the correct fields are shown
+        // Disable changing the accordion and AJAX score changes
+        disable_accordion_change = true;
+        disable_ajax = true;
+[%
+FOREACH leg = game.team_match_legs;
+-%]
+        $("#game_" + game_number + "_leg_[% leg.leg_number %]_home_award").prop("checked", false);
+        $("#game_" + game_number + "_leg_[% leg.leg_number %]_away_award").prop("checked", false);
+        $("#game_" + game_number + "_leg_[% leg.leg_number %]_award").buttonset("refresh");
+[%
+END;
+-%]
+        $("#game_" + game_number + "_leg_1_away").trigger("blur");
+        update_running_scores(response.match_scores);
+        disable_accordion_change = false;
+        disable_ajax = false;
       },
-      error: function(xhr, ajax_options, thrown_error) { 
-        $().toastmessage("showToast", {
-          text: "<br />" + thrown_error + ": " + xhr.responseJSON.json_error,
-          sticky: true,
-          position: "top-center",
-          type: "error"
-        });
+      error: function(xhr, ajax_options, thrown_error) {
+        if ( typeof xhr.responseJSON === "undefined" ) {
+          $().toastmessage("showToast", {
+            text: "<br />" + thrown_error + ": [% c.maketext("ajax.error.refresh-advice") %]",
+            sticky: true,
+            position: "top-center",
+            type: "error"
+          });
+        } else {
+          show_messages(xhr.responseJSON);
+        }
       }
     });
-  });
-  
-  /**
-   *  Generate an AJAX request when changing the venue selection
-   *   
-   */
-  $("#venue").on("change", function() {
-    $.ajax({
-      url: "[% c.uri_for_action("/matches/team/change_venue_by_ids", [match.team_season_home_team_season.team.id, match.team_season_away_team_season.team.id, match.scheduled_date.year, match_month, match_day]) %]",
-      type: "POST",
-      dataType: "json",
-      data: {venue: $(this).val()},
-      success: function(response) {
-        $().toastmessage("showToast", {
-          text: "<br />[% c.maketext("matches.update-venue.success") %]",
-          sticky: false,
-          position: "top-center",
-          type: "success"
-        });
-      },
-      error: function(xhr, ajax_options, thrown_error) { 
-        $().toastmessage("showToast", {
-          text: "<br />" + thrown_error + ": " + xhr.responseJSON.json_error,
-          sticky: true,
-          position: "top-center",
-          type: "error"
-        });
-      }
-    });
-  });
+  }); // End of reset score handler
   
   /**
    *  Reset players back to what they were in the event of an AJAX error
    *
    */
   var disable_callback = 0; // Used to disable AJAX requests when setting the tokeninput (if we're setting it to the value according to the database)
-  function resetPlayer(player_number, player_id, display_name, loan_player) {
+  function reset_player(player_number, player_id, display_name, loan_player) {
     disable_callback = 1;
     if (player_id !== undefined) {
-      if ( parseInt( loan_player ) ) {
+      if ( parseInt(loan_player) ) {
         // For loan players, populate and show the token input field, clear and hide the select box
         $("#player_select" + player_number).val("");
         $("#player_search_div" + player_number).show();
@@ -819,13 +919,303 @@ END;
     $("#player_select" + player_number).trigger("chosen:updated");
     
     disable_callback = 0;
-  }
+  } // End of reset_player()
+  
+  /**
+   *  Move to the next playable game in the accordion
+   *
+   */
+  function move_to_next_playable_game() {
+    games_active_accordion = $("#match-games").accordion("option", "active");
+    
+    // Indefinite loop - break when we get to a playable game, or we reach the end
+    while ( 1 ) {
+      games_active_accordion++;
+      
+      // Now set the new active accordion
+      $("#match-games").accordion("option", "active", games_active_accordion);
+      
+      if ( typeof active_game_number === "undefined" || match_games[active_game_number].can_enter_score || match_games[active_game_number].doubles_game ) {
+        // Either the next game is undefined, or we can enter this score so can stop here
+        break;
+      }
+    }
+  } // End of move_to_next_playable_game()
+  
+  /**
+   *  Update the running scores displayed.
+   *  If an array of match scores is not passed in, we do an AJAX request to get it, however most functions that call this will already have the running scores in
+   *  response to their own AJAX calls.
+   *
+   */
+  function update_running_scores(match_scores) {
+    // Get the running scores from the server if we've not got match scores passed in
+    if ( Array.isArray(match_scores) === false ) {
+      $.ajax({
+        url: "[% c.uri_for_action('/matches/team/calculate_running_scores_by_ids', [match.team_season_home_team_season.team.id, match.team_season_away_team_season.team.id, match.scheduled_date.year, match_month, match_day]) %]",
+        type: "POST",
+        dataType: "json",
+        success: function(response) {
+          match_scores = response.match_scores;
+        },
+        error: function(xhr, ajax_options, thrown_error) {
+          $().toastmessage("showToast", {
+            text: "<br />" + thrown_error + ": " + xhr.responseJSON.json_error + "<br />[% c.maketext("matches.update-running-scores.error") %]",
+            sticky: true,
+            position: "top-center",
+            type: "error"
+          });
+        }
+      });
+    }
+    
+    // Update the running score text on each game
+    $.each(match_scores, function(key, game) {
+      var game_number = game.scheduled_game_number;
+      var show_score = game.complete || game.game_in_progress ? 1 : 0;
+      
+      if ( show_score ) {
+        $("#game_" + game.scheduled_game_number + "_match_score").text("[% c.maketext("matches.game.header.match-score") %]: " + game.home_won + "-" + game.away_won);
+      } else {
+        $("#game_" + game.scheduled_game_number + "_match_score").text("");
+      }
+    });
+  } // End of update_running_scores()
+  
+  /**
+   *  Format the response messages.  If there's an array of more than one element, this is converted to an HTML list; otherwise, it's returned as-is.
+   *
+   */
+  function format_response_messages(messages) {
+    var display_message = "";
+    
+    if ( Array.isArray(messages) === false ) {
+      return messages;
+    }
+    
+    switch ( messages.length ) {
+      case 0:
+        // Nothing to return, no elements in the array
+        break;
+      case 1:
+        // A single thing to display, just return the text
+        display_message = messages[0];
+        break;
+      default:
+        // More than one item in the array, loop through and add them to a list
+        display_message = "<ul>\n";
+        
+        $.each(messages, function(index, value) {
+          display_message += "  <li>" + value + "</li>\n";
+        });
+        
+        display_message += "</ul>\n";
+    }
+    
+    return display_message;
+  } // Enf of format_response_messages()
+  
+  /**
+   *  Show the response messages (of type error, warning, info and success) as a toast message.
+   *  Errors and warnings are sticky (so stay until dismissed), whereas info and success disappear after a few seconds.
+   *
+   */
+  function show_messages(response) {
+    var success_message = format_response_messages(response.messages.success);
+    var error_message = format_response_messages(response.messages.error);
+    var warning_message = format_response_messages(response.messages.warning);
+    var info_message = format_response_messages(response.messages.info);
+    
+    if ( typeof success_message !== "undefined" && success_message !== "" ) {
+      $().toastmessage("showToast", {
+        text: "<br />" + success_message,
+        sticky: false,
+        position: "top-center",
+        type: "success"
+      });
+    }
+    
+    if ( typeof error_message !== "undefined" && error_message !== "" ) {
+      $().toastmessage("showToast", {
+        text: "<br />" + error_message,
+        sticky: true,
+        position: "top-center",
+        type: "error"
+      });
+    }
+    
+    if ( typeof warning_message !== "undefined" && warning_message !== "" ) {
+      $().toastmessage("showToast", {
+        text: "<br />" + warning_message,
+        sticky: true,
+        position: "top-center",
+        type: "warning"
+      });
+    }
+    
+    if ( typeof info_message !== "undefined" && info_message !== "" ) {
+      $().toastmessage("showToast", {
+        text: "<br />" + info_message,
+        sticky: false,
+        position: "top-center",
+        type: "info"
+      });
+    }
+  } // End of show_messages()
+  
+  /**
+   *  Trigger the change event for the loan player checkbox
+   *
+   */
+  $("input.loan_player_check").on("change", function(){
+    var t = $(this);
+    
+    if ( t.prop("checked") === false ) {
+      $("#player_search_div" + t.data("player-number")).hide();
+      $("#player_select_div" + t.data("player-number")).show();
+      $("#player_search" + t.data("player-number")).tokenInput("clear");
+    } else {
+      $("#player_search_div" + t.data("player-number")).show();
+      $("#player_select_div" + t.data("player-number")).hide();
+      
+      if ( $("#player_select" + t.data('player-number')).val() !== "" ) {
+        $("#player_select" + t.data('player-number')).val("");
+        $("#player_select" + t.data('player-number')).trigger("chosen:updated");
+        $("#player_select" + t.data('player-number')).trigger("change");
+      }
+    }
+  }); // End of loan player checkbox change handler
+  
+  /**
+   *  Trigger the change event for the singles players select box
+   *
+   */
+  $("select.player_select").on("change", function() {
+    var $this = $(this);
+    var player_number = $this.data("player-number");
+    var next_player_number = player_number + 1;
+    // Trigger the AJAX call
+    if ( !disable_callback ) {
+      var player_select_uri;
+      switch( player_number ) {
+[%
+FOREACH player = match.team_match_players;
+  # We have to loop through these and create a handler for each one, as we need to use uri_for_action to generate the URI, which needs to know the player number
+  # and since with a generic handler on the select class, we only know this with the $(this) variable, it can't be accessed in uri_for_action.
+-%]
+        case [% player.player_number %]:
+          player_select_uri = "[% c.uri_for_action('/matches/team/player/update_by_ids', [match.team_season_home_team_season.team.id, match.team_season_away_team_season.team.id, match.scheduled_date.year, match_month, match_day, player.player_number]) %]";
+          break;
+[%
+END;
+-%]
+      }
+      
+      $.ajax({
+        url: player_select_uri,
+        type: "POST",
+        dataType: "json",
+        data: {loan: 0, person: $this.val()},
+        success: function(response) {
+          // What to do when successful
+          if ( $("#player_select" + $this.data('player-number')).val() === "" || $("#player_select" + $this.data('player-number')).val() === "PLAYER-MISSING" ) {
+            $("span.game_player" + $this.data('player-number')).text("[% c.maketext("matches.field.player", player.player_number) %]");
+            
+            if ( $("#player_select" + $this.data('player-number')).val() === "PLAYER-MISSING" ) {
+              // Player set as missing
+              $("div.player" + $this.data('player-number') + "_score").hide();
+              $("div.player" + $this.data('player-number') + "_no_players").hide();
+              $("div.player" + $this.data('player-number') + "_player_missing").show();
+            } else {
+              // Player not yet set
+              $("div.player" + $this.data('player-number') + "_score").hide();
+              $("div.player" + $this.data('player-number') + "_no_players").show();
+              $("div.player" + $this.data('player-number') + "_player_missing").hide();
+            }
+            
+            $("div.player" + $this.data('player-number') + "_score").children("div.game_score").children("input.game_score").val(0);
+            $("div.player" + $this.data('player-number') + "_score").children("div.game_score").children("input.game_score").trigger("blur");
+            
+            // Loop through games involving this player and mark them as not able to be entered
+            $("h3.player_[% player.player_number %]").each(function( index, obj ) {
+              var game_number = $(this).data("scheduled-game-number");
+              match_games[game_number].can_enter_score = false;
+            });
+            
+            update_running_scores(response.match_scores);
+          } else {
+            $("span.game_player" + $this.data('player-number')).text($this.children("option").filter(":selected").data("initial-and-surname"));
+            
+            // Process the games that have been returned
+            var game;
+            for (game in response.player_games) {
+              var game_number = response.player_games[game];
+              $("#game_" + game_number + "_no_players").hide();
+              $("#game_" + game_number + "_player_missing").hide();
+              $("#game_" + game_number + "_score_detail").show();
+              match_games[game_number].can_enter_score = true;
+            }
+          }
+          
+          show_messages(response);
+        },
+        error: function(xhr, ajax_options, thrown_error) {
+          if ( typeof xhr.responseJSON === "undefined" ) {
+            reset_player([% player.player_number %], undefined, undefined, undefined);
+            $().toastmessage("showToast", {
+              text: "<br />" + thrown_error + ": [% c.maketext("ajax.error.refresh-advice") %]",
+              sticky: true,
+              position: "top-center",
+              type: "error"
+            });
+          } else {
+            if ( typeof xhr.responseJSON.json_player === "undefined" ) {
+              reset_player([% player.player_number %], undefined, undefined, undefined);
+            } else {
+              reset_player([% player.player_number %], xhr.responseJSON.json_player.id, xhr.responseJSON.json_player.name, xhr.responseJSON.json_player.loan_team);
+            }
+            
+            show_messages(xhr.responseJSON);
+          }
+        }
+      });
+    }
+    
+    if ( player_number == [% match.team_match_template.singles_players_per_team %] ) {
+      // If this is the last home singles player, we need to then activate the away accordion branch and focus on that field
+      if ( $this.val() !== "" ) {
+        // Last player in the home team, activate the away team branch
+        $("#match-players").accordion("option", "active", 1);
+      }
+    }
+    
+    if ( player_number < [% match.team_match_template.singles_players_per_team * 2 %] ) {
+      // Not the last player, focus on the next one
+      if ( $this.val() !== "" ) {
+        if ( $("#loan_player" + next_player_number).prop("checked") ) {
+          // Focus on the tokeninput field
+          $("#token-input-player_search" + next_player_number).focus();
+        } else {
+          // Focus on the select field
+          $("#player_select" + next_player_number).trigger("chosen:activate");
+        }
+      }
+    } else {
+      // Last player, close the player accordion and open game 1
+      if ( $this.val() !== "" ) {
+        $("#match-players").accordion("option", "active", false);
+        $("#match-games").accordion("option", "active", 0);
+        $("#game_1_leg_1_home").focus();
+      }
+    }
+  }); // End of player select change handler
   
   /**
    *  Token inputs for player searches
    *
    */
 [%
+# We need one per player here, as we can't do a class handler where there could be different pre-population options for each one
 FOREACH player = match.team_match_players;
 -%]
   $("#player_search[% player.player_number %]").tokenInput("[% c.uri_for_action("/people/search", {season => match.season.url_key}) %]", {
@@ -851,13 +1241,15 @@ FOREACH player = match.team_match_players;
           data: {loan_player: 1, person: item.id},
           success: function(response) {
             // What to do when successful
-            $("span.game_player[% player.player_number %]").text( item.name );
+            $("span.game_player[% player.player_number %]").text(item.initial_and_surname);
             
             // Process the games that have been returned
-            $.each(response.json_player_games, function( index, game_number ) {
-              //var game_number = response.json_player_games[game];
+            $.each(response.player_games, function( index, game_number ) {
+              //var game_number = response.player_games[game];
               $("#game_" + game_number + "_no_players").hide();
+              $("#game_" + game_number + "_player_missing").hide();
               $("#game_" + game_number + "_score_detail").show();
+              match_games[game_number].can_enter_score = true;
             });
             
             // Another jQuery to get the player lists
@@ -882,9 +1274,9 @@ FOREACH player = match.team_match_players;
                   t.find("option:not(:first)").remove();
                   
                   // Loop through and append the new options
-                  $.each( list_response.json_home_doubles_list, function( index, value ) {
+                  $.each(list_response.json_home_doubles_list, function( index, value ) {
                     // Append this list option
-                    t.append( $("<option>", {
+                    t.append($("<option>", {
                       value: value.value,
                       text: value.text
                     }));
@@ -892,7 +1284,7 @@ FOREACH player = match.team_match_players;
                   
                   // Update the previously selected values if they're still there (if we had any)
                   if ( original_values ) {
-                    t.val( original_values );
+                    t.val(original_values);
                   }
                   
                   // Update the chosen plugin with the new options
@@ -911,9 +1303,9 @@ FOREACH player = match.team_match_players;
                   t.find("option:not(:first)").remove();
                   
                   // Loop through and append the new options
-                  $.each( list_response.json_away_doubles_list, function( index, value ) {
+                  $.each(list_response.json_away_doubles_list, function( index, value ) {
                     // Append this list option
-                    t.append( $("<option>", {
+                    t.append($("<option>", {
                       value: value.value,
                       text: value.text
                     }));
@@ -921,7 +1313,7 @@ FOREACH player = match.team_match_players;
                   
                   // Update the previously selected values if they're still there (if we had any)
                   if ( original_values ) {
-                    t.val( original_values );
+                    t.val(original_values);
                   }
                   
                   // Update the chosen plugin with the new options
@@ -939,29 +1331,25 @@ FOREACH player = match.team_match_players;
               }
             });
             
-            $().toastmessage("showToast", {
-              text: "<br />" + response.json_message,
-              sticky: false,
-              position: "top-center",
-              type: "success"
-            });
+            show_messages(response);
           },
           error: function(xhr, ajax_options, thrown_error) {
-            var message;
-            if ( typeof xhr.responseJSON !== "undefined" && typeof xhr.responseJSON.json_player !== "undefined" ) {
-              message = thrown_error + ": " + xhr.responseJSON.json_error;
-              resetPlayer( [% player.player_number %], xhr.responseJSON.json_player.id, xhr.responseJSON.json_player.name, xhr.responseJSON.json_player.loan_team );
+            if ( typeof xhr.responseJSON === "undefined" ) {
+              $().toastmessage("showToast", {
+                text: "<br />" + thrown_error + ": [% c.maketext("ajax.error.refresh-advice") %]",
+                sticky: true,
+                position: "top-center",
+                type: "error"
+              });
             } else {
-              message = thrown_error + ": [% c.maketext("ajax.error.refresh-advice") %]";
-              resetPlayer( [% player.player_number %], undefined, undefined, undefined );
+              show_messages(xhr.responseJSON);
+              
+              if ( typeof xhr.responseJSON.json_player === "undefined" ) {
+                reset_player([% player.player_number %], undefined, undefined, undefined);
+              } else {
+                reset_player([% player.player_number %], xhr.responseJSON.json_player.id, xhr.responseJSON.json_player.name, xhr.responseJSON.json_player.loan_team);
+              }
             }
-            
-            $().toastmessage("showToast", {
-              text: "<br />" + message,
-              sticky: true,
-              position: "top-center",
-              type: "error"
-            });
           }
         });
       }
@@ -1009,8 +1397,15 @@ FOREACH player = match.team_match_players;
             $("span.game_player[% player.player_number %]").text("[% c.maketext("matches.field.player", player.player_number) %]");
             $("div.player[% player.player_number %]_score").hide();
             $("div.player[% player.player_number %]_no_players").show();
+            $("div.player[% player.player_number %]_player_missing").hide();
             $("div.player[% player.player_number %]_score").children("div.game_score").children("input.game_score").val(0);
             $("div.player[% player.player_number %]_score").children("div.game_score").children("input.game_score").trigger("blur");
+            
+            // Loop through games involving this player and mark them as not able to be entered
+            $("h3.player_[% player.player_number %]").each(function( index, obj ) {
+              var game_number = $(this).data("scheduled-game-number");
+              match_games[game_number].can_enter_score = false;
+            });
             
             // Another jQuery to get the player lists
             $.ajax({
@@ -1034,9 +1429,9 @@ FOREACH player = match.team_match_players;
                   t.find("option:not(:first)").remove();
                   
                   // Loop through and append the new options
-                  $.each( list_response.json_home_doubles_list, function( index, value ) {
+                  $.each(list_response.json_home_doubles_list, function( index, value ) {
                     // Append this list option
-                    t.append( $("<option>", {
+                    t.append($("<option>", {
                       value: value.value,
                       text: value.text
                     }));
@@ -1044,7 +1439,7 @@ FOREACH player = match.team_match_players;
                   
                   // Update the previously selected values if they're still there (if we had any)
                   if ( original_values ) {
-                    t.val( original_values );
+                    t.val(original_values);
                   }
                   
                   // Update the chosen plugin with the new options
@@ -1063,7 +1458,7 @@ FOREACH player = match.team_match_players;
                   t.find("option:not(:first)").remove();
                   
                   // Loop through and append the new options
-                  $.each( list_response.json_away_doubles_list, function( index, value ) {
+                  $.each(list_response.json_away_doubles_list, function( index, value ) {
                     // Append this list option
                     t.append( $("<option>", {
                       value: value.value,
@@ -1073,7 +1468,7 @@ FOREACH player = match.team_match_players;
                   
                   // Update the previously selected values if they're still there (if we had any)
                   if ( original_values ) {
-                    t.val( original_values );
+                    t.val(original_values);
                   }
                   
                   // Update the chosen plugin with the new options
@@ -1082,259 +1477,34 @@ FOREACH player = match.team_match_players;
               },
             });
             
-            $().toastmessage("showToast", {
-              text: "<br />" + response.json_message,
-              sticky: false,
-              position: "top-center",
-              type: "success"
-            });
+            show_messages(response);
           },
           error: function(xhr, ajax_options, thrown_error) {
-            var message;
-            if ( typeof xhr.responseJSON !== "undefined" && typeof xhr.responseJSON.json_player !== "undefined" ) {
-              message = thrown_error + ": " + xhr.responseJSON.json_error;
-              resetPlayer( [% player.player_number %], xhr.responseJSON.json_player.id, xhr.responseJSON.json_player.name, xhr.responseJSON.json_player.loan_team );
+            if ( typeof xhr.responseJSON === "undefined" ) {
+              $().toastmessage("showToast", {
+                text: "<br />" + thrown_error + ": [% c.maketext("ajax.error.refresh-advice") %]",
+                sticky: true,
+                position: "top-center",
+                type: "error"
+              });
             } else {
-              message = thrown_error + ": [% c.maketext("ajax.error.refresh-advice") %]";
-              resetPlayer( [% player.player_number %], undefined, undefined, undefined );
+              show_messages(xhr.responseJSON);
+              
+              if ( typeof xhr.responseJSON.json_player === "undefined" ) {
+                reset_player([% player.player_number %], undefined, undefined, undefined);
+              } else {
+                reset_player([% player.player_number %], xhr.responseJSON.json_player.id, xhr.responseJSON.json_player.name, xhr.responseJSON.json_player.loan_team);
+              }
             }
-            
-            $().toastmessage("showToast", {
-              text: "<br />" + message,
-              sticky: true,
-              position: "top-center",
-              type: "error"
-            });
           }
         });
         
         // Update the game headers featuring this player
-        $("span.game_player[% player.player_number %]").text( "[% c.maketext("matches.field.player", player.player_number) %]" );
+        $("span.game_player[% player.player_number %]").text("[% c.maketext("matches.field.player", player.player_number) %]");
       }
     }
-  });
+  }); // End of player search [% player.player_number %] handler
   
-[%
-END;
--%]
-  
-  /**
-   *  Trigger the change event for the loan player checkbox
-   *
-   */
-  $("input.loan_player_check").on("change", function(){
-    var t = $(this);
-    
-    if ( t.prop("checked") === false ) {
-      $("#player_search_div" + t.data("player-number")).hide();
-      $("#player_select_div" + t.data("player-number")).show();
-      $("#player_search" + t.data("player-number")).tokenInput("clear");
-    } else {
-      $("#player_search_div" + t.data("player-number")).show();
-      $("#player_select_div" + t.data("player-number")).hide();
-      
-      if ( $("#player_select" + t.data('player-number')).val() !== "" ) {
-        $("#player_select" + t.data('player-number')).val("");
-        $("#player_select" + t.data('player-number')).trigger("chosen:updated");
-        $("#player_select" + t.data('player-number')).trigger("change");
-      }
-    }
-  });
-  
-  /**
-   *  Trigger the change event for the singles players select box
-   *
-   */
-[%
-FOREACH player = match.team_match_players;
-  # We have to loop through these and create a handler for each one, as we need to use uri_for_action to generate the URI, which needs to know the player number
-  # and since with a generic handler on the select class, we only know this with the $(this) variable, it can't be accessed in uri_for_action.
--%]
-  $("#player_select[% player.player_number %]").on("change", function() {
-    var $this = $(this);
-    // Trigger the AJAX call
-    if ( !disable_callback ) {
-      $.ajax({
-        url: "[% c.uri_for_action('/matches/team/player/update_by_ids', [match.team_season_home_team_season.team.id, match.team_season_away_team_season.team.id, match.scheduled_date.year, match_month, match_day, player.player_number]) %]",
-        type: "POST",
-        dataType: "json",
-        data: {loan: 0, person: $this.val()},
-        success: function(response) {
-          // What to do when successful
-          if ( $("#player_select" + $this.data('player-number')).val() === "" || $("#player_select" + $this.data('player-number')).val() === "PLAYER-MISSING" ) {
-            $("span.game_player" + $this.data('player-number')).text("[% c.maketext("matches.field.player", player.player_number) %]");
-            $("div.player" + $this.data('player-number') + "_score").hide();
-            $("div.player" + $this.data('player-number') + "_no_players").show();
-            $("div.player" + $this.data('player-number') + "_score").children("div.game_score").children("input.game_score").val(0);
-            $("div.player" + $this.data('player-number') + "_score").children("div.game_score").children("input.game_score").trigger("blur");
-          } else {
-            $("span.game_player" + $this.data('player-number')).text( $this.children("option").filter(":selected").text() );
-            
-            // Process the games that have been returned
-            var game;
-            for (game in response.json_player_games) {
-              var game_number = response.json_player_games[game];
-              $("#game_" + game_number + "_no_players").hide();
-              $("#game_" + game_number + "_score_detail").show();
-            }
-          }
-          
-          $().toastmessage("showToast", {
-            text: response.json_message,
-            sticky: false,
-            position: "top-center",
-            type: "success"
-          });
-        },
-        error: function(xhr, ajax_options, thrown_error) {
-          var message;
-          if ( typeof xhr.responseJSON !== "undefined" && typeof xhr.responseJSON.json_player !== "undefined" ) {
-            message = thrown_error + ": " + xhr.responseJSON.json_error;
-            resetPlayer( [% player.player_number %], xhr.responseJSON.json_player.id, xhr.responseJSON.json_player.name, xhr.responseJSON.json_player.loan_team );
-          } else {
-            message = thrown_error + ": [% c.maketext("ajax.error.refresh-advice") %]";
-            resetPlayer( [% player.player_number %], undefined, undefined, undefined );
-          }
-          
-          $().toastmessage("showToast", {
-            text: "<br />" + message,
-            sticky: true,
-            position: "top-center",
-            type: "error"
-          });
-        }
-      });
-    }
-    
-[%-
-  IF player.player_number == match.team_match_template.singles_players_per_team;
-    # If this is the last singles player, we need to then activate the away accordion branch and focus on that field
--%]
-            
-    if ( $this.val() !== "" ) {
-      // Last player in the home team, activate the away team branch
-      $("#match-players").accordion("option", "active", 1);
-    }
-[%
-  END;
-  IF player.player_number < (match.team_match_template.singles_players_per_team * 2);
-    # Not the last player, focus on the next one
--%]
-            
-    if ( $this.val() !== "" ) {
-      if ( $("#loan_player[% player.player_number + 1 %]").prop("checked") ) {
-        // Focus on the tokeninput field
-        $("#token-input-player_search[% player.player_number + 1 %]").focus();
-      } else {
-        // Focus on the select field
-        $("#player_select[% player.player_number + 1 %]").trigger("chosen:activate");
-      }
-    }
-[%
-  ELSE;
-    # Last player, close the player accordion and open game 1
--%]
-    if ( $this.val() !== "" ) {
-      $("#match-players").accordion("option", "active", false);
-      $("#match-games").accordion("option", "active", 0);
-      $("#game_1_leg_1_home").focus();
-    }
-[%
-  END;
--%]
-  });
-[%
-END;
--%]
-  
-  /**
-   *  TokenInput for the umpires
-   *
-   */
-[%
-FOREACH game = match.team_match_games;
--%]
-  $("#game_[% game.scheduled_game_number %]_umpire").tokenInput("[% c.uri_for_action("/people/search") %]", {
-    jsonContainer: 'json_search',
-    tokenLimit: 1,
-    hintText: "[% c.maketext("matches.umpire.tokeninput.hint-text") %]",
-    noResultsText: "[% c.maketext("tokeninput.text.no-results") %]",
-    searchingText: "[% c.maketext("tokeninput.text.searching") %]",
-[%
-IF game.umpire.id;
--%]
-    prePopulate: [{id:[% game.umpire.id %],name:"[% game.umpire.display_name %]"}],
-[%
-END;
--%]
-    onAdd: function (item) {
-      // Add the player to the database for this match
-      $.ajax({
-        url: "[% c.uri_for_action('/matches/team/game/update_umpire_by_ids', [match.team_season_home_team_season.team.id, match.team_season_away_team_season.team.id, match.scheduled_date.year, match_month, match_day, game.scheduled_game_number]) %]",
-        type: "POST",
-        dataType: "json",
-        data: {person: item.id},
-        success: function(response) {
-          // What to do when successful
-          $().toastmessage("showToast", {
-            text: "<br />" + response.json_message,
-            sticky: false,
-            position: "top-center",
-            type: "success"
-          });
-        },
-        error: function(xhr, ajax_options, thrown_error) {
-          var message;
-          if ( typeof xhr.responseJSON !== "undefined" && typeof xhr.responseJSON.json_player !== "undefined" ) {
-            message = thrown_error + ": " + xhr.responseJSON.json_error;
-          } else {
-            message = thrown_error + ": [% c.maketext("ajax.error.refresh-advice") %]";
-          }
-          
-          $().toastmessage("showToast", {
-            text: "<br />" + message,
-            sticky: true,
-            position: "top-center",
-            type: "error"
-          });
-        }
-      });
-    },
-    onDelete: function (item) {
-      if ( !disable_callback ) {
-        // Remove the player from the database for this match
-        $.ajax({
-          url: "[% c.uri_for_action('/matches/team/game/update_umpire_by_ids', [match.team_season_home_team_season.team.id, match.team_season_away_team_season.team.id, match.scheduled_date.year, match_month, match_day, game.scheduled_game_number]) %]",
-          type: "POST",
-          dataType: "json",
-          success: function(response) {
-            // What to do when successful
-            $().toastmessage("showToast", {
-              text: "<br />" + response.json_message,
-              sticky: false,
-              position: "top-center",
-              type: "success"
-            });
-          },
-          error: function(xhr, ajax_options, thrown_error) {
-            var message;
-            if ( typeof xhr.responseJSON !== "undefined" && typeof xhr.responseJSON.json_player !== "undefined" ) {
-              message = thrown_error + ": " + xhr.responseJSON.json_error;
-            } else {
-              message = thrown_error + ": Please refresh the page and try again; contact the system administrator if the issue persists.";
-            }
-            
-            $().toastmessage("showToast", {
-              text: "<br />" + message,
-              sticky: true,
-              position: "top-center",
-              type: "error"
-            });
-          }
-        });
-      }
-    }
-  });
 [%
 END;
 -%]
@@ -1343,14 +1513,11 @@ END;
    *  Trigger the change event for the doubles players select box
    *
    */
-[%
-FOREACH game = match.team_match_games;
-  IF game.doubles_game;
--%]
-  $("#game_[% game.scheduled_game_number %]_home_doubles_pairing, #game_[% game.scheduled_game_number %]_away_doubles_pairing").on("change", function() {
+  $("select.doubles").on("change", function() {
     // Save $(this) in case we need it after the .each()
-    var $this     = $(this);
-    var location  = $this.data("player-location");
+    var $this = $(this);
+    var location = $this.data("player-location");
+    var game_number = $this.data("game");
     
     // Get the game number for the doubles field that's changed
     var game_number = $this.data("game");
@@ -1374,57 +1541,59 @@ FOREACH game = match.team_match_games;
     if ( $(this).children("option").filter(":selected").length === 2 || $(this).children("option").filter(":selected").length === 0 ) {
       $.ajaxSettings.traditional = true;
       
-      $.ajax({
-        url: "[% c.uri_for_action('/matches/team/game/doubles_pair_by_ids', [match.team_season_home_team_season.team.id, match.team_season_away_team_season.team.id, match.scheduled_date.year, match_month, match_day, game.scheduled_game_number]) %]",
-        type: "POST",
-        dataType: "json",
-        data: send_data,
-        success: function(response) {
-          // What to do when successful
-          $().toastmessage("showToast", {
-            text: "<br />" + response.json_message,
-            sticky: false,
-            position: "top-center",
-            type: "success"
-          });
-        },
-        error: function(xhr, ajax_options, thrown_error) {
-          var message;
-          if ( typeof xhr.responseJSON !== "undefined" && typeof xhr.responseJSON.json_player !== "undefined" ) {
-            message = thrown_error + ": " + xhr.responseJSON.json_error;
-          } else {
-            message = thrown_error + ": Please refresh the page and try again; contact the system administrator if the issue persists.";
-          }
-          
-          $().toastmessage("showToast", {
-            text: "<br />" + message,
-            sticky: true,
-            position: "top-center",
-            type: "error"
-          });
-        }
-      });
-    }
-    
-    if ( allow_doubles_score_entry ) {
-      // Show score fields, hide the message informing us to select all players.
-      $("#game_" + game_number + "_no_players").hide();
-      $("#game_" + game_number + "_score_detail").show();
-      
-      // Focus on the home score field in the first leg
-      $("#game_" + game_number + "_leg_1_home").focus();
-    } else {
-      // Hide score fields, zero any scores and trigger a change to update this; show the notice to fill out all players.
-      $("#game_" + game_number + "_no_players").show();
-      $("#game_" + game_number + "_score_detail").hide();
-      $("#game_" + game_number + "_score_detail").children("div.game_score").children("input.game_score").val(0);
-      $("#game_" + game_number + "_score_detail").children("div.game_score").children("input.game_score").trigger("blur");
-    }
-  });
+      var doubles_update_uri;
+      switch ( game_number ) {
+[%
+FOREACH game = match.team_match_games;
+  IF game.doubles_game;
+-%]
+        case [% game.scheduled_game_number %]:
+          doubles_update_uri = "[% c.uri_for_action('/matches/team/game/doubles_pair_by_ids', [match.team_season_home_team_season.team.id, match.team_season_away_team_season.team.id, match.scheduled_date.year, match_month, match_day, game.scheduled_game_number]) %]";
+          break;
 [%
   END;
 END;
 -%]
+      }
+      
+      $.ajax({
+        url: doubles_update_uri,
+        type: "POST",
+        dataType: "json",
+        data: send_data,
+        success: function(response) {
+          show_messages(response);
+          
+          if ( allow_doubles_score_entry ) {
+            // Show score fields, hide the message informing us to select all players.
+            $("#game_" + game_number + "_no_players").hide();
+            $("#game_" + game_number + "_score_detail").show();
+            
+            // Focus on the home score field in the first leg
+            $("#game_" + game_number + "_leg_1_home").focus();
+          } else {
+            // Hide score fields, zero any scores and trigger a change to update this; show the notice to fill out all players.
+            $("#game_" + game_number + "_no_players").show();
+            $("#game_" + game_number + "_score_detail").hide();
+            $("#game_" + game_number + "_score_detail").children("div.game_score").children("input.game_score").val(0);
+            $("#game_" + game_number + "_score_detail").children("div.game_score").children("input.game_score").trigger("blur");
+          }
+        },
+        error: function(xhr, ajax_options, thrown_error) {
+          if ( typeof xhr.responseJSON === "undefined" ) {
+            $().toastmessage("showToast", {
+              text: "<br />" + thrown_error + ": [% c.maketext("ajax.error.refresh-advice") %]",
+              sticky: true,
+              position: "top-center",
+              type: "error"
+            });
+          } else {
+            show_messages(xhr.responseJSON);
+          }
+        }
+      });
+    }
+  });
   
   /**
    *  Trigger a change to hide the right fields.
@@ -1432,7 +1601,8 @@ END;
    */
   // Disable changing the accordion and AJAX score changes
   disable_accordion_change = true;
-  disable_ajax             = true;
+  disable_ajax = true;
+  disable_running_score_call = true;
 [%
 FOREACH game = match.team_match_games;
 -%]
@@ -1441,12 +1611,12 @@ FOREACH game = match.team_match_games;
 END;
 -%]
   disable_accordion_change = false;
-  disable_ajax             = false;
-});
-
+  disable_ajax = false;
+  disable_running_score_call = false;
 [%
 IF players_active_field != "" OR games_active_field != "";
 -%]
+
   /**
    *  Set the focussed field
    *
@@ -1463,3 +1633,4 @@ IF players_active_field != "" OR games_active_field != "";
   END;
 END;
 -%]
+});

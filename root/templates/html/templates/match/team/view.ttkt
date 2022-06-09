@@ -28,7 +28,7 @@
   </thead>
   <tbody>
 [%
-FOREACH game IN tt_template_games;
+WHILE (game = tt_template_games.next);
 -%]
     <tr>
       <td data-label="[% c.maketext("templates.team-match.games.field.game-number") %]">[% game.match_game_number %]</td>
@@ -53,7 +53,7 @@ END;
   </tbody>
 </table>
 [%
-IF authorisation.template_edit;
+IF authorisation.template_edit AND tt_template.can_edit_or_delete;
 -%]
 <a class="bold" href="[% c.uri_for_action('/templates/match/team/games', [tt_template.url_key]) %]"><img src="[% c.uri_for('/static/images/icons/0009-Add-icon-48.png') %]" alt="[% c.maketext("templates.team-match.games.add") %]" title="[% c.maketext("templates.team-match.games.add") %]" /></a><br /><br />
 [%

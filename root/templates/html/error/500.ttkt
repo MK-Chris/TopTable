@@ -1,15 +1,3 @@
-[% # Note That the '-' at the beginning or end of TT code  -%]
-[% # "chomps" the whitespace/newline at that end of the    -%]
-[% # output (use View Source in browser to see the effect) -%]
-[%-
-FOREACH q IN c.req.params.keys;
-  IF qs == "";
-    SET qs = q _ "=" _ c.req.params.$q;
-  ELSE;
-    qs = qs _ "&" _ q _ "=" _ c.req.params.$q;
-  END;
-END;
--%]
 <div class="table-wrap">
   <div class="table-layout table-layout-centre">
     <p>[% c.maketext("page.error.internal", c.uri_for("/info/contact")) %]</p>
@@ -21,19 +9,72 @@ END;
       </tr>
       <tr>
         <th scope="row">[% c.maketext("error.info.referrer") %]</th>
-        <td>[% c.req.referer %]</td>
+        <td>[% c.req.referer | html_entity %]</td>
       </tr>
       <tr>
         <th scope="row">[% c.maketext("error.info.base-uri") %]</th>
-        <td>[% c.req.base %]</td>
+        <td>[% c.req.base | html_entity %]</td>
       </tr>
       <tr>
         <th scope="row">[% c.maketext("error.info.path") %]</th>
-        <td>[% c.req.path %]</td>
+        <td>[% c.req.path | html_entity %]</td>
       </tr>
       <tr>
+        <th scope="row">[% c.maketext("error.info.body-params") %]</th>
+        <td>
+[%-
+IF c.req.body_params.keys.size;
+  SET key_index = 0;
+  FOREACH q IN c.req.body_params.keys;
+    IF key_index > 0;
+-%]
+<br />
+[%-
+    END;
+    IF q.match("password");
+-%]
+<b>[% q | html_entity %]:</b> &lt;[% c.maketext("error.info.body-params.redacted") %]&gt;
+[%-
+    ELSE;
+-%]
+<b>[% q | html_entity %]:</b> [% c.req.body_params.$q | html_entity %]
+[%-
+    END;
+    
+    SET key_index = key_index + 1;
+  END;
+ELSE;
+-%]
+&nbsp;
+[%-
+END;
+-%]
+</td>
+      <tr>
+      <tr>
         <th scope="row">[% c.maketext("error.info.query") %]</th>
-        <td>[% qs %]</td>
+        <td>
+[%-
+IF c.req.query_params.keys.size;
+  SET key_index = 0;
+  FOREACH q IN c.req.query_params.keys;
+    IF key_index > 0;
+-%]
+<br />
+[%-
+    END;
+-%]
+<b>[% q | html_entity %]:</b> [% c.req.query_params.$q | html_entity %]
+[%-
+    SET key_index = key_index + 1;
+  END;
+ELSE;
+-%]
+&nbsp;
+[%-
+END;
+-%]
+</td>
       <tr>
         <th scope="row">[% c.maketext("error.info.user") %]</th>
         <td>

@@ -11,9 +11,7 @@ $(document).ready(function(){
     var all_fields_empty = 1;
     
     // This object will we what we send to the search routine
-    var search_parameters = {
-      content_type: "json"
-    };
+    var search_parameters = {};
     $("input.geo").each(function() {
       if ( $(this).val() != "" ) {
         all_fields_empty = 0;
@@ -40,7 +38,6 @@ $(document).ready(function(){
           $("#geolocation_select option[value!='']").remove();
           $.each( response.json_results, function( index, value ) {
             if ( $.type( value ) == "object" ) {
-              console.log(value.geometry.location.lat + "," + value.geometry.location.lng);
               $("#geolocation_select")
                 .append( $("<option>", {
                   value: value.geometry.location.lat + "," + value.geometry.location.lng,
@@ -82,7 +79,7 @@ $(document).ready(function(){
         var lat = geo[0];
         var lng = geo[1];
         map_location = new google.maps.LatLng(lat, lng);
-        initialise_map();
+        initMap();
       } else {
         $("#map-canvas-form").hide();
       }

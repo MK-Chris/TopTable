@@ -9,7 +9,7 @@ $(document).ready(function(){
     "pageLength": 25,
     //pagingType: "full_numbers",
     "lengthChange": true,
-    "lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
+    "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
     "info": true,
     "fixedHeader": true,
     "order": [[1, "asc"]],

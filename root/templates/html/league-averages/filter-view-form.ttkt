@@ -37,7 +37,7 @@ END;
     <input type="submit" name="filter-defined" class="average-filter-pre-defined" value="[% c.maketext("averages.filter-form.filter") %]" /><br />
     <a href="[% c.uri_for_action("/league-averages/filters/list_first_page") %]"><img src="[% c.uri_for("/static/images/icons/0011-Info-icon-32.png") %]" width="32" height="32" alt="[% c.maketext("average-filter.view-list") %]" title="[% c.maketext("average-filter.view-list") %]" /></a>
 [%
-IF c.user_exists OR authorisation.average_filter_create_public;
+IF c.user_exists OR authorisation.averagefilter_create_public;
 -%]
     <a href="[% c.uri_for("/league-averages/filters/create") %]"><img src="[% c.uri_for("/static/images/icons/0009-Add-icon-32.png") %]" width="32" height="32" alt="[% c.maketext("admin.create-object", c.maketext("object.singular.average-filters")) %]" title="[% c.maketext("admin.create-object", c.maketext("object.singular.average-filters")) %]" /></a>
 [%

@@ -1,5 +1,5 @@
 [%
-IF c.flash.failed_rows.size;
+IF failed_rows.size;
 -%]
 <h4>[% c.maketext("people.form.import-results.heading-failed") %]</h4>
 <table id="failed-imports" class="stripe hover order-column row-border">
@@ -20,122 +20,101 @@ IF c.flash.failed_rows.size;
       <th>[% c.maketext("people.form.field.mobile-phone") %]</th>
       <th>[% c.maketext("people.form.field.work-phone") %]</th>
       <th>[% c.maketext("people.form.field.email") %]</th>
-      <th>[% c.maketext("people.form.button.captain-of-club") %]</th>
-      <th>[% c.maketext("people.form.button.captain-of-team") %]</th>
-      <th>[% c.maketext("people.form.button.secretary-for") %]</th>
-      <th>Error(s)</th>
+      <th>[% c.maketext("people.import.errors") %]</th>
     </tr>
   </thead>
   <tbody>
 [%
-  FOREACH row IN c.flash.failed_rows;
+  FOREACH row IN failed_rows;
     # Replace blank values with &nbsp;
-    IF row.first_name;
-      SET first_name = row.first_name | html_entity;
+    IF row.fields.first_name;
+      SET first_name = row.fields.first_name | html_entity;
     ELSE;
       SET first_name = "&nbsp;";
     END;
     
-    IF row.surname;
-      SET surname = row.surname | html_entity;
+    IF row.fields.surname;
+      SET surname = row.fields.surname | html_entity;
     ELSE;
       SET surname = "&nbsp;";
     END;
     
-    IF row.club_name;
-      SET club_name = row.club_name | html_entity;
+    IF row.fields.club_name;
+      SET club_name = row.fields.club_name | html_entity;
     ELSE;
       SET club_name = "&nbsp;";
     END;
     
-    IF row.team_name;
-      SET team_name = row.team_name | html_entity;
+    IF row.fields.team_name;
+      SET team_name = row.fields.team_name | html_entity;
     ELSE;
       SET team_name = "&nbsp;";
     END;
     
-    IF row.gender_name;
-      SET gender_name = row.gender_name | html_entity;
+    IF row.fields.gender_name;
+      SET gender_name = row.fields.gender_name | html_entity;
     ELSE;
       SET gender_name = "&nbsp;";
     END;
     
-    IF row.address1;
-      SET address1 = row.address1 | html_entity;
+    IF row.fields.address1;
+      SET address1 = row.fields.address1 | html_entity;
     ELSE;
       SET address1 = "&nbsp;";
     END;
     
-    IF row.address2;
-      SET address2 = row.address2 | html_entity;
+    IF row.fields.address2;
+      SET address2 = row.fields.address2 | html_entity;
     ELSE;
       SET address2 = "&nbsp;";
     END;
     
-    IF row.address3;
-      SET address3 = row.address3 | html_entity;
+    IF row.fields.address3;
+      SET address3 = row.fields.address3 | html_entity;
     ELSE;
       SET address3 = "&nbsp;";
     END;
     
-    IF row.address4;
-      SET address4 = row.address4 | html_entity;
+    IF row.fields.address4;
+      SET address4 = row.fields.address4 | html_entity;
     ELSE;
       SET address4 = "&nbsp;";
     END;
     
-    IF row.address5;
-      SET address5 = row.address5 | html_entity;
+    IF row.fields.address5;
+      SET address5 = row.fields.address5 | html_entity;
     ELSE;
       SET address5 = "&nbsp;";
     END;
     
-    IF row.postcode;
-      SET postcode = row.postcode | html_entity;
+    IF row.fields.postcode;
+      SET postcode = row.fields.postcode | html_entity;
     ELSE;
       SET postcode = "&nbsp;";
     END;
     
-    IF row.home_telephone;
-      SET home_telephone = row.home_telephone | html_entity;
+    IF row.fields.home_telephone;
+      SET home_telephone = row.fields.home_telephone | html_entity;
     ELSE;
       SET home_telephone = "&nbsp;";
     END;
     
-    IF row.work_telephone;
-      SET work_telephone = row.work_telephone | html_entity;
+    IF row.fields.work_telephone;
+      SET work_telephone = row.fields.work_telephone | html_entity;
     ELSE;
       SET work_telephone = "&nbsp;";
     END;
     
-    IF row.mobile_telephone;
-      SET mobile_telephone = row.mobile_telephone | html_entity;
+    IF row.fields.mobile_telephone;
+      SET mobile_telephone = row.fields.mobile_telephone | html_entity;
     ELSE;
       SET mobile_telephone = "&nbsp;";
     END;
     
-    IF row.email_address;
-      SET email_address = row.email_address | html_entity;
+    IF row.fields.email_address;
+      SET email_address = row.fields.email_address | html_entity;
     ELSE;
       SET email_address = "&nbsp;";
-    END;
-    
-    IF row.captain_club_name;
-      SET captain_club_name = row.captain_club_name | html_entity;
-    ELSE;
-      SET captain_club_name = "&nbsp;";
-    END;
-    
-    IF row.captain_team_name;
-      SET captain_team_name = row.captain_team_name | html_entity;
-    ELSE;
-      SET captain_team_name = "&nbsp;";
-    END;
-    
-    IF row.secretary_club_name;
-      SET secretary_club_name = row.secretary_club_name | html_entity;
-    ELSE;
-      SET secretary_club_name = "&nbsp;";
     END;
 -%]
     <tr>
@@ -154,10 +133,28 @@ IF c.flash.failed_rows.size;
       <td>[% mobile_telephone %]</td>
       <td>[% work_telephone %]</td>
       <td>[% email_address %]</td>
-      <td>[% captain_club_name %]</td>
-      <td>[% captain_team_name %]</td>
-      <td>[% secretary_club_name %]</td>
-      <td>[% row.error | html_line_break %]</td>
+      <td>
+[%
+SET error_count = row.errors.list.size;
+IF error_count == 1;
+-%]
+        [% row.errors.list.0 %]
+[%
+ELSE;
+-%]
+        <ul>
+[%
+  FOREACH err IN row.errors.list;
+-%]
+          <li>[% err %]</li>
+[%
+  END;
+-%]
+        </ul>
+[%
+END;
+-%]
+      </td>
     </tr>
 [%
   END;
@@ -166,9 +163,9 @@ IF c.flash.failed_rows.size;
 </table>
 [%
 END;
-IF c.flash.successful_rows.size;
+IF successful_rows.size;
 -%]
-<h4>Successful imports</h4>
+<h4>[% c.maketext("people.form.import-results.heading-successful") %]</h4>
 <table id="successful-imports" class="stripe hover order-column row-border">
   <thead>
     <tr>
@@ -187,90 +184,82 @@ IF c.flash.successful_rows.size;
       <th>[% c.maketext("people.form.field.mobile-phone") %]</th>
       <th>[% c.maketext("people.form.field.work-phone") %]</th>
       <th>[% c.maketext("people.form.field.email") %]</th>
-      <th>[% c.maketext("people.form.button.captain-of-club") %]</th>
-      <th>[% c.maketext("people.form.button.captain-of-team") %]</th>
-      <th>[% c.maketext("people.form.button.secretary-for") %]</th>
     </tr>
   </thead>
   <tbody>
 [%
-  FOREACH row IN c.flash.successful_rows;
-    IF row.club;
-      IF row.team;
-        SET team = '<a href="' _ c.uri_for_action('/teams/view_current_season_by_url_key', [row.club.url_key, row.team.url_key]) _ '">' _ row.team.name _ '</a>';
-      ELSE;
-        SET team = "&nbsp;";
-      END;
-      
-      SET club = '<a href="' _ c.uri_for_action('/clubs/view_current_season', [row.club.url_key]) _ '">' _ row.club.short_name _ '</a>';
+  FOREACH row IN successful_rows;
+    IF row.fields.team;
+      SET team = '<a href="' _ c.uri_for_action('/teams/view_current_season_by_url_key', [row.fields.team.club.url_key, row.fields.team.url_key]) _ '">' _ row.fields.team.name _ '</a>';
+      SET club = '<a href="' _ c.uri_for_action('/clubs/view_current_season', [row.fields.team.club.url_key]) _ '">' _ row.fields.team.club.short_name _ '</a>';
     ELSE;
       SET team = "&nbsp;";
       SET club = "&nbsp;";
     END;
     
     # Replace blank values with &nbsp;
-    IF row.gender.gender;
-      SET gender = row.gender.gender | html_entity;
+    IF row.fields.gender.id;
+      SET gender = c.maketext("gender." _ row.fields.gender.id _ ".gender") | ucfirst;
     ELSE;
       SET gender = "&nbsp;";
     END;
     
-    IF row.address1;
-      SET address1 = row.address1 | html_entity;
+    IF row.fields.address1;
+      SET address1 = row.fields.address1 | html_entity;
     ELSE;
       SET address1 = "&nbsp;";
     END;
     
-    IF row.address2;
-      SET address2 = row.address2 | html_entity;
+    IF row.fields.address2;
+      SET address2 = row.fields.address2 | html_entity;
     ELSE;
       SET address2 = "&nbsp;";
     END;
     
-    IF row.address3;
-      SET address3 = row.address3 | html_entity;
+    IF row.fields.address3;
+      SET address3 = row.fields.address3 | html_entity;
     ELSE;
       SET address3 = "&nbsp;";
     END;
     
-    IF row.address4;
-      SET address4 = row.address4 | html_entity;
+    IF row.fields.address4;
+      SET address4 = row.fields.address4 | html_entity;
     ELSE;
       SET address4 = "&nbsp;";
     END;
     
-    IF row.address5;
-      SET address5 = row.address5 | html_entity;
+    IF row.fields.address5;
+      SET address5 = row.fields.address5 | html_entity;
     ELSE;
       SET address5 = "&nbsp;";
     END;
     
-    IF row.postcode;
-      SET postcode = row.postcode | html_entity;
+    IF row.fields.postcode;
+      SET postcode = row.fields.postcode | html_entity;
     ELSE;
       SET postcode = "&nbsp;";
     END;
     
-    IF row.home_telephone;
-      SET home_telephone = row.home_telephone | html_entity;
+    IF row.fields.home_telephone;
+      SET home_telephone = row.fields.home_telephone | html_entity;
     ELSE;
       SET home_telephone = "&nbsp;";
     END;
     
-    IF row.work_telephone;
-      SET work_telephone = row.work_telephone | html_entity;
+    IF row.fields.work_telephone;
+      SET work_telephone = row.fields.work_telephone | html_entity;
     ELSE;
       SET work_telephone = "&nbsp;";
     END;
     
-    IF row.mobile_telephone;
-      SET mobile_telephone = row.mobile_telephone | html_entity;
+    IF row.fields.mobile_telephone;
+      SET mobile_telephone = row.fields.mobile_telephone | html_entity;
     ELSE;
       SET mobile_telephone = "&nbsp;";
     END;
     
-    IF row.email_address;
-      SET email_address = row.email_address | html_entity;
+    IF row.fields.email_address;
+      SET email_address = row.fields.email_address | html_entity;
     ELSE;
       SET email_address = "&nbsp;";
     END;
@@ -291,9 +280,6 @@ IF c.flash.successful_rows.size;
       <td>[% mobile_telephone %]</td>
       <td>[% work_telephone %]</td>
       <td>[% email_address %]</td>
-      <td>[% row.captain_club.short_name OR "&nbsp;" %]</td>
-      <td>[% row.captain_team.name OR "&nbsp;" %]</td>
-      <td>[% row.secretary_club.full_name OR "&nbsp;" %]</td>
     </tr>
 [%
   END;

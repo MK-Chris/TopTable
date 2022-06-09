@@ -1,45 +1,47 @@
 [%-
-first_name = c.flash.first_name OR person.first_name;
-first_name_html = FILTER html_entity; first_name; END;
+IF c.flash.show_flashed;
+  SET first_name = c.flash.first_name;
+  SET surname = c.flash.surname;
+  SET address1 = c.flash.address1;
+  SET address2 = c.flash.address2;
+  SET address3 = c.flash.address3;
+  SET address4 = c.flash.address4;
+  SET address5 = c.flash.address5;
+  SET postcode = c.flash.postcode;
+  SET home_telephone = c.flash.home_telephone;
+  SET mobile_telephone = c.flash.mobile_telephone;
+  SET work_telephone = c.flash.work_telephone;
+  SET email_address = c.flash.email_address;
+  SET date_of_birth = c.flash.date_of_birth;
+  SET registration_date = c.flash.registration_date;
+  SET gender = c.flash.gender;
+  SET fees_paid = c.flash.fees_paid;
+ELSE;
+  SET first_name = person.first_name;
+  SET surname = person.surname;
+  SET address1 = person.address1;
+  SET address2 = person.address2;
+  SET address3 = person.address3;
+  SET address4 = person.address4;
+  SET address5 = person.address5;
+  SET postcode = person.postcode;
+  SET home_telephone = person.home_telephone;
+  SET mobile_telephone = person.mobile_telephone;
+  SET work_telephone = person.work_telephone;
+  SET email_address = person.email_address;
+  SET date_of_birth = person.date_of_birth;
+  SET registration_date = person.registration_date;
+  SET gender = person.gender;
+  SET fees_paid = person_season.fees_paid;
+END;
 
-surname = c.flash.surname OR person.surname;
-surname_html = FILTER html_entity; surname; END;
+IF date_of_birth;
+  SET date_of_birth = c.i18n_datetime_format_date.format_datetime(date_of_birth);
+END;
 
-address1 = c.flash.address1 OR person.address1;
-address1_html = FILTER html_entity; address1; END;
-
-address2 = c.flash.address2 OR person.address2;
-address2_html = FILTER html_entity; address2; END;
-
-address3 = c.flash.address3 OR person.address3;
-address3_html = FILTER html_entity; address3; END;
-
-address4 = c.flash.address4 OR person.address4;
-address4_html = FILTER html_entity; address4; END;
-
-address5 = c.flash.address5 OR person.address5;
-address5_html = FILTER html_entity; address5; END;
-
-postcode = c.flash.postcode OR person.postcode;
-postcode_html = FILTER html_entity; postcode; END;
-
-home_telephone = c.flash.home_telephone OR person.home_telephone;
-home_telephone_html = FILTER html_entity; home_telephone; END;
-
-mobile_telephone = c.flash.mobile_telephone OR person.mobile_telephone;
-mobile_telephone_html = FILTER html_entity; mobile_telephone; END;
-
-work_telephone = c.flash.work_telephone OR person.work_telephone;
-work_telephone_html = FILTER html_entity; work_telephone; END;
-
-email_address = c.flash.email_address OR person.email_address;
-email_address_html = FILTER html_entity; email_address; END;
-
-date_of_birth = c.flash.date_of_birth.dmy('/') OR c.flash.date_of_birth OR person.date_of_birth.dmy('/') OR person.date_of_birth;
-date_of_birth_html = FILTER html_entity; date_of_birth; END;
-
-registration_date = c.flash.registration_date.dmy('/') OR c.flash.registration_date OR person.registration_date.dmy('/') OR person.registration_date;
-registration_date_html = FILTER html_entity; registration_date; END;
+IF registration_date;
+  SET registration_date = c.i18n_datetime_format_date.format_datetime(registration_date);
+END;
 -%]
 
 <form method="post" action="[% form_action %]">
@@ -49,8 +51,8 @@ registration_date_html = FILTER html_entity; registration_date; END;
     <div class="label-field-container">
       <label for="first_name">[% c.maketext("people.form.field.name") %]</label>
       <div class="field-container">
-        <input type="text" id="first_name" name="first_name" placeholder="[% c.maketext("people.form.field.first-name") %]" value="[% first_name_html %]" />
-        <input type="text" id="surname" name="surname" placeholder="[% c.maketext("people.form.field.surname") %]" value="[% surname_html %]" />
+        <input type="text" id="first_name" name="first_name" placeholder="[% c.maketext("people.form.field.first-name") %]" value="[% first_name | html_entity %]" />
+        <input type="text" id="surname" name="surname" placeholder="[% c.maketext("people.form.field.surname") %]" value="[% surname | html_entity %]" />
       </div>
       <div class="clear-fix"></div>
     </div>
@@ -58,7 +60,7 @@ registration_date_html = FILTER html_entity; registration_date; END;
     <div class="label-field-container">
       <label for="address1">[% c.maketext("people.form.field.address") %]</label>
       <div class="field-container">
-        <input type="text" id="address1" name="address1" value="[% address1_html %]" />
+        <input type="text" id="address1" name="address1" value="[% address1 | html_entity %]" />
       </div>
       <div class="clear-fix"></div>
     </div>
@@ -66,7 +68,7 @@ registration_date_html = FILTER html_entity; registration_date; END;
     <div class="label-field-container">
       <div class="label-placeholder">&nbsp;</div>
       <div class="field-container">
-        <input type="text" id="address2" name="address2" value="[% address2_html %]" />
+        <input type="text" id="address2" name="address2" value="[% address2 | html_entity %]" />
       </div>
       <div class="clear-fix"></div>
     </div>
@@ -74,7 +76,7 @@ registration_date_html = FILTER html_entity; registration_date; END;
     <div class="label-field-container">
       <div class="label-placeholder">&nbsp;</div>
       <div class="field-container">
-        <input type="text" id="address3" name="address3" value="[% address3_html %]" />
+        <input type="text" id="address3" name="address3" value="[% address3 | html_entity %]" />
       </div>
       <div class="clear-fix"></div>
     </div>
@@ -82,7 +84,7 @@ registration_date_html = FILTER html_entity; registration_date; END;
     <div class="label-field-container">
       <div class="label-placeholder">&nbsp;</div>
       <div class="field-container">
-        <input type="text" id="address4" name="address4" value="[% address4_html %]" />
+        <input type="text" id="address4" name="address4" value="[% address4 | html_entity %]" />
       </div>
       <div class="clear-fix"></div>
     </div>
@@ -90,7 +92,7 @@ registration_date_html = FILTER html_entity; registration_date; END;
     <div class="label-field-container">
       <div class="label-placeholder">&nbsp;</div>
       <div class="field-container">
-        <input type="text" id="address5" name="address5" value="[% address5_html %]" />
+        <input type="text" id="address5" name="address5" value="[% address5 | html_entity %]" />
       </div>
       <div class="clear-fix"></div>
     </div>
@@ -98,7 +100,7 @@ registration_date_html = FILTER html_entity; registration_date; END;
     <div class="label-field-container">
       <label for="postcode">[% c.maketext("people.form.field.postcode") %]</label>
       <div class="field-container">
-        <input type="text" id="postcode" name="postcode" value="[% postcode_html %]" />
+        <input type="text" id="postcode" name="postcode" value="[% postcode | html_entity %]" />
       </div>
       <div class="clear-fix"></div>
     </div>
@@ -106,7 +108,7 @@ registration_date_html = FILTER html_entity; registration_date; END;
     <div class="label-field-container">
       <label for="home_telephone">[% c.maketext("people.form.field.home-phone") %]</label>
       <div class="field-container">
-        <input type="text" id="home_telephone" name="home_telephone" value="[% home_telephone_html %]" />
+        <input type="text" id="home_telephone" name="home_telephone" value="[% home_telephone | html_entity %]" />
       </div>
       <div class="clear-fix"></div>
     </div>
@@ -114,7 +116,7 @@ registration_date_html = FILTER html_entity; registration_date; END;
     <div class="label-field-container">
       <label for="mobile_telephone">[% c.maketext("people.form.field.mobile-phone") %]</label>
       <div class="field-container">
-        <input type="text" id="mobile_telephone" name="mobile_telephone" value="[% mobile_telephone_html %]" />
+        <input type="text" id="mobile_telephone" name="mobile_telephone" value="[% mobile_telephone | html_entity %]" />
       </div>
       <div class="clear-fix"></div>
     </div>
@@ -122,7 +124,7 @@ registration_date_html = FILTER html_entity; registration_date; END;
     <div class="label-field-container">
       <label for="work_telephone">[% c.maketext("people.form.field.work-phone") %]</label>
       <div class="field-container">
-        <input type="text" id="work_telephone" name="work_telephone" value="[% work_telephone_html %]" />
+        <input type="text" id="work_telephone" name="work_telephone" value="[% work_telephone | html_entity %]" />
       </div>
       <div class="clear-fix"></div>
     </div>
@@ -130,26 +132,20 @@ registration_date_html = FILTER html_entity; registration_date; END;
     <div class="label-field-container">
       <label for="email_address">[% c.maketext("people.form.field.email") %]</label>
       <div class="field-container">
-        <input type="text" id="email_address" name="email_address" value="[% email_address_html %]" />
+        <input type="text" id="email_address" name="email_address" value="[% email_address | html_entity %]" />
       </div>
       <div class="clear-fix"></div>
     </div>
 
 [%
-IF c.flash.gender == '';
-  SET GENDER_CHECK = person.gender.id;
-ELSE;
-  SET GENDER_CHECK = c.flash.gender;
-END;
-
-FOREACH gender IN genders;
-  IF gender.id == GENDER_CHECK;
-    CHECKED = ' checked="checked"';
+WHILE (lookup_gender = genders.next);
+  IF lookup_gender.id == gender.id;
+    gender_checked = ' checked="checked"';
   ELSE;
-    CHECKED = '';
+    gender_checked = '';
   END;
 -%]
-    <input type="radio" name="gender" value="[% gender.id %]" data-label="[% c.maketext("gender." _ gender.id _ ".gender") | ucfirst %]"[% CHECKED %]>
+    <input type="radio" name="gender" value="[% lookup_gender.id %]" data-label="[% c.maketext("gender." _ lookup_gender.id _ ".gender") | ucfirst %]"[% gender_checked %]>
     <div class="clear-fix"></div>
 [%
 END;
@@ -158,7 +154,7 @@ END;
     <div class="label-field-container">
       <label for="date_of_birth">[% c.maketext("people.form.field.date-of-birth") %]</label>
       <div class="field-container">
-        <input type="text" id="date_of_birth" name="date_of_birth" class="date_picker" autocomplete="off" value="[% date_of_birth_html %]" />
+        <input type="text" id="date_of_birth" name="date_of_birth" class="date_picker" autocomplete="off" value="[% date_of_birth | html_entity %]" />
       </div>
       <div class="clear-fix"></div>
     </div>
@@ -201,44 +197,36 @@ ELSE;
 END;
 -%]
     <div class="label-field-container">
-      <label for="captain">[% c.maketext("people.form.button.captain-of") %]</label>
+      <label for="captain_of">[% c.maketext("people.form.captain-of") %]</label>
       <div class="field-container">
-        <input type="text" id="captain" name="captain" value="" />
+        <input type="text" id="captain_of" name="captain_of" value="" />
       </div>
       <div class="clear-fix"></div>
     </div>
     
     <div class="label-field-container">
-      <label for="secretary">[% c.maketext("people.form.button.secretary-for") %]</label>
+      <label for="secretary_of">[% c.maketext("people.form.secretary-for") %]</label>
       <div class="field-container">
-        <input type="text" id="secretary" name="secretary" value="" />
+        <input type="text" id="secretary_of" name="secretary_of" value="" />
       </div>
       <div class="clear-fix"></div>
     </div>
 
 [%
-IF c.flash.form_errored == 1;
-  IF c.flash.fees_paid == 1;
-    SET CHECKBOX_CHECKED = ' checked="checked"';
-  ELSE;
-    SET CHECKBOX_CHECKED = '';
-  END;
+IF fees_paid == 1;
+  SET fees_paid_checked = ' checked="checked"';
 ELSE;
-  IF person_season.fees_paid == 1;
-    SET CHECKBOX_CHECKED = ' checked="checked"';
-  ELSE;
-    SET CHECKBOX_CHECKED = '';
-  END;
+  SET fees_paid_checked = '';
 END;
 -%]
 
-    <input type="checkbox" id="fees_paid" name="fees_paid" data-label="[% c.maketext("people.form.button.fees-paid") | html_entity %]" value="1"[% CHECKBOX_CHECKED %] />
+    <input type="checkbox" id="fees_paid" name="fees_paid" data-label="[% c.maketext("people.form.button.fees-paid") %]" value="1"[% fees_paid_checked %] />
     <div class="clear-fix"></div>
     
     <div class="label-field-container">
       <label for="registration_date">[% c.maketext("people.form.button.registration-date") %]</label>
       <div class="field-container">
-        <input type="text" id="registration_date" name="registration_date" class="date_picker" autocomplete="off" value="[% registration_date_html %]" />
+        <input type="text" id="registration_date" name="registration_date" class="date_picker" autocomplete="off" value="[% registration_date | html_entity %]" />
       </div>
       <div class="clear-fix"></div>
     </div>
@@ -249,7 +237,7 @@ END;
     <div class="label-field-container">
       <label for="website_username">[% c.maketext("people.form.field.website-username") %]</label>
       <div class="field-container">
-        <input type="text" id="username" name="username" value="" />
+        <input type="text" id="user" name="user" value="" />
       </div>
       <div class="clear-fix"></div>
     </div>

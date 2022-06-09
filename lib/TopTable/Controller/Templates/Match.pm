@@ -24,16 +24,13 @@ Catalyst Controller.
 sub auto :Private {
   my ( $self, $c ) = @_;
   
-  # Load the messages
-  $c->load_status_msgs;
-  
   # The title bar will always have
-  $c->stash({subtitle1 => $c->maketext("menu.text.templates-match")});
+  $c->stash({subtitle1 => $c->maketext("menu.text.template-match")});
   
   # Breadcrumbs
-  push(@{ $c->stash->{breadcrumbs} }, {
-    path  => $c->uri_for("/templates/match"),
-    label => $c->maketext("menu.text.templates-match-breadcrumbs"),
+  push(@{$c->stash->{breadcrumbs}}, {
+    path => $c->uri_for("/templates/match"),
+    label => $c->maketext("menu.text.template-match-breadcrumbs-nav"),
   });
 }
 
@@ -51,10 +48,10 @@ sub index :Path :Args(0) {
   
   # Retrieve all of the match templates to display
   $c->stash({
-    template            => "html/templates/match/options.ttkt",
+    template => "html/templates/match/options.ttkt",
     view_online_display => "Viewing match templates",
-    view_online_link    => 0,
-    external_scripts    => [
+    view_online_link => 0,
+    external_scripts => [
       $c->uri_for("/static/script/standard/option-list.js"),
     ],
   });

@@ -16,41 +16,31 @@ sub games_in_match_with_people {
   
   if ( $player_number ) {
     $where = {
-      -or   => [{
+      -or => [{
         home_player_number => $player_number,
       }, {
         away_player_number => $player_number,
       }],
-      -and  =>  [{
-        home_team       => $match->home_team->id,
-        away_team       => $match->away_team->id,
-        scheduled_date  => $match->scheduled_date->ymd,
-        home_player =>  {
-          '!=' => undef,
-        },
-        away_player => {
-          '!=' => undef,
-        },
+      -and =>  [{
+        home_team => $match->home_team->id,
+        away_team => $match->away_team->id,
+        scheduled_date => $match->scheduled_date->ymd,
+        home_player => {"!=" => undef},
+        away_player => {"!=" => undef},
       }],
     };
   } else {
     $where = {
-      home_team           => $match->home_team->id,
-      away_team           => $match->away_team->id,
-      scheduled_date      => $match->scheduled_date->ymd,
-      home_player_number  => {
-        '!=' => undef,
-      },
-      away_player_number  => {
-        '!=' => undef,
-      }
+      home_team => $match->home_team->id,
+      away_team => $match->away_team->id,
+      scheduled_date => $match->scheduled_date->ymd,
+      home_player_number => {"!=" => undef},
+      away_player_number => {"!=" => undef},
     };
   }
   
   return $self->search( $where, {
-    order_by  => {
-      -asc => "scheduled_game_number",
-    },
+    order_by  => {-asc => qw( scheduled_game_number )},
   });
 }
 
@@ -64,15 +54,13 @@ sub game_in_match_by_scheduled_game_number_by_ids {
   my ( $self, $home_team_id, $away_team_id, $scheduled_date, $scheduled_game_number ) = @_;
   
   return $self->find({
-    home_team             => $home_team_id,
-    away_team             => $away_team_id,
-    scheduled_date        => $scheduled_date->ymd,
+    home_team => $home_team_id,
+    away_team => $away_team_id,
+    scheduled_date => $scheduled_date->ymd,
     scheduled_game_number => $scheduled_game_number,
   }, {
-    prefetch  => "team_match_legs",
-    order_by  =>  {
-      -asc => "team_match_legs.leg_number",
-    },
+    prefetch => "team_match_legs",
+    order_by => {-asc => qw( team_match_legs.leg_number )},
   });
 }
 
@@ -86,22 +74,20 @@ sub game_in_match_by_scheduled_game_number_by_url_keys {
   my ( $self, $home_club_url_key, $home_team_url_key, $away_club_url_key, $away_team_url_key, $scheduled_date, $scheduled_game_number ) = @_;
   
   return $self->find({
-    "club.url_key"        => $home_club_url_key,
-    "home_team.url_key"   => $home_team_url_key,
-    "club_2.url_key"      => $away_club_url_key,
-    "away_team.url_key"   => $away_team_url_key,
-    scheduled_date        => $scheduled_date->ymd,
+    "club.url_key" => $home_club_url_key,
+    "home_team.url_key" => $home_team_url_key,
+    "club_2.url_key" => $away_club_url_key,
+    "away_team.url_key" => $away_team_url_key,
+    scheduled_date => $scheduled_date->ymd,
     scheduled_game_number => $scheduled_game_number,
   }, {
-    prefetch  => "team_match_legs",
-    join      => {
+    prefetch => "team_match_legs",
+    join => {
       home_team => "club"
     }, {
       away_team => "club"
     },
-    order_by  =>  {
-      -asc => "team_match_legs.leg_number",
-    },
+    order_by => {-asc => qw( team_match_legs.leg_number )},
   });
 }
 

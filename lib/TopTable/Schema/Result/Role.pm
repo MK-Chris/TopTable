@@ -99,42 +99,42 @@ Should only be applied to built-in "anonymous" role - anyone not logged in gets 
 
 If this is 1, upon registration, users will get assigned to the role automatically.  This can be altered on user-defined roles, but not on built-in roles.
 
-=head2 average_filter_create_public
+=head2 averagefilter_create_public
 
   data_type: 'tinyint'
   default_value: 0
   extra: {unsigned => 1}
   is_nullable: 0
 
-=head2 average_filter_edit_public
+=head2 averagefilter_edit_public
 
   data_type: 'tinyint'
   default_value: 0
   extra: {unsigned => 1}
   is_nullable: 0
 
-=head2 average_filter_delete_public
+=head2 averagefilter_delete_public
 
   data_type: 'tinyint'
   default_value: 0
   extra: {unsigned => 1}
   is_nullable: 0
 
-=head2 average_filter_view_all
+=head2 averagefilter_view_all
 
   data_type: 'tinyint'
   default_value: 0
   extra: {unsigned => 1}
   is_nullable: 0
 
-=head2 average_filter_edit_all
+=head2 averagefilter_edit_all
 
   data_type: 'tinyint'
   default_value: 0
   extra: {unsigned => 1}
   is_nullable: 0
 
-=head2 average_filter_delete_all
+=head2 averagefilter_delete_all
 
   data_type: 'tinyint'
   default_value: 0
@@ -197,28 +197,28 @@ If this is 1, upon registration, users will get assigned to the role automatical
   extra: {unsigned => 1}
   is_nullable: 0
 
-=head2 contact_reason_view
+=head2 contactreason_view
 
   data_type: 'tinyint'
   default_value: 0
   extra: {unsigned => 1}
   is_nullable: 0
 
-=head2 contact_reason_create
+=head2 contactreason_create
 
   data_type: 'tinyint'
   default_value: 0
   extra: {unsigned => 1}
   is_nullable: 0
 
-=head2 contact_reason_edit
+=head2 contactreason_edit
 
   data_type: 'tinyint'
   default_value: 0
   extra: {unsigned => 1}
   is_nullable: 0
 
-=head2 contact_reason_delete
+=head2 contactreason_delete
 
   data_type: 'tinyint'
   default_value: 0
@@ -316,7 +316,7 @@ If this is 1, upon registration, users will get assigned to the role automatical
   extra: {unsigned => 1}
   is_nullable: 0
 
-=head2 match_report_create
+=head2 matchreport_create
 
   data_type: 'tinyint'
   default_value: 0
@@ -325,7 +325,7 @@ If this is 1, upon registration, users will get assigned to the role automatical
 
 If 1 the person can create match reports for any team.
 
-=head2 match_report_create_associated
+=head2 matchreport_create_associated
 
   data_type: 'tinyint'
   default_value: 0
@@ -334,28 +334,28 @@ If 1 the person can create match reports for any team.
 
 If 1 the person can create match reports involving teams the user is associated with (by playing for or captaining the team or being secretary for the club)
 
-=head2 match_report_edit_own
+=head2 matchreport_edit_own
 
   data_type: 'tinyint'
   default_value: 0
   extra: {unsigned => 1}
   is_nullable: 0
 
-=head2 match_report_edit_all
+=head2 matchreport_edit_all
 
   data_type: 'tinyint'
   default_value: 0
   extra: {unsigned => 1}
   is_nullable: 0
 
-=head2 match_report_delete_own
+=head2 matchreport_delete_own
 
   data_type: 'tinyint'
   default_value: 0
   extra: {unsigned => 1}
   is_nullable: 0
 
-=head2 match_report_delete_all
+=head2 matchreport_delete_all
 
   data_type: 'tinyint'
   default_value: 0
@@ -390,98 +390,77 @@ If 1 the person can create match reports involving teams the user is associated 
   extra: {unsigned => 1}
   is_nullable: 0
 
-=head2 meeting_type_view
+=head2 meetingtype_view
 
   data_type: 'tinyint'
   default_value: 0
   extra: {unsigned => 1}
   is_nullable: 0
 
-=head2 meeting_type_create
+=head2 meetingtype_create
 
   data_type: 'tinyint'
   default_value: 0
   extra: {unsigned => 1}
   is_nullable: 0
 
-=head2 meeting_type_edit
+=head2 meetingtype_edit
 
   data_type: 'tinyint'
   default_value: 0
   extra: {unsigned => 1}
   is_nullable: 0
 
-=head2 meeting_type_delete
+=head2 meetingtype_delete
 
   data_type: 'tinyint'
   default_value: 0
   extra: {unsigned => 1}
   is_nullable: 0
 
-=head2 news_article_view
+=head2 news_view
 
   data_type: 'tinyint'
   default_value: 0
   extra: {unsigned => 1}
   is_nullable: 0
 
-=head2 news_article_create
+=head2 news_create
 
   data_type: 'tinyint'
   default_value: 0
   extra: {unsigned => 1}
   is_nullable: 0
 
-=head2 news_article_edit_own
+=head2 news_edit_own
 
   data_type: 'tinyint'
   default_value: 0
   extra: {unsigned => 1}
   is_nullable: 0
 
-=head2 news_article_edit_all
+=head2 news_edit_all
 
   data_type: 'tinyint'
   default_value: 0
   extra: {unsigned => 1}
   is_nullable: 0
 
-=head2 news_article_delete_own
+=head2 news_delete_own
 
   data_type: 'tinyint'
   default_value: 0
   extra: {unsigned => 1}
   is_nullable: 0
 
-=head2 news_article_delete_all
+=head2 news_delete_all
 
   data_type: 'tinyint'
   default_value: 0
   extra: {unsigned => 1}
   is_nullable: 0
 
-=head2 online_users_view
-
-  data_type: 'tinyint'
-  default_value: 0
-  extra: {unsigned => 1}
-  is_nullable: 0
-
-=head2 anonymous_online_users_view
-
-  data_type: 'tinyint'
-  default_value: 0
-  extra: {unsigned => 1}
-  is_nullable: 0
-
-=head2 view_users_ip
-
-  data_type: 'tinyint'
-  default_value: 0
-  extra: {unsigned => 1}
-  is_nullable: 0
-
-=head2 view_users_user_agent
+=head2 news_pin
 
   data_type: 'tinyint'
   default_value: 0
@@ -601,13 +580,6 @@ If 1 the person can create match reports involving teams the user is associated 
   is_nullable: 0
 
 =head2 session_delete
-
-  data_type: 'tinyint'
-  default_value: 0
-  extra: {unsigned => 1}
-  is_nullable: 0
-
-=head2 system_event_log_view_all
 
   data_type: 'tinyint'
   default_value: 0
@@ -740,6 +712,34 @@ If 1 the person can create match reports involving teams the user is associated 
   extra: {unsigned => 1}
   is_nullable: 0
 
+=head2 user_online_view
+
+  data_type: 'tinyint'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 0
+
+=head2 user_online_view_anonymous
+
+  data_type: 'tinyint'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 0
+
+=head2 user_view_ip
+
+  data_type: 'tinyint'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 0
+
+=head2 user_view_user_agent
+
+  data_type: 'tinyint'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 0
+
 =head2 venue_view
 
   data_type: 'tinyint'
@@ -768,7 +768,7 @@ If 1 the person can create match reports involving teams the user is associated 
   extra: {unsigned => 1}
   is_nullable: 0
 
-=head2 news_article_pin
+=head2 eventlog_view_all
 
   data_type: 'tinyint'
   default_value: 0
@@ -831,42 +831,42 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
-  "average_filter_create_public",
+  "averagefilter_create_public",
   {
     data_type => "tinyint",
     default_value => 0,
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
-  "average_filter_edit_public",
+  "averagefilter_edit_public",
   {
     data_type => "tinyint",
     default_value => 0,
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
-  "average_filter_delete_public",
+  "averagefilter_delete_public",
   {
     data_type => "tinyint",
     default_value => 0,
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
-  "average_filter_view_all",
+  "averagefilter_view_all",
   {
     data_type => "tinyint",
     default_value => 0,
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
-  "average_filter_edit_all",
+  "averagefilter_edit_all",
   {
     data_type => "tinyint",
     default_value => 0,
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
-  "average_filter_delete_all",
+  "averagefilter_delete_all",
   {
     data_type => "tinyint",
     default_value => 0,
@@ -929,28 +929,28 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
-  "contact_reason_view",
+  "contactreason_view",
   {
     data_type => "tinyint",
     default_value => 0,
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
-  "contact_reason_create",
+  "contactreason_create",
   {
     data_type => "tinyint",
     default_value => 0,
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
-  "contact_reason_edit",
+  "contactreason_edit",
   {
     data_type => "tinyint",
     default_value => 0,
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
-  "contact_reason_delete",
+  "contactreason_delete",
   {
     data_type => "tinyint",
     default_value => 0,
@@ -1048,42 +1048,42 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
-  "match_report_create",
+  "matchreport_create",
   {
     data_type => "tinyint",
     default_value => 0,
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
-  "match_report_create_associated",
+  "matchreport_create_associated",
   {
     data_type => "tinyint",
     default_value => 0,
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
-  "match_report_edit_own",
+  "matchreport_edit_own",
   {
     data_type => "tinyint",
     default_value => 0,
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
-  "match_report_edit_all",
+  "matchreport_edit_all",
   {
     data_type => "tinyint",
     default_value => 0,
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
-  "match_report_delete_own",
+  "matchreport_delete_own",
   {
     data_type => "tinyint",
     default_value => 0,
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
-  "match_report_delete_all",
+  "matchreport_delete_all",
   {
     data_type => "tinyint",
     default_value => 0,
@@ -1118,98 +1118,77 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
-  "meeting_type_view",
+  "meetingtype_view",
   {
     data_type => "tinyint",
     default_value => 0,
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
-  "meeting_type_create",
+  "meetingtype_create",
   {
     data_type => "tinyint",
     default_value => 0,
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
-  "meeting_type_edit",
+  "meetingtype_edit",
   {
     data_type => "tinyint",
     default_value => 0,
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
-  "meeting_type_delete",
+  "meetingtype_delete",
   {
     data_type => "tinyint",
     default_value => 0,
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
-  "news_article_view",
+  "news_view",
   {
     data_type => "tinyint",
     default_value => 0,
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
-  "news_article_create",
+  "news_create",
   {
     data_type => "tinyint",
     default_value => 0,
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
-  "news_article_edit_own",
+  "news_edit_own",
   {
     data_type => "tinyint",
     default_value => 0,
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
-  "news_article_edit_all",
+  "news_edit_all",
   {
     data_type => "tinyint",
     default_value => 0,
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
-  "news_article_delete_own",
+  "news_delete_own",
   {
     data_type => "tinyint",
     default_value => 0,
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
-  "news_article_delete_all",
+  "news_delete_all",
   {
     data_type => "tinyint",
     default_value => 0,
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
-  "online_users_view",
-  {
-    data_type => "tinyint",
-    default_value => 0,
-    extra => { unsigned => 1 },
-    is_nullable => 0,
-  },
-  "anonymous_online_users_view",
-  {
-    data_type => "tinyint",
-    default_value => 0,
-    extra => { unsigned => 1 },
-    is_nullable => 0,
-  },
-  "view_users_ip",
-  {
-    data_type => "tinyint",
-    default_value => 0,
-    extra => { unsigned => 1 },
-    is_nullable => 0,
-  },
-  "view_users_user_agent",
+  "news_pin",
   {
     data_type => "tinyint",
     default_value => 0,
@@ -1329,13 +1308,6 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
   },
   "session_delete",
-  {
-    data_type => "tinyint",
-    default_value => 0,
-    extra => { unsigned => 1 },
-    is_nullable => 0,
-  },
-  "system_event_log_view_all",
   {
     data_type => "tinyint",
     default_value => 0,
@@ -1468,6 +1440,34 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
+  "user_online_view",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
+  "user_online_view_anonymous",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
+  "user_view_ip",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
+  "user_view_user_agent",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
   "venue_view",
   {
     data_type => "tinyint",
@@ -1496,7 +1496,7 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
-  "news_article_pin",
+  "eventlog_view_all",
   {
     data_type => "tinyint",
     default_value => 0,
@@ -1588,8 +1588,11 @@ Composing rels: L</user_roles> -> user
 __PACKAGE__->many_to_many("users", "user_roles", "user");
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2022-01-12 14:51:19
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:+AT0++ZQY2/i9nchoyP8XQ
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2022-03-17 03:06:05
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:rQdORDW9FGGzSh6T+RFgGA
+
+use HTML::Entities;
+use Set::Object;
 
 =head2 members
 
@@ -1599,10 +1602,194 @@ Get a list of recipients associated with this contact reason.
 
 sub members {
   my ( $self ) = @_;
-  
-  return $self->search_related("user_roles", {}, {
-    prefetch => "user",
+  return $self->result_source->schema->resultset("User")->search({
+    "user_roles.role" => $self->id,
+  }, {
+    join => [qw( user_roles )],
   });
+  #return $self->search_related("user_roles", undef, {prefetch => "user"});
+}
+
+=head2 set_members
+
+The user list supplied (as an array ref, or a single object if you only want to set one member) will be taken as the new user list; any existing members that don't appear in this list will be removed.
+
+You can use add_members if you just want to add a / some members to the existing list and none will be removed.
+
+=cut
+
+sub set_members {
+  my ( $self, $members, $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  
+  # Setup the response
+  my $response = {
+    errors => [],
+    warnings => [],
+    info => [],
+    success => [],
+    completed => 0,
+    new_members => [],
+    existing_members => [],
+    removed_members => [],
+  };
+  
+  # Check we're not modifying the memberlist of the 'registered users' group, as every user is automatically a member of this and can't be removed
+  if ( $self->apply_on_registration ) {
+    push(@{$response->{errors}}, $lang->maketext("roles.form.notice.cant-modify-registered-users-members"));
+    return $response;
+  }
+  
+  # Ensure we're working on an array
+  $members = [$members] unless ref($members) eq "ARRAY";
+  
+  # Set our final members array - we'll only push into this if the member is a valid user or user ID / URL key (in the case of IDs / URL keys, the user object
+  # is looked up and replaces the ID passed in)
+  my @submitted_members = ();
+  
+  # Loop through and check each one
+  my $invalid_members = 0;
+  foreach my $member ( @{$members} ) {
+    if ( defined($member) ) {
+      if ( ref($member) eq "TopTable::Model::DB::User" ) {
+        push(@submitted_members, $member);
+      } else {
+        $member = $schema->resultset("User")->find_id_or_url_key($member);
+        
+        if ( defined($member) ) {
+          push(@submitted_members, $member);
+        } else {
+          $invalid_members++;
+        }
+      }
+    } else {
+      $invalid_members++;
+    }
+  }
+  
+  # Warn if we had invalid users
+  push(@{$response->{warnings}}, $lang->maketext("roles.form.warning.users-invalid", $invalid_members)) if $invalid_members;
+  
+  # Now get a list of the current members and map them so they're just IDs
+  my @current_members = $self->members;
+  
+  # Get the IDs to compare with Set::Object
+  @current_members = map($_->id, @current_members);
+  @submitted_members = map($_->id, @submitted_members);
+  
+  # Set them as objects so we can compare
+  my $submitted_members = Set::Object->new(@submitted_members);
+  my $current_members = Set::Object->new(@current_members);
+  my $new_members = $submitted_members->difference($current_members);
+  my $removed_members = $current_members->difference($submitted_members);
+  my $existing_members = $current_members->intersection($submitted_members);
+  
+  # Turn them back into User objects so we can return what's changed in the response
+  my @new_members = map($schema->resultset("User")->find($_), @$new_members);
+  my @removed_members = map($schema->resultset("User")->find($_), @$removed_members);
+  my @existing_members = map($schema->resultset("User")->find($_), @$existing_members);
+  
+  $response->{new_members} = \@new_members;
+  $response->{removed_members} = \@removed_members;
+  $response->{existing_members} = \@existing_members;
+  
+  # Check we're not removing everyone from the sysadmin list - we need at least one member of this role, otherwise there's no admin
+  if ( $self->sysadmin ) {
+    # The final list of members will be a combination of new and existing members
+    my @new_full_member_list = ( @new_members, @existing_members );
+    if ( scalar @new_full_member_list == 0 ) {
+      push(@{$response->{errors}}, $lang->maketext("roles.form.error.cant-remove-all-sysadmins"));
+      return $response;
+    }
+  }
+  
+  # Start a transaction
+  my $transaction = $schema->txn_scope_guard;
+  
+  # Delete the ones we need to delete and add the ones we need to add
+  my $ok = 1;
+  foreach my $member ( @removed_members ) {
+    $ok = $self->delete_related("user_roles", {user => $member->id}) if $ok;
+  }
+  
+  foreach my $member ( @new_members ) {
+    $ok = $self->create_related("user_roles", {user => $member->id}) if $ok;
+  }
+  
+  # Commit the transaction
+  $transaction->commit;
+  
+  if ( $ok ) {
+    # All updated okay
+    $response->{completed} = 1;
+    push(@{$response->{success}}, $lang->maketext("admin.forms.roles.set-members.success"));
+  } else {
+    # Not updated, error
+    push(@{$response->{errors}}, $lang->maketext("admin.update.errror.database.roles-set"));
+  }
+  
+  return $response;
+}
+
+=head2 can_delete
+
+Performs the checks we need to ensure the role is deletable (i.e., is not a system role).
+
+=cut
+
+sub can_delete {
+  my ( $self ) = @_;
+  return $self->system ? 0 : 1;
+}
+
+=head2 check_and_delete
+
+Checks the club can be deleted (via can_delete) and then performs the deletion.
+
+=cut
+
+sub check_and_delete {
+  my ( $self, $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  my $response = {
+    errors => [],
+    warnings => [],
+    info => [],
+    success => [],
+    completed => 0,
+  };
+  
+  # Get the name for messaging
+  my $name = $self->system ? $lang->maketext(sprintf("roles.name.%s", $self->name)) : encode_entities($self->name);
+  
+  # Check we can delete
+  unless ( $self->can_delete ) {
+    push(@{$response->{errors}}, $lang->maketext("roles.delete.error.cannot-delete"));
+    return $response;
+  }
+  
+  # Delete
+  my $ok = $self->delete;
+  
+  # Error if the delete was unsuccessful
+  if ( $ok ) {
+    $response->{completed} = 1;
+    push(@{$response->{success}}, $lang->maketext("admin.forms.success", $name, $lang->maketext("admin.message.deleted")));
+  } else {
+    push(@{$response->{errors}}, $lang->maketext("admin.delete.error.database", $name));
+  }
+  
+  return $response;
 }
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

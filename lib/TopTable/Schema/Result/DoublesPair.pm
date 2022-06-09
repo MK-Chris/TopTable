@@ -447,9 +447,6 @@ __PACKAGE__->belongs_to(
 # Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-11-20 08:35:58
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:TH/CxjrnYIMZ46gl9Css/A
 
-#
-# Enable automatic date handling
-#
 __PACKAGE__->add_columns(
     "last_updated",
     { data_type => "datetime", timezone => "UTC", set_on_create => 1, set_on_update => 1, datetime_undef_if_invalid => 1, is_nullable => 1, },

@@ -6,7 +6,7 @@ $(document).ready(function() {
   /*
     Dialog box for confirming we wish to change the team for a player who has played for the team they're already registered for
   */
-  $( "#dialog" ).dialog({
+  $("#dialog").dialog({
     autoOpen: false,
     modal: true,
     resizable: false,

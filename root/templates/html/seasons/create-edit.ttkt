@@ -1,25 +1,77 @@
 <form method="post" action="[% form_action %]">
 <fieldset id="season_details">
   <legend>[% c.maketext("seasons.form.legend.season-details") %]</legend>
-[% # Set the disabled text for the date fields if we need to
-IF restricted_edit == 1;
-  SET DISABLED = ' disabled="disabled"';
+[%
+# Module to show leading zeroes on single-digit numbers
+USE zeroes = format("%02d");
+
+SET locale = c.locale;
+
+# Get the correct values to show
+IF c.flash.show_flashed;
+  SET start_date = c.flash.start_date;
+  SET end_date = c.flash.end_date;
+  SET name = c.flash.name;
+  SET start_hour = c.flash.start_hour;
+  SET start_minute = c.flash.start_minute;
+  SET timezone = c.flash.timezone;
+  SET allow_loan_players = c.flash.allow_loan_players;
+  SET allow_loan_players_below = c.flash.allow_loan_players_below;
+  SET allow_loan_players_above = c.flash.allow_loan_players_above;
+  SET allow_loan_players_across = c.flash.allow_loan_players_across;
+  SET allow_loan_players_same_club_only = c.flash.allow_loan_players_same_club_only;
+  SET allow_loan_players_multiple_teams_per_division = c.flash.allow_loan_players_multiple_teams_per_division;
+  SET loan_players_limit_per_player = c.flash.loan_players_limit_per_player;
+  SET loan_players_limit_per_player_per_team = c.flash.loan_players_limit_per_player_per_team;
+  SET loan_players_limit_per_player_per_opposition = c.flash.loan_players_limit_per_player_per_opposition;
+  SET loan_players_limit_per_team = c.flash.loan_players_limit_per_team;
+ELSE;
+  SET start_date = season.start_date;
+  SET end_date = season.end_date;
+  SET name = season.name;
+  SET start_hour = season.start_hour;
+  SET start_minute = season.start_minute;
+  SET timezone = season.timezone OR c.user.timezone OR c.config.I18N.locales.$locale.timezone OR c.config.DateTime.default_timezone;
+  
+  # We don't have a specific 'allow_loan_players' field in the DB, so the value of this is determined from at least one of the other fields being 1
+  SET allow_loan_players_across = season.allow_loan_players_below;
+  SET allow_loan_players_above = season.allow_loan_players_above;
+  SET allow_loan_players_across = season.allow_loan_players_across;
+  
+  IF allow_loan_players_across OR allow_loan_players_above OR allow_loan_players_across OR !season;
+    # Default to true for a new season, hence the !season being in the if statement
+    SET allow_loan_players = 1;
+  ELSE;
+    SET allow_loan_players = 0;
+  END;
+  
+  SET allow_loan_players_same_club_only = season.allow_loan_players_same_club_only;
+  SET allow_loan_players_multiple_teams_per_division = season.allow_loan_players_multiple_teams_per_division;
+  SET loan_players_limit_per_player = season.loan_players_limit_per_player;
+  SET loan_players_limit_per_player_per_team = season.loan_players_limit_per_player_per_team;
+  SET loan_players_limit_per_player_per_opposition = season.loan_players_limit_per_player_per_opposition;
+  SET loan_players_limit_per_team = season.loan_players_limit_per_team;
 END;
 
-start_date = c.flash.start_date OR season.start_date;
-start_date_html = FILTER html_entity; start_date; END;
+IF start_date;
+  SET start_date = c.i18n_datetime_format_date.format_datetime(start_date);
+END;
 
-end_date = c.flash.end_date OR season.end_date;
-end_date_html = FILTER html_entity; end_date; END;
+IF end_date;
+  SET end_date = c.i18n_datetime_format_date.format_datetime(end_date);
+END;
 
-name = c.flash.name OR season.name;
-name_html = FILTER html_entity; name; END;
+# Set the disabled text for the restricted fields if we need to
+IF restricted_edit == 1;
+  SET restricted_disabled = ' disabled="disabled"';
+END;
+
 -%]
 
   <div class="label-field-container">
     <label for="start_date">[% c.maketext("seasons.form.field.start-date") %]</label>
     <div class="field-container">
-      <input type="text" id="start_date" name="start_date" class="date_picker" autocomplete="off" value="[% start_date_html %]"[% DISABLED %] />
+      <input type="text" id="start_date" name="start_date" class="date_picker" autocomplete="off" value="[% start_date %]"[% restricted_disabled %] />
     </div>
     <div class="clear-fix"></div>
   </div>
@@ -27,7 +79,7 @@ name_html = FILTER html_entity; name; END;
   <div class="label-field-container">
     <label for="end_date">[% c.maketext("seasons.form.field.end-date") %]</label>
     <div class="field-container">
-      <input type="text" id="end_date" name="end_date" class="date_picker" autocomplete="off" value="[% end_date_html %]"[% DISABLED %] />
+      <input type="text" id="end_date" name="end_date" class="date_picker" autocomplete="off" value="[% end_date %]"[% restricted_disabled %] />
     </div>
     <div class="clear-fix"></div>
   </div>
@@ -35,7 +87,7 @@ name_html = FILTER html_entity; name; END;
   <div class="label-field-container">
     <label for="name">[% c.maketext("seasons.form.field.name") %]</label>
     <div class="field-container">
-      <input type="text" id="name" name="name" value="[% name_html %]" />
+      <input type="text" id="name" name="name" value="[% name | html_entity %]" />
     </div>
     <div class="clear-fix"></div>
   </div>
@@ -48,20 +100,16 @@ name_html = FILTER html_entity; name; END;
 [%
 SET counter = 0;
 WHILE counter <= 23;
-  IF counter < 10;
-    SET counter_display = "0" _ counter;
-  ELSE;
-    SET counter_display = counter;
-  END;
+  SET counter_display = zeroes(counter);
   
   # Now set selected text if needed;
-  IF counter_display == c.flash.start_hour;
-    SET SELECTED = ' selected="selected"';
+  IF counter_display == start_hour;
+    SET selected = ' selected="selected"';
   ELSE;
-    SET SELECTED = '';
+    SET selected = '';
   END;
 -%]
-        <option value="[% counter_display %]"[% SELECTED %]>[% counter_display %]</option>
+        <option value="[% counter_display %]"[% selected %]>[% counter_display %]</option>
 [%
   SET counter = counter + 1;
 END;
@@ -73,20 +121,15 @@ END;
 [%
 SET counter = 0;
 WHILE counter <= 59;
-  IF counter < 10;
-    # Set leading zeroes if needed;
-    SET counter_display = "0" _ counter;
-  ELSE;
-    SET counter_display = counter;
-  END;
+  SET counter_display = zeroes(counter);
   # Now set selected text if needed;
-  IF counter_display == c.flash.start_minute;
-    SET SELECTED = ' selected="selected"';
+  IF counter_display == start_minute;
+    SET selected = ' selected="selected"';
   ELSE;
-    SET SELECTED = '';
+    SET selected = '';
   END;
 -%]
-        <option value="[% counter_display %]"[% SELECTED %]>[% counter_display %]</option>
+        <option value="[% counter_display %]"[% selected %]>[% counter_display %]</option>
 [%
   SET counter = counter + 1;
 END;
@@ -102,42 +145,28 @@ END;
       <select id="timezone" name="timezone" data-placeholder="[% c.maketext("seasons.form.field.timezone") %]">
           <option></option>
 [%
-# Set up the timezone to check against
-SET locale = c.locale;
-IF c.flash.timezone;
-  SET check_timezone = c.flash.timezone;
-ELSIF season.timezone;
-  SET check_timezone = season.timezone;
-ELSIF c.user.timezone;
-  SET check_timezone = c.user.timezone;
-ELSIF c.config.I18N.locales.$locale.timezone;
-  SET check_timezone = c.config.I18N.locales.$locale.timezone;
-ELSIF c.config.DateTime.default_timezone;
-  SET check_timezone = c.config.DateTime.default_timezone;
-END;
-
-SET i = 1;
-FOREACH category IN timezones.keys.sort;
-  IF i > 1;
+SET cats = 1;
+FOREACH tz_category IN timezones.keys.sort;
+  IF cats > 1;
     # End the last optgroup if we need to
 -%]
         </optgroup>
 [%
   END;
 -%]
-        <optgroup label="[% category %]">
+        <optgroup label="[% tz_category %]">
 [%
-  FOREACH timezone IN timezones.$category;
-    IF category _ "/" _ timezone == check_timezone;
-      SET SELECTED = ' selected="selected"';
+  FOREACH tz IN timezones.$tz_category;
+    IF tz_category _ "/" _ tz == timezone;
+      SET selected = ' selected="selected"';
     ELSE;
-      SET SELECTED = '';
+      SET selected = '';
     END;
 -%]
-          <option value="[% category _ "/" _ timezone %]"[% SELECTED %]>[% timezone.replace("_", " ") %]</option>
+          <option value="[% tz_category _ "/" _ tz %]"[% selected %]>[% tz.replace("_", " ") %]</option>
 [%
   END;
-  SET i = i + 1;
+  SET cats = cats + 1;
 END
 -%]
         </optgroup>
@@ -150,111 +179,62 @@ END
 <fieldset>
   <legend>[% c.maketext("seasons.form.legend.loan-players") %]</legend>
 [%
-IF c.flash.season_errored_form;
-  # Season form fields have errored, use flashed values
-  IF c.flash.allow_loan_players;
-    SET SUBS_CHECKED = ' checked="checked"';
+IF allow_loan_players;
+  # Loan players allowed
+  SET subs_checked = ' checked="checked"';
+  SET subs_opts_visible = '';
+  
+  IF allow_loan_players_below;
+    SET subs_checked_below = ' checked="checked"';
   ELSE;
-    SET SUBS_CHECKED = '';
+    SET subs_checked_below = '';
   END;
   
-  IF c.flash.allow_loan_players_below;
-    SET SUBS_CHECKED_BELOW = ' checked="checked"';
+  IF allow_loan_players_above;
+    SET subs_checked_above = ' checked="checked"';
   ELSE;
-    SET SUBS_CHECKED_BELOW = '';
+    SET subs_checked_above = '';
   END;
   
-  IF c.flash.allow_loan_players_above;
-    SET SUBS_CHECKED_ABOVE = ' checked="checked"';
+  IF allow_loan_players_across;
+    SET subs_checked_across = ' checked="checked"';
   ELSE;
-    SET SUBS_CHECKED_ABOVE = '';
+    SET subs_checked_across = '';
   END;
   
-  IF c.flash.allow_loan_players_across;
-    SET SUBS_CHECKED_ACROSS = ' checked="checked"';
+  IF allow_loan_players_same_club_only;
+    SET subs_checked_same_club = ' checked="checked"';
   ELSE;
-    SET SUBS_CHECKED_ACROSS = '';
+    SET subs_checked_same_club = '';
   END;
   
-  IF c.flash.allow_loan_players_same_club_only;
-    SET SUBS_CHECKED_SAME_CLUB = ' checked="checked"';
+  IF allow_loan_players_multiple_teams_per_division;
+    SET subs_checked_multi_teams_div = ' checked="checked"';
   ELSE;
-    SET SUBS_CHECKED_SAME_CLUB = '';
+    SET subs_checked_multi_teams_div = '';
   END;
-  
-  IF c.flash.allow_loan_players_multiple_teams_per_division;
-    SET SUBS_CHECKED_MULTI_TEAMS_DIVISION = ' checked="checked"';
-  ELSE;
-    SET SUBS_CHECKED_MULTI_TEAMS_DIVISION = '';
-  END;
-  
-  # Numeric values - do it this way because if they're zero, the DB value will override them (as zero is false)
-  SET loan_players_limit_per_player          = c.flash.loan_players_limit_per_player;
-  SET loan_players_limit_per_player_per_team = c.flash.loan_players_limit_per_player_per_team;
-  SET loan_players_limit_per_team            = c.flash.loan_players_limit_per_team;
 ELSE;
-  # Not errored, use DB values if there are any - default for allow_loan_players for a new season is ticked
-  IF season.allow_loan_players_above OR season.allow_loan_players_below OR season.allow_loan_players_across OR !season;
-    SET SUBS_CHECKED = ' checked="checked"';
-  ELSE;
-    SET SUBS_CHECKED = '';
-  END;
-  
-  IF season.allow_loan_players_below;
-    SET SUBS_CHECKED_BELOW = ' checked="checked"';
-  ELSE;
-    SET SUBS_CHECKED_BELOW = '';
-  END;
-  
-  IF season.allow_loan_players_above;
-    SET SUBS_CHECKED_ABOVE = ' checked="checked"';
-  ELSE;
-    SET SUBS_CHECKED_ABOVE = '';
-  END;
-  
-  IF season.allow_loan_players_across;
-    SET SUBS_CHECKED_ACROSS = ' checked="checked"';
-  ELSE;
-    SET SUBS_CHECKED_ACROSS = '';
-  END;
-  
-  IF season.allow_loan_players_same_club_only;
-    SET SUBS_CHECKED_SAME_CLUB = ' checked="checked"';
-  ELSE;
-    SET SUBS_CHECKED_SAME_CLUB = '';
-  END;
-  
-  IF season.allow_loan_players_multiple_teams_per_division;
-    SET SUBS_CHECKED_MULTI_TEAMS_DIVISION = ' checked="checked"';
-  ELSE;
-    SET SUBS_CHECKED_MULTI_TEAMS_DIVISION = '';
-  END;
-  
-  # Numeric values - do it this way because if they're zero, the DB value will override them (as zero is false)
-  SET loan_players_limit_per_player                 = season.loan_players_limit_per_player;
-  SET loan_players_limit_per_player_per_team        = season.loan_players_limit_per_player_per_team;
-  SET loan_players_limit_per_player_per_opposition  = season.loan_players_limit_per_player_per_opposition;
-  SET loan_players_limit_per_team                   = season.loan_players_limit_per_team;
-END;
-
-# Now check if we've ticked the allow subs box - if not, we'll hide the other fields
-IF SUBS_CHECKED == ' checked="checked"';
-  SET NESTED_FIELDS_VISIBLE = '';
-ELSE;
-  SET NESTED_FIELDS_VISIBLE = ' style="display: none;"';
+  # Loan players not allowed
+  SET subs_checked = '';
+  SET subs_opts_visible = ' style="display: none;"';
+  SET subs_checked_below = '';
+  SET subs_checked_above = '';
+  SET subs_checked_across = '';
+  SET subs_checked_same_club = '';
+  SET subs_checked_multi_teams_div = '';
 END;
 -%]
   <div class="form-column-single">
-    <input type="checkbox" id="allow_loan_players" name="allow_loan_players" data-label="[% c.maketext("seasons.form.field.allow-loan-players") %]" value="1"[% DISABLED _ SUBS_CHECKED %] />
+    <input type="checkbox" id="allow_loan_players" name="allow_loan_players" data-label="[% c.maketext("seasons.form.field.allow-loan-players") %]" value="1"[% restricted_disabled _ subs_checked %] />
   </div>
   
-  <div id="loan-players-nested-fields"[% NESTED_FIELDS_VISIBLE %]>
+  <div id="loan-players-nested-fields"[% subs_opts_visible %]>
     <div class="form-column">
-      <input type="checkbox" id="allow_loan_players_below" name="allow_loan_players_below" data-label="[% c.maketext("seasons.form.field.allow-loan-players-from-lower") %]" value="1"[% DISABLED _ SUBS_CHECKED_BELOW %] />
-      <input type="checkbox" id="allow_loan_players_above" name="allow_loan_players_above" data-label="[% c.maketext("seasons.form.field.allow-loan-players-from-higher") %]" value="1"[% DISABLED _ SUBS_CHECKED_ABOVE %] />
-      <input type="checkbox" id="allow_loan_players_across" name="allow_loan_players_across" data-label="[% c.maketext("seasons.form.field.allow-loan-players-from-same-level") %]" value="1"[% DISABLED _ SUBS_CHECKED_ACROSS %] />
-      <input type="checkbox" id="allow_loan_players_same_club_only" name="allow_loan_players_same_club_only" data-label="[% c.maketext("seasons.form.field.loan-players-from-same-club-only") %]" value="1"[% DISABLED _ SUBS_CHECKED_SAME_CLUB %] />
-      <input type="checkbox" id="allow_loan_players_multiple_teams_per_division" name="allow_loan_players_multiple_teams_per_division" data-label="[% c.maketext("seasons.form.field.allow-loan-players-multiple-teams-per-division") %]" value="1"[% DISABLED _ SUBS_CHECKED_MULTI_TEAMS_DIVISION %] />
+      <input type="checkbox" id="allow_loan_players_below" name="allow_loan_players_below" data-label="[% c.maketext("seasons.form.field.allow-loan-players-from-lower") %]" value="1"[% restricted_disabled _ subs_checked_below %] />
+      <input type="checkbox" id="allow_loan_players_above" name="allow_loan_players_above" data-label="[% c.maketext("seasons.form.field.allow-loan-players-from-higher") %]" value="1"[% restricted_disabled _ subs_checked_above %] />
+      <input type="checkbox" id="allow_loan_players_across" name="allow_loan_players_across" data-label="[% c.maketext("seasons.form.field.allow-loan-players-from-same-level") %]" value="1"[% restricted_disabled _ subs_checked_across %] />
+      <input type="checkbox" id="allow_loan_players_same_club_only" name="allow_loan_players_same_club_only" data-label="[% c.maketext("seasons.form.field.loan-players-from-same-club-only") %]" value="1"[% restricted_disabled _ subs_checked_same_club %] />
+      <input type="checkbox" id="allow_loan_players_multiple_teams_per_division" name="allow_loan_players_multiple_teams_per_division" data-label="[% c.maketext("seasons.form.field.allow-loan-players-multiple-teams-per-division") %]" value="1"[% restricted_disabled _ subs_checked_multi_teams_div %] />
     </div>
     <div class="form-column">
       <div class="info-message-small">
@@ -267,7 +247,7 @@ END;
       <div class="label-field-container">
         <label for="loan_players_limit_per_player">[% c.maketext("seasons.form.field.loan-players-limit-per-player") %]</label>
         <div class="field-container">
-          <input type="number" id="loan_players_limit_per_player" name="loan_players_limit_per_player" min="0" value="[% loan_players_limit_per_player %]"[% DISABLED %] />
+          <input type="number" id="loan_players_limit_per_player" name="loan_players_limit_per_player" min="0" value="[% loan_players_limit_per_player | html_entity %]"[% restricted_disabled %] />
         </div>
         <div class="clear-fix"></div>
       </div>
@@ -275,15 +255,15 @@ END;
       <div class="label-field-container">
         <label for="loan_players_limit_per_player_per_team">[% c.maketext("seasons.form.field.loan-players-limit-per-player-per-team") %]</label>
         <div class="field-container">
-          <input type="number" id="loan_players_limit_per_player_per_team" name="loan_players_limit_per_player_per_team" min="0" value="[% loan_players_limit_per_player_per_team %]"[% DISABLED %] />
+          <input type="number" id="loan_players_limit_per_player_per_team" name="loan_players_limit_per_player_per_team" min="0" value="[% loan_players_limit_per_player_per_team | html_entity %]"[% restricted_disabled %] />
         </div>
         <div class="clear-fix"></div>
       </div>
       
       <div class="label-field-container">
-        <label for="loan_players_limit_per_opposition">[% c.maketext("seasons.form.field.loan-players-limit-per-opposition") %]</label>
+        <label for="loan_players_limit_per_player_per_opposition">[% c.maketext("seasons.form.field.loan-players-limit-per-opposition") %]</label>
         <div class="field-container">
-          <input type="number" id="loan_players_limit_per_player_per_opposition" name="loan_players_limit_per_player_per_opposition" min="0" value="[% loan_players_limit_per_player_per_opposition %]"[% DISABLED %] />
+          <input type="number" id="loan_players_limit_per_player_per_opposition" name="loan_players_limit_per_player_per_opposition" min="0" value="[% loan_players_limit_per_player_per_opposition | html_entity %]"[% restricted_disabled %] />
         </div>
         <div class="clear-fix"></div>
       </div>
@@ -291,7 +271,7 @@ END;
       <div class="label-field-container">
         <label for="loan_players_limit_per_team">[% c.maketext("seasons.form.field.loan-players-limit-per-team") %]</label>
         <div class="field-container">
-          <input type="number" id="loan_players_limit_per_team" name="loan_players_limit_per_team" min="0" value="[% loan_players_limit_per_team %]"[% DISABLED %] />
+          <input type="number" id="loan_players_limit_per_team" name="loan_players_limit_per_team" min="0" value="[% loan_players_limit_per_team %]"[% restricted_disabled %] />
         </div>
         <div class="clear-fix"></div>
       </div>
@@ -301,90 +281,87 @@ END;
 
 <div id="divisions">
 [%
-SET i = 0;
+SET div_rank = 0;
 FOREACH division IN divisions;
-  SET i = i + 1;
-  SET array_index = i - 1;
+  SET div_rank = div_rank + 1;
+  SET array_index = div_rank - 1;
   
   IF action == "edit";
     SET division_season = division.division_seasons.first;
   END;
   
   # Check the checked value of the 'use' tickbox
-  IF i == 1 AND !restricted_edit;
-    # Rank one is always checked
-    CHECKED_TEXT = ' checked="checked"';
-    DISABLED_TEXT = ' disabled="disabled"';
+  IF div_rank == 1 AND !restricted_edit;
+    # Rank one is always checked and is disabled to prevent unchecking
+    SET use_checked = ' checked="checked"';
+    SET use_disabled = ' disabled="disabled"';
   ELSE;
-    IF c.flash.divisions.item(array_index).use_division == 0;
-      CHECKED_TEXT = '';
-      DISABLED_TEXT = '';
+    IF c.flash.show_flashed;
+      IF c.flash.divisions.item(array_index).use_division == 0;
+        # Flashed as not being used - uncheck
+        SET use_checked = '';
+        SET use_disabled = '';
+      ELSE;
+        # Flashed as being used - check
+        SET use_checked = ' checked="checked"';
+        SET use_disabled = '';
+      END;
     ELSIF action == "edit" AND division_season == undef;
-      CHECKED_TEXT = '';
-      DISABLED_TEXT = '';
+      # Editing, but this division doesn't have a season object, so is not being used - uncheck
+      SET use_checked = '';
+      SET use_disabled = '';
     ELSE;
-      CHECKED_TEXT = ' checked="checked"';
-      DISABLED_TEXT = '';
+      # Anything else (including creation) - check by default
+      SET use_checked = ' checked="checked"';
+      SET use_disabled = '';
     END;
   END;
   
-  # Check which value we need to set selected on the fixtures grid
-  IF c.flash.divisions.item(array_index).fixtures_grid == "" AND division_season.defined;
-    SET GRID_SELECT_CHECK = division_season.fixtures_grid.id;
-  ELSIF c.flash.divisions.item(array_index).fixtures_grid.id;
-    SET GRID_SELECT_CHECK = c.flash.divisions.item(array_index).fixtures_grid.id;
+  # Check which options to select in the divisional options and which name to display
+  IF c.flash.show_flashed;
+    SET div_name = c.flash.divisions.item(array_index).name;
+    SET fixtures_grid = c.flash.divisions.item(array_index).fixtures_grid.id;
+    SET match_template = c.flash.divisions.item(array_index).league_match_template.id;
+    SET ranking_template = c.flash.divisions.item(array_index).league_table_ranking_template.id;
+  ELSE;
+    SET div_name = division_seasons.name;
+    SET fixtures_grid = division_season.fixtures_grid.id;
+    SET match_template = division_season.league_match_template.id;
+    SET ranking_template = division_season.league_table_ranking_template.id;
   END;
-  
-  # Check the value we need to set on the league match template
-  IF c.flash.divisions.item(array_index).league_match_template == "" AND division_season.defined;
-    SET MATCH_TEMPLATE_SELECT_CHECK = division_season.league_match_template.id;
-  ELSIF c.flash.divisions.item(array_index).league_match_template.id;
-    SET MATCH_TEMPLATE_SELECT_CHECK = c.flash.divisions.item(array_index).league_match_template.id;
-  END;
-  
-  # Check the value we need to set on the league ranking template
-  IF c.flash.divisions.item(array_index).league_table_ranking_template == "" AND division_season.defined;
-    SET RANKING_TEMPLATE_SELECT_CHECK = division_season.league_table_ranking_template.id;
-  ELSIF c.flash.divisions.item(array_index).league_table_ranking_template.id;
-    SET RANKING_TEMPLATE_SELECT_CHECK = c.flash.divisions.item(array_index).league_table_ranking_template.id;
-  END;
-  
-  name = c.flash.divisions.item(array_index).name OR division.name.item(array_index);
-  name_html = FILTER html_entity; name; END;
 -%]
 
 <fieldset>
-  <legend>[% c.maketext("divisions.form.legend.division-rank") %] [% i %]</legend>
-  <input type="hidden" id="division_id[% i %]" name="division_id" value="[% c.flash.divisions.item(array_index).db.id OR division.id OR 'new' %]" />
+  <legend>[% c.maketext("divisions.form.legend.division-rank") %] [% div_rank %]</legend>
   
   <div class="form-column-single">
-    <input type="checkbox" id="use_division[% i %]" name="use_division[% i %]" class="use-division" value="1" data-rank="[% i %]" data-label="[% c.maketext("divisions.form.field.use") %]"[% CHECKED_TEXT _ DISABLED_TEXT _ DISABLED %] />
+    <input type="checkbox" id="use_division[% div_rank %]" name="use_division[% div_rank %]" class="use-division" value="1" data-rank="[% div_rank %]" data-label="[% c.maketext("divisions.form.field.use") %]"[% use_checked _ use_disabled _ restricted_disabled %] />
   </div>
   
-  <div class="division" id="division-[% i %]">
+  <div class="division" id="division-[% div_rank %]">
     <div class="form-column">
       <div class="label-field-container">
-        <label for="division_name[% i %]">[% c.maketext("divisions.form.field.name") %]</label>
+        <label for="division_name[% div_rank %]">[% c.maketext("divisions.form.field.name") %]</label>
         <div class="field-container">
-          <input type="text" id="division_name[% i %]" name="division_name" value="[% name_html %]"[% DISABLED %] />
+          <input type="text" id="division_name[% div_rank %]" name="division_name[% div_rank %]" value="[% div_name | html_entity %]"[% restricted_disabled %] />
         </div>
         <div class="clear-fix"></div>
       </div>
       
       <div class="label-field-container">
-        <label for="fixtures_grid[% i %]">[% c.maketext("divisions.form.field.fixtures-grid") %]</label>
+        <label for="fixtures_grid[% div_rank %]">[% c.maketext("divisions.form.field.fixtures-grid") %]</label>
         <div class="field-container">
-          <select id="fixtures_grid[% i %]" name="fixtures_grid" data-placeholder="[% c.maketext("divisions.form.field.fixtures-grid") %]"[% DISABLED %]>
+          <select id="fixtures_grid[% div_rank %]" name="fixtures_grid[% div_rank %]" data-placeholder="[% c.maketext("divisions.form.field.fixtures-grid") %]"[% restricted_disabled %]>
             <option value=""></option>
 [%
-  FOREACH grid IN fixtures_grids;
-    IF GRID_SELECT_CHECK == grid.id;
-      SET GRID_SELECTED = ' selected="selected"';
+  WHILE (lookup_grid = fixtures_grids.next);
+    IF fixtures_grid == lookup_grid.id;
+      SET selected = ' selected="selected"';
     ELSE;
-      SET GRID_SELECTED = '';
+      SET selected = '';
     END;
 -%]
-            <option value="[% grid.id %]"[% GRID_SELECTED %]>[% grid.name | html_entity %]</option>
+            <option value="[% lookup_grid.id %]"[% selected %]>[% lookup_grid.name | html_entity %]</option>
 [%
   END;
 -%]
@@ -396,20 +373,20 @@ FOREACH division IN divisions;
     
     <div class="form-column">
       <div class="label-field-container">
-        <label for="league_match_template[% i %]">[% c.maketext("divisions.form.field.league-match-template") %]</label>
+        <label for="league_match_template[% div_rank %]">[% c.maketext("divisions.form.field.league-match-template") %]</label>
         <div class="field-container">
-          <select id="league_match_template[% i %]" name="league_match_template" data-placeholder="[% c.maketext("divisions.form.field.league-match-template") %]"[% DISABLED %]>
+          <select id="league_match_template[% div_rank %]" name="league_match_template[% div_rank %]" data-placeholder="[% c.maketext("divisions.form.field.league-match-template") %]"[% restricted_disabled %]>
             <option value=""></option>
 [%
-  FOREACH template IN match_templates;
+  WHILE (template = match_templates.next);
     # Set selected text if needed;
-    IF MATCH_TEMPLATE_SELECT_CHECK == template.id;
-      SET SELECTED = ' selected="selected"';
+    IF match_template == template.id;
+      SET selected = ' selected="selected"';
     ELSE;
-      SET SELECTED = '';
+      SET selected = '';
     END;
 -%]
-            <option value="[% template.id %]"[% SELECTED %]>[% template.name %]</option>
+            <option value="[% template.id %]"[% selected %]>[% template.name | html_entity %]</option>
 [%
   END;
 -%]
@@ -420,18 +397,18 @@ FOREACH division IN divisions;
       <div class="label-field-container">
         <label class="normal" for="league_table_ranking_template">[% c.maketext("divisions.form.field.league-ranking-template") %]</label>
         <div class="field-container">
-          <select id="league_table_ranking_template[% i %]" name="league_table_ranking_template" data-placeholder="[% c.maketext("divisions.form.field.league-ranking-template") %]"[% DISABLED %]>
+          <select id="league_table_ranking_template[% div_rank %]" name="league_table_ranking_template[% div_rank %]" data-placeholder="[% c.maketext("divisions.form.field.league-ranking-template") %]"[% restricted_disabled %]>
             <option value=""></option>
 [%
-  FOREACH template IN ranking_templates;
+  WHILE (template = ranking_templates.next);
     # Set selected text if needed;
-    IF RANKING_TEMPLATE_SELECT_CHECK == template.id;
-      SET SELECTED = ' selected="selected"';
+    IF ranking_template == template.id;
+      SET selected = ' selected="selected"';
     ELSE;
-      SET SELECTED = '';
+      SET selected = '';
     END;
 -%]
-            <option value="[% template.id %]"[% SELECTED %]>[% template.name %]</option>
+            <option value="[% template.id %]"[% selected %]>[% template.name %]</option>
 [%
   END;
 -%]
@@ -442,7 +419,9 @@ FOREACH division IN divisions;
     </div>
   </div>
 </fieldset>
-[% END -%]
+[%
+END;
+-%]
 </div>
 [%
 IF restricted_edit != 1;

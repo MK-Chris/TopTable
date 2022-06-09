@@ -320,8 +320,7 @@ Detects whether or not this meeting is associated with an event in the events ta
 
 sub is_event {
   my ( $self ) = @_;
-  
-  return ( defined( $self->event ) ) ? 1 : 0;
+  return ( defined($self->event) ) ? 1 : 0;
 }
 
 =head2 attendees
@@ -337,9 +336,7 @@ sub attendees {
     apologies => 0,
   }, {
     prefetch => "person",
-    order_by  => {
-      -asc => [ qw( surname first_name ) ],
-    },
+    order_by  => {-asc => [qw( surname first_name )]},
   });
 }
 
@@ -356,9 +353,7 @@ sub apologies {
     apologies => 1,
   }, {
     prefetch => "person",
-    order_by  => {
-      -asc => [ qw( surname first_name ) ],
-    },
+    order_by  => {-asc => [qw( surname first_name )]},
   });
 }
 

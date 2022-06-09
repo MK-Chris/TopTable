@@ -106,6 +106,21 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
+=head2 system_event_log_contact_forms
+
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::SystemEventLogContactForm>
+
+=cut
+
+__PACKAGE__->has_many(
+  "system_event_log_contact_forms",
+  "TopTable::Schema::Result::SystemEventLogContactForm",
+  { "foreign.object_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
 =head2 system_event_log_contact_reasons
 
 Type: has_many
@@ -132,8 +147,10 @@ Composing rels: L</contact_reason_recipients> -> person
 __PACKAGE__->many_to_many("people", "contact_reason_recipients", "person");
 
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-01-08 22:46:39
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Am7mM6IySLD37TvlTDIA7g
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2022-02-04 13:40:23
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:soOfjT5rZRHtApZYajg8+Q
+
+use HTML::Entities;
 
 =head2 recipients
 
@@ -143,32 +160,61 @@ Get a list of recipients associated with this contact reason.
 
 sub recipients {
   my ( $self ) = @_;
-  
-  return $self->search_related("contact_reason_recipients", undef, {
-    prefetch => "person",
-  });
+  return $self->search_related("contact_reason_recipients", undef, {prefetch => "person"});
+}
+
+=head2 can_delete
+
+Performs the checks we need to ensure the object is deletable.  Currently this will always return 1, but could be added to in future; mainly at the moment, it's here so we can call ->can_delete before deleting, which ensures consistency across other DB result classes.
+
+=cut
+
+sub can_delete {
+  my ( $self ) = @_;
+  return 1;
 }
 
 =head2 check_and_delete
 
-Deletes the contact reason.
+Performs the deletion of a ban.
 
 =cut
 
 sub check_and_delete {
-  my ( $self ) = @_;
-  my $error = [];
+  my ( $self, $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  my $response = {
+    errors => [],
+    warnings => [],
+    info => [],
+    success => [],
+    completed => 0,
+  };
+  
+  # Check we can delete
+  my $enc_name = encode_entities($self->name);
+  unless ( $self->can_delete ) {
+    push(@{$response->{errors}}, $lang->maketext("contact-reasons.delete.error.cannot-delete", $enc_name));
+    return $response;
+  }
   
   # Delete
-  my $ok = $self->delete unless scalar( @{ $error } );
+  my $ok = $self->delete;
   
   # Error if the delete was unsuccessful
-  push(@{ $error }, {
-    id          => "admin.delete.error.database",
-    parameters  => $self->name
-  }) unless $ok;
+  if ( $ok ) {
+    $response->{completed} = 1;
+    push(@{$response->{success}}, $lang->maketext("admin.forms.success", $enc_name, $lang->maketext("admin.message.deleted")));
+  } else {
+    push(@{$response->{errors}}, $lang->maketext("admin.delete.error.database", $enc_name));
+  }
   
-  return $error;
+  return $response;
 }
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

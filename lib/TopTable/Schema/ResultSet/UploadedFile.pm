@@ -14,7 +14,7 @@ sub find_non_deleted {
   my ( $self, $id ) = @_;
   
   return $self->find({
-    id      => $id,
+    id => $id,
     deleted => 0,
   });
 }
@@ -28,9 +28,7 @@ Same as find(), but uses the key column instead of the id.  So we can use human-
 sub find_url_key {
   my ( $self, $url_key ) = @_;
   
-  return $self->find({
-    url_key => $url_key,
-  });
+  return $self->find({url_key => $url_key});
 }
 
 =head2 find_id_or_url_key
@@ -41,21 +39,21 @@ Same as find(), but searches for both the id and key columns.  So we can use hum
 
 sub find_id_or_url_key {
   my ( $self, $id_or_url_key ) = @_;
-  my ( $where );
+  my $where;
   
   if ( $id_or_url_key =~ m/^\d+$/ ) {
-    # Numeric - assume it's the ID
-    $where = {
-      id => $id_or_url_key,
-    };
+    # Numeric - look in ID or URL key
+    $where = [{
+      id => $id_or_url_key
+    }, {
+      url_key => $id_or_url_key
+    }];
   } else {
     # Not numeric - must be the URL key
-    $where = {
-      url_key => $id_or_url_key,
-    };
+    $where = {url_key => $id_or_url_key};
   }
   
-  return $self->find($where);
+  return $self->search($where, {rows => 1})->single;
 }
 
 =head2 generate_url_key
@@ -85,10 +83,10 @@ sub generate_url_key {
     }
     
     # Check if that key already exists
-    my $key_check = $self->find_url_key( $url_key );
+    my $key_check = $self->find_url_key($url_key);
     
     # If not, return it
-    return $url_key if !defined( $key_check ) or ( defined($exclude_id) and $key_check->id == $exclude_id );
+    return $url_key if !defined($key_check) or ( defined($exclude_id) and $key_check->id == $exclude_id );
     
     # Otherwise, we need to increment the count for the next loop round
     $count++;

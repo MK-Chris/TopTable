@@ -47,7 +47,7 @@ END;
       <select name="reason" id="reason" data-placeholder="[% c.maketext("contact.form.field.reason") %]">
         <option></option>
 [%
-FOREACH reason = reasons;
+WHILE (reason = reasons.next);
   IF c.flash.reason == reason.id;
     SET SELECTED = ' selected="selected"';
   ELSE;

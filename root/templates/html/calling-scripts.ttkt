@@ -1,32 +1,15 @@
-[%
-IF map_id;
--%]
-<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=[% c.config.Google.Maps.api_key %]&callback=initMap"></script>
-[%
-END;
--%]
+
 <script>
 [%
 IF map_id;
   INCLUDE "scripts/google-map-standard.ttkt";
 END;
 IF geocode;
-  INCLUDE "scripts/google-geocode-standard.ttkt";
+  #INCLUDE "scripts/google-geocode-standard.ttkt";
 END;
 -%]
 
   $(document).ready(function() {
-[%
-IF map_id;
--%]
-    /*
-      Initialise Google map
-    */
-    initialise_map();
-[%
-END;
--%]
-    
 [%
 IF scripts;
   FOREACH script IN scripts;

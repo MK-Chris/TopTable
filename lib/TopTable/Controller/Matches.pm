@@ -29,9 +29,9 @@ sub auto :Private {
   $c->load_status_msgs;
   
   # Breadcrumbs links
-  push( @{ $c->stash->{breadcrumbs} }, {
-    path  => $c->uri_for_action("/fixtures-results/root_current_season"),
-    label => $c->maketext("menu.text.matches"),
+  push(@{$c->stash->{breadcrumbs}}, {
+    path => $c->uri_for_action("/fixtures-results/root_current_season"),
+    label => $c->maketext("menu.text.match"),
   });
 }
 
@@ -43,7 +43,7 @@ All the matches stuff is in the FixturesResults class, so we just need to detach
 
 sub index :Path {
   my ( $self, $c ) = @_;
-  $c->response->redirect( $c->uri_for_action("/fixtures-results/root_current_season") );
+  $c->res->redirect($c->uri_for_action("/fixtures-results/root_current_season"));
   $c->detach;
   return;
 }

@@ -3,7 +3,6 @@ package TopTable::Schema::ResultSet::ClubSeason;
 use strict;
 use warnings;
 use base 'DBIx::Class::ResultSet';
-use Data::Dumper;
 
 =head2 get_all_seasons_club_entered
 

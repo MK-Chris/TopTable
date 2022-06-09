@@ -1,7 +1,7 @@
 
   var map, map_location;
   
-  function initialise_map() {
+  function initMap() {
     map = new google.maps.Map(document.getElementById("[% map_id %]"), {
       zoom: 12,
       center: map_location,
@@ -32,13 +32,7 @@ END;
 [%
 IF map_latitude AND map_longitude;
 -%]
-  google.maps.event.addDomListener(window, "load", initialise_map);
+  //google.maps.event.addDomListener(window, "load", initMap);
 [%
 END;
--%]  
-  /* When the window is resized, recentre the map */
-  google.maps.event.addDomListener(window, "resize", function() {
-    map.setCenter(map_location);
-  });
-  
-  
+-%]

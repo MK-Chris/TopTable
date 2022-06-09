@@ -2,7 +2,7 @@ package TopTable::Controller::Info;
 use Moose;
 use namespace::autoclean;
 use HTML::Entities;
-#use Email::Valid;
+use Email::Valid;
 
 BEGIN { extends 'Catalyst::Controller'; }
 
@@ -31,9 +31,8 @@ sub auto :Private {
   $c->stash({subtitle1 => $c->maketext("menu.title.info") });
   
   # Breadcrumbs links
-  push( @{ $c->stash->{breadcrumbs} }, {
-    # Clubs listing
-    path  => $c->uri_for("/info"),
+  push(@{$c->stash->{breadcrumbs}}, {
+    path => $c->uri_for("/info"),
     label => $c->maketext("menu.title.info"),
   });
 }
@@ -64,7 +63,7 @@ Display a contact form.  If the user is logged in, use their user information, o
 
 sub contact :Local {
   my ( $self, $c ) = @_;
-  my $site_name = $c->stash->{encoded_site_name};
+  my $site_name = $c->stash->{enc_site_name};
   
   my $banned = $c->model("DB::Ban")->is_banned({
     ip_address => $c->req->address,
@@ -73,16 +72,12 @@ sub contact :Local {
     log_allowed => 0,
     log_banned => 1,
     logger => sub{ my $level = shift; $c->log->$level( @_ ); },
-    language => sub{ $c->maketext( @_ ); },
   });
   
   # Log our responses
-  my @log_info = @{$banned->{log}{info}};
-  my @log_warning = @{$banned->{log}{warning}};
-  my @log_error = @{$banned->{log}{error}};
-  map( $c->log->error( $c->build_message( $_ ) ), @log_error );
-  map( $c->log->warning( $c->build_message( $_ ) ), @log_warning );
-  map( $c->log->info( $c->build_message( $_ ) ), @log_info );
+  $c->log->error($_) foreach @{$banned->{errors}};
+  $c->log->warning($_) foreach @{$banned->{warnings}};
+  $c->log->info($_) foreach @{$banned->{info}};
   
   if ( $banned->{is_banned} ) {
     $c->response->redirect( $c->uri_for("/",
@@ -99,7 +94,7 @@ sub contact :Local {
     form_action => $c->uri_for_action("/info/do_contact"),
     view_online_display => "Sending an email",
     view_online_link => 1,
-    reasons => [ $c->model("DB::ContactReason")->all_reasons ],
+    reasons => $reasons,
     external_scripts => [
       $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
       $c->uri_for("/static/script/plugins/autogrow/jquery.ns-autogrow.min.js"),
@@ -116,13 +111,12 @@ sub contact :Local {
   if ( !$c->user_exists and $c->config->{Google}{reCAPTCHA}{validate_on_contact} and $c->config->{Google}{reCAPTCHA}{site_key} and $c->config->{Google}{reCAPTCHA}{secret_key} ) {
     my $locale_code = $c->locale;
     $locale_code =~ s/_/-/;
-    push( @{ $c->stash->{external_scripts} }, sprintf( "https://www.google.com/recaptcha/api.js?hl=%s", $locale_code ) );
+    push(@{$c->stash->{external_scripts}}, sprintf("https://www.google.com/recaptcha/api.js?hl=%s", $locale_code));
     $c->stash({reCAPTCHA => 1});
   }
   
   # Breadcrumbs links
-  push( @{ $c->stash->{breadcrumbs} }, {
-    # Clubs listing
+  push(@{$c->stash->{breadcrumbs}}, {
     path => $c->uri_for("/info/contact"),
     label => $c->maketext("menu.title.contact"),
   });
@@ -147,43 +141,44 @@ sub do_contact :Path("send-email") {
     $email_address = $user->email_address;
   } else {
     # Not logged on, check we have the required form fields.
-    $first_name = $c->req->param( "first_name" );
-    $surname = $c->req->param( "surname" );
-    $email_address = $c->req->param( "email_address" );
+    $first_name = $c->req->params->{first_name} || undef;
+    $surname = $c->req->params->{surname} || undef;
+    $email_address = $c->req->params->{email_address} || undef;
     
     if ( $c->config->{Google}{reCAPTCHA}{validate_on_contact} and $c->config->{Google}{reCAPTCHA}{site_key} and $c->config->{Google}{reCAPTCHA}{secret_key} ) {
-      my $captcha_result = $c->forward( "TopTable::Controller::Root", "recaptcha" );
+      my $captcha_result = $c->forward("TopTable::Controller::Root", "recaptcha");
       
       if ( $captcha_result->{request_success} ) {
         # Request to Google was successful
         if ( !$captcha_result->{response_content}{success} ) {
           # Error validating, get the response messages in the correct language
-          push(@errors, sprintf( "%s\n", $c->maketext( $_ ) )) foreach @{ $captcha_result->{response_content}{"error-codes"} };
+          push(@errors, sprintf("%s\n", $c->maketext($_) )) foreach @{$captcha_result->{response_content}{"error-codes"}};
         }
       } else {
         # Error requesting validation
-        push(@errors, sprintf( "%s\n", $c->maketext("google.recaptcha.error-sending") ));
+        push(@errors, sprintf("%s\n", $c->maketext("google.recaptcha.error-sending")));
       }
     }
     
-    if ( $first_name ) {
-      if ( $first_name and $surname ) {
+    if ( defined($first_name) ) {
+      if ( defined($first_name) and defined($surname) ) {
         # Name is made up of first and surnames
-        $name = sprintf( "%s %s", $first_name, $surname );
+        $name = sprintf("%s %s", $first_name, $surname);
       } else {
         # Name is just first name
         $name = $first_name;
       }
     } else {
-      push(@errors, {id => "contact.form.error.no-first-name"});
+      push(@errors, $c->maketext("contact.form.error.no-first-name"));
     }
     
-    if ( $email_address ) {
+    if ( defined($email_address) ) {
       # Email is filled out, check it
-      
+      $email_address = Email::Valid->address($email_address);
+      push(@errors, $c->maketext("contact.form.error.invalid-email")) unless defined($email_address);
     } else {
       # Email missing
-      push(@errors, {id => "contact.form.error.no-email"});
+      push(@errors, $c->maketext("contact.form.error.no-email"));
     }
   }
   
@@ -199,36 +194,33 @@ sub do_contact :Path("send-email") {
   });
   
   # Log our responses
-  my @log_info = @{$banned->{log}{info}};
-  my @log_warning = @{$banned->{log}{warning}};
-  my @log_error = @{$banned->{log}{error}};
-  map( $c->log->error( $c->build_message( $_ ) ), @log_error );
-  map( $c->log->warning( $c->build_message( $_ ) ), @log_warning );
-  map( $c->log->info( $c->build_message( $_ ) ), @log_info );
+  $c->log->error($_) foreach @{$banned->{errors}};
+  $c->log->warning($_) foreach @{$banned->{warnings}};
+  $c->log->info($_) foreach @{$banned->{info}};
   
   if ( $banned->{is_banned} ) {
-    $c->response->redirect( $c->uri_for("/",
-            {mid => $c->set_status_msg( {error => $c->maketext("contact.form.error.banned")} )}));
+    $c->response->redirect($c->uri_for("/",
+            {mid => $c->set_status_msg({error => $c->maketext("contact.form.error.banned")})}));
     $c->detach;
     return;
   }
   
-  my $reason = $c->model("DB::ContactReason")->check( $c->req->param( "reason" ) );
-  my $message = $c->req->param( "message" );
+  my $reason = $c->model("DB::ContactReason")->check($c->req->params->{reason});
+  my $message = $c->req->params->{message};
   
-  push(@errors, {id => "contact.form.error.reason-invalid"}) unless defined( $reason );
-  push(@errors, {id => "contact.form.error.no-message"}) unless $message;
+  push(@errors, $c->maketext("contact.form.error.reason-invalid")) unless defined($reason);
+  push(@errors, $c->maketext("contact.form.error.no-message")) unless $message;
   
-  if ( scalar( @errors ) ) {
+  if ( scalar @errors ) {
     # Errors, flash the values and redirect back to the form
     $c->flash->{first_name} = $first_name;
     $c->flash->{surname} = $surname;
     $c->flash->{email_address} = $email_address;
-    $c->flash->{reason} = $reason->id if defined( $reason );
+    $c->flash->{reason} = $reason->id if defined($reason);
     $c->flash->{message} = $message;
     
-    $c->response->redirect( $c->uri_for("/info/contact",
-            {mid => $c->set_status_msg( {error => $c->build_message( \@errors ) } )}));
+    $c->response->redirect($c->uri_for("/info/contact",
+            {mid => $c->set_status_msg({error => \@errors})}));
     $c->detach;
     return;
   } else {
@@ -241,27 +233,27 @@ sub do_contact :Path("send-email") {
     }
     
     # Prepare values for HTML email
-    my $html_site_name = encode_entities( $c->config->{name} );
-    my $html_name = encode_entities( $name );
-    my $html_reason = encode_entities( $reason->name );
-    my $html_email = encode_entities( $email_address );
-    my $html_message = encode_entities( $message );
+    my $html_site_name = encode_entities($c->config->{name});
+    my $html_name = encode_entities($name);
+    my $html_reason = encode_entities($reason->name);
+    my $html_email = encode_entities($email_address);
+    my $html_message = encode_entities($message);
     
     # Line breaks in HTML message
     $html_message =~ s|(\r?\n)|<br />$1|g;
     
     $c->model("Email")->send({
       to => $recipients,
-      reply => [ $email_address, $name ],
-      image => [ $c->path_to( qw( root static images banner-logo-player-small.png ) )->stringify, "logo" ],
+      reply => [$email_address, $name],
+      image => [$c->path_to( qw( root static images banner-logo-player-small.png ) )->stringify, "logo"],
       subject => $c->maketext("email.subject.contact-form", $c->config->{name}, $name, $reason->name),
-      plaintext => $c->maketext("email.plain-text.contact-form", $c->config->{name}, $name, $email_address, $message, $c->request->address),
-      htmltext => [ qw( html/generic/generic-message.ttkt :TT ) ],
+      plaintext => $c->maketext("email.plain-text.contact-form", $c->config->{name}, $name, $email_address, $message, $c->req->address),
+      htmltext => [qw( html/generic/generic-message.ttkt :TT )],
       template_vars => {
         name => $html_site_name,
         home_uri => $c->uri_for("/"),
         email_subject => $c->maketext("email.subject.contact-form", $html_site_name, $html_name, $html_reason),
-        email_html_message => $c->maketext("email.html.contact-form", $html_site_name, $html_name, $html_email, $html_message, $c->request->address),
+        email_html_message => $c->maketext("email.html.contact-form", $html_site_name, $html_name, $html_email, $html_message, $c->req->address),
       },
     });
     
@@ -271,9 +263,10 @@ sub do_contact :Path("send-email") {
       user_name => $html_name,
     });
     
+    $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["contact-form", "submit", {id => $reason->id}, $reason->name]);
+    
     # Breadcrumbs links
-    push( @{ $c->stash->{breadcrumbs} }, {
-      # Clubs listing
+    push(@{$c->stash->{breadcrumbs}}, {
       path => $c->uri_for("/info/contact"),
       label => $c->maketext("menu.title.contact"),
     });

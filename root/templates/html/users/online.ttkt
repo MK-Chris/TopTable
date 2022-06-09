@@ -12,12 +12,12 @@ IF online_users.size;
     <tr>
       <th>[% c.maketext("user.field.username") %]</th>
 [%
-  IF authorisation.view_users_ip;
+  IF authorisation.user_view_ip;
 -%]
       <th>[% c.maketext("user.field.ip") %]</th>
 [%
   END;
-  IF authorisation.view_users_user_agent;
+  IF authorisation.user_view_user_agent;
 -%]
       <th>[% c.maketext("user.field.operating-system") %]</th>
       <th>[% c.maketext("user.field.browser") | html_entity %]</th>
@@ -52,12 +52,12 @@ IF online_users.size;
     <tr>
       <td data-label="Username">[% display_user %]</td>
 [%
-    IF authorisation.view_users_ip;
+    IF authorisation.user_view_ip;
 -%]
       <td data-label="IP address">[% online_user.ip_address %]</td>
 [%
     END;
-    IF authorisation.view_users_user_agent;
+    IF authorisation.user_view_user_agent;
 -%]
       <td data-label="Operating System">[% online_user.os_detected %]</td>
       <td data-label="Browser">[% online_user.browser_detected %]</td>

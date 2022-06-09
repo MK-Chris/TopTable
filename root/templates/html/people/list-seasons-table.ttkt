@@ -17,7 +17,7 @@ IF seasons.count;
         <th>[% c.maketext("people.seasons.registered-as") %]</th>
         <th>[% c.maketext("people.seasons.team") %]</th>
       </tr>
-    <thead>
+    </thead>
     <tbody>
 [%
   WHILE (person_season = seasons.next);

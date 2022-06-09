@@ -1,7 +1,6 @@
 package TopTable::Controller::Venues;
 use Moose;
 use namespace::autoclean;
-use Data::Dumper;
 use JSON;
 use GIS::Distance;
 use HTML::Entities;
@@ -28,13 +27,16 @@ Catalyst Controller.
 sub auto :Private {
   my ( $self, $c ) = @_;
   
+  # Load the messages
+  $c->load_status_msgs;
+  
   # The title bar will always have
-  $c->stash({subtitle1 => $c->maketext("menu.text.venues")});
+  $c->stash({subtitle1 => $c->maketext("menu.text.venue")});
   
   # Breadcrumbs
-  push(@{ $c->stash->{breadcrumbs} }, {
-    path  => $c->uri_for("/venues"),
-    label => $c->maketext("menu.text.venues"),
+  push(@{$c->stash->{breadcrumbs}}, {
+    path => $c->uri_for("/venues"),
+    label => $c->maketext("menu.text.venue"),
   });
 }
 
@@ -48,27 +50,24 @@ Chain base for getting the venue ID and checking it.
 sub base :Chained("/") PathPart("venues") CaptureArgs(1) {
   my ( $self, $c, $id_or_url_key ) = @_;
   
-  # Load the messages
-  $c->load_status_msgs;
-  
   my $venue = $c->model("DB::Venue")->find_id_or_url_key( $id_or_url_key );
   
   if ( defined($venue) ) {
-    my $encoded_name = encode_entities( $venue->name );
+    my $enc_name = encode_entities($venue->name);
     
     $c->stash({
-      venue         => $venue,
-      encoded_name  => $encoded_name,
-      subtitle1     => $encoded_name,
+      venue => $venue,
+      enc_name  => $enc_name,
+      subtitle1 => $enc_name,
     });
     
     # Breadcrumbs
-    push(@{ $c->stash->{breadcrumbs} }, {
-      path  => $c->uri_for_action("/venues/view", [$venue->url_key]),
+    push(@{$c->stash->{breadcrumbs}}, {
+      path => $c->uri_for_action("/venues/view", [$venue->url_key]),
       label => $venue->name,
     });
   } else {
-    $c->detach( qw/TopTable::Controller::Root default/ );
+    $c->detach(qw(TopTable::Controller::Root default));
   }
 }
 
@@ -80,24 +79,21 @@ Chain base for the list of venues.  Matches /venues
 
 sub base_list :Chained("/") :PathPart("venues") :CaptureArgs(0) {
   my ( $self, $c ) = @_;
-  my $site_name = $c->stash->{encoded_site_name};
+  my $site_name = $c->stash->{enc_site_name};
   
   # Check that we are authorised to view venues
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["venue_view", $c->maketext("user.auth.view-venues"), 1] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["venue_view", $c->maketext("user.auth.view-venues"), 1]);
   
   # Check the authorisation to edit venues we can display the link if necessary
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( venue_edit venue_delete venue_create) ], "", 0] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", [ [ qw( venue_edit venue_delete venue_create) ], "", 0]);
   
   # Page description
   $c->stash({
-    page_description  => $c->maketext("description.venues.list", $site_name),
-    external_scripts  => [
+    page_description => $c->maketext("description.venues.list", $site_name),
+    external_scripts => [
       $c->uri_for("/static/script/standard/option-list.js"),
     ],
   });
-  
-  # Load the messages
-  $c->load_status_msgs;
 }
 
 =head2 list_first_page
@@ -109,7 +105,7 @@ List the venues on the first page.
 sub list_first_page :Chained("base_list") :PathPart("") :Args(0) {
   my ( $self, $c ) = @_;
   
-  $c->detach( "retrieve_paged", [1] );
+  $c->detach("retrieve_paged", [1]);
   $c->stash({canonical_uri => $c->uri_for_action("/venues/list_first_page")});
 }
 
@@ -128,7 +124,7 @@ sub list_specific_page :Chained("base_list") :PathPart("page") :Args(1) {
     $c->stash({canonical_uri => $c->uri_for_action("/venues/list_specific_page", [$page_number])});
   }
   
-  $c->detach( "retrieve_paged", [$page_number] );
+  $c->detach("retrieve_paged", [$page_number]);
 }
 
 =head2 retrieve_paged
@@ -141,26 +137,26 @@ sub retrieve_paged :Private {
   my ( $self, $c, $page_number ) = @_;
   
   my $venues = $c->model("DB::Venue")->page_records({
-    page_number       => $page_number,
-    results_per_page  => $c->config->{Pagination}{default_page_size},
+    page_number => $page_number,
+    results_per_page => $c->config->{Pagination}{default_page_size},
   });
   
-  my $page_info   = $venues->pager;
-  my $page_links  = $c->forward( "TopTable::Controller::Root", "generate_pagination_links", [{
-    page_info             => $page_info,
-    page1_action          => "/venues/list_first_page",
-    specific_page_action  => "/venues/list_specific_page",
-    current_page          => $page_number,
+  my $page_info = $venues->pager;
+  my $page_links = $c->forward( "TopTable::Controller::Root", "generate_pagination_links", [{
+    page_info => $page_info,
+    page1_action => "/venues/list_first_page",
+    specific_page_action => "/venues/list_specific_page",
+    current_page => $page_number,
   }] );
   
   # Set up the template to use
   $c->stash({
-    template            => "html/venues/list.ttkt",
+    template => "html/venues/list.ttkt",
     view_online_display => "Viewing venues",
-    view_online_link    => 1,
-    venues              => $venues,
-    page_info           => $page_info,
-    page_links          => $page_links,
+    view_online_link => 1,
+    venues => $venues,
+    page_info => $page_info,
+    page_links => $page_links,
   });
 }
 
@@ -170,13 +166,13 @@ sub retrieve_paged :Private {
 
 sub view :Chained("base") :PathPart("") :Args(0) {
   my ( $self, $c ) = @_;
-  my $venue       = $c->stash->{venue};
-  my $venue_name  = $c->stash->{encoded_name};
-  my $site_name   = $c->stash->{encoded_site_name};
+  my $venue = $c->stash->{venue};
+  my $venue_name = $c->stash->{enc_name};
+  my $site_name = $c->stash->{enc_site_name};
   
   # Check that we are authorised to view venues
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["venue_view", $c->maketext("user.auth.view-venues"), 1] );
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", [[ qw( venue_create venue_edit venue_delete ) ], "", 0] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["venue_view", $c->maketext("user.auth.view-venues"), 1]);
+  $c->forward("TopTable::Controller::Users", "check_authorisation", [[ qw( venue_create venue_edit venue_delete ) ], "", 0]);
   
   # Set up the title links if we need them
   my @title_links = ();
@@ -185,44 +181,47 @@ sub view :Chained("base") :PathPart("") :Args(0) {
     # Push edit / opening hour links if are authorised
     push(@title_links, {
       image_uri => $c->uri_for("/static/images/icons/0018-Pencil-icon-32.png"),
-      text      => $c->maketext("admin.edit-object", $venue_name),
-      link_uri  => $c->uri_for_action("/venues/edit", [$venue->url_key]),
+      text => $c->maketext("admin.edit-object", $venue_name),
+      link_uri => $c->uri_for_action("/venues/edit", [$venue->url_key]),
     }) if $c->stash->{authorisation}{venue_edit};
     
     # Push a delete link if we're authorised and the venue can be deleted
     push(@title_links, {
       image_uri => $c->uri_for("/static/images/icons/0005-Delete-icon-32.png"),
-      text      => $c->maketext("admin.delete-object", $venue_name),
-      link_uri  => $c->uri_for_action("/venues/delete", [$venue->url_key]),
+      text => $c->maketext("admin.delete-object", $venue_name),
+      link_uri => $c->uri_for_action("/venues/delete", [$venue->url_key]),
     }) if $c->stash->{authorisation}{venue_delete} and $venue->can_delete;
   }
   
   # Set up the template to use
   $c->stash({
-    template            => "html/venues/view.ttkt",
-    title_links         => \@title_links,
-    external_scripts    => [
+    template => "html/venues/view.ttkt",
+    title_links => \@title_links,
+    external_scripts => [
       $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
       $c->uri_for("/static/script/standard/chosen.js"),
       $c->uri_for("/static/script/plugins/responsive-tabs/jquery.responsiveTabs.mod.js"),
-      $c->uri_for("/static/script/venues/view.js"),
+      $c->uri_for("/static/script/venues/view.js", {v => 2}),
     ],
-    external_styles     => [
+    external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
       $c->uri_for("/static/css/responsive-tabs/responsive-tabs.css"),
       $c->uri_for("/static/css/responsive-tabs/style-jqueryui.css"),
     ],
-    map_id              => "map-canvas",
-    directions          => 1,
-    prepare_error_div   => 1,
-    marker_title        => $venue->name,
-    subtitle1           => $venue->name,
+    map_id => "map-canvas",
+    directions => 1,
+    prepare_error_div => 1,
+    marker_title => $venue->name,
+    subtitle1 => $venue->name,
     view_online_display => sprintf( "Viewing %s", $venue->name ),
-    view_online_link    => 1,
-    map_latitude        => $venue->coordinates_latitude,
-    map_longitude       => $venue->coordinates_longitude,
-    page_description    => $c->maketext("description.venues.view", $venue_name, $site_name),
+    view_online_link => 1,
+    map_latitude => $venue->coordinates_latitude,
+    map_longitude => $venue->coordinates_longitude,
+    page_description => $c->maketext("description.venues.view", $venue_name, $site_name),
   });
+  
+  # Notice if inactive
+  $c->add_status_messages({info => $c->maketext("venue.msg.inactive")}) unless $venue->active;
 }
 
 =head2 create
@@ -234,58 +233,58 @@ Display a form to collect information for creating a venue
 sub create :Local {
   my ($self, $c) = @_;
   
-  # Load the messages
-  $c->load_status_msgs;
-  
   # Check that we are authorised to create venues
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["venue_create", $c->maketext("user.auth.create-venues"), 1] );
   
   # If we have an address or name, we need to forward to the Geocode searching routine
   if ( $c->flash->{name} or $c->flash->{address1} or $c->flash->{address2} or $c->flash->{address3} or $c->flash->{address4} or $c->flash->{address5} or $c->flash->{postcode} ) {
-    my $parameters = [{
-      name      => $c->flash->{name},
-      address1  => $c->flash->{address1},
-      address2  => $c->flash->{address2},
-      address3  => $c->flash->{address3},
-      address4  => $c->flash->{address4},
-      address5  => $c->flash->{address5},
-      postode   => $c->flash->{postcode},
+    my $params = [{
+      name => $c->flash->{name},
+      address1 => $c->flash->{address1},
+      address2 => $c->flash->{address2},
+      address3 => $c->flash->{address3},
+      address4 => $c->flash->{address4},
+      address5 => $c->flash->{address5},
+      postode => $c->flash->{postcode},
     }];
     
-    $c->forward( "search_geolocation", $parameters );
+    $c->forward("search_geolocation", $params);
   }
   
   if ( $c->flash->{geolocation} and $c->flash->{geolocation} =~ /^[-+]?([1-8]?\d(\.\d+)?|90(\.0+)?),\s*[-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)$/ ) {
-    my @geolocation_bits = split( ",", $c->flash->{geolocation} );
+    my @geolocation_bits = split(",", $c->flash->{geolocation});
     $c->stash({
-      map_latitude  => $geolocation_bits[0],
+      map_latitude => $geolocation_bits[0],
       map_longitude => $geolocation_bits[1],
     });
   }
   
   # Get venues and people to list
   $c->stash({
-    template            => "html/venues/create-edit.ttkt",
-    external_scripts    => [
+    template => "html/venues/create-edit.ttkt",
+    external_scripts => [
       $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
       $c->uri_for("/static/script/plugins/toastmessage/jquery.toastmessage.js"),
       $c->uri_for("/static/script/standard/chosen.js"),
+      $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
+      $c->uri_for("/static/script/standard/prettycheckable.js"),
       $c->uri_for_action("/venues/create_edit_js"),
     ],
-    external_styles     => [
+    external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
       $c->uri_for("/static/css/toastmessage/jquery.toastmessage.css"),
+      $c->uri_for("/static/css/prettycheckable/prettyCheckable.css"),
     ],
-    map_id              => "map-canvas-form",
-    prepare_error_div   => 1,
-    form_action         => $c->uri_for("do-create"),
-    subtitle2           => $c->maketext("admin.create"),
+    map_id => "map-canvas-form",
+    prepare_error_div => 1,
+    form_action => $c->uri_for("do-create"),
+    subtitle2 => $c->maketext("admin.create"),
     view_online_display => "Creating venues",
-    view_online_link    => 0,
+    view_online_link => 0,
   });
   
-  push(@{ $c->stash->{breadcrumbs} }, {
-    path  => $c->uri_for("/venues/create"),
+  push(@{$c->stash->{breadcrumbs}}, {
+    path => $c->uri_for("/venues/create"),
     label => $c->maketext("admin.create"),
   });
 }
@@ -301,76 +300,79 @@ sub edit :Chained('base') :PathPart('edit') :Args(0) {
   my $venue = $c->stash->{venue};
   
   # Don't cache this page.
-  $c->response->header("Cache-Control"  => "no-cache, no-store, must-revalidate");
-  $c->response->header("Pragma"         => "no-cache");
-  $c->response->header("Expires"        => 0);
+  $c->response->header("Cache-Control" => "no-cache, no-store, must-revalidate");
+  $c->response->header("Pragma" => "no-cache");
+  $c->response->header("Expires" => 0);
   
   # Check that we are authorised to edit venues
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["venue_edit", $c->maketext("user.auth.edit-venues"), 1] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["venue_edit", $c->maketext("user.auth.edit-venues"), 1]);
   
   # If we have an address or name, we need to forward to the Geocode searching routine
-  my $parameters;
+  my $params;
   if ( $c->flash->{name} or $c->flash->{address1} or $c->flash->{address2} or $c->flash->{address3} or $c->flash->{address4} or $c->flash->{address5} or $c->flash->{postcode} ) {
-    $parameters = [{
-      name      => $c->flash->{name},
-      address1  => $c->flash->{address1},
-      address2  => $c->flash->{address2},
-      address3  => $c->flash->{address3},
-      address4  => $c->flash->{address4},
-      address5  => $c->flash->{address5},
-      postode   => $c->flash->{postcode},
+    $params = [{
+      name => $c->flash->{name},
+      address1 => $c->flash->{address1},
+      address2 => $c->flash->{address2},
+      address3 => $c->flash->{address3},
+      address4 => $c->flash->{address4},
+      address5 => $c->flash->{address5},
+      postode => $c->flash->{postcode},
     }];
   } else {
     # Nothing flashed, use the DB stored values
-    $parameters = [{
-      name      => $venue->name,
-      address1  => $venue->address1,
-      address2  => $venue->address2,
-      address3  => $venue->address3,
-      address4  => $venue->address4,
-      address5  => $venue->address5,
-      postode   => $venue->postcode,
+    $params = [{
+      name => $venue->name,
+      address1 => $venue->address1,
+      address2 => $venue->address2,
+      address3 => $venue->address3,
+      address4 => $venue->address4,
+      address5 => $venue->address5,
+      postode  => $venue->postcode,
     }];
   }
   
   if ( $c->flash->{geolocation} and $c->flash->{geolocation} =~ /^[-+]?([1-8]?\d(\.\d+)?|90(\.0+)?),\s*[-+]?(180(\.0+)?|((1[0-7]\d)|([1-9]?\d))(\.\d+)?)$/ ) {
     # Stash the flashed values if there are any and they're valid
-    my @geolocation_bits = split( ",", $c->flash->{geolocation} );
+    my @geolocation_bits = split(",", $c->flash->{geolocation});
     $c->stash({
-      map_latitude  => $geolocation_bits[0],
+      map_latitude => $geolocation_bits[0],
       map_longitude => $geolocation_bits[1],
     });
   } else {
     # Stash the stored DB values
     $c->stash({
-      map_latitude  => $venue->coordinates_latitude,
+      map_latitude => $venue->coordinates_latitude,
       map_longitude => $venue->coordinates_longitude,
     });
   }
   
   # Get the geolocation options
-  $c->forward( "search_geolocation", $parameters );
+  $c->forward("search_geolocation", $params);
   
   # Get venues to list
   $c->stash({
-    template            => "html/venues/create-edit.ttkt",
-    external_scripts    => [
+    template => "html/venues/create-edit.ttkt",
+    external_scripts => [
       $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
       $c->uri_for("/static/script/plugins/toastmessage/jquery.toastmessage.js"),
       $c->uri_for("/static/script/standard/chosen.js"),
+      $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
+      $c->uri_for("/static/script/standard/prettycheckable.js"),
       $c->uri_for_action("/venues/create_edit_js"),
     ],
-    external_styles     => [
+    external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
       $c->uri_for("/static/css/toastmessage/jquery.toastmessage.css"),
+      $c->uri_for("/static/css/prettycheckable/prettyCheckable.css"),
     ],
-    map_id              => "map-canvas-form",
-    prepare_error_div   => 1,
-    form_action         => $c->uri_for_action("/venues/do_edit", [$venue->url_key]),
-    subtitle1           => $venue->name,
-    subtitle2           => $c->maketext("admin.edit"),
+    map_id => "map-canvas-form",
+    prepare_error_div => 1,
+    form_action => $c->uri_for_action("/venues/do_edit", [$venue->url_key]),
+    subtitle1 => $venue->name,
+    subtitle2 => $c->maketext("admin.edit"),
     view_online_display => "Editing " . $c->stash->{venue}->name,
-    view_online_link    => 0,
+    view_online_link => 0,
   });
   
   push(@{ $c->stash->{breadcrumbs} }, {
@@ -389,15 +391,15 @@ sub create_edit_js :Path("create-edit.js") {
   my ( $self, $c ) = @_;
   
   # This will be a javascript file, not a HTML
-  $c->response->headers->header("Content-type" => "text/javascript");
+  $c->res->headers->header("Content-type" => "text/javascript");
   
   # Stash no wrapper and the template
   $c->stash({
-    template    => "scripts/venues/create-edit.ttjs",
-    no_wrapper  => 1,
+    template => "scripts/venues/create-edit.ttjs",
+    no_wrapper => 1,
   });
   
-  $c->detach( $c->view("HTML") );
+  $c->detach($c->view("HTML"));
 }
 
 =head2 delete
@@ -411,11 +413,11 @@ sub delete :Chained("base") :PathPart("delete") :Args(0) {
   my $venue = $c->stash->{venue};
   
   # Check that we are authorised to delete venues
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["venue_delete", $c->maketext("user.auth.delete-venues"), 1] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["venue_delete", $c->maketext("user.auth.delete-venues"), 1]);
   
   unless ( $venue->can_delete ) {
-    $c->response->redirect( $c->uri_for_action("/venues/view", [$venue->url_key],
-                                {mid => $c->set_status_msg( {error => $c->maketext( "venues.delete.error.not-allowed", $venue->name )} ) }) );
+    $c->response->redirect($c->uri_for_action("/venues/view", [$venue->url_key],
+                                {mid => $c->set_status_msg({error => $c->maketext("venues.delete.error.cannot-delete", $venue->name)})}));
     $c->detach;
     return;
   }
@@ -427,14 +429,14 @@ sub delete :Chained("base") :PathPart("delete") :Args(0) {
   $c->forward("view");
   
   $c->stash({
-    subtitle2           => $c->maketext("admin.delete"),
-    template            => "html/venues/delete.ttkt",
-    view_online_display => sprintf( "Deleting %s", $venue->name ),
-    view_online_link    => 0,
+    subtitle2 => $c->maketext("admin.delete"),
+    template => "html/venues/delete.ttkt",
+    view_online_display => sprintf("Deleting %s", $venue->name),
+    view_online_link => 0,
   });
   
-  push(@{ $c->stash->{breadcrumbs} }, {
-    path  => $c->uri_for_action("/venues/edit", [$venue->url_key]),
+  push(@{$c->stash->{breadcrumbs}}, {
+    path => $c->uri_for_action("/venues/edit", [$venue->url_key]),
     label => $c->maketext("admin.delete"),
   });
 }
@@ -455,10 +457,10 @@ sub do_create :Path("do-create") {
   my ( $self, $c ) = @_;
   
   # Check that we are authorised to create venues
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["venue_create", $c->maketext("user.auth.create-venues"), 1] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["venue_create", $c->maketext("user.auth.create-venues"), 1]);
   
   # Forward to the create / edit routine
-  $c->detach( "setup_venue", ["create"] );
+  $c->detach("process_form", ["create"]);
 }
 
 =head2 do_edit
@@ -471,10 +473,10 @@ sub do_edit :Chained("base") :PathPart("do-edit") :Args(0) {
   my ( $self, $c ) = @_;
   
   # Check that we are authorised to create venues
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["venue_edit", $c->maketext("user.auth.edit-venues"), 1] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["venue_edit", $c->maketext("user.auth.edit-venues"), 1]);
   
   # Forward to the create / edit routine
-  $c->detach( "setup_venue", ["edit"] );
+  $c->detach("process_form", ["edit"]);
 }
 
 =head2 do_delete
@@ -486,130 +488,106 @@ Process the deletion of a venue.
 sub do_delete :Chained("base") :PathPart("do-delete") :Args(0) {
   my ( $self, $c ) = @_;
   my $venue = $c->stash->{venue};
+  my $enc_name = $c->stash->{enc_name};
   
   # Check that we are authorised to delete venues
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["venue_delete", $c->maketext("user.auth.delete-venues"), 1] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["venue_delete", $c->maketext("user.auth.delete-venues"), 1]);
   
   # Save away the venue name, as if there are no errors and it can be deleted, we will need to
   # reference the name in the message back to the user.
   my $venue_name = $venue->name;
+  my $response = $venue->check_and_delete;
   
-  # Hand off to the model to do some checking
-  my $error = $venue->check_and_delete;
+  # Set the status messages we need to show on redirect
+  my @errors = @{$response->{errors}};
+  my @warnings = @{$response->{warnings}};
+  my @info = @{$response->{info}};
+  my @success = @{$response->{success}};
+  my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});
+  my $redirect_uri;
   
-  if ( scalar( @{ $error } ) ) {
-    # Error deleting, go back to deletion page
-    $c->response->redirect( $c->uri_for_action("/venues/view", [$venue->url_key],
-                                {mid => $c->set_status_msg( {error => $c->build_message($error)} ) }) );
-    $c->detach;
-    return;
+  if ( $response->{completed} ) {
+    # Was completed, display the list page
+    $redirect_uri = $c->uri_for("/venues", {mid => $mid});
+    
+    # Completed, so we log an event
+    $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["venue", "delete", {id => undef}, $venue_name]);
   } else {
-    # Success, log a deletion and return to the venue list
-    $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["venue", "delete", {id => undef}, $venue_name] );
-    $c->response->redirect( $c->uri_for("/venues",
-                                {mid => $c->set_status_msg( {success => $c->maketext( "admin.forms.success", $venue_name, $c->maketext("admin.message.deleted") )} ) }) );
-    $c->detach;
-    return;
+    # Not complete
+    $redirect_uri = $c->uri_for_action("/venues/view", [$venue->url_key], {mid => $mid});
   }
+  
+  # Now actually do the redirection
+  $c->response->redirect($redirect_uri);
+  $c->detach;
+  return;
 }
 
-=head2 setup_venue
+=head2 process_form
 
 Forwarded to from docreate / doedit - sets up the venue and adds / updates the database with the new details.
 
 =cut
 
-sub setup_venue :Private {
+sub process_form :Private {
   my ( $self, $c, $action ) = @_;
   my $venue = $c->stash->{venue};
+  my @field_names = qw( name address1 address2 address 3 address4 address5 postcode telephone email_address geolocation active );
+  my @processed_field_names = qw( name address1 address2 address 3 address4 address5 postcode telephone email_address map_latitude map_longitude active );
   
   # Do the geocoding from Google first, if we have a postcode
-  my ( $latitude, $longitude ) = split( ",", $c->request->parameters->{geolocation} );
+  my ( $latitude, $longitude ) = split(",", $c->req->params->{geolocation});
   
   # Call the DB routine to do the error checking and creation
-  my $details = $c->model("DB::Venue")->create_or_edit($action, {
-    venue                 => $venue,
-    name                  => $c->request->parameters->{name},
-    address1              => $c->request->parameters->{address1},
-    address2              => $c->request->parameters->{address2},
-    address3              => $c->request->parameters->{address3},
-    address4              => $c->request->parameters->{address4},
-    address5              => $c->request->parameters->{address5},
-    postcode              => $c->request->parameters->{postcode},
-    telephone             => $c->request->parameters->{telephone},
-    email_address         => $c->request->parameters->{email_address},
-    coordinates_latitude  => $latitude,
-    coordinates_longitude => $longitude,
+  my $response = $c->model("DB::Venue")->create_or_edit($action, {
+    logger => sub{ my $level = shift; $c->log->$level( @_ ); },
+    venue => $venue,
+    map {$_ => $c->req->params->{$_}} @field_names, # All the fields from the form - put this last because otherwise the following elements are seen as part of the map
   });
   
-  if ( scalar( @{ $details->{error} } ) ) {
-    my $error = $c->build_message( $details->{error} );
-    # Flash the entered values we've got so we can set them into the form
-    $c->flash->{name}           = $c->request->parameters->{name};
-    $c->flash->{address1}       = $c->request->parameters->{address1};
-    $c->flash->{address2}       = $c->request->parameters->{address2};
-    $c->flash->{address3}       = $c->request->parameters->{address3};
-    $c->flash->{address4}       = $c->request->parameters->{address4};
-    $c->flash->{address5}       = $c->request->parameters->{address5};
-    $c->flash->{postcode}       = $c->request->parameters->{postcode};
-    $c->flash->{telephone}      = $c->request->parameters->{telephone};
-    $c->flash->{email_address}  = $c->request->parameters->{email_address};
-    $c->flash->{geolocation}    = $c->request->parameters->{geolocation};
+  # Set the status messages we need to show on redirect
+  my @errors = @{$response->{errors}};
+  my @warnings = @{$response->{warnings}};
+  my @info = @{$response->{info}};
+  my @success = @{$response->{success}};
+  my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});
+  my $redirect_uri;
+  
+  if ( $response->{completed} ) {
+    # Was completed, display the view page
+    $venue = $response->{venue};
+    $redirect_uri = $c->uri_for_action("/venues/view", [$venue->url_key], {mid => $mid});
     
-    my $redirect_uri;
-    if ( $action eq "create" ) {
-      # If we're creating, we'll just redirect straight back to the create form
-      $redirect_uri = $c->uri_for("/venues/create",
-                            {mid => $c->set_status_msg( {error => $details->{error}} ) });
-    } else {
-      if ( defined($details->{venue}) ) {
-        # If we're editing and we found an object to edit, we'll redirect to the edit form for that object
-        $redirect_uri = $c->uri_for_action("/venues/edit", [ $details->{venue}->url_key ],
-                              {mid => $c->set_status_msg( {error => $error} ) });
-      } else {
-        # If we're editing and we didn't an object to edit, we'll redirect to the list of objects
-        $redirect_uri = $c->uri_for("/venues",
-                              {mid => $c->set_status_msg( {error => $error} ) });
-      }
-    }
-    
-    $c->response->redirect( $redirect_uri );
-    $c->detach;
-    return;
+    # Completed, so we log an event
+    $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["venue", $action, {id => $venue->id}, $venue->name]);
   } else {
-    my $venue = $details->{venue};
-    my $encoded_name = encode_entities( $venue->name );
-    my $action_description;
-    
+    # Not complete - check if we need to redirect back to the create or view page
     if ( $action eq "create" ) {
-      $venue = $details->{venue};
-      $action_description = $c->maketext("admin.message.created");
+      $redirect_uri = $c->uri_for("/venues/create", {mid => $mid});
     } else {
-      $action_description = $c->maketext("admin.message.edited");
+      $redirect_uri = $c->uri_for_action("/venues/edit", [$venue->url_key], {mid => $mid});
     }
     
-    $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["venue", $action, {id => $venue->id}, $venue->name] );
-    $c->response->redirect( $c->uri_for_action("/venues/view", [$venue->url_key],
-                                {mid => $c->set_status_msg( {success => $c->maketext( "admin.forms.success", $encoded_name, $action_description )} ) }) );
+    # Flash the entered values we've got so we can set them into the form
+    $c->flash->{show_flashed} = 1;
+    $c->flash->{$_} = $response->{fields}{$_} foreach @field_names;
   }
+  
+  # Now actually do the redirection
+  $c->response->redirect($redirect_uri);
+  $c->detach;
+  return;
 }
 
 sub search_geolocation :Path("geolocation") {
-  my ( $self, $c, $parameters ) = @_;
-  my $content_type;
+  my ( $self, $c, $params ) = @_;
   
   # The below stashed values could either be from the DB or from the flashed values - if we have any, we will add some distance values to our results and denote the closest
-  my $map_latitude  = $c->stash->{map_latitude};
+  my $map_latitude = $c->stash->{map_latitude};
   my $map_longitude = $c->stash->{map_longitude};
   
-  if ( defined( $c->request->parameters->{content_type} ) ) {
-    $content_type = $c->request->parameters->{content_type};
-  } else {
-    $content_type = $parameters->{content_type};
-  }
-  
-  # Not an AJAX request, must be privately forwarded, set $parameters to $c->request->parameters
-  $parameters = $c->request->parameters if $c->is_ajax;
+  # Not an AJAX request, must be privately forwarded, set $params to $c->req->params
+  $params = $c->req->params if $c->is_ajax;
   
   # We will store all of our results in the @results array, as we'll be pushing results on to them with each query.
   # To avoid duplicates, before we push, we'll check against the %seen_coordinates hash (which will have $lat,$lng
@@ -617,82 +595,82 @@ sub search_geolocation :Path("geolocation") {
   my ( @results, %seen_coordinates );
   
   # The first thing to search for is a place of interest (venue name and postcode)
-  my $place = $parameters->{name} . " " . $parameters->{postcode} if $parameters->{name} and $parameters->{postcode};
+  my $place = $params->{name} . " " . $params->{postcode} if $params->{name} and $params->{postcode};
   
   # Build the address search string
   # Start with the name
-  my $address = $parameters->{name} . " " if $parameters->{name};
+  my $address = $params->{name} . " " if $params->{name};
   
   for my $i ( 1 .. 5 ) {
     # Then build in all the non-blank address lines
-    $address .= $parameters->{"address" . $i} . " " if $parameters->{"address" . $i};
+    $address .= $params->{"address" . $i} . " " if $params->{"address" . $i};
   }
   
   # Finally the postcode
-  $address .= $parameters->{postcode} if $parameters->{postcode};
+  $address .= $params->{postcode} if $params->{postcode};
   
-  my $geocode = $c->model("Geocode")->search( $parameters->{name} ) if exists( $parameters->{name} ) and $parameters->{name};
+  my $geocode = $c->model("Geocode")->search({location => $params->{name}}) if exists($params->{name}) and $params->{name};
   
-  if ( defined( $geocode ) and $geocode->{status} eq "OK" ) {
+  if ( defined($geocode) and $geocode->{status} eq "OK" ) {
     # Since we've only done one query so far, we just push them on without checking that we've seen them yet
     foreach my $result ( @{ $geocode->{results} } ) {
       if ( ref( $result ) eq "HASH" ) {
         # Push the result on to the array
-        push( @results, $result );
+        push(@results, $result);
         
         # Set the 'seen' coordinates to the hash
-        $seen_coordinates{ $result->{geometry}{location}{lat} . "," . $result->{geometry}{location}{lng} } = 1;
+        $seen_coordinates{$result->{geometry}{location}{lat} . "," . $result->{geometry}{location}{lng}} = 1;
       }
     }
   }
   
-  undef( $geocode );
-  $geocode = $c->model("Geocode")->search( $place ) if defined( $place );
+  undef($geocode);
+  $geocode = $c->model("Geocode")->search({location => $place}) if defined($place);
   
-  if ( defined( $geocode ) and $geocode->{status} eq "OK" ) {
+  if ( defined($geocode) and $geocode->{status} eq "OK" ) {
     # Since we've only done one query so far, we just push them on without checking that we've seen them yet
-    foreach my $result ( @{ $geocode->{results} } ) {
-      if ( ref( $result ) eq "HASH" and !exists( $seen_coordinates{ $result->{geometry}{location}{lat} . "," . $result->{geometry}{location}{lng} } ) ) {
+    foreach my $result ( @{$geocode->{results}} ) {
+      if ( ref($result) eq "HASH" and !exists($seen_coordinates{ $result->{geometry}{location}{lat} . "," . $result->{geometry}{location}{lng}}) ) {
         # Push the result on to the array
-        push( @results, $result );
+        push(@results, $result);
         
         # Set the 'seen' coordinates to the hash
-        $seen_coordinates{ $result->{geometry}{location}{lat} . "," . $result->{geometry}{location}{lng} } = 1;
+        $seen_coordinates{$result->{geometry}{location}{lat} . "," . $result->{geometry}{location}{lng}} = 1;
       }
     }
   }
   
   # Now search the full address
-  undef( $geocode );
-  $geocode = $c->model("Geocode")->search( $address ) if defined( $address );
+  undef($geocode);
+  $geocode = $c->model("Geocode")->search({location => $address}) if defined($address);
   
   if ( defined($geocode) and $geocode->{status} eq "OK" ) {
     # Loop through and add any previously unseen results to the array
-    foreach my $result ( @{ $geocode->{results} } ) {
-      if ( ref( $result ) eq "HASH" and !exists( $seen_coordinates{ $result->{geometry}{location}{lat} . "," . $result->{geometry}{location}{lng} } ) ) {
+    foreach my $result ( @{$geocode->{results}} ) {
+      if ( ref($result) eq "HASH" and !exists($seen_coordinates{$result->{geometry}{location}{lat} . "," . $result->{geometry}{location}{lng}}) ) {
         # Push the result on to the array
-        push( @results, $result );
+        push(@results, $result);
         
         # Set the 'seen' coordinates to the hash
-        $seen_coordinates{ $result->{geometry}{location}{lat} . "," . $result->{geometry}{location}{lng} } = 1;
+        $seen_coordinates{$result->{geometry}{location}{lat} . "," . $result->{geometry}{location}{lng}} = 1;
       }
     }
   }
   
   # Now just do the postcode
-  undef( $geocode );
-  $geocode = $c->model("Geocode")->search( $parameters->{postcode} ) if exists( $parameters->{postcode} ) and $parameters->{postcode};
+  undef($geocode);
+  $geocode = $c->model("Geocode")->search({location => $params->{postcode}}) if exists($params->{postcode}) and $params->{postcode};
   
   # As a final attempt, just try postcode
   if ( defined($geocode) and $geocode->{status} eq "OK" ) {
     # Loop through and add any previously unseen results to the array
-    foreach my $result ( @{ $geocode->{results} } ) {
-      if ( ref( $result ) eq "HASH" and !exists( $seen_coordinates{ $result->{geometry}{location}{lat} . "," . $result->{geometry}{location}{lng} } ) ) {
+    foreach my $result ( @{$geocode->{results}} ) {
+      if ( ref($result) eq "HASH" and !exists($seen_coordinates{$result->{geometry}{location}{lat} . "," . $result->{geometry}{location}{lng}} ) ) {
         # Push the result on to the array
-        push( @results, $result );
+        push(@results, $result);
         
         # Set the 'seen' coordinates to the hash
-        $seen_coordinates{ $result->{geometry}{location}{lat} . "," . $result->{geometry}{location}{lng} } = 1;
+        $seen_coordinates{$result->{geometry}{location}{lat} . "," . $result->{geometry}{location}{lng}} = 1;
       }
     }
   }
@@ -700,12 +678,12 @@ sub search_geolocation :Path("geolocation") {
   # If we have some map co-ordinates, we'll run a distance check and add that into the results.
   if ( $map_latitude and $map_longitude ) {
     my $gis = GIS::Distance->new;
-    my $distance_tolerance_value  = $c->config->{Google}{Maps}{distance_tolerance_value};
-    my $distance_tolerance_unit   = $c->config->{Google}{Maps}{distance_tolerance_unit};
+    my $distance_tolerance_value = $c->config->{Google}{Maps}{distance_tolerance_value};
+    my $distance_tolerance_unit = $c->config->{Google}{Maps}{distance_tolerance_unit};
     
     foreach my $result ( @results ) {
-      my $distance = $gis->distance( $map_latitude, $map_longitude => $result->{geometry}{location}{lat}, $result->{geometry}{location}{lng} );
-      $result->{distance}   = $distance;
+      my $distance = $gis->distance($map_latitude, $map_longitude => $result->{geometry}{location}{lat}, $result->{geometry}{location}{lng});
+      $result->{distance} = $distance;
       
       # This result is selectable if it's under the tolerance set in config
       $result->{selectable} = 1 if $distance->$distance_tolerance_unit < $distance_tolerance_value;
@@ -713,7 +691,7 @@ sub search_geolocation :Path("geolocation") {
     
     # Now we've looped through and set the distances, we need to find the closest... unfortunately that means looping
     # through again, but a nifty sort means we only have to examine the first one then break out of the loop
-    foreach my $result ( sort { $a->{distance}->millimetres <=> $b->{distance}->millimetres } @results ) {
+    foreach my $result ( sort {$a->{distance}->millimetres <=> $b->{distance}->millimetres} @results ) {
       # Since we're only looping through the first item, we will just set the 'closest' key and get out
       $result->{closest} = 1;
       last;
@@ -729,7 +707,7 @@ sub search_geolocation :Path("geolocation") {
       skip_view_online => 1,
     });
     
-    $c->detach( $c->view("JSON") );
+    $c->detach($c->view("JSON"));
   } else {
     # Not an AJAX request, just stash the first result
     $c->stash({geocode_results  => \@results});
@@ -747,32 +725,32 @@ sub opening_hours :Chained("base") :PathPart("opening-hours") :Args(0) {
   my $venue = $c->stash->{venue};
   
   # Check that we are authorised to view venues
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["venue_edit", $c->maketext("user.auth.edit-venues"), 1] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["venue_edit", $c->maketext("user.auth.edit-venues"), 1]);
   
   my $opening_hours = $venue->get_full_timetable_by_session;
   
   # Add a dummy (blank) row if there aren't any rows on this one
-  $opening_hours = [{}] if !defined( $opening_hours );
+  $opening_hours = [{}] if !defined($opening_hours);
   
   # Set up the template to use
   $c->stash({
-    template            => "html/venues/opening-hours.ttkt",
-    form_action         => "set-opening-hours",
-    external_scripts    => [
+    template => "html/venues/opening-hours.ttkt",
+    form_action => "set-opening-hours",
+    external_scripts => [
       $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
       $c->uri_for("/static/script/standard/chosen.js"),
       $c->uri_for("/static/script/standard/button-toggle.js"),
     ],
-    subtitle2           => $venue->name,
-    subtitle3           => $c->maketext("venues.opening-hours"),
+    subtitle2 => $venue->name,
+    subtitle3 => $c->maketext("venues.opening-hours"),
     view_online_display => "Setting the opening hours for " . $venue->name,
-    view_online_link    => 0,
-    opening_hours       => $opening_hours,
-    weekdays            => [ $c->model("DB::LookupWeekday")->all_days ],
+    view_online_link => 0,
+    opening_hours => $opening_hours,
+    weekdays => [$c->model("DB::LookupWeekday")->all_days],
   });
   
-  push(@{ $c->stash->{breadcrumbs} }, {
-    path  => $c->uri_for_action("/venues/opening_hours", [$venue->url_key]),
+  push(@{$c->stash->{breadcrumbs}}, {
+    path => $c->uri_for_action("/venues/opening_hours", [$venue->url_key]),
     label => $c->maketext("venues.opening-hours"),
   });
 }
@@ -799,20 +777,18 @@ sub search :Local :Args(0) {
   my ( $self, $c ) = @_;
   
   # Check that we are authorised to view venues
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["venue_view", $c->maketext("user.auth.view-venues"), 1] );
-  
-  my $q = $c->req->param( "q" ) || undef;
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["venue_view", $c->maketext("user.auth.view-venues"), 1]);
   
   $c->stash({
     db_resultset => "Venue",
-    query_params => {q => $q},
+    query_params => {q => $c->req->params->{q}},
     view_action => "/venues/view",
     search_action => "/venues/search",
     placeholder => $c->maketext( "search.form.placeholder", $c->maketext("object.plural.venues") ),
   });
   
   # Do the search
-  $c->forward( "TopTable::Controller::Search", "do_search" );
+  $c->forward("TopTable::Controller::Search", "do_search");
 }
 
 =encoding utf8

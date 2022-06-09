@@ -35,13 +35,12 @@ sub auto :Private {
   $c->load_status_msgs;
   
   # The title bar will always have
-  $c->stash({subtitle1 => $c->maketext("menu.text.images") });
+  $c->stash({subtitle1 => $c->maketext("menu.text.image") });
   
   # Breadcrumbs links
-  push( @{ $c->stash->{breadcrumbs} }, {
-    # Clubs listing
-    path  => $c->uri_for("/images"),
-    label => $c->maketext("menu.text.images"),
+  push(@{$c->stash->{breadcrumbs}}, {
+    path => $c->uri_for("/images"),
+    label => $c->maketext("menu.text.image"),
   });
 }
 
@@ -49,7 +48,7 @@ sub index :Path :Args(0) {
   my ( $self, $c ) = @_;
   
   # 404 on the index - we need to either stream or upload, perhaps we can have a list of images here at some point
-  $c->detach( qw/TopTable::Controller::Root default/ );
+  $c->detach(qw(TopTable::Controller::Root default));
 }
 
 =head2 base
@@ -75,28 +74,27 @@ sub base :Chained("/") :PathPart("images") :CaptureArgs(1) {
         # Stash it, then stash the name / view URL in the breadcrumbs section of our stash
         my $encoded_image_description = encode_entities( $image->description );
         $c->stash({
-          image                     => $image,
-          file_path                 => $file_path,
+          image => $image,
+          file_path => $file_path,
           encoded_image_description => $encoded_image_description,
         });
         
         # Push the clubs list page on to the breadcrumbs
-        push( @{ $c->stash->{breadcrumbs} }, {
-          # Club view page (current season)
-          path  => $c->uri_for_action("/images/view", [$image->url_key]),
+        push(@{$c->stash->{breadcrumbs}}, {
+          path => $c->uri_for_action("/images/view", [$image->url_key]),
           label => $encoded_image_description,
         });
       } else {
         # Incorrect file type - 404
-        $c->detach( qw/TopTable::Controller::Root default/ );
+        $c->detach(qw(TopTable::Controller::Root default));
       }
     } else {
       # File does not exist or cannot be read - 404
-      $c->detach( qw/TopTable::Controller::Root default/ );
+      $c->detach(qw(TopTable::Controller::Root default));
     }
   } else {
     # Database record doesn't exist
-    $c->detach( qw/TopTable::Controller::Root default/ );
+    $c->detach(qw(TopTable::Controller::Root default));
   }
 }
 
@@ -105,31 +103,27 @@ sub upload :Local :Args(0) {
   
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["image_upload", $c->maketext("user.auth.upload-images"), 1] );
   
-  # Load the messages
-  $c->load_status_msgs;
-  
   # Stash the template and information we need
   $c->stash({
-    template            => "html/images/upload.ttkt",
-    subtitle2           => $c->maketext("admin.upload"),
-    form_action         => $c->uri_for_action("/images/do_upload"),
+    template => "html/images/upload.ttkt",
+    subtitle2 => $c->maketext("admin.upload"),
+    form_action => $c->uri_for_action("/images/do_upload"),
     view_online_display => "Uploading images",
-    view_online_link    => 1,
+    view_online_link => 1,
   });
 }
 
 sub do_upload :Path("do-upload") :Args(0) {
   my ( $self, $c ) = @_;
-  my @errors;
-  my $description = $c->request->parameters->{description};
-  my ( $return_value, $filename, $new_filename );
+  my ( @errors, $response );
+  my $description = $c->req->param( "description" );
   
   # The type determines whether we return some JSON or not
   my $return_json = 1 if $c->is_ajax;
   
-  if ( my $upload = $c->request->upload("image") ) {
-    $filename           = $upload->filename;
-    my $target_folder   = $c->config->{Paths}{image_streaming};
+  if ( my $upload = $c->req->upload("image") ) {
+    my $filename = $upload->filename;
+    my $target_folder = $c->config->{Paths}{image_streaming};
     my $target_filename = $filename;
     
     # Get MIME type
@@ -146,7 +140,7 @@ sub do_upload :Path("do-upload") :Args(0) {
       while( -e File::Spec->catfile( $target_folder, $target_filename ) ) {
         my ( $name, $path, $extension ) = fileparse( $original_filename, qr/\.[^.]*/ );
         $i++;
-        $target_filename = $name . "-" . sprintf( "%03d", $i ) . $extension;
+        $target_filename = sprintf( "%s-%03d.%s", $name, $i, $extension );
       }
       
       if ( $upload->copy_to( File::Spec->catfile( $target_folder, $target_filename ) ) ) {
@@ -158,13 +152,13 @@ sub do_upload :Path("do-upload") :Args(0) {
           my $url_key = $c->model("DB::UploadedImage")->generate_url_key( $description );
           
           my $image = $c->model("DB::UploadedImage")->create({
-            url_key     => $url_key,
+            url_key => $url_key,
             description => $description,
-            filename    => $target_filename,
-            mime_type   => $mime_type,
+            filename => $target_filename,
+            mime_type => $mime_type,
           });
           
-          $return_value->{link} = $c->uri_for_action( "/images/stream", [$image->url_key] )->as_string if $return_json;
+          $response->{link} = $c->uri_for_action( "/images/stream", [$image->url_key] )->as_string if $return_json;
           
           $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["image", "upload", {id => $image->id}, $image->filename] );
           
@@ -189,20 +183,19 @@ sub do_upload :Path("do-upload") :Args(0) {
   
   if ( scalar( @errors ) ) {
     if ( $return_json ) {
-      $return_value->{error} = join( "\n", @errors );
+      $response->{error} = join("\n", @errors);
     } else {
       $c->flash->{description} = $description;
       
-      $c->response->redirect($c->uri_for("/images/upload",
-                  {mid => $c->set_status_msg( {error => $c->build_message( \@errors ) } )}));
+      $c->response->redirect($c->uri_for("/images/upload", {mid => $c->set_status_msg({error => \@errors})}));
       $c->detach;
       return;
     }
   }
   
   if ( $return_json ) {
-    $c->stash({json_data => $return_value});
-    $c->detach( $c->view("JSON") );
+    $c->stash({json_data => $response});
+    $c->detach($c->view("JSON"));
   }
 }
 
@@ -214,13 +207,13 @@ View the image within the confines of the image view page.
 
 sub view :Chained("base") :PathPart("view") :Args(0) {
   my ( $self, $c ) = @_;
-  my $image                     = $c->stash->{image};
+  my $image = $c->stash->{image};
   my $encoded_image_description = $c->stash->{encoded_image_description};
   
   $c->stash({
-    template            => "html/images/view.ttkt",
+    template => "html/images/view.ttkt",
     view_online_display => sprintf( "Viewing %s", $encoded_image_description ),
-    view_online_link    => 1,
+    view_online_link => 1,
   });
 }
 
@@ -232,7 +225,7 @@ Stream the image as a static file.
 
 sub stream :Chained("base") :PathPart("stream") :Args(0) {
   my ( $self, $c ) = @_;
-  my $image     = $c->stash->{image};
+  my $image = $c->stash->{image};
   my $file_path = $c->stash->{file_path};
   
   $c->serve_static_file( $file_path );
