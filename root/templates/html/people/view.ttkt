@@ -1,13 +1,18 @@
 [%-
 USE scalar;
-IF authorisation.person_contact_view;
+IF authorisation.person_contact_view AND (person.scalar.full_address OR person.home_telephone OR person.mobile_telephone OR person.work_telephone OR person.email_address);
 -%]
 <div id="contact-details">
   <h4>[% c.maketext("people.heading.contact-details") %]</h4>
-  <div id="person-address">
+  <div id="person-contact">
+[%
+  IF person.scalar.full_address;
+-%]
     <h5>[% c.maketext("people.form.field.address") %]</h5>
     <address>[% person.scalar.full_address | html_entity | html_line_break %]</address><br />
 [%
+  END;
+  
   IF person.home_telephone;
 -%]
     <b>[% c.maketext("people.form.field.home-phone") %]:</b> [% person.home_telephone | html_entity %]<br />
