@@ -354,7 +354,7 @@ FOREACH division IN divisions;
           <select id="fixtures_grid[% div_rank %]" name="fixtures_grid[% div_rank %]" data-placeholder="[% c.maketext("divisions.form.field.fixtures-grid") %]"[% restricted_disabled %]>
             <option value=""></option>
 [%
-  WHILE (lookup_grid = fixtures_grids.next);
+  FOREACH lookup_grid = fixtures_grids;
     IF fixtures_grid == lookup_grid.id;
       SET selected = ' selected="selected"';
     ELSE;
@@ -378,7 +378,7 @@ FOREACH division IN divisions;
           <select id="league_match_template[% div_rank %]" name="league_match_template[% div_rank %]" data-placeholder="[% c.maketext("divisions.form.field.league-match-template") %]"[% restricted_disabled %]>
             <option value=""></option>
 [%
-  WHILE (template = match_templates.next);
+  FOREACH template IN match_templates;
     # Set selected text if needed;
     IF match_template == template.id;
       SET selected = ' selected="selected"';
@@ -400,7 +400,7 @@ FOREACH division IN divisions;
           <select id="league_table_ranking_template[% div_rank %]" name="league_table_ranking_template[% div_rank %]" data-placeholder="[% c.maketext("divisions.form.field.league-ranking-template") %]"[% restricted_disabled %]>
             <option value=""></option>
 [%
-  WHILE (template = ranking_templates.next);
+  FOREACH template IN ranking_templates;
     # Set selected text if needed;
     IF ranking_template == template.id;
       SET selected = ' selected="selected"';
