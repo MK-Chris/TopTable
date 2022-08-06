@@ -736,7 +736,8 @@ sub doubles_player_membership_type {
         return undef;
       }
       
-      if ( defined($self->team_match->find_related("team_match_players", {player => $person->id})->loan_team) ) {
+      my $player = $self->team_match->find_related("team_match_players", {player => $person->id});
+      if ( defined($player) and defined($player->loan_team) ) {
         # Loan
         return "loan";
       } else {

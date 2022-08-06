@@ -37,9 +37,9 @@ IF season;
   <li>
 [%
       IF specific_season;
-        SET team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [team_season.team.club_season.club.url_key, team_season.team.url_key, season.url_key]);
+        SET team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [team_season.club_season.club.url_key, team_season.team.url_key, season.url_key]);
       ELSE;
-        SET team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [team_season.team.club_season.club.url_key, team_season.team.url_key]);
+        SET team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [team_season.club_season.club.url_key, team_season.team.url_key]);
       END;
       
       team_name = FILTER html_entity; team_season.club_season.club.short_name _ " " _ team_season.name; END;
