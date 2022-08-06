@@ -556,7 +556,7 @@ sub create_or_edit {
       
       if ( defined($division) ) {
         # Division is valid, we need to first check if it's changed and if we're allowed to change divisions at this stage
-        if ( $division->id != $old_division->id ) {
+        if ( defined($old_division) and $division->id != $old_division->id ) {
           # A different division to the one we have stored is specified
           if ( $mid_season ) {
             # Mid-season, can't change divisions
