@@ -351,31 +351,36 @@ sub get_team_season :Private {
     doubles_pairs_last_updated => $c->model("DB::DoublesPair")->get_tables_last_updated_timestamp({season => $season, team => $team}),
     averages_team_page => 1,
     season => $season,
-    singles_averages => scalar $c->model("DB::PersonSeason")->get_people_in_division_in_singles_averages_order({
-      logger => sub{ my $level = shift; $c->log->$level( @_ ); },
-      season => $season,
-      division => $team_season->division_season->division,
-      team => $team,
-    }),
-    doubles_individual_averages => scalar $c->model("DB::PersonSeason")->get_people_in_division_in_doubles_individual_averages_order({
-      logger => sub{ my $level = shift; $c->log->$level( @_ ); },
-      season => $season,
-      division => $team_season->division_season->division,
-      team => $team,
-      criteria_field => "played",
-      operator => ">",
-      criteria => 0,
-    }),
-    doubles_pair_averages => scalar $c->model("DB::DoublesPair")->get_doubles_pairs_in_division_in_averages_order({
-      logger => sub{ my $level = shift; $c->log->$level( @_ ); },
-      season => $season,
-      division => $team_season->division_season->division,
-      team => $team,
-      criteria_field => "played",
-      operator => ">",
-      criteria => 0,
-    }),
   });
+  
+  if ( defined($team_season) ) {
+    $c->stash({
+      singles_averages => scalar $c->model("DB::PersonSeason")->get_people_in_division_in_singles_averages_order({
+        logger => sub{ my $level = shift; $c->log->$level( @_ ); },
+        season => $season,
+        division => $team_season->division_season->division,
+        team => $team,
+      }),
+      doubles_individual_averages => scalar $c->model("DB::PersonSeason")->get_people_in_division_in_doubles_individual_averages_order({
+        logger => sub{ my $level = shift; $c->log->$level( @_ ); },
+        season => $season,
+        division => $team_season->division_season->division,
+        team => $team,
+        criteria_field => "played",
+        operator => ">",
+        criteria => 0,
+      }),
+      doubles_pair_averages => scalar $c->model("DB::DoublesPair")->get_doubles_pairs_in_division_in_averages_order({
+        logger => sub{ my $level = shift; $c->log->$level( @_ ); },
+        season => $season,
+        division => $team_season->division_season->division,
+        team => $team,
+        criteria_field => "played",
+        operator => ">",
+        criteria => 0,
+      }),
+    });
+  }
 }
 
 =head2 view_finalise
