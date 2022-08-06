@@ -335,7 +335,7 @@ sub check_and_create {
   foreach my $i ( 0 .. $#{$submitted_divisions} ) {
     # Get the respective elements from the arrays - submitted divisions and the list we got from the DB
     my $submitted_division = $submitted_divisions->[$i];
-    my $existing_division = $existing_divisions[$i] if $#existing_divisions <= $i;
+    my $existing_division = $existing_divisions[$i] if defined($existing_divisions[$i]);
     
     $rank++;
     my $name = $submitted_division->{name} || undef;

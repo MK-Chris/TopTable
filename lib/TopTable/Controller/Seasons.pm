@@ -667,7 +667,7 @@ sub process_form :Private {
     
     if ( $response->{divisions_completed} ) {
       # Divisions completed too, redirect to the view page
-      $redirect_uri = $c->uri_for_action("/seasons/view_current_season", [$season->url_key], {mid => $mid});
+      $redirect_uri = $c->uri_for_action("/seasons/view", [$season->url_key], {mid => $mid});
     } else {
       # Divisions errored, redirect to the edit page
       $redirect_uri = $c->uri_for_action("/seasons/edit", [$season->url_key], {mid => $mid});
