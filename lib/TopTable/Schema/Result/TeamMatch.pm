@@ -1857,9 +1857,9 @@ sub generate_ical_data {
   # Get the URI
   my $uri = $params->{get_uri}($self->url_keys);
   
-  my $description = defined( $self->tournament_round)
+  my $description = defined($self->tournament_round)
     ? undef
-    : sprintf("%s: %s\n%s: %s\n%s: %s\n%s", $lang->maketext("matches.field.competition"), $lang->maketext("matches.field.competition.value.league"), $lang->maketext("matches.field.division"), $self->division_season->name, $lang->("matches.field.season"), $self->season->name, $uri);
+    : sprintf("%s: %s\n%s: %s\n%s: %s\n%s", $lang->maketext("matches.field.competition"), $lang->maketext("matches.field.competition.value.league"), $lang->maketext("matches.field.division"), $self->division_season->name, $lang->maketext("matches.field.season"), $self->season->name, $uri);
   
   my $timezone = $self->season->timezone;
   my $now_tz = DateTime->now(time_zone => $timezone);
