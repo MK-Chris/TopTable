@@ -1867,9 +1867,15 @@ sub generate_ical_data {
   # Current date / time in UTC
   my $now_utc = DateTime->now(time_zone => "UTC");
   
-  my ( $home_club_name, $away_club_name ) = defined($params->{abbreviated_club_names}) and $params->{abbreviated_club_names}
-    ? ( $home_team->club_season->abbreviated_name, $away_team->club_season->abbreviated_name )
-    : ( $home_team->club_season->short_name, $away_team->club_season->short_name );
+  my ( $home_club_name, $away_club_name );
+  
+  if ( defined($params->{abbreviated_club_names}) and $params->{abbreviated_club_names} ) {
+    $home_club_name = $home_team->club_season->abbreviated_name;
+    $away_club_name = $away_team->club_season->abbreviated_name;
+  } else {
+    $home_club_name = $home_team->club_season->short_name;
+    $away_club_name = $away_team->club_season->short_name;
+  }
   
   # Add a colon and space to the end of the prefix if the user didn't provide either a colon or hyphen after it (followed by optional space)
   $params->{summary_prefix} .= ": " if exists($params->{summary_prefix}) and defined($params->{summary_prefix}) and $params->{summary_prefix} ne "" and $params->{summary_prefix} !~ m/[-:]\s?$/;

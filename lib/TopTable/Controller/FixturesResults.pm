@@ -1939,6 +1939,7 @@ sub download :Private {
           get_duration => sub{ $c->config->{Matches}{Team}{duration} },
           abbreviated_club_names => $abbreviated_club_names,
           summary_prefix => $summary_prefix,
+          logger => sub{ my $level = shift; $c->log->$level( @_ ); },
         });
         
         push(@events, $event);
