@@ -1887,7 +1887,7 @@ sub generate_ical_data {
   #my $event_timezone  = Data::ICal::TimeZone->new( timezone => $timezone );
   $event->add_properties(
     uid => sprintf("matches.team.%s-%s.%s-%s.%s@%s", $home_team->club_season->club->url_key, $home_team->team->url_key, $away_team->club_season->club->url_key, $away_team->team->url_key, $self->actual_date->ymd("-"), &{$params->{get_host}}),
-    summary => sprintf("%s%s %s %s %s %s", $params->{summary_prefix}, $home_club_name, $home_team->name, $lang->{versus}, $away_club_name, $away_team->name),
+    summary => sprintf("%s%s %s %s %s %s", $params->{summary_prefix}, $home_club_name, $home_team->name, $lang->maketext("matches.versus-abbreviation"), $away_club_name, $away_team->name),
     status => $self->cancelled ? "CANCELLED" : "CONFIRMED",
     description => $description,
     dtstart => DateTime::Format::ICal->format_datetime( $self->actual_date->set(hour => $start_hour, minute => $start_minute)),
