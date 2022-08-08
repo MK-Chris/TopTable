@@ -246,6 +246,8 @@ sub create_or_edit {
     completed => 0,
   };
   
+  $logger->("debug", sprintf("Active: %s (defined: %s)", $active, defined($active)));
+  
   if ( $action ne "create" and $action ne "edit" ) {
     # Invalid action passed
     push(@{$response->{errors}}, $lang->maketext("admin.form.invalid-action", $action));
@@ -271,6 +273,7 @@ sub create_or_edit {
     
     # Will always be active unless we can deactivate it.
     $active = 1 unless $venue->can_deactivate;
+    $logger->("debug", "Can't be deactivated, setting active to 1") unless $venue->can_deactivate;
   }
   
   # Error checking
@@ -323,9 +326,11 @@ sub create_or_edit {
   
   # Active - must be 1 or 0
   if ( defined($active) ) {
+    $logger->("debug", sprintf("Active is defined, doing sanity check for 1 or 0: %s", $active));
     $active = $active ? 1 : 0;
   } else {
     $active = 0;
+    $logger->("debug", sprintf("Active is not defined, setting to 0: %s", $active));
   }
   
   if ( scalar @{$response->{errors}} == 0 ) {

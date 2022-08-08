@@ -143,6 +143,22 @@ sub get_current {
   });
 }
 
+=head2 get_current_or_last
+
+A predefined search to get either the current season (complete = 0) or the last complete season.
+
+=cut
+
+sub get_current_or_last {
+  my ( $self ) = @_;
+  
+  # First see if there's an active season
+  my $season  = $self->get_current;
+  $season = $self->last_complete_season unless defined($season);
+  
+  return $season;
+}
+
 =head2 find_key
 
 Same as find(), but uses the key column instead of the id.  So we can use human-readable URLs.

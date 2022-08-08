@@ -368,7 +368,9 @@ sub can_deactivate {
   my ( $self ) = @_;
   
   # First check clubs using venue, as this will be quicker than checking the number of matches.
-  my $clubs_using_venue = $self->search_related("clubs")->count;
+  my $season = $self->result_source->schema->resultset("Season")->get_current_or_last;
+  
+  my $clubs_using_venue = $self->search_related("club_seasons", {season => $season->id})->count;
   return 0 if $clubs_using_venue;
   
   # If we get this far, we can deactivated.
