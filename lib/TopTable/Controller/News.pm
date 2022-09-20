@@ -594,18 +594,20 @@ sub process_form :Private {
     delete $c->req->params->{pin_expiry_date};
     delete $c->req->params->{pin_expiry_hour};
     delete $c->req->params->{pin_expiry_minute};
-  } elsif( $c->req->params->{pin_expiry_date} ) {
-    
   }
   
-  my $response = $c->model("DB::NewsArticle")->create_or_edit($action, {
+  my $params = {
     logger => sub{ my $level = shift; $c->log->$level( @_ ); },
     user => $c->user,
     ip_address => $c->req->address,
     article => $article,
-    pin_expiry_date => $c->i18n_datetime_format_date->parse_datetime($c->req->params->{pin_expiry_date}),
     map {$_ => $c->req->params->{$_}} @field_names, # All the fields from the form - put this last because otherwise the following elements are seen as part of the map
-  });
+  };
+  
+  # Only add the date in if we have it
+  $params->{pin_expiry_date} = $c->i18n_datetime_format_date->parse_datetime($c->req->params->{pin_expiry_date}) if exists($c->req->params->{pin_expiry_date}) and defined($c->req->params->{pin_expiry_date});
+  
+  my $response = $c->model("DB::NewsArticle")->create_or_edit($action, $params);
   
   # Set the status messages we need to show on redirect
   my @errors = @{$response->{errors}};
