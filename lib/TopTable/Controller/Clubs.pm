@@ -49,7 +49,7 @@ Chain base for getting the club ID and checking it.
 sub base :Chained("/") :PathPart("clubs") :CaptureArgs(1) {
   my ( $self, $c, $id_or_key ) = @_;
   
-  my $club = $c->model("DB::Club")->find_id_or_url_key( $id_or_key );
+  my $club = $c->model("DB::Club")->find_id_or_url_key($id_or_key);
   
   if ( defined($club) ) {
     # Club found, stash it, then stash the name / view URL in the breadcrumbs section of our stash

@@ -76,7 +76,7 @@ __PACKAGE__->table("system_event_log_banned_user");
   is_nullable: 0
   size: 300
 
-'Only used if there is no ID (i.e., if the ban was deleted and is not available).
+Only used if there is no ID (i.e., if the ban was deleted and is not available).
 
 =head2 log_updated
 
@@ -199,8 +199,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2022-01-16 23:47:11
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:HQMz5Q3Q0HWpJpZfb7f5bQ
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2022-08-21 20:10:49
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:unG54HB3ZzAauCL5RO7eaQ
 
 # Enable automatic date handling
 __PACKAGE__->add_columns(

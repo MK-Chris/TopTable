@@ -346,17 +346,17 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
-=head2 officials
+=head2 official_seasons
 
 Type: has_many
 
-Related object: L<TopTable::Schema::Result::Official>
+Related object: L<TopTable::Schema::Result::OfficialSeason>
 
 =cut
 
 __PACKAGE__->has_many(
-  "officials",
-  "TopTable::Schema::Result::Official",
+  "official_seasons",
+  "TopTable::Schema::Result::OfficialSeason",
   { "foreign.season" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
@@ -437,8 +437,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-11-20 08:30:34
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:V9Ei2iOIQNCsJ5vkkjeoKQ
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2022-08-21 20:10:49
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:0PRlHrO8usMaNYn3gwM8Fw
 
 use HTML::Entities;
 

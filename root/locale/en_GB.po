@@ -3862,6 +3862,18 @@ msgstr "Thank you for your message, %1.  We will respond in due course."
 msgid "officials.none"
 msgstr "No officials to view."
 
+msgid "officials.create.error.no-current-season"
+msgstr "There is no current season, so positions for officials cannot be added; create a season first."
+
+msgid "officials.field.position-name"
+msgstr "Position name"
+
+msgid "officials.field.position-holder"
+msgstr "Position holder"
+
+msgid "officials.field.holder-no-people"
+msgstr "You cannot assign this position, as there are no people entered yet."
+
 ### Admin
 ## Bans
 msgid "admin.bans.form.legend.details"

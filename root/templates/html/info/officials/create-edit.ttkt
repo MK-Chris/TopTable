@@ -1,0 +1,48 @@
+[%
+IF c.flash.show_flashed;
+  SET venue = c.flash.venue;
+ELSE;
+  IF club.defined;
+    SET venue = club.venue;
+  ELSE;
+    
+  END;
+END;
+
+IF active;
+  SET active_checked = ' checked="checked"';
+ELSE;
+  SET active_checked = '';
+END;
+-%]
+
+<form method="post" action="[% form_action %]">
+<fieldset>
+  <legend>[% c.maketext("clubs.legend.details") %]</legend>
+  <div class="label-field-container">
+    <label for="position_name">[% c.maketext("officials.field.position-name") %]</label>
+    <div class="field-container">
+      <input type="text" id="position_name" name="position_name" value="[% c.flash.position_name OR official.position_name %]" />
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+[%
+IF tokeninput_confs;
+-%]
+  <div class="label-field-container">
+    <label for="holder">[% c.maketext("officials.field.position-name") %]</label>
+    <div class="field-container">
+      <input type="text" id="holder" name="holder" value="" />
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+[%
+ELSE;
+-%]
+  [% c.maketext("officials.field.holder-no-people") %]
+[%
+END;
+-%]
+</fieldset>
+<input type="submit" name="Submit" value="[% c.maketext("form.button.save") %]" />
+</form>

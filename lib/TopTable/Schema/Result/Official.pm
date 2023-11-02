@@ -49,31 +49,17 @@ __PACKAGE__->table("officials");
   is_auto_increment: 1
   is_nullable: 0
 
-=head2 position
+=head2 url_key
+
+  data_type: 'varchar'
+  is_nullable: 0
+  size: 45
+
+=head2 position_name
 
   data_type: 'varchar'
   is_nullable: 0
   size: 150
-
-=head2 position_order
-
-  data_type: 'tinyint'
-  extra: {unsigned => 1}
-  is_nullable: 0
-
-=head2 position_holder
-
-  data_type: 'integer'
-  extra: {unsigned => 1}
-  is_foreign_key: 1
-  is_nullable: 0
-
-=head2 season
-
-  data_type: 'integer'
-  extra: {unsigned => 1}
-  is_foreign_key: 1
-  is_nullable: 0
 
 =cut
 
@@ -85,24 +71,10 @@ __PACKAGE__->add_columns(
     is_auto_increment => 1,
     is_nullable => 0,
   },
-  "position",
+  "url_key",
+  { data_type => "varchar", is_nullable => 0, size => 45 },
+  "position_name",
   { data_type => "varchar", is_nullable => 0, size => 150 },
-  "position_order",
-  { data_type => "tinyint", extra => { unsigned => 1 }, is_nullable => 0 },
-  "position_holder",
-  {
-    data_type => "integer",
-    extra => { unsigned => 1 },
-    is_foreign_key => 1,
-    is_nullable => 0,
-  },
-  "season",
-  {
-    data_type => "integer",
-    extra => { unsigned => 1 },
-    is_foreign_key => 1,
-    is_nullable => 0,
-  },
 );
 
 =head1 PRIMARY KEY
@@ -117,41 +89,40 @@ __PACKAGE__->add_columns(
 
 __PACKAGE__->set_primary_key("id");
 
+=head1 UNIQUE CONSTRAINTS
+
+=head2 C<url_key>
+
+=over 4
+
+=item * L</url_key>
+
+=back
+
+=cut
+
+__PACKAGE__->add_unique_constraint("url_key", ["url_key"]);
+
 =head1 RELATIONS
 
-=head2 position_holder
+=head2 official_seasons
 
-Type: belongs_to
+Type: has_many
 
-Related object: L<TopTable::Schema::Result::Person>
-
-=cut
-
-__PACKAGE__->belongs_to(
-  "position_holder",
-  "TopTable::Schema::Result::Person",
-  { id => "position_holder" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
-);
-
-=head2 season
-
-Type: belongs_to
-
-Related object: L<TopTable::Schema::Result::Season>
+Related object: L<TopTable::Schema::Result::OfficialSeason>
 
 =cut
 
-__PACKAGE__->belongs_to(
-  "season",
-  "TopTable::Schema::Result::Season",
-  { id => "season" },
-  { is_deferrable => 1, on_delete => "NO ACTION", on_update => "NO ACTION" },
+__PACKAGE__->has_many(
+  "official_seasons",
+  "TopTable::Schema::Result::OfficialSeason",
+  { "foreign.official" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-01-10 20:05:48
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Z6xSup/Ry86aWTx94PSdxQ
+# Created by DBIx::Class::Schema::Loader v0.07049 @ 2022-12-29 22:37:37
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:f8t0PlS8P8s/ApR1rh+NHg
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
