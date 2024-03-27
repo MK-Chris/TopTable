@@ -1,12 +1,12 @@
 use utf8;
-package TopTable::Schema::Result::SystemEventLogBannedUser;
+package TopTable::Schema::Result::SystemEventLogOfficialPosition;
 
 # Created by DBIx::Class::Schema::Loader
 # DO NOT MODIFY THE FIRST PART OF THIS FILE
 
 =head1 NAME
 
-TopTable::Schema::Result::SystemEventLogBannedUser
+TopTable::Schema::Result::SystemEventLogOfficialPosition
 
 =cut
 
@@ -34,11 +34,11 @@ extends 'DBIx::Class::Core';
 
 __PACKAGE__->load_components("InflateColumn::DateTime", "TimeStamp", "PassphraseColumn");
 
-=head1 TABLE: C<system_event_log_banned_user>
+=head1 TABLE: C<system_event_log_official_position>
 
 =cut
 
-__PACKAGE__->table("system_event_log_banned_user");
+__PACKAGE__->table("system_event_log_official_position");
 
 =head1 ACCESSORS
 
@@ -56,13 +56,6 @@ __PACKAGE__->table("system_event_log_banned_user");
   is_foreign_key: 1
   is_nullable: 0
 
-=head2 object_type
-
-  data_type: 'varchar'
-  is_foreign_key: 1
-  is_nullable: 1
-  size: 20
-
 =head2 object_id
 
   data_type: 'integer'
@@ -76,7 +69,7 @@ __PACKAGE__->table("system_event_log_banned_user");
   is_nullable: 0
   size: 300
 
-Only used if there is no ID (i.e., if the ban was deleted and is not available).
+Only used if there is no ID (i.e., if the position was deleted and is not available).
 
 =head2 log_updated
 
@@ -87,6 +80,7 @@ Only used if there is no ID (i.e., if the ban was deleted and is not available).
 =head2 number_of_edits
 
   data_type: 'tinyint'
+  extra: {unsigned => 1}
   is_nullable: 0
 
 Used if the event is for an edit.
@@ -108,8 +102,6 @@ __PACKAGE__->add_columns(
     is_foreign_key => 1,
     is_nullable => 0,
   },
-  "object_type",
-  { data_type => "varchar", is_foreign_key => 1, is_nullable => 1, size => 20 },
   "object_id",
   {
     data_type => "integer",
@@ -126,7 +118,7 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
   },
   "number_of_edits",
-  { data_type => "tinyint", is_nullable => 0 },
+  { data_type => "tinyint", extra => { unsigned => 1 }, is_nullable => 0 },
 );
 
 =head1 PRIMARY KEY
@@ -147,34 +139,14 @@ __PACKAGE__->set_primary_key("id");
 
 Type: belongs_to
 
-Related object: L<TopTable::Schema::Result::BannedUser>
+Related object: L<TopTable::Schema::Result::Official>
 
 =cut
 
 __PACKAGE__->belongs_to(
   "object",
-  "TopTable::Schema::Result::BannedUser",
+  "TopTable::Schema::Result::Official",
   { id => "object_id" },
-  {
-    is_deferrable => 1,
-    join_type     => "LEFT",
-    on_delete     => "SET NULL",
-    on_update     => "CASCADE",
-  },
-);
-
-=head2 object_type
-
-Type: belongs_to
-
-Related object: L<TopTable::Schema::Result::LookupBanType>
-
-=cut
-
-__PACKAGE__->belongs_to(
-  "object_type",
-  "TopTable::Schema::Result::LookupBanType",
-  { id => "object_type" },
   {
     is_deferrable => 1,
     join_type     => "LEFT",
@@ -199,8 +171,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2022-08-21 20:10:49
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:unG54HB3ZzAauCL5RO7eaQ
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-03-17 23:33:11
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:TSL1rabVZHAjUmQTZFcl0A
 
 # Enable automatic date handling
 __PACKAGE__->add_columns(

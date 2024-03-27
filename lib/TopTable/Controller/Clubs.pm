@@ -49,7 +49,7 @@ Chain base for getting the club ID and checking it.
 sub base :Chained("/") :PathPart("clubs") :CaptureArgs(1) {
   my ( $self, $c, $id_or_key ) = @_;
   
-  my $club = $c->model("DB::Club")->find_id_or_url_key( $id_or_key );
+  my $club = $c->model("DB::Club")->find_id_or_url_key($id_or_key);
   
   if ( defined($club) ) {
     # Club found, stash it, then stash the name / view URL in the breadcrumbs section of our stash
@@ -632,7 +632,7 @@ sub delete :Chained("base") :PathPart("delete") :Args(0) {
     subtitle1 => $enc_full_name,
     subtitle2 => $c->maketext("admin.delete"),
     template => "html/clubs/delete.ttkt",
-    view_online_display => sprintf( "Deleting %s", $club->full_name ),
+    view_online_display => sprintf("Deleting %s", $club->full_name),
     view_online_link => 0,
   });
   

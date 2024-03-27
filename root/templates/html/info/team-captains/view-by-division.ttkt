@@ -1,0 +1,141 @@
+<div class="table-wrap">
+  <div class="table-layout table-layout-centre">
+[%
+IF teams.count;
+-%]
+    <table id="datatable" class="stripe hover order-column row-border" style="width: 100%;">
+      <thead>
+        <tr>
+          <th>[% c.maketext("team-captains.list.heading.division-rank") %]</th>
+          <th>[% c.maketext("team-captains.list.heading.division") %]</th>
+          <th>[% c.maketext("team-captains.list.heading.team") %]</th>
+          <th>[% c.maketext("team-captains.list.heading.captain-name-sort") %]</th>
+          <th>[% c.maketext("team-captains.list.heading.captain-name") %]</th>
+          <th>[% c.maketext("team-captains.list.heading.captain-tel") %]</th>
+          <th>[% c.maketext("team-captains.list.heading.captain-email") %]</th>
+        </tr>
+      </thead>
+      <tbody>
+[%
+  WHILE (team = teams.next);
+    SET team_season = team.team_seasons.first;
+    SET club = team.club;
+    SET club_season = club.club_seasons.first;
+    SET captain = team_season.captain;
+    SET division_season = team_season.division_season;
+    SET division = division_season.division;
+    CLUB_FULL_HTML = club_season.full_name | html_entity;
+    TEAM_HTML = team_season.name | html_entity;
+    CLUB_TEAM_HTML = club_season.short_name _ " " _ team_season.name | html_entity;
+    DIVISION_HTML = division_season.name | html_entity;
+    CAPTAIN_HTML = captain.display_name | html_entity;
+    CAPTAIN_SORT_HTML = captain.surname _ ", " _ captain.first_name | html_entity;
+-%]
+        <tr>
+          <td>[% division.rank %]</td>
+          <td><a href="[% c.uri_for_action("/league-tables/view_current_season", [division.url_key]) %]">[% DIVISION_HTML %]</a></td>
+          <td>
+            <a href="[% c.uri_for_action("/teams/view_current_season_by_url_key", [club.url_key, team.url_key]) %]">[% CLUB_TEAM_HTML %]</a>
+[%
+    IF authorisation.team_edit;
+-%]
+            <a class="admin-links" href="[% c.uri_for_action("/teams/edit_by_url_key", [club.url_key, team.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", CLUB_TEAM_HTML) %]" title="[% c.maketext("admin.edit-object", CLUB_TEAM_HTML) %]" /></a>
+[%
+    END;
+    IF authorisation.team_delete AND team.can_delete;
+-%]
+            <a class="admin-links" href="[% c.uri_for_action("/teams/delete_by_url_key", [club.url_key, team.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", CLUB_TEAM_HTML) %]" title="[% c.maketext("admin.delete-object", CLUB_TEAM_HTML) %]" /></a>
+[%
+    END;
+-%]
+          </td>
+          <td>[% CAPTAIN_SORT_HTML %]</td>
+          <td>
+            <a href="[% c.uri_for_action("/people/view_current_season", [captain.url_key]) %]">[% CAPTAIN_HTML %]</a>
+[%
+    IF authorisation.person_edit;
+-%]
+            <a class="admin-links" href="[% c.uri_for_action("/people/edit", [captain.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", CAPTAIN_HTML) %]" title="[% c.maketext("admin.edit-object", CAPTAIN_HTML) %]" /></a>
+[%
+    END;
+    IF authorisation.person_delete AND person.can_delete;
+-%]
+            <a class="admin-links" href="[% c.uri_for_action("/people/delete", [captain.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", CAPTAIN_HTML) %]" title="[% c.maketext("admin.delete-object", CAPTAIN_HTML) %]" /></a>
+[%
+    END;
+-%]
+          </td>
+          <td>
+[%
+    # Variable that will tell us whether we need a line break before the phone number we're about to print
+    SET PHONE_USED = 0;
+    IF captain.home_telephone;
+      PHONE_USED = 1;
+-%]
+            <strong>[% c.maketext("team-captains.list.field.tel-home") %]:</strong> [% captain.home_telephone | html_entity %]
+[%
+    END;
+    IF person.mobile_telephone;
+      IF PHONE_USED;
+-%]
+            <br />
+[%
+      ELSE;
+        PHONE_USED = 1;
+      END;
+-%]
+            <strong>[% c.maketext("team-captains.list.field.tel-mobile") %]:</strong> [% captain.mobile_telephone | html_entity %]
+[%
+    END;
+    IF person.work_telephone;
+      IF PHONE_USED;
+-%]
+            <br />
+[%
+      ELSE;
+        PHONE_USED = 1;
+      END;
+-%]
+            <strong>[% c.maketext("team-captains.list.field.tel-work") %]:</strong> [% captain.work_telephone | html_entity %]
+[%
+    END;
+    IF PHONE_USED == 0;
+-%]
+            &nbsp;
+[%
+    END;
+-%]
+          </td>
+          <td>
+[%-
+    IF captain.email_address;
+-%]
+<a href="[% c.uri_for_action("/teams/email_captain_by_url_key", [club.url_key, team.url_key]) %]">[% c.maketext("officials.action.send-email") %]</a>
+[%-
+    ELSE;
+-%]
+&nbsp;
+[%-
+    END;
+-%]
+</td>
+        </tr>
+[%
+  END;
+-%]
+      </tbody>
+    </table>
+[%
+ELSE;
+  # No officials entered for this season yet.
+-%]
+    <ul class="option-list">
+      <li>
+        [% c.maketext("team-captains.list.none") %]
+      </li>
+    </ul>
+[%
+END;
+%]
+  </div>
+</div>

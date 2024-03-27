@@ -84,8 +84,8 @@ END;
 
 <title>[% page_title %]</title>
 
-<link rel="stylesheet" href="[% c.uri_for('/static/css/main.css') %]?v13" type="text/css" media="screen" />
-<link rel="stylesheet" href="[% c.uri_for('/static/css/main-print.css') %]?v13" type="text/css" media="print" />
+<link rel="stylesheet" href="[% c.uri_for('/static/css/main.css') %]?v14" type="text/css" media="screen" />
+<link rel="stylesheet" href="[% c.uri_for('/static/css/main-print.css') %]?v14" type="text/css" media="print" />
 <link rel="stylesheet" href="[% c.uri_for('/static/css/jqueryui/jquery-ui.structure.min.css') %]" type="text/css" media="screen" />
 <link rel="stylesheet" href="[% c.uri_for('/static/css/jqueryui/jquery-ui.theme.min.css') %]" type="text/css" media="screen" />
 <link rel="stylesheet" href="[% c.uri_for('/static/css/smartmenus/sm-core-css-v1.1.1.css') %]" type="text/css" media="screen" />
@@ -357,8 +357,8 @@ END;
   <li>
     <a href="[% c.uri_for("/info") %]" title="[% c.maketext("menu.title.info") %]">[% c.maketext("menu.text.info") %]</a>
     <ul>
-      <li><a href="[% c.uri_for("/info/officials") %]" title="[% c.maketext("menu.title.officials") %]">[% c.maketext("menu.text.committee") %]</a></li>
-      <li><a href="[% c.uri_for("/info/rules") %]" title="[% c.maketext("menu.title.rules") %]">[% c.maketext("menu.text.rules") %]</a></li>
+      <li><a href="[% c.uri_for("/info/officials") %]" title="[% c.maketext("menu.title.officials", season_html) %]">[% c.maketext("menu.text.officials") %]</a></li>
+      <li><a href="[% c.uri_for("/info/rules") %]" title="[% c.maketext("menu.title.rules", season_html) %]">[% c.maketext("menu.text.rules") %]</a></li>
       <li><a href="[% c.uri_for("/info/contact") %]" title="[% c.maketext("menu.title.contact") %]">[% c.maketext("menu.text.contact") %]</a></li>
       <li><a href="[% c.uri_for("/info/privacy") %]" title="[% c.maketext("menu.title.privacy") %]">[% c.maketext("menu.text.privacy") %]</a></li>
 [%
@@ -494,6 +494,13 @@ END;
               <li><a href="[% c.uri_for_action("/reports/view_specific_season", ["missing-players", season.url_key]) %]" title="[% c.maketext("reports.name.missing-players") %]">[% c.maketext("reports.name.missing-players") %]</a></li>
             </ul>
           </li>
+          <li>
+            <a href="javascript:void(0)" title="[% c.maketext("menu.text.info") %]">[% c.maketext("menu.text.info") %]</a>
+            <ul>
+              <li><a href="[% c.uri_for_action("/info/officials/view_specific_season", [season.url_key]) %]" title="[% c.maketext("menu.title.officials", season_html) %]">[% c.maketext("menu.text.officials") %]</a></li>
+              <li><a href="[% c.uri_for_action("/info/rules/view_specific_season", [season.url_key]) %]" title="[% c.maketext("menu.title.rules", season_html) %]">[% c.maketext("menu.text.rules") %]</a></li>
+            </ul>
+          </li>
         </ul>
       </li>
 [%
@@ -517,7 +524,7 @@ END;
 # a menu option for it unless these permissions are present.
 # Not an ideal solution, but I can't think of a better way, as basically anyone could have permissions to view templates quite legitimately and we don't want an admin
 # menu option for everyone.
-IF authorisation.match_update OR authorisation.user_approve_new OR authorisation.admin_issue_bans;
+IF authorisation.match_update OR authorisation.user_approve_new OR authorisation.admin_issue_bans OR authorisation.role_create OR authorisation.role_edit OR authorisation.role_delete OR authorisation.person_create;
 -%]
   <li><a href="[% c.uri_for("/admin") %]" title="[% c.maketext("menu.text.admin") %]">[% c.maketext("menu.text.admin") %]</a>
     <ul>

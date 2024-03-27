@@ -373,17 +373,17 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
-=head2 officials
+=head2 official_season_people
 
 Type: has_many
 
-Related object: L<TopTable::Schema::Result::Official>
+Related object: L<TopTable::Schema::Result::OfficialSeasonPerson>
 
 =cut
 
 __PACKAGE__->has_many(
-  "officials",
-  "TopTable::Schema::Result::Official",
+  "official_season_people",
+  "TopTable::Schema::Result::OfficialSeasonPerson",
   { "foreign.position_holder" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
@@ -672,9 +672,23 @@ __PACKAGE__->many_to_many(
   "contact_reason",
 );
 
+=head2 official_seasons
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-11-20 08:25:35
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:7aDwVaztDq/DKxPGVln0aQ
+Type: many_to_many
+
+Composing rels: L</official_season_people> -> official_season
+
+=cut
+
+__PACKAGE__->many_to_many(
+  "official_seasons",
+  "official_season_people",
+  "official_season",
+);
+
+
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-03-18 23:57:35
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:bq+yCZ2WVDJ5ycMPnRNysw
 
 use HTML::Entities;
 
@@ -724,6 +738,30 @@ sub get_seasons {
   return $self->search_related("person_seasons", {
     team_membership_type => "active"
   }, $attributes);
+}
+
+=head2 get_season
+
+Get person_seasons for this person with the specified season.
+
+=cut
+
+sub get_season {
+  my ( $self, $season ) = @_;
+  
+  return $self->find_related("person_seasons", {
+    season => $season->id,
+    team_membership_type => "active"
+  }, {
+    prefetch => [qw( season ), {
+      team_season => [qw( division_season team ), {club_season => "club"}]
+    }],
+    order_by => [{
+      -asc => [qw( season.complete )],
+    }, {
+      -desc => [qw( season.start_date season.end_date )],
+    }],
+  });
 }
 
 =head2 last_season_entered
@@ -802,6 +840,21 @@ Return the initial of the person's first name and their surname
 sub initials {
   my ( $self ) = @_;
   return sprintf("%s%s", substr($self->first_name, 0, 1), substr($self->surname, 0, 1));
+}
+
+=head2 email_address_obfuscated
+
+A rendering of the email address with @ replaced with ' -AT- ' and . replaced with ' -DOT- '
+
+=cut
+
+sub email_address_obfuscated {
+  my ( $self ) = @_;
+  my $email = $self->email_address;
+  $email =~ s/@/ -AT- /g;
+  $email =~ s/\./ -DOT- /g;
+  
+  return $email;
 }
 
 =head2 matches_on_loan

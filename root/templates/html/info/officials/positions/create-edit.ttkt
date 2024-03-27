@@ -1,0 +1,41 @@
+[%
+IF c.flash.show_flashed;
+  SET POSITION_BEFORE = c.flash.position_before;
+ELSE;
+  IF position.defined;
+    SET POSITION_BEFORE = position.get_season(season).next_position.official.id;
+    CALL c.log.debug("position before: " _ POSITION_BEFORE);
+  END;
+END;
+-%]
+
+<form method="post" action="[% form_action %]">
+<fieldset>
+  <legend>[% c.maketext("clubs.legend.details") %]</legend>
+  <div class="label-field-container">
+    <label for="position_name">[% c.maketext("officials.field.position-name") %]</label>
+    <div class="field-container">
+      <input type="text" id="position_name" name="position_name" value="[% c.flash.position_name OR position.position_name %]" />
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+[%
+IF tokeninput_confs;
+-%]
+  <div class="label-field-container">
+    <label for="holders">[% c.maketext("officials.field.position-holder") %]</label>
+    <div class="field-container">
+      <input type="text" id="holders" name="holders" value="" />
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+[%
+ELSE;
+-%]
+  [% c.maketext("officials.field.holder-no-people") %]
+[%
+END;
+-%]
+</fieldset>
+<input type="submit" name="Submit" value="[% c.maketext("form.button.save") %]" />
+</form>

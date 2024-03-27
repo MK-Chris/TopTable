@@ -49,31 +49,17 @@ __PACKAGE__->table("officials");
   is_auto_increment: 1
   is_nullable: 0
 
-=head2 position
+=head2 url_key
+
+  data_type: 'varchar'
+  is_nullable: 0
+  size: 45
+
+=head2 position_name
 
   data_type: 'varchar'
   is_nullable: 0
   size: 150
-
-=head2 position_order
-
-  data_type: 'tinyint'
-  extra: {unsigned => 1}
-  is_nullable: 0
-
-=head2 position_holder
-
-  data_type: 'integer'
-  extra: {unsigned => 1}
-  is_foreign_key: 1
-  is_nullable: 0
-
-=head2 season
-
-  data_type: 'integer'
-  extra: {unsigned => 1}
-  is_foreign_key: 1
-  is_nullable: 0
 
 =cut
 
@@ -85,24 +71,10 @@ __PACKAGE__->add_columns(
     is_auto_increment => 1,
     is_nullable => 0,
   },
-  "position",
+  "url_key",
+  { data_type => "varchar", is_nullable => 0, size => 45 },
+  "position_name",
   { data_type => "varchar", is_nullable => 0, size => 150 },
-  "position_order",
-  { data_type => "tinyint", extra => { unsigned => 1 }, is_nullable => 0 },
-  "position_holder",
-  {
-    data_type => "integer",
-    extra => { unsigned => 1 },
-    is_foreign_key => 1,
-    is_nullable => 0,
-  },
-  "season",
-  {
-    data_type => "integer",
-    extra => { unsigned => 1 },
-    is_foreign_key => 1,
-    is_nullable => 0,
-  },
 );
 
 =head1 PRIMARY KEY
@@ -117,42 +89,154 @@ __PACKAGE__->add_columns(
 
 __PACKAGE__->set_primary_key("id");
 
+=head1 UNIQUE CONSTRAINTS
+
+=head2 C<url_key>
+
+=over 4
+
+=item * L</url_key>
+
+=back
+
+=cut
+
+__PACKAGE__->add_unique_constraint("url_key", ["url_key"]);
+
 =head1 RELATIONS
 
-=head2 position_holder
+=head2 official_seasons
 
-Type: belongs_to
+Type: has_many
 
-Related object: L<TopTable::Schema::Result::Person>
-
-=cut
-
-__PACKAGE__->belongs_to(
-  "position_holder",
-  "TopTable::Schema::Result::Person",
-  { id => "position_holder" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
-);
-
-=head2 season
-
-Type: belongs_to
-
-Related object: L<TopTable::Schema::Result::Season>
+Related object: L<TopTable::Schema::Result::OfficialSeason>
 
 =cut
 
-__PACKAGE__->belongs_to(
-  "season",
-  "TopTable::Schema::Result::Season",
-  { id => "season" },
-  { is_deferrable => 1, on_delete => "NO ACTION", on_update => "NO ACTION" },
+__PACKAGE__->has_many(
+  "official_seasons",
+  "TopTable::Schema::Result::OfficialSeason",
+  { "foreign.official" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+=head2 system_event_log_official_positions
+
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::SystemEventLogOfficialPosition>
+
+=cut
+
+__PACKAGE__->has_many(
+  "system_event_log_official_positions",
+  "TopTable::Schema::Result::SystemEventLogOfficialPosition",
+  { "foreign.object_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-01-10 20:05:48
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Z6xSup/Ry86aWTx94PSdxQ
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-03-17 23:33:10
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:PqEZDmJsfssufuiDst12wQ
 
+use HTML::Entities;
+
+=head2 get_season
+
+Get the corresponding OfficialSeason object
+
+=cut
+
+sub get_season {
+  my ( $self, $season ) = @_;
+  return $self->find_related("official_seasons", {season => $season->id}, {
+    prefetch => {official_season_people => "position_holder"},
+    order_by => {-asc => [qw( position_holder.surname position_holder.first_name )]}
+  });
+}
+
+=head2 get_holders
+
+Retrieve a list of people who hold this position in the given season.
+
+=cut
+
+sub get_holders {
+  my ( $self, $params ) = @_;
+  my $season = $params->{season};
+  
+  return $self->find_related("official_seasons", {season => $season->id})->search_related("official_season_people", undef, {
+    prefetch => "position_holder",
+    order_by => {-asc => [qw( position_holder.surname position_holder.first_name )]}
+  })->search_related("position_holder");
+}
+
+=head2 can_delete
+
+Check if we can delete this position.  A position can be deleted if it's not been used in an archived season.
+
+=cut
+
+sub can_delete {
+  my ( $self ) = @_;
+  
+  my $complete_seasons = $self->search_related("official_seasons", {
+    "season.complete" => 1,
+  }, {
+    join => "season"
+  })->count;
+  
+  return $complete_seasons ? 0 : 1;
+}
+
+=head2 check_and_delete
+
+Checks the club can be deleted (via can_delete) and then performs the deletion.
+
+=cut
+
+sub check_and_delete {
+  my ( $self, $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  my $response = {
+    errors => [],
+    warnings => [],
+    info => [],
+    success => [],
+    completed => 0,
+  };
+  
+  # Get the name for messaging
+  my $name = encode_entities($self->position_name);
+  
+  # Check we can delete
+  unless ( $self->can_delete ) {
+    push(@{$response->{errors}}, $lang->maketext("officials.delete.error.cannot-delete", $name));
+    return $response;
+  }
+  
+  # Delete
+  my $seasons = $self->search_related("official_seasons");
+  
+  my $ok = $seasons->search_related("official_season_people")->delete;
+  $ok = $self->delete_related("official_seasons") if $ok;
+  $ok = $self->delete if $ok;
+  
+  # Error if the delete was unsuccessful
+  if ( $ok ) {
+    $response->{completed} = 1;
+    push(@{$response->{success}}, $lang->maketext("admin.forms.success", $name, $lang->maketext("admin.message.deleted")));
+  } else {
+    push(@{$response->{errors}}, $lang->maketext("admin.delete.error.database", $name));
+  }
+  
+  return $response;
+}
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 __PACKAGE__->meta->make_immutable;

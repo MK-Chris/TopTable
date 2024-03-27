@@ -1,0 +1,1 @@
+[% c.maketext("officials.contact.thank-you.text", user, captain.display_name) %]

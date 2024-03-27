@@ -1,0 +1,64 @@
+<div class="table-wrap">
+  <div class="table-layout table-layout-centre">
+    <table id="datatable" class="stripe hover order-column row-border">
+    <thead>
+      <tr>
+        <th>[% c.maketext("officials.list.season") %]</th>
+        <th>[% c.maketext("officials.list.season") %]</th>
+        <th>[% c.maketext("officials.list.holders") %]</th>
+      </tr>
+    <thead>
+    <tbody>
+[%
+SET official_seasons = position.official_seasons_rs;
+
+IF official_seasons.count;
+  WHILE (official_season = official_seasons.next);
+    SET season = official_season.season;
+    SET SEASON_START = season.start_date;
+    SET SEASON_END = season.end_date;
+    CALL SEASON_START.set_locale(c.locale);
+    CALL SEASON_END.set_locale(c.locale);
+    SET SEASON_SORT = SEASON_START("ymd") _ " " _ SEASON_END("ymd");
+-%]
+      <tr>
+        <td>[% SEASON_SORT %]</td>
+        <td>[% season.name | html_entity %]</td>
+        <td>
+[%
+    SET official_holders = official_season.official_season_people_rs;
+    IF official_holders.count;
+      SET NUM = 0;
+      WHILE (official_holder = official_holders.next);
+        SET person = official_holder.position_holder;
+        SET person_season = person.get_season(season);
+        
+        IF person_season;
+          SET person_data = person_season;
+        ELSE;
+          SET person_data = person;
+        END;
+        IF PEOPLE_PRINTED;
+-%]
+<br />
+[%-
+        END;
+-%]
+          <a href="[% c.uri_for_action("/people/view_specific_season", [person.url_key, season.url_key]) %]">[% person_data.display_name %]</a>
+[%
+        SET PEOPLE_PRINTED = PEOPLE_PRINTED + 1;
+      END;
+-%]
+        </td>
+[%
+    END;
+  END;
+-%]
+      </tr>
+[%
+END;
+-%]
+      </tbody>
+    </table>
+  </div>
+</div>

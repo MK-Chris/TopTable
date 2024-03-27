@@ -466,6 +466,320 @@ sub view_finalise :Private {
   });
 }
 
+=head2 email_captain_by_id
+
+Mechanism to forward to email_captain chained to base_by_id.
+
+=cut
+
+sub email_captain_by_id :Chained("base_by_id"): PathPart("email-captain") :Args(0) {
+  my ( $self, $c ) = @_;
+  $c->forward("email_captain");
+}
+
+=head2 email_captain_by_url_key
+
+Mechanism to forward to email_captain chained to base_by_id.
+
+=cut
+
+sub email_captain_by_url_key :Chained("base_by_url_key"): PathPart("email-captain") :Args(0) {
+  my ( $self, $c ) = @_;
+  $c->forward("email_captain");
+}
+
+=head2 email_captain
+
+Display a form to email the captain of this team.
+
+=cut
+
+sub email_captain :Private {
+  my ( $self, $c ) = @_;
+  my $team = $c->stash->{team};
+  
+  # Check we can send the captain email - any error will detach / redirect from the routine, so if we get past here, we're okay
+  $c->forward("can_send_captain_email", [$team]);
+  
+  # Grab the stashed values from the previous checks
+  my $season = $c->stash->{season};
+  my $team_season = $c->stash->{team_season};
+  my $team_name = $c->stash->{team_name};
+  my $enc_team_name = $c->stash->{enc_team_name};
+  my $captain = $c->stash->{captain};
+  my $enc_captain_display = $c->stash->{enc_captain_display};
+  
+  # Stash our template / form information
+  $c->stash({
+    template => "html/teams/contact-captain/form.ttkt",
+    subtitle2 => $c->maketext("teams.captain.contact", $enc_captain_display),
+    form_action => $c->uri_for_action("/teams/send_email_captain_by_url_key", [$team->club->url_key, $team->url_key]),
+    view_online_display => "Sending an email to a team captain",
+    view_online_link => 1,
+    external_scripts => [
+      $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
+      $c->uri_for("/static/script/plugins/autogrow/jquery.ns-autogrow.min.js"),
+      $c->uri_for("/static/script/standard/chosen.js"),
+      $c->uri_for("/static/script/standard/autogrow.js"),
+      $c->uri_for("/static/script/info/contact.js"),
+    ],
+    external_styles => [
+      $c->uri_for("/static/css/chosen/chosen.min.css"),
+    ],
+    page_description => $c->maketext("description.contact", $enc_captain_display),
+  });
+  
+  if ( !$c->user_exists and $c->config->{Google}{reCAPTCHA}{validate_on_contact} and $c->config->{Google}{reCAPTCHA}{site_key} and $c->config->{Google}{reCAPTCHA}{secret_key} ) {
+    my $locale_code = $c->locale;
+    $locale_code =~ s/_/-/;
+    push(@{$c->stash->{external_scripts}}, sprintf("https://www.google.com/recaptcha/api.js?hl=%s", $locale_code));
+    $c->stash({reCAPTCHA => 1});
+  }
+  
+  # Breadcrumbs links
+  push(@{$c->stash->{breadcrumbs}}, {
+    path => $c->uri_for_action("/teams/email_captain_by_url_key", [$team->club->url_key, $team->url_key]),
+    label => $c->maketext("menu.title.contact"),
+  });
+}
+
+=head2 email_captain_by_id
+
+Mechanism to forward to do_email_captain chained to base_by_id.
+
+=cut
+
+sub do_email_captain_by_id :Chained("base_by_id"): PathPart("send-email-captain") :Args(0) {
+  my ( $self, $c ) = @_;
+  $c->forward("send_email_captain");
+}
+
+=head2 send_email_captain_by_url_key
+
+Mechanism to forward to do_email_captain chained to base_by_id.
+
+=cut
+
+sub send_email_captain_by_url_key :Chained("base_by_url_key"): PathPart("send-email-captain") :Args(0) {
+  my ( $self, $c ) = @_;
+  $c->forward("send_email_captain");
+}
+
+=head2 dend_email_captain
+
+Process the captain email form.
+
+=cut
+
+sub send_email_captain :Private {
+  my ( $self, $c ) = @_;
+  my $team = $c->stash->{team};
+  
+  # Check we can send the captain email - any error will detach / redirect from the routine, so if we get past here, we're okay
+  $c->forward("can_send_captain_email", [$team]);
+  
+  # Grab the stashed values from the previous checks
+  my $season = $c->stash->{season};
+  my $team_season = $c->stash->{team_season};
+  my $team_name = $c->stash->{team_name};
+  my $enc_team_name = $c->stash->{enc_team_name};
+  my $captain = $c->stash->{captain};
+  my $enc_captain_display = $c->stash->{enc_captain_display};
+  my ( $first_name, $surname, $name, $email_address, $user );
+  my @errors = ();
+  
+  # Handle the contact form and send the email if there are no errors.
+  if ( $c->user_exists ) {
+    # The user is logged in, take their details from their login.
+    $user = $c->user;
+    $name = $user->display_name;
+    $email_address = $user->email_address;
+  } else {
+    # Not logged on, check we have the required form fields.
+    $first_name = $c->req->params->{first_name} || undef;
+    $surname = $c->req->params->{surname} || undef;
+    $email_address = $c->req->params->{email_address} || undef;
+    
+    if ( $c->config->{Google}{reCAPTCHA}{validate_on_contact} and $c->config->{Google}{reCAPTCHA}{site_key} and $c->config->{Google}{reCAPTCHA}{secret_key} ) {
+      my $captcha_result = $c->forward("TopTable::Controller::Root", "recaptcha");
+      
+      if ( $captcha_result->{request_success} ) {
+        # Request to Google was successful
+        if ( !$captcha_result->{response_content}{success} ) {
+          # Error validating, get the response messages in the correct language
+          push(@errors, sprintf("%s\n", $c->maketext($_))) foreach @{$captcha_result->{response_content}{"error-codes"}};
+        }
+      } else {
+        # Error requesting validation
+        push(@errors, sprintf("%s\n", $c->maketext("google.recaptcha.error-sending")));
+      }
+    }
+    
+    if ( defined($first_name) ) {
+      if ( defined($first_name) and defined($surname) ) {
+        # Name is made up of first and surnames
+        $name = sprintf("%s %s", $first_name, $surname);
+      } else {
+        # Name is just first name
+        $name = $first_name;
+      }
+    } else {
+      push(@errors, $c->maketext("contact.form.error.no-first-name"));
+    }
+    
+    if ( defined($email_address) ) {
+      # Email is filled out, check it
+      $email_address = Email::Valid->address($email_address);
+      push(@errors, $c->maketext("contact.form.error.invalid-email")) unless defined($email_address);
+    } else {
+      # Email missing
+      push(@errors, $c->maketext("contact.form.error.no-email"));
+    }
+  }
+  
+  my $banned = $c->model("DB::Ban")->is_banned({
+    ip_address => $c->req->address,
+    email_address => $email_address,
+    user => $user,
+    level => "contact",
+    log_allowed => 0,
+    log_banned => 1,
+    logger => sub{ my $level = shift; $c->log->$level( @_ ); },
+    language => sub{ $c->maketext( @_ ); },
+  });
+  
+  # Log our responses
+  $c->log->error($_) foreach @{$banned->{errors}};
+  $c->log->warning($_) foreach @{$banned->{warnings}};
+  $c->log->info($_) foreach @{$banned->{info}};
+  
+  if ( $banned->{is_banned} ) {
+    $c->response->redirect($c->uri_for("/",
+            {mid => $c->set_status_msg({error => $c->maketext("contact.form.error.banned")})}));
+    $c->detach;
+    return;
+  }
+  
+  my $message = $c->req->params->{message};
+  
+  push(@errors, $c->maketext("contact.form.error.no-message")) unless $message;
+  
+  if ( scalar @errors ) {
+    # Errors, flash the values and redirect back to the form
+    $c->flash->{first_name} = $first_name;
+    $c->flash->{surname} = $surname;
+    $c->flash->{email_address} = $email_address;
+    $c->flash->{message} = $message;
+    
+    $c->response->redirect($c->uri_for_action("/teams/email_captain_by_url_key", [$team->club->url_key, $team->url_key],
+            {mid => $c->set_status_msg({error => \@errors})}));
+    $c->detach;
+    return;
+  } else {
+    # No errors, send the email.
+    # Get the recipients
+    my $recipients = [$captain->email_address, $captain->display_name];
+    
+    # Prepare values for HTML email
+    my $html_site_name = encode_entities($c->config->{name});
+    my $html_name = encode_entities($name);
+    my $html_email = encode_entities($email_address);
+    my $html_recp_name = encode_entities($captain->first_name);
+    my $html_message = encode_entities($message);
+    
+    # Line breaks in HTML message
+    $html_message =~ s|(\r?\n)|<br />$1|g;
+    
+    $c->model("Email")->send({
+      to => $recipients,
+      reply => [$email_address, $name],
+      image => [$c->path_to(qw( root static images banner-logo-player-small.png ))->stringify, "logo"],
+      subject => $c->maketext("email.subject.contact-captain", $name, $c->config->{name}),
+      plaintext => $c->maketext("email.plain-text.contact-captain", $captain->first_name, $name, $team_name, $c->config->{name}, $email_address, $message, $c->req->address),
+      htmltext => [qw( html/generic/generic-message.ttkt :TT )],
+      template_vars => {
+        name => $html_site_name,
+        home_uri => $c->uri_for("/"),
+        email_subject => $c->maketext("email.subject.contact-captain", $html_name, $html_site_name),
+        email_html_message => $c->maketext("email.html.contact-captain", $html_recp_name, $html_name, $enc_team_name, $html_site_name, $html_email, $html_message, $c->req->address),
+      },
+    });
+    
+    $c->stash({
+      template => "html/teams/contact-captain/thank-you.ttkt",
+      subtitle1 => $c->maketext("contact.thank-you.header", $html_name),
+      user => $name,
+    });
+    
+    #$c->forward("TopTable::Controller::SystemEventLog", "add_event", ["contact-form", "submit", {id => $reason->id}, $reason->name]);
+    
+    # Breadcrumbs links
+    push(@{$c->stash->{breadcrumbs}}, {
+      path => $c->uri_for_action("/teams/email_captain_by_url_key", [$team->club->url_key, $team->url_key]),
+      label => $c->maketext("menu.title.contact"),
+    });
+  }
+}
+
+sub can_send_captain_email :Private {
+  my ( $self, $c, $team ) = @_;
+  
+  # Check the season is current
+  my $season = $c->model("DB::Season")->get_current;
+  $season = $c->model("DB::Season")->last_compete_season unless defined($season);
+  
+  unless ( defined($season) ) {
+    # Error, no current season
+    $c->response->redirect($c->uri_for("/seasons/create",
+                                {mid => $c->set_status_msg({error => $c->maketext("teams.captains.contact.error.no-season")})}));
+    $c->detach;
+    return;
+  }
+  
+  my $team_season = $team->get_season($season);
+  my $team_name = sprintf("%s %s", $team->club->short_name, $team->name);
+  my $enc_team_name = encode_entities($team_name);
+  
+  unless ( defined($team_season) ) {
+    # Error, no current season
+    $c->response->redirect($c->uri_for("/",
+                                {mid => $c->set_status_msg({error => $c->maketext("teams.captains.contact.error.team-not-in-season", $enc_team_name)})}));
+    $c->detach;
+    return;
+  }
+  
+  my $captain = $team_season->captain;
+  
+  unless ( defined($captain) ) {
+    # No captain listed
+    $c->response->redirect($c->uri_for("/",
+                                {mid => $c->set_status_msg({error => $c->maketext("teams.captains.contact.error.no-captain-listed", $enc_team_name)})}));
+    $c->detach;
+    return;
+  }
+  
+  my $enc_captain_display = encode_entities($captain->display_name);
+  
+  unless ( defined($captain->email_address) and $captain->email_address ) {
+    # No captain listed
+    $c->response->redirect($c->uri_for("/",
+                                {mid => $c->set_status_msg({error => $c->maketext("teams.captains.contact.error.no-email-address-listed", $enc_team_name, $enc_captain_display)})}));
+    $c->detach;
+    return;
+  }
+  
+  # If we get this far, we can send (no need to return anything, if we can't send email we've spun out to an error message)
+  # Stash the values we looked up for this
+  $c->stash({
+    season => $season,
+    team_season => $team_season,
+    team_name => $team_name,
+    enc_team_name => $enc_team_name,
+    captain => $captain,
+    enc_captain_display => $enc_captain_display,
+  });
+}
+
 =head2 view_seasons_by_url_key
 
 Display the list of seasons when specifying the URL key in the URL
@@ -802,7 +1116,7 @@ sub edit :Private {
     
     $players_tokeninput_options->{prePopulate} = [map({
       id => $_->id,
-      name => encode_entities( $_->display_name ),
+      name => encode_entities($_->display_name),
     }, @{$players})] if ref($players) eq "ARRAY" and scalar(@{$players});
     
     my $tokeninput_confs = [{

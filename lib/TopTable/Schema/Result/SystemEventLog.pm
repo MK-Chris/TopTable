@@ -356,6 +356,21 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
+=head2 system_event_log_official_positions
+
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::SystemEventLogOfficialPosition>
+
+=cut
+
+__PACKAGE__->has_many(
+  "system_event_log_official_positions",
+  "TopTable::Schema::Result::SystemEventLogOfficialPosition",
+  { "foreign.system_event_log_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
 =head2 system_event_log_people
 
 Type: has_many
@@ -557,8 +572,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2022-06-07 12:01:29
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:B+ok/ErcgLyVf9WwKUC9Pg
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-03-17 23:33:10
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:yFbpUmygCXF1qk4xJoMhGw
 
 # Enable automatic date handling
 __PACKAGE__->add_columns(

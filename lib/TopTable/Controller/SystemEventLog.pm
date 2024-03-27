@@ -116,7 +116,7 @@ sub load_events_js :Path("load.js") :Args(0) {
   $order_dir = "asc" unless defined($order_dir) and ($order_dir eq "asc" or $order_dir eq "desc");
   
   # Get the name to order by
-  $order_col = $c->req->param( "columns[$order_col][name]" );
+  $order_col = $c->req->param("columns[$order_col][name]");
   
   $c->forward("TopTable::Controller::Users", "check_authorisation", [[ qw( user_view_ip eventlog_view_all admin_issue_bans ) ], "", 0]);
   

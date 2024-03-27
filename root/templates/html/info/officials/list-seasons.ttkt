@@ -1,14 +1,8 @@
-[% # This is a TT comment. -%]
-[% # Note That the '-' at the beginning or end of TT code  -%]
-[% # "chomps" the whitespace/newline at that end of the    -%]
-[% # output (use View Source in browser to see the effect) -%]
-[% # Some basic HTML with a loop to display clubs -%]
+<div class="table-wrap">
+  <div class="table-layout table-layout-centre">
+    <ul class="option-list">
 [%
 IF seasons.size;
-  # Use PROCESS instead of INCLUDE so that the page_links_text is defined in the current template thereafter
-  PROCESS "html/generic/pagination.ttkt" OBJECT_PLURAL = c.maketext("object.plural.seasons");
-  page_links_text;
-  
   WHILE (season = seasons.next);
     IF season.complete;
       SET CURRENT_TEXT = "";
@@ -16,18 +10,19 @@ IF seasons.size;
       SET CURRENT_TEXT = " (" _ c.maketext("seasons.text.current") _ ")";
     END;
 -%]
-
-<div class="list-item">
-  <a href="[% c.uri_for_action("/info/officials/view_specific_season", [season.url_key]) %]">[% season.name | html_entity %]</a>[% CURRENT_TEXT %]
-</div>
+      <li>
+        <a href="[% c.uri_for_action("/info/officials/view_specific_season", [season.url_key]) %]">[% season.name | html_entity %]</a>[% CURRENT_TEXT %]
+      </li>
 [%
   END;
-  page_links_text;
 ELSE;
 -%]
-<div class="list-item">
-  [% c.maketext("seasons.none") %]
-</div>
+      <li>
+        [% c.maketext("seasons.none") %]
+      </li>
 [%
 END;
 -%]
+    </ul>
+  </div>
+</div>

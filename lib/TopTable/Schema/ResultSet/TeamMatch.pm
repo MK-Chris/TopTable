@@ -487,7 +487,7 @@ sub matches_on_date {
     "club_season.season" => $season->id,
     "team_season_away_team_season.season" => $season->id,
     "club_season_2.season" => $season->id,
-    scheduled_date => $date->ymd,
+    played_date => $date->ymd,
     
   }, $attributes);
 }

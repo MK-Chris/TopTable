@@ -147,7 +147,7 @@ msgstr "D'informations"
 msgid "menu.title.info"
 msgstr "Informations sur la ligue"
 
-msgid "menu.text.committee"
+msgid "menu.text.officials"
 msgstr "Fonctionnaires"
 
 msgid "menu.title.officials"

@@ -1,8 +1,3 @@
-[% # This is a TT comment. -%]
-[% # Note That the '-' at the beginning or end of TT code  -%]
-[% # "chomps" the whitespace/newline at that end of the    -%]
-[% # output (use View Source in browser to see the effect) -%]
-[% # Some basic HTML with a loop to display clubs -%]
 [%
 IF seasons.count;
 -%]
@@ -34,19 +29,19 @@ IF seasons.count;
     
     SET SEASON_START = team_season.season.start_date;
     SET SEASON_END = team_season.season.end_date;
-    CALL SEASON_START.set_locale( c.locale );
-    CALL SEASON_END.set_locale( c.locale );
+    CALL SEASON_START.set_locale(c.locale);
+    CALL SEASON_END.set_locale(c.locale);
     SET SEASON_SORT = SEASON_START("ymd") _ " " _ SEASON_END("ymd");
     SET CAPTAIN_SEASON = team_season.captain.person_seasons.first;
-    SET_CAPTAIN_SORT = CAPTAIN_SEASON.surname _ ", " _ CAPTAIN_SEASON.first_name; 
+    SET CAPTAIN_SORT = CAPTAIN_SEASON.surname _ ", " _ CAPTAIN_SEASON.first_name; 
     SET CAPTAIN_NAME = CAPTAIN_SEASON.display_name;
 -%]
 
       <tr>
         <td>[% SEASON_SORT %]</td>
-        <td><a href="[% c.uri_for_action("/teams/view_specific_season_by_url_key", [team_season.club_season.club.url_key, team_season.team.url_key, team_season.season.url_key]) %]">[% team_season.season.name | html_entity %]</a>[% CURRENT_TEXT %]</td>
+        <td><a href="[% c.uri_for_action("/teams/view_specific_season_by_url_key", [team.club.url_key, team_season.team.url_key, team_season.season.url_key]) %]">[% team_season.season.name | html_entity %]</a>[% CURRENT_TEXT %]</td>
         <td>[% TEAM_NAME | html_entity %]</td>
-        <td><a href="[% c.uri_for_action("/clubs/view_specific_season", [team_season.club_season.club.url_key, team_season.season.url_key]) %]">[% team_season.club_season.full_name | html_entity %]</a></td>
+        <td><a href="[% c.uri_for_action("/clubs/view_specific_season", [team.club.url_key, team_season.season.url_key]) %]">[% team_season.club_season.full_name | html_entity %]</a></td>
         <td>[% team_season.division_season.division.rank %]</td>
         <td><a href="[% c.uri_for_action("/league-tables/view_specific_season", [team_season.division_season.division.url_key, team_season.season.url_key]) %]">[% team_season.division_season.name | html_entity %]</a></td>
         <td>[% SET_CAPTAIN_SORT | html_entity %]</td>

@@ -1,0 +1,29 @@
+<form method="post" action="[% form_action %]">
+<div id="officials-container">
+<ul class="sortable" id="officials-list">
+[%
+  SET position_number = 0;
+  SET official_ids = "";
+  WHILE (official = officials.next);
+    # Reset the team list
+    
+    # Build the IDs string for the hidden field
+    IF official_ids == "";
+      SET official_ids = official.id;
+    ELSE;
+      SET official_ids = official_ids _ "," _ official.id;
+    END;
+    
+    # Increment the position number
+    SET position_number = position_number + 1;
+    CALL c.log.debug("increased position: " _ position_number);
+-%]
+  <li class="ui-state-default sort-official" data-official-id="[% official.id %]"><span class="ui-icon ui-icon-arrowthick-2-n-s"></span> <span class="official-position-number" id="official-[% official.id %]-position">[% position_number %]</span> <span class="official-position-name">[% official.position_name | html_entity %]</span></li>
+[%
+  END;
+-%]
+</ul><br />
+<input type="hidden" id="official_positions" name="official_positions" value="[% official_ids %]" />
+</div>
+<input type="submit" name="Submit" value="Save" />
+</form>

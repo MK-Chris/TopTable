@@ -33,7 +33,7 @@ sub auto :Private {
   $c->stash({subtitle1 => $c->maketext("menu.text.contactreason")});
   
   push(@{$c->stash->{breadcrumbs}}, {
-    path  => $c->uri_for("/info/contact-reasons"),
+    path => $c->uri_for("/info/contact-reasons"),
     label => $c->maketext("menu.text.contactreason"),
   });
 }
