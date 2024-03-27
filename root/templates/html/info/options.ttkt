@@ -1,6 +1,6 @@
 <ul class="option-list">
   <li>
-    <a href="[% c.uri_for("/info/officials") %]">[% c.maketext("menu.text.committee") %]</a>
+    <a href="[% c.uri_for("/info/officials") %]">[% c.maketext("menu.text.officials") %]</a>
   </li>
   <li>
     <a href="[% c.uri_for("/info/rules") %]">[% c.maketext("menu.text.rules") %]</a>

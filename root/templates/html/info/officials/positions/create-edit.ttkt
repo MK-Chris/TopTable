@@ -1,18 +1,11 @@
 [%
 IF c.flash.show_flashed;
-  SET venue = c.flash.venue;
+  SET POSITION_BEFORE = c.flash.position_before;
 ELSE;
-  IF club.defined;
-    SET venue = club.venue;
-  ELSE;
-    
+  IF position.defined;
+    SET POSITION_BEFORE = position.get_season(season).next_position.official.id;
+    CALL c.log.debug("position before: " _ POSITION_BEFORE);
   END;
-END;
-
-IF active;
-  SET active_checked = ' checked="checked"';
-ELSE;
-  SET active_checked = '';
 END;
 -%]
 
@@ -22,7 +15,7 @@ END;
   <div class="label-field-container">
     <label for="position_name">[% c.maketext("officials.field.position-name") %]</label>
     <div class="field-container">
-      <input type="text" id="position_name" name="position_name" value="[% c.flash.position_name OR official.position_name %]" />
+      <input type="text" id="position_name" name="position_name" value="[% c.flash.position_name OR position.position_name %]" />
     </div>
     <div class="clear-fix"></div>
   </div>
@@ -30,9 +23,9 @@ END;
 IF tokeninput_confs;
 -%]
   <div class="label-field-container">
-    <label for="holder">[% c.maketext("officials.field.position-name") %]</label>
+    <label for="holders">[% c.maketext("officials.field.position-holder") %]</label>
     <div class="field-container">
-      <input type="text" id="holder" name="holder" value="" />
+      <input type="text" id="holders" name="holders" value="" />
     </div>
     <div class="clear-fix"></div>
   </div>

@@ -149,6 +149,7 @@ a, a:active, a:visited {
   text-decoration: underline;
 }
 
+table td {vertical-align: top;}
 div.match-player-notice{margin-top: 5px;}
 td.loan-player, td.loan-player > a, a.loan-player, a.loan-player:active, a.loan-player:visited {color: #4cb1e0;}
 td.inactive-player, td.inactive-player > a, a.inactive-player, a.inactive-player:active, a.inactive-player:visited {color: #ff0000;}
@@ -972,7 +973,7 @@ div.doubles_home_player_selection, div.doubles_away_player_selection {
 }
 
 /* Sortable grid teams */
-.grid-team {
+.grid-team, .sort-official {
   min-height: 29px;
   min-width: 280px;
   -webkit-border-radius: 5px;

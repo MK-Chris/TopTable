@@ -632,7 +632,7 @@ sub delete :Chained("base") :PathPart("delete") :Args(0) {
     subtitle1 => $enc_full_name,
     subtitle2 => $c->maketext("admin.delete"),
     template => "html/clubs/delete.ttkt",
-    view_online_display => sprintf( "Deleting %s", $club->full_name ),
+    view_online_display => sprintf("Deleting %s", $club->full_name),
     view_online_link => 0,
   });
   

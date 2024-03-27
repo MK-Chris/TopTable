@@ -158,11 +158,59 @@ sub teams_in_season_by_club_by_team_name {
   return $self->search({
     "team_seasons.season" => $season->id,
   }, {
-    prefetch  => {
+    prefetch => {
       "club" => "club_seasons",
-      "team_seasons" => ["season", {division_season => "division"}],
+      "team_seasons" => [qw( season captain ), {division_season => "division"}],
     },
-    order_by  => {-asc => [qw( club.short_name me.name)]}
+    order_by  => {-asc => [qw( club.short_name me.name )]}
+  });
+}
+
+=head2 teams_in_season_by_division_by_club_team_name
+
+A predefined search for all teams in a particular season ordered by club (alphabetically by club short name), then team name.
+
+=cut
+
+sub teams_in_season_by_division_by_club_team_name {
+  my ( $self, $season ) = @_;
+  
+  return $self->search({
+    "team_seasons.season" => $season->id,
+  }, {
+    prefetch => {
+      "club" => "club_seasons",
+      "team_seasons" => [qw( season captain ), {division_season => "division"}],
+    },
+    order_by  => {-asc => [qw( division.rank club.short_name me.name )]}
+  });
+}
+
+=head2 get_teams_with_captains_in_season
+
+Return a list of teams in a season with a captain set.  Order by club / team name or by division rank (then club / team name), depending on the $view-mode param.
+
+=cut
+
+sub get_teams_with_captains_in_season {
+  my ( $self, $params ) = @_;
+  my $season = $params->{season};
+  my $view_by = $params->{view_by};
+  
+  my $order_by = $view_by eq "by-division" ? {-asc => [qw( division.rank club.short_name me.name )]} : {-asc => [qw( club.short_name me.name division.rank )]};
+  
+  return $self->search({
+    "team_seasons.season" => $season->id,
+    "club_seasons.season" => $season->id,
+    "team_seasons.captain" => {
+      "!=" => undef,
+    }
+  }, {
+    prefetch => {
+      "club" => "club_seasons",
+      "team_seasons" => [qw( season captain ), {division_season => "division"}],
+    },
+    order_by => $order_by,
   });
 }
 
@@ -176,10 +224,10 @@ sub get_teams_with_specified_captain {
   my ( $self, $person, $season ) = @_;
   
   return $self->search({
-    "team_seasons.season"   => $season->id,
-    "team_seasons.captain"  => $person->id,
+    "team_seasons.season" => $season->id,
+    "team_seasons.captain" => $person->id,
   }, {
-    join => {team_seasons  => "captain"},
+    join => {team_seasons => "captain"},
     prefetch => "club",
   });
 }

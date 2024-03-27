@@ -42,28 +42,6 @@ END;
   </div>
   
   <div class="label-field-container">
-    <label for="reason">[% c.maketext("contact.form.field.reason") %]</label>
-    <div class="field-container">
-      <select name="reason" id="reason" data-placeholder="[% c.maketext("contact.form.field.reason") %]">
-        <option></option>
-[%
-WHILE (reason = reasons.next);
-  IF c.flash.reason == reason.id;
-    SET SELECTED = ' selected="selected"';
-  ELSE;
-    SET SELECTED = '';
-  END;
--%]
-        <option value="[% reason.id %]"[% SELECTED %]>[% reason.name | html_entity %]</option>
-[%
-END;
--%]
-      </select>
-    </div>
-    <div class="clear-fix"></div>
-  </div>
-  
-  <div class="label-field-container">
     <label for="message">[% c.maketext("contact.form.field.message") %]</label>
     <div class="field-container">
       <textarea id="message" name="message" placeholder="[% c.maketext("contact.form.field.message") %]">[% c.flash.message | html_entity %]</textarea>

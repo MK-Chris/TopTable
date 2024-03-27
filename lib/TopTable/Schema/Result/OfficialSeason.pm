@@ -68,13 +68,6 @@ __PACKAGE__->table("official_seasons");
   extra: {unsigned => 1}
   is_nullable: 0
 
-=head2 position_holder
-
-  data_type: 'integer'
-  extra: {unsigned => 1}
-  is_foreign_key: 1
-  is_nullable: 0
-
 =cut
 
 __PACKAGE__->add_columns(
@@ -96,30 +89,21 @@ __PACKAGE__->add_columns(
   { data_type => "varchar", is_nullable => 0, size => 150 },
   "position_order",
   { data_type => "smallint", extra => { unsigned => 1 }, is_nullable => 0 },
-  "position_holder",
-  {
-    data_type => "integer",
-    extra => { unsigned => 1 },
-    is_foreign_key => 1,
-    is_nullable => 0,
-  },
 );
 
-=head1 UNIQUE CONSTRAINTS
-
-=head2 C<official_season_order>
+=head1 PRIMARY KEY
 
 =over 4
 
-=item * L</season>
+=item * L</official>
 
-=item * L</position_order>
+=item * L</season>
 
 =back
 
 =cut
 
-__PACKAGE__->add_unique_constraint("official_season_order", ["season", "position_order"]);
+__PACKAGE__->set_primary_key("official", "season");
 
 =head1 RELATIONS
 
@@ -138,19 +122,22 @@ __PACKAGE__->belongs_to(
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
 );
 
-=head2 position_holder
+=head2 official_season_people
 
-Type: belongs_to
+Type: has_many
 
-Related object: L<TopTable::Schema::Result::Person>
+Related object: L<TopTable::Schema::Result::OfficialSeasonPerson>
 
 =cut
 
-__PACKAGE__->belongs_to(
-  "position_holder",
-  "TopTable::Schema::Result::Person",
-  { id => "position_holder" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+__PACKAGE__->has_many(
+  "official_season_people",
+  "TopTable::Schema::Result::OfficialSeasonPerson",
+  {
+    "foreign.official" => "self.official",
+    "foreign.season"   => "self.season",
+  },
+  { cascade_copy => 0, cascade_delete => 0 },
 );
 
 =head2 season
@@ -168,10 +155,56 @@ __PACKAGE__->belongs_to(
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
 );
 
+=head2 position_holders
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2022-08-21 20:27:27
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:LIeShVfgunYNwXz6AL/38A
+Type: many_to_many
 
+Composing rels: L</official_season_people> -> position_holder
+
+=cut
+
+__PACKAGE__->many_to_many(
+  "position_holders",
+  "official_season_people",
+  "position_holder",
+);
+
+
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-03-25 13:28:37
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:lIqmMZEKqdtrcxll+JN7fQ
+
+=head2 positioned_before
+
+Return the OfficialSeason object positioned after this one (i.e., the one that this is positioned before)
+
+=cut
+
+sub next_position {
+  my ( $self ) = @_;
+  
+  # Return the next position on from us in the list (the one that this is 'ordered before')
+  return $self->result_source->schema->resultset("OfficialSeason")->find({
+    season => $self->season->id,
+    position_order => {">" => $self->position_order},
+  }, {
+    prefetch => "official",
+    order_by => {-asc => [qw( position_order )]},
+    rows => 1,
+  });
+}
+
+=head2 check_holder
+
+Check the given person is the holder of this position in this season.
+
+=cut
+
+sub check_holder {
+  my ( $self, $person ) = @_;
+  
+  # Return 1 if this person holds the position, or 0 if not.
+  return defined($self->find_related("official_season_people", {position_holder => $person->id})) ? 1 : 0;
+}
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 __PACKAGE__->meta->make_immutable;

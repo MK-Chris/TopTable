@@ -273,6 +273,56 @@ sub do_contact :Path("send-email") {
   }
 }
 
+=head2 team_captains
+
+Retrieve all captains and their contact details.  Group either by division or team, depending on the argument passed in.
+
+=cut
+
+sub team_captains :Path("team-captains") :Args(1) {
+  my ( $self, $c, $view_by ) = @_;
+  
+  # Check there's a current season, otherwise we'll error
+  my $season = $c->model("DB::Season")->get_current;
+  
+  unless ( defined($season) ) {
+    # Error, no current season
+    $c->response->redirect($c->uri_for("/",
+                                {mid => $c->set_status_msg({error => $c->maketext("team-captains.view.error.no-current-season")})}));
+    $c->detach;
+    return;
+  }
+  
+  if ( $view_by ne "by-club" and $view_by ne "by-division" ) {
+    # Invalid grouping, just throw a 404
+    $c->detach(qw(TopTable::Controller::Root default));
+  }
+  
+  # Check the auth for edit / delete links
+  $c->forward("TopTable::Controller::Users", "check_authorisation", [[qw( club_edit club_delete team_edit team_delete person_edit person_delete )], "", 0]);
+  
+  $c->stash({
+    template => sprintf("html/info/team-captains/view-%s.ttkt", $view_by),
+    subtitle1 => $c->maketext("menu.text.captains"),
+    teams => scalar $c->model("DB::Team")->get_teams_with_captains_in_season({season => $season, view_by => $view_by}),
+    external_scripts => [
+      $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
+      $c->uri_for(sprintf("/static/script/info/team-captains/view-%s.js", $view_by)),
+    ],
+    external_styles => [
+      $c->uri_for("/static/css/chosen/chosen.min.css"),
+      $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/rowGroup.dataTables.min.css"),
+    ],
+  });
+}
+
 
 =encoding utf8
 

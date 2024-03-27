@@ -594,7 +594,7 @@ sub divisions {
   
   return $self->search_related("division_seasons", undef, {
     prefetch => "division",
-    order_by => {-asc => [qw( rank )]}
+    order_by => {-asc => [qw( division.rank )]}
   });
 }
 

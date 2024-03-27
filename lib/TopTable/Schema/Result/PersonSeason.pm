@@ -710,8 +710,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-11-20 08:25:35
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:KoSQIlkT6Rp63Tnb3MW/TQ
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-03-18 23:57:35
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:a0GgLyoQ8JQhVMen56WQrw
 
 __PACKAGE__->add_columns(
     "last_updated",

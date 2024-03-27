@@ -97,7 +97,7 @@ sub find_id_or_url_key {
 
 =head2 generate_url_key
 
-Generate a unique key from the given season name.
+Generate a unique key from the given contact reason name.
 
 =cut
 

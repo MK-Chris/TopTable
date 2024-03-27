@@ -219,17 +219,23 @@ msgstr "Information"
 msgid "menu.title.info"
 msgstr "League Information"
 
-msgid "menu.text.committee"
-msgstr "Officials"
+msgid "menu.text.officials"
+msgstr "League Officials"
 
 msgid "menu.title.officials"
-msgstr "League Officials"
+msgstr "League Officials for %1"
+
+msgid "menu.text.captains"
+msgstr "Team captains"
+
+msgid "menu.title.captains"
+msgstr "Team captains"
 
 msgid "menu.text.rules"
 msgstr "Rules"
 
 msgid "menu.title.rules"
-msgstr "Rules"
+msgstr "Rules for %1"
 
 msgid "menu.text.privacy"
 msgstr "Privacy"
@@ -244,7 +250,7 @@ msgid "menu.text.contact"
 msgstr "Contact"
 
 msgid "menu.title.contact"
-msgstr "Contact Us"
+msgstr "Contact"
 
 msgid "menu.text.contactreason"
 msgstr "Contact reasons"
@@ -1005,6 +1011,24 @@ msgstr "Registered for"
 
 msgid "teams.list.none"
 msgstr "There are no teams."
+
+msgid "teams.captain.contact"
+msgstr "Contact the team captain (%1)"
+
+msgid "teams.captains.contact.error.no-season"
+msgstr "There are no seasons, so we cannot contact team captains."
+
+msgid "teams.captains.contact.error.team-not-in-season"
+msgstr "There is no record of %1 in the current season, so there&#39;s no captain to contact."
+
+msgid "teams.captains.contact.error.no-captain-listed"
+msgstr "%1 does not have a captain set, so the captain can&#39;t be emailed."
+
+msgid "teams.captains.contact.error.no-email-address-listed"
+msgstr "The captain listed for %1 (%2) does not have an email address listed, so can&#39;t be emailed."
+
+msgid "team-captains.view.error.no-current-season"
+msgstr "There is no current season, so teams captains cannot be viewed."
 
 ### People
 msgid "people.create"
@@ -3865,14 +3889,159 @@ msgstr "No officials to view."
 msgid "officials.create.error.no-current-season"
 msgstr "There is no current season, so positions for officials cannot be added; create a season first."
 
+msgid "officials.edit.error.no-current-season"
+msgstr "There is no current season, so positions for officials cannot be edited; create a season first."
+
+msgid "officials.reorder.error.no-current-season"
+msgstr "There is no current season, so positions for officials cannot be reordered; create a season first."
+
+msgid "officials.reorder.error.no-officials-in-current-season"
+msgstr "There are no officials in use in the current season; add some officials or create some new positions."
+
+msgid "officials.reorder.error.wrong-official-id"
+msgstr "%s is not a valid official identifier or is not used in the current season."
+
+msgid "officials.reorder.error.no-position-for-official"
+msgstr "%1 is being used in %2 but has not been listed in a position for the list of officials."
+
+msgid "officials.reorder.error.position-used-more-than-once"
+msgstr "%1 is used more than once: %2.  Please ensure each official position is used only once."
+
+msgid "officials.reorder.success"
+msgstr "The display order for league officials has been set."
+
+msgid "officials.list.season"
+msgstr "Season"
+
+msgid "officials.list.holders"
+msgstr "Holder(s)"
+
+msgid "officials.field.position-order"
+msgstr "Order"
+
 msgid "officials.field.position-name"
-msgstr "Position name"
+msgstr "Position"
+
+msgid "officials.field.name-sortable"
+msgstr "Name (sortable)"
+
+msgid "officials.field.name"
+msgstr "Name"
 
 msgid "officials.field.position-holder"
-msgstr "Position holder"
+msgstr "Position holder(s)"
+
+msgid "officials.field.tel"
+msgstr "Telephone"
+
+msgid "officials.field.tel-home"
+msgstr "Home"
+
+msgid "officials.field.tel-mobile"
+msgstr "Mobile"
+
+msgid "officials.field.tel-work"
+msgstr "Work"
+
+msgid "officials.field.email"
+msgstr "Email"
+
+msgid "officials.field.position-before"
+msgstr "Order this position before"
+
+msgid "officials.field.position-order.at-end"
+msgstr "At the end"
 
 msgid "officials.field.holder-no-people"
 msgstr "You cannot assign this position, as there are no people entered yet."
+
+msgid "officials.form.error.no-current-season"
+msgstr "There is no current season, so league officials cannot be created or edited - create a new season first."
+
+msgid "officials.form.error.position-invalid"
+msgstr "The official position specified is invalid."
+
+msgid "officials.form.error.name-exists"
+msgstr "An official position with that name already exists."
+
+msgid "officials.form.error.name-blank"
+msgstr "The position name field is blank."
+
+msgid "officials.form.error.position-before-not-in-season"
+msgstr "The &#39;position before&#39; value is is not a position in use in this season, please select from the list."
+
+msgid "officials.form.error.position-before-invalid"
+msgstr "The &#39;position before&#39; value is invalid, please select from the list."
+
+msgid "officials.form.error.position-before-blank"
+msgstr "You must select a &#39;position before&#39; value from the list."
+
+msgid "officials.form.error.invalid-holders-single"
+msgstr "%1 of the position holders specified is invalid."
+
+msgid "officials.form.error.invalid-holders-multiple"
+msgstr "%1 of the position holders specified are invalid."
+
+msgid "officials.form.error.no-holders"
+msgstr "No holders of this position have been specified."
+
+msgid "officials.delete.error.cannot-delete"
+msgstr "You cannot delete %1, as it has been used in seasons that are now complete."
+
+msgid "officials.positions.error.unused-in-season"
+msgstr "The position of %1 is not being used in the season %2."
+
+msgid "officials.positions.error.person-not-in-position"
+msgstr "%1 does not hold the position of %2 so cannot be contacted in this way."
+
+msgid "officials.positions.error.no-email-address"
+msgstr "%1 does not have an email address listed, so can&#39;t be contacted by email."
+
+msgid "officials.action.send-email"
+msgstr "Send email"
+
+msgid "officials.contact.thank-you.text"
+msgstr "Thank you for your message, %1.  It has been sent to %2, who will respond in due course to your email address directly."
+
+### Team captains list
+msgid "team-captains.list.heading.club"
+msgstr "Club"
+
+msgid "team-captains.list.heading.team"
+msgstr "Team name"
+
+msgid "team-captains.list.heading.division-rank"
+msgstr "Division rank"
+
+msgid "team-captains.list.heading.division"
+msgstr "Division"
+
+msgid "team-captains.list.heading.captain-name-sort"
+msgstr "Name (sortable)"
+
+msgid "team-captains.list.heading.captain-name"
+msgstr "Name"
+
+msgid "team-captains.list.heading.captain-tel"
+msgstr "Telephone"
+
+msgid "team-captains.list.heading.captain-email"
+msgstr "Email"
+
+msgid "team-captains.list.field.tel-home"
+msgstr "Home"
+
+msgid "team-captains.list.field.tel-mobile"
+msgstr "Mobile"
+
+msgid "team-captains.list.field.tel-work"
+msgstr "Work"
+
+msgid "team-captains.list.action.send-email"
+msgstr "Send email"
+
+msgid "team-captains.list.none"
+msgstr "No captain details have been entered."
 
 ### Admin
 ## Bans
@@ -4036,6 +4205,9 @@ msgstr "Cancel"
 msgid "admin.upload"
 msgstr "Upload"
 
+msgid "admin.reorder"
+msgstr "Reorder"
+
 # Currently only used for people, but could be expanded, so keep it generic
 msgid "admin.import"
 msgstr "Import"
@@ -4075,6 +4247,9 @@ msgstr "Approve %1"
 
 msgid "admin.reject-object"
 msgstr "Reject on %1"
+
+msgid "admin.reorder-officials"
+msgstr "Change the display order of league officials"
 
 msgid "admin.form.invalid-action"
 msgstr "Invalid action (%1) passed; the action must be 'create' or 'edit'."
@@ -5601,6 +5776,12 @@ msgstr "Changed the captain for %1%2."
 msgid "system-event-log.description.captain-clear"
 msgstr "Removed the captain for %1%2."
 
+msgid "system-event-log.description.assign-official"
+msgstr "Assigned the official position for %1%2."
+
+msgid "system-event-log.description.unassign-official"
+msgstr "Removed the official position for %1%2."
+
 msgid "system-event-log.and"
 msgstr "and"
 
@@ -5746,6 +5927,12 @@ msgstr "filter"
 msgid "object.plural.average-filters"
 msgstr "filters"
 
+msgid "object.singular.official-positions"
+msgstr "committee position"
+
+msgid "object.plural.official-positions"
+msgstr "committee positions"
+
 msgid "object.plural.search-all"
 msgstr "clubs, teams, people, matches, etc."
 
@@ -5776,6 +5963,9 @@ msgstr "Log in"
 
 msgid "form.button.upload"
 msgstr "Upload"
+
+msgid "form.button.send"
+msgstr "Send"
 
 msgid "tokeninput.text.no-results"
 msgstr "No results"
@@ -5988,4 +6178,34 @@ msgid "email.plain-text.contact-form"
 msgstr "Hi\n\n"
 "You have been sent a message through the contact form on %1 from %2.  If you reply to this email, the email you send will go to %2 at %3.  Their message is below:\n\n"
 "%4"
-"This action was performed from IP address %5.  Find out more about this IP address here: http://www.ip-adress.com/ip_tracer/%5ik."
+"This action was performed from IP address %5.  Find out more about this IP address here: http://www.ip-adress.com/ip_tracer/%5."
+
+msgid "email.subject.contact-official"
+msgstr "Message from %1 on %2"
+
+msgid "email.html.contact-official"
+msgstr "Hi %1<br /><br />\n\n"
+"You have been sent a message from %2 in your capacity as %3 for %4.  If you reply to this email, your response will go directly to %2 at %5.  Their message is below:<br /><br />\n\n"
+"<blockquote>%6</blockquote>"
+"This action was performed from IP address %7.  Find out more about this IP address <a href="http://www.ip-adress.com/ip_tracer/%7">here</a>."
+
+msgid "email.plain-text.contact-official"
+msgstr "Hi %1\n\n"
+"You have been sent a message from %2 in your capacity as %3 for %4.  If you reply to this email, your response will go directly to %2 at %5.  Their message is below:\n\n"
+"%6"
+"This action was performed from IP address %7.  Find out more about this IP address here: http://www.ip-adress.com/ip_tracer/%7."
+
+msgid "email.subject.contact-captain"
+msgstr "Message from %1 on %2"
+
+msgid "email.html.contact-captain"
+msgstr "Hi %1<br /><br />\n\n"
+"You have been sent a message from %2 in your capacity as captain of %3 in %4.  If you reply to this email, your response will go directly to %2 at %5.  Their message is below:<br /><br />\n\n"
+"<blockquote>%6</blockquote>"
+"This action was performed from IP address %7.  Find out more about this IP address <a href="http://www.ip-adress.com/ip_tracer/%7">here</a>."
+
+msgid "email.plain-text.contact-captain"
+msgstr "Hi %1\n\n"
+"You have been sent a message from %2 in your capacity as captain of %3 in %4.  If you reply to this email, your response will go directly to %2 at %5.  Their message is below:\n\n"
+"%6"
+"This action was performed from IP address %7.  Find out more about this IP address here: http://www.ip-adress.com/ip_tracer/%7."

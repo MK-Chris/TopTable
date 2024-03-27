@@ -2,6 +2,7 @@ package TopTable::Controller::Info::Officials;
 use Moose;
 use namespace::autoclean;
 use HTML::Entities;
+use DDP;
 
 BEGIN { extends 'Catalyst::Controller'; }
 
@@ -34,7 +35,7 @@ sub auto :Private {
   push(@{$c->stash->{breadcrumbs}}, {
     # Clubs listing
     path => $c->uri_for("/info/officials"),
-    label => $c->maketext("menu.text.committee"),
+    label => $c->maketext("menu.text.officials"),
   });
 }
 
@@ -48,6 +49,9 @@ sub base :Chained("/") :PathPart("info/officials") :CaptureArgs(0) {
   my ( $self, $c ) = @_;
   
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["committee_view", $c->maketext("user.auth.view-officials"), 1]);
+  
+  # Check the authorisation to edit clubs we can display the link if necessary
+  $c->forward("TopTable::Controller::Users", "check_authorisation", [ [ qw(committee_create committee_edit committee_delete person_edit person_delete) ], "", 0]);
 }
 
 =head2 view_current_season
@@ -64,10 +68,24 @@ sub view_current_season :Chained("base") :PathPart("") :Args(0) {
   my $season = $c->model("DB::Season")->get_current;
   $season = $c->model("DB::Season")->last_complete_season unless defined($season);
   
+  $c->forward("TopTable::Controller::Users", "check_authorisation", [ [ qw(committee_edit) ], "", 0]);
+  
+  # Set up the title links if we need them - we only want this when viewing the current season, so check it here
+  my @title_links = ();
+  
+  # Push edit link if we are authorised and the season is not yet complete
+  push(@title_links, {
+    image_uri => $c->uri_for("/static/images/icons/0018-Pencil-icon-32.png"),
+    text => $c->maketext("admin.reorder-officials"),
+    link_uri => $c->uri_for("/info/officials/reorder"),
+  }) if $c->stash->{authorisation}{committee_edit} and !$season->complete;
+  
   if ( defined($season) ) {
     $c->stash({
       season => $season,
       page_description => $c->maketext("description.officials.view-current", $site_name),
+      title_links => \@title_links,
+      season_type => "current", # Set this even if this is the 'last complete' season, as we still want to show the contact details in that case
     });
     
     $c->detach("view_finalise");
@@ -93,16 +111,20 @@ sub view_specific_season :Chained("base") :PathPart("seasons") :Args(1) {
   if ( defined( $season ) ) {
     my $enc_season_name = encode_entities($season->name);
     
+    # Stash whether this is the previous or current season so we can choose the right JS file
+    my $season_type = $season->complete ? "previous" : "current";
+    
     $c->stash({
       season => $season,
       specific_season => 1,
       enc_season_name => $enc_season_name,
       page_description => $c->maketext("description.officials.view-specific", $site_name, $enc_season_name),
+      season_type => $season_type,
     });
   
     # Push the season list URI and the current URI on to the breadcrumbs
     push(@{$c->stash->{breadcrumbs}}, {
-      path => $c->uri_for_action("/info/officials/view_seasons_first_page"),
+      path => $c->uri_for_action("/info/officials/view_seasons"),
       label => $c->maketext("menu.text.season"),
     }, {
       path => $c->uri_for_action("/info/officials/view_specific_season", [$season->url_key]),
@@ -128,10 +150,25 @@ sub view_finalise :Private {
   my $season = $c->stash->{season};
   
   $c->stash({
-    template  => "html/info/officials/view.ttkt",
-    subtitle1 => $c->maketext("menu.title.officials"),
-    subtitle2 => encode_entities( $season->name ),
-    officials => [ $c->model("DB::Official")->all_officials_in_season( $season ) ],
+    template => "html/info/officials/view.ttkt",
+    subtitle1 => $c->maketext("menu.text.officials"),
+    subtitle2 => encode_entities($season->name),
+    officials => scalar $c->model("DB::Official")->all_officials_in_season($season),
+    external_scripts => [
+      $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
+      $c->uri_for("/static/script/info/officials/view.js"),
+    ],
+    external_styles => [
+      $c->uri_for("/static/css/chosen/chosen.min.css"),
+      $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/rowGroup.dataTables.min.css"),
+    ],
   });
 }
 
@@ -141,272 +178,116 @@ View a list of seasons that you can view the officials for.
 
 =cut
 
-sub view_seasons :Chained("base") :PathPart("seasons") :CaptureArgs(0) {
+sub view_seasons :Chained("base") :PathPart("seasons") :Args(0) {
   my ( $self, $c ) = @_;
-  
-  # Push the current URI on to the breadcrumbs
-  push(@{$c->stash->{breadcrumbs}}, {
-    path => $c->uri_for_action("/info/officials/view_seasons_first_page"),
-    label => $c->maketext("menu.text.season"),
-  });
-}
-
-=head2 view_seasons_first_page
-
-List the clubs on the first page.
-
-=cut
-
-sub view_seasons_first_page :Chained("view_seasons") :PathPart("") :Args(0) {
-  my ( $self, $c ) = @_;
-  
-  $c->stash({canonical_uri => $c->uri_for_action("/info/officials/view_seasons_first_page")});
-  $c->detach("retrieve_paged_seasons", [1]);
-}
-
-=head2 view_seasons_specific_page
-
-List the clubs on the specified page.
-
-=cut
-
-sub view_seasons_specific_page :Chained("view_seasons") :PathPart("page") :Args(1) {
-  my ( $self, $c, $page_number ) = @_;
-  
-  # If the page number is less then 1, not defined, false, or not a number, set it to 1
-  $page_number = 1 if !defined( $page_number ) or !$page_number or $page_number !~ /^\d+$/ or $page_number < 1;
-  
-  if ( $page_number == 1 ) {
-    $c->stash({canonical_uri => $c->uri_for_action("/info/officials/view_seasons_first_page")});
-  } else {
-    $c->stash({canonical_uri => $c->uri_for_action("/info/officials/view_seasons_specific_page", [$page_number])});
-  }
-  
-  $c->detach( "retrieve_paged_seasons", [$page_number] );
-}
-
-=head2 retrieve_paged_seasons
-
-Performs the lookups for clubs with the given page number.
-
-=cut
-
-sub retrieve_paged_seasons :Private {
-  my ( $self, $c, $page_number ) = @_;
   my $site_name = $c->stash->{enc_site_name};
-  
-  my $seasons = $c->model("DB::Season")->page_records({
-    page_number => $page_number,
-    results_per_page => $c->config->{Pagination}{default_page_size},
-  });
-  
-  my $page_info = $seasons->pager;
-  my $page_links = $c->forward( "TopTable::Controller::Root", "generate_pagination_links", [{
-    page_info => $page_info,
-    page1_action => "/info/officials/view_seasons_first_page",
-    specific_page_action => "/info/officials/view_seasons_specific_page",
-    current_page => $page_number,
-  }] );
   
   # Set up the template to use
   $c->stash({
     template => "html/info/officials/list-seasons.ttkt",
+    external_scripts => [
+      $c->uri_for("/static/script/standard/option-list.js"),
+    ],
     view_online_display => "Viewing league officials",
     view_online_link => 1,
-    seasons => $seasons,
+    seasons => scalar $c->model("DB::Season")->all_seasons,
     subtitle1 => $c->maketext("menu.title.officials"),
     subtitle2 => $c->maketext("menu.text.season"),
-    page_info => $page_info,
-    page_links => $page_links,
     page_description => $c->maketext("description.officials.list-seasons", $site_name),
   });
-}
-
-=head2 base_position
-
-Chain base for getting the committee position ID and checking it.
-
-=cut
-
-sub base_position :Chained("/") :PathPart("info/officials/positions") :CaptureArgs(1) {
-  my ( $self, $c, $id_or_key ) = @_;
   
-  my $position = $c->model("DB::Official")->find_id_or_url_key($id_or_key);
-  
-  if ( defined($position) ) {
-    # Position found, stash it, then stash the name / view URL in the breadcrumbs section of our stash
-    my $enc_name = encode_entities($position->position_name);
-    $c->stash({
-      position => $position,
-      enc_name => $enc_name,
-      subtitle1 => $enc_name,
-    });
-    
-    # Push the clubs list page on to the breadcrumbs
-    push(@{$c->stash->{breadcrumbs}}, {
-      # Club view page (current season)
-      path => $c->uri_for_action("/officials/view_position", [$position->url_key]),
-      label => $enc_name,
-    });
-  } else {
-    # 404
-    $c->detach(qw(TopTable::Controller::Root default));
-    return;
-  }
-}
-
-=head2 create
-
-Create an official / committee member position.  The display order can be edited afterwards, but the new position will be placed after all existing ones.  There is also an option to assign at this stage, although this option is also given in the 'assign_position' option.
-
-=cut
-
-sub create :Path("create") {
-  my ( $self, $c ) = @_;
-  
-  # Check that we are authorised to create committee positions
-  $c->forward("TopTable::Controller::Users", "check_authorisation", ["committee_create", $c->maketext("user.auth.create-officials"), 1]);
-  
-  my $current_season = $c->mode("DB::Season")->get_current;
-  
-  # Check we have a current season
-  unless ( defined($current_season) ) {
-    # Error, no current season
-    $c->response->redirect($c->uri_for("/seasons/create",
-                                {mid => $c->set_status_msg({error => $c->maketext("officials.create.error.no-current-season")})}));
-    $c->detach;
-    return;
-  }
-  
-  # Get the number of people - if there are none, we can't show the assignment field.
-  my $people_count = $c->model("DB::Person")->search->count;
-  
-  if ( $people_count ) {
-    # First setup the function arguments
-    my $tokeninput_options = {
-      jsonContainer => "json_search",
-      tokenLimit => 1,
-      hintText => encode_entities($c->maketext("person.tokeninput.type")),
-      noResultsText => encode_entities($c->maketext("tokeninput.text.no-results")),
-      searchingText => encode_entities($c->maketext("tokeninput.text.searching")),
-    };
-    
-    # Add the pre-population if needed
-    $tokeninput_options->{prePopulate} = [{id => $c->flash->{holder}->id, name => $c->flash->{holder}->display_name}] if defined($c->flash->{holder});
-    
-    my $tokeninput_confs = [{
-      script => $c->uri_for("/people/search"),
-      options => encode_json($tokeninput_options),
-      selector => "holder",
-    }];
-    
-    $c->stash({tokeninput_confs => $tokeninput_confs});
-  }
-  
-  # Get venues and people to list
-  $c->stash({
-    template => "html/info/officials/create-edit.ttkt",
-    scripts => [
-      "tokeninput-standard",
-    ],
-    external_scripts => [
-      $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js", {v => 2}),
-      $c->uri_for("/static/script/info/officials/create-edit.js"),
-    ],
-    external_styles => [
-      $c->uri_for("/static/css/tokeninput/token-input-tt.css"),
-    ],
-    form_action => $c->uri_for("do-create-position"),
-    subtitle2 => $c->maketext("admin.create"),
-    view_online_display => "Creating league officials",
-    view_online_link => 0,
-  });
-  
-  # Push the breadcrumbs links
+  # Push the current URI on to the breadcrumbs
   push(@{$c->stash->{breadcrumbs}}, {
-    path => $c->uri_for_action("/info/officials/create_position"),
-    label => $c->maketext("admin.create"),
+    path => $c->uri_for_action("/info/officials/view_seasons"),
+    label => $c->maketext("menu.text.season"),
   });
 }
 
-=head2 edit_position
-
-Edit an official / committee member position.  This takes effect for the current season (and is used as the basis for the position in future seasons); if there is no current season, an error is thrown.
-
-=cut
-
-sub edit_position :Path("edit-position") {
-  my ( $self, $c ) = @_;
-  
-  
-}
-
-=head2 delete_position
-
-Edit an official / committee member position.  This can only be done if the position hasn't been used for any season.
-
-=cut
-
-sub delete_position :Path("delete-position") {
-  my ( $self, $c ) = @_;
-  
-  
-}
-
-=head2 assign_position
-
-Assign a person to the position of an official / committee member in the current season; if there is no current season, an error is thrown.
-
-=cut
-
-sub assign_position :Path("assign-position") {
-  my ( $self ) = @_;
-  
-  
-}
-
-=head2 edit_order
+=head2 reorder
 
 Edit the display order for the list of committee members for the current season; if there is no current season, an error is thrown.
 
 =cut
 
-sub edit_order :Path("edit-order") {
-  my ( $self ) = @_;
+sub reorder :Path("reorder") {
+  my ( $self, $c ) = @_;
   
+  # Don't cache this page.
+  $c->response->header("Cache-Control" => "no-cache, no-store, must-revalidate");
+  $c->response->header("Pragma" => "no-cache");
+  $c->response->header("Expires" => 0);
   
+  # Check that we are authorised to create committee positions
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["committee_edit", $c->maketext("user.auth.edit-officials"), 1]);
+  
+  # Get the current season, so we know which teams and divisions we have.
+  my $current_season = $c->model("DB::Season")->get_current;
+  
+  # Check we have a current season
+  unless ( defined($current_season) ) {
+    # Error, no current season
+    $c->response->redirect($c->uri_for("/seasons/create",
+                                {mid => $c->set_status_msg({error => $c->maketext("officials.reorder.error.no-current-season")})}));
+    $c->detach;
+    return;
+  }
+  
+  my $officials = $c->model("DB::Official")->all_officials_in_season($current_season);
+  
+  if ( $officials->count == 0 ) {
+    # No officials yet
+    $c->response->redirect($c->uri_for("/info/officials",
+                                {mid => $c->set_status_msg({error => $c->maketext("officials.reorder.error.no-officials-in-current-season")})}));
+    $c->detach;
+    return;
+  }
+  
+  $c->stash({
+    template => "html/info/officials/reorder.ttkt",
+    subtitle1 => $c->maketext("menu.title.officials"),
+    subtitle2 => $c->maketext("admin.reorder"),
+    external_scripts => [
+      $c->uri_for("/static/script/info/officials/reorder.js"),
+    ],
+    form_action => $c->uri_for_action("/info/officials/do_reorder"),
+    view_online_display => "Reordering league officials",
+    view_online_link => 0,
+    officials => $officials,
+  });
+  
+  # Push the breadcrumbs links
+  push(@{$c->stash->{breadcrumbs}}, {
+    path => $c->uri_for("/info/officials/reorder"),
+    label => $c->maketext("admin.reorder"),
+  });
 }
 
-=head2 do_create_position
+=head2 do_reorder
 
-Process the form for creating a committee position.
+Process the reorder form to set team orders.
 
 =cut
 
-sub do_create_position :Path("do-create-position") {
+sub do_reorder  :Path("do-reorder") {
   my ( $self, $c ) = @_;
   
   # Check that we are authorised to create committee positions
-  $c->forward("TopTable::Controller::Users", "check_authorisation", ["committee_create", $c->maketext("user.auth.create-officials"), 1]);
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["committee_edit", $c->maketext("user.auth.edit-officials"), 1]);
   
-  # Forward to the create / edit routine
-  $c->detach("process_form", ["create"]);
-}
-
-=head2 do_edit_position
-
-Process the form for creating a committee position.
-
-=cut
-
-sub do_edit_position :Path("do-edit-position") {
-  my ( $self, $c ) = @_;
+  my $response = $c->model("DB::Official")->reorder({official_positions => [split(",", $c->req->params->{official_positions})]});
   
-  # Check that we are authorised to create committee positions
-  $c->forward("TopTable::Controller::Users", "check_authorisation", ["committee_edit", $c->maketext("user.auth.create-officials"), 1]);
+  # Set the status messages we need to show on redirect
+  my @errors = @{$response->{errors}};
+  my @warnings = @{$response->{warnings}};
+  my @info = @{$response->{info}};
+  my @success = @{$response->{success}};
+  my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});
+  my $redirect_uri;
   
-  # Forward to the create / edit routine
-  $c->detach("process_form", ["edit"]);
+  # Now actually do the redirection
+  $c->response->redirect($c->uri_for("/info/officials", {mid => $mid}));
+  $c->detach;
+  return;
 }
 
 =encoding utf8
