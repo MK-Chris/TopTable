@@ -12,8 +12,6 @@ $(document).ready(function() {
     $("#surname").focus();
   } else if ( $("#email_address").val() === "" ) {
     $("#email_address").focus();
-  } else if ( $("#reason").val() === "" ) {
-    $("#reason").trigger("chosen:activate");
   } else if ( $("#message").val() === "" ) {
     $("#message").focus();
   } else {

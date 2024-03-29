@@ -3,6 +3,8 @@ use Moose;
 use namespace::autoclean;
 use HTML::Entities;
 use Email::Valid;
+use DateTime::Format::DateParse;
+use DDP;
 
 BEGIN { extends 'Catalyst::Controller'; }
 
@@ -100,7 +102,7 @@ sub contact :Local {
       $c->uri_for("/static/script/plugins/autogrow/jquery.ns-autogrow.min.js"),
       $c->uri_for("/static/script/standard/chosen.js"),
       $c->uri_for("/static/script/standard/autogrow.js"),
-      $c->uri_for("/static/script/info/contact.js"),
+      $c->uri_for("/static/script/info/contact.js", {v => 2}),
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
@@ -114,6 +116,9 @@ sub contact :Local {
     push(@{$c->stash->{external_scripts}}, sprintf("https://www.google.com/recaptcha/api.js?hl=%s", $locale_code));
     $c->stash({reCAPTCHA => 1});
   }
+  
+  # Store current date/time in the session so we can retrieve it and work out how long it took to fill out the form
+  $c->session->{form_load_time_contact} = $c->datetime_tz({time_zone => "UTC"});
   
   # Breadcrumbs links
   push(@{$c->stash->{breadcrumbs}}, {
@@ -132,6 +137,9 @@ sub do_contact :Path("send-email") {
   my ( $self, $c ) = @_;
   my ( $first_name, $surname, $name, $email_address, $user );
   my @errors = ();
+  my $jtest = $c->req->params->{jtest};
+  my $time = $c->session->{form_load_time_contact};
+  delete $c->session->{form_load_time_contact};
   
   # Handle the contact form and send the email if there are no errors.
   if ( $c->user_exists ) {
@@ -210,6 +218,32 @@ sub do_contact :Path("send-email") {
   
   push(@errors, $c->maketext("contact.form.error.reason-invalid")) unless defined($reason);
   push(@errors, $c->maketext("contact.form.error.no-message")) unless $message;
+  
+  # Check Cleantalk
+  if ( $c->config->{"Model::Cleantalk::Contact"}{args}{auth_key} ) {
+    $time = DateTime::Format::DateParse->parse_datetime($time, "UTC");
+    my $delta = $time->delta_ms($c->datetime_tz({time_zone => "UTC"}));
+    my $seconds = ($delta->{minutes} * 60) + $delta->{seconds};
+    
+    my $response = $c->model("Cleantalk::Contact")->request({
+      message => $message,
+      sender_ip => $c->req->address,
+      sender_email => $email_address, # Email IP of the visitor
+      sender_nickname => $name, # Nickname of the visitor
+      submit_time => $seconds, # The time taken to fill the comment form in seconds
+      js_on => ($jtest) ? 1 : 0, # The presence of JavaScript for the site visitor, 0|1
+    });
+    
+    unless ( $response->{allow} ) {
+      # Not allowed, why?
+      if ( $response->{codes} ) {
+        push(@errors, sprintf("%s\n", $c->maketext("cleantalk.response.codes." . $_))) foreach split(" ", $response->{codes});
+      } else {
+        # No codes, but not allowed
+        push(@errors, $c->maketext("cleantalk.error.generic"));
+      }
+    }
+  }
   
   if ( scalar @errors ) {
     # Errors, flash the values and redirect back to the form

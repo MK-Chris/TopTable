@@ -3,6 +3,8 @@ use Moose;
 use namespace::autoclean;
 use JSON;
 use HTML::Entities;
+use DateTime::Format::DateParse;
+use DDP;
 
 BEGIN { extends 'Catalyst::Controller'; }
 
@@ -334,10 +336,10 @@ sub get_team_season :Private {
     my $club_season = $team_season->club_season;
     my $team_season_name = sprintf("%s %s", $club_season->short_name, $team_season->name);
     my $enc_team_season_name = encode_entities($team_season_name);
-    my $team_current_name = sprintf("%s %s", $club_season->club->short_name, $team->name);
-     
-    $c->add_status_messages({info => $c->maketext("teams.club.changed-notice", $enc_team_season_name, encode_entities($team->club->full_name), $c->uri_for_action("/clubs/view_current_season", [$team->club->url_key]))}) if $club_season->club->id != $team->club->id;
-    $c->add_status_messages({info => $c->maketext("teams.name.changed-notice", $enc_team_season_name, encode_entities($team_current_name))}) if $team_season->name ne $team->name;
+    my $team_current_name = sprintf("%s %s", $team->club->short_name, $team->name);
+    
+    $c->add_status_messages({info => $c->maketext("teams.club.changed-notice", $enc_team_season_name, encode_entities($team->club->full_name), $c->uri_for_action("/clubs/view_current_season", [$team->club->url_key]))}) unless $club_season->club->id == $team->club->id;
+    $c->add_status_messages({info => $c->maketext("teams.name.changed-notice", $enc_team_season_name, encode_entities($team_current_name))}) unless $team_season->name eq $team->name;
     $c->add_status_messages({info => $c->maketext("clubs.name.changed-notice", encode_entities($club_season->full_name), encode_entities($club_season->short_name), encode_entities($club_season->club->full_name), encode_entities($club_season->club->short_name))}) if $club_season->full_name ne $club_season->club->full_name or $club_season->short_name ne $club_season->club->short_name;
     
     $c->stash({subtitle1 => $enc_team_season_name});
@@ -466,35 +468,35 @@ sub view_finalise :Private {
   });
 }
 
-=head2 email_captain_by_id
+=head2 contact_captain_by_id
 
-Mechanism to forward to email_captain chained to base_by_id.
-
-=cut
-
-sub email_captain_by_id :Chained("base_by_id"): PathPart("email-captain") :Args(0) {
-  my ( $self, $c ) = @_;
-  $c->forward("email_captain");
-}
-
-=head2 email_captain_by_url_key
-
-Mechanism to forward to email_captain chained to base_by_id.
+Mechanism to forward to contact_captain chained to base_by_id.
 
 =cut
 
-sub email_captain_by_url_key :Chained("base_by_url_key"): PathPart("email-captain") :Args(0) {
+sub contact_captain_by_id :Chained("base_by_id"): PathPart("contact-captain") :Args(0) {
   my ( $self, $c ) = @_;
-  $c->forward("email_captain");
+  $c->forward("contact_captain");
 }
 
-=head2 email_captain
+=head2 contact_captain_by_url_key
+
+Mechanism to forward to contact_captain chained to base_by_url_key.
+
+=cut
+
+sub contact_captain_by_url_key :Chained("base_by_url_key"): PathPart("contact-captain") :Args(0) {
+  my ( $self, $c ) = @_;
+  $c->forward("contact_captain");
+}
+
+=head2 contact_captain
 
 Display a form to email the captain of this team.
 
 =cut
 
-sub email_captain :Private {
+sub contact_captain :Private {
   my ( $self, $c ) = @_;
   my $team = $c->stash->{team};
   
@@ -521,7 +523,7 @@ sub email_captain :Private {
       $c->uri_for("/static/script/plugins/autogrow/jquery.ns-autogrow.min.js"),
       $c->uri_for("/static/script/standard/chosen.js"),
       $c->uri_for("/static/script/standard/autogrow.js"),
-      $c->uri_for("/static/script/info/contact.js"),
+      $c->uri_for("/static/script/teams/contact-captain.js"),
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
@@ -536,36 +538,39 @@ sub email_captain :Private {
     $c->stash({reCAPTCHA => 1});
   }
   
+  # Store current date/time in the session so we can retrieve it and work out how long it took to fill out the form
+  $c->session->{form_time_contact_captain} = $c->datetime_tz({time_zone => "UTC"});
+  
   # Breadcrumbs links
   push(@{$c->stash->{breadcrumbs}}, {
-    path => $c->uri_for_action("/teams/email_captain_by_url_key", [$team->club->url_key, $team->url_key]),
+    path => $c->uri_for_action("/teams/contact_captain_by_url_key", [$team->club->url_key, $team->url_key]),
     label => $c->maketext("menu.title.contact"),
   });
 }
 
-=head2 email_captain_by_id
+=head2 send_email_captain_by_id
 
-Mechanism to forward to do_email_captain chained to base_by_id.
+Mechanism to forward to send_email_captain chained to base_by_id.
 
 =cut
 
-sub do_email_captain_by_id :Chained("base_by_id"): PathPart("send-email-captain") :Args(0) {
+sub send_email_captain_by_id :Chained("base_by_id"): PathPart("send-captain-email") :Args(0) {
   my ( $self, $c ) = @_;
   $c->forward("send_email_captain");
 }
 
 =head2 send_email_captain_by_url_key
 
-Mechanism to forward to do_email_captain chained to base_by_id.
+Mechanism to forward to send_email_captain chained to base_by_id.
 
 =cut
 
-sub send_email_captain_by_url_key :Chained("base_by_url_key"): PathPart("send-email-captain") :Args(0) {
+sub send_email_captain_by_url_key :Chained("base_by_url_key"): PathPart("send-captain-email") :Args(0) {
   my ( $self, $c ) = @_;
   $c->forward("send_email_captain");
 }
 
-=head2 dend_email_captain
+=head2 send_email_captain
 
 Process the captain email form.
 
@@ -574,6 +579,9 @@ Process the captain email form.
 sub send_email_captain :Private {
   my ( $self, $c ) = @_;
   my $team = $c->stash->{team};
+  my $jtest = $c->req->params->{jtest};
+  my $time = $c->session->{form_time_contact_captain};
+  delete $c->session->{form_time_contact_captain};
   
   # Check we can send the captain email - any error will detach / redirect from the routine, so if we get past here, we're okay
   $c->forward("can_send_captain_email", [$team]);
@@ -664,6 +672,32 @@ sub send_email_captain :Private {
   
   push(@errors, $c->maketext("contact.form.error.no-message")) unless $message;
   
+  # Check Cleantalk
+  if ( $c->config->{"Model::Cleantalk::Contact"}{args}{auth_key} ) {
+    $time = DateTime::Format::DateParse->parse_datetime($time, "UTC");
+    my $delta = $time->delta_ms($c->datetime_tz({time_zone => "UTC"}));
+    my $seconds = ($delta->{minutes} * 60) + $delta->{seconds};
+    
+    my $response = $c->model("Cleantalk::Contact")->request({
+      message => $message,
+      sender_ip => $c->req->address,
+      sender_email => $email_address, # Email IP of the visitor
+      sender_nickname => $name, # Nickname of the visitor
+      submit_time => $seconds, # The time taken to fill the comment form in seconds
+      js_on => ($jtest) ? 1 : 0, # The presence of JavaScript for the site visitor, 0|1
+    });
+    
+    unless ( $response->{allow} ) {
+      # Not allowed, why?
+      if ( $response->{codes} ) {
+        push(@errors, sprintf("%s\n", $c->maketext("cleantalk.response.codes." . $_))) foreach split(" ", $response->{codes});
+      } else {
+        # No codes, but not allowed
+        push(@errors, $c->maketext("cleantalk.error.generic"));
+      }
+    }
+  }
+  
   if ( scalar @errors ) {
     # Errors, flash the values and redirect back to the form
     $c->flash->{first_name} = $first_name;
@@ -671,7 +705,7 @@ sub send_email_captain :Private {
     $c->flash->{email_address} = $email_address;
     $c->flash->{message} = $message;
     
-    $c->response->redirect($c->uri_for_action("/teams/email_captain_by_url_key", [$team->club->url_key, $team->url_key],
+    $c->response->redirect($c->uri_for_action("/teams/contact_captain_by_url_key", [$team->club->url_key, $team->url_key],
             {mid => $c->set_status_msg({error => \@errors})}));
     $c->detach;
     return;
@@ -715,7 +749,7 @@ sub send_email_captain :Private {
     
     # Breadcrumbs links
     push(@{$c->stash->{breadcrumbs}}, {
-      path => $c->uri_for_action("/teams/email_captain_by_url_key", [$team->club->url_key, $team->url_key]),
+      path => $c->uri_for_action("/teams/contact_captain_by_url_key", [$team->club->url_key, $team->url_key]),
       label => $c->maketext("menu.title.contact"),
     });
   }

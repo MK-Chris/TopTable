@@ -1,12 +1,8 @@
-[% # This is a TT comment. -%]
-[% # Note That the '-' at the beginning or end of TT code  -%]
-[% # "chomps" the whitespace/newline at that end of the    -%]
-[% # output (use View Source in browser to see the effect) -%]
-[% # Some basic HTML with a loop to display clubs -%]
 <div id="accordion">
 [%
 SET i = 0;
 FOREACH team IN display_options;
+  SET team_season = team.get_season(season);
   SET i = i + 1;
   IF team.club.id != LAST_ID;
     IF i > 1
@@ -16,12 +12,12 @@ FOREACH team IN display_options;
 <!-- END individual club container -->
 [%  END -%]
 
-  <h3>[% team.club.full_name %]</h3>
+  <h3>[% team_season.club_season.full_name %]</h3>
 <!-- START individual club container -->
   <div>
   <ul class="option-list">
 [%
-    SET LAST_ID = team.club.id;
+    SET LAST_ID = team_season.club_season.club.id;
   END -%]
     <li>
 [%
@@ -31,7 +27,7 @@ ELSE;
   SET uri = c.uri_for_action("/fixtures-results/view_team_by_url_key_current_season_end", [team.club.url_key, team.url_key]);
 END;
 -%]
-      <a href="[% uri %]">[% team.name %]</a>
+      <a href="[% uri %]">[% team_season.name %]</a>
     </li>
 [%
 END

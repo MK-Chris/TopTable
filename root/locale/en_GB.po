@@ -5983,6 +5983,130 @@ msgstr "Unknown"
 msgid "user-agent.none"
 msgstr "Unable to get user agent"
 
+### Cleantalk response codes
+msgid "cleantalk.error.generic"
+msgstr ""
+
+msgid "cleantalk.response.codes.ALLOWED"
+msgstr "Allowed"
+
+msgid "cleantalk.response.codes.ALLOWED_PRIV_LIST"
+msgstr "Private list allow"
+
+msgid "cleantalk.response.codes.ALLOWED_PROFILE"
+msgstr "Profile allowed"
+
+msgid "cleantalk.response.codes.ALLOWED_USER"
+msgstr "Allowed user"
+
+msgid "cleantalk.response.codes.BAD_INSTALL"
+msgstr "Contact the site administrator, there is an issue with the antispam module."
+
+msgid "cleantalk.response.codes.BAD_LANGUAGE"
+msgstr "Some of the language you have used is not allowed."
+
+msgid "cleantalk.response.codes.BL_DOMAIN"
+msgstr "You have included some blacklisted links."
+
+msgid "cleantalk.response.codes.BL"
+msgstr "You have been blacklisted from sending."
+
+msgid "cleantalk.response.codes.COMMENT_TYPE_UNKNOWN"
+msgstr "Manual moderation required."
+
+msgid "cleantalk.response.codes.CONTACTS"
+msgstr "You have included links."
+
+msgid "cleantalk.response.codes.CONTACTS_DATA"
+msgstr "You have included contacts."
+
+msgid "cleantalk.response.codes.DENIED"
+msgstr "You are forbidden from performing this action."
+
+msgid "cleantalk.response.codes.DENIED_GREY_LIST"
+msgstr "You have been greylisted - please resubmit the form."
+
+msgid "cleantalk.response.codes.DENIED_PRIV_LIST"
+msgstr "You have been denied private list access."
+
+msgid "cleantalk.response.codes.DENIED_PROFILE"
+msgstr "Your profile is forbidden."
+
+msgid "cleantalk.response.codes.DENIED_USER"
+msgstr "Your user is forbidden."
+
+msgid "cleantalk.response.codes.ERR_CLIENT_IP_EQ_SERVER_IP"
+msgstr "Your IP is the same as the server IP."
+
+msgid "cleantalk.response.codes.FAST_SUBMIT"
+msgstr "You submitted the form too quickly."
+
+msgid "cleantalk.response.codes.FORBIDDEN"
+msgstr "You are forbidden."
+
+msgid "cleantalk.response.codes.JS_DISABLED"
+msgstr "Please enable javascript."
+
+msgid "cleantalk.response.codes.KEY_NOT_FOUND"
+msgstr "Anti-spam disabled, please contact the site administrator to check the access key."
+
+msgid "cleantalk.response.codes.MANUAL"
+msgstr "You require manual approval from the site administrator."
+
+msgid "cleantalk.response.codes.MULT_MESSAGE"
+msgstr "Your message is too long."
+
+msgid "cleantalk.response.codes.MULT_SUBMIT"
+msgstr "You have submitted too many forms."
+
+msgid "cleantalk.response.codes.NO_NORM_WORDS"
+msgstr "You have not submitted any normal words."
+
+msgid "cleantalk.response.codes.OFFTOP"
+msgstr "Your form submission is off-topic."
+
+msgid "cleantalk.response.codes.SERVICE_DISABLED"
+msgstr "Anti-spam service disabled, please contact the site administrator."
+
+msgid "cleantalk.response.codes.SERVICE_FREEZED"
+msgstr "Anti-spam service frozen, please contact the site administrator."
+
+msgid "cleantalk.response.codes.STOP_LIST"
+msgstr "Stop words included, please remove and try again."
+
+msgid "cleantalk.response.codes.TRIAL_EXPIRED"
+msgstr "Anti-spam trial expired, please contact the site administrator."
+
+msgid "cleantalk.response.codes.USERNAME_SPAM"
+msgstr "Your username has been detected as spam."
+
+msgid "cleantalk.response.codes.WRONG_TZ"
+msgstr "Wrong time-zone."
+
+msgid "cleantalk.response.codes.EMAIL_NOT_EXISTS"
+msgstr "The email address used doesn't exist."
+
+msgid "cleantalk.response.codes.BL_EMAIL"
+msgstr "Your email address has been blacklisted."
+
+msgid "cleantalk.response.codes.BL_IP"
+msgstr "Your IP address has been blacklisted."
+
+msgid "cleantalk.response.codes.SEEMS_SPAM_EMAIL"
+msgstr "Your message looks like spam."
+
+msgid "cleantalk.response.codes.SEEMS_SPAM_HEADERS"
+msgstr "Your client looks like a spambot."
+
+msgid "cleantalk.response.codes.SEEMS_SPAM_MESSAGE"
+msgstr "Your message looks like spam."
+
+msgid "cleantalk.response.codes.SEEMS_SPAM_NICK"
+msgstr "Your name looks spammy."
+
+msgid "cleantalk.response.codes.EMAIL_DOMAIN_NOT_EXISTS"
+msgstr "Your email domain does not exist."
+
 ### Google
 ## Maps
 msgid "google.maps.geocode.errors"

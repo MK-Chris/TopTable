@@ -3,6 +3,8 @@ use Moose;
 use namespace::autoclean;
 use HTML::Entities;
 use JSON;
+use DateTime::Format::DateParse;
+use DDP;
 
 BEGIN { extends 'Catalyst::Controller'; }
 
@@ -197,7 +199,7 @@ Edit an official / committee member position.  This takes effect for the current
 
 sub edit :Chained("base") :PathPart("edit") :Args(0) {
   my ( $self, $c ) = @_;
-  my $position = $c->stash->{position};;
+  my $position = $c->stash->{position};
   
   # Don't cache this page.
   $c->response->header("Cache-Control" => "no-cache, no-store, must-revalidate");
@@ -234,10 +236,8 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
     my $holders;
     if ( $c->flash->{show_flashed} ) {
       $holders = $c->flash->{holders};
-      $c->log->debug("use flashed");
     } else {
       $holders = [$position->get_holders({season => $current_season})];
-      $c->log->debug("use db");
     }
     
     $tokeninput_options->{prePopulate} = [map({
@@ -541,7 +541,7 @@ sub contact :Chained("holders") :PathPart("contact") :Args(0) {
       $c->uri_for("/static/script/plugins/autogrow/jquery.ns-autogrow.min.js"),
       $c->uri_for("/static/script/standard/chosen.js"),
       $c->uri_for("/static/script/standard/autogrow.js"),
-      $c->uri_for("/static/script/info/contact.js"),
+      $c->uri_for("/static/script/info/officials/positions/contact.js"),
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
@@ -555,6 +555,9 @@ sub contact :Chained("holders") :PathPart("contact") :Args(0) {
     push(@{$c->stash->{external_scripts}}, sprintf("https://www.google.com/recaptcha/api.js?hl=%s", $locale_code));
     $c->stash({reCAPTCHA => 1});
   }
+  
+  # Store current date/time in the session so we can retrieve it and work out how long it took to fill out the form
+  $c->session->{form_time_contact_official} = $c->datetime_tz({time_zone => "UTC"});
 }
 
 =head2 send_email
@@ -569,6 +572,10 @@ sub send_email :Chained("holders") :PathPart("send-email") :Args(0) {
   my $person = $c->stash->{person};
   my $enc_name = $c->stash->{enc_name};
   my ( $first_name, $surname, $name, $email_address, $user );
+  my $message = $c->req->params->{message};
+  my $jtest = $c->req->params->{jtest};
+  my $time = $c->session->{form_time_contact_official};
+  delete $c->session->{form_time_contact_official};
   my @errors = ();
   
   # Handle the contact form and send the email if there are no errors.
@@ -583,6 +590,7 @@ sub send_email :Chained("holders") :PathPart("send-email") :Args(0) {
     $surname = $c->req->params->{surname} || undef;
     $email_address = $c->req->params->{email_address} || undef;
     
+    # Check recaptcha result if appropriate
     if ( $c->config->{Google}{reCAPTCHA}{validate_on_contact} and $c->config->{Google}{reCAPTCHA}{site_key} and $c->config->{Google}{reCAPTCHA}{secret_key} ) {
       my $captcha_result = $c->forward("TopTable::Controller::Root", "recaptcha");
       
@@ -650,9 +658,33 @@ sub send_email :Chained("holders") :PathPart("send-email") :Args(0) {
     return;
   }
   
-  my $message = $c->req->params->{message};
-  
   push(@errors, $c->maketext("contact.form.error.no-message")) unless $message;
+  
+  # Check Cleantalk
+  if ( $c->config->{"Model::Cleantalk::Contact"}{args}{auth_key} ) {
+    $time = DateTime::Format::DateParse->parse_datetime($time, "UTC");
+    my $delta = $time->delta_ms($c->datetime_tz({time_zone => "UTC"}));
+    my $seconds = ($delta->{minutes} * 60) + $delta->{seconds};
+    
+    my $response = $c->model("Cleantalk::Contact")->request({
+      message => $message,
+      sender_ip => $c->req->address,
+      sender_email => $email_address, # Email IP of the visitor
+      sender_nickname => $name, # Nickname of the visitor
+      submit_time => $seconds, # The time taken to fill the comment form in seconds
+      js_on => ($jtest) ? 1 : 0, # The presence of JavaScript for the site visitor, 0|1
+    });
+    
+    unless ( $response->{allow} ) {
+      # Not allowed, why?
+      if ( $response->{codes} ) {
+        push(@errors, sprintf("%s\n", $c->maketext("cleantalk.response.codes." . $_))) foreach split(" ", $response->{codes});
+      } else {
+        # No codes, but not allowed
+        push(@errors, $c->maketext("cleantalk.error.generic"));
+      }
+    }
+  }
   
   if ( scalar @errors ) {
     # Errors, flash the values and redirect back to the form

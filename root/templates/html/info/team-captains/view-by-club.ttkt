@@ -126,7 +126,7 @@ IF teams.count;
 [%-
     IF captain.email_address;
 -%]
-<a href="[% c.uri_for_action("/teams/email_captain_by_url_key", [club.url_key, team.url_key]) %]">[% c.maketext("officials.action.send-email") %]</a>
+<a href="[% c.uri_for_action("/teams/contact_captain_by_url_key", [club.url_key, team.url_key]) %]">[% c.maketext("officials.action.send-email") %]</a>
 [%-
     ELSE;
 -%]

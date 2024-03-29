@@ -159,10 +159,9 @@ sub teams_in_season_by_club_by_team_name {
     "team_seasons.season" => $season->id,
   }, {
     prefetch => {
-      "club" => "club_seasons",
-      "team_seasons" => [qw( season captain ), {division_season => "division"}],
+      "team_seasons" => [qw( club_season season captain ), {division_season => "division"}],
     },
-    order_by  => {-asc => [qw( club.short_name me.name )]}
+    order_by  => {-asc => [qw( club_season.short_name team_seasons.name )]}
   });
 }
 
@@ -342,7 +341,7 @@ sub find_url_key {
   return $self->find($where, $attrib);
 }
 
-=head2 find_url_key
+=head2 find_url_keys
 
 Same as find(), but uses the url_key columns (from both the club and team tables) instead of the id.  So we can use human-readable URLs.
 

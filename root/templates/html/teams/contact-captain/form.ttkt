@@ -62,6 +62,7 @@ IF reCAPTCHA AND c.config.Google.reCAPTCHA.site_key;
 END;
 -%]
   
+  <input type="hidden" id="jtest" name="jtest" value="" />
   <input type="submit" id="submit" name="submit" value="[% c.maketext("form.button.send") %]" />
 </fieldset>
 </form>
