@@ -119,12 +119,6 @@ sub contact :Local {
   
   # Store current date/time in the session so we can retrieve it and work out how long it took to fill out the form
   $c->session->{form_load_time_contact} = $c->datetime_tz({time_zone => "UTC"});
-  
-  # Breadcrumbs links
-  push(@{$c->stash->{breadcrumbs}}, {
-    path => $c->uri_for("/info/contact"),
-    label => $c->maketext("menu.title.contact"),
-  });
 }
 
 =head2 do_contact
@@ -222,26 +216,38 @@ sub do_contact :Path("send-email") {
   # Check Cleantalk
   if ( $c->config->{"Model::Cleantalk::Contact"}{args}{auth_key} ) {
     $time = DateTime::Format::DateParse->parse_datetime($time, "UTC");
-    my $delta = $time->delta_ms($c->datetime_tz({time_zone => "UTC"}));
-    my $seconds = ($delta->{minutes} * 60) + $delta->{seconds};
     
-    my $response = $c->model("Cleantalk::Contact")->request({
-      message => $message,
-      sender_ip => $c->req->address,
-      sender_email => $email_address, # Email IP of the visitor
-      sender_nickname => $name, # Nickname of the visitor
-      submit_time => $seconds, # The time taken to fill the comment form in seconds
-      js_on => ($jtest) ? 1 : 0, # The presence of JavaScript for the site visitor, 0|1
-    });
-    
-    unless ( $response->{allow} ) {
-      # Not allowed, why?
-      if ( $response->{codes} ) {
-        push(@errors, sprintf("%s\n", $c->maketext("cleantalk.response.codes." . $_))) foreach split(" ", $response->{codes});
-      } else {
-        # No codes, but not allowed
-        push(@errors, $c->maketext("cleantalk.error.generic"));
+    if ( defined($time) ) {
+      my $delta = $time->delta_ms($c->datetime_tz({time_zone => "UTC"}));
+      my $seconds = ($delta->{minutes} * 60) + $delta->{seconds};
+      
+      my %headers = %{$c->req->headers};
+      my $response = $c->model("Cleantalk::Contact")->request({
+        message => $message,
+        sender_ip => $c->req->address,
+        sender_email => $email_address, # Email IP of the visitor
+        sender_nickname => $name, # Nickname of the visitor
+        submit_time => $seconds, # The time taken to fill the comment form in seconds
+        js_on => ($jtest) ? 1 : 0, # The presence of JavaScript for the site visitor, 0|1
+        all_headers => \%headers,
+        sender_info => {
+          REFERRER => $c->req->referer,
+          USER_AGENT => $c->req->user_agent,
+        }
+      });
+      
+      unless ( $response->{allow} ) {
+        # Not allowed, why?
+        if ( $response->{codes} ) {
+          push(@errors, sprintf("%s\n", $c->maketext("cleantalk.response.codes." . $_))) foreach split(" ", $response->{codes});
+        } else {
+          # No codes, but not allowed
+          push(@errors, $c->maketext("cleantalk.error.generic"));
+        }
       }
+    } else {
+      # Time not defined, redirect back to the form
+      push(@errors, $c->maketext("contact.form.error.page-refreshed-resubmit"));
     }
   }
   

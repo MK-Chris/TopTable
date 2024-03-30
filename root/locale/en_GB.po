@@ -3876,6 +3876,9 @@ msgstr "The contact reason is invalid."
 msgid "contact.form.error.no-message"
 msgstr "Please type your message."
 
+msgid "contact.form.error.page-refreshed-resubmit"
+msgstr "The page has been refreshed or the form submitted from an unknown source; please resubmit the form."
+
 msgid "contact.thank-you.header"
 msgstr "Thank you %1"
 
