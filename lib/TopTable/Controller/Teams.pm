@@ -356,13 +356,18 @@ sub get_team_season :Private {
   });
   
   if ( defined($team_season) ) {
+    # We only need to check the singles players for noindex - if they appear in one of the other lists, they'll also be in the singles list
+    my $singles_averages = $c->model("DB::PersonSeason")->get_people_in_division_in_singles_averages_order({
+      logger => sub{ my $level = shift; $c->log->$level( @_ ); },
+      season => $season,
+      division => $team_season->division_season->division,
+      team => $team,
+    });
+    
+    $c->stash->{noindex} = 1 if $singles_averages->noindex_set(1)->count;
+    
     $c->stash({
-      singles_averages => scalar $c->model("DB::PersonSeason")->get_people_in_division_in_singles_averages_order({
-        logger => sub{ my $level = shift; $c->log->$level( @_ ); },
-        season => $season,
-        division => $team_season->division_season->division,
-        team => $team,
-      }),
+      singles_averages => $singles_averages,
       doubles_individual_averages => scalar $c->model("DB::PersonSeason")->get_people_in_division_in_doubles_individual_averages_order({
         logger => sub{ my $level = shift; $c->log->$level( @_ ); },
         season => $season,

@@ -16,6 +16,7 @@ IF c.flash.show_flashed;
   SET registration_date = c.flash.registration_date;
   SET gender = c.flash.gender;
   SET fees_paid = c.flash.fees_paid;
+  SET noindex = c.flash.noindex;
 ELSE;
   SET first_name = person.first_name;
   SET surname = person.surname;
@@ -33,6 +34,7 @@ ELSE;
   SET registration_date = person.registration_date;
   SET gender = person.gender;
   SET fees_paid = person_season.fees_paid;
+  SET noindex = person.noindex;
 END;
 
 IF date_of_birth;
@@ -241,9 +243,20 @@ END;
       </div>
       <div class="clear-fix"></div>
     </div>
+[%
+IF noindex == 1;
+  SET noindex_checked = ' checked="checked"';
+ELSE;
+  SET noindex_checked = '';
+END;
+-%]
+
+    <input type="checkbox" id="noindex" name="noindex" data-label="[% c.maketext("people.form.button.set-noindex") %]" value="1"[% noindex_checked %] />
+    <div class="clear-fix"></div>
   </fieldset>
 </div>
 <div class="clear-fix"></div>
+    
 
 <input type="submit" name="Submit" value="[% c.maketext("form.button.save") | html_entity %]" />
 </form>

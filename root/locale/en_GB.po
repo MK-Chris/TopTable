@@ -1139,6 +1139,9 @@ msgstr "Website details"
 msgid "people.form.field.website-username"
 msgstr "Website username"
 
+msgid "people.form.button.set-noindex"
+msgstr "Set noindex flag so pages featuring this person are not indexed on search engines."
+
 msgid "people.form.dialog.change-team.title"
 msgstr "Change team?"
 

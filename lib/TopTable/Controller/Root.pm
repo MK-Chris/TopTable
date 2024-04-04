@@ -356,6 +356,8 @@ Attempt to render a view, if needed.
 
 sub end :ActionClass("RenderView") {
   my ( $self, $c ) = @_;
+  $c->res->header("X-Robots-Tag" => "noindex") if exists($c->stash->{noindex}) and $c->stash->{noindex};
+  
   if ( !$c->stash->{no_wrapper} and !$c->is_ajax ) {
     ## Nav drop down menus
     # Current season, clubs in current season, archived seasons

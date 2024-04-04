@@ -764,6 +764,31 @@ sub doubles_player_membership_type {
   }
 }
 
+=head2 noindex_set
+
+Return 1 if one of the people playing are set to noindex, or 0 if no one is.
+
+=cut
+
+sub noindex_set {
+  my ( $self ) = @_;
+  
+  if ( $self->doubles_game ) {
+    # Doubles game, check all the doubles pairs
+    return ($self->home_doubles_pair->person_season_person1_season_team->person->noindex
+      || $self->home_doubles_pair->person_season_person2_season_team->person->noindex
+      || $self->away_doubles_pair->person_season_person1_season_team->person->noindex
+      || $self->away_doubles_pair->person_season_person2_season_team->person->noindex)
+    ? 1 : 0;
+  } else {
+    # Singles game, check the home and away players
+    # Definedness accounts for games with missing players
+    return (defined($self->home_player) && $self->home_player->noindex)
+      || (defined($self->away_player) && $self->away_player->noindex)
+    ? 1 : 0;
+  }
+}
+
 =head2 update_score
 
 Update the scores for this game.
