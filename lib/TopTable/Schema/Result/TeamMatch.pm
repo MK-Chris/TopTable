@@ -1411,6 +1411,21 @@ sub players {
   });
 }
 
+=head2 noindex_set
+
+Return a list of players who have the 'noindex' flag set on their person record.
+
+=cut
+
+sub noindex_set {
+  my ( $self, $on ) = @_;
+  
+  # Sanity check
+  $on = $on ? 1 : 0;
+  
+  return $self->search_related("team_match_players", {"player.noindex" => $on}, {join => "player"});
+}
+
 =head2 update_scorecard
 
 Validates and then updates the details given in the scorecard.

@@ -137,6 +137,9 @@ sub base :Private {
   my $home_players = $match->players({location => "home"});
   my $away_players = $match->players({location => "away"});
   
+  my $noindex = $match->noindex_set(1)->count;
+  $c->stash->{noindex} = 1 if $noindex;
+  
   # Get and stash the season / team_season / division_season objects so we don't need to look them up later
   $c->stash({
     encoded_name => $encoded_name,
