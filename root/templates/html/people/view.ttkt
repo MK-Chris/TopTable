@@ -224,8 +224,8 @@ IF season;
       SET inactive_games = 0;
       WHILE ( game = singles_games.next );
         SET match = game.team_match;
-        SET home_team_season  = match.team_season_home_team_season;
-        SET away_team_season  = match.team_season_away_team_season;
+        SET home_team_season = match.team_season_home_team_season;
+        SET away_team_season = match.team_season_away_team_season;
         
         IF game.home_player.id == person.id;
           SET location = "home";

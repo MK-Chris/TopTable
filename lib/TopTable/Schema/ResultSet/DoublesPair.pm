@@ -145,4 +145,24 @@ sub pairs_involving_person {
   });
 }
 
+=head2 noindex_set
+
+Determine if the current resultset has anybody set to noindex (if $on is true, otherwise determine if anyone *doesn't* have it set).
+
+=cut
+
+sub noindex_set {
+  my ( $self, $on ) = @_;
+  
+  # Sanity check - all true values are 1, all false are 0
+  $on = $on ? 1 : 0;
+  
+  return $self->search([-or => {"person.noindex" => $on, "person_2.noindex" => $on}], {
+    join => {
+      person_season_person1_season_team => "person",
+      person_season_person2_season_team => "person"
+    }
+  });
+}
+
 1;

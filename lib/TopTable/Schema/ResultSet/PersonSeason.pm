@@ -191,7 +191,7 @@ sub get_people_in_division_in_singles_averages_order {
     }
   }
   
-  return $self->search( $where, {
+  return $self->search($where, {
     prefetch  => [qw( person team_membership_type ), {
       team_season => [qw( team ), {club_season => "club"}],
     }],
@@ -265,8 +265,8 @@ sub get_tables_last_updated_timestamp {
   my $team = delete $params->{team} || undef;
   
   my $where = {season => $season->id};
-  $where->{"me.team"} = $team->id if defined( $team );
-  $where->{"team_season.division"} = $division->id if defined( $division );
+  $where->{"me.team"} = $team->id if defined($team);
+  $where->{"team_season.division"} = $division->id if defined($division);
   
   my $team_season = $self->find($where, {
     join => "team_season",
@@ -274,7 +274,7 @@ sub get_tables_last_updated_timestamp {
     order_by => {-desc => "last_updated"}
   });
   
-  return defined( $team_season ) ? $team_season->last_updated : undef;
+  return defined($team_season) ? $team_season->last_updated : undef;
 }
 
 =head2 get_people_in_team_in_name_order
@@ -294,6 +294,21 @@ sub get_people_in_team_in_name_order {
     prefetch => "person",
     order_by => [{-asc => [qw( person.surname person.first_name )]}],
   });
+}
+
+=head2 noindex
+
+Check noindex flag on the related person record.
+
+=cut
+
+sub noindex_set {
+  my ( $self, $on ) = @_;
+  
+  # Sanity check - all true values are 1, all false are 0
+  $on = $on ? 1 : 0;
+  
+  return $self->search({"person.noindex" => $on});
 }
 
 1;

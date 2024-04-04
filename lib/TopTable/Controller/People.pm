@@ -62,6 +62,8 @@ sub base :Chained("/") PathPart("people") CaptureArgs(1) {
       subtitle1 => $enc_display_name,
     });
     
+    $c->stash->{noindex} = 1 if $person->noindex;
+    
     # Push the people list page on to the breadcrumbs
     push(@{$c->stash->{breadcrumbs}}, {
       # View page (current season)
@@ -121,7 +123,7 @@ sub list_specific_page :Chained("base_list") :PathPart("page") :Args(1) {
   my ( $self, $c, $page_number ) = @_;
   
   # If the page number is less then 1, not defined, false, or not a number, set it to 1
-  $page_number = 1 if !defined( $page_number ) or !$page_number or $page_number !~ /^\d+$/ or $page_number < 1;
+  $page_number = 1 if !defined($page_number) or !$page_number or $page_number !~ /^\d+$/ or $page_number < 1;
   
   if ( $page_number == 1 ) {
     $c->stash({canonical_uri => $c->uri_for_action("/people/list_first_page")});
@@ -129,7 +131,7 @@ sub list_specific_page :Chained("base_list") :PathPart("page") :Args(1) {
     $c->stash({canonical_uri => $c->uri_for_action("/people/list_specific_page", [$page_number])});
   }
   
-  $c->detach( "retrieve_paged", [$page_number] );
+  $c->detach("retrieve_paged", [$page_number]);
 }
 
 =head2 retrieve_paged
@@ -147,13 +149,15 @@ sub retrieve_paged :Private {
     results_per_page => $c->config->{Pagination}{default_page_size},
   });
   
+  my $noindex_count = $people->noindex_set_paged_count(1);
+  
   my $page_info = $people->pager;
-  my $page_links  = $c->forward( "TopTable::Controller::Root", "generate_pagination_links", [{
+  my $page_links  = $c->forward("TopTable::Controller::Root", "generate_pagination_links", [{
     page_info => $page_info,
     page1_action => "/people/list_first_page",
     specific_page_action => "/people/list_specific_page",
     current_page => $page_number,
-  }] );
+  }]);
   
   # Set up the template to use
   $c->stash({
@@ -164,6 +168,8 @@ sub retrieve_paged :Private {
     page_info => $page_info,
     page_links => $page_links,
   });
+  
+  $c->stash->{noindex} = 1 if $noindex_count;
 }
 
 =head2 base_no_object_specified
@@ -246,7 +252,7 @@ sub view_specific_season :Chained("view") :PathPart("seasons") :Args(1) {
     });
   } else {
     # Invalid season
-    $c->detach(/TopTable::Controller::Root default/);
+    $c->detach(qw(TopTable::Controller::Root default));
   }
   
   # Forward to the routine that stashes the team's season
@@ -286,6 +292,19 @@ sub get_person_season :Private {
   # If the name has changed, we need to display a notice
   $c->add_status_messages({info => $c->maketext("people.name.changed-notice", $person_season_name, $person_name)}) if defined($person_season_name) and $person_name ne $person_season_name;
   
+  # Grab the games
+  my $singles_games = $person->singles_games_played_in_season({season => $season});
+  my $doubles_games = $person->doubles_games_played_in_season({season => $season});
+  
+  if ( !exists($c->stash->{noindex}) or !$c->stash->{noindex} ) {
+    # If this person isn't set to 'noindex', check if any of the people they've played in this season are - no point in doing this expensive query if the person is already
+    # set to noindex
+    my $noindex = $doubles_games->noindex_set(1)->count;
+    $noindex = $singles_games->noindex_set(1)->count unless $noindex; # Only do this one if the doubles games don't show up anything
+    
+    $c->stash->{noindex} = 1 if $noindex;
+  }
+  
   $c->stash({
     subtitle1 => $person_season_name || $person_name,
     teams => $teams,
@@ -293,8 +312,8 @@ sub get_person_season :Private {
       person => $person,
       season => $season,
     }),
-    singles_games => scalar $person->singles_games_played_in_season({season => $season}),
-    doubles_games => scalar $person->doubles_games_played_in_season({season => $season}),
+    singles_games => $singles_games,
+    doubles_games => $doubles_games,
     season => $season,
   });
 }
@@ -406,7 +425,7 @@ sub view_finalise :Private {
 
 =head2 view_seasons
 
-Retrieve and display a list of seasons that this club has entered teams into.
+Retrieve and display a list of seasons that this person has entered teams into.
 
 =cut
 
@@ -991,8 +1010,8 @@ A private routine forwarded from the docreate and doedit routines to set up the 
 sub process_form :Private {
   my ( $self, $c, $action ) = @_;
   my $person = $c->stash->{person};
-  my @field_names = qw( first_name surname address1 address2 address3 address4 address5 postcode home_telephone mobile_telephone work_telephone email_address gender team fees_paid user );
-  my @processed_field_names = qw( first_name surname address1 address2 address3 address4 address5 postcode home_telephone mobile_telephone work_telephone email_address gender date_of_birth team captain_of secretary_of registration_date fees_paid user );
+  my @field_names = qw( first_name surname address1 address2 address3 address4 address5 postcode home_telephone mobile_telephone work_telephone email_address gender team fees_paid user noindex );
+  my @processed_field_names = qw( first_name surname address1 address2 address3 address4 address5 postcode home_telephone mobile_telephone work_telephone email_address gender date_of_birth team captain_of secretary_of registration_date fees_paid user noindex );
   
   # Get the current season
   my $current_season = $c->model("DB::Season")->get_current;

@@ -91,4 +91,44 @@ sub game_in_match_by_scheduled_game_number_by_url_keys {
   });
 }
 
+=head2 noindex_set
+
+Return a subset of the resultset that have players with noindex set.
+
+=cut
+
+sub noindex_set {
+  my ( $self, $on ) = @_;
+  
+  # Sanity check - all true values are 1, all false are 0
+  $on = $on ? 1 : 0;
+  
+  my $where = $on
+    ? [
+        -or => [
+          -and => [doubles_game => 1, [-or => {"person.noindex" => 1, "person_2.noindex" => 1, "person_3.noindex" => 1, "person_4.noindex" => 1,}]]
+        ], [
+          -and => [doubles_game => 0, [-or => {"home_player.noindex" => 1, "away_player.noindex" => 1}]]
+        ]
+      ]
+    : [
+        -or => [
+          -and => [doubles_game => 1, [-and => {"person.noindex" => 0, "person_2.noindex" => 0, "person_3.noindex" => 0, "person_4.noindex" => 0,}]]
+        ], [
+          -and => [doubles_game => 0, [-and => {"home_player.noindex" => 0, "away_player.noindex" => 0}]]
+        ]
+      ];
+  
+  return $self->search($where, {
+    join => {
+      # Join the singles / doubles tables, as we don't know which type of game this is - so we can do a general test for noindex
+      # regardless of doubles or singles status of the game
+      home_doubles_pair => [{person_season_person1_season_team => "person", person_season_person2_season_team => "person"}],
+      away_doubles_pair => [{person_season_person1_season_team => "person", person_season_person2_season_team => "person"}],
+      home_player => "person_seasons",
+      away_player => "person_seasons",
+    },
+  });
+}
+
 1;

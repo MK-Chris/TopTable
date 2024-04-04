@@ -146,6 +146,13 @@ __PACKAGE__->table("people");
   is_nullable: 1
   size: 254
 
+=head2 noindex
+
+  data_type: 'tinyint'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 0
+
 =cut
 
 __PACKAGE__->add_columns(
@@ -188,6 +195,13 @@ __PACKAGE__->add_columns(
   { data_type => "varchar", is_nullable => 1, size => 25 },
   "email_address",
   { data_type => "varchar", is_nullable => 1, size => 254 },
+  "noindex",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
 );
 
 =head1 PRIMARY KEY
@@ -687,8 +701,8 @@ __PACKAGE__->many_to_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-03-18 23:57:35
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:bq+yCZ2WVDJ5ycMPnRNysw
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-04-01 10:43:54
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:wOktZiN7XWVKoLIp8ncSfQ
 
 use HTML::Entities;
 

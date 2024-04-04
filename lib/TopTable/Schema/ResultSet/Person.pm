@@ -55,6 +55,46 @@ sub all_people {
   return $self->search($where, $attrib);
 }
 
+=head2 noindex_set
+
+Use this instead of noindex_set on a paged resultset, because we can't search a paged resultset as a sub resultset.
+
+This can't be used on a paged resultset because if the first result of one or two appears on page 3 of those paged results, you end up with no results, because you're searching for page 3 when there is no longer a page 3.  You can get a count, by using noindex_set_paged_count.
+
+=cut
+
+sub noindex_set {
+  my ( $self, $on ) = @_;
+  
+  # Sanity check - all true values are 1, all false are 0
+  $on = $on ? 1 : 0;
+  
+  return $self->search({noindex => $on});
+}
+
+=head2 noindex_set_paged_count
+
+Return a count of people with noindex set (if $on is true, return a count of people *without* it set if $on is false).
+
+This takes a paged resultset, and iterates through it counting how many have the noindex flag on or off - we can't use noindex_set on a paged resultset (see documentation of that sub for more details).
+
+=cut
+
+sub noindex_set_paged_count {
+  my ( $self, $on ) = @_;
+  
+  # Sanity check - all true values are 1, all false are 0
+  $on = $on ? 1 : 0;
+  
+  my $count = 0;
+  my $rs = $self->search;
+  while ( my $person = $rs->next ) {
+    $count++ if $person->noindex == $on;
+  }
+  
+  return $count;
+}
+
 =head2 page_records
 
 Retrieve a paginated list of all people
@@ -309,6 +349,7 @@ sub create_or_edit {
   my $secretary_of = $params->{secretary_of} || undef;
   my $registration_date = $params->{registration_date} || undef;
   my $fees_paid = $params->{fees_paid};
+  my $noindex = $params->{noindex};
   my $user = $params->{user} || undef;
   my $response = {
     errors => [],
@@ -555,6 +596,9 @@ sub create_or_edit {
   $fees_paid = $fees_paid ? 1 : 0;
   $response->{fields}{fees_paid} = $fees_paid;
   
+  $noindex = $noindex ? 1 : 0;
+  $response->{fields}{noindex} = $noindex;
+  
   # Username check
   if ( defined($user) ) {
     # User passed in, check it's valid
@@ -617,6 +661,7 @@ sub create_or_edit {
         email_address => $email_address,
         date_of_birth => $date_of_birth,
         gender => defined($gender) ? $gender->id : undef,
+        noindex => $noindex,
       };
       
       $person_create_data->{person_seasons} = [$new_person_season_data] if defined($team);
@@ -641,6 +686,7 @@ sub create_or_edit {
         email_address => $email_address,
         date_of_birth => $date_of_birth,
         gender => defined($gender) ? $gender->id : undef,
+        noindex => $noindex,
       });
       
       # Ensure the name is updated for any person season objects from this season

@@ -369,6 +369,10 @@ sub view_finalise :Private {
   if ( defined($averages_type) and $averages_type eq "singles" ) {
     # Singles averages
     my $singles_averages = $c->model("DB::PersonSeason")->get_people_in_division_in_singles_averages_order($config);
+    
+    # Determine if we need the noindex flag (if anyone in this list has the flag set, we can't index the entire page)
+    $c->stash->{noindex} = 1 if $singles_averages->noindex_set(1)->count;
+    
     $c->stash({
       singles_averages => $singles_averages,
         singles_last_updated => $c->model("DB::PersonSeason")->get_tables_last_updated_timestamp({
@@ -382,6 +386,10 @@ sub view_finalise :Private {
   } elsif ( defined($averages_type) and $averages_type eq "doubles-individuals" ) {
     # Doubles averages (invidual)
     my $doubles_ind_averages = $c->model("DB::PersonSeason")->get_people_in_division_in_doubles_individual_averages_order($config);
+    
+    # Determine if we need the noindex flag (if anyone in this list has the flag set, we can't index the entire page)
+    $c->stash->{noindex} = 1 if $doubles_ind_averages->noindex_set(1)->count;
+    
     $c->stash({
       doubles_individual_averages => $doubles_ind_averages,
       doubles_ind_last_updated => $c->model("DB::PersonSeason")->get_tables_last_updated_timestamp({
@@ -395,6 +403,10 @@ sub view_finalise :Private {
   } elsif ( defined($averages_type) and $averages_type eq "doubles-pairs" ) {
     # Doubles averages (pairs)
     my $doubles_pairs_averages = $c->model("DB::DoublesPair")->get_doubles_pairs_in_division_in_averages_order($config);
+    
+    # Determine if we need the noindex flag (if anyone in this list has the flag set, we can't index the entire page)
+    $c->stash->{noindex} = 1 if $doubles_pairs_averages->noindex_set(1)->count;
+    
     $c->stash({
       doubles_pair_averages => $doubles_pairs_averages,
       doubles_pairs_last_updated => $c->model("DB::DoublesPair")->get_tables_last_updated_timestamp({
@@ -404,7 +416,7 @@ sub view_finalise :Private {
     });
     
     # Check if we're authorised to display edit / delete links next to names
-    $c->forward("TopTable::Controller::Users", "check_authorisation", [ [ qw( person_edit person_delete team_edit team_delete ) ], "", 0]);
+    $c->forward("TopTable::Controller::Users", "check_authorisation", [[qw( person_edit person_delete team_edit team_delete )], "", 0]);
   } elsif ( defined( $averages_type ) and $averages_type eq "doubles-teams" ) {
     # Team doubles records
     my $doubles_teams_averages = $c->model("DB::TeamSeason")->get_doubles_teams_in_division_in_averages_order($config);
