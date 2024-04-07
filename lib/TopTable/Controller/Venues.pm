@@ -218,6 +218,7 @@ sub view :Chained("base") :PathPart("") :Args(0) {
     map_latitude => $venue->coordinates_latitude,
     map_longitude => $venue->coordinates_longitude,
     page_description => $c->maketext("description.venues.view", $venue_name, $site_name),
+    canonical_uri => $c->uri_for_action("/venues/view", [$venue->url_key]),
   });
   
   # Notice if inactive

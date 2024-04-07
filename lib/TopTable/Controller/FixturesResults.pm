@@ -473,8 +473,7 @@ sub view_team_by_url_key :Private {
   my $season = $c->stash->{season};
   #my $club = $c->model("DB::Club")->find_url_key($club_url_key);
   #$c->log->debug(sprintf("find club url key: %s, club: %s, ref: %s", $club_url_key, $club, ref($club)));
-  my $team = $c->model("DB::Team")->find_url_keys($club_url_key, $team_url_key, {season => $season});
-  $c->log->debug(sprintf("find team url key: %s, club: %s, ref: %s", $team_url_key, $team, ref($team)));
+  my $team = $c->model("DB::Team")->find_url_keys($club_url_key, $team_url_key);
   $c->detach(qw(TopTable::Controller::Root default)) unless defined($team);
   
   # Grab the team
@@ -520,10 +519,11 @@ sub view_team :Private {
   my $enc_old_team_name = encode_entities($team_info->name);
   my $enc_team_name = encode_entities($team->name);
   my $old_club_and_team = sprintf("%s %s", $enc_old_club_short_name, $enc_old_team_name);
+  my $new_club_and_team = sprintf("%s %s", $enc_club_short_name, $enc_team_name);
   
   # New name info message
-  $c->add_status_messages({info => $c->maketext("teams.club.changed-notice", $enc_old_club_short_name, $enc_old_team_name, $c->uri_for_action("/clubs/view_current_season", [$team_info->club_season->url_key]), $enc_club_full_name)}) if $specific_season and $team_info->club_season->club->id != $team->club->id;
-  $c->add_status_messages({info => $c->maketext("teams.name.changed-notice", $enc_old_club_short_name, $enc_old_team_name, $enc_club_short_name, $enc_team_name)}) if $team_info->name ne $team->name;
+  $c->add_status_messages({info => $c->maketext("teams.club.changed-notice", $old_club_and_team, $enc_club_full_name, $c->uri_for_action("/clubs/view_current_season", [$team->club->url_key]), $enc_club_full_name)}) if $specific_season and $team_info->club_season->club->id != $team->club->id;
+  $c->add_status_messages({info => $c->maketext("teams.name.changed-notice", $old_club_and_team, $new_club_and_team)}) if $team_info->name ne $team->name;
   
   my $online_display;
   if ( $specific_season ) {
