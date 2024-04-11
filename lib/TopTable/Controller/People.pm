@@ -360,7 +360,7 @@ sub view_finalise :Private {
     $c->uri_for("/static/css/responsive-tabs/responsive-tabs.css"),
     $c->uri_for("/static/css/chosen/chosen.min.css"),
     $c->uri_for("/static/css/responsive-tabs/style-jqueryui.css"),
-    $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
+    $c->uri_for("/static/css/datatables/dataTables.dataTables.min.css"),
     $c->uri_for("/static/css/datatables/fixedColumns.dataTables.min.css"),
     $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
     $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
@@ -372,7 +372,7 @@ sub view_finalise :Private {
   my $external_scripts = [
     $c->uri_for("/static/script/plugins/responsive-tabs/jquery.responsiveTabs.mod.js"),
     $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
-    $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
+    $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
     $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
     $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
     $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
@@ -403,7 +403,7 @@ sub view_finalise :Private {
       selector => "to"
     }];
     
-    push(@{$external_styles}, $c->uri_for("/static/css/tokeninput/token-input-tt.css"));
+    push(@{$external_styles}, $c->uri_for("/static/css/tokeninput/token-input-tt2.css"));
     push(@{$external_scripts}, $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js", {v => 2}));
   }
   
@@ -442,14 +442,14 @@ sub view_seasons :Chained("view") :PathPart("seasons") :Args(0) {
   if ( $seasons->count ) {
     $ext_scripts = [
       $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
-      $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/people/seasons.js"),
     ];
     $ext_styles = [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
-      $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/dataTables.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
     ];
@@ -584,7 +584,7 @@ sub create :Chained("base_no_object_specified") :PathPart("create") :CaptureArgs
     ],
     external_styles => [
       $c->uri_for("/static/css/prettycheckable/prettyCheckable.css"),
-      $c->uri_for("/static/css/tokeninput/token-input-tt.css"),
+      $c->uri_for("/static/css/tokeninput/token-input-tt2.css"),
     ],
     tokeninput_confs => [{
       script => $c->uri_for("/teams/search", {season => $current_season->url_key}),
@@ -837,7 +837,7 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
     ],
     external_styles => [
       $c->uri_for("/static/css/prettycheckable/prettyCheckable.css"),
-      $c->uri_for("/static/css/tokeninput/token-input-tt.css"),
+      $c->uri_for("/static/css/tokeninput/token-input-tt2.css"),
     ],
     tokeninput_confs => [{
       script => $c->uri_for("/teams/search", {season => $current_season->url_key}),
@@ -1187,7 +1187,7 @@ sub import_results :Path("import-results") {
         view_online_display => "Importing people",
         external_scripts => [
           $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
-          $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
+          $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
           $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
           $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
           $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
@@ -1195,7 +1195,7 @@ sub import_results :Path("import-results") {
         ],
         external_styles => [
           $c->uri_for("/static/css/chosen/chosen.min.css"),
-          $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
+          $c->uri_for("/static/css/datatables/dataTables.dataTables.min.css"),
           $c->uri_for("/static/css/datatables/fixedColumns.dataTables.min.css"),
           $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
           $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),

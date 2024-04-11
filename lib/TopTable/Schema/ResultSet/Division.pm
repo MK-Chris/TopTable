@@ -74,8 +74,8 @@ sub divisions_in_season {
   return $self->search({
     "division_seasons.season" => $season->id,
   }, {
-    prefetch => {"division_seasons" => "fixtures_grid"},
-    order_by => {-asc => "rank"}
+    prefetch => {division_seasons => "fixtures_grid"},
+    order_by => {-asc => "me.rank"}
   });
 }
 
@@ -130,7 +130,7 @@ sub divisions_and_teams_in_season_by_grid_position {
         }]
       },
     }],
-    order_by => {-asc => [qw( rank team_seasons.grid_position )]}
+    order_by => {-asc => [qw( me.rank team_seasons.grid_position )]}
   });
 }
 

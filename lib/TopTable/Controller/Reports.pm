@@ -213,17 +213,17 @@ sub view_finalise :Private {
   $c->stash({
     template => sprintf("html/reports/%s.ttkt", $report_id),
     external_scripts => [
-      $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.colReorder.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
-      $c->uri_for(sprintf("/static/script/reports/%s.js", $report_id), {v => 3}),
+      $c->uri_for(sprintf("/static/script/reports/%s.js", $report_id), {v => 4}),
       $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
       $c->uri_for("/static/script/standard/option-list.js"),
     ],
     external_styles => [
-      $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/dataTables.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/colReorder.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),

@@ -140,7 +140,7 @@ FOREACH game IN match.team_match_games;
     END;
 -%]
     <div class="group" data-scheduled-game-number="[% game.scheduled_game_number %]" data-accordion-id="[% accordion_id %]">
-      <h3 id="heading-[% game.scheduled_game_number %]" data-scheduled-game-number="[% game.scheduled_game_number %]" data-game-type="doubles">[% game.scheduled_game_number %]: [% c.maketext("matches.game.header.doubles") %] <span id="game_[% game.scheduled_game_number %]_score" class="score">[% game_score_display %]</span> <span class="match_score" id="game_[% game.scheduled_game_number %]_match_score">[% match_score_display | html_entity %]</span></h3>
+      <h3 id="heading-[% game.scheduled_game_number %]" data-scheduled-game-number="[% game.scheduled_game_number %]" data-game-type="doubles">[% game.scheduled_game_number %]: [% c.maketext("matches.game.header.doubles") %] <span id="game_[% game.scheduled_game_number %]_score" class="score">[% game_score_display %]</span> <span class="ui-icon ui-icon-triangle-2-n-s sort-handle"></span><span class="match_score" id="game_[% game.scheduled_game_number %]_match_score">[% match_score_display | html_entity %]</span></h3>
       <div>
 [%-
   ELSE;
@@ -171,7 +171,7 @@ FOREACH game IN match.team_match_games;
     END;
 -%]
     <div class="group" data-scheduled-game-number="[% game.scheduled_game_number %]" data-accordion-id="[% accordion_id %]">
-      <h3 class="player_[% game.home_player_number %] player_[% game.away_player_number %]" data-scheduled-game-number="[% game.scheduled_game_number %]" data-game-type="singles">[% game.scheduled_game_number %]: <span class="game_player[% game.home_player_number %]">[% home_player_display | html_entity %]</span> <span id="game_[% game.scheduled_game_number %]_score" class="score">[% game_score_display %]</span> <span class="game_player[% game.away_player_number %]">[% away_player_display | html_entity %]</span> <span class="match_score" id="game_[% game.scheduled_game_number %]_match_score">[% match_score_display %]</span></h3>
+      <h3 class="player_[% game.home_player_number %] player_[% game.away_player_number %]" data-scheduled-game-number="[% game.scheduled_game_number %]" data-game-type="singles">[% game.scheduled_game_number %]: <span class="game_player[% game.home_player_number %]">[% home_player_display | html_entity %]</span> <span id="game_[% game.scheduled_game_number %]_score" class="score">[% game_score_display %]</span> <span class="game_player[% game.away_player_number %]">[% away_player_display | html_entity %]</span> <span class="ui-icon ui-icon-triangle-2-n-s sort-handle"></span><span class="match_score" id="game_[% game.scheduled_game_number %]_match_score">[% match_score_display %]</span></h3>
       <div>
 [%
   END;

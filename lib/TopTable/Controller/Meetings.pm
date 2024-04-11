@@ -419,7 +419,7 @@ sub create :Local {
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
       $c->uri_for("/static/css/prettycheckable/prettyCheckable.css"),
-      $c->uri_for("/static/css/tokeninput/token-input-tt.css"),
+      $c->uri_for("/static/css/tokeninput/token-input-tt2.css"),
       $c->uri_for("/static/css/prettycheckable/prettyCheckable.css"),
     ],
     meeting_types => $meeting_types,
@@ -585,7 +585,7 @@ sub edit :Private {
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
-      $c->uri_for("/static/css/tokeninput/token-input-tt.css"),
+      $c->uri_for("/static/css/tokeninput/token-input-tt2.css"),
       $c->uri_for("/static/css/prettycheckable/prettyCheckable.css"),
     ],
     meeting_types => [$c->model("DB::MeetingType")->all_meeting_types],

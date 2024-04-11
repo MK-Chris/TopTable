@@ -994,6 +994,7 @@ div.doubles_home_player_selection, div.doubles_away_player_selection {
 td.numeric, th.numeric, dd.numeric {text-align: right !important;}
 td.game-number, th.game-number {text-align: center;}
 .match_score {float: right;}
+.sort-handle {float: right; background-color: #fff;}
 span.game-result {font-weight: bold;}
 span.leg-separator {display: none;}
 td.leg-scores {clear: both;}

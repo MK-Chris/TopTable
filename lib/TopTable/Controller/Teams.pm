@@ -450,7 +450,7 @@ sub view_finalise :Private {
     canonical_uri => $canonical_uri,
     external_scripts => [
       $c->uri_for("/static/script/plugins/responsive-tabs/jquery.responsiveTabs.mod.js"),
-      $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
@@ -460,7 +460,7 @@ sub view_finalise :Private {
     external_styles => [
       $c->uri_for("/static/css/responsive-tabs/responsive-tabs.css"),
       $c->uri_for("/static/css/responsive-tabs/style-jqueryui.css"),
-      $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/dataTables.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/fixedColumns.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
@@ -695,7 +695,7 @@ sub send_email_captain :Private {
         js_on => ($jtest) ? 1 : 0, # The presence of JavaScript for the site visitor, 0|1
         all_headers => \%headers,
         sender_info => {
-          REFERRER => $c->req->referer,
+          REFFERRER => $c->req->referer,
           USER_AGENT => $c->req->user_agent,
         }
       });
@@ -872,14 +872,14 @@ sub view_seasons :Private {
   if ( $seasons->count ) {
     $ext_scripts = [
       $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
-      $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/teams/seasons.js"),
     ];
     $ext_styles = [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
-      $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/dataTables.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
     ];
@@ -1002,7 +1002,7 @@ sub create :Chained("base_create") :PathPart("create") :CaptureArgs(0) {
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
-      $c->uri_for("/static/css/tokeninput/token-input-tt.css"),
+      $c->uri_for("/static/css/tokeninput/token-input-tt2.css"),
     ],
     clubs => scalar $c->model("DB::Club")->all_clubs_by_name,
     divisions => scalar $current_season->divisions,
@@ -1197,7 +1197,7 @@ sub edit :Private {
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
-      $c->uri_for("/static/css/tokeninput/token-input-tt.css"),
+      $c->uri_for("/static/css/tokeninput/token-input-tt2.css"),
     ],
     clubs => scalar $c->model("DB::Club")->all_clubs_by_name,
     divisions => $divisions,

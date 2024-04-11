@@ -76,13 +76,14 @@ $(document).ready(function() {
   $("select").chosen({
     disable_search: true,
     single_backstroke_delete: false,
-    allow_single_deselect: true
+    allow_single_deselect: true,
+    width: "auto"
   });
   
   /*
     Put the checkbox inside the table div.
   */
-  $("#report-grouper").prependTo("#report_wrapper");
+  //$("#report-grouper").prependTo("#report_wrapper");
   
   /*
     Handle chosen selectbox change
@@ -92,7 +93,10 @@ $(document).ready(function() {
     
     // Set the previous column to visible.
     var $previous_value = $this.data("previous-value");
-    if ( $previous_value !== "" ) report_table.column($previous_value).visible(true);
+    
+    if ( $previous_value !== "" ) {
+      report_table.column($previous_value).visible(true);
+    }
     
     if ( $this.val() === "" ) {
       // No grouping, disable grouping and redraw the table
@@ -103,14 +107,17 @@ $(document).ready(function() {
       report_table.order.fixed([]);
     } else {
       // Group by select value's column index
+      // Add a fixed order so that we can only sort within the group
+      var rowGroupData = parseInt($this.val());
+      if (rowGroupData == 11) {
+        rowGroupData = 12;
+      }
+      
+      report_table.order.fixed({"pre": [rowGroupData, "asc"]});
+      
       report_table.column($this.val()).visible(false);
       report_table.columns.adjust();
       
-      var rowGroupData = $this.val();
-      if (rowGroupData == 11) rowGroupData = 12;
-      
-      // Add a fixed order so that we can only sort within the group
-      report_table.order.fixed({"pre": [rowGroupData, "asc"]});
       report_table.rowGroup().dataSrc(rowGroupData);
       report_table.rowGroup().enable().draw();
     }

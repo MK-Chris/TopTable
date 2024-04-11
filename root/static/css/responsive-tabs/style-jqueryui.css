@@ -1,9 +1,9 @@
 /* Tabs container */
 .r-tabs {
 	position: relative;
-	background: #fcfdfd url("../jqueryui/images/ui-bg_inset-hard_100_fcfdfd_1x100.png") repeat-x scroll 50% bottom;
+	background: #fcfdfd;
 	color: #222;
-	border: 1px solid #a6c9e2;
+	border: 1px solid #c5c5c5;
 	border-radius: 5px;
 	padding: 0.2em;
 }
@@ -13,8 +13,8 @@
 	margin: 0px;
 	padding: 0.3em 0.2em 0px 0.2em;
 	border-radius: 5px;
-	border: 1px solid #4297D7;
-	background: #2191c0 url("../jqueryui/images/ui-bg_gloss-wave_75_2191c0_500x100.png") repeat-x scroll 50% 50%;
+	border: 1px solid #ddd;
+	background: #e9e9e9;
 	color: #eaf5f7;
 	font-weight: bold;
 	min-height: 0px;
@@ -42,10 +42,10 @@
 	border-bottom-width: 0px;
 	padding: 0px;
 	white-space: nowrap;
-	border: 1px solid #77d5f7;
-	background: #0078ae url("../jqueryui/images/ui-bg_glass_45_0078ae_1x400.png") repeat-x scroll 50% 50%;
+	border: 1px solid #c5c5c5;
+	background: #f6f6f6;
 	font-weight: normal;
-	color: #fff;
+	color: #222;
 	border-top-right-radius: 5px;
   border-top-left-radius: 5px;
 }
@@ -55,7 +55,7 @@
 	float: left;
 	padding: 0.5em 1em;
 	text-decoration: none;
-  color: #fff;
+  color: #222;
 }
 
 /* Disabled tab */
@@ -66,16 +66,16 @@
 /* Active state tab */
 .r-tabs .r-tabs-nav .r-tabs-state-active {
   padding-bottom: 1px;
-	border: 1px solid #acdd4a;
-	background: #6eac2c url("../jqueryui/images/ui-bg_gloss-wave_50_6eac2c_500x100.png") repeat-x scroll 50% 50%;
+	border: 1px solid #003eff;
+	background: #3875d7;
 	font-weight: normal;
 	color: #fff;
 }
 
 /* Active state tab anchor */
 .r-tabs .r-tabs-nav .r-tabs-state-active .r-tabs-anchor {
-	/*color: #00c5ad;
-	text-shadow: none;
+	color: #fff;
+	/*text-shadow: none;
 
 	background-color: white;
 
@@ -85,10 +85,10 @@
 
 /* Hover state tab */
 .r-tabs .r-tabs-nav .r-tabs-state-hover {
-	border: 1px solid #448dae;
-	background: #79c9ec url("../jqueryui/images/ui-bg_glass_75_79c9ec_1x400.png") 50% 50% repeat-x;
+	border: 1px solid #c5c5c5;
+	background: #f6f6f6;
 	font-weight: normal;
-	color: #026890;
+	color: #222;
 }
 
 /* Tab panel */
@@ -98,16 +98,16 @@
 	background: transparent none repeat scroll 0% 0%;
   border-bottom-right-radius: 5px;
   border-bottom-left-radius: 5px;
-	background: #fcfdfd url("../jqueryui/images/ui-bg_inset-hard_100_fcfdfd_1x100.png") repeat-x scroll 50% bottom;
+	background: #fcfdfd;
 	color: #222;
 }
 
 /* Accordion bar */
 .r-tabs .r-tabs-accordion-title {
-	border: 1px solid #77d5f7;
-	background: #0078ae url("../jqueryui/images/ui-bg_glass_45_0078ae_1x400.png") repeat-x scroll 50% 50%;
+	border: 1px solid #c5c5c5;
+	background: #f6f6f6;
 	font-weight: normal;
-	color: #fff;
+	color: #222;
 	outline: 0px none;
 	line-height: 1.3;
 	padding: 2px;
@@ -122,15 +122,15 @@
 	display: block;
 	padding: 0.5em 1em;
 	text-decoration: none;
-  color: #fff;
+  color: #222;
 }
 
 /* Active accordion anchor */
 .r-tabs .r-tabs-accordion-title.r-tabs-state-active {
   padding-bottom: 1px;
   margin-bottom: 0px;
-	border: 1px solid #acdd4a;
-	background: #6eac2c url("../jqueryui/images/ui-bg_gloss-wave_50_6eac2c_500x100.png") repeat-x scroll 50% 50%;
+	border: 1px solid #003eff;
+	background: #3875d7;
 	font-weight: normal;
 	color: #fff;
 	border-top-left-radius: 5px;
@@ -139,12 +139,16 @@
 	border-bottom-right-radius: 0px;
 }
 
+.r-tabs .r-tabs-accordion-title.r-tabs-state-active .r-tabs-anchor {
+	color: #fff;
+}
+
 /* Hovered accordion */
 .r-tabs .r-tabs-accordion-title.r-tabs-state-hover {
-	border: 1px solid #448dae;
-	background: #79c9ec url("../jqueryui/images/ui-bg_glass_75_79c9ec_1x400.png") 50% 50% repeat-x;
+	border: 1px solid #c5c5c5;
+	background: #f6f6f6;
 	font-weight: normal;
-	color: #026890;
+	color: #222;
 }
 
 /* Disabled accordion button */

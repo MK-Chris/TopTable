@@ -816,7 +816,6 @@ input, textarea {
 input.active, textarea.active {
   margin-bottom:5px;
   line-height:18px;
-  padding:2px 5px;
   -webkit-border-radius: 5px;
   -moz-border-radius: 5px;
   border-radius: 5px;
@@ -1009,7 +1008,7 @@ div.doubles_home_player_selection, div.doubles_away_player_selection {
 .nav_list {text-align: center;}
 td.numeric, th.numeric, dd.numeric {text-align: right !important;}
 td.game-number, th.game-number {text-align: center;}
-.match_score {float: right;}
+.match_score, .sort-handle {float: right;}
 span.game-result {font-weight: bold;}
 span.leg-separator {display: none;}
 td.leg-scores {clear: both;}

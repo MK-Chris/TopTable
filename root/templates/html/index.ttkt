@@ -22,7 +22,7 @@ INCLUDE "html/news/list.ttkt" index = 1;
   <h4>[% c.maketext("home-page.todays-matches") %] ([% matches_today %])</h4>
 [%
 # Today's matches
-INCLUDE "html/fixtures-results/view-group-divisions-no-date-no-score.ttkt";
+INCLUDE "html/fixtures-results/view-group-divisions-no-date-check-score.ttkt";
 -%]
   </div>
 </div>

@@ -231,7 +231,7 @@ sub do_contact :Path("send-email") {
         js_on => ($jtest) ? 1 : 0, # The presence of JavaScript for the site visitor, 0|1
         all_headers => \%headers,
         sender_info => {
-          REFERRER => $c->req->referer,
+          REFFERRER => $c->req->referer,
           USER_AGENT => $c->req->user_agent,
         }
       });
@@ -347,7 +347,7 @@ sub team_captains :Path("team-captains") :Args(1) {
     teams => scalar $c->model("DB::Team")->get_teams_with_captains_in_season({season => $season, view_by => $view_by}),
     external_scripts => [
       $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
-      $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
@@ -355,7 +355,7 @@ sub team_captains :Path("team-captains") :Args(1) {
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
-      $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/dataTables.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/rowGroup.dataTables.min.css"),

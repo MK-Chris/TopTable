@@ -96,14 +96,14 @@ sub view :Chained("base") :PathPart("") :Args(0) {
     view_online_link => 0,
     external_scripts => [
       $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
-      $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/info/officials/positions/view.js"),
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
-      $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/dataTables.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
     ],
@@ -175,7 +175,7 @@ sub create :Local {
       $c->uri_for("/static/script/info/officials/positions/create-edit.js"),
     ],
     external_styles => [
-      $c->uri_for("/static/css/tokeninput/token-input-tt.css"),
+      $c->uri_for("/static/css/tokeninput/token-input-tt2.css"),
       $c->uri_for("/static/css/chosen/chosen.min.css"),
     ],
     form_action => $c->uri_for("do-create"),
@@ -267,7 +267,7 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
       $c->uri_for("/static/script/info/officials/positions/create-edit.js"),
     ],
     external_styles => [
-      $c->uri_for("/static/css/tokeninput/token-input-tt.css"),
+      $c->uri_for("/static/css/tokeninput/token-input-tt2.css"),
       $c->uri_for("/static/css/chosen/chosen.min.css"),
     ],
     form_action => $c->uri_for_action("/info/officials/positions/do_edit", [$position->url_key]),
@@ -678,7 +678,7 @@ sub send_email :Chained("holders") :PathPart("send-email") :Args(0) {
         js_on => ($jtest) ? 1 : 0, # The presence of JavaScript for the site visitor, 0|1
         all_headers => \%headers,
         sender_info => {
-          REFERRER => $c->req->referer,
+          REFFERRER => $c->req->referer,
           USER_AGENT => $c->req->user_agent,
         }
       });
