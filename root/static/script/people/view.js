@@ -11,7 +11,13 @@ $(document).ready(function() {
     "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
     "info": true,
     "fixedHeader": true,
-    "dom": "frtipP",
+    "layout": {
+      "topStart": "pageLength",
+      "topEnd": "search",
+      "bottomStart": "info",
+      "bottomEnd": "paging",
+      "bottom2Start": "searchPanes"
+    },
     "searchPanes": {
       "layout": "columns-6",
       "collapse": false,
@@ -83,7 +89,13 @@ $(document).ready(function() {
     "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
     "info": true,
     "fixedHeader": true,
-    "dom": "frtipP",
+    "layout": {
+      "topStart": "pageLength",
+      "topEnd": "search",
+      "bottomStart": "info",
+      "bottomEnd": "paging",
+      "bottom2Start": "searchPanes"
+    },
     "searchPanes": {
       "layout": "columns-6",
       "collapse": false,

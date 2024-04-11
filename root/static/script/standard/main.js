@@ -9,7 +9,7 @@ $(document).ready(function(){
   /*
     jQueryUI buttons
   */
-  $("input[type=submit]:not(.button-approve, .button-deny, .button-reset), input[type=button]:not(.button-approve, .button-deny, .button-reset), button").button();
+  $("input[type=submit]:not(.button-approve, .button-deny, .button-reset), input[type=button]:not(.button-approve, .button-deny, .button-reset), button:not(.dt-paging-button)").button();
   
   /*
    Active / inactive input fields
