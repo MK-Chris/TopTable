@@ -4,7 +4,7 @@ use namespace::autoclean;
 use HTML::Entities;
 use Email::Valid;
 use DateTime::Format::DateParse;
-use DDP;
+use JSON;
 
 BEGIN { extends 'Catalyst::Controller'; }
 
@@ -222,6 +222,11 @@ sub do_contact :Path("send-email") {
       my $seconds = ($delta->{minutes} * 60) + $delta->{seconds};
       
       my %headers = %{$c->req->headers};
+      my $sender_info = encode_json({
+        REFFERRER => $c->req->referer,
+        USER_AGENT => $c->req->user_agent,
+      });
+      
       my $response = $c->model("Cleantalk::Contact")->request({
         message => $message,
         sender_ip => $c->req->address,
@@ -230,10 +235,7 @@ sub do_contact :Path("send-email") {
         submit_time => $seconds, # The time taken to fill the comment form in seconds
         js_on => ($jtest) ? 1 : 0, # The presence of JavaScript for the site visitor, 0|1
         all_headers => \%headers,
-        sender_info => {
-          REFFERRER => $c->req->referer,
-          USER_AGENT => $c->req->user_agent,
-        }
+        sender_info => $sender_info,
       });
       
       unless ( $response->{allow} ) {
