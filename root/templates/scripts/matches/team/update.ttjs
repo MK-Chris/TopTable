@@ -189,7 +189,7 @@ END;
     }
   }).sortable({
     axis: "y",
-    handle: "h3",
+    handle: ".sort-handle",
     cursor: "move",
     update: function( event, ui ) {
       // IE doesn't register the blur when sorting
@@ -457,7 +457,7 @@ END;
             $("#game_" + game_number + "_leg_" + loop_leg + "_award").hide();
             $("#game_" + game_number + "_leg_" + loop_leg + "_home_award").prop("checked", false);
             $("#game_" + game_number + "_leg_" + loop_leg + "_away_award").prop("checked", false);
-            $("#game_" + game_number + "_leg_" + loop_leg + "_award").buttonset("refresh");
+            $("#game_" + game_number + "_leg_" + loop_leg + "_award").controlgroup("refresh");
           }
 [%
 IF match.team_match_template.winner_type.id == "points";
@@ -781,7 +781,7 @@ END;
       if ( $this_button.prop("checked") ) {
         // If this button is checked, ensure the opposite one is not
         $("#game_" + game_number + "_leg_" + leg_number + "_" + opposite_location + "_award").prop("checked", false);
-        $("#game_" + game_number + "_leg_" + leg_number + "_award").buttonset("refresh");
+        $("#game_" + game_number + "_leg_" + leg_number + "_award").controlgroup("refresh");
       }
       
       // Now check that ONE of the buttons is checked, so that we can work out whether to trigger an update, or send the AJAX request to reset (delete) the existing score
@@ -856,7 +856,7 @@ FOREACH leg = game.team_match_legs;
 -%]
         $("#game_" + game_number + "_leg_[% leg.leg_number %]_home_award").prop("checked", false);
         $("#game_" + game_number + "_leg_[% leg.leg_number %]_away_award").prop("checked", false);
-        $("#game_" + game_number + "_leg_[% leg.leg_number %]_award").buttonset("refresh");
+        $("#game_" + game_number + "_leg_[% leg.leg_number %]_award").controlgroup("refresh");
 [%
 END;
 -%]

@@ -68,7 +68,8 @@ $(document).ready(function() {
   $("select").chosen({
     disable_search: true,
     single_backstroke_delete: false,
-    allow_single_deselect: true
+    allow_single_deselect: true,
+    width: "auto"
   });
   
   /*
@@ -97,7 +98,7 @@ $(document).ready(function() {
       // Group by select value's column index
       report_table.column($this.val()).visible(false);
       report_table.columns.adjust();
-      report_table.order.fixed({"pre": [$this.val(), "asc"]});
+      report_table.order.fixed({"pre": [parseInt($this.val()), "asc"]});
       report_table.rowGroup().dataSrc($this.val());
       report_table.rowGroup().enable().draw();
     }

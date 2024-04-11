@@ -250,7 +250,7 @@ sub create :Local {
       $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js", {v => 2}),
     ],
     external_styles => [
-      $c->uri_for("/static/css/tokeninput/token-input-tt.css"),
+      $c->uri_for("/static/css/tokeninput/token-input-tt2.css"),
     ],
     form_action => $c->uri_for("do-create"),
     subtitle2 => $c->maketext("admin.create"),
@@ -323,7 +323,7 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
       $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js", {v => 2}),
     ],
     external_styles => [
-      $c->uri_for("/static/css/tokeninput/token-input-tt.css"),
+      $c->uri_for("/static/css/tokeninput/token-input-tt2.css"),
     ],
     form_action => $c->uri_for("do-create"),
     subtitle2 => $c->maketext("admin.edit"),

@@ -7,10 +7,10 @@ $(document).ready(function() {
     Show / hide the filter divs based on the ticked state of the checkboxes
   */
   $("input.filter-type").on("change", function() {
-    var $this           = $(this);
-    var form            = $this.data("form");
-    var opposite_form   = form === 1 ? 2 : 1;
-    var filter          = $this.data("filter");
+    var $this = $(this);
+    var form = $this.data("form");
+    var opposite_form = form === 1 ? 2 : 1;
+    var filter = $this.data("filter");
     var opposite_filter = filter === "defined" ? "custom" : "defined";
     
     if ( $this.prop("checked") ) {

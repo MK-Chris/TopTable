@@ -52,9 +52,9 @@ sub page_records {
     page => $page_number,
     rows => $results_per_page,
     order_by => [{
-      -desc => [qw( system sysadmin anonymous )],
+      -desc => [qw( me.system me.sysadmin me.anonymous )],
     }, {
-      -asc  => [qw( name )],
+      -asc  => [qw( me.name )],
     }],
   });
 }

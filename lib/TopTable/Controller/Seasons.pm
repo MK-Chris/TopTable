@@ -217,14 +217,14 @@ sub view :Chained("base") :PathPart("") :Args(0) {
     canonical_uri => $c->uri_for_action("/seasons/view", [$season->url_key]),
     page_description => $c->maketext("description.seasons.view", $enc_name, $site_name),
     external_scripts => [
-      $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/seasons/view.js"),
       $c->uri_for("/static/script/standard/option-list.js"),
       $c->uri_for("/static/script/standard/vertical-table.js"),
     ],
     external_styles => [
-      $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/dataTables.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
     ],
     

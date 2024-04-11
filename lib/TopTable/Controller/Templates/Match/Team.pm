@@ -189,7 +189,7 @@ sub view :Chained("base") :PathPart("") :Args(0) {
     view_online_link => 0,
     tt_template_games => scalar $tt_template->games,
     external_scripts => [
-      $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
@@ -197,7 +197,7 @@ sub view :Chained("base") :PathPart("") :Args(0) {
       $c->uri_for("/static/script/standard/vertical-table.js"),
     ],
     external_styles => [
-      $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/dataTables.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/fixedColumns.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),

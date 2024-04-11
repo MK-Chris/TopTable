@@ -3,8 +3,7 @@ ul.token-input-list {
     overflow: hidden; 
     height: auto !important; 
     height: 1%;
-    width: 400px;
-    border: 1px solid #999;
+    width: 100%;
     cursor: text;
     font-size: 12px;
     font-family: Verdana;
@@ -21,11 +20,23 @@ ul.token-input-list li {
 }
 
 ul.token-input-list li input {
-    border: 0;
-    width: 350px;
-    padding: 3px 8px;
-    background-color: white;
-    -webkit-appearance: caret;
+  border:1px solid #bdc7d8;
+  width: 100%;
+  max-width: 280px;
+  padding: 3px 8px;
+  background-color: white;
+  -webkit-appearance: caret;
+  appearance: caret;
+  margin-bottom:5px;
+  line-height:18px;
+  padding:2px 5px;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  border-radius: 5px;
+  margin-right: 15px;
+  margin-top: 5px;
+  margin-bottom: 5px;
+  overflow:visible;
 }
 
 li.token-input-token {
@@ -34,7 +45,7 @@ li.token-input-token {
     height: 1%;
     margin: 3px;
     padding: 3px 5px;
-    background-color: #d0efa0;
+    background-color: #f6f6f6;
     color: #000;
     font-weight: bold;
     cursor: default;
@@ -54,7 +65,7 @@ li.token-input-token span {
 }
 
 li.token-input-selected-token {
-    background-color: #08844e;
+    background-color: #3875d7;
     color: #fff;
 }
 
@@ -64,7 +75,8 @@ li.token-input-selected-token span {
 
 div.token-input-dropdown {
     position: absolute;
-    width: 400px;
+    width: 100%;
+    max-width: 280px;
     background-color: #fff;
     overflow: hidden;
     border-left: 1px solid #ccc;
@@ -108,6 +120,7 @@ div.token-input-dropdown ul li em {
 }
 
 div.token-input-dropdown ul li.token-input-selected-dropdown-item {
-    background-color: #d0efa0;
+    background-color: #3875d7;
+    color: #fff;
 }
 

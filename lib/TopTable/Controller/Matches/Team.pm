@@ -218,7 +218,7 @@ sub view :Private {
   # Set up the external scripts - if the match has a score, we'll use a different script - the plugin will always be there
   my @external_scripts = (
     $c->uri_for("/static/script/plugins/responsive-tabs/jquery.responsiveTabs.mod.js"),
-    $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
+    $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
     $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
     $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
     $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
@@ -260,7 +260,7 @@ sub view :Private {
     external_styles => [
       $c->uri_for("/static/css/responsive-tabs/responsive-tabs.css"),
       $c->uri_for("/static/css/responsive-tabs/style-jqueryui.css"),
-      $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/dataTables.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/fixedColumns.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
@@ -360,13 +360,13 @@ sub update :Private {
       $c->uri_for("/static/script/standard/chosen.js"),
       $c->uri_for("/static/script/standard/prettycheckable.js"),
       $c->uri_for("/static/script/standard/datepicker.js"),
-      $c->uri_for("/static/script/standard/button-toggle.js"),
+      $c->uri_for("/static/script/standard/button-toggle.js", {v => 2}),
       $c->uri_for_action("/matches/team/update_js_by_ids", [$match->team_season_home_team_season->team->id, $match->team_season_away_team_season->team->id, $match->scheduled_date->year, $match->scheduled_date->month, $match->scheduled_date->day]),
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
       $c->uri_for("/static/css/prettycheckable/prettyCheckable.css"),
-      $c->uri_for("/static/css/tokeninput/token-input-tt.css"),
+      $c->uri_for("/static/css/tokeninput/token-input-tt2.css"),
       $c->uri_for("/static/css/toastmessage/jquery.toastmessage.css"),
     ],
     subtitle2 => encode_entities($match->division_season->name),
@@ -1194,7 +1194,7 @@ sub check_report_create_edit_authorisation :Private {
     $c->forward("TopTable::Controller::Users", "check_authorisation", ["matchreport_create_associated", $c->maketext("user.auth.create-match-reports"), 1]) unless $c->stash->{authorisation}{matchreport_create};
   } else {
     # Editing - check we can edit the report for this match.
-    my $redirect_on_fail = $c->user_exists and $c->user->id == $original_report->author->id ? 0 : 1;
+    my $redirect_on_fail = ($c->user_exists and $c->user->id == $original_report->author->id) ? 0 : 1;
     $c->forward("TopTable::Controller::Users", "check_authorisation", ["matchreport_edit_all", $c->maketext("user.auth.edit-match-reports"), $redirect_on_fail]);
     $c->forward("TopTable::Controller::Users", "check_authorisation", ["matchreport_edit_own", $c->maketext("user.auth.edit-match-reports"), 1]) if !$c->stash->{authorisation}{matchreport_edit_all} and $c->user_exists and $c->user->id == $original_report->author->id;
   }

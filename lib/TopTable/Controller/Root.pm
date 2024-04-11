@@ -173,7 +173,7 @@ sub index :Path :Args(0) {
   my $online_users_last_active_limit = $c->datetime_tz({time_zone => "UTC"})->subtract(minutes => 15);
   my $online_user_count = $c->model("DB::Session")->get_online_users({datetime_limit => $online_users_last_active_limit})->count;
   
-  my ( $matches, $matches_today );
+  my ( $matches, $matches_today, $matches_started );
   
   if ( defined($current_season) ) {
     $matches = $c->model("DB::TeamMatch")->matches_on_date({
@@ -181,8 +181,10 @@ sub index :Path :Args(0) {
       date => $c->datetime,
     });
     
+    $matches_started = $matches->matches_started->count;
     $matches_today = $matches->count;
   } else {
+    $matches_started = 0;
     $matches_today = 0;
   }
   
@@ -204,7 +206,7 @@ sub index :Path :Args(0) {
     external_scripts => [
       $c->uri_for("/static/script/plugins/qtip/jquery.qtip.min.js"),
       $c->uri_for("/static/script/standard/qtip.js"),
-      $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
@@ -215,7 +217,7 @@ sub index :Path :Args(0) {
     ],
     external_styles => [
       $c->uri_for("/static/css/qtip/jquery.qtip.css"),
-      $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/dataTables.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/fixedColumns.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
@@ -230,6 +232,7 @@ sub index :Path :Args(0) {
     exclude_event_user => 1,
     matches => $matches,
     matches_today => $matches_today,
+    matches_started => $matches_started,
     articles => $articles,
     online_user_count => $online_user_count,
     index_text => $c->model("DB::PageText")->get_text("index"),

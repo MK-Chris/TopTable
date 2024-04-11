@@ -113,14 +113,14 @@ sub list :Chained("/") :PathPart("users") :Args(0) {
     users => $users,
     external_scripts => [
       $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
-      $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $user_list_script,
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
-      $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/dataTables.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
     ],
@@ -161,14 +161,14 @@ sub retrieve_paged :Private {
     page_links => $page_links,
     external_scripts => [
       $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
-      $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $user_list_script,
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
-      $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/dataTables.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
     ],
@@ -889,7 +889,7 @@ sub approval_list :Path("approval-list") :Args(0) {
       subtitle2 => $c->maketext("user.list-to-approve"),
       external_scripts => [
         $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
-        $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
+        $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
         $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
         $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
         $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
@@ -898,7 +898,7 @@ sub approval_list :Path("approval-list") :Args(0) {
       ],
       external_styles => [
         $c->uri_for("/static/css/chosen/chosen.min.css"),
-        $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
+        $c->uri_for("/static/css/datatables/dataTables.dataTables.min.css"),
         $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
         $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
         $c->uri_for("/static/css/prettycheckable/prettyCheckable.css"),
@@ -1796,14 +1796,14 @@ sub current_activity :Path("/users-online") {
     online_users => scalar $c->model("DB::Session")->get_online_users({datetime_limit => $online_users_last_active_limit, include_hidden => $include_hidden}),
     view_online_display => "Viewing online users",
     external_scripts => [
-      $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/users/online.js"),
     ],
     external_styles => [
-      $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/dataTables.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/fixedColumns.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),

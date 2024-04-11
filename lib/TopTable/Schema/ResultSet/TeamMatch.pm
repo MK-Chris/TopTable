@@ -464,14 +464,14 @@ sub matches_on_date {
   
   my $attributes = {
     prefetch  => [qw( venue ), {
-      team_season_home_team_season => [ qw( team ), {club_season => "club"}],
+      team_season_home_team_season => [qw( team ), {club_season => "club"}],
     }, {
-      team_season_away_team_season => [ qw( team ), {club_season => "club"}],
+      team_season_away_team_season => [qw( team ), {club_season => "club"}],
     }, {
       division_season => "division"
     }],
     order_by  =>  {
-      -asc => [ qw( division.rank scheduled_date club_season.short_name team_season_home_team_season.name )]
+      -asc => [qw( division.rank scheduled_date club_season.short_name team_season_home_team_season.name )]
     }
   };
   
@@ -490,6 +490,18 @@ sub matches_on_date {
     played_date => $date->ymd,
     
   }, $attributes);
+}
+
+=head2 matches_started
+
+Return a list of matches that have been started (this is intended to be chained to another search, so we're searching on that resultset).
+
+=cut
+
+sub matches_started {
+  my ( $self ) = @_;
+  
+  return $self->search({"me.started" => 1});
 }
 
 =head2 matches_at_venue

@@ -740,7 +740,7 @@ sub opening_hours :Chained("base") :PathPart("opening-hours") :Args(0) {
     external_scripts => [
       $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
       $c->uri_for("/static/script/standard/chosen.js"),
-      $c->uri_for("/static/script/standard/button-toggle.js"),
+      $c->uri_for("/static/script/standard/button-toggle.js", {v => 2}),
     ],
     subtitle2 => $venue->name,
     subtitle3 => $c->maketext("venues.opening-hours"),

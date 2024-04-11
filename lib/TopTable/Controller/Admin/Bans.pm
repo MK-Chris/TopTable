@@ -110,7 +110,7 @@ sub list :Chained("base") :PathPart("") :Args(0) {
   if ( $bans->count ) {
     $ext_scripts = [
       $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
-      $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/admin/bans/list.js"),
@@ -118,7 +118,7 @@ sub list :Chained("base") :PathPart("") :Args(0) {
     
     $ext_styles = [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
-      $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/dataTables.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
     ];
@@ -250,7 +250,7 @@ sub issue :Chained("base") :PathPart("issue") :Args(0) {
     
     # Push the external scripts / styles
     push( @{ $ext_scripts }, $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js", {v => 2}) );
-    push( @{ $ext_styles }, $c->uri_for("/static/css/tokeninput/token-input-tt.css") );
+    push( @{ $ext_styles }, $c->uri_for("/static/css/tokeninput/token-input-tt2.css") );
   }
   
   # Stash our values for TT
@@ -343,7 +343,7 @@ sub edit :Chained("base_item") :PathPart("edit") :Args(0) {
     
     # Push the external scripts / styles
     push(@{$ext_scripts}, $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js", {v => 2}));
-    push(@{$ext_styles}, $c->uri_for("/static/css/tokeninput/token-input-tt.css"));
+    push(@{$ext_styles}, $c->uri_for("/static/css/tokeninput/token-input-tt2.css"));
   }
   
   # Stash our values for TT

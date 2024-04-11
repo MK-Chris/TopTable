@@ -2214,7 +2214,8 @@ msgid "matches.update.form.legend.games"
 msgstr "Games"
 
 msgid "matches.update.games.notice"
-msgstr "If the games were played in a different order to what is the default, you can drag the game headings into the correct order.<br />Although only the fields for only one leg will be visible to start with, as you fill out the scores, a valid score will yield the next fields to be filled out."
+msgstr "Only the first leg fields will be shown to start with; the scores are completed, a valid score will yield the next fields to be filled out.<br />"
+"If the games were played in a different order, you can drag the <span class="ui-icon ui-icon-triangle-2-n-s"></span> icon in the game headings into the correct order."
 
 msgid "matches.update.error.match-cancelled"
 msgstr "This match was cancelled; in order to enter a score, you will need to undo the cancellation first."
@@ -4532,7 +4533,7 @@ msgstr "write a report for this match"
 msgid "user.auth.edit-match-reports"
 msgstr "edit this match report"
 
-msgid "user.auth.edit-match-reports"
+msgid "user.auth.delete-match-reports"
 msgstr "delete this match report"
 
 msgid "user.auth.cancel-matches"

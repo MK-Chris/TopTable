@@ -86,6 +86,7 @@ END;
 
 <link rel="stylesheet" href="[% c.uri_for('/static/css/main.css') %]?v14" type="text/css" media="screen" />
 <link rel="stylesheet" href="[% c.uri_for('/static/css/main-print.css') %]?v14" type="text/css" media="print" />
+<link rel="stylesheet" href="[% c.uri_for('/static/css/jqueryui/jquery-ui.min.css') %]" type="text/css" media="screen" />
 <link rel="stylesheet" href="[% c.uri_for('/static/css/jqueryui/jquery-ui.structure.min.css') %]" type="text/css" media="screen" />
 <link rel="stylesheet" href="[% c.uri_for('/static/css/jqueryui/jquery-ui.theme.min.css') %]" type="text/css" media="screen" />
 <link rel="stylesheet" href="[% c.uri_for('/static/css/smartmenus/sm-core-css-v1.1.1.css') %]" type="text/css" media="screen" />
@@ -108,9 +109,10 @@ IF external_styles;
 END;
 -%]
 
-<script type="text/javascript" src="[% c.uri_for("/static/script/jquery-1.12.4.min.js") %]"></script>
-<!--<script type="text/javascript" src="[% c.uri_for("/static/script/jquery-3.4.1.min.js") %]"></script>-->
-<script type="text/javascript" src="[% c.uri_for("/static/script/plugins/jquery-ui/jquery-ui-1-11-4.min.js") %]"></script>
+<!--<script type="text/javascript" src="[% c.uri_for("/static/script/jquery-1.12.4.min.js") %]"></script>-->
+<script type="text/javascript" src="[% c.uri_for("/static/script/jquery-3.7.1.min.js") %]"></script>
+<!--<script type="text/javascript" src="https://code.jquery.com/jquery-migrate-3.4.1.min.js"></script>-->
+<script type="text/javascript" src="[% c.uri_for("/static/script/plugins/jquery-ui/jquery-ui-1-13.2.min.js") %]"></script>
 <script type="text/javascript" src="[% c.uri_for('/static/script/plugins/smartmenus/jquery.smartmenus.min.v1.1.1.js') %]"></script>
 <script type="text/javascript" src="[% c.uri_for('/static/script/plugins/smartmenus/sm-menu-toggle.js') %]"></script>
 <script type="text/javascript" src="[% c.uri_for('/static/script/plugins/smartmenus/sm-menu-resize.js') %]"></script>

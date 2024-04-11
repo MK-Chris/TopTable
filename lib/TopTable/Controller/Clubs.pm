@@ -355,14 +355,14 @@ sub view_finalise :Private {
     canonical_uri => $canonical_uri,
     external_scripts => [
       $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
-      $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/clubs/view.js", {v => 2}),
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
-      $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/dataTables.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
     ],
@@ -389,14 +389,14 @@ sub view_seasons :Chained("view") :PathPart("seasons") :Args(0) {
   if ( $seasons->count ) {
     $ext_scripts = [
       $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
-      $c->uri_for("/static/script/plugins/datatables/jquery.dataTables.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/clubs/seasons.js"),
     ];
     $ext_styles = [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
-      $c->uri_for("/static/css/datatables/jquery.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/dataTables.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
     ];
@@ -463,9 +463,9 @@ sub create :Local {
     my $tokeninput_options = {
       jsonContainer => "json_search",
       tokenLimit => 1,
-      hintText => encode_entities($c->maketext("person.tokeninput.type")),
-      noResultsText => encode_entities($c->maketext("tokeninput.text.no-results")),
-      searchingText => encode_entities($c->maketext("tokeninput.text.searching")),
+      hintText => $c->maketext("person.tokeninput.type"),
+      noResultsText => $c->maketext("tokeninput.text.no-results"),
+      searchingText => $c->maketext("tokeninput.text.searching"),
     };
     
     # Add the pre-population if needed
@@ -494,7 +494,7 @@ sub create :Local {
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
-      $c->uri_for("/static/css/tokeninput/token-input-tt.css"),
+      $c->uri_for("/static/css/tokeninput/token-input-tt2.css"),
     ],
     venues => $venues,
     form_action => $c->uri_for("do-create"),
@@ -575,7 +575,7 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
-      $c->uri_for("/static/css/tokeninput/token-input-tt.css"),
+      $c->uri_for("/static/css/tokeninput/token-input-tt2.css"),
     ],
     venues => [$c->model("DB::Venue")->active_venues],
     form_action => $c->uri_for_action("/clubs/do_edit", [$club->url_key]),
