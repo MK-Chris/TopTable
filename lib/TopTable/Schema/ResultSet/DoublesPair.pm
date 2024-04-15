@@ -91,20 +91,109 @@ sub find_pair {
   my $season = $params->{season};
   my $team = $params->{team};
   
-  return $self->search([{
+  # Do the lookups if they are not passed in as objects
+  my $schema = $self->result_source->schema;
+  $person1 = $schema->resultset("Person")->find_id_or_url_key($person1) unless ref($person1);
+  $person2 = $schema->resultset("Person")->find_id_or_url_key($person2) unless ref($person2);
+  $season = $schema->resultset("Season")->find_id_or_url_key($season) if defined($season) and !ref($season);
+  $team = $schema->resultset("Team")->find_id_or_url_key($team) if defined($team) and !ref($team);
+  
+  my @where = ({
     person1 => $person1->id,
     person2 => $person2->id,
-    "me.season" => $season->id,
-    "me.team" => $team->id,
   }, {
     person1 => $person2->id,
     person2 => $person1->id,
-    "me.season" => $season->id,
-    "me.team" => $team->id,
-  }], {
-    prefetch  => ["person_season_person1_season_team", "person_season_person2_season_team", {
+  });
+  
+  if ( defined($season) ) {
+    $where[0]{"me.season"} = $season->id;
+    $where[1]{"me.season"} = $season->id;
+  }
+  
+  if ( defined($team) ) {
+    $where[0]{"me.team"} = $team->id;
+    $where[1]{"me.team"} = $team->id;
+  }
+  
+  return $self->search(\@where, {
+    prefetch  => [qw( season ), {
+      person_season_person1_season_team => "person",
+    }, {
+      person_season_person2_season_team => "person",
+    }, {
       team_season => "club_season",
     }],
+    order_by => {-desc => [qw( season.start_date season.end_date )]}
+  });
+}
+
+=head2 get_season
+
+Search a resultset for a specific season.
+
+=cut
+
+sub get_season {
+  my ( $self, $params ) = @_;
+  my $season = $params->{season};
+  
+  return $self->search({"me.season" => $season->id}, {
+    join => [qw( season ), {
+      person_season_person1_season_team => [qw( person team_membership_type )],
+    }, {
+      person_season_person2_season_team => [qw( person team_membership_type )],
+    }, {
+      team_season => [qw( club_season ), {division_season => "division"}],
+    }],
+    order_by => {-asc => [qw( team_membership_type.display_order team_membership_type_2.display_order division.rank )]},
+  });
+}
+
+=head2 get_games
+
+Return the games for this resultset (normally this would be an already looked up resultset involving a specific pair).
+
+=cut
+
+sub get_games {
+  my ( $self, $params ) = @_;
+  my $season = $params->{season} if defined($params);
+  my $schema = $self->result_source->schema;
+  
+  # Grab the IDs in this resultset
+  my @rs = $self->all;
+  my @ids = map($_->id, @rs);
+  
+  # Build our initial where
+  my @where = ({
+    home_doubles_pair => {-in => \@ids},
+    doubles_game => 1,
+  }, {
+    away_doubles_pair => {-in => \@ids},
+    doubles_game => 1,
+  });
+  
+  if ( defined($season) ) {
+    # Add the season if supplied
+    $where[0]{"team_match.season"} = $season->id;
+    $where[1]{"team_match.season"} = $season->id;
+  }
+  
+  # We can't search related because this pair may be a home or away player, so do a direct search on the table
+  return $schema->resultset("TeamMatchGame")->search(\@where, {
+    prefetch  => [qw( winner ), {
+      home_doubles_pair => [{person_season_person1_season_team => "person", person_season_person2_season_team => "person"}],
+      away_doubles_pair => [{person_season_person1_season_team => "person", person_season_person2_season_team => "person"}],
+      team_match => [{
+        team_season_home_team_season => [qw( team ), {club_season => "club"}],
+      }, {
+        team_season_away_team_season => [qw( team ), {club_season => "club"}],
+      }],
+    }],
+    order_by => {
+      -asc => [qw( me.scheduled_date me.home_team me.away_team me.actual_game_number me.scheduled_game_number )],
+    },
   });
 }
 
@@ -142,6 +231,20 @@ sub pairs_involving_person {
     prefetch => ["person_season_person1_season_team", "person_season_person2_season_team", "season", {
       team_season  => ["team", {club_season => "club"}]
     }],
+  });
+}
+
+=head2 get_all_seasons
+
+A list of seasons involving the doubles pairs in this set - essentially just grouping by season.
+
+=cut
+
+sub get_all_seasons {
+  my ( $self ) = @_;
+  
+  return $self->search(undef, {
+    group_by => [qw( me.season )],
   });
 }
 

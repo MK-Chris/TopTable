@@ -414,6 +414,19 @@ msgstr "are"
 msgid "home-page.todays-matches"
 msgstr "Matches playing today"
 
+## Doubles
+msgid "menu.text.doubles"
+msgstr "Doubles"
+
+msgid "description.doubles.view-current"
+msgstr "%1 and %2&#39;s doubles statistics in %2."
+
+msgid "description.doubles.view-specific"
+msgstr "%1 and %2&#39;s doubles statistics from %2 in %3."
+
+msgid "description.doubles.list-seasons"
+msgstr "A list of seasons that %1 and %2 have played in or been involved with in %3."
+
 ### Page descriptions
 ## Clubs
 msgid "description.clubs.list"
@@ -1352,7 +1365,29 @@ msgstr "Season statistics successfully transferred."
 msgid "people.name.changed-notice"
 msgstr "%1 is now known as %2."
 
+### Doubles Pairs
+msgid "doubles.pair.display_names"
+msgstr "%1 and %2"
+
+msgid "doubles.pair.sort_names"
+msgstr "%1, %2, %3, %4"
+
+msgid "doubles.message.did-not-play"
+msgstr "%1 and %2 did not play doubles together in %3."
+
+msgid "doubles.seasons.count-text"
+msgstr "%1 and %2 have played doubles together in %3 %4."
+
+msgid "doubles.tabs.summary"
+msgstr "Summary"
+
+msgid "doubles.tabs.games"
+msgstr "Games"
+
 ### Generic team / person statistics labels
+msgid "stats.heading.details"
+msgstr "Details"
+
 msgid "stats.heading.matches"
 msgstr "Matches"
 
@@ -1364,6 +1399,18 @@ msgstr "Legs"
 
 msgid "stats.heading.points"
 msgstr "Points"
+
+msgid "stats.label.team"
+msgstr "Team"
+
+msgid "stats.label.division"
+msgstr "Division"
+
+msgid "stats.label.player1"
+msgstr "Player 1"
+
+msgid "stats.label.player2"
+msgstr "Player 2"
 
 msgid "stats.label.played"
 msgstr "Played"
