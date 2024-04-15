@@ -673,6 +673,7 @@ sub send_email :Chained("holders") :PathPart("send-email") :Args(0) {
         USER_AGENT => $c->req->user_agent,
       });
       my $response = $c->model("Cleantalk::Contact")->request({
+        method_name => "check_message",
         message => $message,
         sender_ip => $c->req->address,
         sender_email => $email_address, # Email IP of the visitor
