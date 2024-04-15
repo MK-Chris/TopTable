@@ -75,15 +75,11 @@ ELSE;
       IF game.doubles_game;
         # Setup the correct links - complete season show specific season links; incomplete season show current season links
         IF season.complete;
-          SET home1_uri = c.uri_for_action("/people/view_specific_season", [game.home_doubles_pair.person_season_person1_season_team.person.url_key, season.url_key]);
-          SET home2_uri = c.uri_for_action("/people/view_specific_season", [game.home_doubles_pair.person_season_person2_season_team.person.url_key, season.url_key]);
-          SET away1_uri = c.uri_for_action("/people/view_specific_season", [game.away_doubles_pair.person_season_person1_season_team.person.url_key, season.url_key]);
-          SET away2_uri = c.uri_for_action("/people/view_specific_season", [game.away_doubles_pair.person_season_person2_season_team.person.url_key, season.url_key]);
+          SET home_uri = c.uri_for_action("/doubles/view_specific_season", [game.home_doubles_pair.person_season_person1_season_team.person.url_key, game.home_doubles_pair.person_season_person2_season_team.person.url_key, season.url_key]);
+          SET away_uri = c.uri_for_action("/doubles/view_specific_season", [game.away_doubles_pair.person_season_person1_season_team.person.url_key, game.away_doubles_pair.person_season_person2_season_team.person.url_key, season.url_key]);
         ELSE;
-          SET home1_uri = c.uri_for_action("/people/view_current_season", [game.home_doubles_pair.person_season_person1_season_team.person.url_key]);
-          SET home2_uri = c.uri_for_action("/people/view_current_season", [game.home_doubles_pair.person_season_person2_season_team.person.url_key]);
-          SET away1_uri = c.uri_for_action("/people/view_current_season", [game.away_doubles_pair.person_season_person1_season_team.person.url_key]);
-          SET away2_uri = c.uri_for_action("/people/view_current_season", [game.away_doubles_pair.person_season_person2_season_team.person.url_key]);
+          SET home_uri = c.uri_for_action("/doubles/view_current_season", [game.home_doubles_pair.person_season_person1_season_team.person.url_key, game.home_doubles_pair.person_season_person2_season_team.person.url_key]);
+          SET away_uri = c.uri_for_action("/doubles/view_current_season", [game.away_doubles_pair.person_season_person1_season_team.person.url_key, game.away_doubles_pair.person_season_person2_season_team.person.url_key]);
         END;
         
         # Filter the display names for HTML
@@ -93,27 +89,35 @@ ELSE;
         away2_name_html = FILTER html_entity; game.away_doubles_pair.person_season_person2_season_team.display_name; END;
         
         IF game.home_doubles_pair.person1_loan;
-          SET home1_class = ' class="loan-player"';
+          SET home1_class = '<span class="loan-player">';
+          SET home1_class_end = '</span>';
         ELSE;
           SET home1_class = '';
+          SET home1_class_end = '';
         END;
         
         IF game.home_doubles_pair.person2_loan;
-          SET home2_class = ' class="loan-player"';
+          SET home2_class = '<span class="loan-player">';
+          SET home2_class_end = '</span>';
         ELSE;
           SET home2_class = '';
+          SET home2_class_end = '';
         END;
         
         IF game.away_doubles_pair.person1_loan;
-          SET away1_class = ' class="loan-player"';
+          SET away1_class = '<span class="loan-player">';
+          SET away1_class_end = '</span>';
         ELSE;
           SET away1_class = '';
+          SET away1_class_end = '';
         END;
         
         IF game.away_doubles_pair.person2_loan;
-          SET away2_class = ' class="loan-player"';
+          SET away2_class = '<span class="loan-player">';
+          SET away2_class_end = '</span>';
         ELSE;
           SET away2_class = '';
+          SET away2_class_end = '';
         END;
       ELSE;
         IF season.complete;
@@ -160,14 +164,14 @@ ELSE;
           IF game.winner.id == home_team.team.id;
             # Game was awarded to the home team
             IF game.doubles_game;
-              SET result = '<a' _ home1_class _ ' href="' _ home1_uri _ '">' _ home1_html _ '</a> ' _ c.maketext("matches.game.result.doubles-and") _ ' <a' _ home2_class _ ' href="' _ home2_uri _ '">' _ home2_html _ '</a> ' _ c.maketext("matches.versus-abbreviation") _ '<a' _ away1_class _ ' href="' _ away1_uri _ '">' _ away1_html _ '</a> ' _ c.maketext("matches.game.result.doubles-and") _ '<a' _ away2_class _ ' href="' _ away2_uri _ '">' _ away2_html _ '</a>: ' _ c.maketext("matches.game.result.away-doubles-player-retired");
+              SET result = '<a href="' _ home_uri _ '">' _ home1_class _ home1_name_html _ home1_class_end _ ' ' _ c.maketext("matches.game.result.doubles-and") _ ' ' _ home2_class _ home2_name_html _ home2_class_end _ '</a> ' _ c.maketext("matches.versus-abbreviation") _ '<a href="' _ away_uri _ '">' _ away1_class _ away1_name_html _ away1_class_end _ ' ' _ c.maketext("matches.game.result.doubles-and") _ ' ' _ away2_class _ away2_name_html _ away2_class_end _ '</a> ' _ c.maketext("matches.game.result.away-doubles-player-retired");
             ELSE;
               SET result = '<a' _ home_class _ ' href="' _ home_uri _ '">' _ home_name_html _ '</a> <span class="game-result">'  _ c.maketext("matches.versus-abbreviation") _ '</span> <a' _ away_class _ ' href="' _ away_uri _ '">' _ away_name_html _ '</a>: ' _ c.maketext("matches.game.result.away-singles-player-retired");
             END;
           ELSE;
             # Game was awarded to the away team
             IF game.doubles_game;
-              SET result = '<a' _ home1_class _ ' href="' _ home1_uri _ '">' _ home1_html _ '</a> ' _ c.maketext("matches.game.result.doubles-and") _ ' <a' _ home2_class _ ' href="' _ home2_uri _ '">' _ home2_html _ '</a> ' _ c.maketext("matches.versus-abbreviation") _ '<a' _ away1_class _ ' href="' _ away1_uri _ '">' _ away1_html _ '</a> ' _ c.maketext("matches.game.result.doubles-and") _ '<a' _ away2_class _ ' href="' _ away2_uri _ '">' _ away2_html _ '</a>: ' _ c.maketext("matches.game.result.home-doubles-player-retired");
+              SET result = '<a href="' _ home_uri _ '">' _ home1_class _ home1_name_html _ home1_class_end _ ' ' _ c.maketext("matches.game.result.doubles-and") _ ' ' _ home2_class _ home2_name_html _ home2_class_end _ '</a> ' _ c.maketext("matches.versus-abbreviation") _ '<a href="' _ away_uri _ '">' _ away1_class _ away1_name_html _ away1_class_end _ ' ' _ c.maketext("matches.game.result.doubles-and") _ ' ' _ away2_class _ away2_name_html _ away2_class_end _ '</a>' _ c.maketext("matches.game.result.home-doubles-player-retired");
             ELSE;
               SET result = '<a' _ home_class _ ' href="' _ home_uri _ '">' _ home_name_html _ '</a> <span class="game-result">'  _ c.maketext("matches.versus-abbreviation") _ '</span> <a' _ away_class _ ' href="' _ away_uri _ '">' _ away_name_html _ '</a>: ' _ c.maketext("matches.game.result.home-singles-player-retired");
             END;
@@ -204,8 +208,8 @@ ELSE;
         # Game wasn't awarded, show the standard text - with player links
         # Build the result string
         IF game.doubles_game;
-          SET home_links = '<a' _ home1_class _ ' href="' _ home1_uri _ '">' _ home1_name_html _ '</a> ' _ c.maketext("matches.game.result.doubles-and") _ ' <a' _ home2_class _ ' href="' _ home2_uri _ '">' _ home2_name_html _ '</a>';
-          SET away_links = '<a' _ away1_class _ ' href="' _ away1_uri _ '">' _ away1_name_html _ '</a> ' _ c.maketext("matches.game.result.doubles-and") _ ' <a' _ away2_class _ ' href="' _ away2_uri _ '">' _ away2_name_html _ '</a>';
+          SET home_links = '<a href="' _ home_uri _ '">' _ home1_class _ home1_name_html _ home1_class_end _ ' ' _ c.maketext("matches.game.result.doubles-and") _ ' ' _ home2_class _ home2_name_html _ home2_class_end _ '</a>';
+          SET away_links = '<a href="' _ away_uri _ '">' _ away1_class _ away1_name_html _ away1_class_end _ ' ' _ c.maketext("matches.game.result.doubles-and") _ ' ' _ away2_class _ away2_name_html _ away2_class_end _ '</a>';
         ELSE;
           SET home_links = '<a' _ home_class _ ' href="' _ home_uri _ '">' _ home_name_html _ '</a> ';
           SET away_links = '<a' _ away_class _ ' href="' _ away_uri _ '">' _ away_name_html _ '</a> ';

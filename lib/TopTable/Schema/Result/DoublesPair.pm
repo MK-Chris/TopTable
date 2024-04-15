@@ -452,6 +452,17 @@ __PACKAGE__->add_columns(
     { data_type => "datetime", timezone => "UTC", set_on_create => 1, set_on_update => 1, datetime_undef_if_invalid => 1, is_nullable => 1, },
 );
 
+=head2
+
+A simple way to get the URL keys for both pairs returned as an array.
+
+=cut
+
+sub url_keys {
+  my ( $self ) = @_;
+  return [$self->person_season_person1_season_team->person->url_key, $self->person_season_person2_season_team->person->url_key];
+}
+
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 __PACKAGE__->meta->make_immutable;

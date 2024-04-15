@@ -1,0 +1,59 @@
+[%
+IF seasons.count;
+-%]
+<div class="table-wrap">
+  <div class="table-layout table-layout-centre">
+    <table id="datatable" class="stripe hover order-column row-border">
+    <thead>
+      <tr>
+        <th>[% c.maketext("seasons.list.season-name") %]</th>
+        <th>[% c.maketext("seasons.list.season-name") %]</th>
+        <th>[% c.maketext("people.seasons.registered-as") %]</th>
+        <th>[% c.maketext("people.seasons.registered-as") %]</th>
+        <th>[% c.maketext("people.seasons.team") %]</th>
+      </tr>
+    </thead>
+    <tbody>
+[%
+  WHILE (doubles_season = seasons.next);
+    IF doubles_season.season.complete;
+      SET CURRENT_TEXT = "";
+    ELSE;
+      SET CURRENT_TEXT = " (" _ c.maketext("seasons.text.current") _ ")";
+    END;
+    
+    SET NAMES_SORT = enc_names.pair_sort_names;
+    SET TEAM_NAME = doubles_season.team_season.club_season.short_name _ " " _ doubles_season.team_season.name;
+    
+    SET SEASON_START = club_season.season.start_date;
+    SET SEASON_END = club_season.season.end_date;
+    CALL SEASON_START.set_locale( c.locale );
+    CALL SEASON_END.set_locale( c.locale );
+    SET SEASON_SORT = SEASON_START("ymd") _ " " _ SEASON_END("ymd");
+-%]
+
+      <tr>
+        <td>[% SEASON_SORT %]</td>
+        <td><a href="[% c.uri_for_action("/doubles/view_specific_season", [doubles_season.person_season_person1_season_team.person.url_key, doubles_season.person_season_person2_season_team.person.url_key, doubles_season.season.url_key]) %]">[% doubles_season.season.name | html_entity %]</a>[% CURRENT_TEXT %]</td>
+        <td>[% enc_names.pair_sort_names %]</td>
+        <td>[% enc_names.pair_display_names %]</td>
+        <td><a href="[% c.uri_for_action("/teams/view_specific_season_by_url_key", [doubles_season.team_season.club_season.club.url_key, doubles_season.team_season.team.url_key, doubles_season.season.url_key]) %]">[% TEAM_NAME | html_entity %]</a></td>
+      </tr>
+[%
+  END;
+-%]
+    </table>
+  </div>
+</div>
+[%
+  page_links_text;
+ELSE;
+-%]
+<ul class="option-list">
+  <li>
+    [% c.maketext("seasons.none") %]
+  </li>
+</ul>
+[%
+END;
+-%]
