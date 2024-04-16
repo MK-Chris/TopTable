@@ -419,10 +419,10 @@ msgid "menu.text.doubles"
 msgstr "Doubles"
 
 msgid "description.doubles.view-current"
-msgstr "%1 and %2&#39;s doubles statistics in %2."
+msgstr "%1 and %2&#39;s doubles statistics in %3."
 
 msgid "description.doubles.view-specific"
-msgstr "%1 and %2&#39;s doubles statistics from %2 in %3."
+msgstr "%1 and %2&#39;s doubles statistics from %3 in %4."
 
 msgid "description.doubles.list-seasons"
 msgstr "A list of seasons that %1 and %2 have played in or been involved with in %3."
