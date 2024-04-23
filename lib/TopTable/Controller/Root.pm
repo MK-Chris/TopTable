@@ -566,6 +566,7 @@ sub recaptcha :Private {
   $request->content("secret=$secret_key&response=$recaptcha_data");
   
   my $response = $ua->request($request);
+  my $response_content = decode_json($response->content);
   
   return {
     request_success => $response->is_success,
