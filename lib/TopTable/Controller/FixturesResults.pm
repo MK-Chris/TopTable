@@ -471,8 +471,6 @@ Retrieves the team specified by ID in view_team_by_url_key_current_season and vi
 sub view_team_by_url_key :Private {
   my ( $self, $c, $club_url_key, $team_url_key ) = @_;
   my $season = $c->stash->{season};
-  #my $club = $c->model("DB::Club")->find_url_key($club_url_key);
-  #$c->log->debug(sprintf("find club url key: %s, club: %s, ref: %s", $club_url_key, $club, ref($club)));
   my $team = $c->model("DB::Team")->find_url_keys($club_url_key, $team_url_key);
   $c->detach(qw(TopTable::Controller::Root default)) unless defined($team);
   

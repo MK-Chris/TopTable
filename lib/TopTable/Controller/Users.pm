@@ -1481,7 +1481,6 @@ sub send_reset_link :Path("send-reset-link") {
       # First check the invalid login attempts and see if we needed to validate the CAPTCHA
       if ( $c->config->{Google}{reCAPTCHA}{validate_on_username_forget} ) {
         my $captcha_result = $c->forward("TopTable::Controller::Root", "recaptcha");
-        #$c->log->debug(np($captcha_result));
         
         if ( $captcha_result->{request_success} ) {
           # Request to Google was successful

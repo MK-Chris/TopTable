@@ -2,7 +2,6 @@ package TopTable::Controller::News;
 use Moose;
 use namespace::autoclean;
 use HTML::Entities;
-use Data::Printer;
 
 BEGIN { extends 'Catalyst::Controller'; }
 
@@ -278,7 +277,6 @@ Display a form to collect information for creating a news article.
 
 sub create :Local {
   my ( $self, $c ) = @_;
-  $c->log->debug( p($c->flash) );
   
   # Check that we are authorised to create venues
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["news_create", $c->maketext("user.auth.create-news"), 1]);

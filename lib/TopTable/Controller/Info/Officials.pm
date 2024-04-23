@@ -2,7 +2,6 @@ package TopTable::Controller::Info::Officials;
 use Moose;
 use namespace::autoclean;
 use HTML::Entities;
-use DDP;
 
 BEGIN { extends 'Catalyst::Controller'; }
 

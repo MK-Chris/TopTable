@@ -4,7 +4,6 @@ use namespace::autoclean;
 use DateTime;
 use DateTime::TimeZone;
 use Log::Log4perl::Catalyst;
-use DDP;
 
 use Catalyst::Runtime 5.80;
 
@@ -133,7 +132,6 @@ Add an array of status messages.
 sub add_status_messages {
   my ( $c, $msgs ) = @_;
   my %msgs = %{$msgs};
-  $c->log->debug(np(%msgs));
   
   # Loop through the hash keys - each hash key is a message type - usually error, warning, info, success
   foreach my $type ( keys %msgs ) {

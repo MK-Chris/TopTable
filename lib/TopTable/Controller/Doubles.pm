@@ -72,7 +72,7 @@ sub base :Chained("/") PathPart("doubles") CaptureArgs(2) {
       enc_names => \%enc_names,
     });
     
-    $c->stash->{noindex} = 1 if $pairs->noindex_set;
+    $c->stash->{noindex} = 1 if $pairs->noindex_set(1)->count;
     
     # Push the people list page on to the breadcrumbs
     push(@{$c->stash->{breadcrumbs}}, {

@@ -554,12 +554,10 @@ sub recaptcha :Private {
   # First verify that we're dealing with a human if we need to
   my $recaptcha_data = $c->req->params->{"g-recaptcha-response"} || "";
   my $secret_key = $c->config->{Google}{reCAPTCHA}{secret_key};
-  $c->log->debug("recaptcha");
   
   # Create the user agent
   my $ua = LWP::UserAgent->new;
   $ua->agent("TopTable/" . $c->toptable_version);
-  $c->log->debug("lwp setup");
   
   # Create the request object
   my $request = HTTP::Request->new(POST => $c->config->{Google}{reCAPTCHA}{verify_uri});
@@ -568,13 +566,7 @@ sub recaptcha :Private {
   $request->content("secret=$secret_key&response=$recaptcha_data");
   
   my $response = $ua->request($request);
-  $c->log->debug("sent request");
-  $c->log->debug($response->code);
-  $c->log->debug($response->content);
-  my $response_content = decode_json($response->content);
-  $c->log->debug("got content");
   
-  #$c->log->debug("return: " . np($response_content));
   return {
     request_success => $response->is_success,
     response_content => $response_content,

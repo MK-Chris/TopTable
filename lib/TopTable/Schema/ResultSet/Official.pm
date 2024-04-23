@@ -4,7 +4,6 @@ use strict;
 use warnings;
 use base 'DBIx::Class::ResultSet';
 use HTML::Entities;
-use DDP;
 
 =head2 all_officials_in_season
 
