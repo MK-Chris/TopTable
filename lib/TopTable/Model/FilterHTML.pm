@@ -68,7 +68,7 @@ sub filter {
       h5 => [],
       h6 => [],
       a => [qw( href target rel )],
-      img => [qw( class alt title width height src / )],
+      img => [qw( class alt title width height src align style / )],
       iframe => [qw( width height src )],
   	});
     
