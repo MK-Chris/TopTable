@@ -285,7 +285,7 @@ IF season;
 -%]
   </div>
   <div id="head-to-head">
-    <div class="info-message-small"><span class="message-text">[% c.maketext("people.head-to-head.all-seasons.notice", enc_first_name) %]</span></div>
+    <div class="info-message-small"><span class="message-text">[% c.maketext("people.head-to-head.doubles.all-seasons.notice", enc_names.first_names.item(0), enc_names.first_names.item(1)) %]</span></div>
     <form action="[% c.uri_for_action("/doubles/head_to_head", [people.item(0).url_key, people.item(1).url_key]) %]" method="get">
     <div class="label-field-container">
       <label for="opponents">[% c.maketext("people.head-to-head.doubles.form.field.opponents") %]</label>

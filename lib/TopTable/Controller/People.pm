@@ -621,7 +621,10 @@ sub head_to_head :Chained("base") :PathPart("head-to-head") :Args(0) {
         },
         "game-score" => {display => $score},
         scores => $game->detailed_scores,
-        result => {display => $result},
+        result => {
+          display => $result,
+          uri => $c->uri_for_action("/matches/team/view_by_url_keys", $match->url_keys)->as_string,
+        },
         venue => {
           display => encode_entities($match->venue->name),
           uri => $c->uri_for_action("/venues/view", [$match->venue->url_key])->as_string,

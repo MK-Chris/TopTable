@@ -419,13 +419,13 @@ msgid "menu.text.doubles"
 msgstr "Doubles"
 
 msgid "description.doubles.view-current"
-msgstr "%1 and %2&#39;s doubles statistics in %3."
+msgstr "%1 &amp; %2&#39;s doubles statistics in %3."
 
 msgid "description.doubles.view-specific"
-msgstr "%1 and %2&#39;s doubles statistics from %3 in %4."
+msgstr "%1 &amp; %2&#39;s doubles statistics from %3 in %4."
 
 msgid "description.doubles.list-seasons"
-msgstr "A list of seasons that %1 and %2 have played in or been involved with in %3."
+msgstr "A list of seasons that %1 &amp; %2 have played in or been involved with in %3."
 
 ### Page descriptions
 ## Clubs
@@ -1296,8 +1296,11 @@ msgstr "Secretary for"
 msgid "people.summary.officialdoms"
 msgstr "Official positions"
 
-msgid "people.head-to-head.all-seasons.notice"
-msgstr "This form is not specific to the season you're viewing and will show all games between %1 and the person you enter, regardless of the season it was played in."
+msgid "people.head-to-head.singles.all-seasons.notice"
+msgstr "This form is not specific to the season you're viewing and will show all games between %1 and the opposition person you enter, regardless of the season it was played in."
+
+msgid "people.head-to-head.doubles.all-seasons.notice"
+msgstr "This form is not specific to the season you're viewing and will show all games between %1 &amp; %2 and the opposition pairing you enter, regardless of the season it was played in."
 
 msgid "people.head-to-head.singles.form.field.opponent"
 msgstr "Search for an opponent"
@@ -1351,7 +1354,7 @@ msgid "people.head-to-head.error.invalid-person"
 msgstr "An invalid opponent was specified; please use the search function."
 
 msgid "people.head-to-head.doubles.error.same-opponent-as-pair"
-msgstr "You cannot specify %1 and %2 as the opponents, because they cannot play themselves."
+msgstr "You cannot specify %1 &amp; %2 as the opponents, because they cannot play themselves."
 
 msgid "people.head-to-head.doubles.error.person-in-both-pairs"
 msgstr "You cannot specify %1 in the opponent pair, because they cannot play themselves."
@@ -1372,7 +1375,7 @@ msgid "people.head-to-head.doubles.error.two-people-not-entered"
 msgstr "Please search for two people to display head-to-head data with."
 
 msgid "people.head-to-head.doubles.error.invalid-pair"
-msgstr "%1 and %2 have not played doubles together."
+msgstr "%1 &amp; %2 have not played doubles together."
 
 msgid "people.head-to-head.doubles.error.person-invalid"
 msgstr "One of the opponent players entered is invalid."
@@ -1381,7 +1384,7 @@ msgid "people.head-to-head.doubles.error.people-invalid"
 msgstr "Both of the opponent players entered are invalid."
 
 msgid "people.seasons.team"
-msgstr "Registered team"
+msgstr "Registered for"
 
 msgid "people.teams.loan"
 msgstr "Played on loan"
@@ -1401,8 +1404,8 @@ msgstr "%1 has not played any singles games yet."
 msgid "people.no-doubles-games-played"
 msgstr "%1 has not played any doubles games yet."
 
-msgid "people.message.not-registered"
-msgstr "Not registered."
+msgid "people.message.did-not-enter"
+msgstr "%1 did not enter %2."
 
 msgid "people.delete.error.not-allowed"
 msgstr "%1 cannot be deleted because they have been involved in matches."
@@ -1478,16 +1481,16 @@ msgstr "%1 is now known as %2."
 
 ### Doubles Pairs
 msgid "doubles.pair.display_names"
-msgstr "%1 and %2"
+msgstr "%1 &amp; %2"
 
 msgid "doubles.pair.sort_names"
 msgstr "%1, %2, %3, %4"
 
 msgid "doubles.message.did-not-play"
-msgstr "%1 and %2 did not play doubles together in %3."
+msgstr "%1 &amp; %2 did not play doubles together in %3."
 
 msgid "doubles.seasons.count-text"
-msgstr "%1 and %2 have played doubles together in %3 %4."
+msgstr "%1 &amp; %2 have played doubles together in %3 %4."
 
 msgid "doubles.tabs.summary"
 msgstr "Summary"
@@ -2634,7 +2637,7 @@ msgid "matches.game.update-doubles.error.player-ineligible"
 msgstr "%1 is ineligible to play doubles for %2."
 
 msgid "matches.game.update-doubles.add.success"
-msgstr "%1 and %2 have been set as the %3 doubles pair for game %4."
+msgstr "%1 &amp; %2 have been set as the %3 doubles pair for game %4."
 
 msgid "matches.game.update-doubles.remove.success"
 msgstr "The %1 doubles pair has been removed from game %2; if any scores were input, they have been zeroed and will need to be reinput when you enter the doubles pair."
@@ -2736,7 +2739,7 @@ msgid "matches.game.score.not-yet-updated"
 msgstr "This game has not yet been updated."
 
 msgid "matches.game.result.doubles-and"
-msgstr "and"
+msgstr "&amp;"
 
 msgid "matches.game.result.beat"
 msgstr "beat"
@@ -2754,16 +2757,16 @@ msgid "matches.game.result.away-singles-win"
 msgstr "<a href=\"%3\"%5>%1</a> <span class=\"game-result\">lost to</span> <a href=\"%4\"%6>%2</a>"
 
 msgid "matches.game.result.home-doubles-win"
-msgstr "<a href=\"%5\">%1</a> and <a href=\"%6\">%2</a> <span class=\"game-result\">beat</span> <a href=\"%7\">%3</a> and <a href=\"%8\">%4</a>"
+msgstr "<a href=\"%5\">%1</a> &amp; <a href=\"%6\">%2</a> <span class=\"game-result\">beat</span> <a href=\"%7\">%3</a> &amp; <a href=\"%8\">%4</a>"
 
 msgid "matches.game.result.away-doubles-win"
-msgstr "<a href=\"%5\">%1</a> and <a href=\"%6\">%2</a> <span class=\"game-result\">lost to</span> <a href=\"%7\">%3</a> and <a href=\"%8\">%4</a>"
+msgstr "<a href=\"%5\">%1</a> &amp; <a href=\"%6\">%2</a> <span class=\"game-result\">lost to</span> <a href=\"%7\">%3</a> &amp; <a href=\"%8\">%4</a>"
 
 msgid "matches.game.result.singles-draw"
 msgstr "<a href=\"%3\">%1</a> <span class=\"game-result\">drew with</span> <a href=\"%4\">%2</a>"
 
 msgid "matches.game.result.doubles-draw"
-msgstr "<a href=\"%5\">%1</a> and <a href=\"%6\">%2</a> <span class=\"game-result\">drew with</span> <a href=\"%7\">%3</a> and <a href=\"%8\">%4</a>"
+msgstr "<a href=\"%5\">%1</a> &amp; <a href=\"%6\">%2</a> <span class=\"game-result\">drew with</span> <a href=\"%7\">%3</a> &amp; <a href=\"%8\">%4</a>"
 
 msgid "matches.game.result.both-players-missing"
 msgstr "This game was not played because both the home and away players were absent."
@@ -2798,11 +2801,11 @@ msgstr "This game was not played because the away team pulled out."
 
 msgid "matches.game.result.home-doubles-player-retired"
 msgstr "finished early because the home team retired."
-#msgstr "<a href=\"%5\">%1</a> and <a href=\"%6\">%2</a> <span class=\"game-result\">v</span> <a href=\"%7\">%3</a> and <a href=\"%8\">%4</a>: finished early because the home team retired."
+#msgstr "<a href=\"%5\">%1</a> &amp; <a href=\"%6\">%2</a> <span class=\"game-result\">v</span> <a href=\"%7\">%3</a> &amp; <a href=\"%8\">%4</a>: finished early because the home team retired."
 
 msgid "matches.game.result.away-doubles-player-retired"
 msgstr "finished early because the away team retired."
-#msgstr "<a href=\"%5\">%1</a> and <a href=\"%6\">%2</a> <span class=\"game-result\">v</span> <a href=\"%7\">%3</a> and <a href=\"%8\">%4</a>: finished early because the away team retired."
+#msgstr "<a href=\"%5\">%1</a> &amp; <a href=\"%6\">%2</a> <span class=\"game-result\">v</span> <a href=\"%7\">%3</a> &amp; <a href=\"%8\">%4</a>: finished early because the away team retired."
 
 msgid "matches.result.win"
 msgstr "Win"
