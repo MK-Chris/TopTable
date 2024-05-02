@@ -37,9 +37,9 @@ IF matches.count;
   SET i = 0;
   WHILE (match = matches.next);
     SET date = match.actual_date;
-    CALL date.set_locale( c.locale );
-    SET month = zeroes( match.actual_date.month );
-    SET day   = zeroes( match.actual_date.day );
+    CALL date.set_locale(c.locale);
+    SET month = zeroes(match.actual_date.month);
+    SET day = zeroes(match.actual_date.day);
     SET home_team = match.team_season_home_team_season;
     SET away_team = match.team_season_away_team_season;
     

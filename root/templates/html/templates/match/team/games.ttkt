@@ -9,12 +9,10 @@ IF c.flash.show_flashed;
   # Get games from the flashed values
   SET games = c.flash.games;
   SET num_of_games = games.size;
-  CALL c.log.debug("flashed games: " _ num_of_games);
 ELSE;
   # Get games from the DB, if there are any
   SET games = tt_template.games;
   SET num_of_games = tt_template.scalar.games.count;
-  CALL c.log.debug("DB games: " _ num_of_games);
   
   UNLESS num_of_games > 0;
     # Nothing in the DB, try and grab the params for number of games
@@ -22,11 +20,9 @@ ELSE;
     IF games_param > 0 AND games_param < 100;
       # Numeric, use that
       num_of_games = games_param;
-      CALL c.log.debug("param games: " _ num_of_games);
     ELSE;
       # Not a 1 or 2 digit number, default to 1
       num_of_games = 1;
-      CALL c.log.debug("default games: " _ num_of_games);
     END;
   END;
 END;

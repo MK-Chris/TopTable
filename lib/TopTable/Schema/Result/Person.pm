@@ -806,7 +806,7 @@ sub search_display {
   my ( $self, $params ) = @_;
   
   return {
-    id => $self->id,
+    id => $self->url_key, # Use URL key here as it looks better in URLs where we're using get method forms (i.e., in head-to-heads)
     name => $self->display_name,
     url_keys => $self->url_keys,
     type => "person"
@@ -964,6 +964,29 @@ sub matches_on_loan {
   });
 }
 
+=head2 inactive_memberships
+
+Get the inactive team memberships for a given season.
+
+=cut
+
+sub inactive_memberships {
+  my ( $self, $params ) = @_;
+  my $season = $params->{season};
+  my $schema = $self->result_source->schema;
+  
+  if ( defined($season) ) {
+    # No season passed in, look up the current (or last completed) one
+    $season = $schema->resultset("Season")->get_current_or_last;
+  } else {
+    # Season is passed in - if it's not an object, try and look it up
+    $season = $schema->resultset("Season")->find_id_or_url_key($season) unless ref($season);
+  }
+  
+  return undef unless defined($season);
+  return $self->search_related("person_seasons", {team_membership_type => "inactive", season => $season->id});
+}
+
 =head2 singles_games_played_in_season
 
 Return a list of singles games played by the person in this season.
@@ -1049,6 +1072,46 @@ sub doubles_games_played_in_season {
   });
 }
 
+=head2 head_to_heads
+
+Return a list of head-to-heads with this person and the other person specified in the function call.  Pass in an ID / URL key or a person object.
+
+=cut
+
+sub head_to_heads {
+  my ( $self, $params ) = @_;
+  my $schema = $self->result_source->schema;
+  my $opponent = $params->{opponent};
+  
+  $opponent = $schema->resultset("Person")->find_id_or_url_key($opponent) unless ref($opponent);
+  
+  # Make sure the person is valid
+  return undef unless defined($opponent);
+  
+  return $schema->resultset("TeamMatchGame")->search([{
+    home_player => $self->id,
+    away_player => $opponent->id,
+    doubles_game => 0,
+  }, {
+    home_player => $opponent->id,
+    away_player => $self->id,
+    doubles_game => 0,
+  }], {
+    prefetch => [{
+    team_match => [{
+      division_season => "division",
+      team_season_home_team_season => [qw( team ), {
+        club_season => "club",
+      }],
+      team_season_away_team_season => [qw( team ), {
+        club_season => "club",
+      }],
+    }, qw( season venue )],
+  }, qw( home_player away_player team_match_legs )],
+    order_by => {-asc => [qw( season.start_date season.end_date team_match.played_date )]},
+  });
+}
+
 =head2 plays_for
 
 Returns true if the person plays for the specified team in the specified season.
@@ -1112,6 +1175,81 @@ sub secretary_for {
   
   # Return true if the IDs match or false if not
   return ( defined($secretary) and $secretary == $self->id ) ? 1 : 0;
+}
+
+=head2 captaincies
+
+Retrieve the teams this person is captain of in the given season.  If no season is given, the current (or last complete if no season is current) one is used.
+
+=cut
+
+sub captaincies {
+  my ( $self, $params ) = @_;
+  my $season = $params->{season};
+  my $schema = $self->result_source->schema;
+  
+  if ( defined($season) ) {
+    # No season passed in, look up the current (or last completed) one
+    $season = $schema->resultset("Season")->get_current_or_last;
+  } else {
+    # Season is passed in - if it's not an object, try and look it up
+    $season = $schema->resultset("Season")->find_id_or_url_key($season) unless ref($season);
+  }
+  
+  return undef unless defined($season);
+  return $self->search_related("team_seasons", {"me.season" => $season->id}, {
+    prefetch => {club_season => "club"},
+  });
+}
+
+=head2 secretaryships
+
+Retrieve the teams this person is captain of in the given season.  If no season is given, the current (or last complete if no season is current) one is used.
+
+=cut
+
+sub secretaryships {
+  my ( $self, $params ) = @_;
+  my $season = $params->{season};
+  my $schema = $self->result_source->schema;
+  
+  if ( defined($season) ) {
+    # No season passed in, look up the current (or last completed) one
+    $season = $schema->resultset("Season")->get_current_or_last;
+  } else {
+    # Season is passed in - if it's not an object, try and look it up
+    $season = $schema->resultset("Season")->find_id_or_url_key($season) unless ref($season);
+  }
+  
+  return undef unless defined($season);
+  return $self->search_related("club_seasons", {season => $season->id}, {prefetch => "club"});
+}
+
+=head2 officialdoms
+
+Retrieve the official positions this person holds in the given season.  If no season is given, the current (or last complete if no season is current) one is used.
+
+=cut
+
+sub officialdoms {
+  my ( $self, $params ) = @_;
+  my $season = $params->{season};
+  my $schema = $self->result_source->schema;
+  
+  if ( defined($season) ) {
+    # No season passed in, look up the current (or last completed) one
+    $season = $schema->resultset("Season")->get_current_or_last;
+  } else {
+    # Season is passed in - if it's not an object, try and look it up
+    $season = $schema->resultset("Season")->find_id_or_url_key($season) unless ref($season);
+  }
+  
+  return undef unless defined($season);
+  return $self->search_related("official_season_people", {"me.season" => $season->id}, {
+    prefetch => {
+      official_season => "official",
+    }
+  });
 }
 
 =head2 transfer_statistics

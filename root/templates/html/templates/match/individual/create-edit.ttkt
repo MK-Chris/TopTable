@@ -2,11 +2,9 @@
 IF c.flash.show_flashed;
   SET game_type_selected = c.flash.game_type.id;
   SET serve_type_selected = c.flash.serve_type.id;
-  CALL c.log.debug("show flashed");
 ELSE;
   SET game_type_selected = tt_template.game_type.id;
   SET serve_type_selected = tt_template.serve_type.id;
-  CALL c.log.debug("no flashed");
 END;
 %]
 

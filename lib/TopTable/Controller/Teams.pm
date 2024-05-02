@@ -214,8 +214,7 @@ sub view_current_season :Private {
   my $enc_name = $c->stash->{enc_name};
   
   # No season ID, try to find the current season (or the last completed season if there is no current season)
-  my $season = $c->model("DB::Season")->get_current;
-  $season = $c->model("DB::Season")->last_complete_season unless defined($season);
+  my $season = $c->model("DB::Season")->get_current_or_last;
     
   if ( defined($season) ) {
     my $enc_season_name = encode_entities($season->name);
@@ -777,8 +776,7 @@ sub can_send_captain_email :Private {
   my ( $self, $c, $team ) = @_;
   
   # Check the season is current
-  my $season = $c->model("DB::Season")->get_current;
-  $season = $c->model("DB::Season")->last_compete_season unless defined($season);
+  my $season = $c->model("DB::Season")->get_current_or_last;
   
   unless ( defined($season) ) {
     # Error, no current season

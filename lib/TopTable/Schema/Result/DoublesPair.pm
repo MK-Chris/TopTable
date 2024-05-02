@@ -463,6 +463,110 @@ sub url_keys {
   return [$self->person_season_person1_season_team->person->url_key, $self->person_season_person2_season_team->person->url_key];
 }
 
+=head2 head_to_heads
+
+Return a list of head-to-heads with this pair and the other people specified in the function call.  Pass in an ID / URL key or a person object.
+
+=cut
+
+sub head_to_heads {
+  my ( $self, $params ) = @_;
+  my $schema = $self->result_source->schema;
+  my ( $opponent1, $opponent2 ) = ( @{$params->{opponents}} );
+  
+  $opponent1 = $schema->resultset("Person")->find_id_or_url_key($opponent1) unless ref($opponent1);
+  $opponent2 = $schema->resultset("Person")->find_id_or_url_key($opponent2) unless ref($opponent2);
+  
+  # Make sure the person is valid
+  return undef unless defined($opponent1) and defined($opponent2);
+  
+  # Get the IDs to use in an IN statement
+  my @opponent_ids = map($_->id, $opponent1, $opponent2);
+  
+  # This is a search regardless of season - because doubles pairs are tied to a season, we need to extract out person1 and 2 from this and use that in the search
+  # No need to map, we can just use the field names here (not the relationship name, as that means going to that table)
+  my @player_ids = ($self->person1, $self->person2);
+  
+  # Get all the doubles pairs that have these people in - do this for this pair and the opponent pair
+  # We have a list of two IDs, and they must both appear in either person1 or person2
+  my @doubles_pairs = $schema->resultset("DoublesPair")->search({
+    person1 => {-in => \@player_ids},
+    person2 => {-in => \@player_ids},
+  });
+  
+  my @opponent_pairs = $schema->resultset("DoublesPair")->search({
+    person1 => {-in => \@opponent_ids},
+    person2 => {-in => \@opponent_ids},
+  });
+  
+  # Then map to the IDs
+  @doubles_pairs = map($_->id, @doubles_pairs);
+  @opponent_pairs = map($_->id, @opponent_pairs);
+  
+  
+  return $schema->resultset("TeamMatchGame")->search([{
+    "home_doubles_pair.id" => {-in => \@doubles_pairs},
+    "away_doubles_pair.id" => {-in => \@opponent_pairs},
+    doubles_game => 1,
+  }, {
+    "home_doubles_pair.id" => {-in => \@opponent_pairs},
+    "away_doubles_pair.id" => {-in => \@doubles_pairs},
+    doubles_game => 1,
+  }], {
+    prefetch => [{
+      home_doubles_pair => [{
+        person_season_person1_season_team => "person",
+        person_season_person2_season_team => "person",
+      }],
+      away_doubles_pair => [{
+        person_season_person1_season_team => "person",
+        person_season_person2_season_team => "person",
+      }],
+      team_match => [{
+        division_season => "division",
+        team_season_home_team_season => [qw( team ), {
+          club_season => "club",
+        }],
+        team_season_away_team_season => [qw( team ), {
+          club_season => "club",
+        }],
+      }, qw( season venue )],
+    }, qw( team_match_legs )],
+    order_by => {-asc => [qw( season.start_date season.end_date team_match.played_date )]},
+  });
+}
+
+=head2 eq
+
+Determine whether the people in this doubles pair are the same as the one passed in; return 1 or 0 accordingly.
+
+=cut
+
+sub eq {
+  my ( $self, $comparison ) = @_;
+  
+  if ( $self->id == $comparison->id ) {
+    return 1;
+  } elsif ( ($self->person_season_person1_season_team->person->id == $comparison->person_season_person1_season_team->person->id || $self->person_season_person1_season_team->person->id == $comparison->person_season_person2_season_team->person->id)
+      && ($self->person_season_person2_season_team->person->id == $comparison->person_season_person1_season_team->person->id || $self->person_season_person2_season_team->person->id == $comparison->person_season_person2_season_team->person->id) ) {
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+=head2 contains
+
+Check to see if one of the people in this pair is the passed in person (i.e., the doubles pair contains the person we're checking). 1 = yes, 0 = no.
+
+=cut
+
+sub contains {
+  my ( $self, $person ) = @_;
+  
+  return ($self->person_season_person1_season_team->person->id == $person->id or $self->person_season_person2_season_team->person->id == $person->id) ? 1 : 0;
+}
+
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 __PACKAGE__->meta->make_immutable;

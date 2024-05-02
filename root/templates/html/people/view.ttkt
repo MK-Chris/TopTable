@@ -1,59 +1,16 @@
-[%-
-USE scalar;
-IF authorisation.person_contact_view AND (person.scalar.full_address OR person.home_telephone OR person.mobile_telephone OR person.work_telephone OR person.email_address);
--%]
-<div id="contact-details">
-  <h4>[% c.maketext("people.heading.contact-details") %]</h4>
-  <div id="person-contact">
-[%
-  IF person.scalar.full_address;
--%]
-    <h5>[% c.maketext("people.form.field.address") %]</h5>
-    <address>[% person.scalar.full_address | html_entity | html_line_break %]</address><br />
-[%
-  END;
-  
-  IF person.home_telephone;
--%]
-    <b>[% c.maketext("people.form.field.home-phone") %]:</b> [% person.home_telephone | html_entity %]<br />
-[%
-  END;
-  IF person.mobile_telephone;
--%]
-    <b>[% c.maketext("people.form.field.mobile-phone") %]:</b> [% person.mobile_telephone | html_entity %]<br />
-[%
-  END;
-  IF person.work_telephone;
--%]
-    <b>[% c.maketext("people.form.field.work-phone") %]:</b> [% person.work_telephone | html_entity %]<br />
-[%
-  END;
-  IF person.email_address;
--%]
-    <b>[% c.maketext("people.form.field.email") %]:</b> <a href="mailto:[% person.email_address | html_entity %]">[% person.email_address | html_entity %]</a><br />
-[%
-  END;
--%] <br />
-  </div>
-</div>
-[%
-END;
-%]
-
-[%
-# Check there's a season
-IF season;
-  season_html = FILTER html_entity; season.name; END;
--%]
 <div id="tabs">
   <ul>
 [%
+# Check there's a season
+season_html = season.name | html_entity;
+SET teams_count = teams.count;
+IF teams_count;
   WHILE (type = types.next);
     IF type.team_membership_type.id == "active";
       # Below first will work because "active" will always come first.
       SET ACTIVE_TEAM = teams.first;
 -%]
-    <li><a href="#active">[% ACTIVE_TEAM.team_season.club_season.club.short_name | html_entity %] [% ACTIVE_TEAM.team_season.name %]</a></li>
+    <li><a href="#active">[% ACTIVE_TEAM.team_season.club_season.club.short_name | html_entity %] [% ACTIVE_TEAM.team_season.name | html_entity %]</a></li>
 [%
     ELSE;
 -%]
@@ -65,40 +22,43 @@ IF season;
     <li><a href="#singles-games">[% c.maketext("people.singles-games") %]</a></li>
     <li><a href="#doubles-games">[% c.maketext("people.doubles-games") %]</a></li>
 [%
-  IF authorisation.person_edit;
+  IF authorisation.person_edit AND c.config.Players.show_transfer_form;
 -%]
     <li><a href="#transfer">[% c.maketext("people.transfer-season") %]</a></li>
 [%
   END;
+END;
 -%]
+    <li><a href="#summary">[% c.maketext("people.tabs.season-summary", season_html) %]</a></li>
+    <li><a href="#head-to-head">[% c.maketext("people.tabs.head-to-head") %]</a></li>
   </ul>
 [%
+IF teams_count;
   # Check there's a person's season
-  IF teams.count;
-    CALL teams.reset;
-    WHILE (person_team = teams.next);
-      SET team_season = person_team.team_season;
-      
-      IF specific_season;
-        SET team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [team_season.club_season.club.url_key, team_season.team.url_key, season.url_key]);
-        SET averages_uri  = c.uri_for_action("/league-averages/view_specific_season", ["singles", team_season.division_season.division.url_key, season.url_key]);
-      ELSE;
-        SET team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [team_season.club_season.club.url_key, team_season.team.url_key]);
-        SET averages_uri = c.uri_for_action("/league-averages/view_current_season", ["singles", team_season.division_season.division.url_key]);
-      END;
-      
-      # New tab div if this is a new type
-      IF person_team.team_membership_type.id != last_type;
-        UNLESS person_team.team_membership_type.id == "active";
-          # End the current tab div if the new tab is not "active" (if it is, this is the first div)
+  CALL teams.reset;
+  WHILE (person_team = teams.next);
+    SET team_season = person_team.team_season;
+    
+    IF specific_season;
+      SET team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [team_season.club_season.club.url_key, team_season.team.url_key, season.url_key]);
+      SET averages_uri  = c.uri_for_action("/league-averages/view_specific_season", ["singles", team_season.division_season.division.url_key, season.url_key]);
+    ELSE;
+      SET team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [team_season.club_season.club.url_key, team_season.team.url_key]);
+      SET averages_uri = c.uri_for_action("/league-averages/view_current_season", ["singles", team_season.division_season.division.url_key]);
+    END;
+    
+    # New tab div if this is a new type
+    IF person_team.team_membership_type.id != last_type;
+      UNLESS person_team.team_membership_type.id == "active";
+        # End the current tab div if the new tab is not "active" (if it is, this is the first div)
 -%]
   </div>
 [%
-        END;
+      END;
 -%]
   <div id="[% person_team.team_membership_type.id %]">
 [%
-      END;
+    END;
 -%]
     <div class="table-wrap">
       <div class="table-layout table-layout-centre">
@@ -108,7 +68,7 @@ IF season;
             <h5>[% c.maketext("stats.heading.matches") %]</h5>
             <table class="vertical">
               <tr>
-                <th scope="row">[% c.maketext("stats.label.played") %]</td>
+                <th scope="row">[% c.maketext("stats.label.played") %]</th>
                 <td>[% c.i18n_numberformat.format_number(person_team.matches_played) %]</td>
               </tr>
               <tr>
@@ -197,13 +157,13 @@ IF season;
       </div>
     </div>
 [%
-      SET last_type = person_team.team_membership_type.id;
-    END;
+    SET last_type = person_team.team_membership_type.id;
+  END;
 -%]
   </div>
   <div id="singles-games">
 [%
-    IF singles_games.count;
+  IF singles_games.count;
 -%]
     <table id="singles-table" class="stripe hover order-column row-border" style="width: 100%;">
       <thead>
@@ -220,116 +180,116 @@ IF season;
       </thead>
       <tbody>
 [%
-      SET loan_games = 0;
-      SET inactive_games = 0;
-      WHILE ( game = singles_games.next );
-        SET match = game.team_match;
-        SET home_team_season = match.team_season_home_team_season;
-        SET away_team_season = match.team_season_away_team_season;
-        
-        IF game.home_player.id == person.id;
-          SET location = "home";
-          SET for_team_season = match.team_season_home_team_season;
-          SET against_team_season = match.team_season_away_team_season;
-          SET for_team = match.team_season_home_team_season.team;
-          SET against_team = match.team_season_away_team_season.team;
-          SET opponent = game.away_player;
-          SET opponent_season = game.away_player.person_seasons.first;
-        ELSIF game.away_player.id == person.id;
-          SET location = "away";
-          SET for_team_season = match.team_season_away_team_season;
-          SET against_team_season = match.team_season_home_team_season;
-          SET for_team = match.team_season_away_team_season.team;
-          SET against_team = match.team_season_home_team_season.team;
-          SET opponent = game.home_player;
-          SET opponent_season = game.home_player.person_seasons.first;
-        END;
-        
-        SET membership_type = game.singles_player_membership_type({"location" => location});
-        SWITCH membership_type;
-          CASE "loan";
-            SET game_class = ' class="loan-player"';
-            SET loan_games = 1;
-          CASE "inactive";
-            SET game_class = ' class="inactive-player"';
-            SET inactive_games = 1;
-          CASE;
-            SET game_class = '';
-        END;
-        
-        IF specific_season;
-          SET for_team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [for_team_season.club_season.club.url_key, for_team.url_key, season.url_key]);
-          SET against_team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [against_team_season.club_season.club.url_key, against_team.url_key, season.url_key]);
-          SET opponent_uri = c.uri_for_action("/people/view_specific_season", [opponent.url_key, season.url_key]);
-        ELSE;
-          SET for_team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [for_team_season.club_season.club.url_key, for_team.url_key]);
-          SET against_team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [against_team_season.club_season.club.url_key, against_team.url_key]);
-          SET opponent_uri = c.uri_for_action("/people/view_current_season", [opponent.url_key]);
-        END;
-        
-        # These only get displayed if the game is complete
-        # Set the detailed (leg) scores up
-        IF game.started;
-          SET detailed_scores = game.detailed_scores;
-          SET score_html = "";
-          SET leg_scores = game.detailed_scores;
-          SET leg_number = 1;
-          FOREACH leg_score = leg_scores;
-            IF leg_number > 1;
-              SET score_html = score_html _ '<span class="leg-separator">, </span>';
-            END;
-            
-            SET score_html = score_html _ '<span class="leg-score">' _ leg_score.home _ '-' _ leg_score.away _ '</span>';
-            SET leg_number = leg_number + 1;
+    SET loan_games = 0;
+    SET inactive_games = 0;
+    WHILE ( game = singles_games.next );
+      SET match = game.team_match;
+      SET home_team_season = match.team_season_home_team_season;
+      SET away_team_season = match.team_season_away_team_season;
+      
+      IF game.home_player.id == person.id;
+        SET location = "home";
+        SET for_team_season = match.team_season_home_team_season;
+        SET against_team_season = match.team_season_away_team_season;
+        SET for_team = match.team_season_home_team_season.team;
+        SET against_team = match.team_season_away_team_season.team;
+        SET opponent = game.away_player;
+        SET opponent_season = game.away_player.person_seasons.first;
+      ELSIF game.away_player.id == person.id;
+        SET location = "away";
+        SET for_team_season = match.team_season_away_team_season;
+        SET against_team_season = match.team_season_home_team_season;
+        SET for_team = match.team_season_away_team_season.team;
+        SET against_team = match.team_season_home_team_season.team;
+        SET opponent = game.home_player;
+        SET opponent_season = game.home_player.person_seasons.first;
+      END;
+      
+      SET membership_type = game.singles_player_membership_type({"location" => location});
+      SWITCH membership_type;
+        CASE "loan";
+          SET game_class = ' class="loan-player"';
+          SET loan_games = 1;
+        CASE "inactive";
+          SET game_class = ' class="inactive-player"';
+          SET inactive_games = 1;
+        CASE;
+          SET game_class = '';
+      END;
+      
+      IF specific_season;
+        SET for_team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [for_team_season.club_season.club.url_key, for_team.url_key, season.url_key]);
+        SET against_team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [against_team_season.club_season.club.url_key, against_team.url_key, season.url_key]);
+        SET opponent_uri = c.uri_for_action("/people/view_specific_season", [opponent.url_key, season.url_key]);
+      ELSE;
+        SET for_team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [for_team_season.club_season.club.url_key, for_team.url_key]);
+        SET against_team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [against_team_season.club_season.club.url_key, against_team.url_key]);
+        SET opponent_uri = c.uri_for_action("/people/view_current_season", [opponent.url_key]);
+      END;
+      
+      # These only get displayed if the game is complete
+      # Set the detailed (leg) scores up
+      IF game.started;
+        SET detailed_scores = game.detailed_scores;
+        SET score_html = "";
+        SET leg_scores = game.detailed_scores;
+        SET leg_number = 1;
+        FOREACH leg_score = leg_scores;
+          IF leg_number > 1;
+            SET score_html = score_html _ '<span class="leg-separator">, </span>';
           END;
-        ELSE;
-          # The game is marked as complete, but not started - score is not applicable, as it's been awarded
-          SET score_html = c.maketext("msg.not-applicable");
+          
+          SET score_html = score_html _ '<span class="leg-score">' _ leg_score.home _ '-' _ leg_score.away _ '</span>';
+          SET leg_number = leg_number + 1;
         END;
-        
-        IF game.winner.id == for_team.id;
-          SET result = c.maketext("matches.result.win");
-        ELSIF game.winner.id == against_team.id;
-          SET result = c.maketext("matches.result.loss");
-        ELSE;
-          SET result = c.maketext("matches.result.draw");
-        END;
+      ELSE;
+        # The game is marked as complete, but not started - score is not applicable, as it's been awarded
+        SET score_html = c.maketext("msg.not-applicable");
+      END;
+      
+      IF game.winner.id == for_team.id;
+        SET result = c.maketext("matches.result.win");
+      ELSIF game.winner.id == against_team.id;
+        SET result = c.maketext("matches.result.loss");
+      ELSE;
+        SET result = c.maketext("matches.result.draw");
+      END;
 -%]
         <tr[% game_class %]>
           <td data-label="[% c.maketext("people.games.date") %]">[% c.i18n_datetime_format_date.format_datetime(match.actual_date) %]</td>
           <td data-label="[% c.maketext("people.games.date") %]">[% match.actual_date.ymd %]</td>
           <td data-label="[% c.maketext("people.games.playing-for") %]"><a href="[% for_team_uri %]">[% for_team_season.club_season.short_name | html_entity %] [% for_team_season.name | html_entity %]</a></td>
           <td data-label="[% c.maketext("people.games.playing-against") %]"><a href="[% against_team_uri %]">[% against_team_season.club_season.short_name | html_entity %] [% against_team_season.name | html_entity %]</a></td>
-          <td data-label="[% c.maketext("people.singles-games.opponent") %]"><a href="[% opponent_uri %]">[% opponent_season.display_name | html_entity %]</td>
+          <td data-label="[% c.maketext("people.singles-games.opponent") %]"><a href="[% opponent_uri %]">[% opponent_season.display_name | html_entity %]</a></td>
           <td data-label="[% c.maketext("people.games.score") %]">[% score_html %]</td>
           <td data-label="[% c.maketext("people.games.result") %]"><a href="[% c.uri_for_action("/matches/team/view_by_url_keys", match.url_keys) %]">[% result %]</a></td>
           <td data-label="[% c.maketext("people.games.membership-type") %]">[% c.maketext("team-membership-type.name." _ membership_type) %]</td>
         </tr>
 [%
-      END;
+    END;
 -%]
       </tbody>
     </table>
 [%
-      IF loan_games OR inactive_games;
+    IF loan_games OR inactive_games;
 -%]
         <div id="games-key">
 [%
-        IF loan_games;
+      IF loan_games;
 -%]
           <div class="loan-player-key">&nbsp;</div> [% c.maketext("team-membership-type.desc.loan") %]<br />
 [%
-        END;
-        IF inactive_games;
+      END;
+      IF inactive_games;
 -%]
           <div class="inactive-player-key">&nbsp;</div> [% c.maketext("team-membership-type.desc.inactive") %]<br />
 [%
-        END;
+      END;
 -%]
         </div>
 [%
-      END;
-    ELSE;
+    END;
+  ELSE;
 -%]
     <ul class="option-list">
       <li>
@@ -337,12 +297,12 @@ IF season;
       </li>
     </ul>
 [%
-    END;
+  END;
 -%]
   </div>
   <div id="doubles-games">
 [%
-    IF doubles_games.count;
+  IF doubles_games.count;
 -%]
     <table id="doubles-table" class="stripe hover order-column row-border" style="width: 100%;">
       <thead>
@@ -360,98 +320,98 @@ IF season;
       </thead>
       <tbody>
 [%
-      SET loan_games = 0;
-      SET inactive_games = 0;
-      WHILE ( game = doubles_games.next );
-        SET match = game.team_match;
-        SET home_team_season  = match.home_team.team_seasons.first;
-        SET away_team_season  = match.away_team.team_seasons.first;
+    SET loan_games = 0;
+    SET inactive_games = 0;
+    WHILE ( game = doubles_games.next );
+      SET match = game.team_match;
+      SET home_team_season  = match.home_team.team_seasons.first;
+      SET away_team_season  = match.away_team.team_seasons.first;
+      
+      IF game.home_doubles_pair.person1 == person.id OR game.home_doubles_pair.person2 == person.id;
+        SET location = "home";
+        SET for_team_season = match.team_season_home_team_season;
+        SET against_team_season = match.team_season_away_team_season;
+        SET for_team = match.team_season_home_team_season.team;
+        SET against_team = match.team_season_away_team_season.team;
+        SET opponents = game.away_doubles_pair;
         
-        IF game.home_doubles_pair.person1 == person.id OR game.home_doubles_pair.person2 == person.id;
-          SET location = "home";
-          SET for_team_season = match.team_season_home_team_season;
-          SET against_team_season = match.team_season_away_team_season;
-          SET for_team = match.team_season_home_team_season.team;
-          SET against_team = match.team_season_away_team_season.team;
-          SET opponents = game.away_doubles_pair;
+        IF game.home_doubles_pair.person1 == person.id;
+          SET partner = game.home_doubles_pair.person_season_person2_season_team;
+        ELSE;
+          SET partner = game.home_doubles_pair.person_season_person1_season_team;
+        END;
+      ELSIF game.away_doubles_pair.person1 == person.id OR game.away_doubles_pair.person2 == person.id;
+        SET location = "away";
+        SET for_team_season = match.team_season_away_team_season;
+        SET against_team_season = match.team_season_home_team_season;
+        SET for_team = match.team_season_away_team_season.team;
+        SET against_team = match.team_season_home_team_season.team;
+        SET opponent = game.home_player;
+        SET opponent_season = game.home_player.person_seasons.first;
+        SET opponents = game.home_doubles_pair;
+        
+        IF game.away_doubles_pair.person1 == person.id;
+          SET partner = game.away_doubles_pair.person_season_person2_season_team;
+        ELSE;
+          SET partner = game.away_doubles_pair.person_season_person1_season_team;
+        END;
+      END;
+      
+      SET membership_type = game.doubles_player_membership_type({"location" => location, "person" => person});
+      SWITCH membership_type;
+        CASE "loan";
+          SET game_class = ' class="loan-player"';
+          SET loan_games = 1;
+        CASE "inactive";
+          SET game_class = ' class="inactive-player"';
+          SET inactive_games = 1;
+        CASE;
+          SET game_class = '';
+      END;
+      
+      SET opponent1 = opponents.person_season_person1_season_team;
+      SET opponent2 = opponents.person_season_person2_season_team;
+      
+      IF specific_season;
+        SET for_team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [for_team_season.club_season.club.url_key, for_team.url_key, season.url_key]);
+        SET against_team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [against_team_season.club_season.club.url_key, against_team.url_key, season.url_key]);
+        SET partnership_uri = c.uri_for_action("/doubles/view_specific_season", [partner.person.url_key, person.url_key, season.url_key]);
+        SET opponents_uri = c.uri_for_action("/doubles/view_specific_season", [opponent1.person.url_key, opponent2.person.url_key, season.url_key]);
+      ELSE;
+        SET for_team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [for_team_season.club_season.club.url_key, for_team.url_key]);
+        SET against_team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [against_team_season.club_season.club.url_key, against_team.url_key]);
+        SET opponents_uri = c.uri_for_action("/people/view_current_season", [opponents.url_key]);
+        SET partnership_uri = c.uri_for_action("/doubles/view_current_season", [partner.person.url_key, person.url_key]);
+        SET opponents_uri = c.uri_for_action("/doubles/view_current_season", [opponent1.person.url_key, opponent2.person.url_key]);
+      END;
+      
+      # These only get displayed if the game is complete
+      # Set the detailed (leg) scores up
+      IF game.started;
+        SET detailed_scores = game.detailed_scores;
+        SET score_html = "";
+        SET leg_scores = game.detailed_scores;
+        SET leg_number = 1;
+        FOREACH leg_score = leg_scores;
+          IF leg_number > 1;
+            SET score_html = score_html _ '<span class="leg-separator">, </span>';
+          END;
           
-          IF game.home_doubles_pair.person1 == person.id;
-            SET partner = game.home_doubles_pair.person_season_person2_season_team;
-          ELSE;
-            SET partner = game.home_doubles_pair.person_season_person1_season_team;
-          END;
-        ELSIF game.away_doubles_pair.person1 == person.id OR game.away_doubles_pair.person2 == person.id;
-          SET location = "away";
-          SET for_team_season = match.team_season_away_team_season;
-          SET against_team_season = match.team_season_home_team_season;
-          SET for_team = match.team_season_away_team_season.team;
-          SET against_team = match.team_season_home_team_season.team;
-          SET opponent = game.home_player;
-          SET opponent_season = game.home_player.person_seasons.first;
-          SET opponents = game.home_doubles_pair;
-          
-          IF game.away_doubles_pair.person1 == person.id;
-            SET partner = game.away_doubles_pair.person_season_person2_season_team;
-          ELSE;
-            SET partner = game.away_doubles_pair.person_season_person1_season_team;
-          END;
+          SET score_html = score_html _ '<span class="leg-score">' _ leg_score.home _ '-' _ leg_score.away _ '</span>';
+          SET leg_number = leg_number + 1;
         END;
-        
-        SET membership_type = game.doubles_player_membership_type({"location" => location, "person" => person});
-        SWITCH membership_type;
-          CASE "loan";
-            SET game_class = ' class="loan-player"';
-            SET loan_games = 1;
-          CASE "inactive";
-            SET game_class = ' class="inactive-player"';
-            SET inactive_games = 1;
-          CASE;
-            SET game_class = '';
-        END;
-        
-        SET opponent1 = opponents.person_season_person1_season_team;
-        SET opponent2 = opponents.person_season_person2_season_team;
-        
-        IF specific_season;
-          SET for_team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [for_team_season.club_season.club.url_key, for_team.url_key, season.url_key]);
-          SET against_team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [against_team_season.club_season.club.url_key, against_team.url_key, season.url_key]);
-          SET partnership_uri = c.uri_for_action("/doubles/view_specific_season", [partner.person.url_key, person.url_key, season.url_key]);
-          SET opponents_uri = c.uri_for_action("/doubles/view_specific_season", [opponent1.person.url_key, opponent2.person.url_key, season.url_key]);
-        ELSE;
-          SET for_team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [for_team_season.club_season.club.url_key, for_team.url_key]);
-          SET against_team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [against_team_season.club_season.club.url_key, against_team.url_key]);
-          SET opponents_uri = c.uri_for_action("/people/view_current_season", [opponents.url_key]);
-          SET partnership_uri = c.uri_for_action("/doubles/view_current_season", [partner.person.url_key, person.url_key]);
-          SET opponents_uri = c.uri_for_action("/doubles/view_current_season", [opponent1.person.url_key, opponent2.person.url_key]);
-        END;
-        
-        # These only get displayed if the game is complete
-        # Set the detailed (leg) scores up
-        IF game.started;
-          SET detailed_scores = game.detailed_scores;
-          SET score_html = "";
-          SET leg_scores = game.detailed_scores;
-          SET leg_number = 1;
-          FOREACH leg_score = leg_scores;
-            IF leg_number > 1;
-              SET score_html = score_html _ '<span class="leg-separator">, </span>';
-            END;
-            
-            SET score_html = score_html _ '<span class="leg-score">' _ leg_score.home _ '-' _ leg_score.away _ '</span>';
-            SET leg_number = leg_number + 1;
-          END;
-        ELSE;
-          # The game is marked as complete, but not started - score is not applicable, as it's been awarded
-          SET score_html = c.maketext("msg.not-applicable");
-        END;
-        
-        IF game.winner.id == for_team.id;
-          SET result = c.maketext("matches.result.win");
-        ELSIF game.winner.id == against_team.id;
-          SET result = c.maketext("matches.result.loss");
-        ELSE;
-          SET result = c.maketext("matches.result.draw");
-        END;
+      ELSE;
+        # The game is marked as complete, but not started - score is not applicable, as it's been awarded
+        SET score_html = c.maketext("msg.not-applicable");
+      END;
+      
+      IF game.winner.id == for_team.id;
+        SET result = c.maketext("matches.result.win");
+      ELSIF game.winner.id == against_team.id;
+        SET result = c.maketext("matches.result.loss");
+      ELSE;
+        SET result = c.maketext("matches.result.draw");
+      END;
 -%]
         <tr[% game_class %]>
           <td data-label="[% c.maketext("people.games.date") %]">[% c.i18n_datetime_format_date.format_datetime(match.actual_date) %]</td>
@@ -465,31 +425,31 @@ IF season;
           <td data-label="[% c.maketext("people.games.membership-type") %]">[% c.maketext("team-membership-type.name." _ membership_type) %]</td>
         </tr>
 [%
-      END;
+    END;
 -%]
       </tbody>
     </table>
 [%
-      IF loan_games OR inactive_games;
+    IF loan_games OR inactive_games;
 -%]
         <div id="games-key">
 [%
-        IF loan_games;
+      IF loan_games;
 -%]
           <div class="loan-player-key">&nbsp;</div> [% c.maketext("team-membership-type.desc.loan") %]<br />
 [%
-        END;
-        IF inactive_games;
+      END;
+      IF inactive_games;
 -%]
           <div class="inactive-player-key">&nbsp;</div> [% c.maketext("team-membership-type.desc.inactive") %]<br />
 [%
-        END;
+      END;
 -%]
         </div>
 [%
-      END;
-    ELSE;
-      # No doubles games played
+    END;
+  ELSE;
+    # No doubles games played
 -%]
     <ul class="option-list">
       <li>
@@ -497,11 +457,11 @@ IF season;
       </li>
     </ul>
 [%
-    END;
+  END;
 -%]
   </div>
 [%
-    IF authorisation.person_edit;
+  IF authorisation.person_edit AND c.config.Players.show_transfer_form;
 -%]
   <div id="transfer">
     <form method="post" action="[% c.uri_for_action("/people/transfer", [person.url_key]) %]">
@@ -519,27 +479,272 @@ IF season;
     </form>
   </div>
 [%
-    END;
--%]
-</div>
-[%
+  END;
+  
   # Else for the check for a team season
+  SET TEAM_SEASON = ACTIVE_TEAM.team_season;
+  
+  IF specific_season;
+    SET TEAM_URI = c.uri_for_action("/teams/view_specific_season_by_url_key", [TEAM_SEASON.club_season.club.url_key, TEAM_SEASON.team.url_key, season.url_key]);
+    SET AVERAGES_URI  = c.uri_for_action("/league-averages/view_specific_season", ["singles", TEAM_SEASON.division_season.division.url_key, season.url_key]);
   ELSE;
-    first_name_html = FILTER html_entity; person.first_name; END;
+    SET TEAM_URI = c.uri_for_action("/teams/view_current_season_by_url_key", [TEAM_SEASON.club_season.club.url_key, TEAM_SEASON.team.url_key]);
+    SET AVERAGES_URI = c.uri_for_action("/league-averages/view_current_season", ["singles", TEAM_SEASON.division_season.division.url_key]);
+  END;
+  
+  TEAM_NAME = TEAM_SEASON.club_season.short_name _ " " _ TEAM_SEASON.name | html_entity;
+  SET TEAM_DISPLAY = '<a href="' _ TEAM_URI _ '">' _ TEAM_NAME _ '</a>';
+ELSE;
+  SET TEAM_DISPLAY = c.maketext("people.message.not-registered");
+END;
 %]
-  <div class="no-entry">[% c.maketext("people.message.did-not-enter", first_name_html, season_html) %]</div>
-</div>
-[% 
-    # End for the check for a season
+  <div id="summary">
+    <div class="table-wrap">
+      <div class="table-layout table-layout-centre">
+        <table class="vertical">
+          <tr>
+            <th scope="row">[% c.maketext("people.summary.registered.active") %]</th>
+            <td>[% TEAM_DISPLAY %]</td>
+          </tr>
+[%
+IF teams_count;
+-%]
+          <tr>
+            <th scope="row">[% c.maketext("people.summary.division") %]</th>
+            <td><a href="[% AVERAGES_URI %]">[% TEAM_SEASON.division_season.name | html_entity %]</a></td>
+          </tr>
+[%
+  IF loan_matches.count;
+-%]
+          <tr>
+            <th scope="row">[% c.maketext("people.summary.matches-on-loan") %]</th>
+            <td><a href="#loan">[% loan_matches.count %]</a></td>
+          </tr>
+[%
+  END;
+  IF inactive_memberships.count;
+-%]
+          <tr>
+            <th scope="row">[% c.maketext("people.summary.inactive-memberships") %]</th>
+            <td><a href="#inactive">[% inactive_memberships.count %]</a></td>
+          </tr>
+[%
   END;
 END;
+IF captaincies.count;
+-%]
+          <tr>
+            <th scope="row">[% c.maketext("people.summary.captaincies") %]</th>
+            <td>
+[%
+  SET CAPTAINCIES_PRINTED = 0;
+  WHILE (CAPTAINCY = captaincies.next);
+    CAPTAINCIES_PRINTED = CAPTAINCIES_PRINTED + 1;
+    
+    IF specific_season;
+      SET CAPTAIN_TEAM_URI = c.uri_for_action("/teams/view_specific_season_by_url_key", [CAPTAINCY.club_season.club.url_key, CAPTAINCY.team.url_key, season.url_key]);
+    ELSE;
+      SET CAPTAIN_TEAM_URI = c.uri_for_action("/teams/view_current_season_by_url_key", [CAPTAINCY.club_season.club.url_key, CAPTAINCY.team.url_key]);
+    END;
+    
+    CAPTAINCY_TEAM_NAME = CAPTAINCY.club_season.short_name _ " " _ CAPTAINCY.name | html_entity;
+    IF CAPTAINCIES_PRINTED > 1;
+-%]
+              <br />
+[%
+    END;
+-%]
+              <a href="[% CAPTAIN_TEAM_URI %]">[% CAPTAINCY_TEAM_NAME %]</a>
+[%
+  END;
+-%]
+            </td>
+          </tr>
+[%
+END;
+IF secretaryships.count;
+-%]
+          <tr>
+            <th scope="row">[% c.maketext("people.summary.secretaryships") %]</th>
+            <td>
+[%
+  SET SECRETARYSHIPS_PRINTED = 0;
+  WHILE (SECRETARYSHIP = secretaryships.next);
+    SECRETARYSHIPS_PRINTED = SECRETARYSHIPS_PRINTED + 1;
+    
+    IF specific_season;
+      SET SECRETARYSHIP_CLUB_URI = c.uri_for_action("/clubs/view_specific_season", [SECRETARYSHIP.club.url_key, season.url_key]);
+    ELSE;
+      SET SECRETARYSHIP_CLUB_URI = c.uri_for_action("/clubs/view_current_season", [SECRETARYSHIP.club.url_key]);
+    END;
+    IF SECRETARYSHIPS_PRINTED > 1;
+-%]
+              <br />
+[%
+    END;
+-%]
+              <a href="[% SECRETARYSHIP_CLUB_URI %]">[% SECRETARYSHIP.club.full_name | html_entity %]</a>
+[%
+  END;
+-%]
+            </td>
+          </tr>
+[%
+END;
+IF officialdoms.count;
+-%]
+          <tr>
+            <th scope="row">[% c.maketext("people.summary.officialdoms") %]</th>
+            <td>
+[%
+  SET OFFICIALDOMS_PRINTED = 0;
+  WHILE (OFFICIALDOM = officialdoms.next);
+    OFFICIALDOMS_PRINTED = OFFICIALDOMS_PRINTED + 1;
+    
+    IF specific_season;
+      SET OFFICIALDOM_URI = c.uri_for_action("/info/officials/view_specific_season", [season.url_key]);
+    ELSE;
+      SET OFFICIALDOM_URI = c.uri_for_action("/info/officials/view_current_season");
+    END;
+    IF OFFICIALDOMS_PRINTED > 1;
+-%]
+              <br />
+[%
+    END;
+-%]
+              <a href="[% OFFICIALDOM_URI %]">[% OFFICIALDOM.official_season.position_name | html_entity %]</a>
+[%
+  END;
+-%]
+            </td>
+          </tr>
+[%
+END;
 
+IF specific_season;
+  SET form_action = c.uri_for_action("/people/view_current_season", [person.url_key]);
+END;
+-%]
+        </table>
+      </div>
+    </div>
+  </div>
+  <div id="head-to-head">
+    <div class="info-message-small"><span class="message-text">[% c.maketext("people.head-to-head.all-seasons.notice", enc_first_name) %]</span></div>
+    <form action="[% c.uri_for_action("/people/head_to_head", [person.url_key]) %]" method="get">
+    <div class="label-field-container">
+      <label for="opponent">[% c.maketext("people.head-to-head.form.field.opponent") %]</label>
+      <div class="field-container">
+        <input type="text" id="opponent" name="opponent" value="" />
+      </div>
+[%
+IF specific_season;
+-%]
+      <input type="hidden" name="season" value="[% season.id %]" />
+[%
+END;
+-%]
+      <div class="clear-fix"></div>
+    </div>
+    </form>
+    <div id="head-to-head-games">
+      <table id="head-to-heads-table" class="stripe hover order-column row-border" style="width: 100%;">
+        <thead>
+          <tr>
+            <th>[% c.maketext("people.head-to-head.heading.season") %]</th>
+            <th>[% c.maketext("people.head-to-head.heading.date") %]</th>
+            <th>[% c.maketext("people.head-to-head.heading.date-sort") %]</th>
+            <th>[% c.maketext("people.head-to-head.heading.division") %]</th>
+            <th>[% c.maketext("people.head-to-head.heading.division-rank") %]</th>
+            <th>[% c.maketext("people.head-to-head.heading.team") %]</th>
+            <th>[% c.maketext("people.head-to-head.heading.opposing-team") %]</th>
+            <th>[% c.maketext("people.head-to-head.heading.game-score") %]</th>
+            <th>[% c.maketext("people.head-to-head.heading.scores") %]</th>
+            <th>[% c.maketext("people.head-to-head.heading.result") %]</th>
+            <th>[% c.maketext("people.head-to-head.heading.venue") %]</th>
+          </tr>
+        </thead>
+        <tbody>
+[%
+USE zeroes = format("%02d");
+FOREACH h2h IN head_to_heads;
+  SET match = h2h.team_match;
+  SET home_team = match.team_season_home_team_season;
+  SET away_team = match.team_season_away_team_season;
+  SET date = match.actual_date;
+  CALL date.set_locale(c.locale);
+  SET score = h2h.summary_score.home _ "-" _ h2h.summary_score.away;
+  
+  IF h2h.home_player.id == person.id;
+    SET location = "home";
+    SET for_team = home_team;
+    SET against_team = away_team;
+  ELSE;
+    SET location = "away";
+    SET for_team = away_team;
+    SET against_team = home_team;
+  END;
+  
+  for_team_name = for_team.club_season.short_name _ " " _ for_team.name | html_entity;
+  against_team_name = against_team.club_season.short_name _ " " _ against_team.name | html_entity;
+  SET for_team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [for_team.club_season.club.url_key, for_team.team.url_key, season.url_key]);
+  SET against_team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [against_team.club_season.club.url_key, against_team.team.url_key, season.url_key]);
+  
+  # These only get displayed if the game is complete
+  # Set the detailed (leg) scores up
+  IF h2h.started;
+    SET detailed_scores = h2h.detailed_scores;
+    SET score_html = "";
+    SET leg_num = 1;
+    FOREACH leg_score = detailed_scores;
+      IF leg_num > 1;
+        SET score_html = score_html _ '<span class="leg-separator">, </span>';
+      END;
+      
+      SET score_html = score_html _ '<span class="leg-score">' _ leg_score.home _ '-' _ leg_score.away _ '</span>';
+      SET leg_num = leg_num + 1;
+    END;
+  ELSE;
+    # The game is marked as complete, but not started - score is not applicable, as it's been awarded
+    SET score_html = c.maketext("msg.not-applicable");
+  END;
+  
+  IF h2h.winner.id == for_team.team.id;
+    SET result = c.maketext("matches.result.win");
+  ELSIF h2h.winner.id == against_team.team.id;
+    SET result = c.maketext("matches.result.loss");
+  ELSE;
+    SET result = c.maketext("matches.result.draw");
+  END;
+-%]
+          <tr>
+            <td data-label="[% c.maketext("people.head-to-head.heading.season") %]"><a href="[% c.uri_for_action("/seasons/view", [match.season.url_key]) %]">[% match.season.name | html_entity %]</a></td>
+            <td data-label="[% c.maketext("people.head-to-head.heading.date") %]">[% c.i18n_datetime_format_date.format_datetime(date) %]</td>
+            <td data-label="[% c.maketext("people.head-to-head.heading.date-sort") %]">[% date.ymd %]</td>
+            <td data-label="[% c.maketext("people.head-to-head.heading.division") %]"><a href="[% c.uri_for_action("/league-averages/view_specific_season", ["singles", match.division_season.division.url_key, match.season.url_key]) %]">[% match.division_season.name | html_entity %]</a></td>
+            <td data-label="[% c.maketext("people.head-to-head.heading.division-rank") %]">[% match.division_season.division.rank %]</td>
+            <td data-label="[% c.maketext("people.head-to-head.heading.team") %]"><a href="[% for_team_uri %]">[% for_team_name %]</a></td>
+            <td data-label="[% c.maketext("people.head-to-head.heading.opposing-team") %]"><a href="[% against_team_uri %]">[% against_team_name %]</a></td>
+            <td data-label="[% c.maketext("people.head-to-head.heading.game-score") %]">[% score %]</td>
+            <td data-label="[% c.maketext("people.head-to-head.heading.scores") %]">[% score_html %]</td>
+            <td data-label="[% c.maketext("people.head-to-head.heading.result") %]"><a href="[% c.uri_for_action("/matches/team/view_by_url_keys", match.url_keys) %]">[% result %]</a></td>
+            <td data-label="[% c.maketext("people.head-to-head.heading.venue") %]"><a href="[% c.uri_for_action("/venues/view", [match.venue.url_key]) %]">[% match.venue.name | html_entity %]</a></td>
+          </tr>
+[%
+END;
+-%]
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+[%
 IF seasons == 1;
   SET season_text = c.maketext("object.singular.seasons");
 ELSE;
   SET season_text = c.maketext("object.plural.seasons");
 END;
-
 SET seasons_link_text = c.maketext("people.seasons.count-text", enc_display_name, seasons, season_text);
 -%]
 <div class="seasons-count"><a href="[% c.uri_for_action("/people/view_seasons", [person.url_key]) %]">[% seasons_link_text %]</a></div>

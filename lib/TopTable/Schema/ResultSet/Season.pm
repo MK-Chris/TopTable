@@ -8,6 +8,21 @@ use DateTime::TimeZone;
 use Try::Tiny;
 use HTML::Entities;
 
+=head2 get_current
+
+A predefined search to get the current season (complete = 0)
+
+=cut
+
+sub get_current {
+  my ( $self ) = @_;
+  
+  return $self->find({complete => 0}, {
+    order_by => {-asc => [qw( division.rank )]},
+    prefetch  => {division_seasons  => "division"},
+  });
+}
+
 =head2 last_complete_season
 
 A predefined search to find the latest season that has been completed; optionally takes a team, in which case returns the latest completed season that the specified team entered.
@@ -29,6 +44,22 @@ sub last_complete_season {
   }
   
   return $self->search($where, $attrib)->single;
+}
+
+=head2 get_current_or_last
+
+A predefined search to get either the current season (complete = 0) or the last complete season.
+
+=cut
+
+sub get_current_or_last {
+  my ( $self ) = @_;
+  
+  # First see if there's an active season
+  my $season  = $self->get_current;
+  $season = $self->last_complete_season unless defined($season);
+  
+  return $season;
 }
 
 =head2 all_seasons
@@ -126,37 +157,6 @@ sub get_archived {
     }],
     prefetch => {division_seasons  => "division"},
   });
-}
-
-=head2 get_current
-
-A predefined search to get the current season (complete = 0)
-
-=cut
-
-sub get_current {
-  my ( $self ) = @_;
-  
-  return $self->find({complete => 0}, {
-    order_by => {-asc => [qw( division.rank )]},
-    prefetch  => {division_seasons  => "division"},
-  });
-}
-
-=head2 get_current_or_last
-
-A predefined search to get either the current season (complete = 0) or the last complete season.
-
-=cut
-
-sub get_current_or_last {
-  my ( $self ) = @_;
-  
-  # First see if there's an active season
-  my $season  = $self->get_current;
-  $season = $self->last_complete_season unless defined($season);
-  
-  return $season;
 }
 
 =head2 find_key
