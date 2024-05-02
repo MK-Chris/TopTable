@@ -464,8 +464,7 @@ sub holders :Chained("base") :PathPart("holders") :CaptureArgs(1) {
   my $enc_name = $c->stash->{enc_name};
   
   # Get and stash the current season, or last completed - we're only interested in current committee members for these actions
-  my $season = $c->model("DB::Season")->get_current;
-  $season = $c->model("DB::Season")->last_complete_season unless defined($season);
+  my $season = $c->model("DB::Season")->get_current_or_last;
   
   # No need to check for a defined season - if we have a position / holder, there must be a season.
   # Check this position is in use for this season

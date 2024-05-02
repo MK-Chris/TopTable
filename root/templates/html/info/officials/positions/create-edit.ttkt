@@ -4,7 +4,6 @@ IF c.flash.show_flashed;
 ELSE;
   IF position.defined;
     SET POSITION_BEFORE = position.get_season(season).next_position.official.id;
-    CALL c.log.debug("position before: " _ POSITION_BEFORE);
   END;
 END;
 -%]

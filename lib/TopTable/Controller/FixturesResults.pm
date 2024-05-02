@@ -57,8 +57,7 @@ sub load_current_season :Chained("base") :PathPart("") :CaptureArgs(0) {
   my ( $self, $c ) = @_;
   
   # Try to find the current season (or the last completed season if there is no current season)
-  my $season = $c->model("DB::Season")->get_current;
-  $season = $c->model("DB::Season")->last_complete_season unless defined($season);
+  my $season = $c->model("DB::Season")->get_current_or_last;
   
   # The header will just say 'Results' is the season we're looking at is complete
   my $page_header = $season->complete ? $c->maketext("menu.text.results") : $c->maketext("menu.text.fixtures-results");

@@ -49,7 +49,7 @@ sub filter {
   		p => [],
   		br => [qw( / )],
   		a => [qw( href title )],
-  		img => [qw( src alt title width height / )],
+  		img => [qw( src alt title width height style / )],
       ul => [qw( style start )],
       ol => [qw( style start )],
       li => [],

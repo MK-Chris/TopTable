@@ -349,18 +349,17 @@ sub update :Private {
   $c->stash({
     template => "html/matches/team/update.ttkt",
     form_action => $c->uri_for_action("/matches/team/do_update_by_ids", [$match->team_season_home_team_season->team->id, $match->team_season_away_team_season->team->id, $match->scheduled_date->year, $match->scheduled_date->month, $match->scheduled_date->day]),
-    scripts => [
-      "tokeninput-standard",
-    ],
+    scripts => ["tokeninput-standard"],
     external_scripts => [
       $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
       $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
       $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js", {v => 2}),
-      $c->uri_for("/static/script/plugins/toastmessage/jquery.toastmessage.js"),
       $c->uri_for("/static/script/standard/chosen.js"),
       $c->uri_for("/static/script/standard/prettycheckable.js"),
       $c->uri_for("/static/script/standard/datepicker.js"),
       $c->uri_for("/static/script/standard/button-toggle.js", {v => 2}),
+      $c->uri_for("/static/script/plugins/toastmessage/jquery.toastmessage.js"),
+      $c->uri_for("/static/script/standard/messages.js"),
       $c->uri_for_action("/matches/team/update_js_by_ids", [$match->team_season_home_team_season->team->id, $match->team_season_away_team_season->team->id, $match->scheduled_date->year, $match->scheduled_date->month, $match->scheduled_date->day]),
     ],
     external_styles => [

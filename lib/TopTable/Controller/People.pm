@@ -5,6 +5,7 @@ use JSON;
 use MIME::Types;
 use Text::CSV;
 use HTML::Entities;
+use JSON;
 
 BEGIN { extends 'Catalyst::Controller'; }
 
@@ -206,8 +207,7 @@ sub view_current_season :Chained("view") :PathPart("") :Args(0) {
   my $person_name = $c->stash->{enc_display_name};
   
   # No season ID, try to find the current season
-  my $season = $c->model("DB::Season")->get_current;
-  $season = $c->model("DB::Season")->last_complete_season if !defined($season); # No current season season, try and find the last season.
+  my $season = $c->model("DB::Season")->get_current_or_last;
   
   if ( defined($season) ) {
     my $enc_season_name = encode_entities($season->name);
@@ -315,6 +315,11 @@ sub get_person_season :Private {
     singles_games => $singles_games,
     doubles_games => $doubles_games,
     season => $season,
+    loan_matches => scalar $person->matches_on_loan({season => $season}),
+    inactive_memberships => scalar $person->inactive_memberships({season => $season}),
+    captaincies => scalar $person->captaincies({season => $season}),
+    secretaryships => scalar $person->secretaryships({season => $season}),
+    officialdoms => scalar $person->officialdoms({season => $season}),
   });
 }
 
@@ -354,38 +359,24 @@ sub view_finalise :Private {
     ? $c->uri_for_action("/people/view_specific_season", [$person->url_key, $season->url_key])
     : $c->uri_for_action("/people/view_current_season", [$person->url_key]);
   
-  my $scripts = [];
-  my $tokeninput_confs = [];
-  my $external_styles = [
-    $c->uri_for("/static/css/responsive-tabs/responsive-tabs.css"),
-    $c->uri_for("/static/css/chosen/chosen.min.css"),
-    $c->uri_for("/static/css/responsive-tabs/style-jqueryui.css"),
-    $c->uri_for("/static/css/datatables/dataTables.dataTables.min.css"),
-    $c->uri_for("/static/css/datatables/fixedColumns.dataTables.min.css"),
-    $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
-    $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
-    $c->uri_for("/static/css/datatables/select.dataTables.min.css"),
-    $c->uri_for("/static/css/datatables/searchPanes.dataTables.min.css"),
-    $c->uri_for("/static/css/prettycheckable/prettyCheckable.css"),
-  ];
+  my @tokeninput_confs = ();
+  my @scripts = ("tokeninput-head-to-head-singles");
   
-  my $external_scripts = [
-    $c->uri_for("/static/script/plugins/responsive-tabs/jquery.responsiveTabs.mod.js"),
-    $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
-    $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
-    $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
-    $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
-    $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
-    $c->uri_for("/static/script/plugins/datatables/dataTables.select.min.js"),
-    $c->uri_for("/static/script/plugins/datatables/dataTables.searchPanes.min.js"),
-    $c->uri_for("/static/script/people/view.js", {v => 3}),
-    $c->uri_for("/static/script/standard/option-list.js"),
-    $c->uri_for("/static/script/standard/vertical-table.js"),
-    #$c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
-  ];
+  my @head_to_heads;
+  if ( my $opponent = $c->req->params->{opponent} ) {
+    # Add the pre-population if required
+    $opponent = $c->model("DB::Person")->find_id_or_url_key($opponent);
+    
+    if ( defined($opponent) ) {
+      $c->stash({opposition_ti_prepopulate => encode_json([{id => $opponent->url_key, name => encode_entities($opponent->display_name)}])});
+      
+      # We need this as an array to A) suppress the eager slurp due to order criteria warning and B) so we can map each row and format some dates into a hashref
+      @head_to_heads = $person->head_to_heads({opponent => $opponent})->all;
+    }
+  }
   
-  if ( $c->stash->{authorisation}{person_edit} ) {
-    my $tokeninput_options = {
+  if ( $c->stash->{authorisation}{person_edit} and $c->config->{Players}{show_transfer_form} ) {
+    my $transfer_tokeninput_options = {
       jsonContainer => "json_search",
       tokenLimit => 1,
       hintText => $c->maketext("person.tokeninput.type"),
@@ -394,32 +385,58 @@ sub view_finalise :Private {
     };
     
     # Add the pre-population if required
-    $tokeninput_options->{prePopulate} = [{id => $c->flash->{to}->id, name => encode_entities($c->flash->{to}->display_name) }] if defined($c->flash->{to});
+    $transfer_tokeninput_options->{prePopulate} = [{id => $c->flash->{to}->id, name => encode_entities($c->flash->{to}->display_name) }] if defined($c->flash->{to});
     
-    $scripts = ["tokeninput-standard"];
-    $tokeninput_confs = [{
+    push(@tokeninput_confs, {
       script => $c->uri_for("/people/search"),
-      options => encode_json($tokeninput_options),
-      selector => "to"
-    }];
+      options => encode_json($transfer_tokeninput_options),
+      selector => "to",
+    });
     
-    push(@{$external_styles}, $c->uri_for("/static/css/tokeninput/token-input-tt2.css"));
-    push(@{$external_scripts}, $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js", {v => 2}));
+    push(@scripts, "tokeninput-standard");
   }
   
   # Set up the template to use
   $c->stash({
     template => "html/people/view.ttkt",
-    scripts => $scripts,
-    external_scripts => $external_scripts,
-    external_styles => $external_styles,
-    tokeninput_confs => $tokeninput_confs,
     title_links => \@title_links,
     view_online_display => sprintf("Viewing %s", $enc_display_name),
     view_online_link => 1,
     person_seasons => $person_seasons,
     seasons => $person_seasons->count,
+    head_to_heads => \@head_to_heads,
     canonical_uri => $canonical_uri,
+    scripts => \@scripts,
+    external_scripts => [
+      $c->uri_for("/static/script/plugins/responsive-tabs/jquery.responsiveTabs.mod.js"),
+      $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.select.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.searchPanes.min.js"),
+      $c->uri_for("/static/script/standard/option-list.js"),
+      $c->uri_for("/static/script/standard/vertical-table.js"),
+      $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js", {v => 2}),
+      $c->uri_for("/static/script/plugins/toastmessage/jquery.toastmessage.js"),
+      $c->uri_for("/static/script/standard/messages.js"),
+      $c->uri_for("/static/script/people/view.js", {v => 3}),
+    ],
+    external_styles => [
+      $c->uri_for("/static/css/responsive-tabs/responsive-tabs.css"),
+      $c->uri_for("/static/css/chosen/chosen.min.css"),
+      $c->uri_for("/static/css/responsive-tabs/style-jqueryui.css"),
+      $c->uri_for("/static/css/datatables/dataTables.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/fixedColumns.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/select.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/searchPanes.dataTables.min.css"),
+      $c->uri_for("/static/css/tokeninput/token-input-tt2.css"),
+      $c->uri_for("/static/css/toastmessage/jquery.toastmessage.css"),
+    ],
+    tokeninput_confs => \@tokeninput_confs,
   });
 }
 
@@ -475,6 +492,178 @@ sub view_seasons :Chained("view") :PathPart("seasons") :Args(0) {
     path => $c->uri_for_action("/people/view_seasons", [$person->url_key]),
     label => $c->maketext("menu.text.season"),
   });
+}
+
+=head2 head_to_head
+
+Head-to-head form processing, routed to a form submission, or an AJAX query.
+
+=cut
+
+sub head_to_head :Chained("base") :PathPart("head-to-head") :Args(0) {
+  my ( $self, $c ) = @_;
+  my $person = $c->stash->{person};
+  my $opponent = $c->req->params->{opponent};
+  
+  my @errors = ();
+  if ( defined($opponent) ) {
+    # Validate the opponent is valid
+    $opponent = $c->model("DB::Person")->find_id_or_url_key($opponent);
+    
+    if ( defined($opponent) ) {
+      # Valid person - simple check that they're not the same as the other person
+      push(@errors, $c->maketext("people.head-to-head.error.same-opponent-as-person", $c->stash->{enc_display_name})) if $person->id == $opponent->id;
+    } else {
+      # Invalid person
+      push(@errors, $c->maketext("people.head-to-head.error.invalid-person"));
+    }
+  } else {
+    # Nobody specified, error
+    push(@errors, $c->maketext("people.head-to-head.error.nobody-specified"));
+  }
+  
+  if ( $c->is_ajax ) {
+    # Do the query,rReturn with JSON
+    if ( scalar(@errors) ) {
+      # Stash the messages
+      $c->stash({json_data => {messages => {error => \@errors}}});
+      
+      # Change the response code if we didn't complete
+      $c->res->status(400);
+      
+      # Detach to the JSON view
+      $c->detach($c->view("JSON"));
+      return;
+    }
+    
+    my @head_to_heads = $person->head_to_heads({opponent => $opponent})->all;
+    
+    # Maps into a hashref, keys: db, table (table of data we need to populate with DataTables)
+    # This is bad and probably needs to be improved, as it makes the controller very fat, but
+    # I'm struggling to work out another way at the moment.
+    @head_to_heads = map{
+      # Map our variables into the hash
+      my $game = $_;
+      my ( $for_team, $against_team, $for_team_name, $against_team_name );
+      
+      # Grah the match / teams
+      my $match = $game->team_match;
+      my $home_team = $match->team_season_home_team_season;
+      my $away_team = $match->team_season_away_team_season;
+      
+      # Set the dates
+      my $date = $match->actual_date;
+      $date->set_locale($c->locale);
+      my $location = $game->home_player->id == $person->id ? "home" : "away";
+      
+      if ( $location eq "home" ) {
+        $for_team = $home_team;
+        $against_team = $away_team;
+      } else {
+        $for_team = $away_team;
+        $against_team = $home_team;
+      }
+      
+      my ( $score, $leg_scores, $leg_number, $result );
+      if ( $game->started ) {
+        $leg_scores = "";
+        my $detailed_scores = $game->detailed_scores;
+        
+        $leg_number = 1;
+        
+        foreach my $leg_score ( @{$detailed_scores} ) {
+          if ( $leg_number > 1 ) {
+            $leg_scores .= ", ";
+          }
+          
+          $leg_scores .= $leg_score->{home} . '-' . $leg_score->{away};
+          $leg_number++;
+        }
+        
+        $score = $game->summary_score;
+        $score = sprintf("%s-%s", $score->{home}, $score->{away});
+      } else {
+        # The game is marked as complete, but not started - score is not applicable, as it's been awarded
+        $leg_scores = $c->maketext("msg.not-applicable");
+        $score = $c->maketext("msg.not-applicable");
+      }
+      
+      if ( $game->winner->id == $for_team->id ) { 
+        $result = $c->maketext("matches.result.win");
+      } elsif ( $game->winner->id == $against_team->id ) {
+        $result = $c->maketext("matches.result.loss");
+      } else {
+        $result = $c->maketext("matches.result.draw");
+      }
+      
+      my $season = $match->season;
+      
+      # Return the hashref
+      {
+        season => {
+          display => encode_entities($season->name),
+          uri => $c->uri_for_action("/seasons/view", [$season->url_key])->as_string,
+        },
+        date => {display => $c->i18n_datetime_format_date->format_datetime($date)},
+        "date-sort" => {display => $date->ymd},
+        division => {
+          display => encode_entities($match->division_season->name),
+          uri => $c->uri_for_action("/league-averages/view_specific_season", ["singles", $match->division_season->division->url_key, $season->url_key])->as_string,
+        },
+        "division-rank" => {display => $match->division_season->division->rank},
+        "for-team" => {
+          display => encode_entities(sprintf("%s %s", $for_team->club_season->short_name, $for_team->name)),
+          uri => $c->uri_for_action("/teams/view_specific_season_by_url_key", [$for_team->club_season->club->url_key, $for_team->team->url_key, $season->url_key])->as_string,
+        },
+        "against-team" => {
+          display => encode_entities(sprintf("%s %s", $against_team->club_season->short_name, $against_team->name)),
+          uri => $c->uri_for_action("/teams/view_specific_season_by_url_key", [$against_team->club_season->club->url_key, $against_team->team->url_key, $season->url_key])->as_string,
+        },
+        "game-score" => {display => $score},
+        scores => $game->detailed_scores,
+        result => {display => $result},
+        venue => {
+          display => encode_entities($match->venue->name),
+          uri => $c->uri_for_action("/venues/view", [$match->venue->url_key])->as_string,
+        },
+      }
+    } @head_to_heads;
+    
+    # No errors, get the data
+    $c->stash({
+      json_data => {
+        table => \@head_to_heads,
+      }
+    });
+    
+    # Detach to the JSON view
+    $c->detach($c->view("JSON"));
+  } else {
+    # Redirect to the person view page, which will perform the query and display the data
+    # Figure out if it's a specific season or not from form data
+    my $season = $c->model("DB::Season")->find_id_or_url_key($c->req->params->{season}) if exists($c->req->params->{season});
+    
+    if ( scalar(@errors) ) {
+      my $mid = {mid => $c->set_status_msg({error => \@errors})};
+      my $redirect_uri = defined($season)
+        ? $c->uri_for_action("/people/view_specific_season", [$person->url_key, $season->url_key], $mid, \"head-to-head")
+        : $c->uri_for_action("/people/view_current_season", [$person->url_key], $mid, \"head-to-head");
+      
+      $c->res->redirect($redirect_uri);
+      $c->detach;
+      return;
+    }
+    
+    my $query_data = {opponent => $opponent->url_key};
+    my $redirect_uri = defined($season)
+      ? $c->uri_for_action("/people/view_specific_season", [$person->url_key, $season->url_key], $query_data, \"head-to-head")
+      : $c->uri_for_action("/people/view_current_season", [$person->url_key], $query_data, \"head-to-head");
+    
+    # Redirect - no need for a status message
+    $c->res->redirect($redirect_uri);
+    $c->detach;
+    return;
+  }
 }
 
 =head2 create
@@ -1301,7 +1490,7 @@ sub search :Local :Args(0) {
     query_params => {q => $c->req->param("q")},
     view_action => "/people/view_current_season",
     search_action => "/people/search",
-    placeholder => $c->maketext( "search.form.placeholder", $c->maketext("object.plural.people") ),
+    placeholder => $c->maketext("search.form.placeholder", $c->maketext("object.plural.people")),
   });
   
   # Do the search

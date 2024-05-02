@@ -27,6 +27,7 @@ $(document).ready(function() {
   $("select[name=bans-list_length]").chosen({
     disable_search: true,
     single_backstroke_delete: false,
-    allow_single_deselect: true
+    allow_single_deselect: true,
+    width: "75px"
   });
 });

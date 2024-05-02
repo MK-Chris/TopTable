@@ -16,7 +16,6 @@
     
     # Increment the position number
     SET position_number = position_number + 1;
-    CALL c.log.debug("increased position: " _ position_number);
 -%]
   <li class="ui-state-default sort-official" data-official-id="[% official.id %]"><span class="ui-icon ui-icon-arrowthick-2-n-s"></span> <span class="official-position-number" id="official-[% official.id %]-position">[% position_number %]</span> <span class="official-position-name">[% official.position_name | html_entity %]</span></li>
 [%

@@ -552,7 +552,7 @@ sub players_in_club {
   }
   
   my @teams = $self->search_related("teams", $where, $attrib);
-  my @team_ids = map( $_->id , @teams );
+  my @team_ids = map($_->id , @teams);
   
   if ( defined($season) ) {
     $where = {

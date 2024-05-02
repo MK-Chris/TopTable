@@ -91,6 +91,9 @@ sub find_pair {
   my $season = $params->{season};
   my $team = $params->{team};
   
+  # Return undef if we don't have two people defined
+  return undef unless defined($person1) and defined($person2);
+  
   # Do the lookups if they are not passed in as objects
   my $schema = $self->result_source->schema;
   $person1 = $schema->resultset("Person")->find_id_or_url_key($person1) unless ref($person1);

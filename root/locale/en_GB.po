@@ -1275,8 +1275,113 @@ msgstr "Averages position"
 msgid "people.seasons.registered-as"
 msgstr "Registered as"
 
+msgid "people.summary.registered.active"
+msgstr "Registered team"
+
+msgid "people.summary.division"
+msgstr "Division"
+
+msgid "people.summary.matches-on-loan"
+msgstr "Matches played on loan"
+
+msgid "people.summary.inactive-memberships"
+msgstr "Inactive team memberships"
+
+msgid "people.summary.captaincies"
+msgstr "Captain for"
+
+msgid "people.summary.secretaryships"
+msgstr "Secretary for"
+
+msgid "people.summary.officialdoms"
+msgstr "Official positions"
+
+msgid "people.head-to-head.all-seasons.notice"
+msgstr "This form is not specific to the season you're viewing and will show all games between %1 and the person you enter, regardless of the season it was played in."
+
+msgid "people.head-to-head.singles.form.field.opponent"
+msgstr "Search for an opponent"
+
+msgid "people.head-to-head.doubles.form.field.opponents"
+msgstr "Search for an opponent pairing"
+
+msgid "people.head-to-head.form.field.opponent"
+msgstr "Search for an opponent"
+
+msgid "people.head-to-head.heading.season"
+msgstr "Season"
+
+msgid "people.head-to-head.heading.date-sort"
+msgstr "Date (sortable)"
+
+msgid "people.head-to-head.heading.date"
+msgstr "Date"
+
+msgid "people.head-to-head.heading.division"
+msgstr "Division"
+
+msgid "people.head-to-head.heading.division-rank"
+msgstr "Division (rank)"
+
+msgid "people.head-to-head.heading.team"
+msgstr "Team"
+
+msgid "people.head-to-head.heading.opposing-team"
+msgstr "Opposing team"
+
+msgid "people.head-to-head.heading.game-score"
+msgstr "Game score"
+
+msgid "people.head-to-head.heading.scores"
+msgstr "Scores"
+
+msgid "people.head-to-head.heading.result"
+msgstr "Result"
+
+msgid "people.head-to-head.heading.venue"
+msgstr "Venue"
+
+msgid "people.head-to-head.error.nobody-specified"
+msgstr "Nobody was selected; please search for a person to display head-to-head data with."
+
+msgid "people.head-to-head.error.same-opponent-as-person"
+msgstr "You cannot specify %1 as the opponent, because they cannot play themselves."
+
+msgid "people.head-to-head.error.invalid-person"
+msgstr "An invalid opponent was specified; please use the search function."
+
+msgid "people.head-to-head.doubles.error.same-opponent-as-pair"
+msgstr "You cannot specify %1 and %2 as the opponents, because they cannot play themselves."
+
+msgid "people.head-to-head.doubles.error.person-in-both-pairs"
+msgstr "You cannot specify %1 in the opponent pair, because they cannot play themselves."
+
+msgid "people.head-to-head.singles.opponent-populated.no-results"
+msgstr "There is no record of any games between these players."
+
+msgid "people.head-to-head.singles.opponent-not-populated.no-results"
+msgstr "Enter an opponent to view head-to-head games."
+
+msgid "people.head-to-head.doubles.opponent-populated.no-results"
+msgstr "There is no record of any doubles games between these players."
+
+msgid "people.head-to-head.doubles.opponent-not-populated.no-results"
+msgstr "Enter an opponent team (two people) to view head-to-head games."
+
+msgid "people.head-to-head.doubles.error.two-people-not-entered"
+msgstr "Please search for two people to display head-to-head data with."
+
+msgid "people.head-to-head.doubles.error.invalid-pair"
+msgstr "%1 and %2 have not played doubles together."
+
+msgid "people.head-to-head.doubles.error.person-invalid"
+msgstr "One of the opponent players entered is invalid."
+
+msgid "people.head-to-head.doubles.error.people-invalid"
+msgstr "Both of the opponent players entered are invalid."
+
 msgid "people.seasons.team"
-msgstr "Registered for"
+msgstr "Registered team"
 
 msgid "people.teams.loan"
 msgstr "Played on loan"
@@ -1296,8 +1401,8 @@ msgstr "%1 has not played any singles games yet."
 msgid "people.no-doubles-games-played"
 msgstr "%1 has not played any doubles games yet."
 
-msgid "people.message.did-not-enter"
-msgstr "%1 did not enter %2."
+msgid "people.message.not-registered"
+msgstr "Not registered."
 
 msgid "people.delete.error.not-allowed"
 msgstr "%1 cannot be deleted because they have been involved in matches."
@@ -1334,6 +1439,12 @@ msgstr "Select a type to filter:"
 
 msgid "people.seasons.count-text"
 msgstr "%1 has been registered in %2 %3."
+
+msgid "people.tabs.season-summary"
+msgstr "%1 summary"
+
+msgid "people.tabs.head-to-head"
+msgstr "Head-to-head"
 
 msgid "people.transfer-season"
 msgstr "Transfer season statistics"
@@ -1383,6 +1494,9 @@ msgstr "Summary"
 
 msgid "doubles.tabs.games"
 msgstr "Games"
+
+msgid "doubles.tabs.head-to-head"
+msgstr "Head-to-head"
 
 ### Generic team / person statistics labels
 msgid "stats.heading.details"

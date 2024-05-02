@@ -195,8 +195,7 @@ sub view_current_season :Chained("view") :PathPart("") :Args(0) {
   my $event_name = $c->stash->{encoded_event_name};
   
   # Try to find the current season (or the last completed season if there is no current season)
-  my $season = $c->model("DB::Season")->get_current;
-  $season = $c->model("DB::Season")->last_complete_season unless defined($season);
+  my $season = $c->model("DB::Season")->get_current_or_last;
     
   if ( defined( $season ) ) {
     $c->stash({
@@ -466,18 +465,18 @@ sub create :Local {
     my $tokeninput_options = {
       jsonContainer => "json_search",
       tokenLimit => 1,
-      hintText => encode_entities( $c->maketext("person.tokeninput.type") ),
-      noResultsText => encode_entities( $c->maketext("tokeninput.text.no-results") ),
-      searchingText => encode_entities( $c->maketext("tokeninput.text.searching") ),
+      hintText => encode_entities($c->maketext("person.tokeninput.type")),
+      noResultsText => encode_entities($c->maketext("tokeninput.text.no-results")),
+      searchingText => encode_entities($c->maketext("tokeninput.text.searching")),
     };
     
     # Add the pre-population if needed
-    $tokeninput_options->{prePopulate} = [{id => $c->flash->{organiser}->id, name => $c->flash->{organiser}->display_name}] if defined( $c->flash->{organiser} );
+    $tokeninput_options->{prePopulate} = [{id => $c->flash->{organiser}->id, name => $c->flash->{organiser}->display_name}] if defined($c->flash->{organiser});
     
     my $tokeninput_confs = [{
-      script    => $c->uri_for("/people/search"),
-      options   => encode_json( $tokeninput_options ),
-      selector  => "organiser",
+      script => $c->uri_for("/people/search"),
+      options => encode_json($tokeninput_options),
+      selector => "organiser",
     }];
     
     $c->stash({tokeninput_confs => $tokeninput_confs});

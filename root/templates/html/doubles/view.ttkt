@@ -1,15 +1,21 @@
+<div id="tabs">
+  <ul>
 [%-
 # Check there's a season
 IF season;
   season_html = FILTER html_entity; season.name; END;
 -%]
-<div id="tabs">
-  <ul>
     <li><a href="#summary">[% c.maketext("doubles.tabs.summary") %]</a></li>
     <li><a href="#games">[% c.maketext("doubles.tabs.games") %]</a></li>
+[%-
+END;
+-%]
+    <li><a href="#head-to-head">[% c.maketext("doubles.tabs.head-to-head") %]</a></li>
   </ul>
   <div id="summary">
-[%
+[%-
+# Check there's a season
+IF season;
   # Check there's a person's season
   IF season_pairs.count;
     WHILE (season_pair = season_pairs.next);
@@ -277,6 +283,114 @@ IF season;
 [%
     END;
 -%]
+  </div>
+  <div id="head-to-head">
+    <div class="info-message-small"><span class="message-text">[% c.maketext("people.head-to-head.all-seasons.notice", enc_first_name) %]</span></div>
+    <form action="[% c.uri_for_action("/doubles/head_to_head", [people.item(0).url_key, people.item(1).url_key]) %]" method="get">
+    <div class="label-field-container">
+      <label for="opponents">[% c.maketext("people.head-to-head.doubles.form.field.opponents") %]</label>
+      <div class="field-container">
+        <input type="text" id="opponents" name="opponents" value="" />
+      </div>
+[%
+IF specific_season;
+-%]
+      <input type="hidden" name="season" value="[% season.id %]" />
+[%
+END;
+-%]
+      <div class="clear-fix"></div>
+    </div>
+    </form>
+    <div id="head-to-head-games">
+      <table id="head-to-heads-table" class="stripe hover order-column row-border" style="width: 100%;">
+        <thead>
+          <tr>
+            <th>[% c.maketext("people.head-to-head.heading.season") %]</th>
+            <th>[% c.maketext("people.head-to-head.heading.date") %]</th>
+            <th>[% c.maketext("people.head-to-head.heading.date-sort") %]</th>
+            <th>[% c.maketext("people.head-to-head.heading.division") %]</th>
+            <th>[% c.maketext("people.head-to-head.heading.division-rank") %]</th>
+            <th>[% c.maketext("people.head-to-head.heading.team") %]</th>
+            <th>[% c.maketext("people.head-to-head.heading.opposing-team") %]</th>
+            <th>[% c.maketext("people.head-to-head.heading.game-score") %]</th>
+            <th>[% c.maketext("people.head-to-head.heading.scores") %]</th>
+            <th>[% c.maketext("people.head-to-head.heading.result") %]</th>
+            <th>[% c.maketext("people.head-to-head.heading.venue") %]</th>
+          </tr>
+        </thead>
+        <tbody>
+[%
+USE zeroes = format("%02d");
+FOREACH h2h IN head_to_heads;
+  SET match = h2h.team_match;
+  SET home_team = match.team_season_home_team_season;
+  SET away_team = match.team_season_away_team_season;
+  SET date = match.actual_date;
+  CALL date.set_locale(c.locale);
+  SET score = h2h.summary_score.home _ "-" _ h2h.summary_score.away;
+  
+  IF h2h.home_player.id == person.id;
+    SET location = "home";
+    SET for_team = home_team;
+    SET against_team = away_team;
+  ELSE;
+    SET location = "away";
+    SET for_team = away_team;
+    SET against_team = home_team;
+  END;
+  
+  for_team_name = for_team.club_season.short_name _ " " _ for_team.name | html_entity;
+  against_team_name = against_team.club_season.short_name _ " " _ against_team.name | html_entity;
+  SET for_team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [for_team.club_season.club.url_key, for_team.team.url_key, season.url_key]);
+  SET against_team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [against_team.club_season.club.url_key, against_team.team.url_key, season.url_key]);
+  
+  # These only get displayed if the game is complete
+  # Set the detailed (leg) scores up
+  IF h2h.started;
+    SET detailed_scores = h2h.detailed_scores;
+    SET score_html = "";
+    SET leg_num = 1;
+    FOREACH leg_score = detailed_scores;
+      IF leg_num > 1;
+        SET score_html = score_html _ '<span class="leg-separator">, </span>';
+      END;
+      
+      SET score_html = score_html _ '<span class="leg-score">' _ leg_score.home _ '-' _ leg_score.away _ '</span>';
+      SET leg_num = leg_num + 1;
+    END;
+  ELSE;
+    # The game is marked as complete, but not started - score is not applicable, as it's been awarded
+    SET score_html = c.maketext("msg.not-applicable");
+  END;
+  
+  IF h2h.winner.id == for_team.team.id;
+    SET result = c.maketext("matches.result.win");
+  ELSIF h2h.winner.id == against_team.team.id;
+    SET result = c.maketext("matches.result.loss");
+  ELSE;
+    SET result = c.maketext("matches.result.draw");
+  END;
+-%]
+          <tr>
+            <td data-label="[% c.maketext("people.head-to-head.heading.season") %]"><a href="[% c.uri_for_action("/seasons/view", [match.season.url_key]) %]">[% match.season.name | html_entity %]</a></td>
+            <td data-label="[% c.maketext("people.head-to-head.heading.date") %]">[% c.i18n_datetime_format_date.format_datetime(date) %]</td>
+            <td data-label="[% c.maketext("people.head-to-head.heading.date-sort") %]">[% date.ymd %]</td>
+            <td data-label="[% c.maketext("people.head-to-head.heading.division") %]"><a href="[% c.uri_for_action("/league-averages/view_specific_season", ["singles", match.division_season.division.url_key, match.season.url_key]) %]">[% match.division_season.name | html_entity %]</a></td>
+            <td data-label="[% c.maketext("people.head-to-head.heading.division-rank") %]">[% match.division_season.division.rank %]</td>
+            <td data-label="[% c.maketext("people.head-to-head.heading.team") %]"><a href="[% for_team_uri %]">[% for_team_name %]</a></td>
+            <td data-label="[% c.maketext("people.head-to-head.heading.opposing-team") %]"><a href="[% against_team_uri %]">[% against_team_name %]</a></td>
+            <td data-label="[% c.maketext("people.head-to-head.heading.game-score") %]">[% score %]</td>
+            <td data-label="[% c.maketext("people.head-to-head.heading.scores") %]">[% score_html %]</td>
+            <td data-label="[% c.maketext("people.head-to-head.heading.result") %]"><a href="[% c.uri_for_action("/matches/team/view_by_url_keys", match.url_keys) %]">[% result %]</a></td>
+            <td data-label="[% c.maketext("people.head-to-head.heading.venue") %]"><a href="[% c.uri_for_action("/venues/view", [match.venue.url_key]) %]">[% match.venue.name | html_entity %]</a></td>
+          </tr>
+[%
+END;
+-%]
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
 [% 

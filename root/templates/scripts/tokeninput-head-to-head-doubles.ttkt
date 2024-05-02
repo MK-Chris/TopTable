@@ -1,0 +1,183 @@
+
+    /*
+      Head-to-head table - must be done here so we have access to the variable for the tokeninput handlers
+    */
+    let opponent_populated = 
+[%-
+  IF opposition_ti_prepopulate;
+-%]
+true;
+[%-
+  ELSE;
+-%]
+false;
+[%-
+  END;
+-%]
+    
+    let dt_empty = opponent_populated ? "[% c.maketext("people.head-to-head.doubles.opponent-populated.no-results") %]" : "[% c.maketext("people.head-to-head.doubles.opponent-not-populated.no-results") %]";
+    
+    let head_to_heads = $("#head-to-heads-table").DataTable({
+      "responsive": true,
+      "paging": true,
+      "pageLength": 25,
+      "lengthChange": true,
+      "searching": false,
+      "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+      "info": true,
+      "fixedHeader": true,
+      "language": {
+          "emptyTable": dt_empty
+      },
+      "columns": [{
+        // Season
+        "data": "season"
+      }, {
+        // Date (display)
+        "data": "date",
+        "orderData": 2
+      }, {
+        // Date (sort)
+        "data": "date-sort",
+        "visible": false
+      }, {
+        // Division (display)
+        "data": "division",
+        "orderData": 4
+      }, {
+        // Division (rank)
+        "data": "division-rank",
+        "visible": false
+      }, {
+        // For team
+        "data": "for-team"
+      }, {
+        // Against team
+        "data": "against-team"
+      }, {
+        // Game score
+        "data": "game-score",
+        "orderable": false
+      }, {
+        // Scores (legs)
+        "data": "scores",
+        "orderable": false
+      }, {
+        // Result
+        "data": "result"
+      }, {
+        // Venue
+        "data": "venue"
+      }]
+    });
+    
+    head_to_heads.on("draw", function () {
+      if ( opponent_populated ) {
+         $(".dt-empty").text("[% c.maketext("people.head-to-head.doubles.opponent-populated.no-results") %]");
+      } else {
+         $(".dt-empty").text("[% c.maketext("people.head-to-head.doubles.opponent-not-populated.no-results") %]");
+      }
+    });
+    
+    $("select[name=head-to-heads-table_length]").chosen({
+      disable_search: true,
+      single_backstroke_delete: false,
+      allow_single_deselect: true,
+      width: "75px"
+    });
+
+    /*
+      Token inputs for head-to-head
+    */
+    let opponents_input = $("#opponents").tokenInput("[% c.uri_for("/people/search") %]", {
+[%-
+  IF opposition_ti_prepopulate;
+%]
+      "prePopulate": [% opposition_ti_prepopulate %],
+[%-
+  END;
+%]
+      "tokenLimit": 2,
+      "searchingText": "[% c.maketext("tokeninput.text.searching") %]",
+      "noResultsText": "[% c.maketext("tokeninput.text.no-results") %]",
+      "hintText": "[% c.maketext("person.tokeninput.type") %]",
+      "jsonContainer":"json_search",
+      "onAdd": function(item) {
+        let populated = opponents_input.tokenInput("get");
+        
+        // Add a new person, do the query if we have two
+        if ( populated.length == 2 ) {
+          $.ajax({
+            url: "[% c.uri_for_action("/doubles/head_to_head", [people.item(0).url_key, people.item(1).url_key]) %]",
+            type: "GET",
+            dataType: "json",
+            data: {opponents: [populated[0].id, populated[1].id]},
+            success: function(response) {
+              // Process the games that have been returned
+              let dt_rows = [];
+              
+              $.each(response.table, function(index) {
+                // Start a new row of data
+                let dt_row = {};
+                
+                $.each(response.table[index], function(key, val) {
+                  switch (key) {
+                    case "scores":
+                      // Detailed scores are dealt with slightly differently
+                      let score_html = "";
+                      
+                      $.each(val, function(leg_index) {
+                        let leg = val[leg_index];
+                        
+                        if ( parseInt(leg.leg_number) === 1 ) {
+                          score_html += '<span class="leg-separator">, </span>';
+                        }
+                        
+                        score_html += '<span class="leg-score">' + leg.home + '-' + leg.away + '</span>';
+                      });
+                      
+                      // Set the score we've built into the row
+                      dt_row.scores = score_html;
+                      
+                      break;
+                    default:
+                      // Default field handling
+                      if ( val.uri === undefined ) {
+                        // No URL, just display
+                        dt_row[key] = val.display;
+                      } else {
+                        // Set a URL with the display
+                        dt_row[key] = '<a href="' + val.uri + '">' + val.display + '</a>'
+                      }
+                  }
+                });
+                
+                dt_rows.push(dt_row);
+              });
+              
+              opponent_populated = true;
+              head_to_heads.rows.add(dt_rows).draw();
+            },
+            error: function(xhr, ajax_options, thrown_error) {
+              console.log(xhr.responseJSON);
+              if ( typeof xhr.responseJSON === "undefined" ) {
+                $().toastmessage("showToast", {
+                  text: "<br />" + thrown_error + ": [% c.maketext("ajax.error.refresh-advice") %]",
+                  sticky: true,
+                  position: "top-center",
+                  type: "error"
+                });
+              } else {
+                console.log("show messages");
+                show_messages(xhr.responseJSON);
+              }
+            }
+          });
+        }
+      },
+      "onDelete": function(item) {
+        // Remove person, delete table
+        opponent_populated = false;
+        head_to_heads.clear().draw();
+      }
+    });
