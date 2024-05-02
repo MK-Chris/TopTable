@@ -31,11 +31,13 @@ false;
       },
       "columns": [{
         // Season
-        "data": "season"
+        "data": "season",
+        "responsivePriority": 6
       }, {
         // Date (display)
         "data": "date",
-        "orderData": 2
+        "orderData": 2,
+        "responsivePriority": 4
       }, {
         // Date (sort)
         "data": "date-sort",
@@ -43,31 +45,38 @@ false;
       }, {
         // Division (display)
         "data": "division",
-        "orderData": 4
+        "orderData": 4,
+        "responsivePriority": 5
       }, {
         // Division (rank)
         "data": "division-rank",
         "visible": false
       }, {
         // For team
-        "data": "for-team"
+        "data": "for-team",
+        "responsivePriority": 7
       }, {
         // Against team
-        "data": "against-team"
+        "data": "against-team",
+        "responsivePriority": 8
       }, {
         // Game score
         "data": "game-score",
-        "orderable": false
+        "orderable": false,
+        "responsivePriority": 1
       }, {
         // Scores (legs)
         "data": "scores",
-        "orderable": false
+        "orderable": false,
+        "responsivePriority": 3
       }, {
         // Result
-        "data": "result"
+        "data": "result",
+        "responsivePriority": 2
       }, {
         // Venue
-        "data": "venue"
+        "data": "venue",
+        "responsivePriority": 9
       }]
     });
     
