@@ -24,9 +24,9 @@ sub all_roles {
   
   return $self->search($where, {
     order_by => [{
-      -desc => [qw( system sysadmin anonymous )],
+      -desc => [qw( me.system me.sysadmin me.anonymous )],
     }, {
-      -asc  => [qw( name )],
+      -asc  => [qw( me.name )],
     }],
   });
 }

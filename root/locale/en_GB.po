@@ -228,8 +228,20 @@ msgstr "League Officials for %1"
 msgid "menu.text.captains"
 msgstr "Team captains"
 
+msgid "menu.text.captains.by-club"
+msgstr "By club"
+
+msgid "menu.text.captains.by-division"
+msgstr "By division"
+
 msgid "menu.title.captains"
-msgstr "Team captains"
+msgstr "View team captains"
+
+msgid "menu.title.captains.by-club"
+msgstr "View team captains by club"
+
+msgid "menu.title.captains.by-division"
+msgstr "View team captains by division"
 
 msgid "menu.text.rules"
 msgstr "Rules"
@@ -1043,6 +1055,12 @@ msgstr "The captain listed for %1 (%2) does not have an email address listed, so
 msgid "team-captains.view.error.no-current-season"
 msgstr "There is no current season, so teams captains cannot be viewed."
 
+msgid "team-captains.view.info.login-to-view-contact"
+msgstr "You must <a href="%1">login</a> to view contact details for team captains."
+
+msgid "team-captains.view.info.request-to-view-contact"
+msgstr "You don&#39;t have permission to view contact details for team captains; if you&#39;d like to be given these permissions, please use the <a href="%1">contact form</a>."
+
 ### People
 msgid "people.create"
 msgstr "Create a new person"
@@ -1393,10 +1411,10 @@ msgid "people.teams.inactive"
 msgstr "Inactive"
 
 msgid "people.singles-games"
-msgstr "Singles games played"
+msgstr "Singles games"
 
 msgid "people.doubles-games"
-msgstr "Doubles games played"
+msgstr "Doubles games"
 
 msgid "people.no-singles-games-played"
 msgstr "%1 has not played any singles games yet."
@@ -4175,6 +4193,12 @@ msgid "officials.contact.thank-you.text"
 msgstr "Thank you for your message, %1.  It has been sent to %2, who will respond in due course to your email address directly."
 
 ### Team captains list
+msgid "team-captains.view.by-club"
+msgstr "View by club"
+
+msgid "team-captains.view.by-division"
+msgstr "View by division"
+
 msgid "team-captains.list.heading.club"
 msgstr "Club"
 
@@ -4528,6 +4552,9 @@ msgstr "Failed to activate; please try again or contact the system administrator
 
 msgid "user.list-to-approve"
 msgstr "Approval list"
+
+msgid "user.list"
+msgstr "User list"
 
 msgid "users.approve.already-approved"
 msgstr "%1 is already approved, so cannot be re-approved."

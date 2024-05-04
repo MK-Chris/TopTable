@@ -267,34 +267,34 @@ IF authorisation.role_edit;
         <select id="roles" name="roles" multiple="multiple" data-placeholder="[% c.maketext("user.field.roles") %]">
           <option value="">
 [%
-  FOREACH ROLE IN roles;
-    SET ROLE_ID = ROLE.id;
+  WHILE ( role = roles.next );
+    SET role_id = role.id;
     
     # Set the name
-    IF ROLE.system;
-      SET ROLE_NAME = c.maketext("roles.name." _ ROLE.name);
+    IF role.system;
+      SET role_name = c.maketext("roles.name." _ role.name);
     ELSE;
-      ROLE_NAME = FILTER html_entity; ROLE.name; END;
+      role_name = role.name | html_entity;
     END;
     
     IF c.flash.roles;
-      FOREACH FLASHED_ROLE IN c.flash.roles;
-        IF FLASHED_ROLE == ROLE_ID;
-          SET ROLE_SELECTED = ' selected="selected"';
+      FOREACH flashed_role IN c.flash.roles;
+        IF flashed_role == role_id;
+          SET role_selected = ' selected="selected"';
           LAST;
         ELSE;
-          SET ROLE_SELECTED = '';
+          SET role_selected = '';
         END;
       END;
     ELSE;
-      IF user.has_role( ROLE );
-        SET ROLE_SELECTED = ' selected="selected"';
+      IF user.has_role(role);
+        SET role_selected = ' selected="selected"';
       ELSE;
-        SET ROLE_SELECTED = '';
+        SET role_selected = '';
       END;
     END;
 -%]
-          <option value="[% ROLE_ID %]"[% ROLE_SELECTED %]>[% ROLE_NAME %]</option>
+          <option value="[% role_id %]"[% role_selected %]>[% role_name %]</option>
 [%
   END;
 -%]

@@ -196,7 +196,9 @@ sub get_teams_with_captains_in_season {
   my $season = $params->{season};
   my $view_by = $params->{view_by};
   
-  my $order_by = $view_by eq "by-division" ? {-asc => [qw( division.rank club.short_name me.name )]} : {-asc => [qw( club.short_name me.name division.rank )]};
+  my $order_by = $view_by eq "by-division"
+    ? {-asc => [qw( division.rank club.short_name me.name )]}
+    : {-asc => [qw( club.short_name me.name division.rank )]};
   
   return $self->search({
     "team_seasons.season" => $season->id,

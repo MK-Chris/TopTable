@@ -316,6 +316,26 @@ sub do_contact :Path("send-email") {
   }
 }
 
+=head2 team_captains_menu
+
+Display the team captains menu (display links for viewing by club or by division).
+
+=cut
+
+sub team_captains_menu :Path("team-captains") :Args(0) {
+  my ( $self, $c ) = @_;
+  
+  $c->stash({
+    template => "html/info/team-captains/options.ttkt",
+    subtitle1 => $c->maketext("menu.text.captains"),
+    view_online_display => "Home",
+    view_online_link => 0,
+    external_scripts => [$c->uri_for("/static/script/standard/option-list.js")],
+  });
+}
+
+
+
 =head2 team_captains
 
 Retrieve all captains and their contact details.  Group either by division or team, depending on the argument passed in.
@@ -342,11 +362,21 @@ sub team_captains :Path("team-captains") :Args(1) {
   }
   
   # Check the auth for edit / delete links
-  $c->forward("TopTable::Controller::Users", "check_authorisation", [[qw( club_edit club_delete team_edit team_delete person_edit person_delete )], "", 0]);
+  $c->forward("TopTable::Controller::Users", "check_authorisation", [[qw( club_edit club_delete team_edit team_delete person_edit person_delete person_contact_view )], "", 0]);
+  
+  unless ( $c->stash->{authorisation}{person_contact_view} ) {
+    # We'll display an info message if we aren't authorised to view contact details; the contents of the message depend on whether we're logged in or not
+    my $contact_unath_notice = $c->user_exists
+      ? $c->maketext("team-captains.view.info.request-to-view-contact", $c->uri_for("/info/contact"))
+      : $c->maketext("team-captains.view.info.login-to-view-contact", $c->uri_for("/login"));
+    
+    $c->add_status_messages({info => $contact_unath_notice});
+  }
   
   $c->stash({
     template => sprintf("html/info/team-captains/view-%s.ttkt", $view_by),
     subtitle1 => $c->maketext("menu.text.captains"),
+    subtitle2 => $c->maketext(sprintf("menu.text.captains.%s", $view_by)),
     teams => scalar $c->model("DB::Team")->get_teams_with_captains_in_season({season => $season, view_by => $view_by}),
     external_scripts => [
       $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),

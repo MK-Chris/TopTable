@@ -249,6 +249,7 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
   
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["user_edit_all", $lang_action, $redirect_on_fail]);
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["user_edit_own", $lang_action, 1]) if !$c->stash->{authorisation}{user_edit_all} and $c->user_exists and $c->user->id == $user->id;
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["role_edit", "", 0]);
   
   # Get the timezone categories, then map each timezone in that category with the category as the key to a hashref, value is an arrayref of countries
   my @tz_categories = DateTime::TimeZone->categories;
@@ -273,7 +274,7 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
     timezones => $timezones,
   });
   
-  $c->stash({roles => [$c->model("DB::Role")->all_roles]}) if $c->stash->{authorisation}{role_edit};
+  $c->stash({roles => scalar $c->model("DB::Role")->all_roles}) if $c->stash->{authorisation}{role_edit};
   
   $c->warn_on_non_https;
   

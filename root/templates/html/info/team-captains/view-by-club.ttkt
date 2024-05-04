@@ -12,8 +12,14 @@ IF teams.count;
           <th>[% c.maketext("team-captains.list.heading.division") %]</th>
           <th>[% c.maketext("team-captains.list.heading.captain-name-sort") %]</th>
           <th>[% c.maketext("team-captains.list.heading.captain-name") %]</th>
+[%
+  IF authorisation.person_contact_view;
+-%]
           <th>[% c.maketext("team-captains.list.heading.captain-tel") %]</th>
           <th>[% c.maketext("team-captains.list.heading.captain-email") %]</th>
+[%
+  END;
+-%]
         </tr>
       </thead>
       <tbody>
@@ -81,60 +87,66 @@ IF teams.count;
     END;
 -%]
           </td>
+[%
+    IF authorisation.person_contact_view;
+-%]
           <td>
 [%
-    # Variable that will tell us whether we need a line break before the phone number we're about to print
-    SET PHONE_USED = 0;
-    IF captain.home_telephone;
-      PHONE_USED = 1;
+      # Variable that will tell us whether we need a line break before the phone number we're about to print
+      SET PHONE_USED = 0;
+      IF captain.home_telephone;
+        PHONE_USED = 1;
 -%]
             <strong>[% c.maketext("team-captains.list.field.tel-home") %]:</strong> [% captain.home_telephone | html_entity %]
 [%
-    END;
-    IF person.mobile_telephone;
-      IF PHONE_USED;
+      END;
+      IF person.mobile_telephone;
+        IF PHONE_USED;
 -%]
             <br />
 [%
-      ELSE;
-        PHONE_USED = 1;
-      END;
+        ELSE;
+          PHONE_USED = 1;
+        END;
 -%]
             <strong>[% c.maketext("team-captains.list.field.tel-mobile") %]:</strong> [% captain.mobile_telephone | html_entity %]
 [%
-    END;
-    IF person.work_telephone;
-      IF PHONE_USED;
+      END;
+      IF person.work_telephone;
+        IF PHONE_USED;
 -%]
             <br />
 [%
-      ELSE;
-        PHONE_USED = 1;
-      END;
+        ELSE;
+          PHONE_USED = 1;
+        END;
 -%]
             <strong>[% c.maketext("team-captains.list.field.tel-work") %]:</strong> [% captain.work_telephone | html_entity %]
 [%
-    END;
-    IF PHONE_USED == 0;
+      END;
+      IF PHONE_USED == 0;
 -%]
             &nbsp;
 [%
-    END;
+      END;
 -%]
           </td>
           <td>
 [%-
-    IF captain.email_address;
+      IF captain.email_address;
 -%]
 <a href="[% c.uri_for_action("/teams/contact_captain_by_url_key", [club.url_key, team.url_key]) %]">[% c.maketext("officials.action.send-email") %]</a>
 [%-
-    ELSE;
+      ELSE;
 -%]
 &nbsp;
 [%-
-    END;
+      END;
 -%]
 </td>
+[%
+    END;
+-%]
         </tr>
 [%
   END;

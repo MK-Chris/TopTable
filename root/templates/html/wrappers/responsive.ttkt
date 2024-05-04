@@ -152,7 +152,7 @@ IF !no_menu;
   <li><a href="[% c.uri_for("/news") %]" title="[% c.maketext("menu.title.news") %]">[% c.maketext("menu.text.news") %]</a></li>
 [%
 IF nav_current_season;
-  season_html = FILTER html_entity; nav_current_season.name; END;
+  season_html = nav_current_season.name | html_entity;
 %]
   <li class="fixtures">
     <a href="[% c.uri_for_action("/fixtures-results/root_current_season") %]" title="[% c.maketext("menu.title.fixtures-results", season_html) %]">[% c.maketext("menu.text.fixtures-results") %]</a>
@@ -173,7 +173,7 @@ IF nav_current_season;
         <ul>
 [%
   FOREACH division_season = nav_current_season.division_seasons;
-    division_html = FILTER html_entity; division_season.name; END;
+    division_html = division_season.name | html_entity;
 -%]
           <li><a href="[% c.uri_for_action("/league-tables/view_current_season", [division_season.division.url_key]) %]" title="[% c.maketext("menu.title.league-tables-division",division_html, season_html) %]">[% division_html %]</a></li>
 [%
@@ -189,7 +189,7 @@ IF nav_current_season;
             <ul>
 [%
   FOREACH division_season = nav_current_season.division_seasons;
-    division_html = FILTER html_entity; division_season.name; END;
+    division_html = division_season.name | html_entity;
 -%]
               <li><a href="[% c.uri_for_action("/league-averages/view_current_season", ["singles", division_season.division.url_key]) %]" title="[% c.maketext("menu.title.league-averages-singles-division", division_html, season_html) %]">[% division_html %]</a></li>
 [%
@@ -202,7 +202,7 @@ IF nav_current_season;
             <ul>
 [%
   FOREACH division_season = nav_current_season.division_seasons;
-    division_html = FILTER html_entity; division_season.name; END;
+    division_html = division_season.name | html_entity;
 -%]
               <li><a href="[% c.uri_for_action("/league-averages/view_current_season", ["doubles-individuals", division_season.division.url_key]) %]" title="[% c.maketext("menu.title.league-averages-doubles-individuals-division", division_html, season_html) %]">[% division_html %]</a></li>
 [%
@@ -215,7 +215,7 @@ IF nav_current_season;
             <ul>
 [%
   FOREACH division_season = nav_current_season.division_seasons;
-    division_html = FILTER html_entity; division_season.name; END;
+    division_html = division_season.name | html_entity;
 -%]
               <li><a href="[% c.uri_for_action("/league-averages/view_current_season", ["doubles-pairs", division_season.division.url_key]) %]" title="[% c.maketext("menu.title.league-averages-doubles-pairs-division", division_html, season_html) %]">[% division_html %]</a></li>
 [%
@@ -228,7 +228,7 @@ IF nav_current_season;
             <ul>
 [%
   FOREACH division_season = nav_current_season.division_seasons;
-    division_html = FILTER html_entity; division_season.name; END;
+    division_html = division_season.name | html_entity;
 -%]
               <li><a href="[% c.uri_for_action("/league-averages/view_current_season", ["doubles-teams", division_season.division.url_key]) %]" title="[% c.maketext("menu.title.league-averages-doubles-teams-division", division_html, season_html) %]">[% division_html %]</a></li>
 [%
@@ -269,8 +269,8 @@ IF nav_current_season;
   IF authorisation.club_view;
     FOREACH club IN nav_clubs;
       SET teams = club.teams;
-      club_full_name_html = FILTER html_entity; club.full_name; END;
-      club_short_name_html = FILTER html_entity; club.short_name; END;
+      club_full_name_html = club.full_name | html_entity;
+      club_short_name_html = club.short_name | html_entity;
       
       IF teams.size AND c.config.Menu.show_teams AND authorisation.team_view;
         # We have teams, list them in sub-menus
@@ -283,7 +283,7 @@ IF nav_current_season;
           IF ( team.person_seasons.size AND c.config.Menu.show_players ) OR ( c.config.Menu.show_players AND authorisation.person_create );
             # If there are people registered or we are authorised to create people, set the menu up to have sub menus
             SET people_seasons = team.person_seasons;
-            team_html = FILTER html_entity; team.name; END;
+            team_html = team.name | html_entity;
 -%]
           <li>
             <a href="[% c.uri_for_action("/teams/view_current_season_by_url_key", [club.url_key, team.url_key]) %]" title="[% club_short_name_html %] [% team_html %]">[% team_html %]</a>
@@ -292,7 +292,7 @@ IF nav_current_season;
             # Loop through and list the people
             IF c.config.Menu.show_players;
               FOREACH person_season = people_seasons;
-                person_html = FILTER html_entity; person_season.display_name; END;
+                person_html = person_season.display_name | html_entity;
 -%]
               <li><a href="[% c.uri_for_action("/people/view_current_season", [person_season.person.url_key]) %]" title="[% person_html %]">[% person_html %]</a></li>
 [%
@@ -360,6 +360,20 @@ END;
     <a href="[% c.uri_for("/info") %]" title="[% c.maketext("menu.title.info") %]">[% c.maketext("menu.text.info") %]</a>
     <ul>
       <li><a href="[% c.uri_for("/info/officials") %]" title="[% c.maketext("menu.title.officials", season_html) %]">[% c.maketext("menu.text.officials") %]</a></li>
+[%
+IF nav_current_season;
+  # Show team captains on the menu if there's a current season
+-%]
+      <li>
+        <a href="[% c.uri_for_action("/info/team_captains_menu") %]" title="[% c.maketext("menu.title.captains") %]">[% c.maketext("menu.text.captains") %]</a>
+        <ul>
+          <li><a href="[% c.uri_for_action("/info/team_captains", ["by-club"]) %]" title="[% c.maketext("menu.title.captains.by-club") %]">[% c.maketext("menu.text.captains.by-club") %]</a></li>
+          <li><a href="[% c.uri_for_action("/info/team_captains", ["by-division"]) %]" title="[% c.maketext("menu.title.captains.by-division") %]">[% c.maketext("menu.text.captains.by-division") %]</a></li>
+        </ul>
+      </li>
+[%
+END;
+-%]
       <li><a href="[% c.uri_for("/info/rules") %]" title="[% c.maketext("menu.title.rules", season_html) %]">[% c.maketext("menu.text.rules") %]</a></li>
       <li><a href="[% c.uri_for("/info/contact") %]" title="[% c.maketext("menu.title.contact") %]">[% c.maketext("menu.text.contact") %]</a></li>
       <li><a href="[% c.uri_for("/info/privacy") %]" title="[% c.maketext("menu.title.privacy") %]">[% c.maketext("menu.text.privacy") %]</a></li>
@@ -377,7 +391,7 @@ END;
     <ul>
 [%
     FOREACH venue IN nav_venues;
-      venue_html = FILTER html_entity; venue.name; END;
+      venue_html = venue.name | html_entity;
 -%]
           <li><a href="[% c.uri_for_action("/venues/view", [venue.url_key]) %]" title="[% venue_html %]">[% venue_html %]</a></li>
 [%
@@ -396,7 +410,7 @@ END;
 [% # Loop through archived seasons
     IF archived_seasons_count;
       FOREACH season IN archived_seasons;
-        season_html = FILTER html_entity; season.name; END;
+        season_html = season.name | html_entity;
 %]
       <li><a href="[% c.uri_for_action("/seasons/view", [season.url_key]) %]" title="[% season_html %]">[% season_html %]</a>
         <ul>
@@ -419,7 +433,7 @@ END;
                 <ul>
 [%
         FOREACH division_season = season.division_seasons;
-          division_html = FILTER html_entity; division_season.name; END;
+          division_html = division_season.name | html_entity;
 -%]
                   <li><a href="[% c.uri_for_action("/league-tables/view_specific_season", [division_season.division.url_key, season.url_key]) %]" title="[% c.maketext("menu.title.league-tables-division", division_html, season_html) %]">[% division_html %]</a></li>
 [%
@@ -435,7 +449,7 @@ END;
                     <ul>
 [%
         FOREACH division_season = season.division_seasons;
-          division_html = FILTER html_entity; division_season.name; END;
+          division_html = division_season.name | html_entity;
 -%]
                       <li><a href="[% c.uri_for_action("/league-averages/view_specific_season", ["singles", division_season.division.url_key, season.url_key]) %]" title="[% c.maketext("menu.title.league-averages-singles-division", division_html, season_html) %]">[% division_html %]</a></li>
 [%
@@ -448,7 +462,7 @@ END;
                     <ul>
 [%
         FOREACH division_season = season.division_seasons;
-          division_html = FILTER html_entity; division_season.name; END;
+          division_html = division_season.name | html_entity;
 -%]
                       <li><a href="[% c.uri_for_action("/league-averages/view_specific_season", ["doubles-individuals", division_season.division.url_key, season.url_key]) %]" title="[% c.maketext("menu.title.league-averages-doubles-individuals-division", division_html, season_html) %]">[% division_html %]</a></li>
 [%
@@ -461,7 +475,7 @@ END;
                     <ul>
 [%
         FOREACH division_season = season.division_seasons;
-          division_html = FILTER html_entity; division_season.name; END;
+          division_html = division_season.name | html_entity;
 -%]
                       <li><a href="[% c.uri_for_action("/league-averages/view_specific_season", ["doubles-pairs", division_season.division.url_key, season.url_key]) %]" title="[% c.maketext("menu.title.league-averages-doubles-pairs-division", division_html, season_html) %]">[% division_html %]</a></li>
 [%
@@ -474,7 +488,7 @@ END;
                     <ul>
 [%
         FOREACH division_season = season.division_seasons;
-          division_html = FILTER html_entity; division_season.name; END;
+          division_html = division_season.name | html_entity;
 -%]
                       <li><a href="[% c.uri_for_action("/league-averages/view_specific_season", ["doubles-teams", division_season.division.url_key, season.url_key]) %]" title="[% c.maketext("menu.title.league-averages-doubles-teams-division", division_html, season_html) %]">[% division_html %]</a></li>
 [%
@@ -547,6 +561,7 @@ IF authorisation.match_update OR authorisation.user_approve_new OR authorisation
         <a href="javascript:void(0)" title="[% c.maketext("menu.text.user") %]">[% c.maketext("menu.text.user") %]</a>
         <ul>
           <li><a href="[% c.uri_for_action("/users/approval_list") %]" title="[% c.maketext("user.list-to-approve") %]">[% c.maketext("user.list-to-approve") %]</a></li>
+          <li><a href="[% c.uri_for("/users") %]" title="[% c.maketext("user.list") %]">[% c.maketext("user.list") %]</a></li>
         </ul>
       </li>
 [%

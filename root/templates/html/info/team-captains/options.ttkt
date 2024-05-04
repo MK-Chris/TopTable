@@ -1,0 +1,4 @@
+<ul class="option-list">
+  <li><a href="[% c.uri_for_action("/info/team_captains", ["by-club"]) %]">[% c.maketext("team-captains.view.by-club") %]</a></li>
+  <li><a href="[% c.uri_for_action("/info/team_captains", ["by-division"]) %]">[% c.maketext("team-captains.view.by-division") %]</a></li>
+</ul>
