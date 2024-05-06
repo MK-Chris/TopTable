@@ -25,6 +25,9 @@ IF c.flash.show_flashed;
   SET loan_players_limit_per_player_per_team = c.flash.loan_players_limit_per_player_per_team;
   SET loan_players_limit_per_player_per_opposition = c.flash.loan_players_limit_per_player_per_opposition;
   SET loan_players_limit_per_team = c.flash.loan_players_limit_per_team;
+  SET void_unplayed_games_if_both_teams_incomplete = c.flash.void_unplayed_games_if_both_teams_incomplete;
+  SET forefeit_count_averages_if_game_not_started = c.flash.forefeit_count_averages_if_game_not_started;
+  SET missing_player_count_win_in_averages = c.flash.missing_player_count_win_in_averages;
 ELSE;
   SET start_date = season.start_date;
   SET end_date = season.end_date;
@@ -34,11 +37,11 @@ ELSE;
   SET timezone = season.timezone OR c.user.timezone OR c.config.I18N.locales.$locale.timezone OR c.config.DateTime.default_timezone;
   
   # We don't have a specific 'allow_loan_players' field in the DB, so the value of this is determined from at least one of the other fields being 1
-  SET allow_loan_players_across = season.allow_loan_players_below;
+  SET allow_loan_players_below = season.allow_loan_players_below;
   SET allow_loan_players_above = season.allow_loan_players_above;
   SET allow_loan_players_across = season.allow_loan_players_across;
   
-  IF allow_loan_players_across OR allow_loan_players_above OR allow_loan_players_across OR !season;
+  IF allow_loan_players_across OR allow_loan_players_above OR allow_loan_players_below OR !season;
     # Default to true for a new season, hence the !season being in the if statement
     SET allow_loan_players = 1;
   ELSE;
@@ -51,6 +54,9 @@ ELSE;
   SET loan_players_limit_per_player_per_team = season.loan_players_limit_per_player_per_team;
   SET loan_players_limit_per_player_per_opposition = season.loan_players_limit_per_player_per_opposition;
   SET loan_players_limit_per_team = season.loan_players_limit_per_team;
+  SET void_unplayed_games_if_both_teams_incomplete = season.void_unplayed_games_if_both_teams_incomplete;
+  SET forefeit_count_averages_if_game_not_started = season.forefeit_count_averages_if_game_not_started;
+  SET missing_player_count_win_in_averages = season.missing_player_count_win_in_averages;
 END;
 
 IF start_date;
@@ -65,7 +71,6 @@ END;
 IF restricted_edit == 1;
   SET restricted_disabled = ' disabled="disabled"';
 END;
-
 -%]
 
   <div class="label-field-container">
@@ -276,6 +281,36 @@ END;
         <div class="clear-fix"></div>
       </div>
     </div>
+  </div>
+</fieldset>
+
+<fieldset>
+  <legend>[% c.maketext("seasons.form.legend.rules-when-games-not-completed") %]</legend>
+[%
+IF void_unplayed_games_if_both_teams_incomplete;
+  SET void_checked = ' checked="checked"';
+ELSE;
+  SET void_checked = '';
+END;
+
+IF forefeit_count_averages_if_game_not_started;
+  SET forefeit_count_averages_checked = ' checked="checked"';
+ELSE;
+  SET forefeit_count_averages_checked = '';
+END;
+
+IF missing_player_count_win_in_averages;
+  SET missing_player_count_averages = ' checked="checked"';
+ELSE;
+  SET missing_player_count_averages = '';
+END;
+-%]
+  <div class="form-column">
+    <input type="checkbox" id="void_unplayed_games_if_both_teams_incomplete" name="void_unplayed_games_if_both_teams_incomplete" data-label="[% c.maketext("seasons.form.field.void-unplayed-games-if-both-teams-incomplete") %]" value="1"[% restricted_disabled _ void_checked %] />
+    <input type="checkbox" id="forefeit_count_averages_if_game_not_started" name="forefeit_count_averages_if_game_not_started" data-label="[% c.maketext("seasons.form.field.forefeit-count-averages-if-game-not-started") %]" value="1"[% restricted_disabled _ forefeit_count_averages_checked %] />
+  </div>
+  <div class="form-column">
+    <input type="checkbox" id="missing_player_count_win_in_averages" name="missing_player_count_win_in_averages" data-label="[% c.maketext("seasons.form.field.seasons.form.field.missing-player-count-win-in-averages") %]" value="1"[% restricted_disabled _ missing_player_count_averages %] />
   </div>
 </fieldset>
 

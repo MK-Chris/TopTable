@@ -1684,6 +1684,9 @@ msgstr "Timezone"
 msgid "seasons.form.legend.loan-players"
 msgstr "Loan players"
 
+msgid "seasons.form.legend.rules-when-games-not-completed"
+msgstr "What to do when games can&#39;t be completed"
+
 msgid "seasons.form.field.allow-loan-players"
 msgstr "Allow loan players"
 
@@ -1713,6 +1716,18 @@ msgstr "Maximum number of times a player may play on loan <i><u><b>for</b></u></
 
 msgid "seasons.form.field.loan-players-limit-per-opposition"
 msgstr "Maximum number of times a player may play on loan <i><u><b>against</b></u></i> the same team"
+
+msgid "seasons.form.legend.rules-when-games-not-completed"
+msgstr "What to do when games can&#39;t be completed"
+
+msgid "seasons.form.field.void-unplayed-games-if-both-teams-incomplete"
+msgstr "Void unplayed games if both teams have missing players (no team wins a voided game)"
+
+msgid "seasons.form.field.forefeit-count-averages-if-game-not-started"
+msgstr "Count a forefeited game in the averages, even if it wasn&#39;t started"
+
+msgid "seasons.form.field.seasons.form.field.missing-player-count-win-in-averages"
+msgstr "Count an unplayed game due to a missing player as a win in the averages for the other player (not relevant if both teams have players missing and the void games setting is in effect)."
 
 msgid "seasons.form.rules"
 msgstr "Rules"

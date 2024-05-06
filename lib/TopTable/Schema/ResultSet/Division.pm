@@ -154,7 +154,7 @@ sub all_divisions {
       prefetch => {
         division_seasons => {fixtures_grid => "fixtures_grid_weeks"},
       },
-      order_by => {-asc => qw( rank )},
+      order_by => {-asc => qw( me.rank )},
     };
   } else {
     $where = {};
@@ -162,7 +162,7 @@ sub all_divisions {
       prefetch => {
         division_seasons => {fixtures_grid => "fixtures_grid_weeks"},
       },
-      order_by => {-asc => qw( rank )}
+      order_by => {-asc => qw( me.rank )}
     };
   }
   

@@ -362,6 +362,9 @@ sub create_or_edit {
   my $loan_players_limit_per_player_per_team = $params->{loan_players_limit_per_player_per_team} || 0;
   my $loan_players_limit_per_player_per_opposition = $params->{loan_players_limit_per_player_per_opposition} || 0;
   my $loan_players_limit_per_team = $params->{loan_players_limit_per_team} || 0;
+  my $void_unplayed_games_if_both_teams_incomplete = $params->{void_unplayed_games_if_both_teams_incomplete} || 0;
+  my $forefeit_count_averages_if_game_not_started = $params->{forefeit_count_averages_if_game_not_started} || 0;
+  my $missing_player_count_win_in_averages = $params->{missing_player_count_win_in_averages} || 0;
   my $rules = $params->{rules} || undef;
   my $divisions = $params->{divisions} // [];
   my $response = {
@@ -571,6 +574,11 @@ sub create_or_edit {
       $loan_players_limit_per_team = 0;
     }
     
+    # Rules covering unplayed games / missing players
+    $void_unplayed_games_if_both_teams_incomplete = $void_unplayed_games_if_both_teams_incomplete ? 1 : 0;
+    $forefeit_count_averages_if_game_not_started = $forefeit_count_averages_if_game_not_started ? 1 : 0;
+    $missing_player_count_win_in_averages = $missing_player_count_win_in_averages ? 1 : 0;
+    
     $response->{fields}{allow_loan_players} = $allow_loan_players;
     $response->{fields}{allow_loan_players_above} = $allow_loan_players_above;
     $response->{fields}{allow_loan_players_below} = $allow_loan_players_below;
@@ -581,6 +589,9 @@ sub create_or_edit {
     $response->{fields}{loan_players_limit_per_player_per_team} = $loan_players_limit_per_player_per_team;
     $response->{fields}{loan_players_limit_per_player_per_opposition} = $loan_players_limit_per_player_per_opposition;
     $response->{fields}{loan_players_limit_per_team} = $loan_players_limit_per_team;
+    $response->{fields}{void_unplayed_games_if_both_teams_incomplete} = $void_unplayed_games_if_both_teams_incomplete;
+    $response->{fields}{forefeit_count_averages_if_game_not_started} = $forefeit_count_averages_if_game_not_started;
+    $response->{fields}{missing_player_count_win_in_averages} = $missing_player_count_win_in_averages;
   }
   
   # Filter the HTML from the rules
@@ -624,6 +635,9 @@ sub create_or_edit {
         loan_players_limit_per_player_per_team => $loan_players_limit_per_player_per_team,
         loan_players_limit_per_player_per_opposition => $loan_players_limit_per_player_per_opposition,
         loan_players_limit_per_team => $loan_players_limit_per_team,
+        void_unplayed_games_if_both_teams_incomplete => $void_unplayed_games_if_both_teams_incomplete,
+        forefeit_count_averages_if_game_not_started => $forefeit_count_averages_if_game_not_started,
+        missing_player_count_win_in_averages => $missing_player_count_win_in_averages,
         fixtures_weeks => \@fixtures_weeks,
         rules => $rules,
       });
@@ -656,6 +670,9 @@ sub create_or_edit {
           loan_players_limit_per_player_per_team => $loan_players_limit_per_player_per_team,
           loan_players_limit_per_player_per_opposition => $loan_players_limit_per_player_per_opposition,
           loan_players_limit_per_team => $loan_players_limit_per_team,
+          void_unplayed_games_if_both_teams_incomplete => $void_unplayed_games_if_both_teams_incomplete,
+          forefeit_count_averages_if_game_not_started => $forefeit_count_averages_if_game_not_started,
+          missing_player_count_win_in_averages => $missing_player_count_win_in_averages,
           rules => $rules,
         };
       }

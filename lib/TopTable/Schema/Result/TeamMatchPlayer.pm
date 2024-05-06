@@ -459,6 +459,7 @@ sub update_person {
   my $person = $params->{person};
   my $location = $self->location->id;
   my $match = $self->team_match;
+  my $season = $match->season;
   my ( $active_season, $loan_team );
   my $originally_missing = 0;
   my $game_scores_deleted = 0;
@@ -529,7 +530,6 @@ sub update_person {
         # Check it's active to be safe
         if ( $loan_player ) {
           # Grab the loan player rules
-          my $season = $match->season;
           my $match_division = $match->division_season->division;
           my $enc_match_division = encode_entities($match_division->name);
           

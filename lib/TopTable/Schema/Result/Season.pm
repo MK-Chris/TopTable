@@ -152,6 +152,26 @@ __PACKAGE__->table("seasons");
   extra: {unsigned => 1}
   is_nullable: 0
 
+=head2 void_unplayed_games_if_both_teams_incomplete
+
+  data_type: 'tinyint'
+  default_value: 0
+  is_nullable: 0
+
+Void games (no team wins) between a present and absent player if both teams have missing players
+
+=head2 forefeit_count_averages_if_game_not_started
+
+  data_type: 'tinyint'
+  default_value: 0
+  is_nullable: 0
+
+=head2 missing_player_count_win_in_averages
+
+  data_type: 'tinyint'
+  default_value: 0
+  is_nullable: 0
+
 =head2 rules
 
   data_type: 'longtext'
@@ -239,6 +259,12 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
+  "void_unplayed_games_if_both_teams_incomplete",
+  { data_type => "tinyint", default_value => 0, is_nullable => 0 },
+  "forefeit_count_averages_if_game_not_started",
+  { data_type => "tinyint", default_value => 0, is_nullable => 0 },
+  "missing_player_count_win_in_averages",
+  { data_type => "tinyint", default_value => 0, is_nullable => 0 },
   "rules",
   { data_type => "longtext", is_nullable => 1 },
 );
@@ -437,8 +463,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2022-08-21 20:10:49
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:0PRlHrO8usMaNYn3gwM8Fw
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-05-05 09:17:30
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:TXqdS4cnZSi+VdBwbEPKoA
 
 use HTML::Entities;
 
