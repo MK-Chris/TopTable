@@ -451,7 +451,7 @@ table.vertical tr th {
   padding: 8px 10px;
   border-right: none;
   /*width: 1%;*/
-  white-space: nowrap;
+  /*white-space: nowrap;*/
 }
 
 table.vertical tr td {

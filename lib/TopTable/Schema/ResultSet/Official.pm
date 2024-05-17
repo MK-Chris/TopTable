@@ -151,7 +151,7 @@ sub create_or_edit {
   # Setup schema / logging
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
-  $logger->("debug", sprintf("Locale: '%s'", $locale));
+  #$logger->("debug", sprintf("Locale: '%s'", $locale));
   my $schema = $self->result_source->schema;
   $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
   my $lang = $schema->lang;
@@ -247,7 +247,7 @@ sub create_or_edit {
   if ( scalar(@{$holders}) ) {
     # We have holders, check them
     foreach my $holder ( @{$holders} ) {
-      $logger->("debug", sprintf("holder: %s, ref: %s", $holder, ref($holder)));
+      #$logger->("debug", sprintf("holder: %s, ref: %s", $holder, ref($holder)));
       if ( defined($holder) and ref($holder) eq "TopTable::Model::DB::Person" ) {
         
         # Person is valid, add them if we haven't seen them before
@@ -374,7 +374,7 @@ sub reorder {
   # Setup schema / logging
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
-  $logger->("debug", sprintf("Locale: '%s'", $locale));
+  #$logger->("debug", sprintf("Locale: '%s'", $locale));
   my $schema = $self->result_source->schema;
   $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
   my $lang = $schema->lang;

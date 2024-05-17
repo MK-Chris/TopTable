@@ -247,12 +247,16 @@ IF teams_count;
         SET score_html = c.maketext("msg.not-applicable");
       END;
       
-      IF game.winner.id == for_team.id;
-        SET result = c.maketext("matches.result.win");
-      ELSIF game.winner.id == against_team.id;
-        SET result = c.maketext("matches.result.loss");
+      IF game.complete;
+        IF game.winner.id == for_team.id;
+          SET result = c.maketext("matches.result.win");
+        ELSIF game.winner.id == against_team.id;
+          SET result = c.maketext("matches.result.loss");
+        ELSE;
+          SET result = c.maketext("matches.result.draw");
+        END;
       ELSE;
-        SET result = c.maketext("matches.result.draw");
+        SET result = c.maketext("matches.versus.not-yet-played");
       END;
 -%]
         <tr[% game_class %]>

@@ -453,6 +453,8 @@ sub update_person {
   my $schema = $self->result_source->schema;
   $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
   my $lang = $schema->lang;
+  #$logger->("debug", "update_person, action: $action, params:");
+  #$logger->("debug", np($params));
   
   # Get the fields
   my $loan_player = $params->{loan_player} || 0;
@@ -470,6 +472,10 @@ sub update_person {
     success => [],
     completed => 0,
   };
+  
+  # Get our season forefeit / void settings
+  my $void_unplayed_games_if_both_teams_incomplete = $season->void_unplayed_games_if_both_teams_incomplete;
+  my $missing_player_count_win_in_averages = $season->missing_player_count_win_in_averages;
   
   # First check the match wasn't cancelled; if it was, we return straight away
   if ( $match->cancelled ) {
@@ -707,7 +713,7 @@ sub update_person {
       #  * whether there's one or more doubles games with them set.
       #  * whether we're trying to add a player (therefore replace this player) or delete the player.
       # What we can do first of all regardless is encode the display name, as we know we will use it in one of the error messages
-      my $enc_original_player_name = encode_entities($original_player_season)->display_name;
+      my $enc_original_player_name = encode_entities($original_player_season->display_name);
       
       if ( $doubles_games->count == 1 ) {
         # One doubles game
@@ -742,44 +748,42 @@ sub update_person {
   }
   
   # Check if we got an error
+  #$logger->("debug", "check for errors");
   if ( scalar @{$response->{errors}} == 0 ) {
+    #$logger->("debug", "no errors");
     # Wrap all our database writing into a transaction
     my $transaction = $self->result_source->schema->txn_scope_guard;
     
-    # We need to search the games involving this player to see which ones have an opponent player set against them
-    my $player_games = $match->search_related("team_match_games", {sprintf("%s_player_number", $location) => $self->player_number});
+    # Get the opposition missing players
+    my $opposition_missing_players = $location eq "home"
+      ? $match->away_players_absent
+      : $match->home_players_absent if $void_unplayed_games_if_both_teams_incomplete;
+    
+    # We need to search the games involving this player to see which ones have an opponent player set against them - the ones who have an opponent player set,
+    # we will set both players into the game so the system knows the game is ready to be completed.
+    my $games_to_update = $match->search_related("team_match_games", {sprintf("%s_player_number", $location) => $self->player_number});
     
     # Loop through and check we have an opposition player for each game we've returned
-    while( my $player_game = $player_games->next ) {
-      my ( $opposition_location, $opposition_player );
+    while( my $player_game = $games_to_update->next ) {
+      my ( $opposition_location, $opposition_player_num_fld ) = $location eq "home"
+        ? ( "away", "away_player_number" )
+        : ( "home", "home_player_number" );
       
-      # Get the opposition player object
-      if ( $location eq "home" ) {
-        # If it's a home player, we need to check the away player number
-        $opposition_player = $match->find_related("team_match_players", {
-          player_number => $player_game->away_player_number,
-        }, {
-          prefetch => "player",
-        });
-        
-        $opposition_location  = "away";
-      } else {
-        # Otherwise, we need to check the home player number
-        $opposition_player = $match->find_related("team_match_players", {
-          player_number => $player_game->home_player_number,
-        }, {
-          prefetch => "player",
-        });
-        
-        $opposition_location = "home";
-      }
+      # Grab the opposition player
+      my $opposition_player = $match->find_related("team_match_players", {
+        player_number => $player_game->$opposition_player_num_fld,
+      }, {
+        prefetch => "player",
+      });
       
       # If we're removing a player, we need to zero their score for each game, as we can't have
       # scores without players.
       # If we're adding a player where they were previously missing, we also call the delete routine
-      # to unvoid / unaward the game.
+      # to unvoid / unaward the game and remove the missing flag.
       if ( !defined($person) or ( defined($person) and $originally_missing ) ) {
-        my $delete_result = $player_game->update_score({delete => 1, logger => $logger});
+        #$logger->("debug", sprintf("deleting game %s", $player_game->scheduled_game_number));
+        my $remove_missing = $originally_missing and $action ne "set-missing" ? $location : undef; # Remove the missing flag if the person was marked missing and is now not
+        my $delete_result = $player_game->update_score({delete => 1, remove_missing => $remove_missing, logger => $logger});
         
         # Slightly misleading name in this instance, but discard_changes refreshes the match from the DB, so that if the changes to the game
         # resulted in the match not being started, we can detect that now with $match->started.  discard_changes refers to discarding any individual
@@ -794,25 +798,48 @@ sub update_person {
       # Now we ensure the person objects are correct or are cleared - we have to do this after the above delete,
       # as that routine will fail if a player isn't set and in any case, it needs to know which person to subtract
       # the statistics from
-      my $ok;
-      if ( $action eq "add" and defined($opposition_player->player) and defined($person) ) {
-        # If the opposition player is also set, then set both players to this game
-        $ok = $player_game->update({
-          sprintf("%s_player", $location) => $person->id,
-          sprintf("%s_player", $opposition_location) => $opposition_player->player->id,
-        });
+      if ( $action eq "add" ) {
+        # Adding
+        # Grab the opposition missing flag according to whether the person we're updating is home or away
+        my $opposition_missing = $location eq "home" ? $player_game->away_player_missing : $player_game->home_player_missing;
+        
+        if ( defined($opposition_player->player) and defined($person) ) {
+          # If the opposition player is also set, then set both players to this game
+          $player_game->update({
+            sprintf("%s_player", $location) => $person->id,
+            sprintf("%s_player", $opposition_location) => $opposition_player->player->id,
+          });
+        } elsif ( $opposition_missing ) {
+          $player_game->update({
+            sprintf("%s_player", $location) => $person->id,
+            sprintf("%s_player", $opposition_location) => undef,
+          });
+        }
+      } elsif ( $action eq "set-missing" ) {
+        # Set missing - depends on a couple of the season rules
+        if ( $void_unplayed_games_if_both_teams_incomplete and $opposition_missing_players ) {
+          # Missing players, and missing players on the other team, so any unplayed games are void - do not set the players in the game
+          $player_game->update({
+            sprintf("%s_player", $location) => undef,
+            sprintf("%s_player", $opposition_location) => undef,
+          });
+        } elsif ( $missing_player_count_win_in_averages and defined($opposition_player->player) ) {
+          # Player is missing and there's an opposition player set, set them in this game because we count wins with missing players
+          $player_game->update({
+            sprintf("%s_player", $location) => undef,
+            sprintf("%s_player", $opposition_location) => $opposition_player->player->id,
+          });
+        }
       } else {
         # If the opposition player is not set, make sure we remove both players from this game if they are set.
-        $ok = $player_game->update({
+        $player_game->update({
           home_player => undef,
           away_player => undef,
         });
       }
-      
-      push(@{$response->{errors}}, $lang->maketext("matches.add-player.error.update-game-failed", $player_game->scheduled_game_number)) unless $ok;
     }
     
-    # We need to update the season statistics for both
+    # We need to update the season statistics for both the old person (if they were set) and the new
     my ( $new_player_season );
     if ( defined($person) ) {
       # Look for a person_season row for this player, team and season; create one if it's not there.
@@ -823,7 +850,7 @@ sub update_person {
         rows => 1,
       })->single;
       
-      # Create a new season object for the new person if there isn't one already
+      # Create a new season object for the new person if there isn't one already - this will 
       $new_player_season = $person->create_related("person_seasons", {
         season => $match->season->id,
         team => $match->$match_team_field->team->id,
@@ -973,6 +1000,7 @@ sub update_person {
     
     # Finally do the update of the person in the match itself
     my $player_missing;
+    #$logger->("debug", "set missing flags");
     if ( $action eq "set-missing" ) {
       undef($loan_team); # Can't be a loan player if we're setting a missing player
       $player_missing = 1;
@@ -980,76 +1008,102 @@ sub update_person {
       $player_missing = 0;
     }
     
-    my $ok = $self->update({
+    $self->update({
       player => defined($person) ? $person->id : undef,
       loan_team => $loan_team,
       player_missing => $player_missing,
     });
     
-    push(@{$response->{errors}}, $lang->maketext("matches.add-player.error.update-failed")) unless $ok;
-    
-    if ( scalar @{$response->{errors}} == 0 ) {
-      # Go back to the first game - we are going to update the score for each, but couldn't do it in the first loop because we need to remove the person
-      # and set the 'missing' flag first (and we can't move that previous loop down here because that would mean we were potentially doing a score deletion
-      # after removing the original player, which wouldn't work, as the routine needs to know which player to take the statistics from).
+    # If the void_unplayed_games_if_both_teams_incomplete season setting is on and there are missing players on the other team, we may need to delete and re-update those games
+    # so they get voided (if this team previously didn't have a missing player, they wouldn't have voided).
+    if ( $void_unplayed_games_if_both_teams_incomplete and ($player_missing or $originally_missing) ) {
+      # This player is missing; check if the other side has a player missing
       
-      # Note we don't provide scores, as these games aren't actually played, we merely tell the routine to update and it calculates the match scores knowing that
-      # one or other of the players are missing.
-      $player_games->reset;
-      while( my $player_game = $player_games->next ) {
-        # Get the opposition player to find out if they're missing
-        my ( $opposition_location, $opposition_player );
+      if ( $opposition_missing_players ) {
+        # Games to update isn't just the games for this player any more, it's any game with a missing player, as they all need voiding.
+        # That will include this player's games inherently, as this player is marked missing.
+        # We have to search for games where any player is missing.  We can't use the helper methods home_player_missing and away_player_missing sadly,
+        # as they're not real DB columns, so we need to do a rather convoluted lookup from the join back to the match, then team_match_players.
+        $games_to_update = $match->search_related("team_match_games", [{
+          "team_match_players.player_missing" => 1,
+          "me.home_player_number" => {"=" => \"team_match_players.player_number"},
+          "team_match_players.location" => "home",
+        }, {
+          "team_match_players.player_missing" => 1,
+          "me.away_player_number" => {"=" => \"team_match_players.player_number"},
+          "team_match_players.location" => "away",
+        }], {
+          join => {team_match => "team_match_players"},
+          group_by => [qw( me.actual_game_number )],
+          order_by => {-asc => [qw( me.actual_game_number )]},
+        });
         
-        # Get the opposition player object
-        if ( $location eq "home" ) {
-          # If it's a home player, we need to check the away player number
-          $opposition_player = $match->find_related("team_match_players", {
-            player_number => $player_game->away_player_number,
-          }, {
-            prefetch => "player",
-          });
-          
-          $opposition_location = "away";
-        } else {
-          # Otherwise, we need to check the home player number
-          $opposition_player = $match->find_related("team_match_players", {
-            player_number => $player_game->home_player_number,
-          }, {
-            prefetch => "player",
-          });
-          
-          $opposition_location = "home";
+        while ( my $game = $games_to_update->next ) {
+          # Re-delete - some of these will have already been deleted above (in which case calling this will have no effect),
+          # but we need to ensure we're deleting the other scores with missing players too
+          #$logger->("debug", sprintf("delete game %s with opposition missing", $game->scheduled_game_number));
+          my $delete_result = $game->update_score({delete => 1, logger => $logger});
         }
-        
-        # Update the score here if either player is missing
-        my $update_result = $player_game->update_score({logger => $logger}) if $action eq "set-missing" or $opposition_player->player_missing;
-        $match->discard_changes;
       }
-      
-      # Get the games involving this player that also have another player involved
-      my $return_player_games = [];
-      my @player_games = $player_games->all;
-      foreach my $game ( @player_games ) {
-        push (@{$return_player_games}, $game->scheduled_game_number) if defined($game->home_player) and defined($game->away_player);
-      }
-      
-      $response->{player_games} = $return_player_games;
-      
-      my $success_msg;
-      if ( $action eq "add" ) {
-        # Adding a player
-        $success_msg = $loan_player ? $lang->maketext("matches.loan-player.add.success", $enc_display_name, $self->player_number) : $lang->maketext("matches.active-player.add.success", $enc_display_name, $self->player_number);
-      } elsif ( $action eq "remove" ) {
-        # Removing a player
-        $success_msg = $lang->maketext("matches.player.remove.success", $self->player_number);
-      } else {
-        # Set an absent player
-        $success_msg = $lang->maketext("matches.player.set-missing.success", $self->player_number);
-      }
-      
-      push(@{$response->{success}}, $success_msg);
-      $response->{completed} = 1;
     }
+    
+    
+    # Go back to the first game - we are going to update the score for each, but couldn't do it in the first loop because we need to remove the person
+    # and set the 'missing' flag first (and we can't move that previous loop down here because that would mean we were potentially doing a score deletion
+    # after removing the original player, which wouldn't work, as the routine needs to know which player to take the statistics from).
+    
+    # Note we don't provide scores, as these games aren't actually played, we merely tell the routine to update and it calculates the match scores knowing that
+    # one or other of the players are missing.
+    $games_to_update->reset;
+    #$logger->("debug", "reset games to update and loop through");
+    while( my $player_game = $games_to_update->next ) {
+      # Get the opposition player to find out if they're missing
+      my ( $opposition_location, $opp_player_num_fld, $opposition_missing ) = $location eq "home"
+        ? ( "away", "away_player_number", $player_game->away_player_missing )
+        : ( "home", "home_player_number", $player_game->home_player_missing );
+      
+      # Update the score here if either player is missing
+      
+      #$logger->("debug", "check if we need to update game " . $player_game->scheduled_game_number);
+      my $update_result;
+      if ( $action eq "set-missing" ) {
+        # Update the score based on this player being missing
+        #$logger->("debug", sprintf("updating game %s with new missing player", $player_game->scheduled_game_number));
+        $update_result = $player_game->update_score({logger => $logger});
+      } elsif ( $opposition_missing ) {
+        # Action isn't set missing, but there's an opposition player missing
+        #$logger->("debug", sprintf("updating game %s as the opposition player is missing", $player_game->scheduled_game_number));
+        $update_result = $player_game->update_score({logger => $logger});
+      } else {
+        #$logger->("debug", sprintf("not updating game %s as no one is marked missing, opposition player number: %s, this player location: %s", $player_game->scheduled_game_number, $player_game->$opp_player_num_fld, $location));
+      }
+      
+      $match->discard_changes;
+    }
+    
+    # Get the games involving this player that also have another player involved
+    my $return_player_games = [];
+    my @player_games = $games_to_update->all;
+    foreach my $game ( @player_games ) {
+      push (@{$return_player_games}, $game->scheduled_game_number) if defined($game->home_player) and defined($game->away_player);
+    }
+    
+    $response->{player_games} = $return_player_games;
+    
+    my $success_msg;
+    if ( $action eq "add" ) {
+      # Adding a player
+      $success_msg = $loan_player ? $lang->maketext("matches.loan-player.add.success", $enc_display_name, $self->player_number) : $lang->maketext("matches.active-player.add.success", $enc_display_name, $self->player_number);
+    } elsif ( $action eq "remove" ) {
+      # Removing a player
+      $success_msg = $lang->maketext("matches.player.remove.success", $self->player_number);
+    } else {
+      # Set an absent player
+      $success_msg = $lang->maketext("matches.player.set-missing.success", $self->player_number);
+    }
+    
+    push(@{$response->{success}}, $success_msg);
+    $response->{completed} = 1;
     
     # Finally commit the transaction if there are no errors
     $transaction->commit;

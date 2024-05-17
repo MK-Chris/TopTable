@@ -64,33 +64,15 @@ END;
     CALL date.set_locale( c.locale );
 -%]
   <tr>
-    <td data-label="[% c.maketext("teams.fixtures.day") %]">
-      [% date.day_name | ucfirst | html_entity %]
-    </td>
-    <td data-label="[% c.maketext("teams.fixtures.day") %]">
-      [% date.day_of_week | ucfirst | html_entity %]
-    </td>
-    <td data-label="[% c.maketext("teams.fixtures.date") %]">
-      <a href="[% fixtures_day_uri %]">[% c.i18n_datetime_format_date.format_datetime(date) | html_entity %]</a>
-    </td>
-    <td data-label="[% c.maketext("teams.fixtures.date") %]">
-      [% date.ymd %]</a>
-    </td>
-    <td data-label="[% c.maketext("teams.fixtures.home") %] / [% c.maketext("teams.fixtures.away") %]">
-      [% location_text %]
-    </td>
-    <td data-label="[% c.maketext("teams.fixtures.opponent") %]">
-      <a href="[% opponent_uri %]">[% opponent.club_season.club.short_name | html_entity %] [% opponent.name | html_entity %]</a>
-    </td>
-    <td data-label="[% c.maketext("teams.fixtures.result") %]">
-      [% c.maketext(match_result.result.id) OR "&nbsp;" %]
-    </td>
-    <td data-label="[% c.maketext("teams.fixtures.score") %]">
-      <a href="[% c.uri_for_action('/matches/team/view_by_url_keys', match.url_keys) %]" title="[% c.maketext("fixtures-results.view-scorecard") %]">[% match_result.score OR c.maketext("matches.versus.not-yet-played") %]</a>
-    </td>
-    <td data-label="[% c.maketext("teams.fixtures.venue") %]">
-      <a href="[% c.uri_for_action('/venues/view', [match.venue.url_key]) %]">[% match.venue.name | html_entity %]</a>
-    </td>
+    <td data-label="[% c.maketext("teams.fixtures.day") %]">[% date.day_name | ucfirst | html_entity %]</td>
+    <td data-label="[% c.maketext("teams.fixtures.day") %]">[% date.day_of_week | ucfirst | html_entity %]</td>
+    <td data-label="[% c.maketext("teams.fixtures.date") %]"><a href="[% fixtures_day_uri %]">[% c.i18n_datetime_format_date.format_datetime(date) | html_entity %]</a></td>
+    <td data-label="[% c.maketext("teams.fixtures.date") %]">[% date.ymd %]</td>
+    <td data-label="[% c.maketext("teams.fixtures.home") %] / [% c.maketext("teams.fixtures.away") %]">[% location_text %]</td>
+    <td data-label="[% c.maketext("teams.fixtures.opponent") %]"><a href="[% opponent_uri %]">[% opponent.club_season.club.short_name | html_entity %] [% opponent.name | html_entity %]</a></td>
+    <td data-label="[% c.maketext("teams.fixtures.result") %]">[% match_result.result OR "&nbsp;" %]</td>
+    <td data-label="[% c.maketext("teams.fixtures.score") %]"><a href="[% c.uri_for_action('/matches/team/view_by_url_keys', match.url_keys) %]" title="[% c.maketext("fixtures-results.view-scorecard") %]">[% match_result.score OR c.maketext("matches.versus.not-yet-played") %]</a></td>
+    <td data-label="[% c.maketext("teams.fixtures.venue") %]"><a href="[% c.uri_for_action('/venues/view', [match.venue.url_key]) %]">[% match.venue.name | html_entity %]</a></td>
 [%
     IF authorisation.match_update OR authorisation.match_cancel;
 -%]

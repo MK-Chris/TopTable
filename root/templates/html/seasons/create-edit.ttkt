@@ -285,7 +285,7 @@ END;
 </fieldset>
 
 <fieldset>
-  <legend>[% c.maketext("seasons.form.legend.rules-when-games-not-completed") %]</legend>
+  <legend>[% c.maketext("seasons.award-forefeit-rules") %]</legend>
 [%
 IF void_unplayed_games_if_both_teams_incomplete;
   SET void_checked = ' checked="checked"';

@@ -634,7 +634,6 @@ ELSE;
   <li data-sm-reverse="true">
     <a href="[% c.uri_for("/login") %]" title="[% c.maketext("user.login") %] / [% c.maketext("user.register") %]">[% c.maketext("user.login") %] / [% c.maketext("user.register") %]</a>
     <ul class="mega-menu">
-      <div class="no-cookies">
       <form method="post" action="[% c.uri_for_action("/users/do_login") %]">
       <input type="text" class="menu-input menu-margin" name="username" id="menu-username" value="[% c.request.cookie("toptable_username").value | html_entity %]" placeholder="[% c.maketext("user.field.username") %]">
       <input type="password" class="menu-input menu-margin" name="password" id="menu-password" value="" placeholder="[% c.maketext("user.field.password") %]">
@@ -642,7 +641,6 @@ ELSE;
       <input type="submit" class="menu-margin" value="[% c.maketext("user.login") %]" /><br />
       <a class="menu-margin" style="display: inline; background: #fff; padding: 0px; color: #000; text-shadow: 0px 0px 0px #000" href="[% c.uri_for("/register") %]">[% c.maketext("user.register") %]</a>
       </form>
-      </div>
     </ul>
   </li>
 [%
