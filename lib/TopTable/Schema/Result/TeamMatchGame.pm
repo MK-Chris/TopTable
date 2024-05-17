@@ -218,6 +218,20 @@ __PACKAGE__->table("team_match_games");
 
 We need to distinguish the winner if the game has been awarded to either side.
 
+=head2 home_player_missing
+
+  data_type: 'tinyint'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 0
+
+=head2 away_player_missing
+
+  data_type: 'tinyint'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 0
+
 =cut
 
 __PACKAGE__->add_columns(
@@ -372,6 +386,20 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_foreign_key => 1,
     is_nullable => 1,
+  },
+  "home_player_missing",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
+  "away_player_missing",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
   },
 );
 
@@ -575,8 +603,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-01-08 00:07:05
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:NBWDslp75O1UuFUm5iykHw
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-05-12 10:08:14
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:8+qndEG8ts9/aQHMTH5pGQ
 
 use HTML::Entities;
 
@@ -591,28 +619,6 @@ sub started {
   
   my $leg1 = $self->find_related("team_match_legs", {leg_number => 1});
   return $leg1->started ? 1 : 0;
-}
-
-=head2 home_player_missing
-
-Determine from the home player record whether the home player was missing or not.  Return undef if this is a doubles game.
-
-=cut
-
-sub home_player_missing {
-  my ( $self ) = @_;
-  return $self->doubles_game ? undef : $self->team_match->find_related("team_match_players", {player_number => $self->home_player_number})->player_missing;
-}
-
-=head2 away_player_missing
-
-Determine from the home player record whether the home player was missing or not.  Return undef if this is a doubles game.
-
-=cut
-
-sub away_player_missing {
-  my ( $self ) = @_;
-  return $self->doubles_game ? undef : $self->team_match->find_related("team_match_players", {player_number => $self->away_player_number})->player_missing;
 }
 
 =head2 player_missing
@@ -648,6 +654,24 @@ sub both_players_set {
   
   # Now check we have both
   return ( defined($home_player) and defined($away_player) ) ? 1 : 0;
+}
+
+=head2 get_player_from_number
+
+Get the home player from the numbered home player in this game.  Useful if the one of the players is missing, in which case (depending on the settings), the other one won't be set in the home / away player field.
+
+=cut
+
+
+sub get_player_from_match_number {
+  my ( $self, $params ) = @_;
+  
+  return undef if $self->doubles_game;
+  
+  my $location = $params->{location};
+  my $location_fld = sprintf("%s_player_number", $location);
+  my $match_player = $self->team_match->find_related("team_match_players", {player_number => $self->$location_fld});
+  return defined($match_player) ? $match_player->player : undef;
 }
 
 =head2 singles_player_membership_type
@@ -804,7 +828,7 @@ sub update_score {
   $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
   my $lang = $schema->lang;
   
-  # Get the fields
+  # Get the fields and setup the response hash
   my $match = $self->team_match;
   my $season_home_team = $match->team_season_home_team_season;
   my $season_away_team = $match->team_season_away_team_season;
@@ -815,6 +839,8 @@ sub update_score {
   my $awarded = $params->{awarded} || 0;
   my $awarded_winner = $params->{winner} || undef; # Only used if it's been awarded
   my $delete = $params->{delete} || 0;
+  my $new_player_location = $params->{new_player};
+  my $remove_missing = $params->{remove_missing} || 0; # If update_person called this with a delete flag, remove any player missing flags
   my ( $home_player_missing, $away_player_missing ) = qw( 0 0 );
   my $response = {
     errors => [],
@@ -824,13 +850,23 @@ sub update_score {
     completed => 0,
   };
   
+  #$logger->("debug", sprintf("Updating game %d; params:", $self->scheduled_game_number));
+  #$logger->("debug", np($params));
+  
+  # Get our season forefeit / void settings
+  my $void_unplayed_games_if_both_teams_incomplete = $season->void_unplayed_games_if_both_teams_incomplete;
+  my $forefeit_count_averages_if_game_not_started = $season->forefeit_count_averages_if_game_not_started;
+  my $missing_player_count_win_in_averages = $season->missing_player_count_win_in_averages;
+  
+  #$logger->("debug", "Settings: void_unplayed_games_if_both_teams_incomplete: $void_unplayed_games_if_both_teams_incomplete, forefeit_count_averages_if_game_not_started: $forefeit_count_averages_if_game_not_started, missing_player_count_win_in_averages: $missing_player_count_win_in_averages");
+  
   # First check the match wasn't cancelled; if it was, we return straight away
   if ( $match->cancelled ) {
     push(@{$response->{errors}}, $lang->maketext("matches.update.error.match-cancelled"));
     return $response;
   }
   
-  # These are needed further down when updating matches played for the player, so need to be declared here.
+  # These are needed further down when updating matches played for the player as well as for error checking, so need to be declared here.
   my ( $match_home_player, $match_away_player ) = @_;
   
   # Store the template rules
@@ -855,11 +891,17 @@ sub update_score {
       location => "away",
     });
     
-    $home_player_missing = $match_home_player->player_missing;
-    $away_player_missing = $match_away_player->player_missing;
+    # If a player has been set as missing, then it'll already be set in the match player table (not necessarily this table - the game table - this is how we know
+    # whether or not to update games played / won statistics - if the player is missing in the player record, but not here, it's been newly set as missing and
+    # stats need updating).
+    # If we're deleting and the remove_missing flag is set, we need to set it manually as 0; the player will be removed by the update_person routine in the TeamMatchPlayer
+    # class (which is what called this)
+    $home_player_missing = ($delete and defined($remove_missing) and $remove_missing eq "home") ? 0 : $match_home_player->player_missing;
+    $away_player_missing = ($delete and defined($remove_missing) and $remove_missing eq "away") ? 0 : $match_away_player->player_missing;
+    #$logger->("debug", "flags: delete: $delete, remove missing: $remove_missing, home missing: $home_player_missing, away missing: $away_player_missing");
     
     if ( !defined($home_player) or !defined($away_player) ) {
-      unless ( $home_player_missing or $away_player_missing ) {
+      unless ( $delete or $home_player_missing or $away_player_missing ) {
         push(@{$response->{errors}}, $lang->maketext("matches.game.update-score.singles.error.select-players"));
         return $response;
       }
@@ -893,7 +935,13 @@ sub update_score {
   my $game_original_away_team_score = $self->away_team_legs_won;
   my $game_original_home_team_points = $self->home_team_points_won;
   my $game_original_away_team_points = $self->away_team_points_won;
+  my $home_originally_missing = $self->home_player_missing;
+  my $away_originally_missing = $self->away_player_missing;
   my $game_original_winner = defined($self->winner) ? $self->winner->id : undef;
+  
+  # Originally set, so we can increase games played / won for a newly set player, if the opposition is marked missing
+  # (if they were marked missing after we set this player, then it doesn't matter, the games will be updated then anyway)
+  my ( $home_originally_set, $away_originally_set );
   
   if ( $delete and !$game_originally_complete ) {
     # Deleting a score that hasn't been entered - nothing to do, so just return success
@@ -913,7 +961,7 @@ sub update_score {
   
   # Default to not void and not awarded
   my ( $home_legs, $away_legs, $void ) = qw( 0 0 0 );
-  my $game_started = 0; # Flag for whether the game's started - if not and it's been awarded, we won't update any averages
+  my $game_started = 0; # Flag for whether the game's started - if not and it's been awarded, we won't update any averages (unless the season setting forefeit_count_averages_if_game_not_started is set)
   my $game_finished = 0; # Flag (when the game's been awarded) to notify us the game's finished even if the score doesn't look complete.
   while ( my $leg = $legs->next ) {
     my $leg_number = $leg->leg_number;
@@ -926,7 +974,8 @@ sub update_score {
     
     # If we have a true value in either of these, assume the game has started (we'll be error checking later on anyway).
     # If the game was started, the averages are updated even if it was awarded because of an early retirement.  If the game
-    # wasn't started (because someone pulled out), there are no averages to update, even if there's a player set in that position.
+    # wasn't started (because someone pulled out), there are no averages to update, even if there's a player set in that position,
+    # unless the season setting forefeit_count_averages_if_game_not_started is turned on.
     $game_started = 1 if ( $home_score or $away_score ) and !$delete;
     
     # Work out if the required number of legs have been won / have completed
@@ -953,18 +1002,28 @@ sub update_score {
         undef($game_winner);
         $awarded = 0;
         $void = 1;
+        #$logger->("debug", sprintf("game %s, both players missing, void", $self->scheduled_game_number));
+      } elsif ( $season->void_unplayed_games_if_both_teams_incomplete and (( $home_player_missing and $match->away_players_absent ) or ( $away_player_missing and $match->home_players_absent )) ) {
+        # One player missing, but the opposing team has another player missing (not in this game), and we're set to void unplayed games if both teams have players missing so we void
+        undef($winner);
+        undef($game_winner);
+        $awarded = 0;
+        $void = 1;
+        #$logger->("debug", sprintf("game %s, one player missing, but opposition team also has missing players, void", $self->scheduled_game_number));
       } elsif ( $home_player_missing ) {
         # Home player missing, award to away team
         $game_winner = $away_team->id;
         $winner = $away_team->id;
         $awarded = 1;
         $void = 0;
+        #$logger->("debug", sprintf("game %s, home missing, award to away team", $self->scheduled_game_number));
       } else {
         # Away player missing, award to home team
         $game_winner = $home_team->id;
         $winner = $home_team->id;
         $awarded = 1;
         $void = 0;
+        #$logger->("debug", sprintf("game %s, home missing, award to home team", $self->scheduled_game_number));
       }
       
       $game_scores{"leg_$leg_number"} = {
@@ -1171,6 +1230,8 @@ sub update_score {
     void => $void,
     started => $game_started,
     complete => $complete,
+    home_player_missing => $home_player_missing,
+    away_player_missing => $away_player_missing,
   });
   
   # Update the match
@@ -1668,107 +1729,246 @@ sub update_score {
     }
   }
   
-  # Work out the player score adjustments for games
-  if ( $game_originally_started ) {
-    # Game was originally started
-    if ( $game_started ) {
-      # The game has still been started, need to check if the winner has changed.  No change to games played.
-      if ( defined($game_winner) ) {
-        # Not a draw, we have a winner
-        if ( defined($game_original_winner) ) {
-          # Not previously a draw, someone must have won before
-          if ( $game_winner != $game_original_winner ) {
-            # Winner has changed (there is no 'else' statement to this because if the winner hasn't changed, there are no game fields to alter)
-            if ( $game_winner == $home_team->id ) {
-              # Home team now won, away team must have previously won
-              $player_games_adjustments{home}{games_won} = 1;
-              $player_games_adjustments{away}{games_lost} = 1;
-              $player_games_adjustments{home}{games_lost} = -1;
-              $player_games_adjustments{away}{games_won} = -1;
-            } else {
-              # Away team now won, home team must have previously won
-              $player_games_adjustments{home}{games_won} = -1;
-              $player_games_adjustments{away}{games_lost} = -1;
-              $player_games_adjustments{home}{games_lost} = 1;
-              $player_games_adjustments{away}{games_won} = 1;
-            }
+  # Player game adjustments use ++ / -- rather than assigning 1 or -1.  This is because we may add to one if a missing player has been updated, but then take it back off again depending
+  # on the result.  In reality these are probably separate operations, but play safe.
+  #$logger->("debug", "game: " . $self->scheduled_game_number . ", missing_player_count_win_in_averages: $missing_player_count_win_in_averages, home_player_missing: $home_player_missing, home_originally_missing: $home_originally_missing, away_player_missing: $away_player_missing, away_originally_missing: $away_originally_missing, void: $void, complete: $complete, game_originally_void: $game_originally_void, game_originally_complete: $game_originally_complete, delete: $delete");
+  if ( ($missing_player_count_win_in_averages and ($home_player_missing or $away_player_missing or $home_originally_missing or $away_originally_missing)) ) {
+    # Players missing logic - either there are players missing now, or there were previously
+    # The check that this isn't a void game is just to ensure we're not updating stats for a void match (i.e. if both
+    # players are missing, or one player is missing and the opposing team has another missing player)
+    # This is only used if the missing_player_count_win_in_averages setting is on.
+    # We only add to games won here, there are no people to update for games lost.
+    #$logger->("debug", sprintf("game: %s - missing players count as a win in the averages, and there are (or were) players missing", $self->scheduled_game_number));
+    if ( ($void or $delete) and (!$game_originally_void and $game_originally_complete) ) {
+      # Void or delete a previously completed game
+      #$logger->("debug", sprintf("game: %s - void or delete, but was originally complete and not void", $self->scheduled_game_number));
+      if ( $home_originally_missing and $away_originally_missing ) {
+        # Nothing to do - voiding / deleting when the score would have already been void
+        #$logger->("debug", sprintf("game: %s - both players originally missing, so game would have been void, nothing to do", $self->scheduled_game_number));
+      } elsif ( $home_originally_missing ) {
+        # Home originally missing - away would have won this, remove the stats from away
+        $player_games_adjustments{away}{games_played}--;
+        $player_games_adjustments{away}{games_won}--;
+        #$logger->("debug", sprintf("game: %s - home was originally missing, remove games played / won from away", $self->scheduled_game_number));
+      } elsif ( $away_originally_missing ) {
+        # Away originally missing - home would have won this, remove the stats from away
+        $player_games_adjustments{home}{games_played}--;
+        $player_games_adjustments{home}{games_won}--;
+        #$logger->("debug", sprintf("game: %s - away was originally missing, remove games played / won from home", $self->scheduled_game_number));
+      }
+    } elsif ( !$void and !$delete ) {
+      # Not void, not deleting
+      #$logger->("debug", sprintf("game: %s - not void and not deleting", $self->scheduled_game_number));
+      if ( $home_player_missing ) {
+        # Home player missing - check if anyone was missing before
+        #$logger->("debug", sprintf("game: %s - home player missing", $self->scheduled_game_number));
+        if ( $home_originally_missing and $away_originally_missing ) {
+          # Both players were originally missing, now only the home player is.  Add 1 to games played and won for the away player.
+          # No need to check if the opposition has players missing - that's covered by the fact this isn't a void game.
+          $player_games_adjustments{away}{games_played}++;
+          $player_games_adjustments{away}{games_won}++;
+          #$logger->("debug", sprintf("game: %s - both players were originally missing, add 1 to away played / won", $self->scheduled_game_number));
+        } elsif ( $home_originally_missing ) {
+          # Originally the home player was missing (same as now).  If we now have a player set and didn't before
+          #$logger->("debug", sprintf("game: %s - home player was originally missing but away wasn't", $self->scheduled_game_number));
+          if ( !$away_originally_set ) {
+            # If the away player wasn't originally set, it is now, increase the games played / won count
+            $player_games_adjustments{away}{games_played}++;
+            $player_games_adjustments{away}{games_won}++;
+            #$logger->("debug", sprintf("game: %s - away player wasn't originally set, add 1 to away played / won", $self->scheduled_game_number));
           }
         } else {
-          # Previously a draw, remove one from games drawn for both and then check who's won
-          $player_games_adjustments{home}{games_drawn} = -1;
-          $player_games_adjustments{away}{games_drawn} = -1;
-          
-          if ( $game_winner == $home_team->id ) {
-            # Was a draw, now a home win
-            $player_games_adjustments{home}{games_won} = 1;
-            $player_games_adjustments{away}{games_lost} = 1;
-          } else {
-            # Was a draw, now an away win
-            $player_games_adjustments{home}{games_lost} = 1;
-            $player_games_adjustments{away}{games_won} = 1;
-          }
+          # No players originally missing.  No need to check if just the away player was missing, as that can't be the case - we have to change players one at a time, meaning
+          # if the home player is now missing, it was previously either empty or had a player assigned; this means if the away player was originally missing and is now not,
+          # that change must have already been done and scores been updated for that.
+          # Add 1 to games played / games won for away 
+          $player_games_adjustments{away}{games_played}++;
+          $player_games_adjustments{away}{games_won}++;
+          #$logger->("debug", sprintf("game: %s - no players originally missing, add 1 to away played / won", $self->scheduled_game_number));
         }
-      } else {
-        # The game was completed, isn't void and there's no winner; it must be a draw
-        if ( defined($game_original_winner) ) {
-          # Not previously a draw, someone must have won - there is no 'else' statement to this, because going from a draw to a draw doesn't need any adjustments
-          $player_games_adjustments{home}{games_drawn} = 1;
-          $player_games_adjustments{away}{games_drawn} = 1;
-          
-          if ( $game_original_winner == $home_team->id ) {
-            # Was a home win, now a draw
-            $player_games_adjustments{home}{games_won} = -1;
-            $player_games_adjustments{away}{games_lost} = -1;
-          } else {
-            # Was an away win, now a draw
-            $player_games_adjustments{home}{games_lost} = -1;
-            $player_games_adjustments{away}{games_won} = -1;
+      } elsif ( $away_player_missing ) {
+        # Away player missing - check if anyone was missing before
+        #$logger->("debug", sprintf("game: %s - away player missing", $self->scheduled_game_number));
+        if ( $home_originally_missing and $away_originally_missing ) {
+          # Both players were originally missing, now only the away player is.  Add 1 to games played and won for the home player.
+          # No need to check if the opposition has players missing - that's covered by the fact this isn't a void game.
+          $player_games_adjustments{home}{games_played}++;
+          $player_games_adjustments{home}{games_won}++;
+          #$logger->("debug", sprintf("game: %s - both players were originally missing, add 1 to home played / won", $self->scheduled_game_number));
+        } elsif ( $away_originally_missing ) {
+          # Originally the home player was missing (same as now).  If we now have a player set and didn't before
+          #$logger->("debug", sprintf("game: %s - away player was originally missing but home wasn't", $self->scheduled_game_number));
+          if ( !$home_originally_set ) {
+            # If the away player wasn't originally set, it is now, increase the games played / won count
+            $player_games_adjustments{home}{games_played}++;
+            $player_games_adjustments{home}{games_won}++;
+            #$logger->("debug", sprintf("game: %s - home player wasn't originally set, add 1 to home played / won", $self->scheduled_game_number));
           }
+        } else {
+          # No players originally missing.  No need to check if just the away player was missing, as that can't be the case - we have to change players one at a time, meaning
+          # if the away player is now missing, it was previously either empty or had a player assigned; this means if the home player was originally missing and is now not,
+          # that change must have already been done and scores been updated for that.
+          # Add 1 to games played / games won for home 
+          $player_games_adjustments{home}{games_played}++;
+          $player_games_adjustments{home}{games_won}++;
+          #$logger->("debug", sprintf("game: %s - no players originally missing, add 1 to home played / won", $self->scheduled_game_number));
+        }
+      } elsif ( !$game_originally_void ) {
+        # No players missing - there must have been a previous player showing as missing.
+        #$logger->("debug", sprintf("game: %s - previously not void", $self->scheduled_game_number));
+        if ( $home_originally_missing ) {
+          # Home player was missing, so game would have been awarded to away
+          $player_games_adjustments{away}{games_played}--;
+          $player_games_adjustments{away}{games_won}--;
+          #$logger->("debug", sprintf("game: %s - home originally missing, remove 1 from away played / won", $self->scheduled_game_number));
+        } elsif ( $away_originally_missing ) {
+          # Away player was missing, game would have been awarded to home
+          $player_games_adjustments{home}{games_played}--;
+          $player_games_adjustments{home}{games_won}--;
+          #$logger->("debug", sprintf("game: %s - away originally missing, remove 1 from home played / won", $self->scheduled_game_number));
         }
       }
     } else {
-      # We need to take one from games played, as it's either not complete or void
-      $player_games_adjustments{home}{games_played} = -1;
-      $player_games_adjustments{away}{games_played} = -1;
-      
-      if ( defined($game_original_winner) ) {
-        if ( $game_original_winner == $home_team->id ) {
-          # Was a home win
-          $player_games_adjustments{home}{games_won} = -1;
-          $player_games_adjustments{away}{games_lost} = -1;
-        } else {
-          # Was an away win
-          $player_games_adjustments{home}{games_lost} = -1;
-          $player_games_adjustments{away}{games_won} = -1;
-        }
-      } else {
-        # If the game was started and there was no winner, it must have been a draw
-        $player_games_adjustments{home}{games_drawn} = -1;
-        $player_games_adjustments{away}{games_drawn} = -1;
-      }
+      #$logger->("debug", sprintf("game: %s - not void or delete where it was previously complete, is void or delete (should be impossible)", $self->scheduled_game_number));
     }
+  } elsif ( (!$missing_player_count_win_in_averages and ($home_player_missing or $away_player_missing or $home_originally_missing or $away_originally_missing)) ) {
+    # Do nothing if we don't count missing players in the averages and we're updating the player missing statuses, or there's already a player missing when we're trying to update a score
   } else {
-    # Game was not originally started, so this is a new score or a replacement for a void score, which will be all 0 anyway
-    if ( $game_started ) {
-      # Game is now complete and not void (if it is void, we don't update any game counts)
-      # Increase the games played for both teams
-      $player_games_adjustments{home}{games_played} = 1;
-      $player_games_adjustments{away}{games_played} = 1;
-      
-      if ( defined($game_winner) ) {
-        if ( $game_winner == $home_team->id ) {
-          # Home win
-          $player_games_adjustments{home}{games_won} = 1;
-          $player_games_adjustments{away}{games_lost} = 1;
+    #$logger->("debug", sprintf("game: %s - forefeit_count_averages_if_game_not_started: %s, game_originally_complete: %s, game_originally_void: %s, game_originally_started: %s", $self->scheduled_game_number, $forefeit_count_averages_if_game_not_started, $game_originally_complete, $game_originally_void, $game_originally_started));
+    #$logger->("debug", sprintf("game: %s - don't count missing players in averages, OR no players missing", $self->scheduled_game_number));
+    if ( ($forefeit_count_averages_if_game_not_started and $game_originally_complete and !$game_originally_void) or (!$forefeit_count_averages_if_game_not_started and $game_originally_started) ) {
+      #$logger->("debug", sprintf("game: %s - game was previously counted in the averages, because it was completed and not void, or because it wasn't started and awarded, but we count those", $self->scheduled_game_number));
+      # Game was originally started (or completed and we're counting forefeits even before the game started)
+      # If there are players missing, we'll handle that in a different block; otherwise this gets far to complicated to work out
+      if ( (($forefeit_count_averages_if_game_not_started and $complete and !$void)) or (!$forefeit_count_averages_if_game_not_started and $game_started) ) {
+        # The game has still been started, need to check if the winner has changed.  No change to games played.
+        #$logger->("debug", sprintf("game: %s - game is still to be counted in the averages, because it is completed and not void, or because it hasn't been started started and awarded, but we count those", $self->scheduled_game_number));
+        if ( defined($game_winner) ) {
+          # Not a draw, we have a winner
+          #$logger->("debug", sprintf("game: %s - winner defined", $self->scheduled_game_number));
+          if ( defined($game_original_winner) ) {
+            # Not previously a draw, someone must have won before
+            #$logger->("debug", sprintf("game: %s - previous winner defined", $self->scheduled_game_number));
+            if ( $game_winner != $game_original_winner ) {
+              # Winner has changed (there is no 'else' statement to this because if the winner hasn't changed, there are no game fields to alter)
+              #$logger->("debug", sprintf("game: %s - winner has changed", $self->scheduled_game_number));
+              if ( $game_winner == $home_team->id ) {
+                # Home team now won, away team must have previously won
+                $player_games_adjustments{home}{games_won}++;
+                $player_games_adjustments{away}{games_lost}++;
+                $player_games_adjustments{home}{games_lost}--;
+                $player_games_adjustments{away}{games_won}--;
+                #$logger->("debug", sprintf("game: %s - winner has changed - home win", $self->scheduled_game_number));
+              } else {
+                # Away team now won, home team must have previously won
+                $player_games_adjustments{home}{games_won}--;
+                $player_games_adjustments{away}{games_lost}--;
+                $player_games_adjustments{home}{games_lost}++;
+                $player_games_adjustments{away}{games_won}++;
+                #$logger->("debug", sprintf("game: %s - winner has changed - away win", $self->scheduled_game_number));
+              }
+            } else {
+              #$logger->("debug", sprintf("game: %s - winner has not changed", $self->scheduled_game_number));
+            }
+          } else {
+            # Previously a draw, remove one from games drawn for both and then check who's won
+            $player_games_adjustments{home}{games_drawn}--;
+            $player_games_adjustments{away}{games_drawn}--;
+            #$logger->("debug", sprintf("game: %s - no previous winner defined, remove draws", $self->scheduled_game_number));
+            
+            if ( $game_winner == $home_team->id ) {
+              # Was a draw, now a home win
+              $player_games_adjustments{home}{games_won}++;
+              $player_games_adjustments{away}{games_lost}++;
+              #$logger->("debug", sprintf("game: %s - home win", $self->scheduled_game_number));
+            } else {
+              # Was a draw, now an away win
+              $player_games_adjustments{home}{games_lost}++;
+              $player_games_adjustments{away}{games_won}++;
+              #$logger->("debug", sprintf("game: %s - away win", $self->scheduled_game_number));
+            }
+          }
         } else {
-          # Away win
-          $player_games_adjustments{home}{games_lost} = 1;
-          $player_games_adjustments{away}{games_won} = 1;
+          # The game was completed, isn't void and there's no winner; it must be a draw
+          #$logger->("debug", sprintf("game: %s - winner NOT defined", $self->scheduled_game_number));
+          if ( defined($game_original_winner) ) {
+            # Not previously a draw, someone must have won - there is no 'else' statement to this, because going from a draw to a draw doesn't need any adjustments
+            $player_games_adjustments{home}{games_drawn}++;
+            $player_games_adjustments{away}{games_drawn}++;
+            #$logger->("debug", sprintf("game: %s - previous winner defined, add draws", $self->scheduled_game_number));
+            
+            if ( $game_original_winner == $home_team->id ) {
+              # Was a home win, now a draw
+              $player_games_adjustments{home}{games_won}--;
+              $player_games_adjustments{away}{games_lost}--;
+              #$logger->("debug", sprintf("game: %s - previous winner was home", $self->scheduled_game_number));
+            } else {
+              # Was an away win, now a draw
+              $player_games_adjustments{home}{games_lost}--;
+              $player_games_adjustments{away}{games_won}--;
+              #$logger->("debug", sprintf("game: %s - previous winner was away", $self->scheduled_game_number));
+            }
+          } else {
+            #$logger->("debug", sprintf("game: %s - no previous winner defined, remains a draw", $self->scheduled_game_number));
+          }
         }
       } else {
-        # If the game was completed and isn't void and there's no winner, it must be a draw
-        $player_games_adjustments{home}{games_drawn} = 1;
-        $player_games_adjustments{away}{games_drawn} = 1;
+        # We need to take one from games played, as it's either not complete or void
+        #$logger->("debug", sprintf("game: %s - game is no longer to be counted in the averages", $self->scheduled_game_number));
+        $player_games_adjustments{home}{games_played}--;
+        $player_games_adjustments{away}{games_played}--;
+        
+        if ( defined($game_original_winner) ) {
+          #$logger->("debug", sprintf("game: %s - game is no longer to be counted in the averages, previous winner defined", $self->scheduled_game_number));
+          if ( $game_original_winner == $home_team->id ) {
+            # Was a home win
+            $player_games_adjustments{home}{games_won}--;
+            $player_games_adjustments{away}{games_lost}--;
+            #$logger->("debug", sprintf("game: %s - game is no longer to be counted in the averages, previous winner was home", $self->scheduled_game_number));
+          } else {
+            # Was an away win
+            $player_games_adjustments{home}{games_lost}--;
+            $player_games_adjustments{away}{games_won}--;
+            #$logger->("debug", sprintf("game: %s - game is no longer to be counted in the averages, previous winner was away", $self->scheduled_game_number));
+          }
+        } else {
+          # If the game was started and there was no winner, it must have been a draw
+          $player_games_adjustments{home}{games_drawn}--;
+          $player_games_adjustments{away}{games_drawn}--;
+          #$logger->("debug", sprintf("game: %s - game is no longer to be counted in the averages, previously a draw", $self->scheduled_game_number));
+        }
+      }
+    } else {
+      # Game was not originally played / completed, so this is a new score or a replacement for a void score, which will be all 0 anyway
+      #$logger->("debug", sprintf("game: %s - game was NOT previously counted in the averages", $self->scheduled_game_number));
+      if ( (($forefeit_count_averages_if_game_not_started and $complete and !$void)) or (!$forefeit_count_averages_if_game_not_started and $game_started) ) {
+        #$logger->("debug", sprintf("game: %s - game is now to be counted in the averages", $self->scheduled_game_number));
+        # Game is now complete and not void (if it is void, we don't update any game counts)
+        # Increase the games played for both teams
+        $player_games_adjustments{home}{games_played}++;
+        $player_games_adjustments{away}{games_played}++;
+        
+        if ( defined($game_winner) ) {
+          #$logger->("debug", sprintf("game: %s - winner defined", $self->scheduled_game_number));
+          if ( $game_winner == $home_team->id ) {
+            # Home win
+            $player_games_adjustments{home}{games_won}++;
+            $player_games_adjustments{away}{games_lost}++;
+            #$logger->("debug", sprintf("game: %s - winner defined: home", $self->scheduled_game_number));
+          } else {
+            # Away win
+            $player_games_adjustments{home}{games_lost}++;
+            $player_games_adjustments{away}{games_won}++;
+            #$logger->("debug", sprintf("game: %s - winner defined: away", $self->scheduled_game_number));
+          }
+        } else {
+          # If the game was completed and isn't void and there's no winner, it must be a draw
+          $player_games_adjustments{home}{games_drawn}++;
+          $player_games_adjustments{away}{games_drawn}++;
+          #$logger->("debug", sprintf("game: %s - no winner defined: draw", $self->scheduled_game_number));
+        }
+      } else {
+        #$logger->("debug", sprintf("game: %s - game is still not to be counted in the averages", $self->scheduled_game_number));
       }
     }
   }
@@ -1811,45 +2011,50 @@ sub update_score {
   $match->update;
   
   ### STATISTICS UPDATE ###
-  if ( !$self->doubles_game and !$home_player_missing and !$away_player_missing ) {
-    # First get the match player objects regardless of whether it's a tournament or league match
-    my $game_home_player = $match->find_related("team_match_players", {player_number => $self->home_player_number});
-    my $game_away_player = $match->find_related("team_match_players", {player_number => $self->away_player_number});
-    
-    # Calculate the games / points / legs that have been won / lost in this match and during the seasons as a whole for these people
-    $game_home_player->legs_played($game_home_player->legs_played - ( $game_original_home_team_score + $game_original_away_team_score ) + ( $home_legs + $away_legs ));
-    $game_away_player->legs_played($game_away_player->legs_played - ( $game_original_home_team_score + $game_original_away_team_score ) + ( $home_legs + $away_legs ));
-    $game_home_player->legs_won($game_home_player->legs_won - $game_original_home_team_score + $home_legs);
-    $game_away_player->legs_won($game_away_player->legs_won - $game_original_away_team_score + $away_legs);
-    $game_home_player->legs_lost($game_home_player->legs_lost - $game_original_away_team_score + $away_legs);
-    $game_away_player->legs_lost($game_away_player->legs_lost - $game_original_home_team_score + $home_legs);
-    $game_home_player->points_played($game_home_player->points_played - ( $game_original_home_team_points + $game_original_away_team_points ) + ( $home_team_points + $away_team_points ));
-    $game_away_player->points_played($game_away_player->points_played - ( $game_original_home_team_points + $game_original_away_team_points ) + ( $home_team_points + $away_team_points ));
-    $game_home_player->points_won($game_home_player->points_won - $game_original_home_team_points + $home_team_points);
-    $game_away_player->points_won($game_away_player->points_won - $game_original_away_team_points + $away_team_points);
-    $game_home_player->points_lost($game_home_player->points_lost - $game_original_away_team_points + $away_team_points);
-    $game_away_player->points_lost($game_away_player->points_lost - $game_original_home_team_points + $home_team_points);
-    
-    $game_home_player->legs_played ? $game_home_player->average_leg_wins(( $game_home_player->legs_won / $game_home_player->legs_played ) * 100) : $game_home_player->average_leg_wins(0);
-    $game_home_player->points_played ? $game_home_player->average_point_wins(( $game_home_player->points_won / $game_home_player->points_played ) * 100) : $game_home_player->average_point_wins(0);
-    $game_away_player->legs_played ? $game_away_player->average_leg_wins(( $game_away_player->legs_won / $game_away_player->legs_played ) * 100) : $game_away_player->average_leg_wins(0);
-    $game_away_player->points_played ? $game_away_player->average_point_wins(( $game_away_player->points_won / $game_away_player->points_played ) * 100) : $game_away_player->average_point_wins(0);
-    
-    # We already know what we need to do to each matches / games won / drawn / lost total, just loop through and do it
-    foreach my $stat_team ( keys %player_games_adjustments ) {
-      # Work out which team we're modifying at the moment
-      my $mod_team = $stat_team eq "home" ? $game_home_player : $game_away_player;
-      
-      foreach my $field ( keys %{$player_games_adjustments{$stat_team}} ) {
-        $mod_team->$field($mod_team->$field + $player_games_adjustments{$stat_team}{$field}) if $mod_team->result_source->has_column($field);
+  # Check for each stat whether we need to update or not (home or away)
+  if ( !$self->doubles_game ) {
+    foreach my $location ( qw( home away ) ) {
+      my ( $game_player, $orig_score_for, $orig_score_against, $orig_points_for, $orig_points_against, $legs_for, $legs_against, $points_for, $points_against );
+      if ( $location eq "home" ) {
+        $game_player = $match->find_related("team_match_players", {player_number => $self->home_player_number});
+        $orig_score_for = $game_original_home_team_score;
+        $orig_score_against = $game_original_away_team_score;
+        $orig_points_for = $game_original_home_team_points;
+        $orig_points_against = $game_original_away_team_points;
+        $legs_for = $home_legs;
+        $legs_against = $away_legs;
+        $points_for = $home_team_points;
+        $points_against = $away_team_points;
+      } else {
+        $game_player = $match->find_related("team_match_players", {player_number => $self->away_player_number});
+        $orig_score_for = $game_original_away_team_score;
+        $orig_score_against = $game_original_home_team_score;
+        $orig_points_for = $game_original_away_team_points;
+        $orig_points_against = $game_original_home_team_points;
+        $legs_for = $away_legs;
+        $legs_against = $home_legs;
+        $points_for = $away_team_points;
+        $points_against = $home_team_points;
       }
+      
+      $game_player->legs_played($game_player->legs_played - ( $orig_score_for + $orig_score_against ) + ( $legs_for + $legs_against ));
+      $game_player->legs_won($game_player->legs_won - $orig_score_for + $legs_for);
+      $game_player->legs_lost($game_player->legs_lost - $orig_score_against + $legs_against);
+      $game_player->points_played($game_player->points_played - ( $orig_points_for + $orig_points_against ) + ( $points_for + $points_against ));
+      $game_player->points_won($game_player->points_won - $orig_points_for + $points_for);
+      $game_player->points_lost($game_player->points_lost - $orig_points_against + $points_against);
+      
+      $game_player->legs_played ? $game_player->average_leg_wins(( $game_player->legs_won / $game_player->legs_played ) * 100) : $game_player->average_leg_wins(0);
+      $game_player->points_played ? $game_player->average_point_wins(( $game_player->points_won / $game_player->points_played ) * 100) : $game_player->average_point_wins(0);
+      
+      foreach my $field ( keys %{$player_games_adjustments{$location}} ) {
+        $game_player->$field($game_player->$field + $player_games_adjustments{$location}{$field}) if $game_player->result_source->has_column($field) and defined($game_player->player);
+      }
+      
+      # Update all the fields we've modified
+      $game_player->update;
     }
-    
-    # Update all the fields we've modified
-    $game_home_player->update;
-    $game_away_player->update;
   }
-  
   
   # Team match statistics were updated during the match update routine, so we just need to do the season statistics
   if ( defined($match->tournament_round) ) {
@@ -2054,153 +2259,94 @@ sub update_score {
         
         $_player->update;
       }
-    } elsif ( !$home_player_missing and !$away_player_missing ) {
-      # Not a doubles game, work out the singles stats
-      # Get the person season objects (assuming they're defined - they may not be if we've set a missing player)
-      my $season_home_player = $home_player->find_related("person_seasons", {season => $season->id, team => $home_team->id});
-      my $season_away_player = $away_player->find_related("person_seasons", {season => $season->id, team => $away_team->id});
-      
-      # Create the season object if it doesn't exist (we should never have to do this, as even loan players should
-      # be created when added to their match position, before the scores are filled out).
-      $season_home_player = $home_player->create_related("person_seasons", {
-        season => $season->id,
-        team => $home_team->id,
-        first_name => $home_player->first_name,
-        surname => $home_player->surname,
-        display_name => $home_player->display_name,
-        team_membership_type => "loan",
-      }) unless defined($season_home_player);
-      
-      $season_away_player = $away_player->create_related("person_seasons", {
-        season => $season->id,
-        team => $away_team->id,
-        first_name => $away_player->first_name,
-        surname => $away_player->surname,
-        display_name => $away_player->display_name,
-        team_membership_type => "loan",
-      }) unless defined($season_away_player);
-      
-      # We already know what we need to do to each matches won / drawn / lost total, just loop through and do it
-      foreach my $stat_team ( keys %matches_adjustments ) {
-        # Work out which team we're modifying at the moment
-        my $mod_team = $stat_team eq "home" ? $season_home_player : $season_away_player;
-        
-        foreach my $field ( keys %{$matches_adjustments{$stat_team}} ) {
-          $mod_team->$field($mod_team->$field + $matches_adjustments{$stat_team}{$field});
-        }
-      }
-      
-      foreach my $stat_team ( keys %player_games_adjustments ) {
-        # Work out which team we're modifying at the moment
-        my $mod_team = $stat_team eq "home" ? $season_home_player : $season_away_player;
-        
-        foreach my $field ( keys %{$player_games_adjustments{$stat_team}} ) {
-          $mod_team->$field($mod_team->$field + $player_games_adjustments{$stat_team}{$field});
-        }
-      }
-      
-      # We also need to do that for the other players in the match
-      my $home_other_players = $match->search_related("team_match_players", undef, {
-        where => {
-          player_number => {"!=" => $match_home_player->player_number},
-          "person_seasons.season" => $season->id,
-          "person_seasons.team" => $home_team->id,
-          location => "home",
-        },
-        prefetch => {player => "person_seasons"}
-      });
-      
-      while ( my $_home_player = $home_other_players->next ) {
-        my $_player = $_home_player->player->person_seasons->first;
-        
-        foreach my $field ( keys %{$matches_adjustments{home}} ) {
-          $_player->$field($_player->$field + $matches_adjustments{home}{$field});
-        }
-        
-        $_player->update;
-      }
-      
-      my $away_other_players = $match->search_related("team_match_players", undef, {
-        where => {
-          player_number => {"!=" => $match_away_player->player_number},
-          "person_seasons.season" => $season->id,
-          "person_seasons.team" => $away_team->id,
-          location => "away",
-        },
-        prefetch => {player => "person_seasons"}
-      });
-      
-      while ( my $_away_player = $away_other_players->next ) {
-        my $_player = $_away_player->player->person_seasons->first;
-        
-        foreach my $field ( keys %{$matches_adjustments{away}} ) {
-          $_player->$field($_player->$field + $matches_adjustments{away}{$field});
-        }
-        
-        $_player->update;
-      }
-      
-      # Player season stats
-      $season_home_player->legs_played($season_home_player->legs_played + ( $home_legs + $away_legs ) - ( $game_original_home_team_score + $game_original_away_team_score ));
-      $season_away_player->legs_played($season_away_player->legs_played + ( $home_legs + $away_legs ) - ( $game_original_home_team_score + $game_original_away_team_score ));
-      $season_home_player->legs_won($season_home_player->legs_won + ( $home_legs - $game_original_home_team_score ));
-      $season_away_player->legs_won($season_away_player->legs_won + ( $away_legs - $game_original_away_team_score ));
-      $season_home_player->legs_lost($season_home_player->legs_lost + ( $away_legs - $game_original_away_team_score ));
-      $season_away_player->legs_lost($season_away_player->legs_lost + ( $home_legs - $game_original_home_team_score ));
-      $season_home_player->points_played($season_home_player->points_played + ( $home_team_points + $away_team_points ) - ( $game_original_home_team_points  + $game_original_away_team_points ));
-      $season_away_player->points_played($season_away_player->points_played + ( $home_team_points + $away_team_points ) - ( $game_original_home_team_points  + $game_original_away_team_points ));
-      $season_home_player->points_won($season_home_player->points_won + ( $home_team_points - $game_original_home_team_points ));
-      $season_away_player->points_won($season_away_player->points_won + ( $away_team_points - $game_original_away_team_points ));
-      $season_home_player->points_lost($season_home_player->points_lost + ( $away_team_points - $game_original_away_team_points ));
-      $season_away_player->points_lost($season_away_player->points_lost + ( $home_team_points - $game_original_home_team_points ));
-      
-      # Averages
-      $season_home_player->games_played ? $season_home_player->average_game_wins(( $season_home_player->games_won / $season_home_player->games_played ) * 100) : $season_home_player->average_game_wins(0);
-      $season_home_player->legs_played ? $season_home_player->average_leg_wins(( $season_home_player->legs_won / $season_home_player->legs_played ) * 100) : $season_home_player->average_leg_wins(0);
-      $season_home_player->points_played ? $season_home_player->average_point_wins(( $season_home_player->points_won / $season_home_player->points_played  ) * 100) : $season_home_player->average_point_wins(0);
-      $season_away_player->games_played ? $season_away_player->average_game_wins(( $season_away_player->games_won / $season_away_player->games_played ) * 100) : $season_away_player->average_game_wins(0);
-      $season_away_player->legs_played ? $season_away_player->average_leg_wins(( $season_away_player->legs_won / $season_away_player->legs_played ) * 100) : $season_away_player->average_leg_wins(0);
-      $season_away_player->points_played ? $season_away_player->average_point_wins(( $season_away_player->points_won / $season_away_player->points_played ) * 100) : $season_away_player->average_point_wins(0);
-      
-      $season_home_player->update;
-      $season_away_player->update;
     } else {
-      # Singles game, players missing - update matches played this way instead
-      # If there are player matches played / won / lost to update, do it here for all players in the match
-      my $home_players = $match->search_related("team_match_players", {
-        "person_seasons.season" => $season->id,
-        "person_seasons.team" => $home_team->id,
-        location => "home",
-      }, {
-        prefetch => {player => "person_seasons"}
-      });
-      
-      while ( my $_home_player = $home_players->next ) {
-        my $_player = $_home_player->player->person_seasons->first;
+      # Not a doubles game - work out which season stats to update
+      # Check for each stat whether we need to update or not (home or away)
+      foreach my $location ( qw( home away ) ) {
+        my ( $match_player, $for_team, $against_team, $orig_score_for, $orig_score_against, $orig_points_for, $orig_points_against, $legs_for, $legs_against, $points_for, $points_against );
         
-        foreach my $field ( keys %{$matches_adjustments{home}} ) {
-          $_player->$field($_player->$field + $matches_adjustments{home}{$field});
+        if ( $location eq "home" ) {
+          $match_player = $home_player;
+          $for_team = $home_team;
+          $against_team = $away_team;
+          $orig_score_for = $game_original_home_team_score;
+          $orig_score_against = $game_original_away_team_score;
+          $orig_points_for = $game_original_home_team_points;
+          $orig_points_against = $game_original_away_team_points;
+          $legs_for = $home_legs;
+          $legs_against = $away_legs;
+          $points_for = $home_team_points;
+          $points_against = $away_team_points;
+        } else {
+          $match_player = $away_player;
+          $for_team = $away_team;
+          $against_team = $home_team;
+          $orig_score_for = $game_original_away_team_score;
+          $orig_score_against = $game_original_home_team_score;
+          $orig_points_for = $game_original_away_team_points;
+          $orig_points_against = $game_original_home_team_points;
+          $legs_for = $away_legs;
+          $legs_against = $home_legs;
+          $points_for = $away_team_points;
+          $points_against = $home_team_points;
         }
         
-        $_player->update;
-      }
-      
-      my $away_players = $match->search_related("team_match_players", {
-        "person_seasons.season" => $season->id,
-        "person_seasons.team" => $away_team->id,
-        location => "away",
-      }, {
-        prefetch => {player => "person_seasons"}
-      });
-      
-      while ( my $_away_player = $away_players->next ) {
-        my $_player = $_away_player->player->person_seasons->first;
-        
-        foreach my $field ( keys %{$matches_adjustments{away}} ) {
-          $_player->$field($_player->$field + $matches_adjustments{away}{$field});
+        # Get the person season object (assuming they're defined - they may not be if we've set a missing player)
+        if ( defined($match_player) ) {
+          my $season_player = $match_player->find_related("person_seasons", {season => $season->id, team => $for_team->id});
+          
+          # Create them as a loan player if not already existing (we should never have to do this, as even loan players should
+          # be created when added to their match position, before the scores are filled out, but just to triple check).
+          # Ensure the player isn't missing, as trying to create will result in an error
+          $season_player = $match_player->create_related("person_seasons", {
+            season => $season->id,
+            team => $for_team->id,
+            first_name => $match_player->first_name,
+            surname => $match_player->surname,
+            display_name => $match_player->display_name,
+            team_membership_type => "loan",
+          }) unless defined($season_player);
+          
+          # Update the season stats for the player - games we already know and are stored in %player_games_adjustments
+          foreach my $field ( keys %{$player_games_adjustments{$location}} ) {
+            $season_player->$field($season_player->$field + $player_games_adjustments{$location}{$field});
+          }
+          
+          # Legs / points
+          $season_player->legs_played($season_player->legs_played + ( $legs_for + $legs_against ) - ( $orig_score_for + $orig_score_against ));
+          $season_player->legs_won($season_player->legs_won + ( $legs_for - $orig_score_for ));
+          $season_player->legs_lost($season_player->legs_lost + ( $legs_against - $orig_score_against ));
+          $season_player->points_played($season_player->points_played + ( $points_for + $points_against ) - ( $orig_points_for  + $orig_points_against ));
+          $season_player->points_won($season_player->points_won + ( $points_for - $orig_points_for ));
+          $season_player->points_lost($season_player->points_lost + ( $points_against - $orig_points_against ));
+          
+          # Averages
+          $season_player->legs_played ? $season_player->average_leg_wins(( $season_player->legs_won / $season_player->legs_played ) * 100) : $season_player->average_leg_wins(0);
+          $season_player->points_played ? $season_player->average_point_wins(( $season_player->points_won / $season_player->points_played  ) * 100) : $season_player->average_point_wins(0);
+          $season_player->games_played ? $season_player->average_game_wins(( $season_player->games_won / $season_player->games_played ) * 100) : $season_player->average_game_wins(0);
+          
+          # Do the update
+          $season_player->update;
         }
         
-        $_player->update;
+        # Update match stats for all players if required - do this whether we're updating the player stats or not
+        my $match_players = $match->search_related("team_match_players", {
+          "person_seasons.season" => $season->id,
+          "person_seasons.team" => $for_team->id,
+          location => $location,
+        }, {
+          prefetch => {player => "person_seasons"}
+        });
+        
+        while ( my $_match_player = $match_players->next ) {
+          my $_player = $_match_player->player->person_seasons->first;
+          
+          foreach my $field ( keys %{$matches_adjustments{$location}} ) {
+            $_player->$field($_player->$field + $matches_adjustments{$location}{$field});
+          }
+          
+          $_player->update;
+        }
       }
     }
     

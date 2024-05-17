@@ -604,8 +604,8 @@ Take the entered season / division data from the create / edit form and put them
 sub process_form :Private {
   my ( $self, $c, $action ) = @_;
   my $season = $c->stash->{season};
-  my @field_names = qw( name start_hour start_minute timezone allow_loan_players allow_loan_players_above allow_loan_players_below allow_loan_players_across allow_loan_players_same_club_only allow_loan_players_multiple_teams_per_division loan_players_limit_per_player loan_players_limit_per_player_per_team loan_players_limit_per_player_per_opposition loan_players_limit_per_team rules );
-  my @processed_field_names = qw( name start_date end_date start_hour start_minute timezone allow_loan_players allow_loan_players_above allow_loan_players_below allow_loan_players_across allow_loan_players_same_club_only allow_loan_players_multiple_teams_per_division loan_players_limit_per_player loan_players_limit_per_player_per_team loan_players_limit_per_player_per_opposition loan_players_limit_per_team rules );
+  my @field_names = qw( name start_hour start_minute timezone allow_loan_players allow_loan_players_above allow_loan_players_below allow_loan_players_across allow_loan_players_same_club_only allow_loan_players_multiple_teams_per_division loan_players_limit_per_player loan_players_limit_per_player_per_team loan_players_limit_per_player_per_opposition loan_players_limit_per_team void_unplayed_games_if_both_teams_incomplete forefeit_count_averages_if_game_not_started missing_player_count_win_in_averages rules );
+  my @processed_field_names = qw( name start_date end_date start_hour start_minute timezone allow_loan_players allow_loan_players_above allow_loan_players_below allow_loan_players_across allow_loan_players_same_club_only allow_loan_players_multiple_teams_per_division loan_players_limit_per_player loan_players_limit_per_player_per_team loan_players_limit_per_player_per_opposition loan_players_limit_per_team void_unplayed_games_if_both_teams_incomplete forefeit_count_averages_if_game_not_started missing_player_count_win_in_averages rules );
   
   # Build the divisions array expected by the create / edit routine
   my @divisions = ();

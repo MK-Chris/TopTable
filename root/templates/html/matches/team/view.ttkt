@@ -43,9 +43,9 @@ END;
 [%
 IF match.cancelled;
 -%]
-  <div class="list-item">
-    [% c.maketext("matches.message.info.cancelled") %]
-  </div>
+    <div class="list-item">
+      [% c.maketext("matches.message.info.cancelled") %]
+    </div>
 [%
 ELSE;
 -%]
@@ -64,6 +64,7 @@ ELSE;
 [%
   FOREACH game IN match.team_match_games;
     #SET result = game.result;
+    SET score_html = ""; # Reset so we can check later if it's been set
     SET summary_score = game.summary_score;
 -%]
             <tr>
@@ -119,7 +120,7 @@ ELSE;
           SET away2_class = '';
           SET away2_class_end = '';
         END;
-      ELSE;
+      ELSE; # ELSE for IF game.doubles_game
         IF season.complete;
           SET home_uri = c.uri_for_action("/people/view_specific_season", [game.home_player.url_key, match.season.url_key]);
           SET away_uri = c.uri_for_action("/people/view_specific_season", [game.away_player.url_key, match.season.url_key]);
@@ -129,8 +130,8 @@ ELSE;
         END;
         
         # Filter the display names for HTML
-        home_name_html = FILTER html_entity; game.home_player.display_name; END;
-        away_name_html = FILTER html_entity; game.away_player.display_name; END;
+        home_name_html = game.home_player.display_name OR game.get_player_from_match_number({location => "home"}).display_name | html_entity;
+        away_name_html = game.away_player.display_name OR game.get_player_from_match_number({location => "away"}).display_name | html_entity;
         
         # Set player classes if the player isn't an active team member
         SWITCH game.singles_player_membership_type({"location" => "home"});
@@ -155,7 +156,7 @@ ELSE;
           CASE;
             SET away_class = '';
         END;
-      END;
+      END; # END for IF game.doubles_game
       
       IF game.awarded;
         # Game was awarded, so the text is different than if it wasn't.
@@ -178,15 +179,14 @@ ELSE;
           END;
         ELSE;
           # The game wasn't started - either the losing player(s) forefeited, or there are missing players
-          IF game.home_player_missing AND game.away_player_missing;
-            # Both players missing
-            SET result = c.maketext("matches.game.result.both-players-missing");
-          ELSIF game.home_player_missing;
+          IF game.home_player_missing;
             # Home player missing
-            SET result = c.maketext("matches.game.result.home-player-missing");
+            SET result = c.maketext("matches.game.result.home-player-missing", away_name_html, away_uri);
+            SET score_html = c.maketext("matches.game.score.home-player-missing");
           ELSIF game.away_player_missing;
             # Away player missing
-            SET result = c.maketext("matches.game.result.away-player-missing");
+            SET result = c.maketext("matches.game.result.away-player-missing", home_name_html, home_uri);
+            SET score_html = c.maketext("matches.game.score.away-player-missing");
           ELSE;
             # No players missing - forefeited
             IF game.winner.id == home_team.team.id;
@@ -204,8 +204,27 @@ ELSE;
             END;
           END;
         END;
-      ELSE;
-        # Game wasn't awarded, show the standard text - with player links
+      ELSIF game.void; # ELSIF for IF game.awarded
+        # The game was voided
+          IF game.home_player_missing AND game.away_player_missing;
+            # Both players missing
+            SET result = c.maketext("matches.game.result.void");
+            SET score_html = c.maketext("matches.game.score.both-players-missing");
+          ELSIF season.void_unplayed_games_if_both_teams_incomplete AND (game.home_player_missing OR game.away_player_missing);
+            # One player missing, but game is void
+            IF game.home_player_missing;
+              SET result = c.maketext("matches.game.result.void");
+              SET score_html = c.maketext("matches.game.score.home-player-missing-void");
+            ELSE;
+              SET result = c.maketext("matches.game.result.void");
+              SET score_html = c.maketext("matches.game.score.away-player-missing-void");
+            END;
+          ELSE;
+            # Game is void for another reason
+            SET result = c.maketext("matches.game.result.void");
+          END;
+      ELSE; # ELSE for IF game.awarded
+        # Game wasn't awarded or voided, show the standard text - with player links
         # Build the result string
         IF game.doubles_game;
           SET home_links = '<a href="' _ home_uri _ '">' _ home1_class _ home1_name_html _ home1_class_end _ ' ' _ c.maketext("matches.game.result.doubles-and") _ ' ' _ home2_class _ home2_name_html _ home2_class_end _ '</a>';
@@ -229,15 +248,15 @@ ELSE;
         END;
         
         SET result = home_links _ winner_text _ away_links;
-      END;
+      END; # END for IF game.awarded
 -%]
           <td>[% result %]
 [%-
-        IF summary_score.home OR summary_score.away;
+      IF summary_score.home OR summary_score.away;
 -%]
  ([% summary_score.home %]-[% summary_score.away %])
 [%-
-        END;
+      END;
 -%]
 </td>
 [%
@@ -256,7 +275,7 @@ ELSE;
           SET score_html = score_html _ '<span class="leg-score">' _ leg_score.home _ '-' _ leg_score.away _ '</span>';
           SET leg_number = leg_number + 1;
         END;
-      ELSE;
+      ELSIF score_html == "";
         # The game is marked as complete, but not started - score is not applicable, as it's been awarded
         SET score_html = c.maketext("msg.not-applicable");
       END;
@@ -264,7 +283,7 @@ ELSE;
           <td class="leg-scores">[% score_html %]</td>
           <td>[% game.home_team_match_score %]-[% game.away_team_match_score %]</td>
 [%
-    ELSE;
+    ELSE; # ELSE for IF game.complete
       # Game not yet played
 -%]
               <td>[% c.maketext("matches.game.score.not-yet-updated") %]</td>
@@ -275,34 +294,35 @@ ELSE;
 -%]
             </tr>
 [%
-  END;
+  END; # END for FOREACH game
 %]
           </tbody>
         </table>
 [%
-END;
-
-IF loan_players OR inactive;
+  IF loan_players OR inactive;
 -%]
         <div id="games-key">
 [%
-  IF loan_players;
+    IF loan_players;
 -%]
           <div class="loan-player-key">&nbsp;</div> [% c.maketext("team-membership-type.desc.loan") %]<br />
 [%
-  END;
-  IF inactive;
+    END;
+    IF inactive;
 -%]
           <div class="inactive-player-key">&nbsp;</div> [% c.maketext("team-membership-type.desc.inactive") %]<br />
 [%
-  END;
+    END;
 -%]
         </div>
 [%
-END;
+  END;
 -%]
       </div>
     </div>
+[%
+END; # END for IF match.cancelled
+-%]
   </div>
   <div id="teams">
 [%

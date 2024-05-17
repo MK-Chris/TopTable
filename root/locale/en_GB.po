@@ -1684,23 +1684,26 @@ msgstr "Timezone"
 msgid "seasons.form.legend.loan-players"
 msgstr "Loan players"
 
+msgid "seasons.form.legend.rules-when-games-not-completed"
+msgstr "What to do when games can&#39;t be completed"
+
 msgid "seasons.form.field.allow-loan-players"
 msgstr "Allow loan players"
 
 msgid "seasons.form.field.allow-loan-players-from-lower"
-msgstr "From divisions below"
+msgstr "Allow loan players from divisions below"
 
 msgid "seasons.form.field.allow-loan-players-from-higher"
-msgstr "From divisions above"
+msgstr "Allow loan players from divisions above"
 
 msgid "seasons.form.field.allow-loan-players-from-same-level"
-msgstr "From the same level"
+msgstr "Allow loan players from the same division"
 
 msgid "seasons.form.field.loan-players-from-same-club-only"
-msgstr "Must play for the same club"
+msgstr "Loan players must play for the same club"
 
 msgid "seasons.form.field.allow-loan-players-multiple-teams-per-division"
-msgstr "Can play for multiple teams in the same division"
+msgstr "Allow loan players to play for more than one team in the same division"
 
 msgid "seasons.form.loan-players.limits-message"
 msgstr "For the fields below, 0 or blank means &#39;no limit&#39;."
@@ -1713,6 +1716,30 @@ msgstr "Maximum number of times a player may play on loan <i><u><b>for</b></u></
 
 msgid "seasons.form.field.loan-players-limit-per-opposition"
 msgstr "Maximum number of times a player may play on loan <i><u><b>against</b></u></i> the same team"
+
+msgid "seasons.allowed-yes"
+msgstr "Yes"
+
+msgid "seasons.allowed-no"
+msgstr "No"
+
+msgid "seasons.loan-players.no-limit"
+msgstr "No limit"
+
+msgid "seasons.award-forefeit-rules"
+msgstr "Award &amp; forefeit rules"
+
+msgid "seasons.form.legend.rules-when-games-not-completed"
+msgstr "What to do when games can&#39;t be completed"
+
+msgid "seasons.form.field.void-unplayed-games-if-both-teams-incomplete"
+msgstr "Void unplayed games if both teams have missing players"
+
+msgid "seasons.form.field.forefeit-count-averages-if-game-not-started"
+msgstr "Count a forefeited game in the averages, even if it wasn&#39;t started"
+
+msgid "seasons.form.field.seasons.form.field.missing-player-count-win-in-averages"
+msgstr "Count an unplayed game due to a missing player as a win in the averages for the other player (not relevant if both teams have players missing and the void games setting is in effect)"
 
 msgid "seasons.form.rules"
 msgstr "Rules"
@@ -1932,6 +1959,9 @@ msgstr "Matches with players missing"
 
 msgid "seasons.statistics.matches-with-loan-players"
 msgstr "Matches using at least one loan player"
+
+msgid "seasons.loan-player-rules"
+msgstr "Loan player rules"
 
 msgid "seasons.view.dates"
 msgstr "Dates"
@@ -2553,7 +2583,7 @@ msgid "matches.add-player.error.person-invalid"
 msgstr "The person specified to add to this position is invalid."
 
 msgid "matches.add-player.error.update-game-failed"
-msgstr "Failed to update game %1 in the team match games table."
+msgstr "Failed to update game %1 in the team match games table: %2."
 
 msgid "matches.add-player.error.update-failed"
 msgstr "Failed to update player; please refresh the page and try again.  If the error persists, please contact the system administrator."
@@ -2786,44 +2816,59 @@ msgstr "<a href=\"%3\">%1</a> <span class=\"game-result\">drew with</span> <a hr
 msgid "matches.game.result.doubles-draw"
 msgstr "<a href=\"%5\">%1</a> &amp; <a href=\"%6\">%2</a> <span class=\"game-result\">drew with</span> <a href=\"%7\">%3</a> &amp; <a href=\"%8\">%4</a>"
 
-msgid "matches.game.result.both-players-missing"
-msgstr "This game was not played because both the home and away players were absent."
+msgid "matches.game.score.both-players-missing"
+msgstr "Void because both the home and away players were absent"
+
+msgid "matches.game.score.home-player-missing"
+msgstr "Home player absent"
 
 msgid "matches.game.result.home-player-missing"
-msgstr "This game was not played because the home player was absent."
+msgstr "Absent player <span class="game-result">v</span> <a href="%2">%1</a>"
+
+msgid "matches.game.score.home-player-missing-void"
+msgstr "Void because the home player was absent and the away team also have absent players"
+
+msgid "matches.game.score.away-player-missing"
+msgstr "Away player absent"
 
 msgid "matches.game.result.away-player-missing"
-msgstr "This game was not played because the away player was absent."
+msgstr "<a href="%2">%1</a> <span class="game-result">v</span> absent player"
+
+msgid "matches.game.score.away-player-missing-void"
+msgstr "Void because the away player was absent and the home team also have absent players"
+
+msgid "matches.game.result.void"
+msgstr "Void"
 
 msgid "matches.game.result.home-singles-player-forefeited"
-msgstr "not played because the home player pulled out."
-#msgstr "<a href=\"%3\"%5>%1</a> <span class=\"game-result\">v</span> <a href=\"%4\"%6>%2</a>: not played because the home player pulled out."
+msgstr "not played because the home player pulled out"
+#msgstr "<a href=\"%3\"%5>%1</a> <span class=\"game-result\">v</span> <a href=\"%4\"%6>%2</a>: not played because the home player pulled out"
 
 msgid "matches.game.result.away-singles-player-forefeited"
 msgstr "not played because the away player pulled out."
-#msgstr "<a href=\"%3\"%5>%1</a> <span class=\"game-result\">v</span> <a href=\"%4\"%6>%2</a>: not played because the away player pulled out."
+#msgstr "<a href=\"%3\"%5>%1</a> <span class=\"game-result\">v</span> <a href=\"%4\"%6>%2</a>: not played because the away player pulled out"
 
 msgid "matches.game.result.home-singles-player-retired"
 msgstr "finished early because the home player retired."
-#msgstr "<a href=\"%3\"%5>%1</a> <span class=\"game-result\">v</span> <a href=\"%4\"%6>%2</a>: finished early because the home player retired."
+#msgstr "<a href=\"%3\"%5>%1</a> <span class=\"game-result\">v</span> <a href=\"%4\"%6>%2</a>: finished early because the home player retired"
 
 msgid "matches.game.result.away-singles-player-retired"
 msgstr "finished early because the away player retired."
-#msgstr "<a href=\"%3\"%5>%1</a> <span class=\"game-result\">v</span> <a href=\"%4\"%6>%2</a>: finished early because the away player retired."
+#msgstr "<a href=\"%3\"%5>%1</a> <span class=\"game-result\">v</span> <a href=\"%4\"%6>%2</a>: finished early because the away player retired"
 
 msgid "matches.game.result.home-doubles-player-forefeited"
-msgstr "This game was not played because the home team pulled out."
+msgstr "This game was not played because the home team pulled out"
 
 msgid "matches.game.result.away-doubles-player-forefeited"
-msgstr "This game was not played because the away team pulled out."
+msgstr "This game was not played because the away team pulled out"
 
 msgid "matches.game.result.home-doubles-player-retired"
-msgstr "finished early because the home team retired."
-#msgstr "<a href=\"%5\">%1</a> &amp; <a href=\"%6\">%2</a> <span class=\"game-result\">v</span> <a href=\"%7\">%3</a> &amp; <a href=\"%8\">%4</a>: finished early because the home team retired."
+msgstr "finished early because the home team retired"
+#msgstr "<a href=\"%5\">%1</a> &amp; <a href=\"%6\">%2</a> <span class=\"game-result\">v</span> <a href=\"%7\">%3</a> &amp; <a href=\"%8\">%4</a>: finished early because the home team retired"
 
 msgid "matches.game.result.away-doubles-player-retired"
 msgstr "finished early because the away team retired."
-#msgstr "<a href=\"%5\">%1</a> &amp; <a href=\"%6\">%2</a> <span class=\"game-result\">v</span> <a href=\"%7\">%3</a> &amp; <a href=\"%8\">%4</a>: finished early because the away team retired."
+#msgstr "<a href=\"%5\">%1</a> &amp; <a href=\"%6\">%2</a> <span class=\"game-result\">v</span> <a href=\"%7\">%3</a> &amp; <a href=\"%8\">%4</a>: finished early because the away team retired"
 
 msgid "matches.result.win"
 msgstr "Win"
@@ -4496,7 +4541,7 @@ msgid "user.login.error.authentication-failed"
 msgstr "The username or password is incorrect; please try again."
 
 msgid "user.login.error.user-not-activated"
-msgstr "The username entered has not yet been activated; please check the username, or if this is the correct account, you can <a href=\"%1\">resend the activation email</a>."
+msgstr "The username entered has not yet been activated; please check the username, or if this is the correct account, you can <a href="%1">resend the activation email</a>."
 
 msgid "user.login.error.user-not-approved"
 msgstr "This user account has not yet been approved by the administrator; please <a href="%1">contact us</a> if you'd like to ask when this might be done, but try to remember that the website is run by volunteers giving up their time for free."
@@ -4505,7 +4550,7 @@ msgid "user.login.success.header"
 msgstr "Logged in"
 
 msgid "user.login.success.message"
-msgstr "Thank you for logging in %1.  You will now be redirected to the previous page; if this does not happen, please click <a href=\"%2\">here</a>."
+msgstr "Thank you for logging in %1.  You will now be redirected to the previous page; if this does not happen, please click <a href="%2">here</a>."
 
 msgid "user.login.success.status-message"
 msgstr "You have successfully logged in."

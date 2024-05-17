@@ -25,7 +25,7 @@ sub divisions_and_teams_in_season_by_grid_position {
       }]
     }],
     order_by  => {
-      -asc => [ qw( rank team_seasons.grid_position ) ]
+      -asc => [ qw( division.rank team_seasons.grid_position ) ]
     }
   });
 }

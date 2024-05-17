@@ -962,6 +962,28 @@ sub players_absent {
   return $self->search_related("team_match_players", {player_missing => 1})->count;
 }
 
+=head2 home_players_absent
+
+Returns the number of home players missing from the match.
+
+=cut
+
+sub home_players_absent {
+  my ( $self ) = @_;
+  return $self->search_related("team_match_players", {player_missing => 1, location => "home"})->count;
+}
+
+=head2 away_players_absent
+
+Returns the number of home players missing from the match.
+
+=cut
+
+sub away_players_absent {
+  my ( $self ) = @_;
+  return $self->search_related("team_match_players", {player_missing => 1, location => "away"})->count;
+}
+
 =head2 games_reordered
 
 Checks whether any 'actual_game_number' fields in games for this match differ from the 'scheduled_game_number' - if so, returns 1, else 0.

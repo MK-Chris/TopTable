@@ -260,11 +260,11 @@ sub create_or_edit {
   
   # Check the game type has been selected and is valid
   if ( defined($game_type) ) {
-    $logger->("debug", sprintf("game type: %s, ref: %s", $game_type, ref($game_type)));
+    #$logger->("debug", sprintf("game type: %s, ref: %s", $game_type, ref($game_type)));
     if ( ref($game_type) ne "TopTable::Model::DB::LookupGameType" ) {
       # If we haven't got a valid object, try and look it up assuming an ID
       $game_type = $schema->resultset("LookupGameType")->find($game_type);
-      $logger->("debug", sprintf("game type post-lookup: %s, ref: %s", $game_type, ref($game_type)));
+      #$logger->("debug", sprintf("game type post-lookup: %s, ref: %s", $game_type, ref($game_type)));
     }
     
     # Definitely an error if we don't have a value now now
