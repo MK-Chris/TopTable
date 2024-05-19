@@ -2,6 +2,7 @@
 IF c.flash.show_flashed;
   SET first_name = c.flash.first_name;
   SET surname = c.flash.surname;
+  SET change_name_prev_seasons = c.flash.change_name_prev_seasons;
   SET address1 = c.flash.address1;
   SET address2 = c.flash.address2;
   SET address3 = c.flash.address3;
@@ -57,8 +58,20 @@ END;
         <input type="text" id="surname" name="surname" placeholder="[% c.maketext("people.form.field.surname") %]" value="[% surname | html_entity %]" />
       </div>
       <div class="clear-fix"></div>
-    </div>
-    
+    </div> 
+[%
+IF action == "edit";
+    IF change_name_prev_seasons == 1;
+      SET change_name_prev_seasons_checked = ' checked="checked"';
+    ELSE;
+      SET change_name_prev_seasons_checked = '';
+    END;
+-%]
+    <input type="checkbox" id="change_name_prev_seasons" name="change_name_prev_seasons" data-label="[% c.maketext("people.form.field.change-name-prev-seasons") %]" value="1"[% change_name_prev_seasons_checked %] />
+    <div class="clear-fix"></div>
+[%
+END;
+-%]
     <div class="label-field-container">
       <label for="address1">[% c.maketext("people.form.field.address") %]</label>
       <div class="field-container">

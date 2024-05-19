@@ -782,7 +782,7 @@ sub update_person {
       # to unvoid / unaward the game and remove the missing flag.
       if ( !defined($person) or ( defined($person) and $originally_missing ) ) {
         #$logger->("debug", sprintf("deleting game %s", $player_game->scheduled_game_number));
-        my $remove_missing = $originally_missing and $action ne "set-missing" ? $location : undef; # Remove the missing flag if the person was marked missing and is now not
+        my $remove_missing = ($originally_missing and $action ne "set-missing") ? $location : undef; # Remove the missing flag if the person was marked missing and is now not
         my $delete_result = $player_game->update_score({delete => 1, remove_missing => $remove_missing, logger => $logger});
         
         # Slightly misleading name in this instance, but discard_changes refreshes the match from the DB, so that if the changes to the game

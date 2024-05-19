@@ -1101,6 +1101,9 @@ msgstr "First name(s)"
 msgid "people.form.field.surname"
 msgstr "Surname"
 
+msgid "people.form.field.change-name-prev-seasons"
+msgstr "Change name for previous seasons? (Unticking will keep the previous name in previous seasons, with a notice of the new name.  The previous seasons' records cannot be changed after this has been submitted ticked, without changing all other seasons)."
+
 msgid "people.form.field.address"
 msgstr "Address"
 
@@ -1424,6 +1427,9 @@ msgstr "%1 has not played any doubles games yet."
 
 msgid "people.message.did-not-enter"
 msgstr "%1 did not enter %2."
+
+msgid "people.message.not-registered"
+msgstr "Not registered"
 
 msgid "people.delete.error.not-allowed"
 msgstr "%1 cannot be deleted because they have been involved in matches."

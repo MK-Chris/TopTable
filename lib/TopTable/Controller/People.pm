@@ -800,6 +800,7 @@ sub create :Chained("base_no_object_specified") :PathPart("create") :CaptureArgs
     view_online_display => "Creating people",
     view_online_link => 0,
     genders => scalar $c->model("DB::LookupGender")->search,
+    action => "create",
   });
   
   # Append an information notice to this page
@@ -1055,6 +1056,7 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
     view_online_display => sprintf( "Editing %s", $person->display_name ),
     view_online_link => 0,
     genders => scalar $c->model("DB::LookupGender")->search,
+    action => "edit",
   });
   
   # Breadcrumbs
@@ -1202,8 +1204,8 @@ A private routine forwarded from the docreate and doedit routines to set up the 
 sub process_form :Private {
   my ( $self, $c, $action ) = @_;
   my $person = $c->stash->{person};
-  my @field_names = qw( first_name surname address1 address2 address3 address4 address5 postcode home_telephone mobile_telephone work_telephone email_address gender team fees_paid user noindex );
-  my @processed_field_names = qw( first_name surname address1 address2 address3 address4 address5 postcode home_telephone mobile_telephone work_telephone email_address gender date_of_birth team captain_of secretary_of registration_date fees_paid user noindex );
+  my @field_names = qw( first_name surname change_name_prev_seasons address1 address2 address3 address4 address5 postcode home_telephone mobile_telephone work_telephone email_address gender team fees_paid user noindex );
+  my @processed_field_names = qw( first_name surname change_name_prev_seasons address1 address2 address3 address4 address5 postcode home_telephone mobile_telephone work_telephone email_address gender date_of_birth team captain_of secretary_of registration_date fees_paid user noindex );
   
   # Get the current season
   my $current_season = $c->model("DB::Season")->get_current;

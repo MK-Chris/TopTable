@@ -332,6 +332,7 @@ sub create_or_edit {
   my $person = $params->{person} || undef;
   my $first_name = $params->{first_name} || undef;
   my $surname = $params->{surname} || undef;
+  my $change_name_prev_seasons = $params->{change_name_prev_seasons} || 0;
   my $address1 = $params->{address1} || undef;
   my $address2 = $params->{address2} || undef;
   my $address3 = $params->{address3} || undef;
@@ -348,8 +349,8 @@ sub create_or_edit {
   my $captain_of = $params->{captain_of} || undef;
   my $secretary_of = $params->{secretary_of} || undef;
   my $registration_date = $params->{registration_date} || undef;
-  my $fees_paid = $params->{fees_paid};
-  my $noindex = $params->{noindex};
+  my $fees_paid = $params->{fees_paid} || undef;
+  my $noindex = $params->{noindex} || 0;
   my $user = $params->{user} || undef;
   my $response = {
     errors => [],
@@ -690,7 +691,9 @@ sub create_or_edit {
       });
       
       # Ensure the name is updated for any person season objects from this season
-      $person->search_related("person_seasons", {season => $season->id})->update({
+      # If we are changing the name for previous seasons, the season search is undef and all seasons are updated.
+      my $season_search = {season => $season->id} unless $change_name_prev_seasons;
+      $person->search_related("person_seasons", $season_search)->update({
         first_name => $first_name,
         surname => $surname,
         display_name => $display_name, # Automatically set the display name from first and surnames - the user never interacts with this field.
