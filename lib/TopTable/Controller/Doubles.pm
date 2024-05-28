@@ -3,7 +3,6 @@ use Moose;
 use namespace::autoclean;
 use HTML::Entities;
 use JSON;
-use DDP;
 
 BEGIN { extends 'Catalyst::Controller'; }
 

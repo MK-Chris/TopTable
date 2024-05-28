@@ -254,9 +254,9 @@ __PACKAGE__->table("users");
 
 =head2 activation_key
 
-  data_type: 'varchar'
+  accessor: '_activation_key'
+  data_type: 'text'
   is_nullable: 1
-  size: 64
 
 =head2 activated
 
@@ -280,9 +280,9 @@ __PACKAGE__->table("users");
 
 =head2 password_reset_key
 
-  data_type: 'varchar'
+  accessor: '_password_reset_key'
+  data_type: 'text'
   is_nullable: 1
-  size: 64
 
 =head2 password_reset_expires
 
@@ -420,7 +420,7 @@ __PACKAGE__->add_columns(
   "registration_reason",
   { data_type => "text", is_nullable => 1 },
   "activation_key",
-  { data_type => "varchar", is_nullable => 1, size => 64 },
+  { accessor => "_activation_key", data_type => "text", is_nullable => 1 },
   "activated",
   {
     data_type => "tinyint",
@@ -442,7 +442,11 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
   },
   "password_reset_key",
-  { data_type => "varchar", is_nullable => 1, size => 64 },
+  {
+    accessor    => "_password_reset_key",
+    data_type   => "text",
+    is_nullable => 1,
+  },
   "password_reset_expires",
   {
     data_type => "datetime",
@@ -728,16 +732,23 @@ Composing rels: L</user_roles> -> role
 __PACKAGE__->many_to_many("roles", "user_roles", "role");
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2022-01-15 21:50:49
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:XaoqzN7qRiHcD42jcvbGGA
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-05-24 11:53:09
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:0rI1GLFZBUwV0g/Giki9LQ
 
-use Digest::SHA qw( sha256_hex );
-use Time::HiRes;
 use DateTime;
+use DateTime;
+use DateTime::TimeZone;
+use DateTime::Duration;
 use HTML::Entities;
+use Authen::Passphrase::BlowfishCrypt;
+use Encode ();
+use Bytes::Random::Secure qw( random_bytes_hex );
 
 # Have the 'password' column use a SHA-1 hash and 20-byte salt
 # with RFC 2307 encoding; Generate the 'check_password" method
+# Do not add automatic hashing to activation_key or password_reset_key, because DBIx::Class::PassphraseColumn can't deal with
+# them being nulled after activation / password reset (or password reset expiry timeout); therefore we will need to set the hashing
+# manually on those columns when setting.
 # Also enable automatic date handling
 __PACKAGE__->add_columns(
     "password" => {
@@ -746,8 +757,8 @@ __PACKAGE__->add_columns(
         passphrase => "rfc2307",
         passphrase_class => "BlowfishCrypt",
         passphrase_args => {
-            cost => 14,
-            salt_random => 1,
+          cost => 14,
+          salt_random => 1,
         },
         passphrase_check_method => "check_password",
     },
@@ -763,6 +774,92 @@ __PACKAGE__->add_columns(
     { data_type => "datetime", timezone => "UTC", set_on_create => 0, set_on_update => 0, datetime_undef_if_invalid => 1, is_nullable => 1, },
 );
 
+=head2 _keys
+
+Get or set either the password reset key or the activation key.  These are accessed publicly by the accessors activation_key and password_reset_key, but as most of the functionality within that is common to both types of key, they pass off to here.
+
+=cut
+
+sub _keys {
+  # Remove self and params from the front of the passed in array
+  my $self = shift;
+  my $params = shift;
+  
+  my $key_type = $params->{type};
+  my $col_accessor = sprintf("_%s", $key_type);
+  
+  # If there is an update to the column, we'll let the original accessor
+  # deal with it.
+  if ( @_ ) {
+    # Grab the value to set, grab it from the array
+    my ( $val ) = @_;
+    
+    # If it's defined, we'll hash it here - this is why we can't rely on DBIx::Class::PassphraseColumn, it doesn't like setting null on
+    # columns it's handling
+    $val = Authen::Passphrase::BlowfishCrypt->new(cost => 14, salt_random => 1, passphrase => Encode::encode("UTF-8", $val))->as_rfc2307 if defined($val);
+    
+    return $self->$col_accessor($val);
+  }
+  
+  # If we're just getting and not setting, grab the value
+  my $val = $self->$col_accessor;
+  
+  # Return as an object if it's defined
+  return Authen::Passphrase::BlowfishCrypt->from_rfc2307($val) if defined($val);
+}
+
+=head2 activation_key
+
+activation_key accessor, handles hashing of values before writing, and getting the inflated BlowfishCrypt inflated value back if reading (and not null).  This is required because DBIx::Class::PassphraseColumn, which can do all this automatically, doesn't like nullable columns.
+
+=cut
+
+sub activation_key {
+  # Remove the self reference first
+  my $self = shift;
+  
+  # Add a params element to the front of the array with key type
+  unshift(@_, {type => "activation_key"});
+  
+  # Send to the _keys sub with original array, plus the new params at the start
+  return $self->_keys(@_);
+}
+
+=head2 activation_key
+
+activation_key accessor, handles hashing of values before writing, and getting the inflated BlowfishCrypt inflated value back if reading (and not null).  This is required because DBIx::Class::PassphraseColumn, which can do all this automatically, doesn't like nullable columns.
+
+=cut
+
+sub password_reset_key {
+  # Remove the self reference first
+  my $self = shift;
+  
+  # Add a params element to the front of the array with key type
+  unshift(@_, {type => "password_reset_key"});
+  
+  # Send to the _keys sub with original array, plus the new params at the start
+  return $self->_keys(@_);
+}
+
+=head2 check_key
+
+Check a password reset or activation key.  Params are type ("activation") or ("reset") and a value to check.  Returns undef if no key is set for this user in that field, or the result of the match (true or false).
+
+=cut
+
+sub check_key {
+  my $self = shift;
+  my ( $params ) = @_;
+  my $key_type = $params->{type};
+  my $val = $params->{val};
+  
+  my $key = $self->$key_type;
+  
+  return undef unless defined($key) and ref($key);
+  return $key->match(Encode::encode("UTF-8", $val));
+}
+
 =head2 url_keys
 
 Return the URL key for this object as an array ref (even if there's only one, an array ref is necessary so we can do the same for other objects with more than one array key field).
@@ -770,7 +867,7 @@ Return the URL key for this object as an array ref (even if there's only one, an
 =cut
 
 sub url_keys {
-  my ( $self ) = @_;
+  my $self = shift;
   return [$self->url_key];
 }
 
@@ -781,7 +878,7 @@ Performs the logic checks to see if the user can be deleted; returns true if it 
 =cut
 
 sub can_delete {
-  my ( $self ) = @_;
+  my $self = shift;
   
   # If we get this far, we can delete.
   return 1;
@@ -794,7 +891,8 @@ Checks that the venue can be deleted (via can_delete) and then performs the dele
 =cut
 
 sub check_and_delete {
-  my ( $self, $params ) = @_;
+  my $self = shift;
+  my ( $params ) = @_;
   # Setup schema / logging
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
@@ -839,7 +937,8 @@ Approve the user
 =cut
 
 sub approve {
-  my ( $self, $params ) = @_;
+  my $self = shift;
+  my ( $params ) = @_;
   # Setup schema / logging
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
@@ -890,7 +989,8 @@ Disapprove the user (delete).
 =cut
 
 sub reject {
-  my ( $self, $params ) = @_;
+  my $self = shift;
+  my ( $params ) = @_;
   # Setup schema / logging
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
@@ -928,7 +1028,7 @@ Display the person's name instead if there's a person associated
 =cut
 
 sub display_name {
-  my ( $self ) = @_;
+  my $self = shift;
   
   my $person = $self->search_related("person", undef, {rows => 1})->single;
   
@@ -946,7 +1046,7 @@ Display the user with the person's name in brackets if there is a person associa
 =cut
 
 sub display_user_and_name {
-  my ( $self ) = @_;
+  my $self = shift;
   
   my $person = $self->find_related("person", undef, {rows => 1});
   
@@ -964,14 +1064,15 @@ Sets the user to 'activated' and clears out the activation key.
 =cut
 
 sub activate {
-  my ( $self, $params ) = @_;
+  my $self = shift;
+  my ( $params ) = @_;
   # Setup schema / logging
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
   my $schema = $self->result_source->schema;
   $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
   my $lang = $schema->lang;
-  my $person = $params->{person};
+  my $activation_key = $params->{activation_key};
   my $response = {
     errors => [],
     warnings => [],
@@ -980,31 +1081,43 @@ sub activate {
     completed => 0,
   };
   
-  # Check we're activating with a person ID or no person at all
-  $person = defined($person) ? $person->id : undef;
-  
-  my $ok = $self->update({
-    person => $person,
-    activated => 1,
-    activation_key => undef,
-    activation_expires => undef,
-  });
-  
-  if ( $ok ) {
-    if ( $self->approved ) {
-      # Auto-approval must be in place
-      push(@{$response->{success}}, $lang->maketext("user.activation.success-login"));
-    } else {
-      # Manual approval
-      push(@{$response->{success}}, $lang->maketext("user.activation.success-approval-needed"));
-    }
-    
-    
-    $response->{completed} = 1;
+  # First thing to do is check the user isn't already activated
+  if ( $self->activated ) {
+    # Already activated.  Not really an error, but nothing to do
+    push(@{$response->{info}}, $lang->maketext("user.activation.already-activated"));
   } else {
-    push(@{$response->{errors}}, $lang->maketext("user.activation.error.failed"));
+    # Not activated yet, check the key is correct
+    if ( $self->check_key({type => "activation_key", val => $activation_key}) ) {
+      my $person = $schema->resultset("Person")->find({email_address => $self->email_address}) if $params->{associate_person};
+      
+      # Check we're activating with a person ID or no person at all
+      $person = defined($person) ? $person->id : undef;
+      
+      my $ok = $self->update({
+        person => $person,
+        activated => 1,
+        activation_key => undef,
+        activation_expires => undef,
+      });
+      
+      if ( $ok ) {
+        if ( $self->approved ) {
+          # Auto-approval must be in place
+          push(@{$response->{success}}, $lang->maketext("user.activation.success-login"));
+        } else {
+          # Manual approval
+          push(@{$response->{success}}, $lang->maketext("user.activation.success-approval-needed"));
+        }
+        
+        $response->{completed} = 1;
+      } else {
+        push(@{$response->{errors}}, $lang->maketext("user.activation.error.failed"));
+      }
+    } else {
+      # Activation key not recognised, error
+      push(@{$response->{errors}}, $lang->maketext("user.activation.error.key-incorrect"));
+    }
   }
-  
   
   return $response;
 }
@@ -1016,7 +1129,8 @@ Generate a password reset key.
 =cut
 
 sub set_password_reset_key {
-  my ( $self, $params ) = @_;
+  my $self = shift;
+  my ( $params ) = @_;
   # Setup schema / logging
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
@@ -1033,15 +1147,18 @@ sub set_password_reset_key {
   };
   
   # Get the expiry
+  # Store the reset key so the controller can send it back to the user in an email;
+  # if we don't do this, they'll have to get it from the DB, which would be the hashed version
   my $expires = DateTime->now(time_zone  => "UTC")->add(hours => 1);
+  my $reset_key = random_bytes_hex(32);
   
-  my $ok = $self->update({
-    password_reset_key => sha256_hex($self->username . Time::HiRes::time . int(rand(100))),
-    password_reset_expires => sprintf("%s %s", $expires->ymd, $expires->hms),
-  });
+  $self->password_reset_key($reset_key);
+  $self->password_reset_expires(sprintf("%s %s", $expires->ymd, $expires->hms));
+  my $ok = $self->update;
   
   if ( $ok ) {
     $response->{completed} = 1;
+    $response->{password_reset_key} = $reset_key;
   } else {
     push(@{$response->{errors}}, $lang->maketext("user.forgot-password.error.failed-to-set-key"));
   }
@@ -1049,17 +1166,19 @@ sub set_password_reset_key {
   return $response;
 }
 
-=head2 reset_password
+=head2 regenerate_activation_key
 
-Check and reset the user's password, given a new password and a confirm password (hopefully the same!)
+Regenerate the activation key.  Only works if the user isn't yet activated.
 
 =cut
 
-sub reset_password {
-  my ( $self, $params ) = @_;
+sub regenerate_activation_key {
+  my $self = shift;
+  my ( $params ) = @_;
   # Setup schema / logging
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $activation_expiry_limit = $params->{activation_expiry_limit} || 24;
   my $schema = $self->result_source->schema;
   $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
   my $lang = $schema->lang;
@@ -1072,9 +1191,85 @@ sub reset_password {
     completed => 0,
   };
   
-  # Grab the fields
+  # First check if the user is already activated
+  if ( $self->activated ) {
+    # Already activated - this is an error, but which error gets shown depends on the approval status
+    if ( $self->approved ) {
+      # Already activated, but not approved
+      push(@{$response->{errors}}, $lang->maketext("user.activation.error-already-activated-needs-approval"));
+    } else {
+      # Already activated and can login
+      push(@{$response->{errors}}, $lang->maketext("user.activation.error-already-activated"));
+    }
+  }
+  
+  if ( @{$response->{errors}} == 0 ) {
+    my $activation_key = random_bytes_hex(32);
+    my $activation_expires = DateTime->now(time_zone  => "UTC")->add(hours => $activation_expiry_limit);
+    
+    # Activation key has to be updated afterwards, so it can go through the hashing routine
+    $self->activation_key($activation_key);
+    $self->activation_expires(sprintf("%s %s", $activation_expires->ymd, $activation_expires->hms));
+    $self->update;
+    $response->{completed} = 1;
+    $response->{activation_key} = $activation_key;
+    push(@{$response->{success}}, $lang->maketext("user.activation.email-resent-message"));
+  }
+  
+  return $response;
+}
+
+=head2 reset_password
+
+Check and reset the user's password, given a new password and a confirm password (hopefully the same!)
+
+=cut
+
+sub reset_password {
+  my $self = shift;
+  my ( $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  my $response = {
+    errors => [],
+    warnings => [],
+    info => [],
+    success => [],
+    completed => 0,
+  };
+  
+  # Get the fields
   my $password = $params->{password} || undef;
-  my $confirm_password = $params->{confirm_password} || "";
+  my $confirm_password = $params->{confirm_password} || undef;
+  my $password_reset_key = $params->{password_reset_key} || undef;
+  
+  # Ensure password reset hasn't expired
+  if ( defined($self->password_reset_key) ) {
+    my $date_compare = DateTime->compare($self->password_reset_expires, DateTime->now(time_zone => "UTC"));
+    
+    if ( $date_compare == 0 or $date_compare == 1 ) {
+      # Password reset key not expired
+      # Check the key
+      if ( $self->check_key({type => "password_reset_key", val => $password_reset_key}) ) {
+      } else {
+        # Key incorrect
+        push(@{$response->{errors}}, $lang->maketext("user.reset-password.error.key-expired-invalid"));
+      }
+    } else {
+      # Password reset key expired
+      push(@{$response->{errors}}, $lang->maketext("user.reset-password.error.key-expired-invalid"));
+    }
+  } else {
+    # No password reset key, just say it's invalid (don't say this user doesn't have one, that's too much information)
+    push(@{$response->{errors}}, $lang->maketext("user.reset-password.error.key-expired-invalid"));
+  }
+  
+  # No password checking if the reset key is invalid in some way, just return
+  return $response if scalar(@{$response->{errors}});
   
   if ( defined($password) ) {
     # Check the passwords match
@@ -1121,7 +1316,8 @@ Returns true if the user plays for the specified team in the specified season.
 =cut
 
 sub plays_for {
-  my ( $self, $params ) = @_;
+  my $self = shift;
+  my ( $params ) = @_;
   my $team = $params->{team};
   my $season = $params->{season};
   
@@ -1145,7 +1341,8 @@ Returns true if the user is captain for the specified team in the specified seas
 =cut
 
 sub captain_for {
-  my ( $self, $params ) = @_;
+  my $self = shift;
+  my ( $params ) = @_;
   my $team_season = $params->{team};
   
   # Get the person associated with this user
@@ -1165,7 +1362,8 @@ Returns true if the user is secretary for the specified club in the specified se
 =cut
 
 sub secretary_for {
-  my ( $self, $params ) = @_;
+  my $self = shift;
+  my ( $params ) = @_;
   my $club = $params->{club};
   
   # Get the person associated with this user
@@ -1185,7 +1383,8 @@ Checks if the user has the given role.
 =cut
 
 sub has_role {
-  my ( $self, $role ) = @_;
+  my $self = shift;
+  my ( $role ) = @_;
   return defined($self->find_related("user_roles", {role => $role->id})) ? 1 : 0;
 }
 
@@ -1196,7 +1395,7 @@ Return the roles that this user is a member of.
 =cut
 
 sub all_roles {
-  my ( $self ) = @_;
+  my $self = shift;
   return $self->roles;
 }
 
@@ -1207,7 +1406,8 @@ Function in all searchable objects to give a common accessor to the text to disp
 =cut
 
 sub search_display {
-  my ( $self, $params ) = @_;
+  my $self = shift;
+  my ( $params ) = @_;
   
   return {
     id => $self->id,
@@ -1224,7 +1424,7 @@ Return the long registered date.
 =cut
 
 sub registered_long_date {
-  my ( $self ) = @_;
+  my $self = shift;
   return sprintf("%s, %s %s %s", ucfirst($self->registered_date->day_name), $self->registered_date->day, $self->registered_date->month_name, $self->registered_date->year);
 }
 

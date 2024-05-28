@@ -3,14 +3,13 @@ package TopTable::Schema::ResultSet::User;
 use strict;
 use warnings;
 use base 'DBIx::Class::ResultSet';
-use Digest::SHA qw( sha256_hex );
 use DateTime;
 use DateTime::TimeZone;
-use Time::HiRes;
 use Set::Object;
 use HTML::Entities;
 use Regexp::Common qw( URI );
 use Email::Valid;
+use Bytes::Random::Secure qw( random_bytes_hex );
 
 =head2 search_by_name
 
@@ -19,7 +18,8 @@ Return search results based on a supplied full or username.
 =cut
 
 sub search_by_name {
-  my ( $self, $params ) = @_;
+  my $class = shift;
+  my ( $params ) = @_;
   my $q = delete $params->{q};
   my $split_words = delete $params->{split_words} || 0;
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
@@ -61,7 +61,7 @@ sub search_by_name {
     $attrib->{rows} = $results_per_page;
   }
   
-  return $self->search( $where, $attrib );
+  return $class->search( $where, $attrib );
 }
 
 =head2 page_records
@@ -71,7 +71,8 @@ Returns a paginated resultset of clubs.
 =cut
 
 sub page_records {
-  my ( $self, $params ) = @_;
+  my $class = shift;
+  my ( $params ) = @_;
   my $page_number = $params->{page_number} || 1;
   my $results_per_page = $params->{results_per_page} || 25;
   
@@ -81,7 +82,7 @@ sub page_records {
   # Default the page number to 1
   $page_number = 1 if !defined($page_number) or $page_number !~ m/^\d+$/;
   
-  return $self->search({}, {
+  return $class->search({}, {
     page => $page_number,
     rows => $results_per_page,
     order_by => {-asc => qw( username )},
@@ -95,9 +96,10 @@ Returns a paginated resultset of clubs.
 =cut
 
 sub all_users {
-  my ( $self, $params ) = @_;
+  my $class = shift;
+  my ( $params ) = @_;
   
-  return $self->search(undef, {
+  return $class->search(undef, {
     prefetch => "person",
     order_by => {-asc => qw( username )}
   });
@@ -110,8 +112,9 @@ Return a single user based on the full username.
 =cut
 
 sub find_by_name {
-  my ( $self, $username ) = @_;
-  return $self->find({username => $username});
+  my $class = shift;
+  my ( $username ) = @_;
+  return $class->find({username => $username});
 }
 
 =head2 find_id_or_url_key
@@ -121,7 +124,8 @@ Same as find(), but searches for both the id and key columns.  So we can use hum
 =cut
 
 sub find_id_or_url_key {
-  my ( $self, $id_or_url_key ) = @_;
+  my $class = shift;
+  my ( $id_or_url_key ) = @_;
   my $where;
   
   if ( $id_or_url_key =~ m/^\d+$/ ) {
@@ -136,7 +140,7 @@ sub find_id_or_url_key {
     $where = {"me.url_key" => $id_or_url_key};
   }
   
-  return $self->search($where, {
+  return $class->search($where, {
     prefetch => "person",
     rows => 1,
   })->single;
@@ -149,14 +153,15 @@ Get all of the invalid login counts that have expired and reset them to 0.
 =cut
 
 sub reset_expired_invalid_login_counts {
-  my ( $self, $expiry_threshold_minutes ) = @_;
+  my $class = shift;
+  my ( $expiry_threshold_minutes ) = @_;
   
   # Set a default number of minutes if the number supplied is invalid
   $expiry_threshold_minutes = 30 if !defined($expiry_threshold_minutes) or !$expiry_threshold_minutes or $expiry_threshold_minutes!~ /^\d+$/ or $expiry_threshold_minutes < 1;
   
   my $time_limit_threshold = DateTime->now(time_zone => "UTC")->subtract(minutes => $expiry_threshold_minutes);
   
-  $self->search(undef, {
+  $class->search(undef, {
     where => {
       last_invalid_login => {"<=" => $time_limit_threshold->ymd . " " . $time_limit_threshold->hms},
     },
@@ -173,11 +178,11 @@ Get all of the activation keys and password reset keys that have expired and und
 =cut
 
 sub delete_expired_keys {
-  my ( $self ) = @_;
+  my $class = shift;
   my $now = DateTime->now(time_zone => "UTC");
   
   # Password reset keys
-  $self->search(undef, {
+  $class->search(undef, {
     where => {
       password_reset_expires => {"<=" => sprintf("%s %s", $now->ymd, $now->hms)}
     }
@@ -187,7 +192,7 @@ sub delete_expired_keys {
   });
   
   # Activation keys - user actually gets deleted if not activated in time.
-  $self->search(undef, {
+  $class->search(undef, {
     where => {
       activated => 0,
       activation_expires => {"<=" => sprintf("%s %s", $now->ymd, $now->hms)}
@@ -202,8 +207,8 @@ Get a list of unapproved users.
 =cut
 
 sub get_unapproved {
-  my ( $self ) = @_;
-  return $self->search({approved => 0}, {prefetch => "person"});
+  my $class = shift;
+  return $class->search({approved => 0}, {prefetch => "person"});
 }
 
 =head2 create_or_edit
@@ -213,11 +218,12 @@ Error checks requested registration details and creates the user with an activat
 =cut
 
 sub create_or_edit {
-  my ( $self, $action, $params ) = @_;
+  my $class = shift;
+  my ( $action, $params ) = @_;
   # Setup schema / logging
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
-  my $schema = $self->result_source->schema;
+  my $schema = $class->result_source->schema;
   $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
   my $lang = $schema->lang;
   
@@ -305,7 +311,7 @@ sub create_or_edit {
   
   if ( $action eq "register" ) {
     # Check we're not banned from registering - check the IP passed in and the email entered; if either is banned, we error
-    my $banned = $self->result_source->schema->resultset("Ban")->is_banned({
+    my $banned = $class->result_source->schema->resultset("Ban")->is_banned({
       ip_address => $ip_address,
       email_address => $email_address,
       level => "registration",
@@ -336,9 +342,9 @@ sub create_or_edit {
         my $check_username;
         
         if ( $action eq "register" ) {
-          $check_username = $self->find({username => $username});
+          $check_username = $class->find({username => $username});
         } else {
-          $check_username = $self->find(undef, {
+          $check_username = $class->find(undef, {
             where => {
               username => $username,
               id => {"!=" => $user->id},
@@ -368,9 +374,9 @@ sub create_or_edit {
           my $check_email;
           
           if ( $action eq "register" ) {
-            $check_email = $self->find({email_address => $email_address});
+            $check_email = $class->find({email_address => $email_address});
           } else {
-            $check_email = $self->find({}, {
+            $check_email = $class->find({}, {
               where => {
                 username  => $username,
                 id => {"!=" => $user->id},
@@ -462,7 +468,7 @@ sub create_or_edit {
   
   if ( $action eq "register" ) {
     # Add any roles that need to be added to newly registered users by default.
-    my $default_roles = $self->result_source->schema->resultset("Role")->search({apply_on_registration => 1});
+    my $default_roles = $class->result_source->schema->resultset("Role")->search({apply_on_registration => 1});
     
     if ( $default_roles->count ) {
       while ( my $role = $default_roles->next ) {
@@ -471,7 +477,7 @@ sub create_or_edit {
     }
   } elsif ( $action eq "edit" ) {
     # Check that we can edit roles, then loop through and add them
-    my @need_roles = $self->result_source->schema->resultset("Role")->search({role_edit => 1});
+    my @need_roles = $class->result_source->schema->resultset("Role")->search({role_edit => 1});
     my @have_roles = $editing_user->all_roles;
     @need_roles = map($_->name, @need_roles);
     @have_roles = map($_->name, @have_roles);
@@ -487,7 +493,7 @@ sub create_or_edit {
       
       my $invalid_roles = 0;
       foreach my $role_id ( @{$roles} ) {
-        my $role = $self->result_source->schema->resultset("Role")->find($role_id);
+        my $role = $class->result_source->schema->resultset("Role")->find($role_id);
         
         if ( defined($role) ) {
           if ( $role->anonymous ) {
@@ -504,7 +510,7 @@ sub create_or_edit {
       # Warn if any of the roles were invalid
       push(@{$response->{warnings}}, $lang->maketext("user.form.warning.one-or-more-roles-invalid", $invalid_roles)) if $invalid_roles;
       
-      my @default_roles = $self->result_source->schema->resultset("Role")->search({apply_on_registration => 1});
+      my @default_roles = $class->result_source->schema->resultset("Role")->search({apply_on_registration => 1});
       @default_roles = map($_->id , @default_roles);
       my $default_roles = Set::Object->new(@default_roles);
       my $selected_roles = Set::Object->new(@roles);
@@ -524,18 +530,18 @@ sub create_or_edit {
   
   if ( scalar @{$response->{errors}} == 0 ) {
     # This is a random verification key that we can then put into an email.
-    my $activation_key = sha256_hex($username . Time::HiRes::time . int(rand(100))) if $action eq "register";
+    my $activation_key = random_bytes_hex(32) if $action eq "register";
     
     # Build the key from the username
     my $url_key;
     if ( $action eq "edit" and $username_changed and $username_editable ) {
-      $url_key = $self->generate_url_key($username, $user->id);
+      $url_key = $class->generate_url_key($username, $user->id);
     } elsif ( $action eq "register" ) {
-      $url_key = $self->generate_url_key($username);
+      $url_key = $class->generate_url_key($username);
     }
     
     # Start a transaction so we don't have a partially updated database
-    my $transaction = $self->result_source->schema->txn_scope_guard;
+    my $transaction = $class->result_source->schema->txn_scope_guard;
     
     if ( $action eq "register" ) {
       # Create new user
@@ -551,7 +557,6 @@ sub create_or_edit {
         locale => $language,
         timezone => $timezone,
         html_emails => $html_emails,
-        activation_key => $activation_key,
         activated => 0,
         activation_expires => sprintf("%s %s", $activation_expires->ymd, $activation_expires->hms),
         registration_reason => $registration_reason,
@@ -566,8 +571,13 @@ sub create_or_edit {
         $create_options->{approved} = 1;
       }
       
-      $user = $self->create($create_options);
+      $user = $class->create($create_options);
+      
+      # Activation key has to be updated afterwards, so it can go through the hashing routine
+      $user->activation_key($activation_key);
+      $user->update;
       $response->{completed} = 1;
+      $response->{activation_key} = $activation_key;
       
       # We will NEVER set locale if the user is being created, as that user needs to be activated first
       $set_locale = 0;
@@ -628,7 +638,7 @@ sub create_or_edit {
         my @roles_to_remove = @$roles_to_remove;
         
         # Check if any of the roles we're removing is the sysadmin role
-        my $sysadmin_role = $self->result_source->schema->resultset("Role")->find({
+        my $sysadmin_role = $class->result_source->schema->resultset("Role")->find({
           sysadmin => 1,
           id => {-in => \@roles_to_remove}
         });
@@ -681,8 +691,9 @@ Same as find(), but uses the key column instead of the id.  So we can use human-
 =cut
 
 sub find_url_key {
-  my ( $self, $url_key ) = @_;
-  return $self->find({url_key => $url_key});
+  my $class = shift;
+  my ( $url_key ) = @_;
+  return $class->find({url_key => $url_key});
 }
 
 =head2 generate_url_key
@@ -692,7 +703,8 @@ Generate a unique key from the given club short name.
 =cut
 
 sub generate_url_key {
-  my ( $self, $short_name, $exclude_id ) = @_;
+  my $class = shift;
+  my ( $short_name, $exclude_id ) = @_;
   my $url_key;
   ( my $original_url_key = substr($short_name, 0, 45) ) =~ s/[ \W]/-/g; # Truncate after 45 characters, swap out spaces and non-word characters for dashes
   $original_url_key =~ s/-+/-/g; # If we find more than one dash in a row, replace it with just one.
@@ -712,7 +724,7 @@ sub generate_url_key {
     }
     
     # Check if that key already exists
-    my $key_check = $self->find_url_key($url_key);
+    my $key_check = $class->find_url_key($url_key);
     
     # If not, return it
     return $url_key if !defined($key_check) or ( defined($exclude_id) and $key_check->id == $exclude_id );

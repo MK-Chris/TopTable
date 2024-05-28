@@ -4547,7 +4547,7 @@ msgid "user.login.error.authentication-failed"
 msgstr "The username or password is incorrect; please try again."
 
 msgid "user.login.error.user-not-activated"
-msgstr "The username entered has not yet been activated; please check the username, or if this is the correct account, you can <a href="%1">resend the activation email</a>."
+msgstr "The username entered has not yet been activated; please check the username, or if this is the correct account, you can <a href="%1">regenerate a new activation key</a> (this will overwrite the previous key)."
 
 msgid "user.login.error.user-not-approved"
 msgstr "This user account has not yet been approved by the administrator; please <a href="%1">contact us</a> if you'd like to ask when this might be done, but try to remember that the website is run by volunteers giving up their time for free."
@@ -4572,10 +4572,13 @@ msgstr "Registration successful"
 
 msgid "user.registration.success-message"
 msgstr "Thank you, %1.\n\n"
-"You now need to verify your account; an email was sent to the email address you provided (%2) with a link to verify your account; please click that link when the email arrives.  If it you can&#39;t see it, please check your spam folder.  If it&#39;s still not there, you can <a href=\"%3\">resend the activation</a>.\n\n"
+"You now need to verify your account; an email was sent to the email address you provided (%2) with a link to verify your account; please click that link when the email arrives.  If it you can&#39;t see it, please check your spam folder.  If it&#39;s still not there, you can <a href=\"%3\">regenerate a new activation key</a> to be sent via email; this will overwrite the key that&#39;s just been sent.\n\n"
 
 msgid "user.activation.error-already-activated"
-msgstr "This user is already activated; please log in."
+msgstr "This user is already activated and can be logged into."
+
+msgid "user.activation.error-already-activated-needs-approval"
+msgstr "This user is already activated and is awaiting approval from a site administrator."
 
 msgid "user.activation.success-login"
 msgstr "Your account has now been activated; please login."
@@ -4590,7 +4593,7 @@ msgid "user.activation.email-resent-header"
 msgstr "Activation email resent"
 
 msgid "user.activation.email-resent-message"
-msgstr "Your activation email has been resent to the email account that you registered with; you will need to click the link in this email to verify your account."
+msgstr "A new activation link has been generated and sent to the email account that you registered with; you will need to click the link in this email to verify your account."
 
 msgid "user.activation.already-activated"
 msgstr "This user is already activated; please log in."
@@ -5179,6 +5182,9 @@ msgstr "Forgot username or password"
 
 msgid "user.reset-password.error.failed-to-reset"
 msgstr "Failed to reset your password; please try again."
+
+msgid "user.reset-password.error.key-expired-invalid"
+msgstr "That key is expired, or is not recognised.  Please check and try again, or generate a new password reset link."
 
 msgid "user.new-password"
 msgstr "New password"
@@ -5981,7 +5987,7 @@ msgid "system-event-log.description.activate"
 msgstr "%1%2 activated."
 
 msgid "system-event-log.description.activation-invalid"
-msgstr "Invalid activation key tried."
+msgstr "Invalid activation key tried for %1%2."
 
 msgid "system-event-log.description.forgot-password"
 msgstr "Password reset link sent for %1%2."
@@ -6404,22 +6410,24 @@ msgstr "Hi %1\n\n"
 "Regards,\n\n\n"
 "%2\n"
 
-msgid "email.subject.users.resend-activation"
+msgid "email.subject.users.regenerate-activation"
 msgstr "%1: activation link for %2"
 
-msgid "email.html.users.resend-activation"
+msgid "email.html.users.regenerate-activation"
 msgstr "Hi %1<br /><br />\n\n"
 "In order to activate your account, please click <a href="%2">here</a>.<br /><br />\n\n"
 "If the above link does not work, copy and paste the line below into the browser&#39;s address bar:<br /><br />\n\n"
 "%2<br /><br />\n\n"
+"Please note this link supersedes any previously generated; previously sent activation links will no longer work.<br /><br />\n\n"
 "Regards,<br /><br /><br />\n\n\n"
 "%3<br />\n"
 
-msgid "email.plain-text.users.resend-activation"
+msgid "email.plain-text.users.regenerate-activation"
 msgstr "Hi %1\n\n"
 "Please see below the link you need to activate your account:\n\n"
 "%2\n\n"
 "If the above link does not work, copy and paste it into the browser's address bar.\n\n"
+"Please note this link supersedes any previously generated; previously sent activation links will no longer work.\n\n"
 "Regards,\n\n\n"
 "%3\n"
 

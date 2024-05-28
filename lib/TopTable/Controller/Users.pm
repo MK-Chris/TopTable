@@ -554,7 +554,7 @@ sub process_form :Private {
         to => [$email_address, $username],
         image => [$c->path_to(qw( root static images banner-logo-player-small.png ))->stringify, "logo"],
         subject => $subject,
-        plaintext => $c->maketext("email.plain-text.users.activate-user", $username, $c->config->{name}, $c->uri_for_action("/users/activate", [$user->activation_key])),
+        plaintext => $c->maketext("email.plain-text.users.activate-user", $username, $c->config->{name}, $c->uri_for_action("/users/activate", [$user->url_key, $response->{activation_key}])),
       };
       
       if ( $user->html_emails ) {
@@ -568,7 +568,7 @@ sub process_form :Private {
           name => $enc_site_name,
           home_uri => $c->uri_for("/"),
           email_subject => $html_subject,
-          email_html_message => $c->maketext("email.html.users.activate-user", $enc_username, $enc_site_name, $c->uri_for_action("/users/activate", [$user->activation_key])),
+          email_html_message => $c->maketext("email.html.users.activate-user", $enc_username, $enc_site_name, $c->uri_for_action("/users/activate", [$user->url_key, $response->{activation_key}])),
         };
       }
       
@@ -657,52 +657,50 @@ sub do_delete :Chained("base") :PathPart("do-delete") :Args(0) {
   return;
 }
 
-=head2 resend_activation
+=head2 regenerate_activation_key
 
-Resend the email with the activation key.
+Regenerate the activation key for a user that's not yet activated (overwriting the previous value - can't resend the old one, as it's hashed).
 
 =cut
 
-sub resend_activation :Chained("base") :PathPart("resend-activation") :Args(0) {
+sub regenerate_activation_key :Chained("base") :PathPart("regenerate-activation-key") :Args(0) {
   my ( $self, $c ) = @_;
   my $user = $c->stash->{user};
   my $enc_username = $c->stash->{enc_username};
+  my $activation_expiry_limit = $c->config->{Users}{activation_expiry_limit};
   
-  # Check the user hasn't been activated yet
-  if ( $user->activated ) {
-    # User is already activated; error and show the login page.
-    $c->response->redirect($c->uri_for_action("/login",
-                                {mid => $c->set_status_msg({error => $c->maketext("user.activation.error-already-activated")})}));
-    $c->detach;
-    return;
-  } else {
-    # Send the activation code
+  # Send the activation code
+  my $response = $user->regenerate_activation_key({activation_expiry_limit => $activation_expiry_limit});
+  
+  # Set the status messages we need to show on redirect
+  my @errors = @{$response->{errors}};
+  my @warnings = @{$response->{warnings}};
+  my @info = @{$response->{info}};
+  my @success = @{$response->{success}};
+  my $redirect_uri = $c->uri_for("/", {mid => $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success})});
+  
+  if ( $response->{completed} ) {
+    # Was completed, display the list page
     
-    # Stash the confirmation screen details
-    $c->stash({
-      username => $user->username,
-      activation_key => $user->activation_key,
-    });
-      
     # Set the locale before getting the email message text, but save the current locale so we can set it back afterwards
     my $original_locale = $c->locale;
     $c->locale($user->locale) if $user->locale ne $c->locale;
     
     # Do the encoding - these do it once for each element here, as this is quite an expensive task
-    my $subject = $c->maketext("email.subject.users.resend-activation", $c->config->{name}, $user->username);
+    my $subject = $c->maketext("email.subject.users.regenerate-activation", $c->config->{name}, $user->username);
     
     # Set up the email send hash; we'll add to this if we're sending a HTML email
     my $send_options = {
       to => [$user->email_address, $user->username],
       image => [$c->path_to(qw( root static images banner-logo-player-small.png ))->stringify, "logo"],
       subject => $subject,
-      plaintext => $c->maketext("email.plain-text.users.resend-activation", $user->username, $c->uri_for_action("/users/activate", [$user->activation_key]), $c->config->{name}),
+      plaintext => $c->maketext("email.plain-text.users.regenerate-activation", $user->username, $c->uri_for_action("/users/activate", [$user->username, $response->{activation_key}]), $c->config->{name}),
     };
     
     if ( $user->html_emails ) {
       # Encode the HTML bits
       my $enc_site_name = encode_entities($c->config->{name});
-      my $html_subject = $c->maketext("email.subject.users.activate-user", $enc_site_name, $enc_username);
+      my $html_subject = $c->maketext("email.subject.users.regenerate-activation", $enc_site_name, $enc_username);
       
       # Add the HTML parts of the email
       $send_options->{htmltext} = [qw( html/generic/generic-message.ttkt :TT )];
@@ -710,7 +708,7 @@ sub resend_activation :Chained("base") :PathPart("resend-activation") :Args(0) {
         name => $enc_site_name,
         home_uri => $c->uri_for("/"),
         email_subject => $html_subject,
-        email_html_message => $c->maketext("email.html.users.resend-activation", $enc_username, $c->uri_for_action("/users/activate", [$user->activation_key]), $enc_site_name),
+        email_html_message => $c->maketext("email.html.users.regenerate-activation", $enc_username, $c->uri_for_action("/users/activate", [$user->username, $response->{activation_key}]), $enc_site_name),
       };
     }
     
@@ -719,19 +717,25 @@ sub resend_activation :Chained("base") :PathPart("resend-activation") :Args(0) {
     
     # Set the locale back if we changed it
     $c->locale($original_locale) if $original_locale ne $user->locale;
-    
-    $c->stash({
-      template => "html/users/activation-resend.ttkt",
-      subtitle2 => $c->maketext("user.activation.email-resent-header"),
-      view_online_display => "Activating account",
-      view_online_link => 0,
-      hide_breadcrumbs => 1,
-    });
   }
+  
+  # Now actually do the redirection
+  $c->response->redirect($redirect_uri);
+  $c->detach;
+  return;
+  
+  $c->stash({
+    template => "html/users/activation-resend.ttkt",
+    subtitle2 => $c->maketext("user.activation.email-resent-header"),
+    view_online_display => "Activating account",
+    view_online_link => 0,
+    hide_breadcrumbs => 1,
+  });
 }
 
-sub activate :Local :Args(1) {
+sub activate :Chained("base") :PathPart("activate") :Args(1) {
   my ( $self, $c, $activation_key ) = @_;
+  my $user = $c->stash->{user};
   
   if ( $c->user_exists ) {
     # We're logged in, so can't activate anything, as we must already be activated
@@ -740,135 +744,117 @@ sub activate :Local :Args(1) {
     $c->detach;
     return;
   } else {
-    # ID specified, process it
-    my $user = $c->model("DB::User")->find({activation_key => $activation_key});
+    # Try and activate the user.
+    my $response = $user->activate({
+      logger => sub{ my $level = shift; $c->log->$level( @_ ); },
+      activation_key => $activation_key,
+      associate_person => $c->config->{Users}{associate_with_person_by_email} || 0,
+    });
     
-    if ( defined($user) ) {
-      # Activation key found, check the user hasn't yet been activated
-      if ( $user->activated ) {
-        # User already activated
-        $c->response->redirect($c->uri_for_action("/login",
-                                    {mid => $c->set_status_msg({info => $c->maketext("user.activation.already-activated")})}));
-        $c->detach;
-        return;
+    # Set the status messages we need to show on redirect
+    my @errors = @{$response->{errors}};
+    my @warnings = @{$response->{warnings}};
+    my @info = @{$response->{info}};
+    my @success = @{$response->{success}};
+    my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});
+    my $redirect_uri = $c->uri_for("/", {mid => $mid});
+    
+    if ( $response->{completed} ) {
+      # Log the activation
+      $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["user", "activate", {id => $user->id}, $user->username]);
+      
+      # Don't trust the config setting at this point, as it could have been changed since registration - if this user is not approved, they require manual approval
+      my $manual_approval = $user->approved ? 0 : 1;
+      my ( $plain_text, $html_text );
+      
+      # Encode the HTML bits
+      my $enc_site_name = encode_entities($c->config->{name});
+      my $enc_username = encode_entities($user->username);
+      
+      if ( $manual_approval ) {
+        $plain_text = $c->maketext("email.plain-text.users.activated.approval-required", $user->username, $c->config->{name});
+        $html_text = $c->maketext("email.html.users.activated.approval-required", $enc_username, $enc_site_name, $c->uri_for("/login"));
       } else {
-        # Not activated yet, activate it.
-        
-        # First, try to find a 'Person' with the same email address
-        my $person = $c->model("DB::Person")->find({email_address => $user->email_address});
-        my $response = $user->activate({person => $person});
-        
-        # Set the status messages we need to show on redirect
-        my @errors = @{$response->{errors}};
-        my @warnings = @{$response->{warnings}};
-        my @info = @{$response->{info}};
-        my @success = @{$response->{success}};
-        my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});
-        my $redirect_uri = $c->uri_for("/", {mid => $mid});
-        
-        if ( $response->{completed} ) {
-          # Log the activation
-          $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["user", "activate", {id => $user->id}, $user->username]);
-          
-          # Don't trust the config setting at this point, as it could have been changed since registration - if this user is not approved, they require manual approval
-          my $manual_approval = $user->approved ? 0 : 1;
-          my ( $plain_text, $html_text );
-          
-          # Encode the HTML bits
-          my $enc_site_name = encode_entities($c->config->{name});
-          my $enc_username = encode_entities($user->username);
-          
-          if ( $manual_approval ) {
-            $plain_text = $c->maketext("email.plain-text.users.activated.approval-required", $user->username, $c->config->{name});
-            $html_text = $c->maketext("email.html.users.activated.approval-required", $enc_username, $enc_site_name, $c->uri_for("/login"));
-          } else {
-            $plain_text = $c->maketext("email.plain-text.users.activated.no-approval", $user->username, $c->config->{name}, $c->uri_for("/login"));
-            $html_text = $c->maketext("email.html.users.activated.no-approval", $enc_username, $enc_site_name, $c->uri_for("/login"));
-          }
-          
-          # Email the user to tell them their account has been activated.
-          # Stash the email details
-          $c->stash({username => $user->username});
-          
-          # Set the locale before getting the email message text, but save the current locale so we can set it back afterwards
-          my $original_locale = $c->locale;
-          $c->locale($user->locale) if $user->locale ne $c->locale;
-          
-          # Do the encoding - these do it once for each element here, as this is quite an expensive task
-          my $subject = $c->maketext("email.subject.users.activated", $c->config->{name}, $user->username);
-          
-          # Set up the email send hash; we'll add to this if we're sending a HTML email
-          my $send_options = {
-            to => [$user->email_address, $user->username],
-            image => [$c->path_to(qw( root static images banner-logo-player-small.png ))->stringify, "logo"],
-            subject => $subject,
-            plaintext => $plain_text,
-          };
-          
-          if ( $user->html_emails ) {
-            my $enc_subject = $c->maketext("email.subject.users.activated", $enc_username, $enc_site_name, $c->uri_for("/login"));
-            
-            # Add the HTML parts of the email
-            $send_options->{htmltext} = [qw( html/generic/generic-message.ttkt :TT )];
-            $send_options->{template_vars} = {
-              name => $enc_site_name,
-              home_uri => $c->uri_for("/"),
-              email_subject => $enc_subject,
-              email_html_message => $html_text,
-            };
-          }
-          
-          # Email the user
-          $c->model("Email")->send($send_options);
-          
-          my $manual_approval_notification_email = $c->config->{Users}{manual_approval_notification_email} || undef;
-          
-          if ( $manual_approval and defined($manual_approval_notification_email) ) {
-            # We are manually approving and want notification emails for this.
-            # Setup the locale for this email
-            $c->locale($c->config->{Users}{manual_approval_notification_language}) if $c->locale ne $c->config->{Users}{manual_approval_notification_language};
-            
-            my $subject = $c->maketext("email.subject.users.approve-user", $c->config->{name}, $user->username);
-            my $enc_subject = $c->maketext("email.subject.users.approve-user", $enc_site_name, $enc_username);
-            my $enc_reason = encode_entities($user->registration_reason);
-            
-            # Line breaks in HTML reason
-            $enc_reason =~ s|(\r?\n)|<br />$1|g;
-            
-            my $approval_send_options = {
-              to => [$manual_approval_notification_email],
-              image => [$c->path_to(qw( root static images banner-logo-player-small.png ))->stringify, "logo"],
-              subject => $subject,
-              plaintext => $c->maketext("email.plain-text.users.approve-user", $user->username, $c->config->{name}, $user->registration_reason, $c->uri_for_action("/users/view", [$user->url_key]), $c->uri_for_action("/users/approval_list")),
-              htmltext => [qw( html/generic/generic-message.ttkt :TT )],
-              template_vars => {
-                name => $enc_site_name,
-                home_uri => $c->uri_for("/"),
-                email_subject => $enc_subject,
-                email_html_message => $c->maketext("email.html.users.approve-user", $enc_username, $enc_site_name, $enc_reason, $c->uri_for_action("/users/view", [$user->url_key]), $c->uri_for_action("/users/approval_list")),
-              },
-            };
-            
-            # Email the approver
-            $c->model("Email")->send($approval_send_options);
-          }
-          
-          # Set the locale back if we changed it
-          $c->locale($original_locale) if $original_locale ne $user->locale;
-        }
-        
-        $c->response->redirect($redirect_uri);
-        $c->detach;
-        return;
+        $plain_text = $c->maketext("email.plain-text.users.activated.no-approval", $user->username, $c->config->{name}, $c->uri_for("/login"));
+        $html_text = $c->maketext("email.html.users.activated.no-approval", $enc_username, $enc_site_name, $c->uri_for("/login"));
       }
+      
+      # Email the user to tell them their account has been activated.
+      # Stash the email details
+      $c->stash({username => $user->username});
+      
+      # Set the locale before getting the email message text, but save the current locale so we can set it back afterwards
+      my $original_locale = $c->locale;
+      $c->locale($user->locale) if $user->locale ne $c->locale;
+      
+      # Do the encoding - these do it once for each element here, as this is quite an expensive task
+      my $subject = $c->maketext("email.subject.users.activated", $c->config->{name}, $user->username);
+      
+      # Set up the email send hash; we'll add to this if we're sending a HTML email
+      my $send_options = {
+        to => [$user->email_address, $user->username],
+        image => [$c->path_to(qw( root static images banner-logo-player-small.png ))->stringify, "logo"],
+        subject => $subject,
+        plaintext => $plain_text,
+      };
+      
+      if ( $user->html_emails ) {
+        my $enc_subject = $c->maketext("email.subject.users.activated", $enc_username, $enc_site_name, $c->uri_for("/login"));
+        
+        # Add the HTML parts of the email
+        $send_options->{htmltext} = [qw( html/generic/generic-message.ttkt :TT )];
+        $send_options->{template_vars} = {
+          name => $enc_site_name,
+          home_uri => $c->uri_for("/"),
+          email_subject => $enc_subject,
+          email_html_message => $html_text,
+        };
+      }
+      
+      # Email the user
+      $c->model("Email")->send($send_options);
+      
+      my $manual_approval_notification_email = $c->config->{Users}{manual_approval_notification_email} || undef;
+      
+      if ( $manual_approval and defined($manual_approval_notification_email) ) {
+        # We are manually approving and want notification emails for this.
+        # Setup the locale for this email
+        $c->locale($c->config->{Users}{manual_approval_notification_language}) if $c->locale ne $c->config->{Users}{manual_approval_notification_language};
+        
+        my $subject = $c->maketext("email.subject.users.approve-user", $c->config->{name}, $user->username);
+        my $enc_subject = $c->maketext("email.subject.users.approve-user", $enc_site_name, $enc_username);
+        my $enc_reason = encode_entities($user->registration_reason);
+        
+        # Line breaks in HTML reason
+        $enc_reason =~ s|(\r?\n)|<br />$1|g;
+        
+        my $approval_send_options = {
+          to => [$manual_approval_notification_email],
+          image => [$c->path_to(qw( root static images banner-logo-player-small.png ))->stringify, "logo"],
+          subject => $subject,
+          plaintext => $c->maketext("email.plain-text.users.approve-user", $user->username, $c->config->{name}, $user->registration_reason, $c->uri_for_action("/users/view", [$user->url_key]), $c->uri_for_action("/users/approval_list")),
+          htmltext => [qw( html/generic/generic-message.ttkt :TT )],
+          template_vars => {
+            name => $enc_site_name,
+            home_uri => $c->uri_for("/"),
+            email_subject => $enc_subject,
+            email_html_message => $c->maketext("email.html.users.approve-user", $enc_username, $enc_site_name, $enc_reason, $c->uri_for_action("/users/view", [$user->url_key]), $c->uri_for_action("/users/approval_list")),
+          },
+        };
+        
+        # Email the approver
+        $c->model("Email")->send($approval_send_options);
+      }
+      
+      # Set the locale back if we changed it
+      $c->locale($original_locale) if $original_locale ne $user->locale;
     } else {
-      # Activation key not recognised, error
-      $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["user", "activate-fail", {id => undef}, undef]);
-      $c->response->redirect( $c->uri_for_action("/users/activate",
-                                  {mid => $c->set_status_msg({error => $c->maketext("user.activation.error.key-incorrect")})}));
-      $c->detach;
-      return;
+      $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["user", "activation-fail", {id => $user->id}, $user->username]);
     }
+    
+    $c->response->redirect($redirect_uri);
+    $c->detach;
+    return;
   }
 }
 
@@ -1390,11 +1376,11 @@ sub do_login :Path("authenticate") {
           }
         } else {
           # Not yet activated and / or approved; error
-          push(@errors, $c->maketext("user.login.error.user-not-activated", $c->uri_for_action("/users/resend_activation", [$user->url_key]))) unless $user->activated;
+          push(@errors, $c->maketext("user.login.error.user-not-activated", $c->uri_for_action("/users/regenerate_activation_key", [$user->url_key]))) unless $user->activated;
           push(@errors, $c->maketext("user.login.error.user-not-approved", $c->uri_for("/info/contact"))) unless $user->approved;
           
           # Stash the values we've got so we can set them
-          $c->flash->{username}     = $username;
+          $c->flash->{username} = $username;
           $c->flash->{redirect_uri} = $redirect_uri;
           $c->response->redirect($c->uri_for("/login",
                                       {mid => $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success})}));
@@ -1477,8 +1463,6 @@ sub send_reset_link :Path("send-reset-link") {
     my $user = $c->model("DB::User")->find({email_address => $email_address});
     
     if ( defined($user) ) {
-      
-    
       # First check the invalid login attempts and see if we needed to validate the CAPTCHA
       if ( $c->config->{Google}{reCAPTCHA}{validate_on_username_forget} ) {
         my $captcha_result = $c->forward("TopTable::Controller::Root", "recaptcha");
@@ -1540,7 +1524,7 @@ sub send_reset_link :Path("send-reset-link") {
           to => [$user->email_address, $user->username],
           image => [$c->path_to(qw( root static images banner-logo-player-small.png ))->stringify, "logo"],
           subject => $subject,
-          plaintext => $c->maketext("email.plain-text.users.password-reset", $user->username, $c->config->{name}, $c->uri_for_action("/users/reset_password", [$user->password_reset_key]), $c->req->address),
+          plaintext => $c->maketext("email.plain-text.users.password-reset", $user->username, $c->config->{name}, $c->uri_for_action("/users/reset_password", [$user->url_key, $response->{password_reset_key}]), $c->req->address),
         };
         
         if ( $user->html_emails ) {
@@ -1555,7 +1539,7 @@ sub send_reset_link :Path("send-reset-link") {
             name => $enc_site_name,
             home_uri => $c->uri_for("/"),
             email_subject => $html_subject,
-            email_html_message => $c->maketext("email.html.users.password-reset", $enc_username, $enc_site_name, $c->uri_for_action("/users/reset_password", [$user->password_reset_key]), $c->req->address),
+            email_html_message => $c->maketext("email.html.users.password-reset", $enc_username, $enc_site_name, $c->uri_for_action("/users/reset_password", [$user->url_key, $response->{password_reset_key}]), $c->req->address),
           };
         }
         
@@ -1629,99 +1613,91 @@ Validate a password reset key, then display a form to reset the user's password.
 
 =cut
 
-sub reset_password :Path("reset-password") :Args(1) {
+sub reset_password :Chained("base") :PathPart("reset-password") :Args(1) {
   my ( $self, $c, $password_reset_key ) = @_;
+  my $user = $c->stash->{user};
   
-  # Validate the user from the password reset key
-  my $user = $c->model("DB::User")->find({password_reset_key => $password_reset_key});
-  
-  if ( defined( $user ) ) {
-    # Check the link hasn't expired
-    my $date_compare = DateTime->compare($user->password_reset_expires, $c->datetime_tz({time_zone => "UTC"}));
-    if ( $date_compare == 0 or $date_compare == 1 ) {
-      # Still valid
-      if ( $c->req->method eq "POST" ) {
-        # Post request, process the form submission
-        my $password = $c->req->body_params->{password};
-        my $confirm_password = $c->req->body_params->{confirm_password};
+  # Check we have a password reset expiry
+  if ( $c->req->method eq "POST" ) {
+    # Still valid
+    # Post request, process the form submission
+    my $password = $c->req->body_params->{password};
+    my $confirm_password = $c->req->body_params->{confirm_password};
+    
+    my $response = $user->reset_password({
+      password => $password,
+      confirm_password => $confirm_password,
+      password_reset_key => $password_reset_key,
+      logger => sub{ my $level = shift; $c->log->$level( @_ ); },
+    });
+    
+    my @errors = @{$response->{errors}};
+    my @warnings = @{$response->{warnings}};
+    my @info = @{$response->{info}};
+    my @success = @{$response->{success}};
+    
+    if ( $response->{completed} ) {
+      # No errors if we get here, so reset the password and notify the user
+      $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["user", "password-reset", {id => $user->id}, $user->username]);
+      
+      # Set the locale before getting the email message text, but save the current locale so we can set it back afterwards
+      my $original_locale = $c->locale;
+      $c->locale($user->locale) if $user->locale ne $c->locale;
+      
+      # Do the encoding - these do it once for each element here, as this is quite an expensive task
+      my $subject = $c->maketext("email.subject.users.password-reset-confirm", $c->config->{name});
+      
+      # Set up the email send hash; we'll add to this if we're sending a HTML email
+      my $send_options = {
+        to => [$user->email_address, $user->username],
+        image => [$c->path_to(qw( root static images banner-logo-player-small.png ))->stringify, "logo"],
+        subject => $subject,
+        plaintext => $c->maketext("email.plain-text.users.password-reset-confirm", $user->username, $c->config->{name}, $c->uri_for("/login")),
+      };
+      
+      if ( $user->html_emails ) {
+        # Encode the HTML bits
+        my $enc_site_name = encode_entities($c->config->{name});
+        my $enc_username = encode_entities($user->username);
+        my $html_subject = $c->maketext("email.subject.users.password-reset-confirm", $enc_site_name, $enc_username);
         
-        my $response = $user->reset_password($password, $confirm_password);
-        
-        my @errors = @{$response->{errors}};
-        my @warnings = @{$response->{warnings}};
-        my @info = @{$response->{info}};
-        my @success = @{$response->{success}};
-        
-        if ( $response->{completed} ) {
-          # No errors if we get here, so reset the password and notify the user
-          $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["user", "password-reset", {id => $user->id}, $user->username]);
-          
-          # Set the locale before getting the email message text, but save the current locale so we can set it back afterwards
-          my $original_locale = $c->locale;
-          $c->locale($user->locale) if $user->locale ne $c->locale;
-          
-          # Do the encoding - these do it once for each element here, as this is quite an expensive task
-          my $subject = $c->maketext("email.subject.users.password-reset-confirm", $c->config->{name});
-          
-          # Set up the email send hash; we'll add to this if we're sending a HTML email
-          my $send_options = {
-            to => [$user->email_address, $user->username],
-            image => [$c->path_to(qw( root static images banner-logo-player-small.png ))->stringify, "logo"],
-            subject => $subject,
-            plaintext => $c->maketext("email.plain-text.users.password-reset-confirm", $user->username, $c->config->{name}, $c->uri_for("/login")),
-          };
-          
-          if ( $user->html_emails ) {
-            # Encode the HTML bits
-            my $enc_site_name = encode_entities($c->config->{name});
-            my $enc_username = encode_entities($user->username);
-            my $html_subject = $c->maketext("email.subject.users.password-reset-confirm", $enc_site_name, $enc_username);
-            
-            # Add the HTML parts of the email
-            $send_options->{htmltext} = [qw( html/generic/generic-message.ttkt :TT )];
-            $send_options->{template_vars} = {
-              name => $enc_site_name,
-              home_uri => $c->uri_for("/"),
-              email_subject => $html_subject,
-              email_html_message => $c->maketext("email.html.users.password-reset-confirm", $enc_username, $enc_site_name, $c->uri_for("/login")),
-            };
-          }
-          
-          # Email the user
-          $c->model("Email")->send($send_options);
-          
-          # Set the locale back if we changed it
-          $c->locale($original_locale) if $original_locale ne $user->locale;
-        } else {
-          $c->response->redirect( $c->uri_for_action("/users/reset_password", [$password_reset_key],
-                                      {mid => $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success})}));
-          $c->detach;
-          return;
-        }
-        
-        # If we get this far, the password has changed, we just display a notice
-        $c->stash({
-          template => "html/users/forgot-password-changed.ttkt",
-          subtitle1 => $c->maketext("user.password-changed"),
-          user => $user,
-        });
-      } else {
-        # Get request, display the form
-        $c->stash({
-          template => "html/users/reset-password.ttkt",
-          subtitle1 => $c->maketext("user.forgot-password"),
-          form_action => $c->uri_for_action("/users/reset_password", [$password_reset_key]),
-        });
-        
-        $c->warn_on_non_https;
+        # Add the HTML parts of the email
+        $send_options->{htmltext} = [qw( html/generic/generic-message.ttkt :TT )];
+        $send_options->{template_vars} = {
+          name => $enc_site_name,
+          home_uri => $c->uri_for("/"),
+          email_subject => $html_subject,
+          email_html_message => $c->maketext("email.html.users.password-reset-confirm", $enc_username, $enc_site_name, $c->uri_for("/login")),
+        };
       }
+      
+      # Email the user
+      $c->model("Email")->send($send_options);
+      
+      # Set the locale back if we changed it
+      $c->locale($original_locale) if $original_locale ne $user->locale;
     } else {
-      # Expired.  Don't worry about deleting, this will be done in the housekeeping subs.
-      $c->detach(qw(TopTable::Controller::Root default));
+      $c->response->redirect( $c->uri_for_action("/users/reset_password", [$user->url_key, $password_reset_key],
+                                  {mid => $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success})}));
+      $c->detach;
+      return;
     }
+    
+    # If we get this far, the password has changed, we just display a notice
+    $c->stash({
+      template => "html/users/forgot-password-changed.ttkt",
+      subtitle1 => $c->maketext("user.password-changed"),
+      user => $user,
+    });
   } else {
-    # Not found, just give a 404
-    $c->detach(qw(TopTable::Controller::Root default));
+    # Get request, display the form
+    $c->stash({
+      template => "html/users/reset-password.ttkt",
+      subtitle1 => $c->maketext("user.forgot-password"),
+      form_action => $c->uri_for_action("/users/reset_password", [$user->url_key, $password_reset_key]),
+    });
+    
+    $c->warn_on_non_https;
   }
 }
 
