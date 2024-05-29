@@ -1560,28 +1560,30 @@ sub send_reset_link :Path("send-reset-link") {
         return;
       }
     } else {
-      # User not found - do not raise an error, but email the address entered, informing them.  Raising an error can inform a malicious user that the email address wasn't found
-      # Do the encoding - these do it once for each element here, as this is quite an expensive task
-      my $subject = $c->maketext("email.subject.users.password-reset.user-not-found", $c->config->{name});
-      
-      # Encode the HTML bits
-      my $enc_site_name = encode_entities($c->config->{name});
-      my $html_subject= $c->maketext("email.subject.users.password-reset.user-not-found", $enc_site_name);
-      
-      # Email the user
-      $c->model("Email")->send({
-        to => [$email_address],
-        image => [$c->path_to(qw( root static images banner-logo-player-small.png ))->stringify, "logo"],
-        subject => $subject,
-        plaintext => $c->maketext("email.plain-text.users.password-reset.user-not-found", $c->config->{name}, $c->req->address),
-        htmltext => [ qw( html/generic/generic-message.ttkt :TT ) ],
-        template_vars => {
-          name => $enc_site_name,
-          home_uri => $c->uri_for("/"),
-          email_subject => $html_subject,
-          email_html_message  => $c->maketext("email.html.users.password-reset.user-not-found", $enc_site_name, $c->req->address),
-        },
-      });
+      # User not found - do not raise an error, but email the address entered (if configured to do that), informing them.  Raising an error can inform a malicious user that the email address wasn't found
+      if ( $c->config->{Users}{forgot_password_email_unrecognised_user} ) {
+        # Do the encoding - these do it once for each element here, as this is quite an expensive task
+        my $subject = $c->maketext("email.subject.users.password-reset.user-not-found", $c->config->{name});
+        
+        # Encode the HTML bits
+        my $enc_site_name = encode_entities($c->config->{name});
+        my $html_subject= $c->maketext("email.subject.users.password-reset.user-not-found", $enc_site_name);
+        
+        # Email the user
+        $c->model("Email")->send({
+          to => [$email_address],
+          image => [$c->path_to(qw( root static images banner-logo-player-small.png ))->stringify, "logo"],
+          subject => $subject,
+          plaintext => $c->maketext("email.plain-text.users.password-reset.user-not-found", $c->config->{name}, $c->req->address),
+          htmltext => [ qw( html/generic/generic-message.ttkt :TT ) ],
+          template_vars => {
+            name => $enc_site_name,
+            home_uri => $c->uri_for("/"),
+            email_subject => $html_subject,
+            email_html_message  => $c->maketext("email.html.users.password-reset.user-not-found", $enc_site_name, $c->req->address),
+          },
+        });
+      }
       
       # Log that we've had a request to reset an invalid account
       $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["user", "password-reset-invalid", {id => undef}, $email_address]);

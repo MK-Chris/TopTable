@@ -5193,7 +5193,7 @@ msgid "user.user-identification"
 msgstr "User identification"
 
 msgid "user.forgot-password.reset-link-sent"
-msgstr "Thank you for filling out the form.  You will now receive further instructions in an email; if your email address is registered, this will include your username and instructions to reset your account password."
+msgstr "Thank you for filling out the form.  You will now receive further instructions in an email, if your email address is registered."
 
 msgid "user.password-changed"
 msgstr "Password changed"
@@ -5993,7 +5993,7 @@ msgid "system-event-log.description.forgot-password"
 msgstr "Password reset link sent for %1%2."
 
 msgid "system-event-log.description.forgot-password-invalid"
-msgstr "Password reset attempted for invalid account using email: %1."
+msgstr "Password reset attempted for invalid account using email: %1%2."
 
 msgid "system-event-log.description.reset-password"
 msgstr "Password reset for %1%2."
@@ -6002,7 +6002,7 @@ msgid "system-event-log.description.login"
 msgstr "%1%2 logged in."
 
 msgid "system-event-log.description.login-failed"
-msgstr "Failed login attempt using username '%1'%2."
+msgstr "Failed login attempt using username %1%2."
 
 msgid "system-event-log.description.logout"
 msgstr "%1%2 logged out."
