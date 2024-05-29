@@ -232,6 +232,7 @@ __PACKAGE__->table("users");
 
   data_type: 'tinyint'
   default_value: 1
+  extra: {unsigned => 1}
   is_nullable: 0
 
 =head2 approved_by
@@ -407,7 +408,12 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
   },
   "approved",
-  { data_type => "tinyint", default_value => 1, is_nullable => 0 },
+  {
+    data_type => "tinyint",
+    default_value => 1,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
   "approved_by",
   {
     data_type => "integer",
@@ -732,8 +738,8 @@ Composing rels: L</user_roles> -> role
 __PACKAGE__->many_to_many("roles", "user_roles", "role");
 
 
-# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-05-24 11:53:09
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:0rI1GLFZBUwV0g/Giki9LQ
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-05-29 08:34:29
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:fT2pA0xTl0728wde3Jf+3g
 
 use DateTime;
 use DateTime;
