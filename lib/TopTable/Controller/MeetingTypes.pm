@@ -49,9 +49,12 @@ Chain base for getting the meeting type ID or URL key and checking it.
 sub base :Chained("/") :PathPart("meeting-types") :CaptureArgs(1) {
   my ( $self, $c, $id_or_key ) = @_;
   
-  my $meeting_type = $c->model("DB::MeetingType")->find_id_or_url_key( $id_or_key );
+  # Check that we are authorised to view meeting types
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["meetingtype_view", $c->maketext("user.auth.view-meeting-types"), 1]);
   
-  if ( defined( $meeting_type ) ) {
+  my $meeting_type = $c->model("DB::MeetingType")->find_id_or_url_key($id_or_key);
+  
+  if ( defined($meeting_type) ) {
     my $encoded_type = encode_entities($meeting_type->name);
     
     $c->stash({
@@ -80,11 +83,11 @@ sub base_list :Chained("/") :PathPart("meeting-types") :CaptureArgs(0) {
   my ( $self, $c ) = @_;
   my $site_name = $c->stash->{enc_site_name};
   
-  # Check that we are authorised to view clubs
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["meeting_view", $c->maketext("user.auth.view-meetings"), 1] );
+  # Check that we are authorised to view meeting types
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["meetingtype_view", $c->maketext("user.auth.view-meeting-types"), 1]);
   
   # Check the authorisation to edit clubs we can display the link if necessary
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", [[qw( meetingtype_edit meetingtype_delete meetingtype_create )], "", 0] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", [[qw( meetingtype_edit meetingtype_delete meetingtype_create )], "", 0]);
   
   # Page description
   $c->stash({
@@ -118,7 +121,7 @@ sub list_specific_page :Chained("base_list") :PathPart("page") :Args(1) {
   my ( $self, $c, $page_number ) = @_;
   
   # If the page number is less then 1, not defined, false, or not a number, set it to 1
-  $page_number = 1 if !defined( $page_number ) or !$page_number or $page_number !~ /^\d+$/ or $page_number < 1;
+  $page_number = 1 if !defined($page_number) or !$page_number or $page_number !~ /^\d+$/ or $page_number < 1;
   
   if ( $page_number == 1 ) {
     $c->stash({canonical_uri => $c->uri_for_action("/meeting-types/list_first_page")});
@@ -478,7 +481,7 @@ sub process_form :Private {
     $redirect_uri = $c->uri_for_action("/meeting-types/view_first_page", [$meeting_type->url_key], {mid => $mid});
     
     # Completed, so we log an event
-    $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["meeting-type", $action, {id => $meeting_type->id}, $meeting_type->name] );
+    $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["meeting-type", $action, {id => $meeting_type->id}, $meeting_type->name]);
   } else {
     # Not complete - check if we need to redirect back to the create or view page
     if ( $action eq "create" ) {

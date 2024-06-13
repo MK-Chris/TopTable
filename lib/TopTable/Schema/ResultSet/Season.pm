@@ -595,7 +595,7 @@ sub create_or_edit {
   }
   
   # Filter the HTML from the rules
-  $rules = TopTable->model("FilterHTML")->filter($rules, "textarea");
+  #$rules = TopTable->model("FilterHTML")->filter($rules, "textarea");
   $response->{fields}{rules} = $rules;
   
   if ( scalar @{$response->{errors}} == 0 ) {

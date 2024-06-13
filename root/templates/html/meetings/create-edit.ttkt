@@ -1,234 +1,219 @@
-<form method="post" action="[% form_action %]">
 [%
 USE zeroes = format("%02d");
-date = c.flash.date_and_start_time.dmy("/") OR meeting.date_and_start_time.dmy("/") OR event_season.date_and_start_time.dmy("/");
-date_html = FILTER html_entity; date; END;
+IF c.flash.show_flashed;
+  start_date = c.flash.start_date;
+  end_date = c.flash.end_date;
+  type = c.flash.type;
+  venue = c.flash.venue;
+  start_hour = start_date.hour;
+  start_minute = start_date.minute;
+  all_day = c.flash.all_day;
+  end_hour = end_date.hour;
+  end_minute = end_date.minute;
+ELSE;
+  start_date = meeting.start_date_time;
+  end_date = meeting.end_date_time;
+  CALL start_date.set_time_zone(c.timezone);
+  CALL end_date.set_time_zone(c.timezone);
+  type = meeting.type;
+  venue = meeting.venue;
+  start_hour = start_date.hour;
+  start_minute = start_date.minute;
+  all_day = event_season.all_day;
+  end_hour = end_date.hour;
+  end_minute = end_date.minute;
+END;
+
+IF start_date;
+  SET start_date = c.i18n_datetime_format_date.format_datetime(start_date);
+END;
+
+IF end_date;
+  SET start_date = c.i18n_datetime_format_date.format_datetime(end_date);
+END;
 -%]
+<form method="post" action="[% form_action %]">
 <fieldset>
   <legend>[% c.maketext("meetings.form.legend.meeting-details") %]</legend>
-  <div class="form-column-single">
 [%
 UNLESS is_event;
 -%]
-    <div class="label-field-container">
-      <label for="type">[% c.maketext("meetings.field.type") %]</label>
-      <div class="field-container">
-        <select id="type" name="type" data-placeholder="[% c.maketext("meetings.field.type") %]">
-          <option value=""></option>
+  <div class="label-field-container">
+    <label for="type">[% c.maketext("meetings.field.type") %]</label>
+    <div class="field-container">
+      <select id="type" name="type" data-placeholder="[% c.maketext("meetings.field.type") %]">
+        <option value=""></option>
 [%
-  IF c.flash.form_errored;
-    SET type_check = c.flash.type;
-  ELSE;
-    SET type_check = meeting.type.id;
-  END;
-  
-  FOREACH meeting_type IN meeting_types;
-    IF meeting_type.id == type_check;
+  WHILE (meeting_type = meeting_types.next);
+    IF meeting_type.id == type.id;
       SET selected = ' selected="selected"';
     ELSE;
       SET selected = '';
     END;
 -%]
-          <option value="[% meeting_type.id %]"[% selected %]>[% meeting_type.name | html_entity %]</option>
+        <option value="[% meeting_type.id %]"[% selected %]>[% meeting_type.name | html_entity %]</option>
 [%
   END;
 -%]
-        </select>
-      </div>
-      <div class="clear-fix"></div>
+      </select>
     </div>
+    <div class="clear-fix"></div>
+  </div>
 [%
 END;
 -%]
     
-    <div class="label-field-container">
-      <label for="venue">[% c.maketext("meetings.field.venue") %]</label>
-      <div class="field-container">
-        <select id="venue" name="venue" data-placeholder="[% c.maketext("meetings.field.venue") %]">
-          <option value=""></option>
+  <div class="label-field-container">
+    <label for="venue">[% c.maketext("meetings.field.venue") %]</label>
+    <div class="field-container">
+      <select id="venue" name="venue" data-placeholder="[% c.maketext("meetings.field.venue") %]">
+        <option value=""></option>
 [%
-IF c.flash.form_errored;
-  SET venue_check = c.flash.venue;
-ELSIF is_event;
-  SET venue_check = event_season.venue.id;
-ELSE;
-  SET venue_check = meeting.venue.id;
-END;
-
-FOREACH venue IN venues;
-  IF venue.id == venue_check;
+WHILE (venue_loop = venues.next);
+  IF venue.id == venue_loop.id;
     SET selected = ' selected="selected"';
   ELSE;
     SET selected = '';
   END;
 -%]
-          <option value="[% venue.id %]"[% selected %]>[% venue.name | html_entity %]</option>
+        <option value="[% venue.id %]"[% selected %]>[% venue.name | html_entity %]</option>
 [%
 END;
 -%]
-        </select>
-      </div>
-      <div class="clear-fix"></div>
+      </select>
     </div>
-    
-    <div class="label-field-container">
-      <label for="token-input-organiser">[% c.maketext("meetings.field.organiser") %]</label>
-      <div class="field-container">
-        <input type="text" id="organiser" name="organiser" value="" />
-      </div>
-      <div class="clear-fix"></div>
+    <div class="clear-fix"></div>
+  </div>
+  
+  <div class="label-field-container">
+    <label for="token-input-organiser">[% c.maketext("meetings.field.organiser") %]</label>
+    <div class="field-container">
+      <input type="text" id="organiser" name="organiser" value="" />
     </div>
-    
-    <div class="label-field-container">
-      <label for="date">[% c.maketext("meetings.field.date") %]</label>
-      <div class="field-container">
-        <input type="text" id="date" name="date" class="date_picker" autocomplete="off" value="[% date_html %]" />
-      </div>
-      <div class="clear-fix"></div>
+    <div class="clear-fix"></div>
+  </div>
+  
+  <div class="label-field-container" id="date-container">
+    <label for="start_date">[% c.maketext("events.field.start-date") %]</label>
+    <div class="field-container">
+      <input type="text" id="start_date" name="start_date" class="date_picker" autocomplete="off" value="[% start_date %]" />
     </div>
-    
-    <div class="label-field-container">
-      <label for="start_hour">[% c.maketext("meetings.field.start-time") %]</label>
-      <div class="field-container">
-        <select class="time" id="start_hour" name="start_hour" data-placeholder="[% c.maketext("meetings.field.hour") %]">
-          <option value=""></option>
+    <div class="clear-fix"></div>
+  </div>
+  
+  <div class="label-field-container" id="start-time-container">
+    <label for="start_hour">[% c.maketext("events.field.start-time") %]</label>
+    <div class="field-container">
+      <select class="time" id="start_hour" name="start_hour" data-placeholder="[% c.maketext("events.field.hour") %]">
+        <option value=""></option>
 [%
-IF c.flash.form_errored;
-  check_hour = c.flash.start_hour;
-ELSIF is_event;
-  check_hour = event_season.date_and_start_time.hour;
-ELSE;
-  check_hour = meeting.date_and_start_time.hour;
-END;
-
 SET counter = 0;
 WHILE counter <= 23;
-  SET display = zeroes( counter );
+  SET counter_display = zeroes(counter);
   
   # Now set selected text if needed;
-  IF display == check_hour;
-    SET SELECTED = ' selected="selected"';
+  IF counter == start_hour;
+    SET selected = ' selected="selected"';
   ELSE;
-    SET SELECTED = '';
+    SET selected = '';
   END;
 -%]
-          <option value="[% display %]"[% SELECTED %]>[% display %]</option>
+        <option value="[% counter_display %]"[% selected %]>[% counter_display %]</option>
 [%
   SET counter = counter + 1;
 END;
 -%]
-        </select>
-        :
-        <select class="time" id="start_minute" name="start_minute" data-placeholder="[% c.maketext("meetings.field.minute") %]">
-          <option value=""></option>
+      </select>
+      :
+      <select class="time" id="start_minute" name="start_minute" data-placeholder="[% c.maketext("events.field.minute") %]">
+        <option value=""></option>
 [%
-IF c.flash.form_errored;
-  check_minute = c.flash.start_minute;
-ELSIF is_event;
-  check_minute = event_season.date_and_start_time.minute;
-ELSE;
-  check_minute = meeting.date_and_start_time.minute;
-END;
-
 SET counter = 0;
 WHILE counter <= 59;
-  SET display = zeroes( counter );
+  SET counter_display = zeroes(counter);
   
   # Now set selected text if needed;
-  IF display == check_minute;
-    SET SELECTED = ' selected="selected"';
+  IF counter == start_minute;
+    SET selected = ' selected="selected"';
   ELSE;
-    SET SELECTED = '';
+    SET selected = '';
   END;
 -%]
-          <option value="[% display %]"[% SELECTED %]>[% display %]</option>
+        <option value="[% counter_display %]"[% selected %]>[% counter_display %]</option>
 [%
   SET counter = counter + 1;
 END;
 -%]
-        </select>
-      </div>
-      <div class="clear-fix"></div>
+      </select>
     </div>
+    <div class="clear-fix"></div>
+  </div>
+  
+  <div id="all-day-container">
 [%
-IF c.flash.form_errored;
-  SET all_day_check = c.flash.all_day;
-ELSIF is_event;
-  SET all_day_check = event_season.all_day;
-ELSE;
-  SET all_day_check = meeting.all_day;
-END;
-
-IF all_day_check;
+IF all_day;
   SET checked = ' checked="checked"';
 ELSE;
   SET checked = '';
 END;
 -%]
-    <input type="checkbox" id="all_day" name="all_day" value="1"[% checked %] data-label="[% c.maketext("meetings.field.duration-all-day") %]" />
-    
-    <div class="label-field-container" id="finish-time-container">
-      <label for="finish_hour">[% c.maketext("meetings.field.finish-time") %]</label>
-      <div class="field-container">
-        <select class="time" id="finish_hour" name="finish_hour" data-placeholder="[% c.maketext("meetings.field.hour") %]">
-          <option value=""></option>
+    <input type="checkbox" id="all_day" name="all_day" value="1"[% checked %] data-label="[% c.maketext("events.field.duration-all-day") %]" />
+  </div>
+  
+  <div class="label-field-container" id="date-container">
+    <label for="end_date">[% c.maketext("events.field.end-date") %]</label>
+    <div class="field-container">
+      <input type="text" id="end_date" name="end_date" class="date_picker" autocomplete="off" value="[% end_date %]" />
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+  
+  <div class="label-field-container" id="finish-time-container">
+    <label for="end_hour">[% c.maketext("events.field.finish-time") %]</label>
+    <div class="field-container">
+      <select class="time" id="end_hour" name="end_hour" data-placeholder="[% c.maketext("events.field.hour") %]">
+        <option value=""></option>
 [%
-IF c.flash.form_errored;
-  check_hour = c.flash.finish_hour;
-ELSIF is_event;
-  check_hour = event_season.finish_time.hour;
-ELSE;
-  check_hour = meeting.finish_time.hour;
-END;
-
 SET counter = 0;
 WHILE counter <= 23;
-  SET display = zeroes( counter );
+  SET counter_display = zeroes(counter);
   
   # Now set selected text if needed;
-  IF display == check_hour;
-    SET SELECTED = ' selected="selected"';
+  IF counter == end_hour;
+    SET selected = ' selected="selected"';
   ELSE;
-    SET SELECTED = '';
+    SET selected = '';
   END;
 -%]
-          <option value="[% display %]"[% SELECTED %]>[% display %]</option>
+        <option value="[% counter_display %]"[% selected %]>[% counter_display %]</option>
 [%
   SET counter = counter + 1;
 END;
 -%]
-        </select>
-        :
-        <select class="time" id="finish_minute" name="finish_minute" data-placeholder="[% c.maketext("meetings.field.minute") %]">
-          <option value=""></option>
+      </select>
+      :
+      <select class="time" id="end_minute" name="end_minute" data-placeholder="[% c.maketext("events.field.minute") %]">
+        <option value=""></option>
 [%
-IF c.flash.form_errored;
-  check_minute = c.flash.finish_minute;
-ELSIF is_event;
-  check_minute = event_season.finish_time.minute;
-ELSE;
-  check_minute = meeting.finish_time.minute;
-END;
 SET counter = 0;
 WHILE counter <= 59;
-  SET display = zeroes( counter );
+  SET counter_display = zeroes(counter);
   
   # Now set selected text if needed;
-  IF display == check_minute;
-    SET SELECTED = ' selected="selected"';
+  IF counter == end_minute;
+    SET selected = ' selected="selected"';
   ELSE;
-    SET SELECTED = '';
+    SET selected = '';
   END;
 -%]
-          <option value="[% display %]"[% SELECTED %]>[% display %]</option>
+        <option value="[% counter_display %]"[% selected %]>[% counter_display %]</option>
 [%
   SET counter = counter + 1;
 END;
 -%]
-        </select>
-      </div>
-      <div class="clear-fix"></div>
+      </select>
     </div>
+    <div class="clear-fix"></div>
   </div>
 </fieldset>
 

@@ -287,15 +287,15 @@ sub create :Local {
   # Get venues and people to list
   $c->stash({
     template => "html/news/create-edit.ttkt",
+    scripts => [qw( ckeditor-iframely-standard )],
+    ckeditor_selectors => [qw( article )],
     external_scripts => [
       $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
       $c->uri_for("/static/script/standard/prettycheckable.js"),
       $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
       $c->uri_for("/static/script/standard/chosen.js"),
       $c->uri_for("/static/script/standard/datepicker.js"),
-      $c->uri_for("/static/script/plugins/ckeditor/ckeditor.js"),
-      $c->uri_for("/static/script/plugins/ckeditor/adapters/jquery.js"),
-      $c->uri_for("/static/script/standard/ckeditor.js"),
+      $c->uri_for("/static/script/plugins/ckeditor5/ckeditor.js"),
       $c->uri_for("/static/script/news/create-edit.js", {v => 2}),
     ],
     external_styles => [
@@ -359,15 +359,15 @@ sub edit :Private {
   # Get venues and people to list
   $c->stash({
     template => "html/news/create-edit.ttkt",
+    scripts => [qw( ckeditor-iframely-standard )],
+    ckeditor_selectors => [qw( article )],
     external_scripts => [
       $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
       $c->uri_for("/static/script/standard/prettycheckable.js"),
       $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
       $c->uri_for("/static/script/standard/chosen.js"),
       $c->uri_for("/static/script/standard/datepicker.js"),
-      $c->uri_for("/static/script/plugins/ckeditor/ckeditor.js"),
-      $c->uri_for("/static/script/plugins/ckeditor/adapters/jquery.js"),
-      $c->uri_for("/static/script/standard/ckeditor.js"),
+      $c->uri_for("/static/script/plugins/ckeditor5/ckeditor.js"),
       $c->uri_for("/static/script/news/create-edit.js", {v => 2}),
     ],
     external_styles => [

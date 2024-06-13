@@ -1,15 +1,11 @@
-[% # This is a TT comment. -%]
-[% # Note That the '-' at the beginning or end of TT code  -%]
-[% # "chomps" the whitespace/newline at that end of the    -%]
-[% # output (use View Source in browser to see the effect) -%]
 <ul class="option-list">
 [%
 USE zeroes = format("%02d");
 FOREACH day IN display_options;
   SET date = day.scheduled_date;
-  CALL date.set_locale( c.locale );
-  SET month       = zeroes( date.month );
-  SET day_number  = zeroes( date.day );
+  CALL date.set_locale(c.locale);
+  SET month = zeroes(date.month);
+  SET day_number = zeroes(date.day);
 -%]
   <li>
 [%

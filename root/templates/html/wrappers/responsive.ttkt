@@ -109,24 +109,24 @@ IF external_styles;
 END;
 -%]
 
-<!--<script type="text/javascript" src="[% c.uri_for("/static/script/jquery-1.12.4.min.js") %]"></script>-->
-<script type="text/javascript" src="[% c.uri_for("/static/script/jquery-3.7.1.min.js") %]"></script>
-<!--<script type="text/javascript" src="https://code.jquery.com/jquery-migrate-3.4.1.min.js"></script>-->
-<script type="text/javascript" src="[% c.uri_for("/static/script/plugins/jquery-ui/jquery-ui-1-13.2.min.js") %]"></script>
-<script type="text/javascript" src="[% c.uri_for('/static/script/plugins/smartmenus/jquery.smartmenus.min.v1.1.1.js') %]"></script>
-<script type="text/javascript" src="[% c.uri_for('/static/script/plugins/smartmenus/sm-menu-toggle.js') %]"></script>
-<script type="text/javascript" src="[% c.uri_for('/static/script/plugins/smartmenus/sm-menu-resize.js') %]"></script>
-<script type="text/javascript" src="[% c.uri_for('/static/script/plugins/cookie/jquery.cookie.js') %]"></script>
-<script type="text/javascript" src="[% c.uri_for('/static/script/plugins/touch-punch/jquery.ui.touch-punch.min.js') %]"></script>
-<script type="text/javascript" src="[% c.uri_for('/static/plugins/jquery-scrollto/jquery-scrollto.js') %]"></script>
-<script type="text/javascript" src="[% c.uri_for('/static/script/plugins/ihavecookies/jquery.ihavecookies.min.js') %]"></script>
+<!--<script src="[% c.uri_for("/static/script/jquery-1.12.4.min.js") %]"></script>-->
+<script src="[% c.uri_for("/static/script/jquery-3.7.1.min.js") %]"></script>
+<!--<script src="https://code.jquery.com/jquery-migrate-3.4.1.min.js"></script>-->
+<script src="[% c.uri_for("/static/script/plugins/jquery-ui/jquery-ui-1-13.2.min.js") %]"></script>
+<script src="[% c.uri_for('/static/script/plugins/smartmenus/jquery.smartmenus.min.v1.1.1.js') %]"></script>
+<script src="[% c.uri_for('/static/script/plugins/smartmenus/sm-menu-toggle.js') %]"></script>
+<script src="[% c.uri_for('/static/script/plugins/smartmenus/sm-menu-resize.js') %]"></script>
+<script src="[% c.uri_for('/static/script/plugins/cookie/jquery.cookie.js') %]"></script>
+<script src="[% c.uri_for('/static/script/plugins/touch-punch/jquery.ui.touch-punch.min.js') %]"></script>
+<script src="[% c.uri_for('/static/plugins/jquery-scrollto/jquery-scrollto.js') %]"></script>
+<script src="[% c.uri_for('/static/script/plugins/ihavecookies/jquery.ihavecookies.min.js') %]"></script>
 
-<script type="text/javascript" src="[% c.uri_for("/static/script/standard/main.js", {v => 4}) %]"></script>
+<script src="[% c.uri_for("/static/script/standard/main.js", {v => 4}) %]"></script>
 [%
 IF external_scripts;
   FOREACH script IN external_scripts;
 -%]
-<script type="text/javascript" src="[% script %]"></script>
+<script src="[% script %]"></script>
 [%
   END;
 END;
@@ -380,7 +380,7 @@ END;
 [%
   IF authorisation.meeting_view;
 -%]
-      <li><a href="[% c.uri_for("/meetings") %]" title="[% c.maketext("menu.title.meetings") %]">[% c.maketext("menu.text.meeting") %]</a></li>
+      <li><a href="[% c.uri_for("/meetings") %]" title="[% c.maketext("menu.title.meetings") %]">[% c.maketext("menu.text.meetings") %]</a></li>
 [%
   END;
 -%]
@@ -540,7 +540,7 @@ END;
 # a menu option for it unless these permissions are present.
 # Not an ideal solution, but I can't think of a better way, as basically anyone could have permissions to view templates quite legitimately and we don't want an admin
 # menu option for everyone.
-IF authorisation.match_update OR authorisation.user_approve_new OR authorisation.admin_issue_bans OR authorisation.role_create OR authorisation.role_edit OR authorisation.role_delete OR authorisation.person_create;
+IF authorisation.match_update OR authorisation.user_approve_new OR authorisation.admin_issue_bans OR authorisation.role_create OR authorisation.role_edit OR authorisation.role_delete OR authorisation.person_create OR authorisation.meetingtype_view;
 -%]
   <li><a href="[% c.uri_for("/admin") %]" title="[% c.maketext("menu.text.admin") %]">[% c.maketext("menu.text.admin") %]</a>
     <ul>
@@ -611,6 +611,29 @@ IF authorisation.match_update OR authorisation.user_approve_new OR authorisation
         <ul>
           <li><a href="[% c.uri_for("/people/create") %]" title="[% c.maketext("admin.create-object", c.maketext("object.singular.people")) %]">[% c.maketext("admin.create") %]</a></li>
           <li><a href="[% c.uri_for("/people/import") %]" title="[% c.maketext("admin.import-object", c.maketext("object.plural.people")) %]">[% c.maketext("admin.import") %]</a></li>
+        </ul>
+      </li>
+[%
+  END;
+  IF authorisation.meetingtype_view;
+-%]
+      <li>
+        <a href="[% c.uri_for("/meeting-types") %]" title="[% c.maketext("menu.text.meeting-types") %]">[% c.maketext("menu.text.meeting-types") %]</a>
+        <ul>
+[%
+    IF nav_meeting_types.size;
+      FOREACH meeting_type IN nav_meeting_types;
+-%]
+          <li><a href="[% c.uri_for_action("/meeting-types/view_first_page", [meeting_type.url_key]) %]" title="[% meeting_type.name | html_entity %]">[% meeting_type.name | html_entity %]</a></li>
+[%
+      END;
+      IF authorisation.meetingtype_create;
+-%]
+          <li><a href="[% c.uri_for_action("/meeting-types/create") %]" title="[% c.maketext("admin.create-object", c.maketext("object.singular.meeting-types")) %]">[% c.maketext("admin.create") %]</a></li>
+[%
+      END;
+    END;
+-%]
         </ul>
       </li>
 [%

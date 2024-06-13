@@ -30,7 +30,5 @@ $(document).ready(function() {
     
     $("#pin_expiry_hour").trigger("chosen:updated");
     $("#pin_expiry_minute").trigger("chosen:updated");
-  
   });
-  
 });

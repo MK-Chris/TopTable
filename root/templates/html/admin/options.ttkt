@@ -27,11 +27,10 @@ IF authorisation.user_approve_new;
   <li class="heading"><a href="[% c.uri_for("/roles") %]">[% c.maketext("menu.text.roles") %]</a></li>
 [%
 END;
-IF authorisation.user_approve_new;
+IF authorisation.meetingtype_view;
 -%]
-  <li class="heading">[% c.maketext("menu.text.person") %]</li>
-  <li><a href="[% c.uri_for("/people/create") %]">[% c.maketext("admin.create") %]</a></li>
-  <li><a href="[% c.uri_for("/people/import") %]">[% c.maketext("admin.import") %]</a></li>
+  <li class="heading"><a href="[% c.uri_for("/meeting-types") %]">[% c.maketext("menu.text.meeting-types") %]</a></li>
+  <li><a href="[% c.uri_for("/meeting-types/create") %]">[% c.maketext("admin.create") %]</a></li>
 [%
 END;
 -%]

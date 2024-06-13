@@ -308,11 +308,12 @@ sub create :Local {
     # Stash everything we need in the template
     $c->stash({
       template => "html/seasons/create-edit.ttkt",
+      scripts => [qw( ckeditor-iframely-standard )],
+      ckeditor_selectors => [qw( rules )],
       external_scripts => [
         $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
         $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
-        $c->uri_for("/static/script/plugins/ckeditor/ckeditor.js"),
-        $c->uri_for("/static/script/plugins/ckeditor/adapters/jquery.js"),
+        $c->uri_for("/static/script/plugins/ckeditor5/ckeditor.js"),
         $c->uri_for("/static/script/standard/chosen.js"),
         $c->uri_for("/static/script/standard/prettycheckable.js"),
         $c->uri_for_action("/seasons/create_edit_js"),

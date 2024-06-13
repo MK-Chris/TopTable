@@ -177,9 +177,30 @@ Get a single specified season associated with this event.
 =cut
 
 sub single_season {
-  my ( $self, $season ) = @_;
+  my $self = shift;
+  my ( $season ) = @_;
   
   return $self->find_related("event_seasons", {season => $season->id});
+}
+
+=head2 can_edit_details
+
+Check whether we can edit details (essentially if we have an instance of the event in the current season).
+
+=cut
+
+sub can_edit_details {
+  my $self = shift;
+  my $schema = $self->result_source->schema;
+  my $current_season = $schema->resultset("Season")->get_current;
+  
+  if ( defined($current_season) ) {
+    # IF there's an instance this season, we can edit the details of it; if there's not, we can't
+    return defined($self->single_season($current_season)) ? 1 : 0;
+  } else {
+    # No current season, can't edit details
+    return 0;
+  }
 }
 
 =head2 can_delete
@@ -189,7 +210,7 @@ Check whether the even can be deleted.
 =cut
 
 sub can_delete {
-  my ( $self ) = @_;
+  my $self = shift;
   
   ## NEEDS WRITING
   return 1;
@@ -202,7 +223,8 @@ Checks the club can be deleted (via can_delete) and then performs the deletion.
 =cut
 
 sub check_and_delete {
-  my ( $self, $params ) = @_;
+  my $self = shift;
+  my ( $params ) = @_;
   # Setup schema / logging
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
@@ -245,7 +267,7 @@ Determines whether the event type is editable by searching for previous seasons
 =cut
 
 sub can_edit_event_type {
-  my ( $self ) = @_;
+  my $self = shift;
   
   # First search for this event in previous (completed) seasons
   my $previous_events = $self->search_related("event_seasons", {
@@ -269,7 +291,7 @@ sub can_edit_event_type {
       }
     });
     
-    return 0 if defined( $tournament_matches_started );
+    return 0 if $tournament_matches_started->count;
   } elsif ( $self->event_type->id eq "meeting" ) {
     my $meetings_attended = $self->search_related("event_seasons", {}, {
       select => ["name", {count => "meeting_attendees.person"}],

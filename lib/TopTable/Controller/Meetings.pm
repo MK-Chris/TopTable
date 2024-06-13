@@ -31,11 +31,11 @@ sub auto :Private {
   $c->load_status_msgs;
   
   # The title bar will always have
-  $c->stash({subtitle1 => $c->maketext("menu.text.meeting")});
+  $c->stash({subtitle1 => $c->maketext("menu.text.meetings")});
   
   push(@{$c->stash->{breadcrumbs}}, {
     path => $c->uri_for("/meetings"),
-    label => $c->maketext("menu.text.meeting"),
+    label => $c->maketext("menu.text.meetings"),
   });
 }
 
@@ -53,21 +53,21 @@ sub base_by_type_and_date :Chained("/") :PathPart("meetings") :CaptureArgs(4) {
     date => {year => $year, month => $month, day => $day},
   });
   
-  if ( defined( $meeting ) ) {
+  if ( defined($meeting) ) {
     my $encoded_meeting_type = encode_entities($meeting->type->name);
     
     $c->stash({
       meeting => $meeting,
-      is_event => $meeting->is_event,
+      is_event => 0, # Can't be an event if there's a type / date combination
       encoded_meeting_type => $encoded_meeting_type,
       subtitle1 => $encoded_meeting_type,
     });
     
     # Push the clubs list page on to the breadcrumbs
     push(@{$c->stash->{breadcrumbs}}, {
-      path => $c->uri_for_action("/meetings/view_by_type_and_date", [$meeting->type->url_key, $meeting->date_and_start_time->year, sprintf("%02d", $meeting->date_and_start_time->month), sprintf("%02d", $meeting->date_and_start_time->day)]),
+      path => $c->uri_for_action("/meetings/view_by_type_and_date", [$meeting->type->url_key, $meeting->start_date_time->year, sprintf("%02d", $meeting->start_date_time->month), sprintf("%02d", $meeting->start_date_time->day)]),
       label => $encoded_meeting_type,
-    }) unless $meeting->is_event;
+    });
   } else {
     $c->detach(qw(TopTable::Controller::Root default));
   }
@@ -96,7 +96,7 @@ sub base_by_id :Chained("/") :PathPart("meetings") :CaptureArgs(1) {
     
     # Push the clubs list page on to the breadcrumbs
     push(@{$c->stash->{breadcrumbs}}, {
-      path => $c->uri_for_action("/meetings/view_by_type_and_date", [ $meeting->type->url_key, $meeting->date_and_start_time->year, sprintf( "%02d", $meeting->date_and_start_time->month ), sprintf( "%02d", $meeting->date_and_start_time->day ) ]),
+      path => $c->uri_for_action("/meetings/view_by_type_and_date", [$meeting->type->url_key, $meeting->start_date_time->year, sprintf("%02d", $meeting->start_date_time->month), sprintf("%02d", $meeting->start_date_time->day)]),
       label => encode_entities( $meeting->type->name ),
     }) unless $meeting->is_event;
   } else {
@@ -234,32 +234,19 @@ sub view :Private {
   my ( $edit_uri, $delete_uri, $edit_auth_code, $delete_auth_code, $name, $meeting );
   
   if ( $is_event ) {
-    $meeting = $event_season->event_detail if defined( $event_season );
-    $c->stash({meeting => $meeting});
+    # Event, redirect to the event view
+    $c->response->redirect($c->uri_for_action("/events/view_current_season", [$event->url_key]));
   } else {
     $meeting = $c->stash->{meeting};
   }
   
-  my $canonical_uri = $c->stash->{canonical_uri};
-  if ( $is_event ) {
-    $edit_uri = $c->uri_for_action("/events/edit", [$event->url_key]);
-    $edit_auth_code = "event_edit";
-    $delete_uri = $c->uri_for_action("/events/delete", [$event->url_key]);
-    $delete_auth_code = "event_delete";
-    $name = encode_entities( $event_season->name );
-  } else {
-    $edit_uri = $c->uri_for_action("/meetings/edit_by_type_and_date", [$meeting->type->url_key, $meeting->date_and_start_time->year, sprintf("%02d", $meeting->date_and_start_time->month), sprintf("%02d", $meeting->date_and_start_time->day)]);
-    $edit_auth_code = "meeting_edit";
-    $delete_uri = $c->uri_for_action("/meetings/delete_by_type_and_date", [$meeting->type->url_key, $meeting->date_and_start_time->year, sprintf("%02d", $meeting->date_and_start_time->month), sprintf("%02d", $meeting->date_and_start_time->day)]);
-    $delete_auth_code = "meeting_delete";
-    $name = $encoded_meeting_type;
-    $canonical_uri = $c->uri_for_action("/meetings/view_by_type_and_date", [$meeting->type->url_key, $meeting->date_and_start_time->year, sprintf("%02d", $meeting->date_and_start_time->month), sprintf("%02d", $meeting->date_and_start_time->day)]);
-  }
+  $name = $encoded_meeting_type;
+  my $canonical_uri = $c->uri_for_action("/meetings/view_by_type_and_date", [$meeting->type->url_key, $meeting->start_date_time->year, sprintf("%02d", $meeting->start_date_time->month), sprintf("%02d", $meeting->start_date_time->day)]);
   
   # Check that we are authorised to view meetings
   # Only do the view authorisation if it's not an event; if it is, we'll have checked the event view permissions already
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["meeting_view", $c->maketext("user.auth.view-meetings"), 1] ) unless $is_event;
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", [[ $edit_auth_code, $delete_auth_code ], "", 0] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["meeting_view", $c->maketext("user.auth.view-meetings"), 1]);
+  $c->forward("TopTable::Controller::Users", "check_authorisation", [[qw( meeting_edit meeting_delete )], "", 0]);
   
   # Set up the title links if we need them
   my @title_links = ();
@@ -269,15 +256,15 @@ sub view :Private {
     push(@title_links, {
       image_uri => $c->uri_for("/static/images/icons/0018-Pencil-icon-32.png"),
       text => $c->maketext("admin.edit-object", $name),
-      link_uri => $edit_uri,
-    }) if $c->stash->{authorisation}{$edit_auth_code};
+      link_uri => $c->uri_for_action("/meetings/edit_by_type_and_date", [$meeting->type->url_key, $meeting->start_date_time->year, sprintf("%02d", $meeting->start_date_time->month), sprintf("%02d", $meeting->start_date_time->day)]),
+    }) if $c->stash->{authorisation}{meeting_edit};
     
     # Push a delete link if we're authorised and the club can be deleted
     push(@title_links, {
       image_uri => $c->uri_for("/static/images/icons/0005-Delete-icon-32.png"),
       text => $c->maketext("admin.delete-object", $name),
-      link_uri => $delete_uri,
-    }) if $c->stash->{authorisation}{$delete_auth_code};
+      link_uri => $c->uri_for_action("/meetings/delete_by_type_and_date", [$meeting->type->url_key, $meeting->start_date_time->year, sprintf("%02d", $meeting->start_date_time->month), sprintf("%02d", $meeting->start_date_time->day)]),
+    }) if $c->stash->{authorisation}{meeting_delete};
   }
   
   $c->stash({
@@ -285,6 +272,8 @@ sub view :Private {
     external_scripts => [
       $c->uri_for("/static/script/plugins/responsive-tabs/jquery.responsiveTabs.mod.js"),
       $c->uri_for("/static/script/standard/responsive-tabs.js"),
+      $c->uri_for("/static/script/standard/vertical-table.js"),
+      $c->uri_for("/static/script/standard/option-list.js"),
     ],
     external_styles => [
       $c->uri_for("/static/css/responsive-tabs/responsive-tabs.css"),
@@ -294,7 +283,7 @@ sub view :Private {
     subtitle1 => $name,
     attendees => [$meeting->attendees],
     apologies => [$meeting->apologies],
-    view_online_display => sprintf( "Viewing %s", $name ),
+    view_online_display => sprintf("Viewing %s", $name),
     view_online_link => 0,
     canonical_uri => $canonical_uri,
     page_description => $c->maketext("description.meetings.view", $name, $site_name),
@@ -310,14 +299,13 @@ Display a form to collect information for creating a season.
 sub create :Local {
   my ( $self, $c ) = @_;
   my $event = $c->stash->{event};
-  my $is_event = $c->stash->{is_event} || 0;
   
   # Check that we are authorised to create clubs
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["meeting_create", $c->maketext("user.auth.create-meetings"), 1] );
   
   my $meeting_types = $c->model("DB::MeetingType")->all_meeting_types;
   
-  if ( $meeting_types->count == 0 and !$is_event ) {
+  if ( $meeting_types->count == 0 ) {
     $c->response->redirect( $c->uri_for("/meetings",
                                 {mid => $c->set_status_msg( {error => $c->maketext("meetings.form.error.no-meeting-types", $c->uri_for("/meeting-types/create") ) } ) }) );
     $c->detach;
@@ -326,7 +314,7 @@ sub create :Local {
   
   my $venues = $c->model("DB::Venue")->active_venues;
   
-  if ( !$venues->count and !$is_event ) {
+  if ( !$venues->count ) {
     $c->response->redirect( $c->uri_for("/meetings",
                                 {mid => $c->set_status_msg( {error => $c->maketext("meetings.form.error.no-venues", $c->uri_for("/venues/create") ) } ) }) );
     $c->detach;
@@ -337,9 +325,9 @@ sub create :Local {
   my $organiser_tokeninput_options = {
     jsonContainer => "json_search",
     tokenLimit => 1,
-    hintText => encode_entities( $c->maketext("person.tokeninput.type") ),
-    noResultsText => encode_entities( $c->maketext("tokeninput.text.no-results") ),
-    searchingText => encode_entities( $c->maketext("tokeninput.text.searching") ),
+    hintText => $c->maketext("person.tokeninput.type"),
+    noResultsText => $c->maketext("tokeninput.text.no-results"),
+    searchingText => $c->maketext("tokeninput.text.searching"),
   };
   
   # Add the pre-population if needed
@@ -348,17 +336,17 @@ sub create :Local {
   # Attendee tokeninputs
   my $attendee_tokeninput_options = {
     jsonContainer => "json_search",
-    hintText => encode_entities( $c->maketext("meetings.field.attendees.tokeninput.type") ),
-    noResultsText => encode_entities( $c->maketext("tokeninput.text.no-results") ),
-    searchingText => encode_entities( $c->maketext("tokeninput.text.searching") ),
+    hintText => $c->maketext("meetings.field.attendees.tokeninput.type"),
+    noResultsText => $c->maketext("tokeninput.text.no-results"),
+    searchingText => $c->maketext("tokeninput.text.searching"),
   };
   
   # Add pre-population if we need it
-  if ( exists( $c->flash->{attendees} ) and ref( $c->flash->{attendees} ) eq "ARRAY" ) {
+  if ( exists($c->flash->{attendees}) and ref($c->flash->{attendees}) eq "ARRAY" ) {
     foreach my $player ( @{$c->flash->{attendees}} ) {
       push(@{$attendee_tokeninput_options->{prePopulate}}, {
         id => $player->id,
-        name => encode_entities( $player->display_name ),
+        name => encode_entities($player->display_name),
       });
     }
   }
@@ -366,32 +354,32 @@ sub create :Local {
   # Apologies tokeninputs
   my $apologies_tokeninput_options = {
     jsonContainer => "json_search",
-    hintText => encode_entities( $c->maketext("meetings.field.apologies.tokeninput.type") ),
-    noResultsText => encode_entities( $c->maketext("tokeninput.text.no-results") ),
-    searchingText => encode_entities( $c->maketext("tokeninput.text.searching") ),
+    hintText => $c->maketext("meetings.field.apologies.tokeninput.type"),
+    noResultsText => $c->maketext("tokeninput.text.no-results"),
+    searchingText => $c->maketext("tokeninput.text.searching"),
   };
   
   # Add pre-population if we need it
-  if ( exists( $c->flash->{apologies} ) and ref( $c->flash->{apologies} ) eq "ARRAY" ) {
+  if ( exists($c->flash->{apologies}) and ref($c->flash->{apologies}) eq "ARRAY" ) {
     foreach my $player ( @{$c->flash->{apologies}} ) {
-      push(@{ $apologies_tokeninput_options->{prePopulate} }, {
+      push(@{$apologies_tokeninput_options->{prePopulate}}, {
         id => $player->id,
-        name => encode_entities( $player->display_name ),
+        name => encode_entities($player->display_name),
       });
     }
   }
   
   my $tokeninput_confs = [{
     script => $c->uri_for("/people/search"),
-    options => encode_json( $organiser_tokeninput_options ),
+    options => encode_json($organiser_tokeninput_options),
     selector => "organiser",
   }, {
     script => $c->uri_for("/people/search"),
-    options => encode_json( $attendee_tokeninput_options ),
+    options => encode_json($attendee_tokeninput_options),
     selector => "attendees",
   }, {
     script => $c->uri_for("/people/search"),
-    options => encode_json( $apologies_tokeninput_options ),
+    options => encode_json($apologies_tokeninput_options),
     selector => "apologies",
   }];
   
@@ -401,19 +389,16 @@ sub create :Local {
     form_action => $c->uri_for("do-create"),
     subtitle2 => $c->maketext("admin.create"),
     tokeninput_confs => $tokeninput_confs,
-    scripts => [
-      "tokeninput-standard",
-    ],
+    scripts => [qw( tokeninput-standard ckeditor-iframely-standard )],
+    ckeditor_selectors => [qw( minutes agenda )],
     external_scripts => [
       $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
       $c->uri_for("/static/script/standard/chosen.js"),
       $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js", {v => 2}),
       $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
-      $c->uri_for("/static/script/plugins/ckeditor/ckeditor.js"),
-      $c->uri_for("/static/script/plugins/ckeditor/adapters/jquery.js"),
+      $c->uri_for("/static/script/plugins/ckeditor5/ckeditor.js"),
       $c->uri_for("/static/script/standard/prettycheckable.js"),
       $c->uri_for("/static/script/standard/datepicker.js"),
-      $c->uri_for("/static/script/standard/ckeditor.js"),
       $c->uri_for("/static/script/meetings/create-edit.js"),
     ],
     external_styles => [
@@ -422,8 +407,8 @@ sub create :Local {
       $c->uri_for("/static/css/tokeninput/token-input-tt2.css"),
       $c->uri_for("/static/css/prettycheckable/prettyCheckable.css"),
     ],
-    meeting_types => $meeting_types,
-    venues => $venues,
+    meeting_types => scalar $meeting_types,
+    venues => scalar $venues,
     view_online_display => "Creating meeting types",
     view_online_link => 0,
   });
@@ -568,35 +553,33 @@ sub edit :Private {
     form_action => $c->uri_for_action("/meetings/do_edit_by_id", [$meeting->id]),
     subtitle2 => $c->maketext("admin.edit"),
     tokeninput_confs => $tokeninput_confs,
-    scripts => [
-      "tokeninput-standard",
-    ],
+    scripts => [qw( tokeninput-standard ckeditor-iframely-standard )],
+    ckeditor_selectors => [qw( minutes agenda )],
     external_scripts => [
       $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
       $c->uri_for("/static/script/standard/chosen.js"),
       $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js", {v => 2}),
       $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
-      $c->uri_for("/static/script/plugins/ckeditor/ckeditor.js"),
-      $c->uri_for("/static/script/plugins/ckeditor/adapters/jquery.js"),
+      $c->uri_for("/static/script/plugins/ckeditor5/ckeditor.js"),
       $c->uri_for("/static/script/standard/prettycheckable.js"),
       $c->uri_for("/static/script/standard/datepicker.js"),
-      $c->uri_for("/static/script/standard/ckeditor.js"),
       $c->uri_for("/static/script/meetings/create-edit.js"),
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
+      $c->uri_for("/static/css/prettycheckable/prettyCheckable.css"),
       $c->uri_for("/static/css/tokeninput/token-input-tt2.css"),
       $c->uri_for("/static/css/prettycheckable/prettyCheckable.css"),
     ],
-    meeting_types => [$c->model("DB::MeetingType")->all_meeting_types],
-    venues => [$c->model("DB::Venue")->active_venues],
+    meeting_types => scalar $c->model("DB::MeetingType")->all_meeting_types,
+    venues => scalar $c->model("DB::Venue")->active_venues,
     view_online_display => "Editing a meeting",
     view_online_link => 0,
   });
   
   my $page_uri = ( $is_event )
     ? $c->uri_for_action("/events/edit", [$event->url_key])
-    : $c->uri_for_action("/meetings/edit_by_type_and_date", [$meeting->type->url_key, $meeting->date_and_start_time->year, sprintf("%02d", $meeting->date_and_start_time->month), sprintf("%02d", $meeting->date_and_start_time->day)]);
+    : $c->uri_for_action("/meetings/edit_by_type_and_date", [$meeting->type->url_key, $meeting->start_date_time->year, sprintf("%02d", $meeting->start_date_time->month), sprintf("%02d", $meeting->start_date_time->day)]);
   
   push(@{$c->stash->{breadcrumbs}}, {
     path  => $page_uri,
@@ -654,7 +637,7 @@ sub delete :Private {
   
   # Push the breadcrumbs links
   push(@{$c->stash->{breadcrumbs}}, {
-    path => $c->uri_for_action("/meetings/delete_by_type_and_date", [$meeting->type->url_key, $meeting->date_and_start_time->year, sprintf("%02d", $meeting->date_and_start_time->month), sprintf("%02d", $meeting->date_and_start_time->day)]),
+    path => $c->uri_for_action("/meetings/delete_by_type_and_date", [$meeting->type->url_key, $meeting->start_date_time->year, sprintf("%02d", $meeting->start_date_time->month), sprintf("%02d", $meeting->start_date_time->day)]),
     label => $c->maketext("admin.delete"),
   });
 }
@@ -772,7 +755,7 @@ sub do_delete :Private {
     $c->forward( "TopTable::Controller::SystemEventLog", "add_event", ["meeting", "delete", {id => undef}, undef] );
   } else {
     # Not complete
-    $redirect_uri = $c->uri_for_action("/meetings/view_by_type_and_date", [$meeting->type->url_key, $meeting->date_and_start_time->year, sprintf("%02d", $meeting->date_and_start_time->month), sprintf("%02d", $meeting->date_and_start_time->day)], {mid => $mid});
+    $redirect_uri = $c->uri_for_action("/meetings/view_by_type_and_date", [$meeting->type->url_key, $meeting->start_date_time->year, sprintf("%02d", $meeting->start_date_time->month), sprintf("%02d", $meeting->start_date_time->day)], {mid => $mid});
   }
   
   # Now actually do the redirection
@@ -791,8 +774,8 @@ sub process_form :Private {
   my ( $self, $c, $action ) = @_;
   my $meeting   = $c->stash->{meeting};
   my $is_event  = $c->stash->{is_event};
-  my @field_names = qw( is_event type venue organiser date start_hour start_minute all_day finish_hour finish_minute agenda minutes );
-  my @processed_field_names = qw( is_event type venue organiser date start_hour start_minute all_day finish_hour finish_minute attendees apologies agenda minutes );
+  my @field_names = qw( is_event type venue organiser start_hour start_minute all_day end_hour end_minute agenda minutes );
+  my @processed_field_names = qw( is_event type venue organiser start_date start_hour start_minute all_day end_date end_hour end_minute attendees apologies agenda minutes );
   my $event;
   
   # If it's an event, work out if we can edit (we must be editing, can't create through this method).
@@ -800,7 +783,7 @@ sub process_form :Private {
     my ( $season, $event_season );
     $season = $c->model("DB::Season")->get_current;
     
-    if ( defined( $season ) ) {
+    if ( defined($season) ) {
       $event_season = $meeting->event_season;
       $event = $event_season->event;
     } else {
@@ -818,7 +801,8 @@ sub process_form :Private {
     meeting => $meeting,
     attendees => [split(",", $c->req->params->{attendees})],
     apologies => [split(",", $c->req->params->{apologies})],
-    date => $c->i18n_datetime_format_date->parse_datetime($c->req->params->{date}),
+    start_date => $c->i18n_datetime_format_date->parse_datetime($c->req->params->{start_date}),
+    end_date => $c->i18n_datetime_format_date->parse_datetime($c->req->params->{end_date}),
     map {$_ => $c->req->params->{$_}} @field_names, # All the rest of the fields from the form - put this last because otherwise the following elements are seen as part of the map
   });
   
@@ -838,8 +822,8 @@ sub process_form :Private {
       $redirect_uri = $c->uri_for_action("/events/view_current_season", [$event->url_key], {mid => $mid});
       $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["event", $action, {id => $event->id}, $event->name]);
     } else {
-      $redirect_uri = $c->uri_for_action("/meetings/view_by_type_and_date", [$meeting->type->url_key, $meeting->date_and_start_time->year, sprintf("%02d", $meeting->date_and_start_time->month), sprintf("%02d", $meeting->date_and_start_time->day)], , {mid => $mid});
-      $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["meeting", $action, {id => $meeting->id}, sprintf("%s (%s)", $meeting->type->name, $meeting->date_and_start_time->ymd("/"))]);
+      $redirect_uri = $c->uri_for_action("/meetings/view_by_type_and_date", [$meeting->type->url_key, $meeting->start_date_time->year, sprintf("%02d", $meeting->start_date_time->month), sprintf("%02d", $meeting->start_date_time->day)], {mid => $mid});
+      $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["meeting", $action, {id => $meeting->id}, sprintf("%s (%s)", $meeting->type->name, $meeting->start_date_time->ymd("/"))]);
     }
   } else {
     # Not complete - check if we need to redirect back to the create or view page
@@ -848,7 +832,7 @@ sub process_form :Private {
     } else {
       $redirect_uri = $is_event ?
         $c->uri_for_action("/events/edit", [$event->url_key], {mid => $mid}):
-        $c->uri_for_action("/meetings/edit_by_type_and_date", [$meeting->type->url_key, $meeting->date_and_start_time->year, sprintf("%02d", $meeting->date_and_start_time->month), sprintf("%02d", $meeting->date_and_start_time->day)], {mid => $mid});
+        $c->uri_for_action("/meetings/edit_by_type_and_date", [$meeting->type->url_key, $meeting->start_date_time->year, sprintf("%02d", $meeting->start_date_time->month), sprintf("%02d", $meeting->start_date_time->day)], {mid => $mid});
     }
     
     # Flash the entered values we've got so we can set them into the form
