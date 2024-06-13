@@ -46,8 +46,8 @@ sub edit {
   
   if ( defined($page_key) ) {
     # Filter the HTML from the page text
-    $page_text = TopTable->model("FilterHTML")->filter( $page_text, "textarea" );
-    $page_text = "" unless defined( $page_text );
+    #$page_text = TopTable->model("FilterHTML")->filter( $page_text, "textarea" );
+    $page_text = "" unless defined($page_text);
     $response->{fields}{page_text} = $page_text;
     
     my $page = $self->update_or_create({

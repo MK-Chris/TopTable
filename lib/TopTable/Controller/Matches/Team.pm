@@ -1050,10 +1050,10 @@ sub report :Private {
   # Stash the template values
   $c->stash({
     template => "html/matches/team/report.ttkt",
+    scripts => [qw( ckeditor-iframely-standard )],
+    ckeditor_selectors => [qw( report )],
     external_scripts => [
-      $c->uri_for("/static/script/plugins/ckeditor/ckeditor.js"),
-      $c->uri_for("/static/script/plugins/ckeditor/adapters/jquery.js"),
-      $c->uri_for("/static/script/standard/ckeditor.js"),
+      $c->uri_for("/static/script/plugins/ckeditor5/ckeditor.js"),
     ],
     form_action => $c->uri_for_action("/matches/team/publish_report_by_url_keys", $match->url_keys),
     subtitle2 => $c->maketext("matches.report.heading"),

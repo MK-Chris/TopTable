@@ -453,8 +453,6 @@ sub update_person {
   my $schema = $self->result_source->schema;
   $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
   my $lang = $schema->lang;
-  #$logger->("debug", "update_person, action: $action, params:");
-  #$logger->("debug", np($params));
   
   # Get the fields
   my $loan_player = $params->{loan_player} || 0;

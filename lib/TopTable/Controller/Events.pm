@@ -53,21 +53,21 @@ sub base :Chained("/") :PathPart("events") :CaptureArgs(1) {
   
   if ( defined( $event ) ) {
     # Encode the name for future use later in the chain (saves encoding multiple times, which is expensive)
-    my $encoded_event_name = encode_entities( $event->name );
+    my $enc_name = encode_entities($event->name);
     
     # Event found, stash it, then stash the name / view URL in the breadcrumbs section of our stash
     $c->stash({
       event => $event,
       is_event => 1,
-      subtitle1 => $encoded_event_name,
-      encoded_event_name => $encoded_event_name,
+      subtitle1 => $enc_name,
+      enc_name => $enc_name,
     });
     
     # Push the events list page on to the breadcrumbs
     push(@{$c->stash->{breadcrumbs}}, {
       # Event view page (current season)
       path => $c->uri_for_action("/events/view_current_season", [$event->url_key]),
-      label => $encoded_event_name,
+      label => $enc_name,
     });
   } else {
     # 404
@@ -90,7 +90,7 @@ sub base_list :Chained("/") :PathPart("events") :CaptureArgs(0) {
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["event_view", $c->maketext("user.auth.view-events"), 1] );
   
   # Check the authorisation to edit events we can display the link if necessary
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", [ [ qw( event_edit event_delete event_create) ], "", 0] );
+  $c->forward( "TopTable::Controller::Users", "check_authorisation", [[qw( event_edit event_delete event_create)], "", 0] );
   
   # Page description
   $c->stash({
@@ -124,7 +124,7 @@ sub list_specific_page :Chained("base_list") :PathPart("page") :Args(1) {
   my ( $self, $c, $page_number ) = @_;
   
   # If the page number is less then 1, not defined, false, or not a number, set it to 1
-  $page_number = 1 if !defined( $page_number ) or !$page_number or $page_number !~ /^\d+$/ or $page_number < 1;
+  $page_number = 1 if !defined($page_number) or !$page_number or $page_number !~ /^\d+$/ or $page_number < 1;
   
   if ( $page_number == 1 ) {
     $c->stash({canonical_uri => $c->uri_for_action("/events/list_first_page")});
@@ -132,7 +132,7 @@ sub list_specific_page :Chained("base_list") :PathPart("page") :Args(1) {
     $c->stash({canonical_uri => $c->uri_for_action("/events/list_specific_page", [$page_number])});
   }
   
-  $c->detach( "retrieve_paged", [$page_number] );
+  $c->detach("retrieve_paged", [$page_number]);
 }
 
 =head2 retrieve_paged
@@ -192,7 +192,7 @@ sub view_current_season :Chained("view") :PathPart("") :Args(0) {
   my ( $self, $c ) = @_;
   my $event = $c->stash->{event};
   my $site_name = $c->stash->{enc_site_name};
-  my $event_name = $c->stash->{encoded_event_name};
+  my $event_name = $c->stash->{enc_name};
   
   # Try to find the current season (or the last completed season if there is no current season)
   my $season = $c->model("DB::Season")->get_current_or_last;
@@ -203,7 +203,7 @@ sub view_current_season :Chained("view") :PathPart("") :Args(0) {
       page_description => $c->maketext("description.events.view-current", $event_name, $site_name),
     });
     
-    # Get the team's details for the season.
+    # Get the event's details for the season.
     $c->forward("get_event_season");
   } else {
     # There is no current season, so this page is invalid for now.
@@ -225,14 +225,15 @@ sub view_specific_season :Chained("view") :PathPart("seasons") :Args(1) {
   my ( $self, $c, $season_id_or_url_key ) = @_;
   my $event = $c->stash->{event};
   my $site_name = $c->stash->{enc_site_name};
-  my $event_name = $c->stash->{encoded_event_name};
+  my $event_name = $c->stash->{enc_name};
   
   # Validate the passed season ID
-  my $season = $c->model("DB::Season")->find_id_or_url_key( $season_id_or_url_key );
-  my $encoded_season_name = encode_entities( $season->name );
+  my $season = $c->model("DB::Season")->find_id_or_url_key($season_id_or_url_key);
   
   if ( defined($season) ) {
     # Stash the season and the fact that we requested it specifically
+    my $encoded_season_name = encode_entities($season->name);
+    
     $c->stash({
       season => $season,
       specific_season => 1,
@@ -252,8 +253,8 @@ sub view_specific_season :Chained("view") :PathPart("seasons") :Args(1) {
     # Invalid season - the message says we are attempting to find the current season, which
     # is correct, as the redirect is to the same page, but with no season ID specified, which
     # should try and match the current season (or if there is no current season the latest season).
-    $c->response->redirect( $c->uri_for_action("/events/view_current_season", [$event->url_key],
-                                {mid => $c->set_status_msg( {error => "seasons.invalid-find-current"} ) }) );
+    $c->response->redirect($c->uri_for_action("/events/view_current_season", [$event->url_key],
+                                {mid => $c->set_status_msg( {error => "seasons.invalid-find-current"})}));
     $c->detach;
     return;
   }
@@ -261,12 +262,9 @@ sub view_specific_season :Chained("view") :PathPart("seasons") :Args(1) {
   # Forward to the routine that stashes the team's season
   $c->forward("get_event_season");
   
-  # Finalise the view routine - if it's a meeting, we fire off to that routine
-  if ( $event->event_type->id eq "meeting" ) {
-    $c->detach(qw(TopTable::Controller::Root default));
-  } else {
-    $c->detach("view_finalise");
-  }
+  # Finalise the view routine - if there is no season to display, we'll just display the details without a season.
+  # We only do this if we're actually showing a view page, not a delete page
+  $c->detach("view_finalise") unless exists( $c->stash->{delete_screen} );
 }
 
 =head2 get_event_season
@@ -278,7 +276,12 @@ Obtain a event's details for a given season.
 sub get_event_season :Private {
   my ( $self, $c ) = @_;
   my ( $event, $season ) = ( $c->stash->{event}, $c->stash->{season} );
-  $c->stash({event_season => $event->single_season( $season ) });
+  my $event_season = $event->single_season($season);
+  $c->stash({event_season => $event_season});
+  
+  if ( defined($event_season) ) {
+    $c->stash({event_detail => $event_season->event_detail});
+  }
 }
 
 =head2 view_finalise
@@ -291,7 +294,8 @@ sub view_finalise :Private {
   my ( $self, $c ) = @_;
   my $event = $c->stash->{event};
   my $season = $c->stash->{season};
-  my $encoded_event_name = $c->stash->{encoded_event_name};
+  my $event_season = $c->stash->{event_season};
+  my $enc_name = $c->stash->{enc_name};
   my $delete_screen = $c->stash->{delete_screen};
   
   # Set up the title links if we need them
@@ -299,16 +303,24 @@ sub view_finalise :Private {
   
   unless ( $delete_screen ) {
     # Push edit link if we are authorised
-    push(@title_links, {
-      image_uri => $c->uri_for("/static/images/icons/0018-Pencil-icon-32.png"),
-      text => $c->maketext("admin.edit-object", $encoded_event_name),
-      link_uri => $c->uri_for_action("/events/edit", [$event->url_key]),
-    }) if $c->stash->{authorisation}{event_edit};
+    if ( $c->stash->{authorisation}{event_edit} ) {
+      push(@title_links, {
+        image_uri => $c->uri_for("/static/images/icons/0018-Pencil-icon-32.png"),
+        text => $c->maketext("admin.edit-object", $enc_name),
+        link_uri => $c->uri_for_action("/events/edit", [$event->url_key]),
+      });
+      
+      push(@title_links, {
+        image_uri => $c->uri_for("/static/images/icons/0037-Notepad-icon-32.png"),
+        text => $c->maketext("admin.edit-object-details", $enc_name),
+        link_uri => $c->uri_for_action("/events/details", [$event->url_key]),
+      }) if $event->can_edit_details;
+    }
     
     # Push a delete link if we're authorised and the event can be deleted
     push(@title_links, {
       image_uri => $c->uri_for("/static/images/icons/0005-Delete-icon-32.png"),
-      text => $c->maketext("admin.delete-object", $encoded_event_name),
+      text => $c->maketext("admin.delete-object", $enc_name),
       link_uri => $c->uri_for_action("/events/delete", [$event->url_key]),
     }) if $c->stash->{authorisation}{event_delete} and $event->can_delete;
   }
@@ -320,17 +332,43 @@ sub view_finalise :Private {
   
   $c->stash({canonical_uri => $canonical_uri});
   
-  # Set up the template to use
+  # Set up the template to use - meetings have their own viewing template
+  my $template;
+  my @external_scripts = ();
+  my @external_styles = ();
   if ( $event->event_type->id eq "meeting" ) {
-    $c->detach(qw(TopTable::Controller::Root default));
-  } else {
+    my $meeting = $event_season->get_meeting;
+    
     $c->stash({
-      template => "html/events/view.ttkt",
-      title_links => \@title_links,
-      view_online_display => sprintf( "Viewing %s", $encoded_event_name ),
-      view_online_link => 1,
+      meeting => $meeting,
+      attendees => [$meeting->attendees],
+      apologies => [$meeting->apologies],
     });
+    
+    $template = "html/meetings/view.ttkt";
+    push(@external_scripts,
+      $c->uri_for("/static/script/plugins/responsive-tabs/jquery.responsiveTabs.mod.js"),
+      $c->uri_for("/static/script/standard/responsive-tabs.js"),
+      $c->uri_for("/static/script/standard/vertical-table.js"),
+      $c->uri_for("/static/script/standard/option-list.js"),
+    );
+    push(@external_styles,
+      $c->uri_for("/static/css/responsive-tabs/responsive-tabs.css"),
+      $c->uri_for("/static/css/responsive-tabs/style-jqueryui.css"),,
+    );
+  } else {
+    $template= sprintf("html/events-%s.ttkt", $event->event_type->id);
   }
+  
+  
+  $c->stash({
+    template => $template,
+    title_links => \@title_links,
+    view_online_display => sprintf("Viewing %s", $enc_name),
+    view_online_link => 1,
+    external_scripts => \@external_scripts,
+    external_styles => \@external_styles,
+  });
 }
 
 =head2 view_seasons
@@ -343,7 +381,7 @@ sub view_seasons :Chained("view") :PathPart("seasons") :CaptureArgs(0) {
   my ( $self, $c ) = @_;
   my $event = $c->stash->{event};
   my $site_name = $c->stash->{enc_site_name};
-  my $event_name = $c->stash->{encoded_event_name};
+  my $event_name = $c->stash->{enc_name};
   
   # Stash the template; the data will be retrieved when we know what page we're on
   $c->stash({
@@ -372,7 +410,7 @@ sub view_seasons_first_page :Chained("view_seasons") :PathPart("") :Args(0) {
   my $event = $c->stash->{event};
   
   $c->stash({canonical_uri => $c->uri_for_action("/events/view_seasons_first_page", [$event->url_key])});
-  $c->detach( "retrieve_paged_seasons", [1] );
+  $c->detach("retrieve_paged_seasons", [1]);
 }
 
 =head2 view_seasons_specific_page
@@ -386,7 +424,7 @@ sub view_seasons_specific_page :Chained("view_seasons") :PathPart("page") :Args(
   my $event = $c->stash->{event};
   
   # If the page number is less then 1, not defined, false, or not a number, set it to 1
-  $page_number = 1 if !defined( $page_number ) or !$page_number or $page_number !~ /^\d+$/ or $page_number < 1;
+  $page_number = 1 if !$page_number or $page_number !~ /^\d+$/ or $page_number < 1;
   
   if ( $page_number == 1 ) {
     $c->stash({canonical_uri => $c->uri_for_action("/events/view_seasons_first_page", [$event->url_key])});
@@ -394,7 +432,7 @@ sub view_seasons_specific_page :Chained("view_seasons") :PathPart("page") :Args(
     $c->stash({canonical_uri => $c->uri_for_action("/events/view_seasons_specific_page", [$event->url_key, $page_number])});
   }
   
-  $c->detach( "retrieve_paged_seasons", [$page_number] );
+  $c->detach("retrieve_paged_seasons", [$page_number]);
 }
 
 =head2 retrieve_paged_seasons
@@ -426,7 +464,7 @@ sub retrieve_paged_seasons :Private {
   # Set up the template to use
   $c->stash({
     template => "html/events/list-seasons.ttkt",
-    view_online_display => sprintf( "Viewing seasons for ", $event->name ),
+    view_online_display => sprintf("Viewing seasons for ", $event->name),
     view_online_link => 1,
     seasons => $seasons,
     subtitle2 => $c->maketext("menu.text.season"),
@@ -449,38 +487,30 @@ sub create :Local {
   
   my $current_season = $c->model("DB::Season")->get_current;
   
-  unless ( defined( $current_season ) ) {
+  unless ( defined($current_season) ) {
     # Redirect and show the error
-    $c->response->redirect( $c->uri_for("/",
-                                {mid => $c->set_status_msg( {error => $c->maketext("events.form.error.no-current-season", $c->maketext("admin.message.created"))} ) }) );
+    $c->response->redirect($c->uri_for("/",
+                                {mid => $c->set_status_msg({error => $c->maketext("events.form.error.no-current-season", $c->maketext("admin.message.created"))})}));
     $c->detach;
     return;
   }
   
-  # Get the number of people - if there are none, then we need to display a message
-  my $people_count = $c->model("DB::Person")->search->count;
+  # First setup the function arguments
+  my $tokeninput_options = {
+    jsonContainer => "json_search",
+    tokenLimit => 1,
+    hintText => encode_entities($c->maketext("person.tokeninput.type")),
+    noResultsText => encode_entities($c->maketext("tokeninput.text.no-results")),
+    searchingText => encode_entities($c->maketext("tokeninput.text.searching")),
+  };
   
-  if ( $people_count ) {
-    # First setup the function arguments
-    my $tokeninput_options = {
-      jsonContainer => "json_search",
-      tokenLimit => 1,
-      hintText => encode_entities($c->maketext("person.tokeninput.type")),
-      noResultsText => encode_entities($c->maketext("tokeninput.text.no-results")),
-      searchingText => encode_entities($c->maketext("tokeninput.text.searching")),
-    };
-    
-    # Add the pre-population if needed
-    $tokeninput_options->{prePopulate} = [{id => $c->flash->{organiser}->id, name => $c->flash->{organiser}->display_name}] if defined($c->flash->{organiser});
-    
-    my $tokeninput_confs = [{
-      script => $c->uri_for("/people/search"),
-      options => encode_json($tokeninput_options),
-      selector => "organiser",
-    }];
-    
-    $c->stash({tokeninput_confs => $tokeninput_confs});
-  }
+  $tokeninput_options->{prePopulate} = [{id => $c->flash->{organiser}->url_key, name => $c->flash->{organiser}->display_name}] if defined($c->flash->{organiser});
+  
+  my $tokeninput_confs = [{
+    script => $c->uri_for("/people/search"),
+    options => encode_json($tokeninput_options),
+    selector => "organiser",
+  }];
   
   # Get venues and people to list
   $c->stash({
@@ -502,10 +532,11 @@ sub create :Local {
       $c->uri_for("/static/css/tokeninput/token-input-tt2.css"),
       $c->uri_for("/static/css/prettycheckable/prettyCheckable.css"),
     ],
+    tokeninput_confs => $tokeninput_confs,
     venues => [$c->model("DB::Venue")->active_venues],
     event_types => [$c->model("DB::LookupEventType")->all_types],
     tournament_types => [$c->model("DB::LookupTournamentType")->all_types],
-    current_season => $current_season,
+    season => $current_season,
     form_action => $c->uri_for("do-create"),
     subtitle2 => $c->maketext("admin.create"),
     view_online_display => "Creating events",
@@ -528,7 +559,7 @@ Display the form to edit the event.
 sub edit :Chained("base") :PathPart("edit") :Args(0) {
   my ($self, $c) = @_;
   my $event = $c->stash->{event};
-  my $encoded_event_name = $c->stash->{encoded_event_name};
+  my $enc_name = $c->stash->{enc_name};
   
   # Don't cache this page.
   $c->response->header("Cache-Control" => "no-cache, no-store, must-revalidate");
@@ -537,32 +568,77 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
   
   # Check that we are authorised to edit clubs
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.edit-events"), 1]);  # Try to find the current season (or the last completed season if there is no current season)
-  my $season = $c->model("DB::Season")->get_current;
+  my $current_season = $c->model("DB::Season")->get_current;
     
-  if ( defined( $season ) ) {
-    $c->stash({season => $season});
-    
-    # Forward to the routine that stashes the team's season
+  if ( defined( $current_season ) ) {
+    # Forward to the routine that stashes the event's season details
+    $c->stash({season => $current_season});
     $c->forward("get_event_season");
   } else {
     # There is no current season, so we can't edit
-    $c->response->redirect( $c->uri_for("/events/view_current_season", [$event->url_key],
-                                {mid => $c->set_status_msg( {error => $c->maketext("events.edit.error.no-current-season") } ) }) );
+    $c->response->redirect($c->uri_for("/events/view_current_season", [$event->url_key],
+                                {mid => $c->set_status_msg({error => $c->maketext("events.edit.error.no-current-season")})}));
     $c->detach;
     return;
   }
   
-  # Set up the template to use
-  if ( $event->event_type->id eq "meeting" ) {
-    $c->detach(qw(TopTable::Controller::Root default));
+  # Add the pre-population if needed
+  my $organiser;
+  if ( $c->flash->{show_flashed} ) {
+    $organiser = $c->flash->{organiser};
   } else {
-    $c->stash({
-      template => "html/events/create-edit.ttkt",
-      subtitle1 => $encoded_event_name,
-      view_online_display => sprintf( "Viewing %s", $encoded_event_name ),
-      view_online_link => 1,
-    });
+    if ( defined(my $event_season = $c->stash->{event_season}) ) {
+      # If there's a currently defined team season, use the captain from that
+      $organiser = $event_season->organiser;
+    }
   }
+  
+  # First setup the function arguments
+  my $tokeninput_options = {
+    jsonContainer => "json_search",
+    tokenLimit => 1,
+    hintText => encode_entities($c->maketext("person.tokeninput.type")),
+    noResultsText => encode_entities($c->maketext("tokeninput.text.no-results")),
+    searchingText => encode_entities($c->maketext("tokeninput.text.searching")),
+  };
+  
+  $tokeninput_options->{prePopulate} = [{id => $organiser->url_key, name => $organiser->display_name}] if defined($organiser);
+  
+  my $tokeninput_confs = [{
+    script => $c->uri_for("/people/search"),
+    options => encode_json($tokeninput_options),
+    selector => "organiser",
+  }];
+  
+  # Set up the template to use
+  $c->stash({
+    template => "html/events/create-edit.ttkt",
+    subtitle1 => $enc_name,
+    view_online_display => sprintf("Viewing %s", $enc_name),
+    form_action => $c->uri_for_action("/events/do_edit", [$event->url_key]),
+    view_online_link => 1,
+    scripts => [
+      "tokeninput-standard",
+    ],
+    external_scripts => [
+      $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
+      $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js", {v => 2}),
+      $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
+      $c->uri_for("/static/script/standard/chosen.js"),
+      $c->uri_for("/static/script/standard/datepicker.js"),
+      $c->uri_for("/static/script/standard/prettycheckable.js"),
+      $c->uri_for("/static/script/events/create-edit.js"),
+    ],
+    external_styles => [
+      $c->uri_for("/static/css/chosen/chosen.min.css"),
+      $c->uri_for("/static/css/tokeninput/token-input-tt2.css"),
+      $c->uri_for("/static/css/prettycheckable/prettyCheckable.css"),
+    ],
+    tokeninput_confs => $tokeninput_confs,
+    venues => [$c->model("DB::Venue")->active_venues],
+    event_types => [$c->model("DB::LookupEventType")->all_types],
+    tournament_types => [$c->model("DB::LookupTournamentType")->all_types],
+  });
   
   # Push the breadcrumbs links
   push(@{$c->stash->{breadcrumbs}}, {
@@ -580,7 +656,7 @@ Display the form asking if the user really wants to delete the event.
 sub delete :Chained("base") :PathPart("delete") :Args(0) {
   my ( $self, $c ) = @_;
   my $event = $c->stash->{event};
-  my $encoded_name = $c->stash->{encoded_event_name};
+  my $encoded_name = $c->stash->{enc_name};
   
   # Check that we are authorised to delete clubs
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["event_delete", $c->maketext("user.auth.delete-events"), 1] );
@@ -695,22 +771,15 @@ Forwarded from docreate and doedit to do the event creation / edit.
 sub process_form :Private {
   my ( $self, $c, $action ) = @_;
   my $event = $c->stash->{event};
-  my @field_names = qw( name event_type tournament_type venue organiser date start_hour start_minute all_day finish_hour finish_minute );
-  
-  my $season = $c->model("DB::Season")->get_current;
-  
-  unless ( defined($season) ) {
-    # Error, no current season so can't create or edit events
-    $c->response->redirect( $c->uri_for("/",
-                                {mid => $c->set_status_msg( {error => $c->maketext("events.form.error.no-current-season", $c->maketext("admin.message.created"))} ) }) );
-    $c->detach;
-    return;
-  }
+  my @field_names = qw( name event_type tournament_type venue organiser start_hour start_minute all_day end_hour end_minute );
+  my @processed_field_names = qw( name event_type tournament_type venue organiser start_date all_day end_date );
   
   # The rest of the error checking is done in the Club model
   my $response = $c->model("DB::Event")->create_or_edit($action, {
     logger => sub{ my $level = shift; $c->log->$level( @_ ); },
     event => $event,
+    start_date => $c->i18n_datetime_format_date->parse_datetime($c->req->params->{start_date}),
+    end_date => $c->i18n_datetime_format_date->parse_datetime($c->req->params->{end_date}),
     map {$_ => $c->req->params->{$_}} @field_names, # All the fields from the form - put this last because otherwise the following elements are seen as part of the map
   });
   
@@ -738,13 +807,225 @@ sub process_form :Private {
     }
     
     # Flash the entered values we've got so we can set them into the form
-    map {$c->flash->{$_} = $response->{fields}{$_}} @field_names;
+    $c->flash->{show_flashed} = 1;
+    map {$c->flash->{$_} = $response->{fields}{$_}} @processed_field_names;
   }
   
   # Now actually do the redirection
   $c->response->redirect($redirect_uri);
   $c->detach;
   return;
+}
+
+sub details :Chained("base") :PathPart("details") :Args(0) {
+  my ( $self, $c ) = @_;
+  my $event = $c->stash->{event};
+  my $enc_name = $c->stash->{enc_name};
+  
+  # Check we can edit events
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.edit-events"), 1]);  # Try to find the current season (or the last completed season if there is no current season)
+  
+  # Check we have a current season to edit (we can't edit archived seasons' events)
+  my $current_season = $c->model("DB::Season")->get_current;
+    
+  if ( defined($current_season) ) {
+    # Forward to the routine that stashes the event's season details
+    $c->stash({season => $current_season});
+    $c->forward("get_event_season");
+  } else {
+    # There is no current season, so we can't edit
+    $c->response->redirect($c->uri_for("/events/view_current_season", [$event->url_key],
+                                {mid => $c->set_status_msg({error => $c->maketext("events.edit.error.no-current-season")})}));
+    $c->detach;
+    return;
+  }
+  
+  my $event_season = $c->stash->{event_season};
+  
+  if ( !defined($event_season) ) {
+    # No season created for this event
+    $c->response->redirect($c->uri_for("/events/edit", [$event->url_key],
+                                {mid => $c->set_status_msg({error => $c->maketext("events.edit-details.error.no-event-this-season", $enc_name, encode_entities($current_season->name))})}));
+    $c->detach;
+    return;
+  }
+  
+  $c->detach(sprintf("edit_%s", $event->event_type->id));
+}
+
+=head2 edit_meeting
+
+Forwarded from the details routine when the event is a meeting.
+
+=cut
+
+
+sub edit_meeting :Private {
+  my ( $self, $c ) = @_;
+  my $event = $c->stash->{event};
+  my $event_season = $c->stash->{event_season};
+  my $enc_name = $c->stash->{enc_name};
+  
+  # Attendees / apologies
+  my $attendees_tokeninput_options = {
+    jsonContainer => "json_search",
+    hintText => $c->maketext("person.tokeninput.type"),
+    noResultsText => $c->maketext("tokeninput.text.no-results"),
+    searchingText => $c->maketext("tokeninput.text.searching"),
+  };
+  
+  my $apologies_tokeninput_options = {
+    jsonContainer => "json_search",
+    hintText => $c->maketext("person.tokeninput.type"),
+    noResultsText => $c->maketext("tokeninput.text.no-results"),
+    searchingText => $c->maketext("tokeninput.text.searching"),
+  };
+  
+  # Pre-population
+  my ( $attendees, $apologies );
+  if ( $c->flash->{show_flashed} ) {
+    $attendees = $c->flash->{attendees};
+    $apologies = $c->flash->{apologies};
+  } else {
+    $attendees = [$event_season->attendees];
+    $apologies = [$event_season->apologies];
+  }
+  
+  $attendees = [$attendees] unless ref($attendees) eq "ARRAY";
+  $apologies = [$apologies] unless ref($apologies) eq "ARRAY";
+  
+  if ( scalar( @{$attendees} ) ) {
+    foreach my $attendee ( @{$attendees} ) {
+      # Depending whether we've flashed the value or taken it from the database, this will be the person object directly
+      # or the meeting attendee object, in which case we need to retrieve the person object.
+      my $attendee_person = ref( $attendee ) eq "TopTable::DB::Model::Person" ? $attendee : $attendee->person;
+      
+      push(@{$attendees_tokeninput_options->{prePopulate}}, {
+        id => $attendee_person->id,
+        name => encode_entities($attendee_person->display_name),
+      });
+    }
+  }
+  
+  if ( scalar @{$apologies} ) {
+    foreach my $apology ( @{$apologies} ) {
+      # Depending whether we've flashed the value or taken it from the database, this will be the person object directly
+      # or the meeting attendee object, in which case we need to retrieve the person object.
+      my $apology_person = ref($apology) eq "TopTable::DB::Model::Person" ? $apology : $apology->person;
+      
+      push(@{$apologies_tokeninput_options->{prePopulate}}, {
+        id => $apology_person->id,
+        name => encode_entities($apology_person->display_name),
+      });
+    }
+  }
+  
+  my $tokeninput_confs = [{
+    script => $c->uri_for("/people/search"),
+    options => encode_json($attendees_tokeninput_options),
+    selector => "attendees",
+  }, {
+    script => $c->uri_for("/people/search"),
+    options => encode_json($apologies_tokeninput_options),
+    selector => "apologies",
+  }];
+  
+  $c->stash({
+    template => sprintf("html/events/edit-details-%s.ttkt", $event->event_type->id),
+    form_action => $c->uri_for_action("/events/do_edit_details", [$event->url_key]),
+    view_online_display => sprintf("Editing details for %s", $enc_name),
+    view_online_link => 1,
+    external_scripts => [
+      $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js", {v => 2}),
+      $c->uri_for("/static/script/plugins/ckeditor5/ckeditor.js"),
+      #$c->uri_for("/static/script/events/edit-details-meeting.js"),
+    ],
+    external_styles => [
+      $c->uri_for("/static/css/tokeninput/token-input-tt2.css"),
+    ],
+    scripts => [qw( tokeninput-standard ckeditor-iframely-standard )],
+    ckeditor_selectors => [qw( minutes agenda )],
+    tokeninput_confs => $tokeninput_confs,
+  });
+}
+
+sub do_edit_details :Chained("base") :PathPart("do-edit-details") :Args(0) {
+  my ( $self, $c ) = @_;
+  my $event = $c->stash->{event};
+  my $enc_name = $c->stash->{enc_name};
+  
+  # Check we can edit events
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.edit-events"), 1]);  # Try to find the current season (or the last completed season if there is no current season)
+  
+  # Check we have a current season to edit (we can't edit archived seasons' events)
+  my $current_season = $c->model("DB::Season")->get_current;
+    
+  if ( defined($current_season) ) {
+    # Forward to the routine that stashes the event's season details
+    $c->stash({season => $current_season});
+    $c->forward("get_event_season");
+  } else {
+    # There is no current season, so we can't edit
+    $c->response->redirect($c->uri_for("/events/view_current_season", [$event->url_key],
+                                {mid => $c->set_status_msg({error => $c->maketext("events.edit.error.no-current-season")})}));
+    $c->detach;
+    return;
+  }
+  
+  my $event_season = $c->stash->{event_season};
+  
+  if ( !defined($event_season) ) {
+    # No season created for this event
+    $c->response->redirect($c->uri_for("/events/edit", [$event->url_key],
+                                {mid => $c->set_status_msg({error => $c->maketext("events.edit-details.error.no-event-this-season", $enc_name, encode_entities($current_season->name))})}));
+    $c->detach;
+    return;
+  }
+  
+  my $response = $c->forward(sprintf("do_edit_%s", $event->event_type->id));
+  
+  # Set the status messages we need to show on redirect
+  my @errors = @{$response->{errors}};
+  my @warnings = @{$response->{warnings}};
+  my @info = @{$response->{info}};
+  my @success = @{$response->{success}};
+  my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});
+  my $redirect_uri;
+  
+  if ( $response->{completed} ) {
+    # Was completed, display the view page
+    $redirect_uri = $c->uri_for_action("/events/view_current_season", [$event->url_key], {mid => $mid});
+    $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["event", "edit", {id => $event->id}, $event->name]);
+  } else {
+    # Not complete - check if we need to redirect back to the create or view page
+    $redirect_uri = $redirect_uri = $c->uri_for("/events/details", [$event->urlkey], {mid => $mid});
+    
+    # Flash the entered values we've got so we can set them into the form
+    $c->flash->{$_} = $response->{fields}{$_} foreach @{$c->stash->{processed_field_names}};
+  }
+  
+  # Now actually do the redirection
+  $c->response->redirect($redirect_uri);
+  $c->detach;
+  return;
+}
+
+sub do_edit_meeting :Private {
+  my ( $self, $c ) = @_;
+  my $event = $c->stash->{event};
+  my $event_season = $c->stash->{event_season};
+  my @field_names = qw( agenda minutes );
+  $c->stash({processed_field_names => [qw( attendees apologies agenda minutes )]});
+  
+  # Call the DB routine to do the error checking and creation
+  my $response = $event_season->set_details({
+    logger => sub{ my $level = shift; $c->log->$level( @_ ); },
+    attendees => [split(",", $c->req->params->{attendees})],
+    apologies => [split(",", $c->req->params->{apologies})],
+    map {$_ => $c->req->params->{$_}} @field_names, # All the rest of the fields from the form - put this last because otherwise the following elements are seen as part of the map
+  });
+  
+  return $response;
 }
 
 =encoding utf8

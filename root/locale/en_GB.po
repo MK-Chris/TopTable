@@ -267,11 +267,14 @@ msgstr "Contact"
 msgid "menu.text.contactreason"
 msgstr "Contact reasons"
 
-msgid "menu.text.meeting"
+msgid "menu.text.meetings"
 msgstr "Meetings"
 
 msgid "menu.title.meetings"
 msgstr "Meetings"
+
+msgid "menu.text.meeting-types"
+msgstr "Meeting types"
 
 ## Venues
 msgid "menu.text.venue-list"
@@ -3363,8 +3366,11 @@ msgstr "Organiser"
 msgid "events.field.venue"
 msgstr "Venue"
 
-msgid "events.field.date"
-msgstr "Date"
+msgid "events.field.start-date"
+msgstr "Start date"
+
+msgid "events.field.end-date"
+msgstr "End date (leave blank to use the same as the start date)"
 
 msgid "events.field.duration-all-day"
 msgstr "All day event"
@@ -3426,11 +3432,17 @@ msgstr "You must select a venue."
 msgid "events.form.error.venue-inactive"
 msgstr "%1 is not an active venue; you must select an active venue, or edit %1 to make it active first."
 
-msgid "events.form.error.date-invalid"
-msgstr "The specified event date is not a valid date."
+msgid "events.form.error.start_date-invalid"
+msgstr "The specified event start date is not a valid date."
 
-msgid "events.form.error.date-blank"
-msgstr "You must specify a date for the event."
+msgid "events.form.error.end_date-invalid"
+msgstr "The specified event end date is not a valid date."
+
+msgid "events.form.error.start_date-blank"
+msgstr "You must specify a start date for the event."
+
+msgid "events.form.error.start-date-must-be-before-end-date"
+msgstr "The start date and time must be before the end date and time, if the end date and time are specified."
 
 msgid "events.form.error.organiser-invalid"
 msgstr "The organiser is invalid."
@@ -3443,6 +3455,12 @@ msgstr "You must select an hour for the event start time."
 
 msgid "events.form.error.start-minute-invalid"
 msgstr "The event start minute value is invalid; it must be selected from the list (&#39;00&#39; to &#39;59&#39;)."
+
+msgid "events.form.error.start-time-partially-blank"
+msgstr "The start time must be left blank, or both the hour and minute parts must have a value selected."
+
+msgid "events.form.error.end-time-partially-blank"
+msgstr "The end time must be left blank, or both the hour and minute parts must have a value selected."
 
 msgid "events.form.error.start-minute-blank"
 msgstr "You must select a minute for the event start time."
@@ -3461,6 +3479,9 @@ msgstr "You can&#39;t edit events until there is a current season to edit them i
 
 msgid "events.delete.error.cannot-delete"
 msgstr "You cannot delete %1."
+
+msgid "events.edit-details.error.no-event-this-season"
+msgstr "%1 has not been created for %2; use this form to create an instance of the event for this season."
 
 ### Reports
 msgid "reports.name.loan-players"
@@ -3672,11 +3693,14 @@ msgstr "%1 is not an active venue; you must select an active venue, or edit %1 t
 msgid "meetings.form.error.organiser-invalid"
 msgstr "The organiser is invalid."
 
-msgid "meetings.form.error.date-invalid"
-msgstr "The specified meeting date is not a valid date."
+msgid "meetings.form.error.start_date-invalid"
+msgstr "The specified meeting start date is not a valid date."
 
-msgid "meetings.form.error.date-blank"
-msgstr "You must specify a date."
+msgid "meetings.form.error.end_date-invalid"
+msgstr "The specified meeting end date is not a valid date."
+
+msgid "meetings.form.error.start_date-blank"
+msgstr "You must specify a start date."
 
 msgid "meetings.form.error.meeting-type-and-date-exists"
 msgstr "There is already a %1 occuring on that date; select another date or meeting type."
@@ -3700,7 +3724,13 @@ msgid "meetings.form.error.end-minute-invalid"
 msgstr "The end time minute value is invalid; it must be selected from the list (&#39;00&#39; to &#39;59&#39;).  You may leave the end time blank."
 
 msgid "meetings.form.error.attendee-on-both-lists"
-msgstr "%1 is listed as having both attended and sent their apologies; please remove %2 from one or both lists."
+msgstr "%1 is listed as having both attended and sent their apologies; please remove them from one or both lists."
+
+msgid "meetings.form.error.attendees-invalid"
+msgstr "%1 people on the attendee list are invalid and have not been added."
+
+msgid "meetings.form.error.apologies-invalid"
+msgstr "%1 people on the apology list are invalid and have not been added."
 
 msgid "meetings.form.error.attendees-on-both-lists"
 msgstr "The following %1 people are listed as having both attended and sent their apologies; please check each one and remove from one or both lists: %2."
@@ -3722,6 +3752,9 @@ msgstr "%1, %2 %3 %4 at %5:%6"
 
 msgid "meetings.display.date-with-finish-time"
 msgstr "%1, %2 %3 %4 at %5:%6 until %7:%8"
+
+msgid "meetings.display.date-with-finish-date-time"
+msgstr "%1, %2 %3 %4 at %5:%6 until %7, %8 %9 %10 at %11:%12"
 
 msgid "meetings.display.date-all-day"
 msgstr "%1, %2 %3 %4 at %5:%6, lasting for the rest of the day"
@@ -4473,6 +4506,9 @@ msgstr "Import some new %1"
 msgid "admin.edit-object"
 msgstr "Edit %1"
 
+msgid "admin.edit-object-details"
+msgstr "Edit the event details for %1"
+
 msgid "admin.archive-object"
 msgstr "Archive %1"
 
@@ -4855,6 +4891,9 @@ msgstr "edit meetings"
 
 msgid "user.auth.delete-meetings"
 msgstr "delete meetings"
+
+msgid "user.auth.view-meeting-types"
+msgstr "view meeting types"
 
 msgid "user.auth.create-meeting-types"
 msgstr "create meeting types"

@@ -13,7 +13,7 @@ Search for all meeting types ordered by name.
 sub all_meeting_types {
   my ( $self ) = @_;
   
-  return $self->search({}, {
+  return $self->search(undef, {
     order_by => {-asc => "name"},
   });
 }

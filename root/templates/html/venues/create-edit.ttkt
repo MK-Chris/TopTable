@@ -141,4 +141,4 @@ END;
 </div><!-- End map container -->
 
 </form>
-<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?key=[% c.config.Google.Maps.api_key %]&amp;callback=initMap" async></script>
+<script src="https://maps.googleapis.com/maps/api/js?key=[% c.config.Google.Maps.api_key %]&amp;callback=initMap" async></script>

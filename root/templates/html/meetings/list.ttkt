@@ -14,26 +14,26 @@ IF meetings.count;
   USE zeroes = format("%02d");
   WHILE (meeting = meetings.next);
     name_html = FILTER html_entity; meeting.type.name; END;
-    SET date = meeting.date_and_start_time;
-    CALL date.set_locale( c.locale );
+    SET date = meeting.start_date_time;
+    CALL date.set_locale(c.locale);
     
-    SET month   = zeroes( date.month );
-    SET day     = zeroes( date.day );
-    SET hour    = zeroes( date.hour );
-    SET minute  = zeroes( date.minute );
+    SET month = zeroes(date.month);
+    SET day = zeroes(date.day);
+    SET hour = zeroes(date.hour);
+    SET minute = zeroes(date.minute);
     SET date_display = c.maketext("meetings.display.date", date.day_name, date.day, date.month_name, date.year, hour, minute);
 -%]
   <li>
-    <a href="[% c.uri_for_action("/meetings/view_by_type_and_date", [meeting.type.url_key, meeting.date_and_start_time.year, month, day]) %]">[% name_html %] ([% date_display %])</a>
+    <a href="[% c.uri_for_action("/meetings/view_by_type_and_date", [meeting.type.url_key, meeting.start_date_time.year, month, day]) %]">[% name_html %] ([% date_display %])</a>
 [%
     IF authorisation.meeting_edit;
 -%]
-    <a href="[% c.uri_for_action("/meetings/edit_by_type_and_date" [meeting.type.url_key, meeting.date_and_start_time.year, month, day]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", name_html) %]" title="[% c.maketext("admin.edit-object", name_html) %]" /></a>
+    <a href="[% c.uri_for_action("/meetings/edit_by_type_and_date" [meeting.type.url_key, meeting.start_date_time.year, month, day]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", name_html) %]" title="[% c.maketext("admin.edit-object", name_html) %]" /></a>
 [%
     END;
     IF authorisation.meeting_delete AND meeting.can_delete;
 -%]
-    <a href="[% c.uri_for_action("/meetings/delete_by_type_and_date" [meeting.type.url_key, meeting.date_and_start_time.year, month, day]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", name_html) %]" title="[% c.maketext("admin.delete-object", name_html) %]" /></a>
+    <a href="[% c.uri_for_action("/meetings/delete_by_type_and_date" [meeting.type.url_key, meeting.start_date_time.year, month, day]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", name_html) %]" title="[% c.maketext("admin.delete-object", name_html) %]" /></a>
 [%
     END;
 -%]

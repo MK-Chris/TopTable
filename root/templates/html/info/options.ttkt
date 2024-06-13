@@ -15,7 +15,7 @@
 IF authorisation.meeting_view;
 -%]
   <li>
-    <a href="[% c.uri_for("/info/meetings") %]">[% c.maketext("menu.text.meeting") %]</a>
+    <a href="[% c.uri_for("/info/meetings") %]">[% c.maketext("menu.text.meetings") %]</a>
   </li>
 [%
 END;

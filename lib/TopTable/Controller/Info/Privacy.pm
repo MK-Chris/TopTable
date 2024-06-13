@@ -80,9 +80,10 @@ sub edit :Local :Args(0) {
   
   $c->stash({
     template => "html/page-text/edit.ttkt",
+    scripts => [qw( ckeditor-iframely-standard )],
+    ckeditor_selectors => [qw( page_text )],
     external_scripts => [
-      $c->uri_for("/static/script/plugins/ckeditor/ckeditor.js"),
-      $c->uri_for("/static/script/plugins/ckeditor/adapters/jquery.js"),
+      $c->uri_for("/static/script/plugins/ckeditor5/ckeditor.js"),
       $c->uri_for("/static/script/page_text/edit.js"),
     ],
     subtitle1 => $c->maketext("menu.text.privacy"),

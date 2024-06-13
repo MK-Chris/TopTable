@@ -94,7 +94,7 @@ Only populated if the meeting is NOT created out of an event - otherwise the ven
 
 Only populated if the meeting is NOT created out of an event - otherwise the location will be specified in the event details.
 
-=head2 date_and_start_time
+=head2 start_date_time
 
   data_type: 'datetime'
   datetime_undef_if_invalid: 1
@@ -108,9 +108,10 @@ Only populated if the meeting is NOT created out of an event - otherwise the dat
   extra: {unsigned => 1}
   is_nullable: 1
 
-=head2 finish_time
+=head2 end_date_time
 
-  data_type: 'time'
+  data_type: 'datetime'
+  datetime_undef_if_invalid: 1
   is_nullable: 1
 
 =head2 agenda
@@ -168,7 +169,7 @@ __PACKAGE__->add_columns(
     is_foreign_key => 1,
     is_nullable => 1,
   },
-  "date_and_start_time",
+  "start_date_time",
   {
     data_type => "datetime",
     datetime_undef_if_invalid => 1,
@@ -176,8 +177,12 @@ __PACKAGE__->add_columns(
   },
   "all_day",
   { data_type => "tinyint", extra => { unsigned => 1 }, is_nullable => 1 },
-  "finish_time",
-  { data_type => "time", is_nullable => 1 },
+  "end_date_time",
+  {
+    data_type => "datetime",
+    datetime_undef_if_invalid => 1,
+    is_nullable => 1,
+  },
   "agenda",
   { data_type => "longtext", is_nullable => 1 },
   "minutes",
@@ -309,8 +314,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-01-08 00:07:05
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:opBrDUZ+RvSZYQoAlOOMyA
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-06-01 21:05:53
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:eaimHDP6jrCsqIyyXmrfHA
 
 =head2 is_event
 
@@ -355,6 +360,47 @@ sub apologies {
     prefetch => "person",
     order_by  => {-asc => [qw( surname first_name )]},
   });
+}
+
+=head2 update_attendees
+
+Update attendees - the hash passed in here is the same format as the one returned from the resultset class prepare_attendees_for_update (although the invalid / conflict lists are irrelevant and ignored) - call that to create the output to pass in here.
+
+This takes both an attendee and an apology list.
+
+=cut
+
+sub update_attendees {
+  my $self = shift;
+  my ( $people ) = @_;
+  
+  # Delete the conflict key if supplied
+  delete $people->{conflict};
+  
+  # Start a transaction so we don't have a partially updated database
+  my $tx = $self->result_source->schema->txn_scope_guard;
+  
+  foreach my $type ( keys %{$people} ) {
+    # Set the apologies field
+    my $apologies = $type eq "apologies" ? 1 : 0;
+    my @remove_ids = map($_->id, @{$people->{$type}{remove}});
+    
+    # Delete any that need removing
+    $self->delete_related("meeting_attendees", {
+      apologies => $apologies,
+      person => {-in => \@remove_ids},
+    });
+    
+    foreach my $person ( @{$people->{$type}{add}} ) {
+      # Create the new attendee unless they exist already - we don't need to check whether they're an apology here, as that was all changed in the previous loop
+      $self->update_or_create_related("meeting_attendees", {
+        person => $person->id,
+        apologies => $apologies,
+      });
+    }
+  }
+  
+  $tx->commit;
 }
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

@@ -1,0 +1,35 @@
+<form method="post" action="[% form_action %]">
+<fieldset>
+  <legend>[% c.maketext("meetings.form.legend.attendees-apologies") %]</legend>
+  <div class="form-column">
+    <div class="label-field-container">
+      <label for="token-input-attendees">[% c.maketext("meetings.field.attendees") %]</label>
+      <div class="field-container">
+        <input type="text" id="attendees" name="attendees" value="" />
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+  </div>
+  
+  <div class="form-column">
+    <div class="label-field-container">
+      <label for="token-input-apologies">[% c.maketext("meetings.field.apologies") %]</label>
+      <div class="field-container">
+        <input type="text" id="apologies" name="apologies" value="" />
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+  </div>
+</fieldset>
+
+<fieldset>
+  <legend>[% c.maketext("meetings.form.legend.agenda") %]</legend>
+  <textarea id="agenda" name="agenda" rows="25">[% c.flash.agenda OR meeting.agenda %]</textarea><br />
+</fieldset>
+
+<fieldset>
+  <legend>[% c.maketext("meetings.form.legend.minutes") %]</legend>
+  <textarea id="minutes" name="minutes" rows="25">[% c.flash.minutes OR meeting.minutes %]</textarea><br />
+</fieldset>
+<input type="submit" name="Submit" value="[% c.maketext("form.button.save") %]" />
+</form>

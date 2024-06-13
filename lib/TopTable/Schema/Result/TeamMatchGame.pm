@@ -850,9 +850,6 @@ sub update_score {
     completed => 0,
   };
   
-  #$logger->("debug", sprintf("Updating game %d; params:", $self->scheduled_game_number));
-  #$logger->("debug", np($params));
-  
   # Get our season forefeit / void settings
   my $void_unplayed_games_if_both_teams_incomplete = $season->void_unplayed_games_if_both_teams_incomplete;
   my $forefeit_count_averages_if_game_not_started = $season->forefeit_count_averages_if_game_not_started;

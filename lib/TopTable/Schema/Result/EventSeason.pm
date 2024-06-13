@@ -62,13 +62,7 @@ __PACKAGE__->table("event_seasons");
   is_nullable: 0
   size: 300
 
-=head2 date
-
-  data_type: 'date'
-  datetime_undef_if_invalid: 1
-  is_nullable: 1
-
-=head2 date_and_start_time
+=head2 start_date_time
 
   data_type: 'datetime'
   datetime_undef_if_invalid: 1
@@ -80,12 +74,13 @@ __PACKAGE__->table("event_seasons");
   extra: {unsigned => 1}
   is_nullable: 1
 
-=head2 finish_time
+=head2 end_date_time
 
-  data_type: 'time'
+  data_type: 'datetime'
+  datetime_undef_if_invalid: 1
   is_nullable: 1
 
-An approximate value in minutes; the value can then be converted in the script to hours / an end time.
+Time will be an approximate value in minutes; the value can then be converted in the script to hours / an end time.
 
 =head2 organiser
 
@@ -125,9 +120,7 @@ __PACKAGE__->add_columns(
   },
   "name",
   { data_type => "varchar", is_nullable => 0, size => 300 },
-  "date",
-  { data_type => "date", datetime_undef_if_invalid => 1, is_nullable => 1 },
-  "date_and_start_time",
+  "start_date_time",
   {
     data_type => "datetime",
     datetime_undef_if_invalid => 1,
@@ -135,8 +128,12 @@ __PACKAGE__->add_columns(
   },
   "all_day",
   { data_type => "tinyint", extra => { unsigned => 1 }, is_nullable => 1 },
-  "finish_time",
-  { data_type => "time", is_nullable => 1 },
+  "end_date_time",
+  {
+    data_type => "datetime",
+    datetime_undef_if_invalid => 1,
+    is_nullable => 1,
+  },
   "organiser",
   {
     data_type => "integer",
@@ -272,8 +269,31 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-01-08 00:07:04
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:GI8P/tdfX36e4arJbprg6w
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-06-01 20:59:23
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:SfaFo9Gu0F5SG/RBHRuLdQ
+
+use DateTime;
+
+# Add UTC time zone to date / time columns
+__PACKAGE__->add_columns(
+    "start_date_time",
+    { data_type => "datetime", timezone => "UTC", datetime_undef_if_invalid => 1, is_nullable => 1, },
+    "end_date_time",
+    { data_type => "datetime", timezone => "UTC", datetime_undef_if_invalid => 1, is_nullable => 1, },
+);
+
+=head2 ends_on_different_day
+
+Determine whether to show the end date or time - if the end date is the same as the start date, don't show
+
+=cut
+
+sub ends_on_different_day {
+  my $self = shift;
+  
+  # Truncate the times off then compare
+  return DateTime->compare($self->start_date_time->truncate(to => "day"), $self->end_date_time->truncate(to => "day")) == 0 ? 0 : 1;
+}
 
 =head2 event_detail
 
@@ -282,7 +302,7 @@ Returns a different detail depending on the event.
 =cut
 
 sub event_detail {
-  my ( $self ) = @_;
+  my $self = shift;
   
   # Get the event type
   my $event_type = $self->event->event_type->id;
@@ -290,6 +310,153 @@ sub event_detail {
   if ( $event_type eq "meeting" ) {
     return $self->search_related("meetings", undef, {rows => 1})->single;
   }
+}
+
+=head2 attendees
+
+Get the attendees for this event (if it's a meeting; if it's not, return undef).
+
+=cut
+
+sub attendees {
+  my $self = shift;
+  my $event_type = $self->event->event_type->id;
+  
+  if ( $event_type eq "meeting" ) {
+    return $self->search_related("meetings", undef, {rows => 1})->single->attendees;
+  } else {
+    return undef;
+  }
+}
+
+=head2 apologies
+
+Get the attendees for this event (if it's a meeting; if it's not, return undef).
+
+=cut
+
+sub apologies {
+  my $self = shift;
+  my $event_type = $self->event->event_type->id;
+  
+  if ( $event_type eq "meeting" ) {
+    return $self->search_related("meetings", undef, {rows => 1})->single->apologies;
+  } else {
+    return undef;
+  }
+}
+
+=head2 set_details
+
+Set the details of this season's event.  What exactly happens here depends on the type of event.
+
+=cut
+
+sub set_details {
+  my $self = shift;
+  
+  if ( $self->event->event_type->id eq "meeting" ) {
+    return $self->_set_meeting_details(@_);
+  }
+}
+
+=head2 get_meeting
+
+Get the meeting object.
+
+=cut
+
+sub get_meeting {
+  my $self = shift;
+  return $self->search_related("meetings", undef, {rows => 1})->single;
+}
+
+=head2 _set_meeting_details
+
+Called internally by set_details if the event is a meeting
+
+=cut
+
+sub _set_meeting_details {
+  my $self = shift;
+  my ( $params ) = @_;
+  
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  
+  # Get the specific meeting
+  my $meeting = $self->get_meeting;
+  
+  # Grab the fields
+  my $attendees = $params->{attendees} || [];
+  my $apologies = $params->{apologies} || [];
+  my $agenda = $params->{agenda} || undef;
+  my $minutes = $params->{minutes} || undef;
+  
+  # Set the response hash up
+  my $response = {
+    errors => [],
+    warnings => [],
+    info => [],
+    success => [],
+    fields => {
+      agenda => $agenda,
+      minutes => $minutes,
+    },
+    completed => 0,
+  };
+  
+  # Prepare the people for DB insert / update / delete
+  my $people = $schema->resultset("Meeting")->prepare_attendees_for_update({
+    meeting => $meeting,
+    attendees => $attendees,
+    apologies => $apologies,
+    logger => $logger,
+  });
+  
+  # Now check if we have anyone who appears on both lists
+  if ( scalar(@{$people->{conflict}}) == 1 ) {
+    # One person on both lists elicits a different message to multiple people
+    push(@{$response->{errors}}, $lang->maketext("meetings.form.error.attendee-on-both-lists", encode_entities($people->{conflict}[0]->display_name)));
+  } elsif ( scalar(@{$people->{conflict}}) > 1 ) {
+    # Multiple people on both lists, get their names and encode them for the error message
+    # Save the number of conflicts, as we'll be popping the last one off here to build the message, so we need to get the total number early on
+    my $conflicts = @{$people->{conflict}};
+    
+    # Now join all the remaining elements with ", " and add " and $last" to the end of it
+    my @people_names = map(encode_entities($_->display_name), @{$people->{conflict}});
+    
+    # Get the last element from the list, as we don't want this to have commas before it
+    my $last = pop(@people_names);
+    
+    my $conflict_people = sprintf("%s %s %s", join(", ", @people_names), $lang->maketext("msg.and"), $last);
+    
+    push(@{$response->{errors}}, $lang->maketext("meetings.form.error.attendees-on-both-lists", $conflicts, $conflict_people));
+  }
+  
+  # Check for invalid attendees / apologies
+  push(@{$response->{errors}}, $lang->maketext("meetings.form.error.attendees-invalid", $people->{attendees}{invalid})) if $people->{attendees}{invalid};
+  push(@{$response->{errors}}, $lang->maketext("meetings.form.error.apologies-invalid", $people->{apologies}{invalid})) if $people->{apologies}{invalid};
+  
+  # Start a transaction so we don't have a partially updated database
+  my $transaction = $self->result_source->schema->txn_scope_guard;
+  
+  $meeting->update({
+    agenda => $agenda,
+    minutes => $minutes,
+  });
+  
+  # Now sort out our attendees from the prepared list
+  $meeting->update_attendees($people);
+  $response->{completed} = 1;
+  
+  $transaction->commit;
+  
+  return $response;
 }
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
