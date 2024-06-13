@@ -76,7 +76,7 @@ WHILE (venue_loop = venues.next);
     SET selected = '';
   END;
 -%]
-        <option value="[% venue.id %]"[% selected %]>[% venue.name | html_entity %]</option>
+        <option value="[% venue_loop.id %]"[% selected %]>[% venue_loop.name | html_entity %]</option>
 [%
 END;
 -%]
