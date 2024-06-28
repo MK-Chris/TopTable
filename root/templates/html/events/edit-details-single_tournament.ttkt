@@ -1,0 +1,5 @@
+<form method="post" action="[% form_action %]">
+<fieldset>
+  <legend>[% c.maketext("tournament.round.details") %]</legend>
+</fieldset>
+</form>

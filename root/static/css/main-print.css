@@ -548,7 +548,7 @@ input[type=text], input[type=password], input[type=date], input[type=url], input
 
 select.average-filter {width: auto;}
 select.average-filter-pre-defined {width: auto;}
-select.grid-match {width: 120px;}
+select.grid-match {width: 160px;}
 
 button, input, textarea, select {
   -moz-box-sizing: border-box;
@@ -817,7 +817,7 @@ input.active, textarea.active {
 input.menu-input {width: 150px;}
 .menu-margin {margin-left: 5px;}
 
-#club-secretary, #club-venue, #grid-positions, #grid-matches, #stats-left, #stats-right, #meeting-attendees, #meeting-apologies {
+#club-secretary, #club-venue, #stats-left, #stats-right, #meeting-attendees, #meeting-apologies {
   min-width: 280px;
   float: left;
   padding-bottom: 20px;
@@ -868,7 +868,7 @@ div.user-info-heading, div.user-info-data {
 
 div.user-info-heading {font-weight: bold;}
 
-#grid-positions, #grid-matches, #stats-left, #stats-right, #meeting-attendees, #meeting-apologies {width: 45%;}
+#stats-left, #stats-right, #meeting-attendees, #meeting-apologies {width: 45%;}
 #club-secretary, #club-venue {width: 25%;}
 #club-venue, #user, #grid-positions, #stats-left {margin-right: 20px;}
 
@@ -1180,7 +1180,7 @@ html[xmlns] .clearfix, html[xmlns] .clear-fix {display: block;}
   div.field-container {
     margin-left: 5px;
     width: 100%;
-    max-width: 280px;
+    max-width: 350px;
   	float: left;
   }
   

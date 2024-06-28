@@ -1,9 +1,7 @@
-<h4>[% grid.name %]</h4>
 <form method="post" action="[% form_action %]">
-<h5>General Settings</h5>
-<div class="table-wrap">
-  <div class="table-layout table-layout-centre">
-    <div class="repeat-fixtures">
+<fieldset>
+<legend>[% c.maketext("fixtures-grids.matches.form.legend.general") %]</legend>
+<div class="repeat-fixtures">
 [%
 IF c.flash.repeat_fixtures;
   SET CHECKED = ' checked="checked"';
@@ -13,11 +11,11 @@ ELSE;
   SET REPEAT_DISPLAY = '';
 END;
 -%]
-      <input type="checkbox" id="repeat-fixtures" name="repeat_fixtures" data-label="Repeat fixtures?" value="1"[% CHECKED %] /><br />
-      <div class="info-message-small">
-        <span class="message-text">[% c.maketext("fixtures-grids.form.matches.notice-repeated-fixtures") %]</span>
-      </div>
-    </div>
+  <input type="checkbox" id="repeat-fixtures" name="repeat_fixtures" data-label="Repeat fixtures?" value="1"[% CHECKED %] /><br />
+  <div class="info-message-small">
+    <span class="message-text">[% c.maketext("fixtures-grids.form.matches.notice-repeated-fixtures") %]</span>
+  </div>
+</div>
 [%
 # Set the number of non-repeated matches (i.e., first pass through) fixtures we have.  This is the maximum number of teams minus 1
 SET first_pass_fixtures = grid.maximum_teams - 1;
@@ -40,8 +38,8 @@ FOREACH week IN weeks;
     SET DATA_REPEATED = 0;
   END;
 -%]
-    <div id="week-[% week.week %]">
-      <a name="week-[% week.week %]"></a><h5>[% c.maketext("fixtures-grids.field.week", week.week) %]</h5>
+<div id="week-[% week.week %]">
+  <a name="week-[% week.week %]"></a><h5>[% c.maketext("fixtures-grids.field.week", week.week) %]</h5>
 [%
   # Loop through all the matches for each week
   FOREACH match = week.fixtures_grid_matches;
@@ -71,8 +69,15 @@ FOREACH week IN weeks;
     ELSE;
       FIRST_MATCH_CLASS = "";
     END;
+    
+    SET home_fld = "week_" _ week.week _ "_match_" _ match.match_number _ "_home";
+    SET away_fld = "week_" _ week.week _ "_match_" _ match.match_number _ "_away";
 -%]
-      <select name="week_[% week.week %]_match_[% match.match_number %]_home" data-placeholder="[% c.maketext("fixtures-grids.form.matches.field.match-home-team", match.match_number) %]" data-week="[% week.week %]" data-match="[% match.match_number %]" data-repeated="[% DATA_REPEATED %]" class="grid-match home week[% week.week %] match[% REPEATED_SELECT_CLASS _ FIRST_MATCH_CLASS %]">
+
+  <div class="label-field-container">
+    <label for="[% home_fld %]">[% c.maketext("fixtures-grids.matches.field.match-num", match.match_number) %]</label>
+    <div class="field-container">
+      <select name="[% home_fld %]" id="[% home_fld %]" data-placeholder="[% c.maketext("fixtures-grids.form.matches.field.match-home-team", match.match_number) %]" data-week="[% week.week %]" data-match="[% match.match_number %]" data-repeated="[% DATA_REPEATED %]" class="grid-match home week[% week.week %] match[% REPEATED_SELECT_CLASS _ FIRST_MATCH_CLASS %]">
         <option value=""></option>
 [%
     SET i = 1;
@@ -90,8 +95,8 @@ FOREACH week IN weeks;
     END;
 -%]
       </select>
-      v
-      <select name="week_[% week.week %]_match_[% match.match_number %]_away" data-placeholder="[% c.maketext("fixtures-grids.form.matches.field.match-away-team", match.match_number) %]" data-week="[% week.week %]" data-match="[% match.match_number %]" data-repeated="[% DATA_REPEATED %]" class="grid-match away week[% week.week %] match[% REPEATED_SELECT_CLASS %]">
+  [% c.maketext("matches.versus-abbreviation") %]
+      <select name="[% away_fld %]" id="[% away_fld %]" data-placeholder="[% c.maketext("fixtures-grids.form.matches.field.match-away-team", match.match_number) %]" data-week="[% week.week %]" data-match="[% match.match_number %]" data-repeated="[% DATA_REPEATED %]" class="grid-match away week[% week.week %] match[% REPEATED_SELECT_CLASS %]">
         <option value=""></option>
 [%
     SET i = 1;
@@ -108,22 +113,24 @@ FOREACH week IN weeks;
       SET i = i + 1;
     END;
 -%]
-      </select><br />
+      </select>
+  </div>
+  <div class="clear-fix"></div>
+</div>
 [%
   END;
   
   # If we opened a repeated matches div, close it here
   IF repeated_matches_div_started;
 -%]
-    </div>
+</div>
 [%
   END;
 -%]
-    <br />
+<br />
 [%
 END;
 -%]
-  </div>
-</div>
+</fieldset>
 <input type="submit" name="Submit" value="Save" />
 </form>

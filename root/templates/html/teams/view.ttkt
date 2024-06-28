@@ -246,13 +246,12 @@ END;
   END;
 # End check for a season
 END;
- %]
-[%
-  IF seasons == 1;
-    SET season_text = c.maketext("object.singular.seasons");
-  ELSE;
-    SET season_text = c.maketext("object.plural.seasons");
-  END;
+
+IF seasons == 1;
+  SET season_text = c.maketext("object.singular.seasons");
+ELSE;
+  SET season_text = c.maketext("object.plural.seasons");
+END;
 -%]
 
 <div class="seasons-count"><a href="[% c.uri_for_action("/teams/view_seasons_by_url_key", [team.club.url_key, team.url_key]) %]">[% c.maketext("teams.seasons.count-text", enc_name, seasons, season_text) %]</a></div>

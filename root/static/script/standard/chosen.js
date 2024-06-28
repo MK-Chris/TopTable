@@ -28,7 +28,7 @@
     $("select.grid-match").chosen({
       single_backstroke_delete: false,
       allow_single_deselect: true,
-      width: "120px"
+      width: "160px"
     });
     
     $("select.average-filter").chosen({

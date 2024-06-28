@@ -48,10 +48,10 @@ Chain base for getting the event identifier and checking it.
 
 sub base :Chained("/") :PathPart("events") :CaptureArgs(1) {
   my ( $self, $c, $id_or_key ) = @_;
+  my $params = {type => "tournament"} if $c->stash->{tournament};
+  my $event = $c->model("DB::Event")->find_id_or_url_key($id_or_key, $params);
   
-  my $event = $c->model("DB::Event")->find_id_or_url_key( $id_or_key );
-  
-  if ( defined( $event ) ) {
+  if ( defined($event) ) {
     # Encode the name for future use later in the chain (saves encoding multiple times, which is expensive)
     my $enc_name = encode_entities($event->name);
     
@@ -197,7 +197,7 @@ sub view_current_season :Chained("view") :PathPart("") :Args(0) {
   # Try to find the current season (or the last completed season if there is no current season)
   my $season = $c->model("DB::Season")->get_current_or_last;
     
-  if ( defined( $season ) ) {
+  if ( defined($season) ) {
     $c->stash({
       season => $season,
       page_description => $c->maketext("description.events.view-current", $event_name, $site_name),
@@ -333,9 +333,18 @@ sub view_finalise :Private {
   $c->stash({canonical_uri => $canonical_uri});
   
   # Set up the template to use - meetings have their own viewing template
-  my $template;
-  my @external_scripts = ();
-  my @external_styles = ();
+  my @external_scripts = (
+    $c->uri_for("/static/script/plugins/responsive-tabs/jquery.responsiveTabs.mod.js"),
+    $c->uri_for("/static/script/standard/responsive-tabs.js"),
+    $c->uri_for("/static/script/standard/vertical-table.js"),
+    $c->uri_for("/static/script/standard/option-list.js"),
+  );
+  
+  my @external_styles = (
+    $c->uri_for("/static/css/responsive-tabs/responsive-tabs.css"),
+    $c->uri_for("/static/css/responsive-tabs/style-jqueryui.css"),
+  );
+  
   if ( $event->event_type->id eq "meeting" ) {
     my $meeting = $event_season->get_meeting;
     
@@ -344,25 +353,13 @@ sub view_finalise :Private {
       attendees => [$meeting->attendees],
       apologies => [$meeting->apologies],
     });
-    
-    $template = "html/meetings/view.ttkt";
-    push(@external_scripts,
-      $c->uri_for("/static/script/plugins/responsive-tabs/jquery.responsiveTabs.mod.js"),
-      $c->uri_for("/static/script/standard/responsive-tabs.js"),
-      $c->uri_for("/static/script/standard/vertical-table.js"),
-      $c->uri_for("/static/script/standard/option-list.js"),
-    );
-    push(@external_styles,
-      $c->uri_for("/static/css/responsive-tabs/responsive-tabs.css"),
-      $c->uri_for("/static/css/responsive-tabs/style-jqueryui.css"),,
-    );
   } else {
-    $template= sprintf("html/events-%s.ttkt", $event->event_type->id);
+    
   }
   
   
   $c->stash({
-    template => $template,
+    template => sprintf("html/events/view-%s.ttkt", $event->event_type->id),
     title_links => \@title_links,
     view_online_display => sprintf("Viewing %s", $enc_name),
     view_online_link => 1,
@@ -570,7 +567,7 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.edit-events"), 1]);  # Try to find the current season (or the last completed season if there is no current season)
   my $current_season = $c->model("DB::Season")->get_current;
     
-  if ( defined( $current_season ) ) {
+  if ( defined($current_season) ) {
     # Forward to the routine that stashes the event's season details
     $c->stash({season => $current_season});
     $c->forward("get_event_season");
@@ -850,6 +847,11 @@ sub details :Chained("base") :PathPart("details") :Args(0) {
     return;
   }
   
+  $c->stash({
+    template => sprintf("html/events/edit-details-%s.ttkt", $event->event_type->id),
+    form_action => $c->uri_for_action("/events/do_edit_details", [$event->url_key]),
+  });
+  
   $c->detach(sprintf("edit_%s", $event->event_type->id));
 }
 
@@ -931,8 +933,6 @@ sub edit_meeting :Private {
   }];
   
   $c->stash({
-    template => sprintf("html/events/edit-details-%s.ttkt", $event->event_type->id),
-    form_action => $c->uri_for_action("/events/do_edit_details", [$event->url_key]),
     view_online_display => sprintf("Editing details for %s", $enc_name),
     view_online_link => 1,
     external_scripts => [
@@ -946,6 +946,32 @@ sub edit_meeting :Private {
     scripts => [qw( tokeninput-standard ckeditor-iframely-standard )],
     ckeditor_selectors => [qw( minutes agenda )],
     tokeninput_confs => $tokeninput_confs,
+  });
+}
+
+=head2 edit_single_tournament
+
+Forwarded from the details routine when the event is a single (not multi) tournament.
+
+=cut
+
+sub edit_single_tournament :Private {
+  my ( $self, $c ) = @_;
+  my $event = $c->stash->{event};
+  my $event_season = $c->stash->{event_season};
+  my $enc_name = $c->stash->{enc_name};
+  
+  $c->stash({
+    view_online_display => sprintf("Editing details for %s", $enc_name),
+    view_online_link => 1,
+    external_scripts => [
+      $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js", {v => 2}),
+      $c->uri_for("/static/script/plugins/ckeditor5/ckeditor.js"),
+      #$c->uri_for("/static/script/events/edit-details-meeting.js"),
+    ],
+    external_styles => [
+      $c->uri_for("/static/css/tokeninput/token-input-tt2.css"),
+    ],
   });
 }
 

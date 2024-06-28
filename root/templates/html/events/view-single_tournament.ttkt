@@ -1,17 +1,9 @@
 [%
-IF is_event;
-  SET start_date = event_season.start_date_time;
-  SET all_day = event_season.all_day;
-  SET end_date = event_season.end_date_time;
-  SET venue = event_season.venue;
-  SET organiser = event_season.organiser;
-ELSE;
-  SET start_date = meeting.start_date_time;
-  SET all_day = meeting.all_day;
-  SET end_date = meeting.end_date_time;
-  SET venue = meeting.venue;
-  SET organiser = meeting.organiser;
-END;
+SET start_date = event_season.start_date_time;
+SET all_day = event_season.all_day;
+SET end_date = event_season.end_date_time;
+SET venue = event_season.venue;
+SET organiser = event_season.organiser;
 
 CALL start_date.set_locale(c.locale);
 CALL end_date.set_locale(c.locale);
@@ -41,99 +33,11 @@ ELSE;
   # End date not specified
   SET date_display = c.maketext("meetings.display.date", start_date.day_name, start_date.day, start_date.month_name, start_date.year, start_hour, start_minute);
 END;
- 
 -%]
 <div id="tabs">
   <ul>
-[%
-IF meeting.agenda;
--%]
-    <li><a href="#agenda">[% c.maketext("meetings.tab.agenda") %]</a></li>
-[%
-END;
-IF attendees.size OR apologies.size;
--%]
-    <li><a href="#attendees">[% c.maketext("meetings.tab.attendees") %]</a></li>
-[%
-END;
-IF meeting.minutes;
--%]
-    <li><a href="#minutes">[% c.maketext("meetings.tab.minutes") %]</a></li>
-[%
-END;
--%]
-    <li><a href="#details">[% c.maketext("meetings.heading.details") %]</a></li>
+    <li><a href="#details">[% c.maketext("events.tournaments.heading.details") %]</a></li>
   </ul>
-[%
-IF meeting.agenda;
--%]
-  <div id="agenda">
-[% meeting.agenda %]
-  </div>
-[%
-END;
-IF attendees.size OR apologies.size;
--%]
-  <div id="attendees">
-    <div id="meeting-attendees">
-      <h5>[% c.maketext("meetings.field.attendees") %]</h5>
-        <ul class="option-list"> 
-[%
-  IF attendees.size;
--%]
-[%
-    FOREACH attendee = attendees;
--%]
-          <li><a href="[% c.uri_for_action("/people/view_current_season", [attendee.person.url_key]) %]">[% attendee.person.display_name | html %]</a></li>
-[%
-    END;
--%]
-[%
-  ELSE;
-  # No attendees
--%]
-          <li>[% c.maketext("meetings.attendees-apologies.none") %]</li>
-[%
-  END;
--%]
-        </ul>
-    </div>
-    <div id="meeting-apologies">
-      <h5>[% c.maketext("meetings.field.apologies") %]</h5>
-        <ul class="option-list">
-      
-[%
-  IF apologies.size;
--%]
-[%
-    FOREACH apology = apologies;
--%]
-          <li><a href="[% c.uri_for_action("/people/view_current_season", [apology.person.url_key]) %]">[% apology.person.display_name | html %]</a></li>
-[%
-    END;
--%]
-[%
-  ELSE;
-  # No attendees
--%]
-          <li>[% c.maketext("meetings.attendees-apologies.none") %]</li>
-[%
-  END;
--%]
-      </ul>
-    </div>
-    <div class="clear-fix"></div>
-  </div>
-[%
-END;
-IF meeting.minutes;
--%]
-  <div id="minutes">
-[% meeting.minutes %]
-  </div>
-[%
-END;
--%]
   <div id="details">
     <div class="table-wrap">
       <div class="table-layout table-layout-centre">

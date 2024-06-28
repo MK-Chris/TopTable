@@ -2097,11 +2097,23 @@ msgid "divisions.not-yet-used"
 msgstr "Not yet used"
 
 ### Fixtures grids
+msgid "fixtures-grids.summary"
+msgstr "Summary"
+
 msgid "fixtures-grids.matches"
 msgstr "Matches"
 
-msgid "fixtures-grids.teams"
-msgstr "Teams"
+msgid "fixtures-grids.positions"
+msgstr "Positions for %1"
+
+msgid "fixtures-grid.matches.round"
+msgstr "Round #"
+
+msgid "fixtures-grid.matches.home-participant"
+msgstr "Home"
+
+msgid "fixtures-grid.matches.away-participant"
+msgstr "Away"
 
 msgid "fixtures-grids.allocate-teams"
 msgstr "Allocate teams to grid numbers"
@@ -2138,6 +2150,9 @@ msgstr "The maximum teams per division field must be an even number between 2 an
 
 msgid "fixtures-grids.form.error.repeat-fixtures-invalid"
 msgstr "The number of times a fixture is repeated must be a number between 1 and 9."
+
+msgid "fixtures-grids.form.matches.cannot-edit"
+msgstr "The matches for this grid can&#39;t be edited because there have been matches created using this template already; you must create a new grid and use that instead."
 
 msgid "fixtures-grids.form.matches.home-team-blank"
 msgstr "The home team for week %1, match %2 is blank."
@@ -2209,10 +2224,10 @@ msgid "fixtures-grids.field.name"
 msgstr "Name"
 
 msgid "fixtures-grids.field.maximum-teams-per-division"
-msgstr "Maximum teams per division"
+msgstr "Maximum participants per division / group"
 
 msgid "fixtures-grids.field.fixtures-repeated-question"
-msgstr "How many times are fixtures repeated?"
+msgstr "How many times do participants play each other?"
 
 msgid "fixtures-grids.field.fixtures-repeated"
 msgstr "Fixtures repeated"
@@ -2224,7 +2239,7 @@ msgid "fixtures-grids.create-fixtures.legend.assign-weeks"
 msgstr "Assign grid week numbers to weeks in the season"
 
 msgid "fixtures-grids.field.week"
-msgstr "Week %1"
+msgstr "Round %1"
 
 msgid "fixtures-grids.create-fixtures.field.week-beginning"
 msgstr "Week beginning %1"
@@ -2248,7 +2263,13 @@ msgid "fixtures-grids.form.matches.field.match-away-team"
 msgstr "Match %1 Away"
 
 msgid "fixtures-grids.form.matches.field.team-number"
-msgstr "Team %1"
+msgstr "Team / player %1"
+
+msgid "fixtures-grids.form.matches.field.player-number"
+msgstr "Player %1"
+
+msgid "fixtures-grids.form.matches.field.pair-number"
+msgstr "Pair %1"
 
 msgid "fixtures-grids.form.teams.bye"
 msgstr "Bye"
@@ -2257,12 +2278,36 @@ msgid "fixtures-grids.teams.view.no-season"
 msgstr "There is no season to display the positions for."
 
 msgid "fixtures-grids.matches.view.match-not-set"
-msgstr "Match %1 not set."
+msgstr "Participants not set."
+
+msgid "fixtures-grids.matches.form.legend.general"
+msgstr "Match teams"
+
+msgid "fixtures-grids.matches.field.match-num"
+msgstr "Match %1"
 
 msgid "fixtures-grids.matches.view.matches-not-set"
 msgstr "Matches for this grid have not been set yet."
 
-msgid "fixtures-grids.matches.set-link"
+msgid "fixtures-grid.positions.division"
+msgstr "Division"
+
+msgid "fixtures-grid.positions.division-sortable"
+msgstr "Division (sortable)"
+
+msgid "fixtures-grid.positions.position"
+msgstr "Position"
+
+msgid "fixtures-grid.positions.team"
+msgstr "Team"
+
+msgid "fixtures-grid.positions.team-home-night"
+msgstr "Home night"
+
+msgid "fixtures-grids.positions.view.position-not-set"
+msgstr "Not set"
+
+msgid "fixtures-grids.matches.set-matches"
 msgstr "Set the matches for this grid"
 
 msgid "fixtures-grids.teams.set-link"
@@ -2285,6 +2330,9 @@ msgstr "There are already matches set from this grid in the current season.  If 
 
 msgid "fixtures-grids.teams.error.wrong-team-id"
 msgstr "%s is not a valid team identifier or is in the wrong division."
+
+msgid "fixtures-grids.seasons.count-text"
+msgstr "%1 has been used in %2 %3."
 
 ### Fixtures and results
 msgid "fixtures-results.title.fixtures-results"
@@ -3483,6 +3531,9 @@ msgstr "You cannot delete %1."
 msgid "events.edit-details.error.no-event-this-season"
 msgstr "%1 has not been created for %2; use this form to create an instance of the event for this season."
 
+msgid "events.tournaments.heading.details"
+msgstr "Details"
+
 ### Reports
 msgid "reports.name.loan-players"
 msgstr "Loan players"
@@ -3890,6 +3941,9 @@ msgstr "You must enter the number of points assigned for a draw (even if that&#3
 
 msgid "templates.league-table-ranking.field.assign-points"
 msgstr "Award points for match results"
+
+msgid "templates.rules"
+msgstr "Template rules"
 
 msgid "templates.league-table-ranking.field.points-per-win"
 msgstr "Points for a win"
@@ -4532,6 +4586,9 @@ msgstr "Reject on %1"
 
 msgid "admin.reorder-officials"
 msgstr "Change the display order of league officials"
+
+msgid "admin.fixtures-grid.edit-object"
+msgstr "Set the matches for %1"
 
 msgid "admin.form.invalid-action"
 msgstr "Invalid action (%1) passed; the action must be 'create' or 'edit'."
@@ -5836,10 +5893,10 @@ msgid "team-membership-type.description.inactive"
 msgstr "An inactive team membership.  This would previously have been active; the player must have played for the team and then re-registered for a different team for a membership to be marked as inactive."
 
 ### Event types
-msgid "event-type.name.single-tournament"
+msgid "event-type.name.single_tournament"
 msgstr "Tournament"
 
-msgid "event-type.name.multi-tournament"
+msgid "event-type.name.multi_tournament"
 msgstr "Multi-tournament event"
 
 msgid "event-type.name.meeting"
@@ -5884,6 +5941,10 @@ msgstr "Entrants to tournaments are doubles partners and matches follow an indiv
 
 msgid "tournament-type.description.team"
 msgstr "Entrants to tournaments are teams and the matches follow the same specification as league matches (where you supply a team match template and each game has an individual match template).  Unless otherwise specified (set per round), each match of the tournament is played at the home team&#39;s venue on the home team&#39;s home night at the default match start time for the home team.  For each round, you will specify a &#39;week&#39; of the season that the round takes place in."
+
+### Tournaments
+msgid "tournament.round.details"
+msgstr "Tournament round details"
 
 ### Images
 msgid "images.form.image"

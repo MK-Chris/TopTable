@@ -423,11 +423,15 @@ sub end :ActionClass("RenderView") {
     });
     
     # Check the authorisation for showing / creating clubs, events, seasons, venues, meetings, teams and people.
-    $c->forward("TopTable::Controller::Users", "check_authorisation", [[qw( club_view club_create event_view event_create season_view season_create venue_view venue_create meeting_view meetingtype_view meetingtype_create team_create team_view )], "", 0]);
+    $c->forward("TopTable::Controller::Users", "check_authorisation", [[qw( club_view club_create event_view event_create season_view season_create venue_view venue_create meeting_view meetingtype_view meetingtype_create team_create team_view fixtures_create )], "", 0]);
     
     # If we can view meeting types, get the meeting types to show
     if ( $c->stash->{authorisation}{meetingtype_view} ) {
       $c->stash({nav_meeting_types => [$c->model("DB::MeetingType")->all_meeting_types]});
+    }
+    
+    if ( $c->stash->{authorisation}{fixtures_create} ) {
+      $c->stash({nav_fixtures_grids => [$c->model("DB::FixturesGrid")->all_grids]});
     }
   }
   

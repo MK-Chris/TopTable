@@ -148,7 +148,7 @@ __PACKAGE__->belongs_to(
   "event_type",
   "TopTable::Schema::Result::LookupEventType",
   { id => "event_type" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "CASCADE" },
 );
 
 =head2 system_event_log_events
@@ -167,8 +167,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2016-01-08 12:16:00
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:sTih6PTV2dgE3wUNf8EZ7w
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-06-14 11:42:30
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:54lSHs3MU1HUdpaB7Cm3Yw
 
 =head2 single_season
 

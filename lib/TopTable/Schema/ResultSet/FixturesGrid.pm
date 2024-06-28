@@ -103,29 +103,6 @@ sub page_records {
   });
 }
 
-=head2 get_grid_matches
-
-A predefined search to get the matches for a grid in week number, then match number order.
-
-=cut
-
-sub get_grid_matches {
-  my ( $self, $grid ) = @_;
-  
-  return $self->search( {
-    id => $grid->id
-  }, {
-    prefetch => {
-      fixtures_grid_weeks => "fixtures_grid_matches",
-    },
-    order_by => {
-      -asc => [
-        qw( fixtures_grid_weeks.week fixtures_grid_matches.match_number )
-      ]
-    },
-  });
-}
-
 =head2 incomplete_matches
 
 A predefined search to get the matches for a grid in week number, then match number order.

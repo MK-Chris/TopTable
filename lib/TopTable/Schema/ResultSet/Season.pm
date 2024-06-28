@@ -292,6 +292,7 @@ sub page_records {
   my $team = $params->{team};
   my $division = $params->{division};
   my $person = $params->{person};
+  my $grid = $params->{fixutres_grid};
   
   # Set a default for results per page if it's not provided or invalid
   $results_per_page = 25 if !defined($results_per_page) or $results_per_page !~ m/^\d+$/;
@@ -324,6 +325,11 @@ sub page_records {
   } elsif ( defined($person) ) {
     $where = {"person.id" => $person->id};
     $attrib->{join} = {person_seasons => "person"};
+  } elsif ( defined($grid) ) {
+    $where = {"fixtures_grid.id" => $grid->id};
+    $attrib->{join} = {
+      division_seasons => [qw( division fixtures_grid )]
+    };
   }
   
   return $self->search($where, $attrib);
