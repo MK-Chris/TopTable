@@ -14,18 +14,18 @@ sub divisions_and_teams_in_season_by_grid_position {
   my ( $self, $season, $grid ) = @_;
   
   return $self->search({
-    "me.season"           => $season->id,
+    "me.season" => $season->id,
     "team_seasons.season" => $season->id,
-    "club_season.season"  => $season->id,
-    "me.fixtures_grid"    => $grid->id,
+    "club_season.season" => $season->id,
+    "me.fixtures_grid" => $grid->id,
   }, {
-    prefetch => [ qw( division ), {
+    prefetch => [qw( division ), {
         team_seasons => [qw( team ), {
         club_season => "club",
       }]
     }],
     order_by  => {
-      -asc => [ qw( division.rank team_seasons.grid_position ) ]
+      -asc => [qw( division.rank team_seasons.grid_position )]
     }
   });
 }

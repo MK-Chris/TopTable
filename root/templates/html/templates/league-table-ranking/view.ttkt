@@ -1,29 +1,34 @@
-[% # Note That the '-' at the beginning or end of TT code  -%]
-[% # "chomps" the whitespace/newline at that end of the    -%]
-[% # output (use View Source in browser to see the effect) -%]
-
 <div id="template_rules">
-<h4>Template Rules</h4>
-<table class="vertical">
-[% # Match score type: use the number of games or points won / lost as the match score?
+<h4>[% c.maketext("templates.rules") %]</h4><div class="table-wrap">
+<div class="table-wrap">
+  <div class="table-layout table-layout-centre">
+    <table class="vertical">
+[%
+# Match score type: use the number of games or points won / lost as the match score?
 IF tt_template.assign_points == 1;
 -%]
-  <tr>
-    <th>[% c.maketext("templates.league-table-ranking.field.points-per-win") %]</th>
-    <td>[% tt_template.points_per_win %]</td>
-  </tr>
-  <tr>
-    <th>[% c.maketext("templates.league-table-ranking.field.points-per-draw") %]</th>
-    <td>[% tt_template.points_per_draw %]</td>
-  </tr>
-  <tr>
-    <th>[% c.maketext("templates.league-table-ranking.field.points-per-loss") %]</th>
-    <td>[% tt_template.points_per_loss %]</td>
-[% ELSE -%]
-  </tr>
-  <tr>
-    <th>[% c.maketext("templates.league-table-ranking.field.points-per-win-draw-loss") %]</th>
-    <td>Determined by match score</td>
-  </tr>
-[% END -%]
-</table>
+      <tr>
+        <th>[% c.maketext("templates.league-table-ranking.field.points-per-win") %]</th>
+        <td>[% tt_template.points_per_win %]</td>
+      </tr>
+      <tr>
+        <th>[% c.maketext("templates.league-table-ranking.field.points-per-draw") %]</th>
+        <td>[% tt_template.points_per_draw %]</td>
+      </tr>
+      <tr>
+        <th>[% c.maketext("templates.league-table-ranking.field.points-per-loss") %]</th>
+        <td>[% tt_template.points_per_loss %]</td>
+[%
+ELSE
+-%]
+      </tr>
+      <tr>
+        <th>[% c.maketext("templates.league-table-ranking.field.points-per-win-draw-loss") %]</th>
+        <td>Determined by match score</td>
+      </tr>
+[%
+END
+-%]
+    </table>
+  </div>
+</div>

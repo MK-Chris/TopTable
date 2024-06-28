@@ -80,27 +80,34 @@ Same as find(), but searches for both the id and key columns.  So we can use hum
 =cut
 
 sub find_id_or_url_key {
-  my ( $class, $id_or_url_key ) = @_;
-  my ( $where );
+  my ( $class, $id_or_url_key, $params ) = @_;
+  my $type = $params->{type};
+  my $where;
   
   if ( $id_or_url_key =~ m/^\d+$/ ) {
-    # Numeric - assume it's the ID
-    $where = {id => $id_or_url_key};
+    # Numeric - look in ID or URL key
+    $where = [{
+      "me.id" => $id_or_url_key
+    }, {
+      "me.url_key" => $id_or_url_key
+    }];
   } else {
     # Not numeric - must be the URL key
-    $where = {url_key => $id_or_url_key};
+    $where = {"me.url_key" => $id_or_url_key};
+  }
+  
+  if ( defined($type) ) {
+    if ( $type eq "tournament" ) {
+      $where->{event_type} = {-in => [qw( single_tournament multi_tournament )]};
+    } else {
+      $where->{event_type} = $type;
+    }
   }
   
   return $class->find($where, {
-    prefetch  => [
-      "event_type", {
-        event_seasons => [
-          "meetings",
-          "organiser",
-          "tournaments", # Will eventually be a hashref drilling down to rounds, groups, etc.
-        ],
-      },
-    ],
+    prefetch  => [qw( event_type ), {
+      event_seasons => [qw( organiser meetings tournaments )] # Tournaments will eventually be a hashref drilling down to rounds, groups, etc.
+    }],
   });
 }
 
@@ -250,7 +257,7 @@ sub create_or_edit {
       if ( $event_type->id eq "single-tournament" ) {
         # Check we have a tournament type
         if ( defined($tournament_type) ) {
-          $tournament_type = $class->schema->resultset("LookupTournamentType")->find($tournament_type) unless ref($tournament_type) eq "TopTable::Model::DB::LookupTournamentType";
+          $tournament_type = $schema->resultset("LookupTournamentType")->find($tournament_type) unless ref($tournament_type) eq "TopTable::Model::DB::LookupTournamentType";
           
           if ( defined($tournament_type) ) {
             if ( $tournament_type->id eq "team" ) {

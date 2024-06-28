@@ -52,7 +52,7 @@ __PACKAGE__->table("tournaments");
 =head2 url_key
 
   data_type: 'varchar'
-  is_nullable: 0
+  is_nullable: 1
   size: 45
 
 =head2 name
@@ -100,7 +100,7 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
   },
   "url_key",
-  { data_type => "varchar", is_nullable => 0, size => 45 },
+  { data_type => "varchar", is_nullable => 1, size => 45 },
   "name",
   { data_type => "varchar", is_nullable => 0, size => 100 },
   "event",
@@ -187,8 +187,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2015-12-08 01:14:14
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:55whDIRRMFP8htVOLGWhfA
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-06-13 22:46:57
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:4m/ZfgrclHxocSw70keV/g
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

@@ -404,7 +404,7 @@ sub create_or_edit {
   
   # Check the organiser (not required, so if it's undefined or blank that's fine)
   if ( defined($organiser) ) {
-    $organiser = $schema->resultset("Venue")->find_id_or_url_key($organiser) unless ref($organiser) eq "TopTable::Model::DB::Person";
+    $organiser = $schema->resultset("Person")->find_id_or_url_key($organiser) unless ref($organiser) eq "TopTable::Model::DB::Person";
     
     if ( defined($organiser) ) {
       # Push the organiser back into the returned fields
@@ -562,7 +562,7 @@ sub create_or_edit {
     if ( !$is_event ) {
       $meeting_data->{type} = $type->id;
       $meeting_data->{venue} = $venue->id;
-      $meeting_data->{organiser} = defined($organiser) ? $organiser->id : undef;
+      $meeting_data->{organiser} = $organiser;
       $meeting_data->{start_date_time} = $start_date;
       $meeting_data->{all_day} = $all_day;
       $meeting_data->{end_date_time} = $end_date;

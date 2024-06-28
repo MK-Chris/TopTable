@@ -1,0 +1,4 @@
+[%
+# For meetings we just use the meeting view file
+INCLUDE "html/meetings/view.ttkt"
+-%]

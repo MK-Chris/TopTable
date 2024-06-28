@@ -48,6 +48,8 @@ __PACKAGE__->table("lookup_event_types");
   is_nullable: 0
   size: 20
 
+In contrast to normal IDs, these must have underscores rather than hyphens, as they tie directly to the name of a subroutine.
+
 =head2 display_order
 
   data_type: 'tinyint'
@@ -107,8 +109,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2015-11-10 22:06:12
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:5m3In/P9TtZv4esnHNDEdw
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-06-14 12:04:08
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:S/U6KWldIp8RQ9jHcxAzpg
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

@@ -51,7 +51,7 @@ Chain base for getting the fixtures grid ID and checking it.
 sub base :Chained("/") :PathPart("fixtures-grids") :CaptureArgs(1) {
   my ( $self, $c, $id_or_key ) = @_;
   
-  my $grid = $c->model("DB::FixturesGrid")->find_id_or_url_key( $id_or_key );
+  my $grid = $c->model("DB::FixturesGrid")->find_id_or_url_key($id_or_key);
   
   if ( defined($grid) ) {
     # Encode the name for future use later in the chain (saves encoding multiple times, which is expensive)
@@ -88,7 +88,7 @@ sub base_list :Chained("/") :PathPart("fixtures-grids") :CaptureArgs(0) {
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["fixtures_view", $c->maketext("user.auth.view-fixtures-grids"), 1]);
   
   # Check the authorisation to edit fixtures so we can display the link if necessary
-  $c->forward("TopTable::Controller::Users", "check_authorisation", [ [ qw( fixtures_edit fixtures_delete fixtures_create) ], "", 0]);
+  $c->forward("TopTable::Controller::Users", "check_authorisation", [[qw( fixtures_edit fixtures_delete fixtures_create)], "", 0]);
   
   # Page description
   $c->stash({
@@ -196,8 +196,11 @@ sub view_current_season :Chained("view") :PathPart("") :Args(0) {
   my $season = $c->model("DB::Season")->get_current_or_last;
   
   if ( defined($season) ) {
+    my $enc_season_name = encode_entities($season->name);
+    
     $c->stash({
       season => $season,
+      enc_season_name => $enc_season_name,
       view_online_display => sprintf("Viewing %s", $enc_name),
       view_online_link => 1,
       page_description => $c->maketext("description.fixtures-grids.view-current", $enc_name, $site_name),
@@ -279,13 +282,6 @@ sub view_finalise :Private {
   my $season = $c->stash->{season};
   my $enc_name = $c->stash->{enc_name};
   
-  # Grab the weeks / matches
-  my $grid_weeks = $c->model("DB::FixturesGrid")->get_grid_matches( $grid )->first;
-  my $weeks = $grid_weeks->fixtures_grid_weeks;
-  
-  # Get the list of divisions using this grid in the season specified - if we don't have a season, don't do this
-  my $divisions = [$c->model("DB::Division")->divisions_and_teams_in_season_by_grid_position($season, $grid)] if exists($c->stash->{season});
-  
   # Set up the title links if we need them
   my @title_links = ();
   
@@ -303,6 +299,33 @@ sub view_finalise :Private {
       text => $c->maketext("admin.delete-object", $enc_name),
       link_uri => $c->uri_for_action("/fixtures-grids/delete", [$grid->url_key]),
     }) if $c->stash->{authorisation}{fixtures_delete} and $grid->can_delete;
+    
+    # Set matches link
+    if ( $c->stash->{authorisation}{fixtures_edit} ) {
+      push(@title_links, {
+        image_uri => $c->uri_for("/static/images/icons/edit-table-32.png"),
+        text => $c->maketext("admin.fixtures-grid.edit-object", $enc_name),
+        link_uri => $c->uri_for_action("/fixtures-grids/matches", [$grid->url_key]),
+      });
+      
+      push(@title_links, {
+        image_uri => $c->uri_for("/static/images/icons/reorder-32.png"),
+        text => $c->maketext("admin.fixtures-grid.edit-object", $enc_name),
+        link_uri => $c->uri_for_action("/fixtures-grids/teams", [$grid->url_key]),
+      });
+      
+      push(@title_links, {
+        image_uri => $c->uri_for("/static/images/icons/fixtures-32.png"),
+        text => $c->maketext("admin.fixtures-grid.edit-object", $enc_name),
+        link_uri => $c->uri_for_action("/fixtures-grids/create_fixtures", [$grid->url_key]),
+      }) if $grid->can_create_fixtures;
+      
+      push(@title_links, {
+        image_uri => $c->uri_for("/static/images/icons/fixturesdel-32.png"),
+        text => $c->maketext("admin.fixtures-grid.edit-object", $enc_name),
+        link_uri => $c->uri_for_action("/fixtures-grids/delete_fixtures", [$grid->url_key]),
+      }) if $grid->can_create_fixtures;
+    }
   }
   
   my $canonical_uri = ( defined($season) and $season->complete )
@@ -314,15 +337,34 @@ sub view_finalise :Private {
     template => "html/fixtures-grids/view.ttkt",
     title_links => \@title_links,
     subtitle1 => $enc_name,
-    weeks => [$weeks->all],
-    divisions => $divisions,
+    weeks => scalar $grid->get_match_templates,
+    divisions => scalar $grid->get_divisions($season),
     season => $season,
     view_online_display => sprintf("Viewing %s", $grid->name),
     view_online_link => 1,
     canonical_uri => $canonical_uri,
+    seasons => $grid->get_seasons->count,
     external_scripts => [
+      $c->uri_for("/static/script/plugins/responsive-tabs/jquery.responsiveTabs.mod.js"),
+      #$c->uri_for("/static/script/standard/responsive-tabs.js"),
       $c->uri_for("/static/script/standard/option-list.js"),
       $c->uri_for("/static/script/standard/vertical-table.js"),
+      $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
+      $c->uri_for("/static/script/standard/chosen.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
+      $c->uri_for("/static/script/fixtures-grids/view.js"),
+    ],
+    external_styles => [
+      $c->uri_for("/static/css/responsive-tabs/responsive-tabs.css"),
+      $c->uri_for("/static/css/responsive-tabs/style-jqueryui.css"),
+      $c->uri_for("/static/css/chosen/chosen.min.css"),
+      $c->uri_for("/static/css/datatables/dataTables.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/rowGroup.dataTables.min.css"),
     ],
   });
 }
@@ -343,10 +385,9 @@ sub view_seasons :Chained("view") :PathPart("seasons") :CaptureArgs(0) {
   # Stash the template; the data will be retrieved when we know what page we're on
   $c->stash({
     template => "html/fixtures-grids/list-seasons.ttkt",
+    subtitle1 => $enc_name,
     page_description => $c->maketext("description.fixtures-grids.list-seasons", $enc_name, $site_name),
-    external_scripts => [
-      $c->uri_for("/static/script/standard/option-list.js"),
-    ],
+    external_scripts => [$c->uri_for("/static/script/standard/option-list.js")],
   });
   
   # Push the current URI on to the breadcrumbs
@@ -678,7 +719,14 @@ sub matches :Chained("base") :PathPart("matches") :Args(0) {
   $c->response->header("Expires" => 0);
   
   # Check that we are authorised to create fixtures grids
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["fixtures_edit", $c->maketext("user.auth.edit-fixtures-grids"), 1] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["fixtures_edit", $c->maketext("user.auth.edit-fixtures-grids"), 1]);
+  
+  # Check the matches for this grid can be set
+  if ( !$grid->can_edit_matches ) {
+    $c->response->redirect($c->uri_for_action("/fixtures-grids/view_current_season", [$grid->url_key], {mid => $c->set_status_msg({error => $c->maketext("fixtures-grids.form.matches.cannot-edit")})}));
+    $c->detach;
+    return;
+  }
   
   # Grab the weeks / matches
   my $weeks = $grid->fixtures_grid_weeks;

@@ -198,7 +198,7 @@ Return the URL key for this object as an array ref (even if there's only one, an
 =cut
 
 sub url_keys {
-  my ( $self ) = @_;
+  my $self = shift;
   return [$self->url_key];
 }
 
@@ -209,7 +209,7 @@ Checks to see whether a fixtures grid can be deleted.  A fixtures grid can be de
 =cut
 
 sub can_delete {
-  my ( $self ) = @_;
+  my $self = shift;
   
   # First check the divisions - this is quicker than matches, as there are lots of matches to check
   my $divisions = $self->search_related("division_seasons")->count;
@@ -229,7 +229,8 @@ Process the deletion of the grid; checks that we're able to do this first (via c
 =cut
 
 sub check_and_delete {
-  my ( $self, $params ) = @_;
+  my $self = shift;
+  my ( $params ) = @_;
   # Setup schema / logging
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
@@ -274,7 +275,7 @@ Checks that all the requirements are in place to create the fixtures.  (i.e., th
 =cut
 
 sub can_create_fixtures {
-  my ( $self ) = @_;
+  my $self = shift;
   
   # First check the matches have been filled out
   my $incomplete_grid_matches = $self->search_related("fixtures_grid_weeks", [{
@@ -316,7 +317,7 @@ Checks to see whether the fixtures for the current season that have been created
 =cut
 
 sub can_delete_fixtures {
-  my ( $self ) = @_;
+  my $self = shift;
   
   my $total_matches = $self->search_related("team_matches", {
     "season.complete" => 0,
@@ -363,13 +364,56 @@ Returns the number of matches in the current season (defined as the season with 
 =cut
 
 sub matches_in_current_season {
-  my ( $self ) = @_;
+  my $self = shift;
   
   return $self->search_related("team_matches", {
     "season.complete" => 0,
   }, {
     join => "season",
   })->count;
+}
+
+=head2 get_divisions
+
+Return the DivisionSeason objects that relate to this grid for the given season.
+
+=cut
+
+sub get_divisions {
+  my $self = shift;
+  my ( $season ) = @_;
+  
+  return $self->search_related("division_seasons", {
+    "me.season" => $season->id,
+    "team_seasons.season" => $season->id,
+    "club_season.season" => $season->id,
+  }, {
+    prefetch => [qw( division ), {
+        team_seasons => [qw( team ), {
+        club_season => "club",
+      }]
+    }],
+    order_by  => {
+      -asc => [qw( division.rank team_seasons.grid_position )],
+    }
+  });
+}
+
+=head2 get_match_templates
+
+Get the matches setup for the grid.
+
+=cut
+
+sub get_match_templates {
+  my $self = shift;
+  
+  return $self->search_related("fixtures_grid_weeks", undef, {
+    prefetch => [qw( fixtures_grid_matches )],
+    order_by => {
+      -asc => [qw( fixtures_grid_matches.week fixtures_grid_matches.match_number )]
+    },
+  });
 }
 
 =head2 set_matches
@@ -379,7 +423,8 @@ Performs error checking and updates the grid matches for each week.
 =cut
 
 sub set_matches {
-  my ( $self, $params ) = @_;
+  my $self = shift;
+  my ( $params ) = @_;
   # Setup schema / logging
   my $logger = $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $locale = $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
@@ -398,6 +443,9 @@ sub set_matches {
     fields => {repeat_fixtures => $repeat_fixtures},
     completed => 0,
   };
+  
+  # Check the matches for this grid can be set
+  push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.matches.cannot-edit")) unless $self->can_edit_matches;
   
   # Get the grid settings
   my $maximum_teams_per_division = $self->maximum_teams;
@@ -428,7 +476,7 @@ sub set_matches {
     last if $repeat_fixtures and $week->week == $first_pass_fixtures_weeks;
   }
   
-  $response->{fields}{weeks}= \@fixtures_grid_weeks;
+  $response->{fields}{weeks} = \@fixtures_grid_weeks;
   
   # These will hold the details of any teams submitted that are blank / invalid in a text form so that they can be 'join'ed in a final error message
   my (@blank_teams, @invalid_teams);
@@ -547,7 +595,8 @@ Set the teams to their grid numbers for the current season.
 =cut
 
 sub set_teams {
-  my ( $self, $params ) = @_;
+  my $self = shift;
+  my ( $params ) = @_;
   # Setup schema / logging
   my $logger = $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $locale = $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
@@ -708,7 +757,8 @@ Checks the given parameters and if everything is okay, populates the league matc
 =cut
 
 sub create_matches {
-  my ( $self, $params ) = @_;
+  my $self = shift;
+  my ( $params ) = @_;
   # Setup schema / logging
   my $logger = $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $locale = $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
@@ -1035,7 +1085,8 @@ Deletes the fixtures for the grid in the current season (so long as they are abl
 =cut
 
 sub delete_matches {
-  my ( $self, $params ) = @_;
+  my $self = shift;
+  my ( $params ) = @_;
   # Setup schema / logging
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
@@ -1102,6 +1153,45 @@ sub delete_matches {
   return $response;
 }
 
+=head2 get_matches
+
+
+
+=cut
+
+sub get_matches {
+  my $self = shift;
+  return $self->search_related("team_matches");
+}
+
+=head2 can_edit_matches
+
+Determine whether we can edit the matches for this grid by checking if matches have been created from it yet.
+
+=cut
+
+sub can_edit_matches {
+  my $self = shift;
+  return $self->get_matches->count ? 0 : 1;
+}
+
+=head2 get_seasons
+
+Get the seasons that this grid has been used in.
+
+=cut
+
+sub get_seasons {
+  my $self = shift;
+  my $schema = $self->result_source->schema;
+  return $schema->resultset("Season")->search({"fixtures_grid.id" => $self->id}, {
+    join => {
+      division_seasons => [qw( fixtures_grid )]
+    },
+    group_by => [qw( me.id )]
+  });
+}
+
 =head2 search_display
 
 Function in all searchable objects to give a common accessor to the text to display. 
@@ -1109,7 +1199,8 @@ Function in all searchable objects to give a common accessor to the text to disp
 =cut
 
 sub search_display {
-  my ( $self, $params ) = @_;
+  my $self = shift;
+  my ( $params ) = @_;
   
   return {
     id => $self->id,

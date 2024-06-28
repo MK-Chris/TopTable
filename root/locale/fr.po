@@ -1229,7 +1229,7 @@ msgstr "Matchs %1 pas r�gl�."
 msgid "fixtures-grids.matches.view.matches-not-set"
 msgstr "Matches pour cette grille n'a pas encore �t� fix�e."
 
-msgid "fixtures-grids.matches.set-link"
+msgid "fixtures-grids.matches.set-matches"
 msgstr "D�finissez les matchs pour cette grille"
 
 msgid "fixtures-grids.teams.set-link"
