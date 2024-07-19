@@ -685,7 +685,7 @@ sub create_or_edit {
   
   # Lookup the captain and check it if an ID was specified
   if ( defined($captain) ) {
-    $captain = $schema->resultset("Person")->find($captain) unless ref($captain) eq "TopTable::Model::DB::Person";
+    $captain = $schema->resultset("Person")->find_id_or_url_key($captain) unless ref($captain) eq "TopTable::Model::DB::Person";
     push(@{$response->{errors}}, $lang->maketext("teams.form.error.captain-invalid")) unless defined($captain);
   }
   
