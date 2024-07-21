@@ -165,10 +165,14 @@ sub get_holders {
   my ( $self, $params ) = @_;
   my $season = $params->{season};
   
-  return $self->find_related("official_seasons", {season => $season->id})->search_related("official_season_people", undef, {
+  my $official_seasons = $self->find_related("official_seasons", {season => $season->id});
+  
+  return $official_seasons->search_related("official_season_people", undef, {
     prefetch => "position_holder",
     order_by => {-asc => [qw( position_holder.surname position_holder.first_name )]}
-  })->search_related("position_holder");
+  })->search_related("position_holder") if defined($official_seasons);
+  
+  return undef;
 }
 
 =head2 can_delete

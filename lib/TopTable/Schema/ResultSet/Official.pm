@@ -235,7 +235,7 @@ sub create_or_edit {
     if ( defined($holder_ids) ) {
       # Now find the person for each ID given - just use the ID if we can't find anything; this means
       # we can raise an error when we then look for valid people in @$holders
-      push(@{$holders}, $schema->resultset("Person")->find($_) || $_ ) foreach (@{$holder_ids});
+      push(@{$holders}, $schema->resultset("Person")->find_id_or_url_key($_) || $_) foreach (@{$holder_ids});
     }
   }
   
