@@ -100,7 +100,7 @@ IF teams.count;
             <strong>[% c.maketext("team-captains.list.field.tel-home") %]:</strong> [% captain.home_telephone | html_entity %]
 [%
       END;
-      IF person.mobile_telephone;
+      IF captain.mobile_telephone;
         IF PHONE_USED;
 -%]
             <br />
@@ -112,7 +112,7 @@ IF teams.count;
             <strong>[% c.maketext("team-captains.list.field.tel-mobile") %]:</strong> [% captain.mobile_telephone | html_entity %]
 [%
       END;
-      IF person.work_telephone;
+      IF captain.work_telephone;
         IF PHONE_USED;
 -%]
             <br />
