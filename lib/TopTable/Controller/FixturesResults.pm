@@ -5,6 +5,7 @@ use DateTime;
 use Try::Tiny;
 use HTML::Entities;
 use URI::QueryParam;
+use Data::ICal::TimeZone;
 
 BEGIN { extends 'Catalyst::Controller'; }
 
@@ -509,7 +510,7 @@ sub view_team :Private {
   });
   
   # Team info is in the team season object if we're using a specific season
-  my $team_info = $team->team_seasons->first;
+  my $team_info = $team->find_related("team_seasons", {season => $season->id});
   my $enc_old_club_short_name = encode_entities($team_info->club_season->short_name);
   my $enc_club_short_name = encode_entities($team->club->short_name);
   my $enc_club_full_name = encode_entities($team->club->full_name);
@@ -1672,7 +1673,7 @@ sub download_team :Private {
       $c->stash({
         matches => $matches,
         file_name => sprintf( "fixtures_team_%s-%s_%s", $team->club->url_key, $team->url_key, $season->url_key ),
-        calendar_name => sprintf( "%s | %s %s | %s", $c->config->{"Model::ICal"}{args}{calname}, $team->club->short_name, $team->name, $season->name ),
+        calendar_name => sprintf("%s | %s %s | %s", $c->config->{"Model::ICal"}{args}{calname}, $team->club->short_name, $team->name, $season->name),
       });
     }
   }
@@ -1926,6 +1927,8 @@ sub download :Private {
   my $summary_prefix = $c->stash->{summary_prefix};
   
   if ( $download_type eq "calendar" ) {
+    my $zone = Data::ICal::TimeZone->new(timezone => $season->timezone);
+    
     if ( defined( $calendar_type ) and $calendar_type eq "download" ) {
       # Valid calendar type
       my @events = ();
@@ -1939,13 +1942,16 @@ sub download :Private {
           abbreviated_club_names => $abbreviated_club_names,
           summary_prefix => $summary_prefix,
           logger => sub{ my $level = shift; $c->log->$level( @_ ); },
+          timezone => $zone,
         });
         
         push(@events, $event);
       }
       
       # Now push the events into a calendar
-      my $calendar = $c->model("ICal", {calname => $calendar_name})->add_entries(@events);
+      my $calendar = $c->model("ICal", {calname => $calendar_name});
+      $calendar->add_entry($zone->definition);
+      $calendar->add_entries(@events);
       
       # Content type is text/calendar
       $c->res->header("Content-type" => "text/calendar");

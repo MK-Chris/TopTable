@@ -890,7 +890,6 @@ use Try::Tiny;
 use DateTime::Duration;
 use Set::Object;
 use Data::ICal::Entry::Event;
-use Data::ICal::TimeZone;
 use DateTime;
 use DateTime::Format::ICal;
 
@@ -1894,12 +1893,12 @@ sub generate_ical_data {
   # Get the URI
   my $uri = $params->{get_uri}($self->url_keys);
   
+  # Get the timezone
+  my $zone = $params->{timezone};
+  
   my $description = defined($self->tournament_round)
     ? undef
     : sprintf("%s: %s\n%s: %s\n%s: %s\n%s", $lang->maketext("matches.field.competition"), $lang->maketext("matches.field.competition.value.league"), $lang->maketext("matches.field.division"), $self->division_season->name, $lang->maketext("matches.field.season"), $self->season->name, $uri);
-  
-  my $timezone = $self->season->timezone;
-  my $now_tz = DateTime->now(time_zone => $timezone);
   
   # Current date / time in UTC
   my $now_utc = DateTime->now(time_zone => "UTC");
@@ -1921,13 +1920,12 @@ sub generate_ical_data {
   $params->{summary_prefix} = "" unless exists($params->{summary_prefix}) and defined($params->{summary_prefix});
   
   my $event = Data::ICal::Entry::Event->new;
-  #my $event_timezone  = Data::ICal::TimeZone->new( timezone => $timezone );
   $event->add_properties(
     uid => sprintf("matches.team.%s-%s.%s-%s.%s@%s", $home_team->club_season->club->url_key, $home_team->team->url_key, $away_team->club_season->club->url_key, $away_team->team->url_key, $self->actual_date->ymd("-"), &{$params->{get_host}}),
     summary => sprintf("%s%s %s %s %s %s", $params->{summary_prefix}, $home_club_name, $home_team->name, $lang->maketext("matches.versus-abbreviation"), $away_club_name, $away_team->name),
     status => $self->cancelled ? "CANCELLED" : "CONFIRMED",
     description => $description,
-    dtstart => DateTime::Format::ICal->format_datetime( $self->actual_date->set(hour => $start_hour, minute => $start_minute)),
+    dtstart => [DateTime::Format::ICal->format_datetime($self->actual_date->set(hour => $start_hour, minute => $start_minute)), {TZID => $zone->timezone}],
     duration => DateTime::Format::ICal->format_duration(DateTime::Duration->new(minutes => &{$params->{get_duration}})),
     location => $self->venue->full_address(", "),
     geo => sprintf("%s;%s", $self->venue->coordinates_latitude, $self->venue->coordinates_longitude),
