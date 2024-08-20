@@ -1124,7 +1124,7 @@ msgstr "L'�quipe de la maison pour la semaine %1, match de %2 est invalide; il
 msgid "fixtures-grids.form.matches.away-number-invalid"
 msgstr "L'�quipe visiteuse pour la semaine %1, match de %2 est invalide; il doit �tre un nombre compris entre 1 et %3."
 
-msgid "fixtures-grids.form.matches.team-overused"
+msgid "fixtures-grids.form.matches.error.team-overused"
 msgstr "Dans la semaine %1, l'�quipe %2 est utilis� plus d'une fois: (%3).  S'il vous pla�t assurer que chaque �quipe est utilis� une seule fois dans une semaine donn�e."
 
 msgid "fixtures-grids.form.matches.success"

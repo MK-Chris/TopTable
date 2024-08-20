@@ -90,6 +90,8 @@ sub base_list :Chained("/") :PathPart("fixtures-grids") :CaptureArgs(0) {
   # Check the authorisation to edit fixtures so we can display the link if necessary
   $c->forward("TopTable::Controller::Users", "check_authorisation", [[qw( fixtures_edit fixtures_delete fixtures_create)], "", 0]);
   
+  $c->add_status_messages({info => $c->maketext("fixtures-grids.info")});
+  
   # Page description
   $c->stash({
     page_description => $c->maketext("description.fixtures-grids.list", $site_name),
@@ -293,39 +295,39 @@ sub view_finalise :Private {
       link_uri => $c->uri_for_action("/fixtures-grids/edit", [$grid->url_key]),
     }) if $c->stash->{authorisation}{fixtures_edit};
     
+    # Set matches link
+    if ( $c->stash->{authorisation}{fixtures_edit} ) {
+      push(@title_links, {
+        image_uri => $c->uri_for("/static/images/icons/edit-table-32.png"),
+        text => $c->maketext("admin.fixtures-grid.set-matches", $enc_name),
+        link_uri => $c->uri_for_action("/fixtures-grids/matches", [$grid->url_key]),
+      });
+      
+      push(@title_links, {
+        image_uri => $c->uri_for("/static/images/icons/reorder-32.png"),
+        text => $c->maketext("admin.fixtures-grid.set-positions", $enc_name),
+        link_uri => $c->uri_for_action("/fixtures-grids/teams", [$grid->url_key]),
+      }) if !$season->complete and $grid->used_in_league_season($season);
+      
+      push(@title_links, {
+        image_uri => $c->uri_for("/static/images/icons/fixtures-32.png"),
+        text => $c->maketext("admin.fixtures-grid.create-fixtures", $enc_name),
+        link_uri => $c->uri_for_action("/fixtures-grids/create_fixtures", [$grid->url_key]),
+      }) if !$season->complete and $grid->can_create_fixtures;
+      
+      push(@title_links, {
+        image_uri => $c->uri_for("/static/images/icons/fixturesdel-32.png"),
+        text => $c->maketext("admin.fixtures-grid.delete-fixtures", $enc_name),
+        link_uri => $c->uri_for_action("/fixtures-grids/delete_fixtures", [$grid->url_key]),
+      }) if !$season->complete and $grid->can_delete_fixtures;
+    }
+    
     # Push a delete link if we're authorised and the grid can be deleted
     push(@title_links, {
       image_uri => $c->uri_for("/static/images/icons/0005-Delete-icon-32.png"),
       text => $c->maketext("admin.delete-object", $enc_name),
       link_uri => $c->uri_for_action("/fixtures-grids/delete", [$grid->url_key]),
     }) if $c->stash->{authorisation}{fixtures_delete} and $grid->can_delete;
-    
-    # Set matches link
-    if ( $c->stash->{authorisation}{fixtures_edit} ) {
-      push(@title_links, {
-        image_uri => $c->uri_for("/static/images/icons/edit-table-32.png"),
-        text => $c->maketext("admin.fixtures-grid.edit-object", $enc_name),
-        link_uri => $c->uri_for_action("/fixtures-grids/matches", [$grid->url_key]),
-      });
-      
-      push(@title_links, {
-        image_uri => $c->uri_for("/static/images/icons/reorder-32.png"),
-        text => $c->maketext("admin.fixtures-grid.edit-object", $enc_name),
-        link_uri => $c->uri_for_action("/fixtures-grids/teams", [$grid->url_key]),
-      });
-      
-      push(@title_links, {
-        image_uri => $c->uri_for("/static/images/icons/fixtures-32.png"),
-        text => $c->maketext("admin.fixtures-grid.edit-object", $enc_name),
-        link_uri => $c->uri_for_action("/fixtures-grids/create_fixtures", [$grid->url_key]),
-      }) if $grid->can_create_fixtures;
-      
-      push(@title_links, {
-        image_uri => $c->uri_for("/static/images/icons/fixturesdel-32.png"),
-        text => $c->maketext("admin.fixtures-grid.edit-object", $enc_name),
-        link_uri => $c->uri_for_action("/fixtures-grids/delete_fixtures", [$grid->url_key]),
-      }) if $grid->can_create_fixtures;
-    }
   }
   
   my $canonical_uri = ( defined($season) and $season->complete )
@@ -665,9 +667,9 @@ sub process_form :Private {
   
   # The rest of the error checking is done in the Club model
   my $response = $c->model("DB::FixturesGrid")->create_or_edit($action, {
+    logger => sub{ my $level = shift; $c->log->$level( @_ ); },
     grid => $grid, # This will be undef if we're creating.
     map {$_ => $c->req->params->{$_}} @field_names, # All the fields from the form
-    logger => sub{ my $level = shift; $c->log->$level( @_ ); },
   });
   
   my @errors = @{$response->{errors}};
@@ -728,9 +730,6 @@ sub matches :Chained("base") :PathPart("matches") :Args(0) {
     return;
   }
   
-  # Grab the weeks / matches
-  my $weeks = $grid->fixtures_grid_weeks;
-  
   # Get venues to list
   $c->stash({
     template => "html/fixtures-grids/matches.ttkt",
@@ -750,7 +749,8 @@ sub matches :Chained("base") :PathPart("matches") :Args(0) {
     form_action => $c->uri_for_action("/fixtures-grids/set_matches", [$grid->url_key]),
     view_online_display => sprintf("Configuring weeks for %s", $enc_name),
     view_online_link => 0,
-    weeks => [$weeks->all],
+    weeks => scalar $grid->fixtures_grid_weeks,
+    grid_team_types => [$c->model("DB::LookupGridTeamType")->all_types],
     flashed_weeks => $c->flash->{weeks},
   });
   
@@ -779,9 +779,13 @@ sub set_matches :Chained("base") :PathPart("set-matches") :Args(0) {
   foreach my $key ( keys %{$c->req->params} ) {
     # Check the key matches the name we're looking for: "week_[number]_match_[number]_home" or "week_[number]_match_[number]_away"
     # The resulting hash is made up of $fixtures_weeks{$week_number}{$match_number}{home} or $fixtures_weeks{$week_number}{$match_number}{away}
+    # The value is a hashref consisting of team_grid_type (grid type ID - so 'static' or one of the dynamic types) and competitor (team number in the grid,
+    # or match number from the previous round)
+    
+    # Split the value passed in into grid team type (first part before the _) and team / match number (second part)
     $match_teams{$1}{$2}{$3} = $c->req->params->{$key} if $key =~ /^week_(\d{1,2})_match_(\d{1,2})_(home|away)$/;
   }
-    
+  
   my $response = $grid->set_matches({
     logger => sub{ my $level = shift; $c->log->$level( @_ ); },
     repeat_fixtures => $c->req->params->{repeat_fixtures},
@@ -844,8 +848,17 @@ sub teams :Chained("base") :PathPart("teams") :Args(0) {
   # Check we have a current season
   unless ( defined($current_season) ) {
     # Error, no current season
-    $c->response->redirect($c->uri_for("/seasons/create",
-                                {mid => $c->set_status_msg({error => $c->maketext("fixtures-grids.teams.error.no-current-season")})}));
+    $c->forward("TopTable::Controller::Users", "check_authorisation", ["season_create", "", 0]);
+    
+    # Generate error message
+    my $mid = $c->set_status_msg({error => $c->maketext("fixtures-grids.teams.error.no-current-season")});
+    
+    # Link to fixtures grid view or season create, depending on permissions
+    my $redirect_uri = $c->stash->{authorisation}{season_create}
+      ? $c->uri_for_action("/fixtures-grids/view_current_season", [$grid->url_key], {mid => $mid})
+      : $c->uri_for("/seasons/create", {mid => $mid});
+    
+    $c->response->redirect($redirect_uri);
     $c->detach;
     return;
   }
@@ -855,6 +868,14 @@ sub teams :Chained("base") :PathPart("teams") :Args(0) {
     # Error, matches set already
     $c->response->redirect($c->uri_for_action("/fixtures-grids/view_current_season", [$grid->url_key],
                                 {mid => $c->set_status_msg({error => $c->maketext("fixtures-grids.teams.error.matches-already-set")})}));
+    $c->detach;
+    return;
+  }
+  
+  unless ( $grid->used_in_league_season($current_season) ) {
+    # Error, no current season
+    $c->response->redirect($c->uri_for_action("/fixtures-grids/view_current_season", [$grid->url_key],
+                                {mid => $c->set_status_msg({error => $c->maketext("fixtures-grids.teams.error.no-divisions-using")})}));
     $c->detach;
     return;
   }
@@ -909,6 +930,14 @@ sub set_teams :Chained("base") :PathPart("set-teams") :Args(0) {
     # Error, matches set already
     $c->response->redirect($c->uri_for_action("/fixtures_grids/view_current_season", [$grid->url_key],
                                 {mid => $c->set_status_msg({error => $c->maketext("fixtures-grids.teams.error.matches-already-set")})}));
+    $c->detach;
+    return;
+  }
+  
+  unless ( $grid->used_in_league_season($current_season) ) {
+    # Error, no current season
+    $c->response->redirect($c->uri_for_action("/fixtures-grids/view_current_season", [$grid->url_key],
+                                {mid => $c->set_status_msg({error => $c->maketext("fixtures-grids.teams.error.no-divisions-using")})}));
     $c->detach;
     return;
   }

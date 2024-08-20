@@ -407,9 +407,6 @@ sub create_or_edit {
         # Another fatal error
         return $response;
       }
-      
-      # Another fatal error
-      return $response;
     } else {
       push(@{$response->{errors}}, $lang->maketext("seasons.form.error.season-not-specified"));
     }

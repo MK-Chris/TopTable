@@ -2104,7 +2104,7 @@ msgid "fixtures-grids.matches"
 msgstr "Matches"
 
 msgid "fixtures-grids.positions"
-msgstr "Positions for %1"
+msgstr "League divisional positions for %1"
 
 msgid "fixtures-grid.matches.round"
 msgstr "Round #"
@@ -2121,8 +2121,11 @@ msgstr "Allocate teams to grid numbers"
 msgid "fixtures-grids.teams.error.no-current-season"
 msgstr "You cannot set the teams to their grid numbers as there is no current season; create a new season first."
 
+msgid "fixtures-grids.teams.error.no-divisions-using"
+msgstr "There are no team permissions to set for this grid because no divisions in the current season are using this grid."
+
 msgid "fixtures-grids.teams.error.matches-already-set"
-msgstr "You cannot set the teams to their grid numbers as the fixtures for the current season have already been created."
+msgstr "You cannot set the teams to their grid numbers as the fixtures for this grid in the current season have already been created."
 
 msgid "fixtures-grids.teams.error.no-position-for-team"
 msgstr "%1 %2 has been entered into %3 but has not been listed in a position for the fixtures grid."
@@ -2146,7 +2149,7 @@ msgid "fixtures-grids.form.error.name-blank"
 msgstr "The name field is blank."
 
 msgid "fixtures-grids.form.error.maximum-teams-invalid"
-msgstr "The maximum teams per division field must be an even number between 2 and 98."
+msgstr "The maximum participants per group or division must be an even number between 2 and 98."
 
 msgid "fixtures-grids.form.error.repeat-fixtures-invalid"
 msgstr "The number of times a fixture is repeated must be a number between 1 and 9."
@@ -2155,19 +2158,43 @@ msgid "fixtures-grids.form.matches.cannot-edit"
 msgstr "The matches for this grid can&#39;t be edited because there have been matches created using this template already; you must create a new grid and use that instead."
 
 msgid "fixtures-grids.form.matches.home-team-blank"
-msgstr "The home team for week %1, match %2 is blank."
+msgstr "The home competitor for round %1, match %2 is blank."
 
 msgid "fixtures-grids.form.matches.away-team-blank"
-msgstr "The away team for week %1, match %2 is blank."
+msgstr "The away team for round %1, match %2 is blank."
 
 msgid "fixtures-grids.form.matches.home-number-invalid"
-msgstr "The home team for week %1, match %2 is invalid; it must be a number between 1 and %3."
+msgstr "The home team for round %1, match %2 is invalid; it must be a number between 1 and %3."
 
 msgid "fixtures-grids.form.matches.away-number-invalid"
-msgstr "The home team for week %1, match %2 is invalid; it must be a number between 1 and %3."
+msgstr "The home team for round %1, match %2 is invalid; it must be a number between 1 and %3."
 
-msgid "fixtures-grids.form.matches.team-overused"
-msgstr "In week %1, team %2 is used more than once: (%3).  Please ensure each team is used only once in a given week."
+msgid "fixtures-grids.form.matches.error.team-overused"
+msgstr "In round %1, team %2 is used more than once: (%3).  Please ensure each team is used only once in a given round."
+
+msgid "fixtures-grids.form.matches.error.dynamic-winner-team-overused"
+msgstr "In round %1, the winner of game %2 in the previous round is used more than once (%3).  Please ensure each competitor is used only once in a given round."
+
+msgid "fixtures-grids.form.matches.error.dynamic-loser-team-overused"
+msgstr "In round %1, the loser of game %2 in the previous round is used more than once (%3).  Please ensure each competitor is used only once in a given round."
+
+msgid "fixtures-grids.form.matches.error.team-overused.match-details.home"
+msgstr "match %1 (home)"
+
+msgid "fixtures-grids.form.matches.error.team-overused.match-details.away"
+msgstr "match %1 (away)"
+
+msgid "fixtures-grids.form.matches.type-mismatch-in-match"
+msgstr "The winner / loser has been mixed with the static team / player number in round %1, match %2 - there must be a static competitor, or a dynamic one for both home and away."
+
+msgid "fixtures-grids.form.matches.error-round1-dynamic"
+msgstr "You cannot set winner / loser of the previous round as a competitor in round 1."
+
+msgid "fixtures-grids.form.matches.error.type-mismatch-in-week"
+msgstr "The winner / loser has been mixed with the static team / player number in round %1 - there must be static competitors set for all matches, or a dynamic one."
+
+msgid "fixtures-grids.form.matches.error.invalid-competitor"
+msgstr "There&#39;s an invalid competitor set in round %1, match %2.  Select from the list."
 
 msgid "fixtures-grids.form.matches.success"
 msgstr "The matches for this grid have been set successfully."
@@ -2271,6 +2298,16 @@ msgstr "Player %1"
 msgid "fixtures-grids.form.matches.field.pair-number"
 msgstr "Pair %1"
 
+# %2 because the round number is also passed in here, but only used for dynamic
+msgid "fixtures-grids.form.matches.field.competitor.static"
+msgstr "Team / player %2"
+
+msgid "fixtures-grids.form.matches.field.competitor.dynamic-winner"
+msgstr "Round %1, match %2 winner"
+
+msgid "fixtures-grids.form.matches.field.competitor.dynamic-loser"
+msgstr "Round %1, match %2 loser"
+
 msgid "fixtures-grids.form.teams.bye"
 msgstr "Bye"
 
@@ -2323,7 +2360,7 @@ msgid "fixtures-grids.delete.error.cant-delete"
 msgstr "You cannot delete %1, as it has teams assigned either in this season or in historical seasons."
 
 msgid "fixtures-grids.teams.error.no-current-season"
-msgstr "There is no current season, so teams cannot be set to fixtures grids - create a new season first."
+msgstr "There is no current season, so teams cannot be set to fixtures grids - a new season must be created first, with divsions that use this grid."
 
 msgid "fixtures-grids.teams.error.matches-set"
 msgstr "There are already matches set from this grid in the current season.  If they are incorrect, delete them and then reset the team positions."
@@ -2333,6 +2370,9 @@ msgstr "%s is not a valid team identifier or is in the wrong division."
 
 msgid "fixtures-grids.seasons.count-text"
 msgstr "%1 has been used in %2 %3."
+
+msgid "fixtures-grids.info"
+msgstr "Fixtures grids are used to create matches in any division assigned to that grid, but can also be used for tournament groups."
 
 ### Fixtures and results
 msgid "fixtures-results.title.fixtures-results"
@@ -4587,8 +4627,17 @@ msgstr "Reject on %1"
 msgid "admin.reorder-officials"
 msgstr "Change the display order of league officials"
 
-msgid "admin.fixtures-grid.edit-object"
+msgid "admin.fixtures-grid.set-matches"
 msgstr "Set the matches for %1"
+
+msgid "admin.fixtures-grid.set-positions"
+msgstr "Set the league divisional positions for %1"
+
+msgid "admin.fixtures-grid.create-fixtures"
+msgstr "Create the league fixtures for %1"
+
+msgid "admin.fixtures-grid.delete-fixtures"
+msgstr "Delete the league fixtures for %1"
 
 msgid "admin.form.invalid-action"
 msgstr "Invalid action (%1) passed; the action must be 'create' or 'edit'."

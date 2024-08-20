@@ -2,7 +2,7 @@ package TopTable::Schema::ResultSet::Club;
 
 use strict;
 use warnings;
-use base 'DBIx::Class::ResultSet';
+use base qw( TopTable::Schema::ResultSet );
 use HTML::Entities;
 use Regexp::Common qw( URI );
 
@@ -351,7 +351,7 @@ sub create_or_edit {
   # Check the names were entered and don't exist already.
   if ( defined($full_name) ) {
     # Full name entered, check it.
-    push(@{$response->{errors}}, $lang->maketext("clubs.form.error.full-name-exists", $full_name)) if defined($self->check_field({field => "full_name", value => $full_name, exclusion_obj => $club}));
+    push(@{$response->{errors}}, $lang->maketext("clubs.form.error.full-name-exists", $full_name)) if defined($self->check_duplicates({field => "full_name", value => $full_name, exclusion_obj => $club}));
   } else {
     # Full name omitted.
     push(@{$response->{errors}}, $lang->maketext("clubs.form.error.full-name-blank"));
@@ -359,7 +359,7 @@ sub create_or_edit {
   
   if ( defined($short_name) ) {
     # Full name entered, check it.
-    push(@{$response->{errors}}, $lang->maketext("clubs.form.error.short-name-exists", $short_name)) if defined($self->check_field({field => "short_name", value => $short_name, exclusion_obj => $club}));
+    push(@{$response->{errors}}, $lang->maketext("clubs.form.error.short-name-exists", $short_name)) if defined($self->check_duplicates({field => "short_name", value => $short_name, exclusion_obj => $club}));
   } else {
     # Full name omitted.
     push(@{$response->{errors}}, $lang->maketext("clubs.form.error.short-name-blank"));
@@ -367,7 +367,7 @@ sub create_or_edit {
   
   if ( defined($abbreviated_name) ) {
     # Full name entered, check it.
-    push(@{$response->{errors}}, $lang->maketext("clubs.form.error.abbreviated-name-exists", $abbreviated_name)) if defined($self->check_field({field => "abbreviated_name", value => $abbreviated_name, exclusion_obj => $club}));
+    push(@{$response->{errors}}, $lang->maketext("clubs.form.error.abbreviated-name-exists", $abbreviated_name)) if defined($self->check_duplicates({field => "abbreviated_name", value => $abbreviated_name, exclusion_obj => $club}));
   } else {
     # Full name omitted.
     push(@{$response->{errors}}, $lang->maketext("clubs.form.error.abbreviated-name-blank"));
@@ -474,26 +474,6 @@ sub create_or_edit {
   }
   
   return $response;
-}
-
-sub check_field {
-  my ( $self, $params ) = @_;
-  my $field = delete $params->{field};
-  my $value = delete $params->{value};
-  my $exclusion_obj = delete $params->{exclusion_obj};
-  
-  if ( defined( $exclusion_obj ) ) {
-    # Find anything with this value, excluding the exclusion object passed in
-    return $self->find({}, {
-      where => {
-        $field => $value,
-        id => {"!=" => $exclusion_obj->id},
-      }
-    });
-  } else {
-    # Find anything with this value
-    return $self->find({$field => $value});
-  }
 }
 
 1;

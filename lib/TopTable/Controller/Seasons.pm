@@ -390,13 +390,14 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
     # Stash values for the form
     $c->stash({
       template => "html/seasons/create-edit.ttkt",
+      scripts => [qw( ckeditor-iframely-standard )],
+      ckeditor_selectors => [qw( rules )],
       external_scripts => [
         $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
-        $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
-        $c->uri_for("/static/script/plugins/ckeditor/ckeditor.js"),
-        $c->uri_for("/static/script/plugins/ckeditor/adapters/jquery.js"),
-        $c->uri_for("/static/script/standard/chosen.js"),
         $c->uri_for("/static/script/standard/prettycheckable.js"),
+        $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
+        $c->uri_for("/static/script/plugins/ckeditor5/ckeditor.js"),
+        $c->uri_for("/static/script/standard/chosen.js"),
         $c->uri_for_action("/seasons/create_edit_js"),
       ],
       external_styles => [
@@ -648,8 +649,8 @@ sub process_form :Private {
   my $response = $c->model("DB::Season")->create_or_edit($action, {
     logger => sub{ my $level = shift; $c->log->$level( @_ ); },
     season => $season, # This will be undef if we're creating.
-    start_date => $c->i18n_datetime_format_date->parse_datetime($c->req->params->{start_date}),
-    end_date => $c->i18n_datetime_format_date->parse_datetime($c->req->params->{end_date}),
+    start_date => $c->req->params->{start_date} ? $c->i18n_datetime_format_date->parse_datetime($c->req->params->{start_date}) : undef,
+    end_date => $c->req->params->{end_date} ? $c->i18n_datetime_format_date->parse_datetime($c->req->params->{end_date}) : undef,
     divisions => \@divisions,
     map {$_ => $c->req->params->{$_}} @field_names, # All the fields from the form - put this last because otherwise the following elements are seen as part of the map
   });
@@ -666,7 +667,7 @@ sub process_form :Private {
     # Was completed, display the view page
     $season = $response->{season};
     
-    if ( $response->{divisions_completed} ) {
+    if ( $response->{divisions_completed} or $response->{restricted_edit} ) {
       # Divisions completed too, redirect to the view page
       $redirect_uri = $c->uri_for_action("/seasons/view", [$season->url_key], {mid => $mid});
     } else {

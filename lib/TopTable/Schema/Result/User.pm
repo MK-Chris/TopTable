@@ -233,7 +233,7 @@ __PACKAGE__->table("users");
   data_type: 'tinyint'
   default_value: 1
   extra: {unsigned => 1}
-  is_nullable: 0
+  is_nullable: 1
 
 =head2 approved_by
 
@@ -412,7 +412,7 @@ __PACKAGE__->add_columns(
     data_type => "tinyint",
     default_value => 1,
     extra => { unsigned => 1 },
-    is_nullable => 0,
+    is_nullable => 1,
   },
   "approved_by",
   {
@@ -738,8 +738,8 @@ Composing rels: L</user_roles> -> role
 __PACKAGE__->many_to_many("roles", "user_roles", "role");
 
 
-# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-05-29 08:34:29
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:fT2pA0xTl0728wde3Jf+3g
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-08-15 20:43:22
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:ZJpN8SPoLV5LkuWB6xfHOA
 
 use DateTime;
 use DateTime;
