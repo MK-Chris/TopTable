@@ -5,7 +5,13 @@ USE scalar;
   <ul>
     <li><a href="#summary">[% c.maketext("fixtures-grids.summary") %]</a></li>
     <li><a href="#matches">[% c.maketext("fixtures-grids.matches") %]</a></li>
+[%
+IF grid.used_in_league_season(season);
+-%]
     <li><a href="#positions">[% c.maketext("fixtures-grids.positions", enc_season_name) %]</a></li>
+[%
+END;
+-%]
   </ul>
   <div id="summary">
     <div class="table-wrap">
@@ -61,6 +67,9 @@ END;
       </div>
     </div>
   </div>
+[%
+IF grid.used_in_league_season(season);
+-%]
   <div id="positions">
     <div class="table-wrap">
       <div class="table-layout table-layout-centre">
@@ -76,20 +85,20 @@ END;
           </thead>
           <tbody>
 [%
-WHILE (division_season = divisions.next);
-  IF specific_season;
-    SET division_uri = c.uri_for_action("/league-tables/view_specific_season", [division_season.division.url_key, season.url_key]);
-  ELSE;
-    SET division_uri = c.uri_for_action("/league-tables/view_current_season", [division_season.division.url_key]);
-  END;
-  division_name = division_season.name | html_entity;
-  
-  SET last_grid_position = 0;
-  SET team_seasons = division_season.scalar.team_seasons;
-  WHILE (team_season = team_seasons.next);
-    IF team_season.grid_position;
-      IF team_season.grid_position - last_grid_position > 1 AND last_position_set;
-        # We have a bye position, as the current grid position is more than one more than the previous one
+  WHILE (division_season = divisions.next);
+    IF specific_season;
+      SET division_uri = c.uri_for_action("/league-tables/view_specific_season", [division_season.division.url_key, season.url_key]);
+    ELSE;
+      SET division_uri = c.uri_for_action("/league-tables/view_current_season", [division_season.division.url_key]);
+    END;
+    division_name = division_season.name | html_entity;
+    
+    SET last_grid_position = 0;
+    SET team_seasons = division_season.scalar.team_seasons;
+    WHILE (team_season = team_seasons.next);
+      IF team_season.grid_position;
+        IF team_season.grid_position - last_grid_position > 1 AND last_position_set;
+          # We have a bye position, as the current grid position is more than one more than the previous one
       
 -%]
             <tr>
@@ -100,20 +109,20 @@ WHILE (division_season = divisions.next);
               <td data-label="[% c.maketext("fixtures-grid.positions.team-home-night") %]">&nbsp;</td>
             </tr>
 [%
+        END;
+        
+        SET last_grid_position = team_season.grid_position;
+        SET last_position_set = 1;
+      ELSE;
+        SET last_position_set = 0;
       END;
       
-      SET last_grid_position = team_season.grid_position;
-      SET last_position_set = 1;
-    ELSE;
-      SET last_position_set = 0;
-    END;
-    
-    IF specific_season;
-      SET team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [team_season.club_season.club.url_key, team_season.team.url_key, season.url_key]);
-    ELSE;
-      SET team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [team_season.club_season.club.url_key, team_season.team.url_key]);
-    END;
-    team_name = team_season.club_season.club.short_name _ " " _ team_season.name | html_entity;
+      IF specific_season;
+        SET team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [team_season.club_season.club.url_key, team_season.team.url_key, season.url_key]);
+      ELSE;
+        SET team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [team_season.club_season.club.url_key, team_season.team.url_key]);
+      END;
+      team_name = team_season.club_season.club.short_name _ " " _ team_season.name | html_entity;
     
 -%]
             <tr>
@@ -124,14 +133,18 @@ WHILE (division_season = divisions.next);
               <td data-label="[% c.maketext("fixtures-grid.positions.team-home-night") %]">[% team_season.home_night.weekday_name OR "&nbsp;" %]</td>
             </tr>
 [%
+    END;
   END;
-END;
 -%]
           </tbody>
         </table>
       </div>
     </div>
   </div>
+[%
+# End check for if used in league season
+END;
+-%]
 </div>
 [%
 IF seasons == 1;

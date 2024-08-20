@@ -222,6 +222,17 @@ sub can_delete {
   return 1;
 }
 
+=head2 restricted_edit
+
+Returns 1 if we can only edit the name of the grid, not the maximum number of teams, or number of times they're repeated (because there are matches created from this one already).  Returns 0 if edit is not restricted.
+
+=cut
+
+sub restricted_edit {
+  my ( $self ) = shift;
+  return $self->can_edit_matches ? 0 : 1;
+}
+
 =head2 check_and_delete
 
 Process the deletion of the grid; checks that we're able to do this first (via can_delete).
@@ -246,7 +257,7 @@ sub check_and_delete {
   };
   
   # Get the name for messaging
-  my $name = encode_entities($self->full_name);
+  my $name = encode_entities($self->name);
   
   # Check we can delete
   unless ( $self->can_delete ) {
@@ -276,6 +287,7 @@ Checks that all the requirements are in place to create the fixtures.  (i.e., th
 
 sub can_create_fixtures {
   my $self = shift;
+  my $schema = $self->result_source->schema;
   
   # First check the matches have been filled out
   my $incomplete_grid_matches = $self->search_related("fixtures_grid_weeks", [{
@@ -296,6 +308,11 @@ sub can_create_fixtures {
   })->count;
   
   return 0 if $incomplete_team_positions;
+  
+  # Check the grid is used in this season
+  my $current_season = $schema->resultset("Season")->get_current;
+  return 0 unless defined($current_season); # If there's no current season, we can't continue
+  return 0 unless $self->used_in_league_season($current_season); # If we're not using this grid in the current season, we also can't continue
   
   # If we get this far, we need to check if fixtures have been created
   my $matches = $self->search_related("team_matches", {
@@ -354,7 +371,18 @@ sub can_delete_fixtures {
   })->count;
   
   # Return 1 if the number of matches with any scores in is zero, otherwise zero
-  return ( $matches == 0 ) ? 1 : 0;
+  return $matches == 0 ? 1 : 0;
+}
+
+=head2 matches_per_round
+
+Return the number of matches per round (or week, as we sometimes refer to it, since fixtures grids were originally just for league matches).
+
+=cut
+
+sub matches_per_round {
+  my $self = shift;
+  return $self->maximum_teams / 2;
 }
 
 =head2 matches_in_current_season
@@ -397,6 +425,18 @@ sub get_divisions {
       -asc => [qw( division.rank team_seasons.grid_position )],
     }
   });
+}
+
+=head2 used_in_league_season
+
+Returns 1 if the grid is used for any divisions in the given season, or 0 if not.
+
+=cut
+
+sub used_in_league_season {
+  my $self = shift;
+  my ( $season ) = @_;
+  return $self->search_related("division_seasons", {"me.season" => $season->id})->count ? 1 : 0;
 }
 
 =head2 get_match_templates
@@ -448,11 +488,11 @@ sub set_matches {
   push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.matches.cannot-edit")) unless $self->can_edit_matches;
   
   # Get the grid settings
-  my $maximum_teams_per_division = $self->maximum_teams;
+  my $max_teams = $self->maximum_teams;
   my $fixtures_repeated_count = $self->fixtures_repeated;
   
   # The number of weeks required to complete a set of fixtures (i.e., everybody playing everybody) will always be the number of teams minus 1 (as everybody plays everybody but themselves)
-  my $first_pass_fixtures_weeks = $maximum_teams_per_division - 1;
+  my $first_pass_fixtures_weeks = $max_teams - 1;
   my $weeks = $self->fixtures_grid_weeks;
   
   # This array will hold the match number / week number information from the database as well as the submitted form information (home / away teams for each match) 
@@ -462,14 +502,81 @@ sub set_matches {
     # Push this week on to the array, with an empty arrayref for matches
     push(@fixtures_grid_weeks, {week => $week->week, matches => []});
     
+    # Week type must be entirely dynamic or entirely static
+    my $week_type = undef;
+    
     my $matches = $week->fixtures_grid_matches;
     while ( my $match = $matches->next ) {
       # Create the arrayref of matches within this week
-      push ( @{$fixtures_grid_weeks[$#fixtures_grid_weeks]{matches}}, {
-        match_number => $match->match_number,
-        home_team => $match_teams{$week->week}{$match->match_number}{home},
-        away_team => $match_teams{$week->week}{$match->match_number}{away},
-      });
+      # Match number will always go in fine...
+      my %match_details = (match_number => $match->match_number);
+      
+      # ...but we need to do some checking on home / away values (and parse it)
+      if ( !defined($match_teams{$week->week}{$match->match_number}{home}) ) {
+        push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.matches.home-team-blank", $week->{week}, $match->{match_number}));
+      }
+      
+      if ( !defined($match_teams{$week->week}{$match->match_number}{away}) ) {
+        push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.matches.away-team-blank", $week->{week}, $match->{match_number}));
+      }
+      
+      my ( $home_type, $home_team ) = ( $match_teams{$week->week}{$match->match_number}{home} =~ /^([a-z0-9-]+)_(\d{1,3})$/ );
+      my ( $away_type, $away_team ) = ( $match_teams{$week->week}{$match->match_number}{away} =~ /^([a-z0-9-]+)_(\d{1,3})$/ );
+      
+      # Store the home and away team numbers in the database
+      $match_details{home} = $home_team;
+      $match_details{away} = $away_team;
+      
+      # Lookup the types to verify
+      $home_type = $schema->resultset("LookupGridTeamType")->find($home_type);
+      $away_type = $schema->resultset("LookupGridTeamType")->find($away_type);
+      
+      if ( defined($home_type) and defined($away_type) ) {
+        # Types are valid
+        $match_details{home_type} = $home_type;
+        $match_details{away_type} = $away_type;
+        
+        if ( $match->match_number == 1 ) {
+          # Match 1, so these will set the week type
+          if ( $home_type->type eq "static" xor $away_type->type eq "static" ) {
+            # One is static, one is not - error
+            push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.matches.type-mismatch-in-match", $week->week, $match->match_number));
+          } else {
+            # We dont' have one static / one not, so at least either both are static OR both are dynamic - we can do more complicated checks here now
+            # Set the week type to the home team type (the away team type will be the same, as this has already been checked)
+            $week_type = $home_type->type;
+            
+            if ( $week_type eq "dynamic" ) {
+              # Dynamic type - we need to check each type is compatible
+              # Split off the bit after the dynamic type
+              my $home_result = $home_type->player;
+              my $away_result = $away_type->player;
+            }
+          }
+        } else {
+          # Match is not 1, so we need to check the types against the week type
+          if ( $week_type eq "static" ) {
+            if ( $home_type->type eq "dynamic" or $away_type->type eq "dynamic" ) {
+              # Error, as we have a dynamic type in a week that's already set as static
+              push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.matches.error.type-mismatch-in-week", $week->week));
+            }
+          } else {
+            # Dynamic round type
+            if ( $week->week == 1 ) {
+              # Can't have a dynamic round 1
+              push(@{$response->{errors},}, $lang->maketext("fixtures-grids.form.matches.error-round1-dynamic"));
+            } elsif ( $home_type->type eq "static" or $away_type->type eq "static" ) {
+              # Error, as we have a static type in a week that's already set as dynamic
+              push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.matches.error.type-mismatch-in-week", $week->week));
+            }
+          }
+        }
+      } else {
+        # One or both types are invalid
+        push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.matches.error.invalid-competitor", $week->week, $match->match_number));
+      }
+      
+      push(@{$fixtures_grid_weeks[$#fixtures_grid_weeks]{matches}}, \%match_details);
     }
     
     # Break out of the loop if we are repeating and we have reached the end of the first pass of fixtures
@@ -478,67 +585,109 @@ sub set_matches {
   
   $response->{fields}{weeks} = \@fixtures_grid_weeks;
   
-  # These will hold the details of any teams submitted that are blank / invalid in a text form so that they can be 'join'ed in a final error message
-  my (@blank_teams, @invalid_teams);
-  
   # This hash will hold a hashref of weeks and the keys to each week will be a team number; keys will be added as teams are used so that we can check
   # if a key exists when validating the teams selected
+  # e.g.:
+  # static: $used_teams{$weeknumber}{$teamnumber} = {type => static, detail => [array of lang messages showing "match num (home|away)"]}
+  # dynamic: $used_teams{$weeknumber}{$teamnumber} = {type => dynamic, detail => {(winner|loser) => [array of lang messages showing "match num (home|away)"]}}
   my %used_teams = ();
   
   # Now loop through the data structure we've created and make sure everything is valid.
-  foreach my $week ( @fixtures_grid_weeks ) {
-    foreach my $match ( @{ $week->{matches} } ) {
-      if ( !$match->{home_team} ) {
-        push( @{$response->{errors}}, $lang->maketext("fixtures-grids.form.matches.home-team-blank", $week->{week}, $match->{match_number}) );
-      } elsif ( $match->{home_team} !~ m/^\d{1,2}$/ or $match->{home_team} > $maximum_teams_per_division ) {
-        push( @{$response->{errors}}, $lang->maketext("fixtures-grids.form.matches.home-number-invalid", $week->{week}, $match->{match_number}, $maximum_teams_per_division) );
-      } else {
-        # The value is valid, but has it been entered in a previous match for this week?
-        if ( ref($used_teams{$week->{week}}{$match->{home_team}}) eq "ARRAY" ) {
-          # Already exists, push it on to the arrayref
-          push(@{$used_teams{$week->{week}}{$match->{home_team}}} , sprintf("match %s (home)", $match->{match_number}));
-        } else {
-          # Doesn't exist, create a new arrayref
-          $used_teams{$week->{week}}{$match->{home_team}} = [sprintf("match %s (home)", $match->{match_number})];
-        }
-      }
-      
-      if ( !$match->{away_team} ) {
-        push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.matches.away-team-blank", $week->{week}, $match->{match_number}) );
-      } elsif ( $match->{away_team} !~ m/^\d{1,2}$/ or $match->{home_team} > $maximum_teams_per_division ) {
-        push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.matches.away-number-invalid", $week->{week}, $match->{match_number}, $maximum_teams_per_division) );
-      } else {
-        # The value is valid, but has it been entered in a previous match for this week?
-        if ( ref($used_teams{$week->{week}}{$match->{away_team}}) eq "ARRAY" ) {
-          # Already exists, push it on to the arrayref
-          push(@{$used_teams{$week->{week}}{$match->{away_team}}} , sprintf("match %s (away)", $match->{match_number}));
-        } else {
-          # Doesn't exist, create a new arrayref
-          $used_teams{$week->{week}}{$match->{away_team}} = [sprintf("match %s (away)", $match->{match_number})];
+  # Each week / round must entirely consist of either dynamic or static types, they cannot be mixed
+  if ( scalar @{$response->{errors}} == 0 ) {
+    foreach my $week ( @fixtures_grid_weeks ) {
+      foreach my $match ( @{$week->{matches}} ) {
+        # Type checks first of all
+        my $home_type = $match->{home_type};
+        my $away_type = $match->{away_type};
+        
+        # Ensure they're valid
+        # If it's a static match, the maximum teams in the grid is the maximum number we can reach
+        # If it's dynamic, it's effectively half that, since we play winner or loser of match X.
+        my $max_check = $home_type->type eq "static" ? $max_teams : int($max_teams / 2);
+        
+        my @teams = ( $match->{home}, $match->{away} );
+        
+        # Loop through home and away
+        foreach my $idx ( 0 .. $#teams ) {
+          # Grab the reference to the team and check the location (first element = home, second element = away)
+          my $team = $teams[$idx];
+          my ( $location, $type );
+          
+          if ( $idx == 0 ) {
+            # Home
+            $location = "home";
+            $type = $home_type;
+          } else {
+            # Away
+            $location = "away";
+            $type = $away_type;
+          }
+          
+          if ( !$team ) {
+            push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.matches.$location-team-blank", $week->{week}, $match->{match_number}));
+          } elsif ( $team !~ m/^[1-$max_check]$/ ) {
+            push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.matches.$location-number-invalid", $week->{week}, $match->{match_number}, $max_teams));
+          } else {
+            if ( $type->id eq "static" ) {
+              # Static checks to make sure we only see each team once
+              # The value is valid, but has it been entered in a previous match for this week?
+              if ( exists($used_teams{$week->{week}}{$match->{$location}})  ) {
+                # Already exists, push it on to the arrayref
+                push(@{$used_teams{$week->{week}}{$match->{$location}}{detail}}, $lang->maketext("fixtures-grids.form.matches.error.team-overused.match-details.$location", $match->{match_number}));
+              } else {
+                # Doesn't exist, create a new arrayref
+                $used_teams{$week->{week}}{$match->{$location}} = {
+                  type => $type->type,
+                  detail => [$lang->maketext("fixtures-grids.form.matches.error.team-overused.match-details.$location", $match->{match_number})],
+                };
+              }
+            } else {
+              # Dynamic checks - we use each match exactly twice (once as winner, once as loser)
+              # The value is valid, but has it been entered in a previous match for this week?
+              if ( exists($used_teams{$week->{week}}{$match->{$location}})  ) {
+                # Already exists - check the player type hash exists now
+                if ( exists($used_teams{$week->{week}}{$match->{$location}}{detail}{$type->player}) ) {
+                  # It does - push it on
+                  push(@{$used_teams{$week->{week}}{$match->{$location}}{detail}{$type->player}}, $lang->maketext("fixtures-grids.form.matches.error.team-overused.match-details.$location", $match->{match_number}));
+                } else {
+                  # Create the hashref as an array we can push on to if there are any more of these
+                  $used_teams{$week->{week}}{$match->{$location}}{detail}{$type->player} = [$lang->maketext("fixtures-grids.form.matches.error.team-overused.match-details.$location", $match->{match_number})];
+                }
+              } else {
+                # Doesn't exist, create a new arrayref
+                $used_teams{$week->{week}}{$match->{$location}} = {
+                  type => $type->type,
+                  detail => {
+                    $type->player => [$lang->maketext("fixtures-grids.form.matches.error.team-overused.match-details.$location", $match->{match_number})]
+                  },
+                };
+              }
+            }
+          }
         }
       }
     }
-  }
-  
-  # Now loop through our %used_teams hash and make sure we haven't used any team more than once.
-  foreach my $week ( keys(%used_teams) ) {
-    foreach my $team ( keys( %{$used_teams{$week}} ) ) {
-      push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.matches.team-overused", $week, $team, join(", ", @{ $used_teams{$week}{$team} } )) ) if scalar(@{ $used_teams{$week}{$team} }) > 1;
+    
+    # Now loop through our %used_teams hash and make sure we haven't used any team more than once.
+    foreach my $week ( keys %used_teams ) {
+      foreach my $team ( keys %{$used_teams{$week}} ) {
+        if ( $used_teams{$week}{$team}{type} eq "static" ) {
+          # If there's more than one match listed for this team, error
+          push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.matches.error.team-overused", $week, $team, join(", ", @{$used_teams{$week}{$team}{detail}}))) if scalar(@{$used_teams{$week}{$team}{detail}}) > 1;
+        } else {
+          push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.matches.error.dynamic-winner-team-overused", $week, $team, join(", ", @{$used_teams{$week}{$team}{winner}{detail}}))) if scalar(@{$used_teams{$week}{$team}{winner}{detail}}) > 1;
+          push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.matches.error.dynamic-loser-team-overused", $week, $team, join(", ", @{$used_teams{$week}{$team}{loser}{detail}}))) if scalar(@{$used_teams{$week}{$team}{loser}{detail}}) > 1;
+        }
+      }
     }
   }
   
   # If we've errored, we need to return all the values so - for example - a web application can set them back into the form - we didn't do this originally, as we didn't know if there was an error or not.
   if ( scalar @{$response->{errors}} == 0 ) {
     # Finally we need to loop through again updating the home / away teams for each match
-    # If we're repeating, we need to do multiple loops through
-    my $loop_end;
-    if ( $repeat_fixtures ) {
-      # Loop through as many times as fixtures are repeated
-      $loop_end = $fixtures_repeated_count;
-    } else {
-      # Loop through just once (this saves an if statement deciding whether to create a loop within a loop or not, which would duplicate code)
-      $loop_end = 1;
-    }
+    # If we're repeating, we need to do multiple loops through; if not, the loop just goes from 1 to 1
+    my $loop_end = $repeat_fixtures ? $fixtures_repeated_count : 1;
     
     # Transaction so if we fail, nothing is updated
     my $transaction = $self->result_source->schema->txn_scope_guard;
@@ -555,16 +704,20 @@ sub set_matches {
         # ... and within that, loop through the matches in that array
         foreach my $match ( @{$week->{matches}} ) {
           # The home / away teams will be swapped if the first loop counter ($1) is an EVEN number.
-          my ( $home_team, $away_team );
+          my ( $home_team, $away_team, $home_type, $away_type );
           
           if ( $i % 2 ) {
             # Odd number (no remainder), don't swap home and away teams
-            $home_team = $match->{home_team};
-            $away_team = $match->{away_team};
+            $home_team = $match->{home};
+            $home_type = $match->{home_type};
+            $away_team = $match->{away};
+            $away_type = $match->{away_type}
           } else {
             # Even number (remainder 1), swap home and away teams
-            $home_team = $match->{away_team};
-            $away_team = $match->{home_team};
+            $home_team = $match->{away};
+            $home_type = $match->{away_type};
+            $away_team = $match->{home};
+            $away_type = $match->{home_type};
           }
           
           my $ok = $weeks->find({
@@ -575,6 +728,8 @@ sub set_matches {
           })->update({
             home_team => $home_team,
             away_team => $away_team,
+            home_team_type => $home_type->id,
+            away_team_type => $away_type->id,
           });
         }
       }
@@ -795,7 +950,7 @@ sub create_matches {
   # Check if we have some incomplete matches set up for this grid
   my $grid_weeks = $self->search_related("fixtures_grid_weeks", undef, {prefetch => "fixtures_grid_matches"});
   
-  # This will store home / away team information for each match of each week; team numbers are 1-[maximum_teams_per_division].
+  # This will store home / away team information for each match of each week; team numbers are 1-[$max_teams].
   # Format:
   # $grid_matches{$week_id}[$array_index]{home_team} = $home_team_number;
   # $grid_matches{$week_id}[$array_index]{away_team} = $away_team_number;

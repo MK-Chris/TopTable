@@ -237,7 +237,8 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
       $holders = $c->flash->{holders};
     } else {
       $holders = $position->get_holders({season => $current_season});
-      $holders = [$holders->all] if defined($holders);    }
+      $holders = [$holders->all] if defined($holders);
+    }
     
     $tokeninput_options->{prePopulate} = [map({
       id => $_->id,

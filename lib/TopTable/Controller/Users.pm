@@ -5,6 +5,7 @@ use DateTime;
 use DateTime::TimeZone;
 use DateTime::Duration;
 use HTML::Entities;
+#use DDP;
 
 BEGIN { extends 'Catalyst::Controller'; }
 
@@ -1859,6 +1860,7 @@ sub check_authorisation :Private {
       
       # Extract the name column for each returned value
       @role_names = map($_->name, @roles);
+      #$c->log->debug(sprintf("check auth on $action: %s", np(@role_names)));
       
       if ( $c->check_any_user_role(@role_names) ) {
         # We are in one of the roles that is authorised, set allowed flag

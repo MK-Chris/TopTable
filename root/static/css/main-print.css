@@ -517,6 +517,7 @@ form:after {
 div.form-column {
   float: left;
   margin-right: 20px;
+  min-width: 430px;
 }
 
 div.label-field-container, div.label-field-container-weekday, div.label-field-container-multi, div.label-field-container-checkradio {
@@ -1125,7 +1126,7 @@ html[xmlns] .clearfix, html[xmlns] .clear-fix {display: block;}
   }
   
   div.form-column, div.form-column-single {
-    max-width: 300px;
+    max-width: 280px;
     width: 90%;
   }
   
@@ -1180,7 +1181,7 @@ html[xmlns] .clearfix, html[xmlns] .clear-fix {display: block;}
   div.field-container {
     margin-left: 5px;
     width: 100%;
-    max-width: 350px;
+    max-width: 400px;
   	float: left;
   }
   

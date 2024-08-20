@@ -468,11 +468,9 @@ IF restricted_edit != 1;
 END;
 -%]
 
-<div id="rules">
-  <fieldset>
-    <legend>[% c.maketext("seasons.form.rules") %]</legend>
-    <textarea id="rules" name="rules">[% c.flash.rules OR season.rules %]</textarea><br />
-  </fieldset>
-</div>
+<fieldset>
+  <legend>[% c.maketext("seasons.form.rules") %]</legend>
+  <textarea id="rules" name="rules" rows="25" cols="100">[% c.flash.rules OR season.rules %]</textarea><br />
+</fieldset>
 <input type="submit" name="Submit" value="[% c.maketext("form.button.save") %]" />
 </form>
