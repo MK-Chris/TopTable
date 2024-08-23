@@ -659,7 +659,7 @@ msgid "people.form.error.person-not-valid"
 msgstr "La personne indiqu�e est incorrecte."
 
 msgid "people.form.error.duplicate-name"
-msgstr "Il ya d�j� une personne avec le nom %1 %2; s'il vous pla�t entrer quelque chose (comme une initiale moyenne dans le domaine des premiers noms) pour les distinguer."
+msgstr "Il ya d�j� une personne avec le nom %1; s'il vous pla�t entrer quelque chose (comme une initiale moyenne dans le domaine des premiers noms) pour les distinguer."
 
 msgid "people.form.error.first-name-blank"
 msgstr "Le premier champ de nom est vide."

@@ -2,7 +2,8 @@ package TopTable::Schema::ResultSet::MeetingType;
 
 use strict;
 use warnings;
-use base 'DBIx::Class::ResultSet';
+use base qw( TopTable::Schema::ResultSet );
+use HTML::Entities;
 
 =head2 all_meeting_types
 
@@ -11,9 +12,9 @@ Search for all meeting types ordered by name.
 =cut
 
 sub all_meeting_types {
-  my ( $self ) = @_;
+  my $class = shift;
   
-  return $self->search(undef, {
+  return $class->search(undef, {
     order_by => {-asc => "name"},
   });
 }
@@ -25,7 +26,8 @@ Retrieve a paginated list of seasons.  If an object is specified (i.e., club, te
 =cut
 
 sub page_records {
-  my ( $self, $parameters ) = @_;
+  my $class = shift;
+  my ( $parameters ) = @_;
   my $page_number = $parameters->{page_number} || 1;
   my $results_per_page = $parameters->{results_per_page} || 25;
   
@@ -35,82 +37,11 @@ sub page_records {
   # Default the page number to 1
   $page_number = 1 if !defined($page_number) or $page_number !~ m/^\d+$/;
   
-  return $self->search({}, {
+  return $class->search({}, {
     page => $page_number,
     rows => $results_per_page,
     order_by => {-asc => [qw( name )]},
   });
-}
-
-=head2 find_key
-
-Same as find(), but uses the key column instead of the id.  So we can use human-readable URLs.
-
-=cut
-
-sub find_url_key {
-  my ( $self, $url_key, $exclude_id ) = @_;
-  
-  return $self->find({
-    url_key => $url_key,
-  });
-}
-
-=head2 find_id_or_url_key
-
-Same as find(), but searches for both the id and key columns.  So we can use human-readable URLs.
-
-=cut
-
-sub find_id_or_url_key {
-  my ( $self, $id_or_url_key ) = @_;
-  my ( $where );
-  
-  if ( $id_or_url_key =~ m/^\d+$/ ) {
-    # Numeric - assume it's the ID
-    $where = {id => $id_or_url_key};
-  } else {
-    # Not numeric - must be the URL key
-    $where = {url_key => $id_or_url_key};
-  }
-  
-  return $self->find( $where );
-}
-
-=head2 generate_url_key
-
-Generate a unique key from the given season name.
-
-=cut
-
-sub generate_url_key {
-  my ( $self, $name, $exclude_id ) = @_;
-  my $url_key;
-  ( my $original_url_key = substr($name, 0, 45) ) =~ s/[ \W]/-/g; # Truncate after 45 characters, swap out spaces and non-word characters for dashes
-  $original_url_key =~ s/-+/-/g; # If we find more than one dash in a row, replace it with just one.
-  $original_url_key = lc( $original_url_key ); # Make lower-case
-  
-  my $count;
-  # Infinite loop; we'll break when we can't find the key
-  while ( 1 ) {
-    if ( defined($count) ) {
-      $count = 2 if $count == 1; # We won't have a 1 - if we reach the point where count is a number, we want to start at 2
-      
-      # If we have a count, we will add it on to the end of the original key
-      $url_key = $original_url_key . "-" . $count;
-    } else {
-      $url_key = $original_url_key;
-    }
-    
-    # Check if that key already exists
-    my $key_check = $self->find_url_key( $url_key );
-    
-    # If not, return it
-    return $url_key if !defined( $key_check ) or ( defined($exclude_id) and $key_check->id == $exclude_id );
-    
-    # Otherwise, we need to increment the count for the next loop round
-    $count++;
-  }
 }
 
 =head2 create_or_edit
@@ -120,17 +51,18 @@ Provides the wrapper (including error checking) for adding / editing a meeting t
 =cut
 
 sub create_or_edit {
-  my ( $self, $action, $params ) = @_;
+  my $class = shift;
+  my ( $action, $params ) = @_;
   # Setup schema / logging
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
-  my $schema = $self->result_source->schema;
+  my $schema = $class->result_source->schema;
   $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
   my $lang = $schema->lang;
   
   # Grab the fields
-  my $meeting_type = delete $params->{meeting_type};
-  my $name = delete $params->{name};
+  my $meeting_type = $params->{meeting_type};
+  my $name = $params->{name} || undef;
   my $response = {
     errors => [],
     warnings => [],
@@ -149,10 +81,10 @@ sub create_or_edit {
   } elsif ( $action eq "edit" ) {
     if ( ref( $meeting_type ) ne "TopTable::Model::DB::MeetingType" ) {
       # This may not be an error, we may just need to find from an ID or URL key
-      $meeting_type = $self->find_id_or_url_key( $meeting_type );
+      $meeting_type = $class->find_id_or_url_key($meeting_type);
       
       # Definitely error if we're now undef
-      push(@{$response->{errors}}, $lang->maketext("meeting-types.form.error.meeting-type-invalid")) unless defined( $meeting_type );
+      push(@{$response->{errors}}, $lang->maketext("meeting-types.form.error.meeting-type-invalid")) unless defined($meeting_type);
       
       # Another fatal error
       return $response;
@@ -161,38 +93,25 @@ sub create_or_edit {
   
   # Error checking
   # Check the names were entered and don't exist already.
-  if ( $name ) {
-    # Name entered, check it.
-    my $meeting_type_name_check;
-    if ( $action eq "edit" ) {
-      $meeting_type_name_check = $self->find({}, {
-        where => {
-          name  => $name,
-          id    => {"!=" => $meeting_type->id}
-        }
-      });
-    } else {
-      $meeting_type_name_check = $self->find({name => $name});
-    }
-    
-    push(@{$response->{errors}}, $lang->maketext("meeting-types.form.error.name-exists")) if defined( $meeting_type_name_check );
+  if ( defined($name) ) {
+    push(@{$response->{errors}}, $lang->maketext("meeting-types.form.error.name-exists", encode_entities($name))) if defined($class->search_single_field({field => "name", value => $name, exclusion_obj => $meeting_type}));
   } else {
     # Name omitted.
     push(@{$response->{errors}}, $lang->maketext("meeting-types.form.error.name-blank"));
   }
   
-  if ( scalar( @{$response->{errors}} ) == 0 ) {
+  if ( scalar @{$response->{errors}} == 0 ) {
     # Generate a new URL key
     my $url_key;
     if ( $action eq "edit" ) {
-      $url_key = $self->generate_url_key( $name, $meeting_type->id );
+      $url_key = $class->make_url_key($name, $meeting_type);
     } else {
-      $url_key = $self->generate_url_key( $name );
+      $url_key = $class->make_url_key($name);
     }
     
     # Success, we need to create the meeting type
     if ( $action eq "create" ) {
-      $meeting_type = $self->create({
+      $meeting_type = $class->create({
         name => $name,
         url_key => $url_key,
       });

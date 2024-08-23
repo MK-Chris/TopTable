@@ -2,7 +2,7 @@ package TopTable::Schema::ResultSet::ClubTeamView;
 
 use strict;
 use warnings;
-use parent 'DBIx::Class::ResultSet';
+use base qw( TopTable::Schema::ResultSet );
 
 
 =head2 search_by_name
@@ -12,7 +12,8 @@ Return search results based on a supplied full or partial club / team name.
 =cut
 
 sub search_by_name {
-  my ( $self, $params ) = @_;
+  my $class = shift;
+  my ( $params ) = @_;
   my $q = delete $params->{q};
   my $split_words = delete $params->{split_words} || 0;
   my $season = delete $params->{season};
@@ -51,11 +52,11 @@ sub search_by_name {
     group_by => [ qw( team_with_club abbreviated_team_with_club ) ],
   };
   
-  my $use_paging = ( defined( $page ) ) ? 1 : 0;
+  my $use_paging = defined($page) ? 1 : 0;
   
   if ( $use_paging ) {
     # Set a default for results per page if it's not provided or invalid
-    $results_per_page = 25 if !defined( $results_per_page ) or $results_per_page !~ m/^\d+$/;
+    $results_per_page = 25 if !defined($results_per_page) or $results_per_page !~ m/^\d+$/;
     
     # Default the page number to 1
     $page = 1 if $page !~ m/^\d+$/;
@@ -65,12 +66,12 @@ sub search_by_name {
     $attrib->{rows} = $results_per_page;
   }
   
-  if ( defined( $season ) ) {
+  if ( defined($season) ) {
     $where->[0]{season_id} = $season->id;
     $where->[1]{season_id} = $season->id;
   }
   
-  return $self->search( $where, $attrib );
+  return $class->search( $where, $attrib );
 }
 
 1;

@@ -149,7 +149,7 @@ sub do_upload :Path("do-upload") :Args(0) {
         push(@errors, $c->maketext("image.upload.error.description-blank")) unless $description;
         
         unless ( scalar( @errors ) ) {
-          my $url_key = $c->model("DB::UploadedImage")->generate_url_key( $description );
+          my $url_key = $c->model("DB::UploadedImage")->make_url_key($description);
           
           my $image = $c->model("DB::UploadedImage")->create({
             url_key => $url_key,

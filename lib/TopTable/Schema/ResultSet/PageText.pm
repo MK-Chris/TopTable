@@ -2,7 +2,7 @@ package TopTable::Schema::ResultSet::PageText;
 
 use strict;
 use warnings;
-use base 'DBIx::Class::ResultSet';
+use base qw( TopTable::Schema::ResultSet );
 use HTML::Entities;
 
 =head2 get_text
@@ -12,9 +12,10 @@ Gets the page_text for a given page.
 =cut
 
 sub get_text {
-  my ( $self, $page_key ) = @_;
+  my $class = shift;
+  my ( $page_key ) = @_;
   
-  return $self->find({page_key => $page_key}) || "";
+  return $class->find({page_key => $page_key}) || "";
 }
 
 =head2 edit
@@ -24,11 +25,12 @@ Edit the page text for a given page
 =cut
 
 sub edit {
-  my ( $self, $params ) = @_;
+  my $class = shift;
+  my ( $params ) = @_;
   # Setup schema / logging
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
-  my $schema = $self->result_source->schema;
+  my $schema = $class->result_source->schema;
   $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
   my $lang = $schema->lang;
   
@@ -50,7 +52,7 @@ sub edit {
     $page_text = "" unless defined($page_text);
     $response->{fields}{page_text} = $page_text;
     
-    my $page = $self->update_or_create({
+    my $page = $class->update_or_create({
       page_key => $page_key,
       page_text => $page_text,
     });

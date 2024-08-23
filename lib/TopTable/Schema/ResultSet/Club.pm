@@ -13,9 +13,10 @@ A find() wrapper that also prefetches the secretary and venue.
 =cut
 
 sub get_club_and_secretary_and_venue {
-  my ( $self, $club_id ) = @_;
+  my $class = shift;
+  my ( $club_id ) = @_;
   
-  return $self->find({
+  return $class->find({
     id => $club_id,
   }, {
     prefetch => [qw(secretary venue)],
@@ -29,9 +30,9 @@ Retrieve all clubs without any prefetching, ordered by full name.
 =cut
 
 sub all_clubs_by_name {
-  my ( $self ) = @_;
+  my $class = shift;
   
-  return $self->search(undef, {
+  return $class->search(undef, {
     order_by => {-asc => [qw( full_name )]}
   });
 }
@@ -43,7 +44,8 @@ Return search results based on a supplied full or partial full / short name.
 =cut
 
 sub search_by_name {
-  my ( $self, $params ) = @_;
+  my $class = shift;
+  my ( $params ) = @_;
   my $q = delete $params->{q};
   my $split_words = delete $params->{split_words} || 0;
   my $season = delete $params->{season};
@@ -82,11 +84,11 @@ sub search_by_name {
   }
   
   my $attrib = {
-    order_by => {-asc => [ qw( me.full_name ) ]},
+    order_by => {-asc => [qw( me.full_name )]},
     group_by => [ qw( me.full_name ) ],
   };
   
-  my $use_paging = ( defined($page) ) ? 1 : 0;
+  my $use_paging = defined($page) ? 1 : 0;
   
   if ( $use_paging ) {
     # Set a default for results per page if it's not provided or invalid
@@ -106,7 +108,7 @@ sub search_by_name {
     $attrib->{join} = "club_seasons";
   }
   
-  return $self->search($where, $attrib);
+  return $class->search($where, $attrib);
 }
 
 =head2 find_by_short_name
@@ -116,8 +118,9 @@ Does a find() based on the club short name.
 =cut
 
 sub find_by_short_name {
-  my ( $self, $short_name ) = @_;
-  return $self->find({short_name  => $short_name});
+  my $class = shift;
+  my ( $short_name ) = @_;
+  return $class->find({short_name  => $short_name});
 }
 
 =head2 page_records
@@ -127,7 +130,8 @@ Returns a paginated resultset of clubs.
 =cut
 
 sub page_records {
-  my ( $self, $parameters ) = @_;
+  my $class = shift;
+  my ( $parameters ) = @_;
   my $page_number = $parameters->{page_number} || 1;
   my $results_per_page = $parameters->{results_per_page} || 25;
   
@@ -137,7 +141,7 @@ sub page_records {
   # Default the page number to 1
   $page_number = 1 if !defined($page_number) or $page_number !~ m/^\d+$/;
   
-  return $self->search({}, {
+  return $class->search({}, {
     page => $page_number,
     rows => $results_per_page,
     order_by => {-asc => "full_name"},
@@ -151,7 +155,8 @@ Retrieve all clubs (and prefetch their teams) with teams entering a given season
 =cut
 
 sub clubs_with_teams_in_season {
-  my ( $self, $params ) = @_;
+  my $class = shift;
+  my ( $params ) = @_;
   my $season = $params->{season};
   my $get_teams = $params->{get_teams};
   my $get_players = $params->{get_players};
@@ -168,7 +173,7 @@ sub clubs_with_teams_in_season {
       prefetch => {
         teams => ["team_seasons", {person_seasons => "person"}],
       },
-      order_by => {-asc => [ qw( me.full_name teams.name person.surname person.first_name ) ]},
+      order_by => {-asc => [qw( me.full_name teams.name person.surname person.first_name )]},
     };
   } elsif ( $get_teams ) {
     # Prefetch players only
@@ -176,7 +181,7 @@ sub clubs_with_teams_in_season {
     
     $attrib = {
       prefetch => {teams => "team_seasons"},
-      order_by => {-asc => [ qw( me.full_name teams.name ) ]},
+      order_by => {-asc => [qw( me.full_name teams.name )]},
     };
   } else {
     # Not showing either, so we just join the teams not prefetch.  We need to join,
@@ -189,95 +194,19 @@ sub clubs_with_teams_in_season {
     };
   }
   
-  return $self->search($where, $attrib);
+  return $class->search($where, $attrib);
 }
 
-=head2 get_clubs_with_specified_secretary
+=head2 with_secretary
 
 Returns all clubs with the specified person set as secretary
 
 =cut
 
-sub get_clubs_with_specified_secretary {
-  my ( $self, $person ) = @_;
-  return $self->search({secretary => $person->id});
-}
-
-=head2 find_key
-
-Same as find(), but uses the key column instead of the id.  So we can use human-readable URLs.
-
-=cut
-
-sub find_url_key {
-  my ( $self, $url_key ) = @_;
-  return $self->find({url_key => $url_key});
-}
-
-=head2 find_id_or_url_key
-
-Same as find(), but searches for both the id and key columns.  So we can use human-readable URLs.
-
-=cut
-
-sub find_id_or_url_key {
-  my ( $self, $id_or_url_key ) = @_;
-  my $where;
-  
-  if ( $id_or_url_key =~ m/^\d+$/ ) {
-    # Numeric - look in ID or URL key
-    $where = [{
-      "me.id" => $id_or_url_key
-    }, {
-      "me.url_key" => $id_or_url_key
-    }];
-  } else {
-    # Not numeric - must be the URL key
-    $where = {"me.url_key" => $id_or_url_key};
-  }
-  
-  return $self->search($where, {
-    prefetch => [qw( secretary venue )],
-    rows => 1,
-  })->single;
-}
-  
-
-=head2 generate_url_key
-
-Generate a unique key from the given club short name.
-
-=cut
-
-sub generate_url_key {
-  my ( $self, $short_name, $exclude_id ) = @_;
-  my $url_key;
-  ( my $original_url_key = substr($short_name, 0, 45) ) =~ s/[ \W]/-/g; # Truncate after 45 characters, swap out spaces and non-word characters for dashes
-  $original_url_key =~ s/-+/-/g; # If we find more than one dash in a row, replace it with just one.
-  $original_url_key =~ s/^-|-$//g; # Replace dashes at the start and end with nothing
-  $original_url_key = lc( $original_url_key ); # Make lower-case
-  
-  my $count;
-  # Infinite loop; we'll break when we can't find the key
-  while ( 1 ) {
-    if ( defined($count) ) {
-      $count = 2 if $count == 1; # We won't have a 1 - if we reach the point where count is a number, we want to start at 2
-      
-      # If we have a count, we will add it on to the end of the original key
-      $url_key = $original_url_key . "-" . $count;
-    } else {
-      $url_key = $original_url_key;
-    }
-    
-    # Check if that key already exists
-    my $key_check = $self->find_url_key($url_key);
-    
-    # If not, return it
-    return $url_key if !defined($key_check) or ( defined($exclude_id) and $key_check->id == $exclude_id );
-    
-    # Otherwise, we need to increment the count for the next loop round
-    $count++;
-  }
+sub with_secretary {
+  my $class = shift;
+  my ( $person ) = @_;
+  return $class->search({secretary => $person->id});
 }
 
 =head2 create_or_edit
@@ -287,11 +216,12 @@ Provides the wrapper (including error checking) for adding / editing a club.
 =cut
 
 sub create_or_edit {
-  my ( $self, $action, $params ) = @_;
+  my $class = shift;
+  my ( $action, $params ) = @_;
   # Setup schema / logging
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
-  my $schema = $self->result_source->schema;
+  my $schema = $class->result_source->schema;
   $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
   my $lang = $schema->lang;
   
@@ -334,7 +264,7 @@ sub create_or_edit {
     if ( defined($club) ) {
       if ( ref($club) ne "TopTable::Model::DB::Club" ) {
         # This may not be an error, we may just need to find from an ID or URL key
-        $club = $self->find_id_or_url_key($club);
+        $club = $class->find_id_or_url_key($club);
         
         # Definitely error if we're now undef
         push(@{$response->{errors}}, $lang->maketext("clubs.form.error.club-invalid")) unless defined($club);
@@ -351,7 +281,7 @@ sub create_or_edit {
   # Check the names were entered and don't exist already.
   if ( defined($full_name) ) {
     # Full name entered, check it.
-    push(@{$response->{errors}}, $lang->maketext("clubs.form.error.full-name-exists", $full_name)) if defined($self->check_duplicates({field => "full_name", value => $full_name, exclusion_obj => $club}));
+    push(@{$response->{errors}}, $lang->maketext("clubs.form.error.full-name-exists", encode_entities($full_name))) if defined($class->search_single_field({field => "full_name", value => $full_name, exclusion_obj => $club}));
   } else {
     # Full name omitted.
     push(@{$response->{errors}}, $lang->maketext("clubs.form.error.full-name-blank"));
@@ -359,7 +289,7 @@ sub create_or_edit {
   
   if ( defined($short_name) ) {
     # Full name entered, check it.
-    push(@{$response->{errors}}, $lang->maketext("clubs.form.error.short-name-exists", $short_name)) if defined($self->check_duplicates({field => "short_name", value => $short_name, exclusion_obj => $club}));
+    push(@{$response->{errors}}, $lang->maketext("clubs.form.error.short-name-exists", encode_entities($short_name))) if defined($class->search_single_field({field => "short_name", value => $short_name, exclusion_obj => $club}));
   } else {
     # Full name omitted.
     push(@{$response->{errors}}, $lang->maketext("clubs.form.error.short-name-blank"));
@@ -367,7 +297,7 @@ sub create_or_edit {
   
   if ( defined($abbreviated_name) ) {
     # Full name entered, check it.
-    push(@{$response->{errors}}, $lang->maketext("clubs.form.error.abbreviated-name-exists", $abbreviated_name)) if defined($self->check_duplicates({field => "abbreviated_name", value => $abbreviated_name, exclusion_obj => $club}));
+    push(@{$response->{errors}}, $lang->maketext("clubs.form.error.abbreviated-name-exists", encode_entities($abbreviated_name))) if defined($class->search_single_field({field => "abbreviated_name", value => $abbreviated_name, exclusion_obj => $club}));
   } else {
     # Full name omitted.
     push(@{$response->{errors}}, $lang->maketext("clubs.form.error.abbreviated-name-blank"));
@@ -428,8 +358,8 @@ sub create_or_edit {
     # Success, we need to create / edit the club.  We don't create any club_seasons here, as they may not
     # be entering teams into this season.  This will be done when teams are entered for the club.
     if ( $action eq "create" ) {
-      $club = $self->create({
-        url_key => $self->generate_url_key($short_name),
+      $club = $class->create({
+        url_key => $class->make_url_key($short_name),
         full_name => $full_name,
         short_name => $short_name,
         abbreviated_name => $abbreviated_name,
@@ -444,7 +374,7 @@ sub create_or_edit {
       push(@{$response->{success}}, $lang->maketext("admin.forms.success", encode_entities($club->full_name), $lang->maketext("admin.message.created")));
     } else {
       $club->update({
-        url_key => $self->generate_url_key($short_name, $club->id),
+        url_key => $class->make_url_key($short_name, $club),
         full_name => $full_name,
         short_name => $short_name,
         abbreviated_name => $abbreviated_name,

@@ -2,7 +2,7 @@ package TopTable::Schema::ResultSet::PersonSeason;
 
 use strict;
 use warnings;
-use base 'DBIx::Class::ResultSet';
+use base qw( TopTable::Schema::ResultSet );
 
 =head2 get_active_person_season_and_team
 
@@ -11,9 +11,10 @@ A find() wrapper that also prefetches the team.
 =cut
 
 sub get_active_person_season_and_team {
-  my ( $self, $person, $season ) = @_;
+  my $class = shift;
+  my ( $person, $season ) = @_;
   
-  return $self->find({
+  return $class->find({
     person => $person->id,
     season => $season->id,
     team_membership_type => "active",
@@ -33,7 +34,8 @@ A find() wrapper that also prefetches the teams and divisions; the 'active' memb
 =cut
 
 sub get_person_season_and_teams_and_divisions {
-  my ( $self, $params ) = @_;
+  my $class = shift;
+  my ( $params ) = @_;
   my $person = $params->{person};
   my $season = $params->{season};
   my $separate_membership_types = $params->{separate_membership_types} || 0;
@@ -41,7 +43,7 @@ sub get_person_season_and_teams_and_divisions {
   if ( $separate_membership_types ) {
     my %teams = (
       # Get ACTIVE team
-      active => $self->find({
+      active => $class->find({
         person => $person->id,
         "me.season" => $season->id,
         "team_seasons.season" => $season->id,
@@ -55,7 +57,7 @@ sub get_person_season_and_teams_and_divisions {
       }),
       
       # Get LOAN teams
-      loan => $self->search({
+      loan => $class->search({
         person => $person->id,
         "me.season" => $season->id,
         "team_seasons.season" => $season->id,
@@ -71,7 +73,7 @@ sub get_person_season_and_teams_and_divisions {
         },
       }),
       
-      inactive => $self->search({
+      inactive => $class->search({
         person => $person->id,
         "me.season" => $season->id,
         "team_seasons.season" => $season->id,
@@ -91,7 +93,7 @@ sub get_person_season_and_teams_and_divisions {
     return \%teams;
   } else {
     # We're not separating, just return as called.
-    return $self->search({
+    return $class->search({
       person => $person->id,
       "me.season" => $season->id,
       "team_season.season" => $season->id,
@@ -113,11 +115,12 @@ Get a list of all team membership types that a person is using in the season
 =cut
 
 sub get_team_membership_types_for_person_in_season {
-  my ( $self, $params ) = @_;
+  my $class = shift;
+  my ( $params ) = @_;
   my $person = $params->{person};
   my $season = $params->{season};
   
-  return $self->search({
+  return $class->search({
       person => $person->id,
       "me.season" => $season->id,
   }, {
@@ -135,9 +138,10 @@ Gets a list of seasons that a person played in; groups by season, as we don't ne
 =cut
 
 sub get_all_seasons_a_person_played_in {
-  my ( $self, $person ) = @_;
+  my $class = shift;
+  my ( $person ) = @_;
   
-  return $self->search({
+  return $class->search({
     person => $person->id
   }, {
     prefetch => "season",
@@ -152,7 +156,8 @@ Retrieve people in a given season / division in averages order.  If the $criteri
 =cut
 
 sub get_people_in_division_in_singles_averages_order {
-  my ( $self, $params ) = @_;
+  my $class = shift;
+  my ( $params ) = @_;
   my $division = $params->{division};
   my $season = $params->{season};
   my $team = $params->{team};
@@ -191,7 +196,7 @@ sub get_people_in_division_in_singles_averages_order {
     }
   }
   
-  return $self->search($where, {
+  return $class->search($where, {
     prefetch  => [qw( person team_membership_type ), {
       team_season => [qw( team ), {club_season => "club"}],
     }],
@@ -209,7 +214,8 @@ Retrieve people in a given season / division in averages order.  If the $criteri
 =cut
 
 sub get_people_in_division_in_doubles_individual_averages_order {
-  my ( $self, $params ) = @_;
+  my $class = shift;
+  my ( $params ) = @_;
   my $division = $params->{division};
   my $season = $params->{season};
   my $team = $params->{team};
@@ -240,7 +246,7 @@ sub get_people_in_division_in_doubles_individual_averages_order {
     };
   }
   
-  return $self->search($where, {
+  return $class->search($where, {
     prefetch  => ["person", {
       team_season => ["team", {club_season => "club"}],
     }],
@@ -259,7 +265,8 @@ For a given season and division, return the last updated date / time.
 =cut
 
 sub get_tables_last_updated_timestamp {
-  my ( $self, $params ) = @_;
+  my $class = shift;
+  my ( $params ) = @_;
   my $season = delete $params->{season};
   my $division = delete $params->{division} || undef;
   my $team = delete $params->{team} || undef;
@@ -268,7 +275,7 @@ sub get_tables_last_updated_timestamp {
   $where->{"me.team"} = $team->id if defined($team);
   $where->{"team_season.division"} = $division->id if defined($division);
   
-  my $team_season = $self->find($where, {
+  my $team_season = $class->find($where, {
     join => "team_season",
     rows => 1,
     order_by => {-desc => "last_updated"}
@@ -284,9 +291,10 @@ Retrieve people in a given season / team in order by surname, then first name.
 =cut
 
 sub get_people_in_team_in_name_order {
-  my ( $self, $season, $team ) = @_;
+  my $class = shift;
+  my ( $season, $team ) = @_;
   
-  return $self->search({
+  return $class->search({
     "me.season" => $season->id,
     team => $team->id,
     team_membership_type => "active",
@@ -303,12 +311,13 @@ Check noindex flag on the related person record.
 =cut
 
 sub noindex_set {
-  my ( $self, $on ) = @_;
+  my $class = shift;
+  my ( $on ) = @_;
   
   # Sanity check - all true values are 1, all false are 0
   $on = $on ? 1 : 0;
   
-  return $self->search({"person.noindex" => $on});
+  return $class->search({"person.noindex" => $on});
 }
 
 1;

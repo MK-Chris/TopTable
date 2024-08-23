@@ -2,7 +2,7 @@ package TopTable::Schema::ResultSet::Official;
 
 use strict;
 use warnings;
-use base 'DBIx::Class::ResultSet';
+use base qw( TopTable::Schema::ResultSet );
 use HTML::Entities;
 
 =head2 all_officials_in_season
@@ -12,9 +12,10 @@ Returns all the officials for a given season.  Search / return the season object
 =cut
 
 sub all_officials_in_season {
-  my ( $self, $season ) = @_;
+  my $class = shift;
+  my ( $season ) = @_;
   
-  return $self->search({
+  return $class->search({
     "official_seasons.season" => $season->id,
   }, {
     prefetch => {
@@ -34,7 +35,8 @@ Returns a paginated resultset of clubs.
 =cut
 
 sub page_records {
-  my ( $self, $parameters ) = @_;
+  my $class = shift;
+  my ( $parameters ) = @_;
   my $page_number = $parameters->{page_number} || 1;
   my $results_per_page = $parameters->{results_per_page} || 25;
   
@@ -44,7 +46,7 @@ sub page_records {
   # Default the page number to 1
   $page_number = 1 if !defined($page_number) or $page_number !~ m/^\d+$/;
   
-  return $self->search({}, {
+  return $class->search({}, {
     page => $page_number,
     rows => $results_per_page,
     order_by => {-asc => "position_name"},
@@ -58,7 +60,8 @@ Same as find(), but searches for both the id and key columns.  So we can use hum
 =cut
 
 sub find_id_or_url_key {
-  my ( $self, $id_or_url_key ) = @_;
+  my $class = shift;
+  my ( $id_or_url_key ) = @_;
   my $where;
   
   if ( $id_or_url_key =~ m/^\d+$/ ) {
@@ -74,7 +77,7 @@ sub find_id_or_url_key {
     $where = {"me.url_key" => $id_or_url_key};
   }
   
-  return $self->search($where, {
+  return $class->search($where, {
     prefetch => {
       official_seasons => [qw( season ), {
         official_season_people => "position_holder",
@@ -88,58 +91,6 @@ sub find_id_or_url_key {
   })->first;
 }
 
-=head2 find_url_key
-
-Same as find(), but uses the key column instead of the id.  So we can use human-readable URLs.
-
-=cut
-
-sub find_url_key {
-  my ( $self, $url_key, $exclude_id ) = @_;
-  
-  return $self->find({
-    url_key => $url_key,
-  }, {
-    #prefetch => {contact_reason_recipients => "person"}
-  });
-}
-
-=head2 generate_url_key
-
-Generate a unique key from the given contact reason name.
-
-=cut
-
-sub generate_url_key {
-  my ( $self, $name, $exclude_id ) = @_;
-  my $url_key;
-  ( my $original_url_key = substr($name, 0, 45) ) =~ s/[ \W]/-/g; # Truncate after 45 characters, swap out spaces and non-word characters for dashes
-  $original_url_key =~ s/-+/-/g; # If we find more than one dash in a row, replace it with just one.
-  $original_url_key = lc( $original_url_key ); # Make lower-case
-  
-  my $count;
-  # Infinite loop; we'll break when we can't find the key
-  while ( 1 ) {
-    if ( defined($count) ) {
-      $count = 2 if $count == 1; # We won't have a 1 - if we reach the point where count is a number, we want to start at 2
-      
-      # If we have a count, we will add it on to the end of the original key
-      $url_key = $original_url_key . "-" . $count;
-    } else {
-      $url_key = $original_url_key;
-    }
-    
-    # Check if that key already exists
-    my $key_check = $self->find_url_key($url_key);
-    
-    # If not, return it
-    return $url_key if !defined($key_check) or ( defined($exclude_id) and $key_check->id == $exclude_id );
-    
-    # Otherwise, we need to increment the count for the next loop round
-    $count++;
-  }
-}
-
 =head2 create_or_edit
 
 Provides the wrapper (including error checking) for adding / editing a contact reason.
@@ -147,12 +98,13 @@ Provides the wrapper (including error checking) for adding / editing a contact r
 =cut
 
 sub create_or_edit {
-  my ( $self, $action, $params ) = @_;
+  my $class = shift;
+  my ( $action, $params ) = @_;
   # Setup schema / logging
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
   #$logger->("debug", sprintf("Locale: '%s'", $locale));
-  my $schema = $self->result_source->schema;
+  my $schema = $class->result_source->schema;
   $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
   my $lang = $schema->lang;
   
@@ -206,14 +158,14 @@ sub create_or_edit {
     my $position_name_check;
     
     if ( $action eq "edit" ) {
-      $position_name_check = $self->find({}, {
+      $position_name_check = $class->find({}, {
         where => {
           position_name => $position_name,
           id => {"!=" => $position->id}
         }
       });
     } else {
-      $position_name_check = $self->find({position_name => $position_name});
+      $position_name_check = $class->find({position_name => $position_name});
       undef($position); # Make sure we don't have a position passed in if we're creating
     }
     
@@ -285,17 +237,17 @@ sub create_or_edit {
     # Generate a new URL key
     my $url_key;
     if ( $action eq "edit" ) {
-      $url_key = $self->generate_url_key($position_name, $position->id);
+      $url_key = $class->make_url_key($position_name, $position);
     } else {
-      $url_key = $self->generate_url_key($position_name);
+      $url_key = $class->make_url_key($position_name);
     }
     
     # Success, we need to do the database operations
     # Start a transaction so we don't have a partially updated database
-    my $transaction = $self->result_source->schema->txn_scope_guard;
+    my $transaction = $class->result_source->schema->txn_scope_guard;
     
     # All new officials will be positioned at the end; same goes for officials not as yet used in the current season
-    my @officials_in_season = $self->all_officials_in_season($season);
+    my @officials_in_season = $class->all_officials_in_season($season);
     my $position_order;
     
     my $official_season;
@@ -313,7 +265,7 @@ sub create_or_edit {
     
     if ( $action eq "create" ) {
       # Create the new position
-      $position = $self->create({
+      $position = $class->create({
         position_name => $position_name,
         url_key => $url_key,
         official_seasons => [{
@@ -370,12 +322,13 @@ sub create_or_edit {
 }
 
 sub reorder {
-  my ( $self, $params ) = @_;
+  my $class = shift;
+  my ( $params ) = @_;
   # Setup schema / logging
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
   #$logger->("debug", sprintf("Locale: '%s'", $locale));
-  my $schema = $self->result_source->schema;
+  my $schema = $class->result_source->schema;
   $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
   my $lang = $schema->lang;
   
@@ -391,7 +344,7 @@ sub reorder {
   };
   
   # Get the current season, as we can only change this for the current season
-  my $season = $self->result_source->schema->resultset("Season")->get_current;
+  my $season = $class->result_source->schema->resultset("Season")->get_current;
   
   unless ( defined( $season ) ) {
     # No current season, fatal error
@@ -400,7 +353,7 @@ sub reorder {
     return $response;
   }
   
-  my $officials = $self->all_officials_in_season($season);
+  my $officials = $class->all_officials_in_season($season);
     
   # If we have a grid and a season, we need to see if matches have already been set for that grid
   if ( $officials->count == 0 ) {
@@ -427,7 +380,7 @@ sub reorder {
   my $position = 1;
   foreach my $id ( @{$official_ids} ) {
     # If we have an ID, make sure it's in the resultset for this season
-    my $official = $self->find_id_or_url_key($id);
+    my $official = $class->find_id_or_url_key($id);
     my $official_season = $official->get_season($season);
     
     if ( defined($official_season) ) {
@@ -474,7 +427,7 @@ sub reorder {
   # Check for errors
   if ( scalar @{$response->{errors}} == 0 ) {
     # Start a transaction so we don't have a partially updated database
-    my $transaction = $self->result_source->schema->txn_scope_guard;
+    my $transaction = $class->result_source->schema->txn_scope_guard;
     
     # Finally we need to loop through again updating the home / away teams for each match
     foreach my $official_key ( keys %submitted_data ) {

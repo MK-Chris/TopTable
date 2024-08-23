@@ -2,7 +2,7 @@ package TopTable::Schema::ResultSet::UserAgent;
 
 use strict;
 use warnings;
-use base 'DBIx::Class::ResultSet';
+use base qw( TopTable::Schema::ResultSet );
 use DateTime;
 use Digest::SHA qw( sha256_hex );
 
@@ -15,9 +15,10 @@ A hash is used for the user agent finding, as this is quicker than searching a t
 =cut
 
 sub update_user_agents {
-  my ( $self, $user_agent_string, $user, $ip_address ) = @_;
+  my $class = shift;
+  my ( $user_agent_string, $user, $ip_address ) = @_;
   my $user_agent_hash = sha256_hex($user_agent_string);
-  my $user_agent = $self->find({sha256_hash => $user_agent_hash});
+  my $user_agent = $class->find({sha256_hash => $user_agent_hash});
   my $now = DateTime->now(time_zone => "UTC");
   
   if ( defined($user_agent) ) {
@@ -57,7 +58,7 @@ sub update_user_agents {
       ip_address => $ip_address,
     }] if defined($user);
     
-    $user_agent = $self->create($create_hash);
+    $user_agent = $class->create($create_hash);
   }
   
   return $user_agent;

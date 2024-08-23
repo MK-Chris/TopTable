@@ -2,7 +2,7 @@ package TopTable::Schema::ResultSet::Venue;
 
 use strict;
 use warnings;
-use base 'DBIx::Class::ResultSet';
+use base qw( TopTable::Schema::ResultSet );
 use Email::Valid;
 use HTML::Entities;
 
@@ -13,7 +13,8 @@ A predefined search for all venues returned in venue order.  If a season is spec
 =cut
 
 sub all_venues {
-  my ( $self, $season ) = @_;
+  my $class = shift;
+  my ( $season ) = @_;
   my ( $where, $attrib );
   
   if ( $season ) {
@@ -32,7 +33,7 @@ sub all_venues {
     };
   }
   
-  return $self->search($where, $attrib);
+  return $class->search($where, $attrib);
 }
 
 =head2 active_venues
@@ -42,9 +43,9 @@ A predefined search for all active venues returned in venue order.
 =cut
 
 sub active_venues {
-  my ( $self ) = @_;
+  my $class = shift;
   
-  return $self->search({active => 1}, {
+  return $class->search({active => 1}, {
     order_by => {-asc => qw( me.name )},
   });
 }
@@ -56,7 +57,8 @@ Return search results based on a supplied full or partial name.
 =cut
 
 sub search_by_name {
-  my ( $self, $params ) = @_;
+  my $class = shift;
+  my ( $params ) = @_;
   my $q = delete $params->{q};
   my $split_words = delete $params->{split_words} || 0;
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
@@ -100,7 +102,7 @@ sub search_by_name {
     $attrib->{rows} = $results_per_page;
   }
   
-  return $self->search($where, $attrib);
+  return $class->search($where, $attrib);
 }
 
 =head2 page_records
@@ -110,7 +112,8 @@ Returns a paginated resultset of venues.
 =cut
 
 sub page_records {
-  my ( $self, $params ) = @_;
+  my $class = shift;
+  my ( $params ) = @_;
   my $page_number = $params->{page_number} || 1;
   my $results_per_page = $params->{results_per_page} || 25;
   
@@ -120,83 +123,11 @@ sub page_records {
   # Default the page number to 1
   $page_number = 1 if !defined($page_number) or $page_number !~ m/^\d+$/;
   
-  return $self->search(undef, {
+  return $class->search(undef, {
     page => $page_number,
     rows => $results_per_page,
     order_by  => {-asc => qw( name )},
   });
-}
-
-=head2 find_key
-
-Same as find(), but uses the key column instead of the id.  So we can use human-readable URLs.
-
-=cut
-
-sub find_url_key {
-  my ( $self, $url_key ) = @_;
-  return $self->find({url_key => $url_key});
-}
-
-=head2 find_id_or_url_key
-
-Same as find(), but searches for both the id and key columns.  So we can use human-readable URLs.
-
-=cut
-
-sub find_id_or_url_key {
-  my ( $self, $id_or_url_key ) = @_;
-  my $where;
-  
-  if ( $id_or_url_key =~ m/^\d+$/ ) {
-    # Numeric - look in ID or URL key
-    $where = [{
-      id => $id_or_url_key
-    }, {
-      url_key => $id_or_url_key
-    }];
-  } else {
-    # Not numeric - must be the URL key
-    $where = {url_key => $id_or_url_key};
-  }
-  
-  return $self->search($where, {rows => 1})->single;
-}
-
-=head2 generate_url_key
-
-Generate a unique key from the given season name.
-
-=cut
-
-sub generate_url_key {
-  my ( $self, $name, $exclude_id ) = @_;
-  my $url_key;
-  ( my $original_url_key = substr($name, 0, 45) ) =~ s/[ \W]/-/g; # Truncate after 45 characters, swap out spaces and non-word characters for dashes
-  $original_url_key =~ s/-+/-/g; # If we find more than one dash in a row, replace it with just one.
-  $original_url_key = lc( $original_url_key ); # Make lower-case
-  
-  my $count;
-  # Infinite loop; we'll break when we can't find the key
-  while ( 1 ) {
-    if ( defined($count) ) {
-      $count = 2 if $count == 1; # We won't have a 1 - if we reach the point where count is a number, we want to start at 2
-      
-      # If we have a count, we will add it on to the end of the original key
-      $url_key = $original_url_key . "-" . $count;
-    } else {
-      $url_key = $original_url_key;
-    }
-    
-    # Check if that key already exists
-    my $key_check = $self->find_url_key($url_key);
-    
-    # If not, return it
-    return $url_key if !defined($key_check) or ( defined($exclude_id) and $key_check->id == $exclude_id );
-    
-    # Otherwise, we need to increment the count for the next loop round
-    $count++;
-  }
 }
 
 =head2 create_or_edit
@@ -206,11 +137,12 @@ Provides the wrapper (including error checking) for adding / editing a venue.
 =cut
 
 sub create_or_edit {
-  my ( $self, $action, $params ) = @_;
+  my $class = shift;
+  my ( $action, $params ) = @_;
   # Setup schema / logging
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
-  my $schema = $self->result_source->schema;
+  my $schema = $class->result_source->schema;
   $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
   my $lang = $schema->lang;
   
@@ -258,7 +190,7 @@ sub create_or_edit {
     if ( defined($venue) ) {
       if ( ref($venue) ne "TopTable::Model::DB::Venue" ) {
         # This may not be an error, we may just need to find from an ID or URL key
-        $venue = $self->find_id_or_url_key($venue);
+        $venue = $class->find_id_or_url_key($venue);
         
         # Definitely error if we're now undef
         push(@{$response->{errors}}, $lang->maketext("venues.form.error.venue-invalid")) unless defined($venue);
@@ -279,20 +211,7 @@ sub create_or_edit {
   # Error checking
   # Check the names were entered and don't exist already.
   if ( defined($name) ) {
-    # Full name entered, check it.
-    my $venue_name_check;
-    if ( $action eq "edit" ) {
-      $venue_name_check = $self->find(undef, {
-        where => {
-          name => $name,
-          id => {"!=" => $venue->id}
-        }
-      });
-    } else {
-      $venue_name_check = $self->find({name => $name});
-    }
-    
-    push(@{$response->{errors}}, $lang->maketext("venues.form.error.name-exists", encode_entities($name))) if defined($venue_name_check);
+    push(@{$response->{errors}}, $lang->maketext("venues.form.error.name-exists", encode_entities($name))) if defined($class->search_single_field({field => "name", value => $name, exclusion_obj => $venue}));
   } else {
     # Name omitted.
     push(@{$response->{errors}}, $lang->maketext("venues.form.error.name-blank"));
@@ -336,9 +255,9 @@ sub create_or_edit {
   if ( scalar @{$response->{errors}} == 0 ) {
     # Success, we need to create the venue
     if ( $action eq "create" ) {
-      $venue = $self->create({
+      $venue = $class->create({
         name => $name,
-        url_key => $self->generate_url_key($name),
+        url_key => $class->generate_url_key($name),
         address1 => $address1,
         address2 => $address2,
         address3 => $address3,
@@ -357,7 +276,7 @@ sub create_or_edit {
     } else {
       $venue->update({
         name => $name,
-        url_key => $self->generate_url_key($name, $venue->id),
+        url_key => $class->generate_url_key($name, $venue->id),
         address1 => $address1,
         address2 => $address2,
         address3 => $address3,

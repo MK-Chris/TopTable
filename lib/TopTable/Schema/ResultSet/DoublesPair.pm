@@ -2,7 +2,7 @@ package TopTable::Schema::ResultSet::DoublesPair;
 
 use strict;
 use warnings;
-use base 'DBIx::Class::ResultSet';
+use base qw( TopTable::Schema::ResultSet );
 
 __PACKAGE__->load_components(qw(Helper::ResultSet::SetOperations));
 
@@ -13,7 +13,8 @@ Retrieve doubles pairs in a given season / division in averages order.  If the $
 =cut
 
 sub get_doubles_pairs_in_division_in_averages_order {
-  my ( $self, $params ) = @_;
+  my $class = shift;
+  my ( $params ) = @_;
   my $division = $params->{division};
   my $season = $params->{season};
   my $team = $params->{team};
@@ -38,7 +39,7 @@ sub get_doubles_pairs_in_division_in_averages_order {
     };
   }
   
-  return $self->search($where, {
+  return $class->search($where, {
     prefetch  => [
       "person_season_person1_season_team",
       "person_season_person2_season_team", {
@@ -61,7 +62,8 @@ For a given season and division, return the last updated date / time.
 =cut
 
 sub get_tables_last_updated_timestamp {
-  my ( $self, $params ) = @_;
+  my $class = shift;
+  my ( $params ) = @_;
   my $division = $params->{division};
   my $season = $params->{season};
   my $team = $params->{team} || undef;
@@ -70,7 +72,7 @@ sub get_tables_last_updated_timestamp {
   $where->{"me.team"} = $team->id if defined( $team );
   $where->{"team_season.division"} = $division->id if defined( $division );
   
-  my $doubles_pair = $self->find($where, {
+  my $doubles_pair = $class->find($where, {
     rows => 1,
     join => {team_season => "division_season"},
     order_by => {-desc => "last_updated"}
@@ -86,7 +88,8 @@ Finds a doubles pair given two people (in an arrayref), a team and a season.  Pe
 =cut
 
 sub find_pair {
-  my ( $self, $params ) = @_;
+  my $class = shift;
+  my ( $params ) = @_;
   my ( $person1, $person2 ) = ( @{$params->{people}} );
   my $season = $params->{season};
   my $team = $params->{team};
@@ -95,7 +98,7 @@ sub find_pair {
   return undef unless defined($person1) and defined($person2);
   
   # Do the lookups if they are not passed in as objects
-  my $schema = $self->result_source->schema;
+  my $schema = $class->result_source->schema;
   $person1 = $schema->resultset("Person")->find_id_or_url_key($person1) unless ref($person1);
   $person2 = $schema->resultset("Person")->find_id_or_url_key($person2) unless ref($person2);
   $season = $schema->resultset("Season")->find_id_or_url_key($season) if defined($season) and !ref($season);
@@ -119,7 +122,7 @@ sub find_pair {
     $where[1]{"me.team"} = $team->id;
   }
   
-  return $self->search(\@where, {
+  return $class->search(\@where, {
     prefetch  => [qw( season ), {
       person_season_person1_season_team => "person",
     }, {
@@ -138,10 +141,11 @@ Search a resultset for a specific season.
 =cut
 
 sub get_season {
-  my ( $self, $params ) = @_;
+  my $class = shift;
+  my ( $params ) = @_;
   my $season = $params->{season};
   
-  return $self->search({"me.season" => $season->id}, {
+  return $class->search({"me.season" => $season->id}, {
     join => [qw( season ), {
       person_season_person1_season_team => [qw( person team_membership_type )],
     }, {
@@ -160,12 +164,13 @@ Return the games for this resultset (normally this would be an already looked up
 =cut
 
 sub get_games {
-  my ( $self, $params ) = @_;
+  my $class = shift;
+  my ( $params ) = @_;
   my $season = $params->{season} if defined($params);
-  my $schema = $self->result_source->schema;
+  my $schema = $class->result_source->schema;
   
   # Grab the IDs in this resultset
-  my @rs = $self->all;
+  my @rs = $class->all;
   my @ids = map($_->id, @rs);
   
   # Build our initial where
@@ -207,7 +212,8 @@ Finds doubles pairs involving the given person
 =cut
 
 sub pairs_involving_person {
-  my ( $self, $params ) = @_;
+  my $class = shift;
+  my ( $params ) = @_;
   my $person = $params->{person};
   my $season = $params->{season};
   my $team = $params->{team};
@@ -230,7 +236,7 @@ sub pairs_involving_person {
     $where->[1]{team} = $team->id;
   }
   
-  return $self->search($where, {
+  return $class->search($where, {
     prefetch => ["person_season_person1_season_team", "person_season_person2_season_team", "season", {
       team_season  => ["team", {club_season => "club"}]
     }],
@@ -244,9 +250,9 @@ A list of seasons involving the doubles pairs in this set - essentially just gro
 =cut
 
 sub get_all_seasons {
-  my ( $self ) = @_;
+  my $class = shift;
   
-  return $self->search(undef, {
+  return $class->search(undef, {
     group_by => [qw( me.season )],
   });
 }
@@ -258,12 +264,13 @@ Determine if the current resultset has anybody set to noindex (if $on is true, o
 =cut
 
 sub noindex_set {
-  my ( $self, $on ) = @_;
+  my $class = shift;
+  my ( $on ) = @_;
   
   # Sanity check - all true values are 1, all false are 0
   $on = $on ? 1 : 0;
   
-  return $self->search([-or => {"person.noindex" => $on, "person_2.noindex" => $on}], {
+  return $class->search([-or => {"person.noindex" => $on, "person_2.noindex" => $on}], {
     join => {
       person_season_person1_season_team => "person",
       person_season_person2_season_team => "person"

@@ -15,7 +15,8 @@ A predefined search to find all events, ordered by the datestamp (paged if neces
 =cut
 
 sub page_records {
-  my ( $self, $parameters ) = @_;
+  my $class = shift;
+  my ( $parameters ) = @_;
   my $page_number = $parameters->{page_number} || 1;
   my $results_per_page = $parameters->{results_per_page} || 25;
   
@@ -26,7 +27,7 @@ sub page_records {
   $page_number = 1 if $page_number !~ m/^\d+$/;
   
   
-  return $self->search({
+  return $class->search({
     # The original article is undef if this IS the original article
     original_article => undef,
   }, {
@@ -46,13 +47,13 @@ Searches for pinned articles whose expiry date has been reached and sets the pin
 =cut
 
 sub unpin_expired_pins {
-  my ( $self ) = @_;
-  my $current_time = DateTime->now( time_zone => "UTC" );
+  my $class = shift;
+  my $current_time = DateTime->now(time_zone => "UTC");
   
   # Search for pinned articles (pinned = 1) where the pinned_expires value is in the past (or right now) and set the pinned flag to 0
-  return $self->search({
+  return $class->search({
     pinned => 1,
-    pinned_expires => {"<=" => sprintf( "%s %s", $current_time->ymd, $current_time->hms )},
+    pinned_expires => {"<=" => sprintf("%s %s", $current_time->ymd, $current_time->hms)},
   })->update({pinned => 0});
 }
 
@@ -63,9 +64,10 @@ Same as find(), but uses the key column instead of the id.  So we can use human-
 =cut
 
 sub find_url_key {
-  my ( $self, $url_key, $published_year, $published_month ) = @_;
+  my $class = shift;
+  my ( $url_key, $published_year, $published_month ) = @_;
   
-  return $self->find({
+  return $class->find({
     url_key => $url_key,
     published_year => $published_year,
     published_month => $published_month,
@@ -74,12 +76,13 @@ sub find_url_key {
 
 =head2 find_id_or_url_key
 
-Same as find(), but searches for both the id and key columns.  So we can use human-readable URLs.
+Same as find(), but searches for both the id and key columns.  So we can use human-readable URLs.  Overrides the version in TopTable::Schema::ResultSet because URL keys are unique to the published year and month for news articles.
 
 =cut
 
 sub find_id_or_url_key {
-  my ( $self, $id_or_url_key, $published_year, $published_month ) = @_;
+  my $class = shift;
+  my ( $id_or_url_key, $published_year, $published_month ) = @_;
   my ( $where );
   
   if ( $id_or_url_key =~ m/^\d+$/ ) {
@@ -96,22 +99,23 @@ sub find_id_or_url_key {
     };
   }
   
-  return $self->find( $where );
+  return $class->find($where);
 }
 
-=head2 generate_url_key
+=head2 make_url_key
 
 Generate a unique key from the given season name.
 
 =cut
 
-sub generate_url_key {
-  my ( $self, $headline, $published_year, $published_month, $exclude_id ) = @_;
+sub make_url_key {
+  my $class = shift;
+  my ( $headline, $published_year, $published_month, $exclusion_obj ) = @_;
   my $url_key;
   ( my $original_url_key = substr($headline, 0, 45) ) =~ s/[ \W]/-/g; # Truncate after 45 characters, swap out spaces and non-word characters for dashes
   $original_url_key =~ s/-+/-/g; # If we find more than one dash in a row, replace it with just one.
   $original_url_key =~ s/^-|-$//g; # Replace dashes at the start and end with nothing
-  $original_url_key = lc( $original_url_key ); # Make lower-case
+  $original_url_key = lc($original_url_key); # Make lower-case
   
   my $count;
   # Infinite loop; we'll break when we can't find the key
@@ -120,16 +124,30 @@ sub generate_url_key {
       $count = 2 if $count == 1; # We won't have a 1 - if we reach the point where count is a number, we want to start at 2
       
       # If we have a count, we will add it on to the end of the original key
-      $url_key = $original_url_key . "-" . $count;
+      $url_key = sprintf("%s-%d", $original_url_key, $count);
     } else {
       $url_key = $original_url_key;
     }
     
     # Check if that key already exists
-    my $key_check = $self->find_url_key( $url_key, $published_year, $published_month );
+    my $conflict;
+    if ( defined($exclusion_obj) ) {
+      # Find anything with this value, excluding the exclusion object passed in
+      $conflict = $class->find({}, {
+        where => {
+          url_key => $url_key,
+          published_year => $published_year,
+          published_month => $published_month,
+          id => {"!=" => $exclusion_obj->id},
+        }
+      });
+    } else {
+      # Find anything with this value
+      $conflict = $class->find_id_or_url_key($url_key, $published_year, $published_month);
+    }
     
     # If not, return it
-    return $url_key if !defined( $key_check ) or ( defined($exclude_id) and $key_check->id == $exclude_id );
+    return $url_key unless defined($conflict);
     
     # Otherwise, we need to increment the count for the next loop round
     $count++;
@@ -143,11 +161,12 @@ Provides the wrapper (including error checking) for adding / editing a venue.
 =cut
 
 sub create_or_edit {
-  my ( $self, $action, $params ) = @_;
+  my $class = shift;
+  my ( $action, $params ) = @_;
   # Setup schema / logging
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
-  my $schema = $self->result_source->schema;
+  my $schema = $class->result_source->schema;
   $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
   my $lang = $schema->lang;
   
@@ -186,7 +205,7 @@ sub create_or_edit {
       # If we're editing, we need to make sure we've got an ID
       if ( ref($article) ne "TopTable::Model::DB::NewsArticle" ) {
         # Check if it's a valid ID
-        $article = $self->find($article);
+        $article = $class->find($article);
         push( @{$response->{errors}}, $lang->maketext("news.form.error.invalid-news-article")) unless defined($article);
         return $response;
       }
@@ -288,9 +307,9 @@ sub create_or_edit {
     # Generate a new URL key
     my $url_key;
     if ( $action eq "edit" ) {
-      $url_key = $self->generate_url_key($headline, $published_year, $published_month, $article->id);
+      $url_key = $class->make_url_key($headline, $published_year, $published_month, $article->id);
     } else {
-      $url_key = $self->generate_url_key($headline, $published_year, $published_month);
+      $url_key = $class->make_url_key($headline, $published_year, $published_month);
     }
     
     # Store timezone as UTC
@@ -301,7 +320,7 @@ sub create_or_edit {
     
     # Success, we need to create the venue
     if ( $action eq "create" ) {
-       $article = $self->create({
+       $article = $class->create({
         url_key => $url_key,
         published_year => $published_year,
         published_month => $published_month,

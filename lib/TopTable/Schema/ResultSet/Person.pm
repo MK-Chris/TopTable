@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use base 'DBIx::Class::ResultSet';
+use base qw( TopTable::Schema::ResultSet );
 use DateTime;
 use Try::Tiny;
 use Email::Valid;
@@ -17,9 +17,10 @@ A find() wrapper that also prefetches the gender.
 =cut
 
 sub get_person_and_gender {
-  my ( $self, $id ) = @_;
+  my $class = shift;
+  my ( $id ) = @_;
   
-  return $self->find({id => $id}, {
+  return $class->find({id => $id}, {
     prefetch => [qw( gender user )],
   });
 }
@@ -31,19 +32,16 @@ Return a list of all people sorted by surname then first name.  If a season is s
 =cut
 
 sub all_people {
-  my ( $self, $season ) = @_;
+  my $class = shift;
+  my ( $season ) = @_;
   my ( $where, $attrib );
   
   if ( $season ) {
-    $where = {
-      "person_seasons.season" => $season->id,
-    };
+    $where = {"person_seasons.season" => $season->id};
     
     $attrib = {
       join => "person_seasons",
-      order_by => {
-        -asc => [qw( surname first_name )],
-      },
+      order_by => {-asc => [qw( surname first_name )]},
     };
   } else {
     $where = {};
@@ -52,7 +50,7 @@ sub all_people {
     };
   }
   
-  return $self->search($where, $attrib);
+  return $class->search($where, $attrib);
 }
 
 =head2 noindex_set
@@ -64,12 +62,13 @@ This can't be used on a paged resultset because if the first result of one or tw
 =cut
 
 sub noindex_set {
-  my ( $self, $on ) = @_;
+  my $class = shift;
+  my ( $on ) = @_;
   
   # Sanity check - all true values are 1, all false are 0
   $on = $on ? 1 : 0;
   
-  return $self->search({noindex => $on});
+  return $class->search({noindex => $on});
 }
 
 =head2 noindex_set_paged_count
@@ -81,13 +80,14 @@ This takes a paged resultset, and iterates through it counting how many have the
 =cut
 
 sub noindex_set_paged_count {
-  my ( $self, $on ) = @_;
+  my $class = shift;
+  my ( $on ) = @_;
   
   # Sanity check - all true values are 1, all false are 0
   $on = $on ? 1 : 0;
   
   my $count = 0;
-  my $rs = $self->search;
+  my $rs = $class->search;
   while ( my $person = $rs->next ) {
     $count++ if $person->noindex == $on;
   }
@@ -102,7 +102,8 @@ Retrieve a paginated list of all people
 =cut
 
 sub page_records {
-  my ( $self, $parameters ) = @_;
+  my $class = shift;
+  my ( $parameters ) = @_;
   my $page_number = $parameters->{page_number} || 1;
   my $results_per_page = $parameters->{results_per_page} || 25;
   
@@ -112,7 +113,7 @@ sub page_records {
   # Default the page number to 1
   $page_number = 1 if !defined($page_number) or $page_number !~ m/^\d+$/;
   
-  return $self->search({}, {
+  return $class->search({}, {
     page => $page_number,
     rows => $results_per_page,
     order_by => {-asc => [qw( surname first_name )]},
@@ -126,13 +127,14 @@ Return search results based on a supplied full or partial club / team name.
 =cut
 
 sub search_by_name {
-  my ( $self, $params ) = @_;
-  my $q = delete $params->{q};
-  my $split_words = delete $params->{split_words} || 0;
-  my $season = delete $params->{season};
+  my $class = shift;
+  my ( $params ) = @_;
+  my $q = $params->{q};
+  my $split_words = $params->{split_words} || 0;
+  my $season = $params->{season};
+  my $page = $params->{page} || undef;
+  my $results_per_page = $params->{results} || undef;
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
-  my $page = delete $params->{page} || undef;
-  my $results_per_page = delete $params->{results} || undef;
   
   # Split into words, so we can match a single word
   my @words = split(/\s+/, $q);
@@ -176,7 +178,7 @@ sub search_by_name {
     $attrib->{join} = "person_seasons";
   }
   
-  return $self->search($where, $attrib);
+  return $class->search($where, $attrib);
 }
 
 =head2 find_person_in_season_and_team
@@ -184,7 +186,8 @@ sub search_by_name {
 =cut
 
 sub find_person_in_season_and_team {
-  my ( $self, $team, $season, $name, $exclude_id ) = @_;
+  my $class = shift;
+  my ( $team, $season, $name, $exclude_id ) = @_;
   my $attrib;
   
   if ( $exclude_id ) {
@@ -208,109 +211,7 @@ sub find_person_in_season_and_team {
     };
   }
   
-  return $self->find({}, $attrib);
-}
-
-=head2 find_key
-
-Same as find(), but uses the key column instead of the id.  So we can use human-readable URLs.
-
-=cut
-
-sub find_url_key {
-  my ( $self, $url_key ) = @_;
-  
-  return $self->find({url_key => $url_key});
-}
-
-=head2 find_id_or_url_key
-
-Same as find(), but searches for both the id and key columns.  So we can use human-readable URLs.
-
-=cut
-
-sub find_id_or_url_key {
-  my ( $self, $id_or_url_key ) = @_;
-  my $where;
-  
-  if ( $id_or_url_key =~ m/^\d+$/ ) {
-    # Numeric - look in ID or URL key
-    $where = [{
-      id => $id_or_url_key
-    }, {
-      url_key => $id_or_url_key
-    }];
-  } else {
-    # Not numeric - must be the URL key
-    $where = {url_key => $id_or_url_key};
-  }
-  
-  return $self->search($where, {rows => 1})->single;
-}
-
-=head2 find_id_or_url_key
-
-Same as find(), but searches for both the id and key columns.  So we can use human-readable URLs.
-
-=cut
-
-sub find_with_user {
-  my ( $self, $id_or_url_key ) = @_;
-  my $where;
-  
-  if ( $id_or_url_key =~ m/^\d+$/ ) {
-    # Numeric - look in ID or URL key
-    $where = [{
-      "me.id" => $id_or_url_key
-    }, {
-      "me.url_key" => $id_or_url_key
-    }];
-  } else {
-    # Not numeric - must be the URL key
-    $where = {"me.url_key" => $id_or_url_key};
-  }
-  
-  return $self->search($where, {
-    prefetch => "user",
-    rows => 1,
-  })->single;
-}
-
-=head2 generate_url_key
-
-Generate a unique key from the given season name.
-
-=cut
-
-sub generate_url_key {
-  my ( $self, $name, $exclude_id ) = @_;
-  my $url_key;
-  ( my $original_url_key = substr($name, 0, 45) ) =~ s/[ \W]/-/g; # Truncate after 45 characters, swap out spaces and non-word characters for dashes
-  $original_url_key =~ s/-+/-/g; # If we find more than one dash in a row, replace it with just one.
-  $original_url_key =~ s/^-|-$//g; # Replace dashes at the start and end with nothing
-  $original_url_key = lc($original_url_key); # Make lower-case
-  
-  my $count;
-  # Infinite loop; we'll break when we can't find the key
-  while ( 1 ) {
-    if ( defined($count) ) {
-      $count = 2 if $count == 1; # We won't have a 1 - if we reach the point where count is a number, we want to start at 2
-      
-      # If we have a count, we will add it on to the end of the original key
-      $url_key = $original_url_key . "-" . $count;
-    } else {
-      $url_key = $original_url_key;
-    }
-    
-    # Check if that key already exists
-    my $key_check = $self->find_url_key($url_key);
-    
-    # If not, return it
-    return $url_key if !defined($key_check) or ( defined($exclude_id) and $key_check->id == $exclude_id );
-    
-    # Otherwise, we need to increment the count for the next loop round
-    $count++;
-  }
+  return $class->find({}, $attrib);
 }
 
 =head2 create_or_edit
@@ -320,11 +221,12 @@ Provides the wrapper (including error checking) for adding / editing a team.
 =cut
 
 sub create_or_edit {
-  my ( $self, $action, $params ) = @_;
+  my $class = shift;
+  my ( $action, $params ) = @_;
   # Setup schema / logging
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
-  my $schema = $self->result_source->schema;
+  my $schema = $class->result_source->schema;
   $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
   my $lang = $schema->lang;
   
@@ -396,7 +298,7 @@ sub create_or_edit {
     return $response;
   } elsif ( $action eq "edit" ) {
     if ( defined($person) ) {
-      $person = $self->find_id_or_url_key($person) unless ref($person) eq "TopTable::Model::DB::Person";
+      $person = $class->find_id_or_url_key($person) unless ref($person) eq "TopTable::Model::DB::Person";
       
       if ( defined($person) ) {
         # Search for the person season - membership type 1 just searches for the active one
@@ -408,12 +310,12 @@ sub create_or_edit {
         $active_person_season = $person_seasons->find({team_membership_type => "active"}) if $person_seasons->count > 0;
       } else {
         # Not valid.
-        push(@{ $response->{errors} }, $lang->maketext("people.form.error.person-not-valid"));
+        push(@{$response->{errors}}, $lang->maketext("people.form.error.person-not-valid"));
         return $response;
       }
     } else {
       # Not specified.
-      push(@{ $response->{errors} }, $lang->maketext("people.form.error.person-not-specified"));
+      push(@{$response->{errors}}, $lang->maketext("people.form.error.person-not-specified"));
       return $response;
     }
   }
@@ -423,7 +325,7 @@ sub create_or_edit {
   if ( $first_name and $surname ) {
     my $person_name_check;
     if ( $action eq "edit" ) {
-      $person_name_check = $self->find({}, {
+      $person_name_check = $class->find({}, {
         where => {
           first_name => $first_name,
           surname => $surname,
@@ -431,13 +333,13 @@ sub create_or_edit {
         }
       });
     } else {
-      $person_name_check = $self->find({
+      $person_name_check = $class->find({
         first_name => $first_name,
         surname => $surname,
       });
     }
     
-    push(@{$response->{errors}}, $lang->maketext("people.form.error.duplicate-name", $first_name, $surname)) if defined($person_name_check);
+    push(@{$response->{errors}}, $lang->maketext("people.form.error.duplicate-name", encode_entities(sprintf("%s %s", $first_name, $surname)))) if defined($person_name_check);
   } else {
     push(@{$response->{errors}}, $lang->maketext("people.form.error.first-name-blank")) unless defined($first_name);
     push(@{$response->{errors}}, $lang->maketext("people.form.error.surname-blank")) unless defined($surname);
@@ -618,9 +520,9 @@ sub create_or_edit {
     # Generate a new URL key
     my $url_key;
     if ( $action eq "edit" ) {
-      $url_key = $self->generate_url_key($display_name, $person->id);
+      $url_key = $class->make_url_key($display_name, $person);
     } else {
-      $url_key = $self->generate_url_key($display_name);
+      $url_key = $class->make_url_key($display_name);
     }
     
     # These dates need to be checked first - we format them for SQL if they hold values.
@@ -641,7 +543,7 @@ sub create_or_edit {
     
     
     # Transaction so if we fail, nothing is updated
-    my $transaction = $self->result_source->schema->txn_scope_guard;
+    my $transaction = $class->result_source->schema->txn_scope_guard;
     
     if ( $action eq "create" ) {
       # Setup the person creation data - if they have a team specified, we'll create a person_season connection too
@@ -666,7 +568,7 @@ sub create_or_edit {
       };
       
       $person_create_data->{person_seasons} = [$new_person_season_data] if defined($team);
-      $person = $self->create($person_create_data);
+      $person = $class->create($person_create_data);
     } else {
       # Editing
       # Update the main person object
@@ -741,7 +643,7 @@ sub create_or_edit {
       } else {
         # No team defined; if there is an active season association where they haven't played yet, we'll remove it (if they have played, we'll leave it active,
         # as there's no point deactivating it for nothing.)
-        if ( defined( $active_person_season ) and $active_person_season->matches_played == 0 ) {
+        if ( defined($active_person_season) and $active_person_season->matches_played == 0 ) {
           # Now search for doubles pairs to ensure they haven't played doubles
           my $pairings1 = $active_person_season->search_related("doubles_pairs_person1_season_teams", {
             games_played => {">" => 0},
@@ -847,11 +749,12 @@ Import people from a CSV file - this function processes the CSV file into an arr
 =cut
 
 sub import {
-  my ( $self, $params ) = @_;
+  my $class = shift;
+  my ( $params ) = @_;
   # Setup schema / logging
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, "@_"; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
-  my $schema = $self->result_source->schema;
+  my $schema = $class->result_source->schema;
   $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
   my $lang = $schema->lang;
   
@@ -926,7 +829,7 @@ sub import {
       if ( $i == 1 ) {
         # First line: column headers; set them up as field names
         # We need to check the column exists or is one of our pre-defined 'other' columns to set the team
-        if ( $self->result_source->has_column($field) or $field eq "club" or $field eq "team" ) {
+        if ( $class->result_source->has_column($field) or $field eq "club" or $field eq "team" ) {
           # Field exists or is a special field to add some related data; save the field position number
           push(@people_field_positions, $field);
         } else {
@@ -997,7 +900,7 @@ sub import {
       push(@failed_rows, $person);
     } else {
       # No error, pass on to the creation routine, which does the rest of the checking first
-      my $create_result = $self->create_or_edit("create", $person->{fields});
+      my $create_result = $class->create_or_edit("create", $person->{fields});
       
       # Check our responses
       my @errors = @{$create_result->{errors}};

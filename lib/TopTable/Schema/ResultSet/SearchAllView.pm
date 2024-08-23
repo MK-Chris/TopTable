@@ -2,7 +2,7 @@ package TopTable::Schema::ResultSet::SearchAllView;
 
 use strict;
 use warnings;
-use parent 'DBIx::Class::ResultSet';
+use base qw( TopTable::Schema::ResultSet );
 
 
 =head2 search_by_name
@@ -12,7 +12,8 @@ Return search results based on a supplied full or partial club / team name.
 =cut
 
 sub search_by_name {
-  my ( $self, $params ) = @_;
+  my $class = shift;
+  my ( $params ) = @_;
   my $q = $params->{q};
   my $split_words = $params->{split_words} || 0;
   my $season = $params->{season};
@@ -78,7 +79,7 @@ sub search_by_name {
     $where->[1]{season_id} = $season->id;
   }
   
-  return $self->search($where, $attrib);
+  return $class->search($where, $attrib);
 }
 
 1;

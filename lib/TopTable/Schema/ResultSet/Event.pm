@@ -2,9 +2,10 @@ package TopTable::Schema::ResultSet::Event;
 
 use strict;
 use warnings;
-use base 'DBIx::Class::ResultSet';
+use base qw( TopTable::Schema::ResultSet );
 use Regexp::Common qw( URI );
 use Try::Tiny;
+use HTML::Entities;
 
 =head2 all_events_by_name
 
@@ -13,7 +14,7 @@ Retrieve all events without any prefetching, ordered by full name.
 =cut
 
 sub all_events_by_name {
-  my ( $class ) = @_;
+  my $class = shift;
   
   return $class->search(undef, {
     order_by => {-asc => [qw( name )]}
@@ -27,7 +28,8 @@ Returns a paginated resultset of events.
 =cut
 
 sub page_records {
-  my ( $class, $params ) = @_;
+  my $class = shift;
+  my ( $params ) = @_;
   my $page_number = $params->{page_number} || 1;
   my $results_per_page = $params->{results_per_page} || 25;
   
@@ -51,7 +53,8 @@ Retrieve all events that have been run in a given season.
 =cut
 
 sub events_in_season {
-  my ( $class, $params ) = @_;
+  my $class = shift;
+  my ( $params ) = @_;
   my $season = $params->{season};
   
   return $class->search({
@@ -62,25 +65,15 @@ sub events_in_season {
   });
 }
 
-=head2 find_key
-
-Same as find(), but uses the key column instead of the id.  So we can use human-readable URLs.
-
-=cut
-
-sub find_url_key {
-  my ( $class, $url_key ) = @_;
-  return $class->find({url_key => $url_key});
-}
-
 =head2 find_id_or_url_key
 
-Same as find(), but searches for both the id and key columns.  So we can use human-readable URLs.
+Same as find(), but searches for both the id and key columns.  So we can use human-readable URLs.  Overrides the base class because we have to check the event type.
 
 =cut
 
 sub find_id_or_url_key {
-  my ( $class, $id_or_url_key, $params ) = @_;
+  my $class = shift;
+  my ( $id_or_url_key, $params ) = @_;
   my $type = $params->{type};
   my $where;
   
@@ -111,43 +104,6 @@ sub find_id_or_url_key {
   });
 }
 
-=head2 generate_url_key
-
-Generate a unique key from the given event short name.
-
-=cut
-
-sub generate_url_key {
-  my ( $class, $name, $exclude_id ) = @_;
-  my $url_key;
-  ( my $original_url_key = substr($name, 0, 45) ) =~ s/[ \W]/-/g; # Truncate after 45 characters, swap out spaces and non-word characters for dashes
-  $original_url_key =~ s/-+/-/g; # If we find more than one dash in a row, replace it with just one.
-  $original_url_key =~ s/^-|-$//g; # Replace dashes at the start and end with nothing
-  $original_url_key = lc( $original_url_key ); # Make lower-case
-  
-  my $count;
-  # Infinite loop; we'll break when we can't find the key
-  while ( 1 ) {
-    if ( defined($count) ) {
-      $count = 2 if $count == 1; # We won't have a 1 - if we reach the point where count is a number, we want to start at 2
-      
-      # If we have a count, we will add it on to the end of the original key
-      $url_key = $original_url_key . "-" . $count;
-    } else {
-      $url_key = $original_url_key;
-    }
-    
-    # Check if that key already exists
-    my $key_check = $class->find_url_key($url_key);
-    
-    # If not, return it
-    return $url_key if !defined($key_check) or ( defined($exclude_id) and $key_check->id == $exclude_id );
-    
-    # Otherwise, we need to increment the count for the next loop round
-    $count++;
-  }
-}
-
 =head2 create_or_edit
 
 Provides the wrapper (including error checking) for adding / editing a event.
@@ -155,7 +111,8 @@ Provides the wrapper (including error checking) for adding / editing a event.
 =cut
 
 sub create_or_edit {
-  my ( $class, $action, $params ) = @_;
+  my $class = shift;
+  my ( $action, $params ) = @_;
   # Setup schema / logging
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
@@ -230,19 +187,7 @@ sub create_or_edit {
   # Check the names were entered and don't exist already.
   if ( defined($name) ) {
     # Name entered, check it.
-    my $event_name_check;
-    if ( $action eq "edit" ) {
-      $event_name_check = $class->find({}, {
-        where => {
-          name => $name,
-          id => {"!=" => $event->id}
-        }
-      });
-    } else {
-      $event_name_check = $class->find({name => $name});
-    }
-    
-    push(@{$response->{errors}}, $lang->maketext("events.form.error.name-exists", $name)) if defined($event_name_check);
+    push(@{$response->{errors}}, $lang->maketext("events.form.error.name-exists", encode_entities($name))) if defined($class->search_single_field({field => "name", value => $name, exclusion_obj => $event}));
   } else {
     # Name omitted.
     push(@{$response->{errors}}, $lang->maketext("events.form.error.name-blank"));
@@ -476,9 +421,9 @@ sub create_or_edit {
     # Build the key from the name
     my $url_key;
     if ( $action eq "edit" ) {
-      $url_key = $class->generate_url_key($name, $event->id);
+      $url_key = $class->make_url_key($name, $event);
     } else {
-      $url_key = $class->generate_url_key($name);
+      $url_key = $class->make_url_key($name);
     }
     
     # Create a transaction to safeguard - if either operation fails, nothing is written / updated

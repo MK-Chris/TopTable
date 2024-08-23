@@ -2,7 +2,7 @@ package TopTable::Schema::ResultSet::TeamMatchPlayer;
 
 use strict;
 use warnings;
-use base 'DBIx::Class::ResultSet';
+use base qw( TopTable::Schema::ResultSet );
 
 =head2 player_in_match_by_ids
 
@@ -11,9 +11,10 @@ Prefetch with the player object by IDs.
 =cut
 
 sub player_in_match_by_ids {
-  my ( $self, $home_team_id, $away_team_id, $scheduled_date, $player_number ) = @_;
+  my $class = shift;
+  my ( $home_team_id, $away_team_id, $scheduled_date, $player_number ) = @_;
   
-  return $self->find({
+  return $class->find({
     home_team => $home_team_id,
     away_team => $away_team_id,
     scheduled_date => $scheduled_date->ymd,
@@ -33,9 +34,10 @@ Prefetch with the player object by URL keys.
 =cut
 
 sub player_in_match_by_url_keys {
-  my ( $self, $home_club_url_key, $home_team_url_key, $away_club_url_key, $away_team_url_key, $scheduled_date, $player_number ) = @_;
+  my $class = shift;
+  my ( $home_club_url_key, $home_team_url_key, $away_club_url_key, $away_team_url_key, $scheduled_date, $player_number ) = @_;
   
-  return $self->find({
+  return $class->find({
     "club.url_key" => $home_club_url_key,
     "home_team.url_key" => $home_team_url_key,
     "club_2.url_key" => $away_club_url_key,
@@ -62,10 +64,11 @@ Search loan players in a given season.
 =cut
 
 sub loan_players {
-  my ( $self, $params ) = @_;
+  my $class = shift;
+  my ( $params ) = @_;
   my $season  = $params->{season};
   
-  return $self->search({
+  return $class->search({
     loan_team => {"<>" => undef},
     "team_match.season" => $season->id,
     "club_season.season" => $season->id,

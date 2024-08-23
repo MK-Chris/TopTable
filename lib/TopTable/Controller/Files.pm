@@ -198,7 +198,7 @@ sub do_upload :Path("do-upload") :Args(0) {
       
       if ( $upload->copy_to(File::Spec->catfile($target_folder, $target_filename)) ) {
         # File has been copied successfully, insert it into the database
-        my $url_key = $c->model("DB::UploadedImage")->generate_url_key($description);
+        my $url_key = $c->model("DB::UploadedImage")->make_url_key($description);
         
         my $file = $c->model("DB::UploadedFile")->create({
           url_key => $url_key,

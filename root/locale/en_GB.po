@@ -1195,7 +1195,7 @@ msgid "people.form.error.person-not-specified"
 msgstr "You must specify a person to edit."
 
 msgid "people.form.error.duplicate-name"
-msgstr "There is already a person with the name %1 %2; please enter something (such as a middle initial in the first names field) to distinguish them."
+msgstr "There is already a person with the name %1; please enter something (such as a middle initial in the first names field) to distinguish them."
 
 msgid "people.form.error.first-name-blank"
 msgstr "The first name field is blank."
@@ -3867,7 +3867,7 @@ msgid "meeting-types.form.error.meeting-type-invalid"
 msgstr "The meeting type is invalid."
 
 msgid "meeting-types.form.error.name-exists"
-msgstr "A meeting type with the same name already exists."
+msgstr "A meeting type with the name &#39;%1&#39; already exists."
 
 msgid "meeting-types.form.error.name-blank"
 msgstr "The name field is blank."
@@ -4176,7 +4176,7 @@ msgid "contact-reasons.recipients"
 msgstr "Recipient(s)"
 
 msgid "contact-reasons.form.error.name-exists"
-msgstr "A contact reason with the same name already exists."
+msgstr "A contact reason with the name &#39;%1&#39; already exists."
 
 msgid "contact-reasons.form.error.name-blank"
 msgstr "The name field is blank."

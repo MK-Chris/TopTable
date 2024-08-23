@@ -540,7 +540,7 @@ END;
 # a menu option for it unless these permissions are present.
 # Not an ideal solution, but I can't think of a better way, as basically anyone could have permissions to view templates quite legitimately and we don't want an admin
 # menu option for everyone.
-IF authorisation.match_update OR authorisation.user_approve_new OR authorisation.admin_issue_bans OR authorisation.role_create OR authorisation.role_edit OR authorisation.role_delete OR authorisation.person_create OR authorisation.meetingtype_view OR authorisation.fixtures_create;
+IF authorisation.match_update OR authorisation.user_approve_new OR authorisation.admin_issue_bans OR authorisation.role_create OR authorisation.role_edit OR authorisation.role_delete OR authorisation.person_create OR authorisation.meetingtype_create OR authorisation.fixtures_create OR authorisation.contactreason_create;
 -%]
   <li><a href="[% c.uri_for("/admin") %]" title="[% c.maketext("menu.text.admin") %]">[% c.maketext("menu.text.admin") %]</a>
     <ul>
@@ -634,7 +634,7 @@ IF authorisation.match_update OR authorisation.user_approve_new OR authorisation
       </li>
 [%
   END;
-  IF authorisation.meetingtype_view;
+  IF authorisation.meetingtype_create;
 -%]
       <li>
         <a href="[% c.uri_for("/meeting-types") %]" title="[% c.maketext("menu.text.meeting-types") %]">[% c.maketext("menu.text.meeting-types") %]</a>
@@ -651,6 +651,27 @@ IF authorisation.match_update OR authorisation.user_approve_new OR authorisation
           <li><a href="[% c.uri_for_action("/meeting-types/create") %]" title="[% c.maketext("admin.create-object", c.maketext("object.singular.meeting-types")) %]"><img src="[% c.uri_for("/static/images/icons/0009-Add-icon-16.png") %]" /> &laquo; [% c.maketext("admin.create") %] &raquo;</a></li>
 [%
       END;
+    END;
+-%]
+        </ul>
+      </li>
+[%
+  END;
+  IF authorisation.contactreason_create;
+-%]
+      <li>
+        <a href="[% c.uri_for("/info/contact-reasons") %]" title="[% c.maketext("menu.text.contactreason") %]">[% c.maketext("menu.text.contactreason") %]</a>
+        <ul>
+[%
+    IF nav_contact_reasons.size;
+      FOREACH reason IN nav_contact_reasons;
+-%]
+          <li><a href="[% c.uri_for_action("/info/contact-reasons/view", [reason.url_key]) %]" title="[% reason.name | html_entity %]">[% reason.name | html_entity %]</a></li>
+[%
+      END;
+-%]
+          <li><a href="[% c.uri_for_action("/info/contact-reasons/create") %]" title="[% c.maketext("admin.create-object", c.maketext("object.singular.contact-reasons")) %]"><img src="[% c.uri_for("/static/images/icons/0009-Add-icon-16.png") %]" /> &laquo; [% c.maketext("admin.create") %] &raquo;</a></li>
+[%
     END;
 -%]
         </ul>

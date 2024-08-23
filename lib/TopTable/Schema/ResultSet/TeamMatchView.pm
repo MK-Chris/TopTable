@@ -2,7 +2,7 @@ package TopTable::Schema::ResultSet::TeamMatchView;
 
 use strict;
 use warnings;
-use parent 'DBIx::Class::ResultSet';
+use base qw( TopTable::Schema::ResultSet );
 
 
 =head2 search_by_name
@@ -12,7 +12,8 @@ Return search results based on a supplied full or partial club / team name.
 =cut
 
 sub search_by_name {
-  my ( $self, $params ) = @_;
+  my $class = shift;
+  my ( $params ) = @_;
   my $q = $params->{q};
   my $split_words = $params->{split_words} || 0;
   my $season = $params->{season};
@@ -133,7 +134,7 @@ sub search_by_name {
     }],
   };
   
-  my $use_paging = ( defined($page) ) ? 1 : 0;
+  my $use_paging = defined($page) ? 1 : 0;
   
   if ( $use_paging ) {
     # Set a default for results per page if it's not provided or invalid
@@ -147,7 +148,7 @@ sub search_by_name {
     $attrib->{rows} = $results_per_page;
   }
   
-  return $self->search($where, $attrib);
+  return $class->search($where, $attrib);
 }
 
 1;
