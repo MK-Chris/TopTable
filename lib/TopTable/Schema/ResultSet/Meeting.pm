@@ -2,7 +2,7 @@ package TopTable::Schema::ResultSet::Meeting;
 
 use strict;
 use warnings;
-use base 'DBIx::Class::ResultSet';
+use base qw( TopTable::Schema::ResultSet );
 use Try::Tiny;
 use HTML::Entities;
 use DateTime;
@@ -38,7 +38,7 @@ sub find_by_type_and_date {
   # First we need to work out whether or not the $type is a meeting type object, or an ID / URL key
   # If it is, set it to the URL key for the query.  We don't use the ID, as that's numeric and that
   # causes an 'or' query on ID / URL key, which is likely slightly slower
-  $type = $type->url_key if ref( $type ) eq "TopTable::Model::DB::MeetingType";
+  $type = $type->url_key if ref($type) eq "TopTable::Model::DB::MeetingType";
   
   # Now check the date.  It must either be a DateTime object, or a valid year / month / day in hashref form.
   if ( ref($date) eq "HASH" ) {
@@ -65,10 +65,10 @@ sub find_by_type_and_date {
   # If the type ID is entirely numeric, search the ID field, otherwise search the URL key field.
   my $where = ( $type =~ /^\d+$/ ) ? {
     "type.id" => $type,
-    start_date_time => {-between => [ sprintf( "%s 00:00:00", $date->ymd ), sprintf( "%s 23:59:00", $date->ymd ) ]}
+    start_date_time => {-between => [sprintf( "%s 00:00:00", $date->ymd ), sprintf("%s 23:59:00", $date->ymd)]}
   } : {
     "type.url_key" => $type,
-    start_date_time => {-between => [ sprintf( "%s 00:00:00", $date->ymd ), sprintf( "%s 23:59:00", $date->ymd ) ]}
+    start_date_time => {-between => [ sprintf( "%s 00:00:00", $date->ymd ), sprintf("%s 23:59:00", $date->ymd)]}
   };
   
   return $class->find($where, {
@@ -127,81 +127,6 @@ sub page_records {
       -asc => [qw( type.name )],
     }],
   });
-}
-
-=head2 find_key
-
-Same as find(), but uses the key column instead of the id.  So we can use human-readable URLs.
-
-=cut
-
-sub find_url_key {
-  my $class = shift;
-  my ( $url_key, $exclude_id ) = @_;
-  return $class->find({url_key => $url_key});
-}
-
-=head2 find_id_or_url_key
-
-Same as find(), but searches for both the id and key columns.  So we can use human-readable URLs.
-
-=cut
-
-sub find_id_or_url_key {
-  my $class = shift;
-  my ( $id_or_url_key ) = @_;
-  my $where;
-  
-  if ( $id_or_url_key =~ m/^\d+$/ ) {
-    # Numeric - look in ID or URL key
-    $where = [{
-      id => $id_or_url_key
-    }, {
-      url_key => $id_or_url_key
-    }];
-  } else {
-    # Not numeric - must be the URL key
-    $where = {url_key => $id_or_url_key};
-  }
-  
-  return $class->search($where, {rows => 1})->single;
-}
-
-=head2 generate_url_key
-
-Generate a unique key from the given season name.
-
-=cut
-
-sub generate_url_key {
-  my $class = shift;
-  my ( $name, $exclude_id ) = @_;
-  my $url_key;
-  ( my $original_url_key = substr($name, 0, 45) ) =~ s/[ \W]/-/g; # Truncate after 45 characters, swap out spaces and non-word characters for dashes
-  $original_url_key =~ s/-+/-/g; # If we find more than one dash in a row, replace it with just one.
-  $original_url_key = lc( $original_url_key ); # Make lower-case
-  
-  my $count;
-  # Infinite loop; we'll break when we can't find the key
-  while ( 1 ) {
-    if ( defined($count) ) {
-      $count = 2 if $count == 1; # We won't have a 1 - if we reach the point where count is a number, we want to start at 2
-      
-      # If we have a count, we will add it on to the end of the original key
-      $url_key = $original_url_key . "-" . $count;
-    } else {
-      $url_key = $original_url_key;
-    }
-    
-    # Check if that key already exists
-    my $key_check = $class->find_url_key( $url_key );
-    
-    # If not, return it
-    return $url_key if !defined( $key_check ) or ( defined($exclude_id) and $key_check->id == $exclude_id );
-    
-    # Otherwise, we need to increment the count for the next loop round
-    $count++;
-  }
 }
 
 =head2 create_or_edit

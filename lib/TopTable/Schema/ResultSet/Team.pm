@@ -2,7 +2,7 @@ package TopTable::Schema::ResultSet::Team;
 
 use strict;
 use warnings;
-use base 'DBIx::Class::ResultSet';
+use base qw( TopTable::Schema::ResultSet );
 use DateTime;
 use HTML::Entities;
 
@@ -13,7 +13,8 @@ A predefined search for all teams ordered by club (alphabetically by club full n
 =cut
 
 sub all_teams_by_club_by_team_name {
-  my ( $self, $param ) = @_;
+  my $class = shift;
+  my ( $param ) = @_;
   my $season = $param->{season} || undef;
   my $years_to_go_back = $param->{years} || undef;
   my ( $where, $earliest_start_date );
@@ -39,7 +40,7 @@ sub all_teams_by_club_by_team_name {
     };
   }
   
-  return $self->search($where, {
+  return $class->search($where, {
     prefetch => [{
       club => "club_seasons",
       team_seasons => [qw( season captain home_night ), {
@@ -64,7 +65,8 @@ A predefined search for all teams in the given club.
 =cut
 
 sub teams_in_club {
-  my ( $self, $param ) = @_;
+  my $class = shift;
+  my ( $param ) = @_;
   my ( $where, $attrib, $sort_hash );
   my $club = $param->{club};
   my $season = $param->{season} || undef;
@@ -128,7 +130,7 @@ sub teams_in_club {
     };
   }
   
-  return $self->search($where, $attrib);
+  return $class->search($where, $attrib);
 }
 
 =head2 find_by_name_in_club
@@ -138,9 +140,10 @@ Finds a team with the given name in the given club
 =cut
 
 sub find_by_name_in_club {
-  my ( $self, $club, $name ) = @_;
+  my $class = shift;
+  my ( $club, $name ) = @_;
   
-  return $self->find({
+  return $class->find({
     name => $name,
     club => $club->id,
   }, {prefetch  => "club"});
@@ -153,9 +156,10 @@ A predefined search for all teams in a particular season ordered by club (alphab
 =cut
 
 sub teams_in_season_by_club_by_team_name {
-  my ( $self, $season ) = @_;
+  my $class = shift;
+  my ( $season ) = @_;
   
-  return $self->search({
+  return $class->search({
     "team_seasons.season" => $season->id,
   }, {
     prefetch => {
@@ -172,9 +176,10 @@ A predefined search for all teams in a particular season ordered by club (alphab
 =cut
 
 sub teams_in_season_by_division_by_club_team_name {
-  my ( $self, $season ) = @_;
+  my $class = shift;
+  my ( $season ) = @_;
   
-  return $self->search({
+  return $class->search({
     "team_seasons.season" => $season->id,
   }, {
     prefetch => {
@@ -192,7 +197,8 @@ Return a list of teams in a season with a captain set.  Order by club / team nam
 =cut
 
 sub get_teams_with_captains_in_season {
-  my ( $self, $params ) = @_;
+  my $class = shift;
+  my ( $params ) = @_;
   my $season = $params->{season};
   my $view_by = $params->{view_by};
   
@@ -200,7 +206,7 @@ sub get_teams_with_captains_in_season {
     ? {-asc => [qw( division.rank club.short_name me.name )]}
     : {-asc => [qw( club.short_name me.name division.rank )]};
   
-  return $self->search({
+  return $class->search({
     "team_seasons.season" => $season->id,
     "club_seasons.season" => $season->id,
     "team_seasons.captain" => {
@@ -222,9 +228,10 @@ Get all teams that have the specified person as captain within the specified sea
 =cut
 
 sub get_teams_with_specified_captain {
-  my ( $self, $person, $season ) = @_;
+  my $class = shift;
+  my ( $person, $season ) = @_;
   
-  return $self->search({
+  return $class->search({
     "team_seasons.season" => $season->id,
     "team_seasons.captain" => $person->id,
   }, {
@@ -240,7 +247,8 @@ A wrapper for find() that prefetches the joined tables with the team data.
 =cut
 
 sub find_with_prefetches {
-  my ( $self, $id, $params ) = @_;
+  my $class = shift;
+  my ( $id, $params ) = @_;
   my $season = delete $params->{season};
   my ( $where, $attrib );
   
@@ -262,7 +270,7 @@ sub find_with_prefetches {
     $attrib = {prefetch  => [qw( club )]};
   }
   
-  return $self->find($where, $attrib);
+  return $class->find($where, $attrib);
 }
 
 =head2 search_by_name
@@ -272,7 +280,8 @@ Return search results based on a supplied full or partial club / team name.
 =cut
 
 sub search_by_name {
-  my ( $self, $params ) = @_;
+  my $class = shift;
+  my ( $params ) = @_;
   my $q = $params->{q};
   my $season = $params->{season};
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.;
@@ -309,7 +318,7 @@ sub search_by_name {
     push(@{$attrib->{order_by}{-asc}}, qw( me.id ));
   }
   
-  return $self->search($where, $attrib);
+  return $class->search($where, $attrib);
 }
 
 =head2 find_url_key
@@ -319,7 +328,7 @@ Same as find(), but uses the url_key column instead of the id.  So we can use hu
 =cut
 
 sub find_url_key {
-  my ( $self, $club, $url_key, $params ) = @_;
+  my ( $class, $club, $url_key, $params ) = @_;
   my $season = $params->{season};
   my ( $where, $attrib );
   
@@ -340,7 +349,7 @@ sub find_url_key {
     $attrib = {prefetch  => [qw( club )]};
   }
   
-  return $self->find($where, $attrib);
+  return $class->find($where, $attrib);
 }
 
 =head2 find_url_keys
@@ -350,7 +359,7 @@ Same as find(), but uses the url_key columns (from both the club and team tables
 =cut
 
 sub find_url_keys {
-  my ( $self, $club_url, $team_url, $params ) = @_;
+  my ( $class, $club_url, $team_url, $params ) = @_;
   my $season = $params->{season};
   my ( $where, $attrib );
   
@@ -371,7 +380,7 @@ sub find_url_keys {
     $attrib = {prefetch  => [qw( club )]};
   }
   
-  return $self->find($where, $attrib);
+  return $class->find($where, $attrib);
 }
 
 =head2 find_names
@@ -381,7 +390,7 @@ Same as find(), but uses the url_keys column (in ) instead of the id.  So we can
 =cut
 
 sub find_by_names {
-  my ( $self, $params ) = @_;
+  my ( $class, $params ) = @_;
   my $club_name = $params->{club_name};
   my $team_name = $params->{team_name};
   my $season = $params->{season};
@@ -408,22 +417,22 @@ sub find_by_names {
     };
   }
   
-  return $self->find($where, $attrib);
+  return $class->find($where, $attrib);
 }
 
-=head2 generate_url_key
+=head2 make_url_key
 
 Generate a unique key from the given season name.
 
 =cut
 
-sub generate_url_key {
-  my ( $self, $club, $name, $exclude_id ) = @_;
+sub make_url_key {
+  my ( $class, $club, $name, $exclusion_obj ) = @_;
   my $url_key;
   ( my $original_url_key = substr($name, 0, 45) ) =~ s/[ \W]/-/g; # Truncate after 45 characters, swap out spaces and non-word characters for dashes
   $original_url_key =~ s/-+/-/g; # If we find more than one dash in a row, replace it with just one.
   $original_url_key =~ s/^-|-$//g; # Replace dashes at the start and end with nothing
-  $original_url_key = lc( $original_url_key ); # Make lower-case
+  $original_url_key = lc($original_url_key); # Make lower-case
   
   my $count;
   # Infinite loop; we'll break when we can't find the key
@@ -432,16 +441,34 @@ sub generate_url_key {
       $count = 2 if $count == 1; # We won't have a 1 - if we reach the point where count is a number, we want to start at 2
       
       # If we have a count, we will add it on to the end of the original key
-      $url_key = $original_url_key . "-" . $count;
+      $url_key = sprintf("%s-%d", $original_url_key, $count);
     } else {
       $url_key = $original_url_key;
     }
     
-    # Check if that key already exists
-    my $key_check = $self->find_url_keys($club, $url_key);
+    my $conflict;
+    if ( defined($exclusion_obj) ) {
+      # Find anything with this value, excluding the exclusion object passed in
+      $conflict = $class->find({}, {
+        where => {
+          "me.url_key" => $url_key,
+          "club.url_key" => $club->url_key,
+          "me.id" => {"!=" => $exclusion_obj->id},
+        },
+        join  => [qw( club )],
+      });
+    } else {
+      # Find anything with this value
+      $conflict = $class->find({
+        "club.url_key" => $club->url_key,
+        "me.url_key" => $url_key,
+      }, {
+        join => [qw( club )],
+      });
+    }
     
     # If not, return it
-    return $url_key if !defined($key_check) or ( defined($exclude_id) and $key_check->id == $exclude_id );
+    return $url_key unless defined($conflict);
     
     # Otherwise, we need to increment the count for the next loop round
     $count++;
@@ -455,11 +482,12 @@ Provides the wrapper (including error checking) for adding / editing a team.
 =cut
 
 sub create_or_edit {
-  my ( $self, $action, $params ) = @_;
+  my $class = shift;
+  my ( $action, $params ) = @_;
   # Setup schema / logging
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
-  my $schema = $self->result_source->schema;
+  my $schema = $class->result_source->schema;
   $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
   my $lang = $schema->lang;
   
@@ -521,7 +549,7 @@ sub create_or_edit {
     # Editing fatal checks
     if ( defined($team) ) {
       # Look up the team if it's not a valid team object already
-      $team = $self->find($team) unless ref($team) eq "TopTable::Model::DB::Team";
+      $team = $class->find($team) unless ref($team) eq "TopTable::Model::DB::Team";
       
       unless ( defined($team) ) {
         push(@{$response->{errors}}, $lang->maketext("teams.form.error.team-invalid"));
@@ -658,7 +686,7 @@ sub create_or_edit {
     if ( defined($club) ) {
       my $team_name_check;
       if ( $action eq "edit" ) {
-        $team_name_check = $self->find({}, {
+        $team_name_check = $class->find({}, {
           where => {
             name => $name,
             club => $club->id,
@@ -666,7 +694,7 @@ sub create_or_edit {
           }
         });
       } else {
-        $team_name_check = $self->find({
+        $team_name_check = $class->find({
           name => $name,
           club => $club->id,
         });
@@ -815,7 +843,7 @@ sub create_or_edit {
     my $default_match_start = sprintf("%s:%s", $start_hour, $start_minute) if defined($start_hour) and defined($start_minute);
     
     # Transaction so if we fail, nothing is updated
-    my $transaction = $self->result_source->schema->txn_scope_guard;
+    my $transaction = $class->result_source->schema->txn_scope_guard;
     
     # Check if we need to create a new club season
     unless ( defined(my $club_season = $club->get_season($season)) ) {
@@ -832,9 +860,9 @@ sub create_or_edit {
     # Success, we need to create / edit the team
     if ( $action eq "create" ) {
       # Setup the team season
-      $team = $self->create({
+      $team = $class->create({
         name => $name,
-        url_key => $self->generate_url_key($club, $name),
+        url_key => $class->make_url_key($club, $name),
         club => $club->id,
         default_match_start => $default_match_start,
         team_seasons => [{
@@ -859,7 +887,7 @@ sub create_or_edit {
       
       $team->update({
         name => $name,
-        url_key => $self->generate_url_key($club, $name, $team->id),
+        url_key => $class->make_url_key($club, $name, $team),
         club => $club->id,
         default_match_start => $default_match_start,
       });

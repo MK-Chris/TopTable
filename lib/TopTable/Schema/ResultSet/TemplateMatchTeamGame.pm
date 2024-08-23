@@ -2,7 +2,7 @@ package TopTable::Schema::ResultSet::TemplateMatchTeamGame;
 
 use strict;
 use warnings;
-use base 'DBIx::Class::ResultSet';
+use base qw( TopTable::Schema::ResultSet );
 use HTML::Entities;
 
 =head2 individual_game_templates
@@ -12,9 +12,10 @@ A predefined search to find and return the individual games and their templates 
 =cut
 
 sub individual_game_templates {
-  my ( $self, $team_match_template ) = @_;
+  my $class = shift;
+  my ( $team_match_template ) = @_;
   
-  return $self->search({team_match_template => $team_match_template->id}, {
+  return $class->search({team_match_template => $team_match_template->id}, {
     prefetch => "individual_match_template",
     order_by => {
       -asc => "match_game_number"
@@ -29,11 +30,12 @@ A predefined search to find and return the players within a division in the orde
 =cut
 
 sub division_averages_list {
-  my ( $self, $season, $division, $minimum_matches_played ) = @_;
+  my $class = shift;
+  my ( $season, $division, $minimum_matches_played ) = @_;
   
   $minimum_matches_played = 0 if !$minimum_matches_played;
   
-  return $self->search({
+  return $class->search({
     "person_seasons.matches_played" => {">=" => $minimum_matches_played},
     "person_seasons.division" => $division,
     "person_seasons.season" => $season,
@@ -54,11 +56,12 @@ Provides the wrapper (including error checking) for adding / editing a club.
 =cut
 
 sub create_or_edit {
-  my ( $self, $params ) = @_;
+  my $class = shift;
+  my ( $params ) = @_;
   # Setup schema / logging
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
-  my $schema = $self->result_source->schema;
+  my $schema = $class->result_source->schema;
   $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
   my $lang = $schema->lang;
   
@@ -77,7 +80,7 @@ sub create_or_edit {
   if ( defined($tt_template) ) {
     if ( ref($tt_template) ne "TopTable::Model::DB::TemplateMatchTeam" ) {
       # This may not be an error, we may just need to find from an ID or URL key
-      $tt_template = $self->find_id_or_url_key($tt_template);
+      $tt_template = $class->find_id_or_url_key($tt_template);
       
       # Definitely error if we're now undef
       push(@{$response->{errors}}, $lang->maketext("templates.team-match.form.error.template-invalid")) unless defined($tt_template);
@@ -178,7 +181,7 @@ sub create_or_edit {
     my $games_to_delete = $tt_template->search_related("template_match_team_games")->count;
     $tt_template->delete_related("template_match_team_games") if $games_to_delete;
     $response->{deleted_games} = $games_to_delete;
-    $self->populate(\@populate);
+    $class->populate(\@populate);
     $response->{completed} = 1;
     push(@{$response->{success}}, $lang->maketext("templates.team-match.games.success", $game_num, $tt_template->name));
   }

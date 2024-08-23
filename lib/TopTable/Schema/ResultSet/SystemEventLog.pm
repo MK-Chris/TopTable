@@ -2,7 +2,7 @@ package TopTable::Schema::ResultSet::SystemEventLog;
 
 use strict;
 use warnings;
-use base 'DBIx::Class::ResultSet';
+use base qw( TopTable::Schema::ResultSet );
 use Math::Round;
 use DateTime;
 use DateTime::Duration;
@@ -14,7 +14,8 @@ A predefined search to find all events and page them if required, ordered by the
 =cut
 
 sub page_records {
-  my ( $self, $params ) = @_;
+  my $class = shift;
+  my ( $params ) = @_;
   my $public_only = $params->{public_only};
   my $page = $params->{page};
   my $start = $params->{start};
@@ -135,7 +136,7 @@ sub page_records {
   }
   
   # Return into a resultset, even though we really want an array, so that we can perform paging functions on it first
-  my $rs = $self->search($where, $attrib);
+  my $rs = $class->search($where, $attrib);
   
   if ( $page_results ) {
     my @pages = $rs->all;
@@ -167,7 +168,8 @@ Provides the logic for setting the event log entry - either creating a new one o
 =cut
 
 sub set_event_log {
-  my ( $self, $params ) = @_;
+  my $class = shift;
+  my ( $params ) = @_;
   
   my $object_type = $params->{object_type} || undef;
   my $event_type = $params->{event_type} || undef;
@@ -251,7 +253,7 @@ sub set_event_log {
   my $earliest_updated_time = $current_datetime->clone->subtract( hours => 1 );
   
   # Now work out if there are any more events we can add this object to
-  my $event = $self->get_related($object_type, $event_type, $user_id, $ip_address, $earliest_updated_time);
+  my $event = $class->get_related($object_type, $event_type, $user_id, $ip_address, $earliest_updated_time);
   
   if ( defined($event) ) {
     # Update the event's edit number
@@ -301,7 +303,7 @@ sub set_event_log {
     }
     
     # Do the creation, now we have all the related objects
-    $event = $self->create({
+    $event = $class->create({
       object_type => $object_type,
       event_type => $event_type,
       user_id => $user_id,
@@ -319,7 +321,8 @@ Returns the latest related event (if there is one updated in time period specifi
 =cut
 
 sub get_related {
-  my ( $self, $object_type, $event_type, $user_id, $ip_address, $earliest_updated ) = @_;
+  my $class = shift;
+  my ( $object_type, $event_type, $user_id, $ip_address, $earliest_updated ) = @_;
   $earliest_updated = DateTime->now(time_zone => "UTC")->subtract(hours => 1) unless defined($earliest_updated) and ref($earliest_updated) eq "DateTime";
   
   # Initial where clause
@@ -335,7 +338,7 @@ sub get_related {
   
   # Add the earliest updated 
   
-  return $self->find($where, {
+  return $class->find($where, {
     prefetch => [qw(
       system_event_log_average_filters
       system_event_log_clubs

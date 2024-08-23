@@ -26,7 +26,8 @@ Return search results based on a supplied full or partial name.
 =cut
 
 sub search_by_name {
-  my ( $class, $params ) = @_;
+  my $class = shift;
+  my ( $params ) = @_;
   my $q = $params->{q};
   my $split_words = $params->{split_words} || 0;
   my $season = $params->{season};
@@ -53,7 +54,7 @@ sub search_by_name {
   }
   
   my $attrib = {
-    order_by => {-asc => [ qw( name ) ]},
+    order_by => {-asc => [qw( name )]},
     group_by => [qw( name )],
   };
   
@@ -85,7 +86,8 @@ Returns a paginated resultset of fixtures grids.
 =cut
 
 sub page_records {
-  my ( $class, $parameters ) = @_;
+  my $class = shift;
+  my ( $parameters ) = @_;
   my $page_number = $parameters->{page_number} || 1;
   my $results_per_page = $parameters->{results_per_page} || 25;
   
@@ -109,7 +111,8 @@ A predefined search to get the matches for a grid in week number, then match num
 =cut
 
 sub incomplete_matches {
-  my ( $class, $grid ) = @_;
+  my $class = shift;
+  my ( $grid ) = @_;
   
   return $class->search({
     -or => [{
@@ -134,7 +137,8 @@ Returns the count of teams that have incomplete grid positions for a given grid 
 =cut
 
 sub incomplete_grid_positions {
-  my ( $class, $grid, $season ) = @_;
+  my $class = shift;
+  my ( $grid, $season ) = @_;
   
   return $class->search({
     "me.id" => $grid->id,
@@ -153,7 +157,8 @@ Wraps find() with a prefetch on season weeks.
 =cut
 
 sub find_with_weeks {
-  my ( $class, $grid_id ) = @_;
+  my $class = shift;
+  my ( $grid_id ) = @_;
   
   return $class->find({
     id  => $grid_id,
@@ -169,7 +174,8 @@ Provides the wrapper (including error checking) for adding / editing a fixtures 
 =cut
 
 sub create_or_edit {
-  my ( $class, $action, $params ) = @_;
+  my $class = shift;
+  my ( $action, $params ) = @_;
   # Setup schema / logging
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.

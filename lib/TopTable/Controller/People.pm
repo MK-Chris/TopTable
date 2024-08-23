@@ -50,7 +50,7 @@ Chain base for getting the person ID and checking it.
 sub base :Chained("/") PathPart("people") CaptureArgs(1) {
   my ( $self, $c, $id_or_url_key ) = @_;
   
-  my $person = $c->model("DB::Person")->find_with_user($id_or_url_key);
+  my $person = $c->model("DB::Person")->find_id_or_url_key($id_or_url_key);
   
   if ( defined($person) ) {
     my $enc_first_name = encode_entities($person->first_name);
@@ -984,7 +984,7 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
   if ( defined( $c->flash->{secretary_of} ) ) {
     $secretaried_clubs = $c->flash->{secretary_of};
   } else {
-    $secretaried_clubs = [$c->model("DB::Club")->get_clubs_with_specified_secretary($person)];
+    $secretaried_clubs = [$c->model("DB::Club")->with_secretary($person)];
   }
   
   # Check if we have clubs flashed to be secretary for

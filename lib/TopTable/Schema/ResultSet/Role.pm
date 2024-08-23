@@ -2,7 +2,7 @@ package TopTable::Schema::ResultSet::Role;
 
 use strict;
 use warnings;
-use base 'DBIx::Class::ResultSet';
+use base qw( TopTable::Schema::ResultSet );
 use HTML::Entities;
 use Set::Object;
 
@@ -17,12 +17,13 @@ You should then get a list consisting of: Administrators, Anonymous, any other s
 =cut
 
 sub all_roles {
-  my ( $self, $parameters ) = @_;
+  my $class = shift;
+  my ( $parameters ) = @_;
   my $include_anonymous = $parameters->{include_anonymous};
   
   my $where = $include_anonymous ? {} : {anonymous => 0};
   
-  return $self->search($where, {
+  return $class->search($where, {
     order_by => [{
       -desc => [qw( me.system me.sysadmin me.anonymous )],
     }, {
@@ -38,7 +39,8 @@ Retrieve a paginated list of contact reasons.  If an object is specified (i.e., 
 =cut
 
 sub page_records {
-  my ( $self, $parameters ) = @_;
+  my $class = shift;
+  my ( $parameters ) = @_;
   my $page_number = $parameters->{page_number} || 1;
   my $results_per_page = $parameters->{results_per_page} || 25;
   
@@ -48,7 +50,7 @@ sub page_records {
   # Default the page number to 1
   $page_number = 1 if !defined($page_number) or $page_number !~ m/^\d+$/;
   
-  return $self->search({}, {
+  return $class->search({}, {
     page => $page_number,
     rows => $results_per_page,
     order_by => [{
@@ -59,80 +61,6 @@ sub page_records {
   });
 }
 
-=head2 find_url_key
-
-Same as find(), but uses the key column instead of the id.  So we can use human-readable URLs.
-
-=cut
-
-sub find_url_key {
-  my ( $self, $url_key, $exclude_id ) = @_;
-  return $self->find({url_key => $url_key});
-}
-
-=head2 find_id_or_url_key
-
-Same as find(), but searches for both the id and key columns.  So we can use human-readable URLs.
-
-=cut
-
-sub find_id_or_url_key {
-  my ( $self, $id_or_url_key ) = @_;
-  my $where;
-  
-  if ( $id_or_url_key =~ m/^\d+$/ ) {
-    # Numeric - look in ID or URL key
-    $where = [{
-      "me.id" => $id_or_url_key
-    }, {
-      "me.url_key" => $id_or_url_key
-    }];
-  } else {
-    # Not numeric - must be the URL key
-    $where = {"me.url_key" => $id_or_url_key};
-  }
-  
-  return $self->search($where, {
-    rows => 1,
-  })->single;
-}
-
-=head2 generate_url_key
-
-Generate a unique key from the given season name.
-
-=cut
-
-sub generate_url_key {
-  my ( $self, $name, $exclude_id ) = @_;
-  my $url_key;
-  ( my $original_url_key = substr($name, 0, 45) ) =~ s/[ \W]/-/g; # Truncate after 45 characters, swap out spaces and non-word characters for dashes
-  $original_url_key =~ s/-+/-/g; # If we find more than one dash in a row, replace it with just one.
-  $original_url_key = lc( $original_url_key ); # Make lower-case
-  
-  my $count;
-  # Infinite loop; we'll break when we can't find the key
-  while ( 1 ) {
-    if ( defined($count) ) {
-      $count = 2 if $count == 1; # We won't have a 1 - if we reach the point where count is a number, we want to start at 2
-      
-      # If we have a count, we will add it on to the end of the original key
-      $url_key = $original_url_key . "-" . $count;
-    } else {
-      $url_key = $original_url_key;
-    }
-    
-    # Check if that key already exists
-    my $key_check = $self->find_url_key($url_key);
-    
-    # If not, return it
-    return $url_key if !defined($key_check) or ( defined($exclude_id) and $key_check->id == $exclude_id );
-    
-    # Otherwise, we need to increment the count for the next loop round
-    $count++;
-  }
-}
-
 =head2 create_or_edit
 
 Provides the wrapper (including error checking) for adding / editing a role.
@@ -140,11 +68,12 @@ Provides the wrapper (including error checking) for adding / editing a role.
 =cut
 
 sub create_or_edit {
-  my ( $self, $action, $params ) = @_;
+  my $class = shift;
+  my ( $action, $params ) = @_;
   # Setup schema / logging
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
-  my $schema = $self->result_source->schema;
+  my $schema = $class->result_source->schema;
   $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
   my $lang = $schema->lang;
   
@@ -159,9 +88,7 @@ sub create_or_edit {
     warnings => [],
     info => [],
     success => [],
-    fields => {
-      name => $name,
-    },
+    fields => {name => $name},
     completed => 0,
     new_members => [],
     existing_members => [],
@@ -185,7 +112,7 @@ sub create_or_edit {
     if ( defined($role) ) {
       if ( ref($role) ne "TopTable::Model::DB::Role" ) {
         # This may not be an error, we may just need to find from an ID or URL key
-        $role = $self->find_id_or_url_key($role);
+        $role = $class->find_id_or_url_key($role);
         
         # Definitely error if we're now undef
         if ( defined($role) ) {
@@ -210,20 +137,7 @@ sub create_or_edit {
   # Check the names were entered and don't exist already - if it's a system role, it can't be renamed, so we don't do this check.
   if ( $action eq "create" or ( $action eq "edit" and !$role->system ) ) {
     if ( defined($name) ) {
-      my $role_name_check;
-      # Name entered, check it.
-      if ( $action eq "edit" ) {
-        $role_name_check = $self->find({}, {
-          where => {
-            name => $name,
-             => {"!=" => $role->id}
-          }
-        });
-      } else {
-        $role_name_check = $self->find({name => $name});
-      }
-      
-      push(@{$response->{errors}}, $lang->maketext("roles.form.error.name-exists", encode_entities($name))) if defined($role_name_check);
+      push(@{$response->{errors}}, $lang->maketext("roles.form.error.name-exists", encode_entities($name))) if defined($class->search_single_field({field => "name", value => $name, exclusion_obj => $role}));
     } else {
       # Name omitted.
       push(@{$response->{errors}}, $lang->maketext("roles.form.error.name-blank"));
@@ -265,7 +179,7 @@ sub create_or_edit {
   push(@{$response->{warnings}}, $lang->maketext("roles.form.warning.users-invalid", $invalid_members)) if $invalid_members;
   
   # Check permissions - first get the list of possible fields from result_source
-  my $columns = Set::Object->new($self->result_source->columns);
+  my $columns = Set::Object->new($class->result_source->columns);
   
   # Delete the ones we're not bothered about - leave only permissions fields
   $columns->delete(qw( id url_key name system sysadmin anonymous apply_on_registration ));
@@ -281,9 +195,9 @@ sub create_or_edit {
     # Generate a new URL key
     my $url_key;
     if ( $action eq "edit" and !$role->system ) {
-      $url_key = $self->generate_url_key($name, $role->id);
+      $url_key = $class->make_url_key($name, $role);
     } elsif ( $action eq "create" ) {
-      $url_key = $self->generate_url_key($name);
+      $url_key = $class->make_url_key($name);
     }
     
     # Success, we need to do the database operations
@@ -292,7 +206,7 @@ sub create_or_edit {
       $fields{name} = $name;
       $fields{url_key} = $url_key;
       
-      $role = $self->create(\%fields);
+      $role = $class->create(\%fields);
       $response->{completed} = 1;
       push(@{$response->{success}}, $lang->maketext("admin.forms.success", encode_entities($role->name), $lang->maketext("admin.message.created")));
     } else {

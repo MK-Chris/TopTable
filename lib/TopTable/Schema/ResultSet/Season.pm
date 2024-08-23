@@ -2,7 +2,7 @@ package TopTable::Schema::ResultSet::Season;
 
 use strict;
 use warnings;
-use base 'DBIx::Class::ResultSet';
+use base qw( TopTable::Schema::ResultSet );
 use DateTime;
 use DateTime::TimeZone;
 use Try::Tiny;
@@ -15,9 +15,9 @@ A predefined search to get the current season (complete = 0)
 =cut
 
 sub get_current {
-  my ( $self ) = @_;
+  my $class = shift;
   
-  return $self->find({complete => 0}, {
+  return $class->find({complete => 0}, {
     order_by => {-asc => [qw( division.rank )]},
     prefetch  => {division_seasons  => "division"},
   });
@@ -30,7 +30,8 @@ A predefined search to find the latest season that has been completed; optionall
 =cut
 
 sub last_complete_season {
-  my ( $self, $team ) = @_;
+  my $class = shift;
+  my ( $team ) = @_;
   
   my $where = {complete => 1};
   my $attrib = {
@@ -43,7 +44,7 @@ sub last_complete_season {
     $attrib->{prefetch} = {team_seasons => "home_night"};
   }
   
-  return $self->search($where, $attrib)->single;
+  return $class->search($where, $attrib)->single;
 }
 
 =head2 get_current_or_last
@@ -53,11 +54,11 @@ A predefined search to get either the current season (complete = 0) or the last 
 =cut
 
 sub get_current_or_last {
-  my ( $self ) = @_;
+  my $class = shift;
   
   # First see if there's an active season
-  my $season  = $self->get_current;
-  $season = $self->last_complete_season unless defined($season);
+  my $season  = $class->get_current;
+  $season = $class->last_complete_season unless defined($season);
   
   return $season;
 }
@@ -69,9 +70,9 @@ A predefined search to find all seasons.  A non-complete season will be ordered 
 =cut
 
 sub all_seasons {
-  my ( $self ) = @_;
+  my $class = shift;
   
-  return $self->search({}, {
+  return $class->search({}, {
     order_by => [{
       -asc => [
         qw( complete )
@@ -94,7 +95,8 @@ Search for seasons by name.
 =cut
 
 sub search_by_name {
-  my ( $self, $params ) = @_;
+  my $class = shift;
+  my ( $params ) = @_;
   my $q = $params->{q};
   my $split_words = $params->{split_words} || 0;
   my $logger = $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
@@ -121,7 +123,7 @@ sub search_by_name {
     order_by => {-desc => [qw( start_date end_date )]},
   };
   
-  my $use_paging = ( defined($page) ) ? 1 : 0;
+  my $use_paging = defined($page) ? 1 : 0;
   
   if ( $use_paging ) {
     # Set a default for results per page if it's not provided or invalid
@@ -135,7 +137,7 @@ sub search_by_name {
     $attrib->{rows} = $results_per_page;
   }
   
-  return $self->search($where, $attrib);
+  return $class->search($where, $attrib);
 }
 
 =head2 get_archived
@@ -145,9 +147,9 @@ A predefined search to get all archived seasons (complete = 1)
 =cut
 
 sub get_archived {
-  my ( $self ) = @_;
+  my $class = shift;
   
-  return $self->search({complete => 1}, {
+  return $class->search({complete => 1}, {
     order_by => [{
       -desc => [qw( start_date end_date )]
     }, {
@@ -159,84 +161,6 @@ sub get_archived {
   });
 }
 
-=head2 find_key
-
-Same as find(), but uses the key column instead of the id.  So we can use human-readable URLs.
-
-=cut
-
-sub find_url_key {
-  my ( $self, $url_key ) = @_;
-  
-  return $self->find({url_key => $url_key});
-}
-
-=head2 find_id_or_url_key
-
-Same as find(), but searches for both the id and key columns.  So we can use human-readable URLs.
-
-=cut
-
-sub find_id_or_url_key {
-  my ( $self, $id_or_url_key ) = @_;
-  my $where;
-  
-  if ( $id_or_url_key =~ m/^\d+$/ ) {
-    # Numeric - look in ID or URL key
-    $where = [{
-      id => $id_or_url_key
-    }, {
-      url_key => $id_or_url_key
-    }];
-  } else {
-    # Not numeric - must be the URL key
-    $where = {url_key => $id_or_url_key};
-  }
-  
-  return $self->search($where, {rows => 1})->single;
-}
-
-=head2 generate_url_key
-
-Generate a unique key from the given season name.
-
-=cut
-
-sub generate_url_key {
-  my ( $self, $params ) = @_;
-  my $name = $params->{name};
-  my $exclude_id = $params->{id};
-  my $logger = $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
-  
-  my $url_key;
-  ( my $original_url_key = substr($name, 0, 45) ) =~ s/[ \W]/-/g; # Truncate after 45 characters, swap out spaces and non-word characters for dashes
-  $original_url_key =~ s/-+/-/g; # If we find more than one dash in a row, replace it with just one.
-  $original_url_key =~ s/^-|-$//g; # Replace dashes at the start and end with nothing
-  $original_url_key = lc($original_url_key); # Make lower-case
-  
-  my $count;
-  # Infinite loop; we'll break when we can't find the key
-  while ( 1 ) {
-    if ( defined($count) ) {
-      $count = 2 if $count == 1; # We won't have a 1 - if we reach the point where count is a number, we want to start at 2
-      
-      # If we have a count, we will add it on to the end of the original key
-      $url_key = $original_url_key . "-" . $count;
-    } else {
-      $url_key = $original_url_key;
-    }
-    
-    # Check if that key already exists
-    my $key_check = $self->find_url_key($url_key);
-    
-    # If not, return it
-    return $url_key if !defined($key_check) or ( defined($exclude_id) and $key_check->id == $exclude_id );
-    
-    # Otherwise, we need to increment the count for the next loop round
-    $count++;
-  }
-}
-
 =head2 divisions_and_teams_in_season
 
 Retrieve the season with the specified ID, prefetched with the teams and divisions.
@@ -244,9 +168,10 @@ Retrieve the season with the specified ID, prefetched with the teams and divisio
 =cut
 
 sub divisions_and_teams_in_season {
-  my ( $self, $season_id ) = @_;
+  my $class = shift;
+  my ( $season_id ) = @_;
   
-  return $self->find({id => $season_id}, {
+  return $class->find({id => $season_id}, {
     prefetch => [{
       division_seasons => "division",
       team_seasons => [{
@@ -263,9 +188,9 @@ Return the last season that has any teams registered to it.
 =cut
 
 sub last_season_with_team_entries {
-  my ( $self ) = @_;
+  my $class = shift;
   
-  return $self->find({}, {
+  return $class->find({}, {
     join => {team_seasons => "team"},
     having => \["COUNT(team.id) > ?", 0],
     group_by => "me.id",
@@ -285,7 +210,8 @@ Retrieve a paginated list of seasons.  If an object is specified (i.e., club, te
 =cut
 
 sub page_records {
-  my ( $self, $params ) = @_;
+  my $class = shift;
+  my ( $params ) = @_;
   my $page_number = $params->{page_number} || 1;
   my $results_per_page = $params->{results_per_page} || 25;
   my $club = $params->{club};
@@ -332,7 +258,7 @@ sub page_records {
     };
   }
   
-  return $self->search($where, $attrib);
+  return $class->search($where, $attrib);
 }
 
 =head2 create_or_edit
@@ -342,11 +268,12 @@ Provides the wrapper (including error checking) for adding / editing a club.
 =cut
 
 sub create_or_edit {
-  my ( $self, $action, $params ) = @_;
+  my $class = shift;
+  my ( $action, $params ) = @_;
   # Setup schema / logging
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
-  my $schema = $self->result_source->schema;
+  my $schema = $class->result_source->schema;
   $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
   my $lang = $schema->lang;
   
@@ -399,7 +326,7 @@ sub create_or_edit {
     if ( defined($season) ) {
       if ( ref($season) ne "TopTable::Model::DB::Season" ) {
         # This may not be an error, we may just need to find from an ID or URL key
-        $season = $self->find_id_or_url_key($season);
+        $season = $class->find_id_or_url_key($season);
         
         # Definitely error if we're now undef
         push(@{$response->{errors}}, $lang->maketext("seasons.form.error.season-invalid")) unless defined($season);
@@ -424,23 +351,10 @@ sub create_or_edit {
   # Error checking
   # Check the names were entered and don't exist already.
   if ( defined($name) ) {
-    my $season_name_check;
-    # Full name entered, check it.
-    if ( $action eq "edit" ) {
-      $season_name_check = $self->find({}, {
-        where => {
-          name => $name,
-          id => {"!=" => $season->id},
-        }
-      });
-    } else {
-      $season_name_check = $self->find({name => $name});
-    }
-    
-    push(@{$response->{errors}}, $lang->maketext("seasons.form.error.name-exists", $name)) if defined($season_name_check);
+    push(@{$response->{errors}}, $lang->maketext("seasons.form.error.name-exists", encode_entities($name))) if defined($class->search_single_field({field => "name", value => $name, exclusion_obj => $season}));
   } else {
-    # Full name omitted.
-    push(@{$response->{errors}}, $lang->maketext("seasons.form.error.name-blank"));
+    # Name omitted.
+    push(@{$response->{errors}}, $lang->maketext("seasons.form.error.name-exists"));
   }
   
   # Check the entered start time values (hour and minute) are valid
@@ -605,9 +519,9 @@ sub create_or_edit {
     my $url_key;
     if ( $action eq "edit" ) {
       
-      $url_key = $self->generate_url_key({name => $name, id => $season->id});
+      $url_key = $class->make_url_key({name => $name, id => $season});
     } else {
-      $url_key = $self->generate_url_key({name => $name});
+      $url_key = $class->make_url_key({name => $name});
     }
     
     my @fixtures_weeks = ();
@@ -622,7 +536,7 @@ sub create_or_edit {
     
     if ( $action eq "create" ) {
       # Success, we need to create the season
-      $season = $self->create({
+      $season = $class->create({
         name=> $name,
         url_key => $url_key,
         start_date => $start_date->ymd,

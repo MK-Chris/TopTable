@@ -2,7 +2,7 @@ package TopTable::Schema::ResultSet::DivisionSeason;
 
 use strict;
 use warnings;
-use base 'DBIx::Class::ResultSet';
+use base qw( TopTable::Schema::ResultSet );
 
 =head2 divisions_and_teams_in_season_by_grid_position
 
@@ -11,9 +11,10 @@ A predefined search to find and return the divisions (and the teams in them) wit
 =cut
 
 sub divisions_and_teams_in_season_by_grid_position {
-  my ( $self, $season, $grid ) = @_;
+  my $class = shift;
+  my ( $season, $grid ) = @_;
   
-  return $self->search({
+  return $class->search({
     "me.season" => $season->id,
     "team_seasons.season" => $season->id,
     "club_season.season" => $season->id,

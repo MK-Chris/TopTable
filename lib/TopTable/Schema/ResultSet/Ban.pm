@@ -2,7 +2,7 @@ package TopTable::Schema::ResultSet::Ban;
 
 use strict;
 use warnings;
-use base 'DBIx::Class::ResultSet';
+use base qw( TopTable::Schema::ResultSet );
 use DateTime;
 use Try::Tiny;
 use HTML::Entities;
@@ -14,22 +14,23 @@ Get a specific ban by ID and type.
 =cut
 
 sub get_by_id_and_type {
-  my ( $self, $params ) = @_;
+  my $class = shift;
+  my ( $params ) = @_;
   my $type = $params->{type};
   my $id = $params->{id};
   
   if ( $type->id eq "username" ) {
     # Return from BannedUser instead
-    $self->result_source->schema->resultset("BannedUser")->find({id => $id}, {
-      prefetch => [ qw( banned_by banned ) ],
+    $class->result_source->schema->resultset("BannedUser")->find({id => $id}, {
+      prefetch => [qw( banned_by banned )],
     });
   } else {
     # Search for this type in the main bans table
-    return $self->search({
+    return $class->search({
       "me.type" => $type->id,
       "me.id" => $id,
     }, {
-      prefetch => [ qw( banned_by type ) ],
+      prefetch => [qw( banned_by type )],
       rows => 1,
     })->single;
   }
@@ -42,17 +43,18 @@ Return either all bans, or all bans with a specific type.
 =cut
 
 sub get_bans {
-  my ( $self, $params ) = @_;
+  my $class = shift;
+  my ( $params ) = @_;
   my $type = $params->{type};
   
   if ( $type->id eq "username" ) {
     # Return from BannedUser instead
-    $self->result_source->schema->resultset("BannedUser")->search(undef, {
+    $class->result_source->schema->resultset("BannedUser")->search(undef, {
       prefetch => [qw( banned_by banned )],
     });
   } else {
     # Search for this type
-    return $self->search({type => $type->id}, {
+    return $class->search({type => $type->id}, {
       prefetch => [qw( banned_by type )],
     });
   }
@@ -65,11 +67,12 @@ Create or edit a ban, with error checking beforehand.
 =cut
 
 sub create_or_edit {
-  my ( $self, $action, $params ) = @_;
+  my $class = shift;
+  my ( $action, $params ) = @_;
   # Setup schema / logging
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
-  my $schema = $self->result_source->schema;
+  my $schema = $class->result_source->schema;
   $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
   my $lang = $schema->lang;
   
@@ -133,7 +136,7 @@ sub create_or_edit {
     if ( defined($ban) ) {
       if ( ref($ban) ne "TopTable::Model::DB::Ban" and ref($ban) ne "TopTable::Model::DB::BannedUser" ) {
         # Not passed as an object, see if it's a valid ID
-        $ban = $ban_type->id eq "username" ? $schema->resultset("BannedUser")->find($ban) : $self->find($ban);
+        $ban = $ban_type->id eq "username" ? $schema->resultset("BannedUser")->find($ban) : $class->find($ban);
         
         unless ( defined($ban) ) {
           push(@{$response->{errors}}, $lang->maketext("admin.bans.form.error.ban-invalid"));
@@ -276,11 +279,11 @@ sub create_or_edit {
       
       if ( $ban_type->id eq "username" ) {
         # No type needed, create the ban in the banned users table
-        $ban = $self->result_source->schema->resultset("BannedUser")->create($ban_data);
+        $ban = $class->result_source->schema->resultset("BannedUser")->create($ban_data);
       } else {
         # Add the type and create the data in the main table
         $ban_data->{type} = $ban_type->id;
-        $ban = $self->create($ban_data);
+        $ban = $class->create($ban_data);
       }
       
       $response->{completed} = 1;
@@ -312,18 +315,18 @@ Get all of the expired bans and them.
 =cut
 
 sub delete_expired_bans {
-  my ( $self ) = @_;
+  my $class = shift;
   my $now = DateTime->now(time_zone => "UTC");
   
   # Password reset keys
-  $self->search({}, {
+  $class->search({}, {
     where => {
       expires => {"<=" => sprintf("%s %s", $now->ymd, $now->hms)}
     }
   })->delete;
   
   # Also do the same for banned users
-  $self->result_source->schema->resultset("BannedUser")->search({}, {
+  $class->result_source->schema->resultset("BannedUser")->search({}, {
     where => {
       expires => {"<=" => sprintf("%s %s", $now->ymd, $now->hms)}
     }
@@ -337,11 +340,12 @@ Determine if the given IP address, email address or user is banned for the given
 =cut
 
 sub is_banned {
-  my ( $self, $params ) = @_;
+  my $class = shift;
+  my ( $params ) = @_;
   # Setup schema / logging
   my $logger = $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $locale = $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
-  my $schema = $self->result_source->schema;
+  my $schema = $class->result_source->schema;
   $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
   my $lang = $schema->lang;
   
@@ -379,7 +383,7 @@ sub is_banned {
   }
   
   if ( defined($ip_address) ) {
-    my $ip_banned = $self->search({
+    my $ip_banned = $class->search({
       type => "ip",
       banned_id => $ip_address,
       "ban_$level" => 1,
@@ -401,7 +405,7 @@ sub is_banned {
   }
   
   if ( defined($email_address) ) {
-    my $email_banned = $self->search({
+    my $email_banned = $class->search({
       type => "email",
       banned_id => $email_address,
       "ban_$level" => 1,
@@ -428,11 +432,11 @@ sub is_banned {
       # than $user in the precedence (which prevents an unncessary lookup).
     } elsif ( defined($user_id) ) {
       # Lookup from the ID
-      $user = $self->result_source->schema->resultset("User")->find_id_or_url_key($user_id);
+      $user = $class->result_source->schema->resultset("User")->find_id_or_url_key($user_id);
     }
     
     if ( defined($user) ) {
-      my $user_banned = $self->result_source->schema->resultset("BannedUser")->search({
+      my $user_banned = $class->result_source->schema->resultset("BannedUser")->search({
         banned_id => $user->id,
         "ban_$level" => 1,
         expires => [ -or => {

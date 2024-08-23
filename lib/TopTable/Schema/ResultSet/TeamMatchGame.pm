@@ -2,7 +2,7 @@ package TopTable::Schema::ResultSet::TeamMatchGame;
 
 use strict;
 use warnings;
-use base 'DBIx::Class::ResultSet';
+use base qw( TopTable::Schema::ResultSet );
 
 =head2 games_in_match_with_people
 
@@ -11,7 +11,8 @@ Get the games in a match that have people set in the positions in the team_match
 =cut
 
 sub games_in_match_with_people {
-  my ( $self, $match, $player_number ) = @_;
+  my $class = shift;
+  my ( $match, $player_number ) = @_;
   my ( $where );
   
   if ( $player_number ) {
@@ -39,7 +40,7 @@ sub games_in_match_with_people {
     };
   }
   
-  return $self->search( $where, {
+  return $class->search( $where, {
     order_by  => {-asc => qw( scheduled_game_number )},
   });
 }
@@ -51,9 +52,10 @@ Get the specified scheduled game number in a match
 =cut
 
 sub game_in_match_by_scheduled_game_number_by_ids {
-  my ( $self, $home_team_id, $away_team_id, $scheduled_date, $scheduled_game_number ) = @_;
+  my $class = shift;
+  my ( $home_team_id, $away_team_id, $scheduled_date, $scheduled_game_number ) = @_;
   
-  return $self->find({
+  return $class->find({
     home_team => $home_team_id,
     away_team => $away_team_id,
     scheduled_date => $scheduled_date->ymd,
@@ -71,9 +73,10 @@ Get the specified scheduled game number in a match
 =cut
 
 sub game_in_match_by_scheduled_game_number_by_url_keys {
-  my ( $self, $home_club_url_key, $home_team_url_key, $away_club_url_key, $away_team_url_key, $scheduled_date, $scheduled_game_number ) = @_;
+  my $class = shift;
+  my ( $home_club_url_key, $home_team_url_key, $away_club_url_key, $away_team_url_key, $scheduled_date, $scheduled_game_number ) = @_;
   
-  return $self->find({
+  return $class->find({
     "club.url_key" => $home_club_url_key,
     "home_team.url_key" => $home_team_url_key,
     "club_2.url_key" => $away_club_url_key,
@@ -98,7 +101,8 @@ Return a subset of the resultset that have players with noindex set.
 =cut
 
 sub noindex_set {
-  my ( $self, $on ) = @_;
+  my $class = shift;
+  my ( $on ) = @_;
   
   # Sanity check - all true values are 1, all false are 0
   $on = $on ? 1 : 0;
@@ -119,7 +123,7 @@ sub noindex_set {
         ]
       ];
   
-  return $self->search($where, {
+  return $class->search($where, {
     join => {
       # Join the singles / doubles tables, as we don't know which type of game this is - so we can do a general test for noindex
       # regardless of doubles or singles status of the game

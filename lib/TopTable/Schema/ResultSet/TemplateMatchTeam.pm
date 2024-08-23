@@ -2,7 +2,7 @@ package TopTable::Schema::ResultSet::TemplateMatchTeam;
 
 use strict;
 use warnings;
-use base 'DBIx::Class::ResultSet';
+use base qw( TopTable::Schema::ResultSet );
 use HTML::Entities;
 
 =head2 all_templates
@@ -12,9 +12,9 @@ Retrieve all templates in name order
 =cut
 
 sub all_templates {
-  my ( $self ) = @_;
+  my $class = shift;
   
-  return $self->search({}, {
+  return $class->search({}, {
     order_by => {-asc => qw( name )},
   });
 }
@@ -26,7 +26,8 @@ Return search results based on a supplied full or partial name.
 =cut
 
 sub search_by_name {
-  my ( $self, $params ) = @_;
+  my $class = shift;
+  my ( $params ) = @_;
   my $q = delete $params->{q};
   my $split_words = delete $params->{split_words} || 0;
   my $season = delete $params->{season};
@@ -69,7 +70,7 @@ sub search_by_name {
     $attrib->{rows} = $results_per_page;
   }
   
-  return $self->search($where, $attrib);
+  return $class->search($where, $attrib);
 }
 
 =head2 page_records
@@ -79,7 +80,8 @@ Returns a paginated resultset of clubs.
 =cut
 
 sub page_records {
-  my ( $self, $params ) = @_;
+  my $class = shift;
+  my ( $params ) = @_;
   my $page_number = $params->{page_number} || 1;
   my $results_per_page = $params->{results_per_page} || 25;
   
@@ -89,7 +91,7 @@ sub page_records {
   # Default the page number to 1
   $page_number = 1 if !defined($page_number) or $page_number !~ m/^\d+$/;
   
-  return $self->search({}, {
+  return $class->search({}, {
     page => $page_number,
     rows => $results_per_page,
     order_by => {-asc => qw( name )},
@@ -103,9 +105,9 @@ Retrieve all templates in name order where they have games setup.  This avoids a
 =cut
 
 sub all_templates_with_games {
-  my ( $self ) = @_;
+  my $class = shift;
   
-  return $self->search({
+  return $class->search({
     
   }, {
     order_by => {-asc => qw( name )},
@@ -120,9 +122,10 @@ A predefined search to find and return the team match template for league matche
 =cut
 
 sub season_league_match_template {
-  my ( $self, $season ) = @_;
+  my $class = shift;
+  my ( $season ) = @_;
   
-  return $self->find({"seasons.id" => $season->id}, {
+  return $class->find({"seasons.id" => $season->id}, {
     join => "seasons",
     prefetch => "template_match_team_games",
   });
@@ -135,10 +138,11 @@ A predefined search to find and return the players within a division in the orde
 =cut
 
 sub division_averages_list {
-  my ( $self, $season, $division, $minimum_matches_played ) = @_;
+  my $class = shift;
+  my ( $season, $division, $minimum_matches_played ) = @_;
   $minimum_matches_played = 0 if !$minimum_matches_played;
   
-  return $self->search({
+  return $class->search({
     "person_seasons.matches_played" => {">="  => $minimum_matches_played},
     "person_seasons.division" => $division,
     "person_seasons.season" => $season
@@ -150,78 +154,6 @@ sub division_averages_list {
   });
 }
 
-=head2 find_url_key
-
-Same as find(), but uses the url_key column instead of the id.  So we can use human-readable URLs.
-
-=cut
-
-sub find_url_key {
-  my ( $self, $url_key ) = @_;
-  return $self->find({url_key => $url_key});
-}
-
-=head2 find_id_or_url_key
-
-Same as find(), but searches for both the id and key columns.  So we can use human-readable URLs.
-
-=cut
-
-sub find_id_or_url_key {
-  my ( $self, $id_or_url_key ) = @_;
-  my $where;
-  
-  if ( $id_or_url_key =~ m/^\d+$/ ) {
-    # Numeric - look in ID or URL key
-    $where = [{
-      id => $id_or_url_key
-    }, {
-      url_key => $id_or_url_key
-    }];
-  } else {
-    # Not numeric - must be the URL key
-    $where = {url_key => $id_or_url_key};
-  }
-  
-  return $self->search($where, {rows => 1})->single;
-}
-
-=head2 generate_url_key
-
-Generate a unique key from the given template name.
-
-=cut
-
-sub generate_url_key {
-  my ( $self, $short_name, $exclude_id ) = @_;
-  my $url_key;
-  ( my $original_url_key = substr($short_name, 0, 45) ) =~ s/[ \W]/-/g; # Truncate after 45 characters, swap out spaces and non-word characters for dashes
-  $original_url_key =~ s/-+/-/g; # If we find more than one dash in a row, replace it with just one.
-  $original_url_key = lc( $original_url_key ); # Make lower-case
-  
-  my $count;
-  # Infinite loop; we'll break when we can't find the key
-  while ( 1 ) {
-    if ( defined($count) ) {
-      $count = 2 if $count == 1; # We won't have a 1 - if we reach the point where count is a number, we want to start at 2
-      
-      # If we have a count, we will add it on to the end of the original key
-      $url_key = $original_url_key . "-" . $count;
-    } else {
-      $url_key = $original_url_key;
-    }
-    
-    # Check if that key already exists
-    my $key_check = $self->find_url_key($url_key);
-    
-    # If not, return it
-    return $url_key if !defined($key_check) or ( defined($exclude_id) and $key_check->id == $exclude_id );
-    
-    # Otherwise, we need to increment the count for the next loop round
-    $count++;
-  }
-}
-
 =head2 create_or_edit
 
 Provides the wrapper (including error checking) for adding / editing a club.
@@ -229,11 +161,12 @@ Provides the wrapper (including error checking) for adding / editing a club.
 =cut
 
 sub create_or_edit {
-  my ( $self, $action, $params ) = @_;
+  my $class = shift;
+  my ( $action, $params ) = @_;
   # Setup schema / logging
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
-  my $schema = $self->result_source->schema;
+  my $schema = $class->result_source->schema;
   $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
   my $lang = $schema->lang;
   
@@ -261,7 +194,7 @@ sub create_or_edit {
     if ( defined($tt_template) ) {
       if ( ref($tt_template) ne "TopTable::Model::DB::TemplateMatchTeam" ) {
         # This may not be an error, we may just need to find from an ID or URL key
-        $tt_template = $self->find_id_or_url_key($tt_template);
+        $tt_template = $class->find_id_or_url_key($tt_template);
         
         # Definitely error if we're now undef
         push(@{$response->{errors}}, $lang->maketext("templates.team-match.form.error.template-invalid")) unless defined($tt_template);
@@ -282,23 +215,10 @@ sub create_or_edit {
   
   # Error checking
   # Check the names were entered and don't exist already.
-  if ( $name ) {
-    # Full name entered, check it.
-    my $template_name_check;
-    if ( $action eq "edit" ) {
-      $template_name_check = $self->find({}, {
-        where => {
-          name => $name ,
-          id => {"!=" => $tt_template->id}
-        }
-      });
-    } else {
-      $template_name_check = $self->find({name => $name});
-    }
-    
-    push(@{$response->{errors}}, $lang->maketext("templates.form.error.name-exists", encode_entities($name))) if defined($template_name_check);
+  if ( defined($name) ) {
+    push(@{$response->{errors}}, $lang->maketext("templates.form.error.name-exists", encode_entities($name))) if defined($class->search_single_field({field => "name", value => $name, exclusion_obj => $tt_template}));
   } else {
-    # Full name omitted.
+    # Name omitted.
     push(@{$response->{errors}}, $lang->maketext("templates.form.error.name-blank"));
   }
   
@@ -331,14 +251,14 @@ sub create_or_edit {
     # No errors, build the key from the name
     my $url_key;
     if ( $action eq "edit" ) {
-      $url_key = $self->generate_url_key($name, $tt_template->id);
+      $url_key = $class->make_url_key($name, $tt_template);
     } else {
-      $url_key = $self->generate_url_key($name);
+      $url_key = $class->make_url_key($name);
     }
     
     # Success, we need to create / edit the club
     if ( $action eq "create" ) {
-      $tt_template = $self->create({
+      $tt_template = $class->create({
         url_key => $url_key,
         name => $name,
         singles_players_per_team => $singles_players_per_team,

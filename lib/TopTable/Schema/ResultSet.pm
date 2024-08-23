@@ -21,7 +21,10 @@ Same as find(), but searches for both the id and key columns.  So we can use hum
 =cut
 
 sub find_id_or_url_key {
-  my ( $class, $id_or_url_key ) = @_;
+  my ( $class, $id_or_url_key, $params ) = @_;
+  my $no_prefetch = $params->{no_prefetch} || 0;
+  my $schema = $class->result_source->schema;
+  
   my $where;
   
   if ( $id_or_url_key =~ m/^\d+$/ ) {
@@ -36,7 +39,21 @@ sub find_id_or_url_key {
     $where = {"me.url_key" => $id_or_url_key};
   }
   
-  return $class->search($where, {rows => 1})->single;
+  # Setup attribs, and get the prefetches based on what's calling
+  my %attrib = ();
+  
+  if ( $class->isa(__PACKAGE__ . "::Club") ) {
+    # Club, prefetch secretary and venue
+    $attrib{prefetch} = [qw( secretary venue )] unless $no_prefetch;
+  } elsif ( $class->isa(__PACKAGE__ . "::ContactReason") ) {
+    $attrib{prefetch} = {contact_reason_recipients => "person"} unless $no_prefetch;
+  } elsif ( $class->isa(__PACKAGE__ . "::Person") ) {
+    $attrib{prefetch} = "user" unless $no_prefetch;
+  } elsif ( $class->isa(__PACKAGE__ . "::User") ) {
+    $attrib{prefetch} = "person" unless $no_prefetch;
+  }
+  
+  return $class->find($where, \%attrib);
 }
 
 =head2 make_url_key
