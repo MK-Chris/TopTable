@@ -25,19 +25,6 @@ sub find_id_or_url_key {
   my $no_prefetch = $params->{no_prefetch} || 0;
   my $schema = $class->result_source->schema;
   
-  my $where;
-  
-  if ( $id_or_url_key =~ m/^\d+$/ ) {
-    # Numeric - look in ID or URL key
-    $where = [{
-      "me.id" => $id_or_url_key
-    }, {
-      "me.url_key" => $id_or_url_key
-    }];
-  } else {
-    # Not numeric - must be the URL key
-    $where = {"me.url_key" => $id_or_url_key};
-  }
   
   # Setup attribs, and get the prefetches based on what's calling
   my %attrib = ();
@@ -53,7 +40,16 @@ sub find_id_or_url_key {
     $attrib{prefetch} = "person" unless $no_prefetch;
   }
   
-  return $class->find($where, \%attrib);
+  if ( $id_or_url_key =~ m/^\d+$/ ) {
+    # Numeric value, check the ID first, then check the URL key
+    my $obj = $class->find({"me.id" => $id_or_url_key}, \%attrib);
+    return $obj if defined($obj);
+    $obj = $class->find({"me.url_key" => $id_or_url_key}, \%attrib);
+    return $obj;
+  } else {
+    # Not numeric, so it can't be the ID - just check the URL key
+    return $class->find({"me.url_key" => $id_or_url_key}, \%attrib);
+  }
 }
 
 =head2 make_url_key
