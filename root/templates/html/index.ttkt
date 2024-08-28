@@ -9,8 +9,19 @@ SET table_width = 70;
 INCLUDE "html/event-viewer/view-preloaded.ttkt";
 -%]<br />
 <a href="[% c.uri_for("/event-viewer") %]">[% c.maketext("home-page.updates.view-more") %]</a><br /><br />
+[%
+# If there are matches to show, display as two columns
+IF matches_to_show;
+-%]
 <div class="row">
   <div class="column left">
+[%
+ELSE;
+-%]
+  <div id="news">
+[%
+END;
+-%]
   <h4>[% c.maketext("home-page.news.recent") %]</h4>
 [%
 # Latest news
@@ -18,14 +29,37 @@ INCLUDE "html/news/list.ttkt" index = 1;
 -%]<br />
   <a href="[% c.uri_for("/news") %]">[% c.maketext("home-page.news.view-more") %]</a>.
   </div>
+[%
+# If there are matches to show, display as two columns
+IF matches_to_show;
+-%]
   <div class="column right">
-  <h4>[% c.maketext("home-page.todays-matches") %] ([% matches_today %])</h4>
+[%
+  IF next_match_date;
+    # No matches today, we'll be showing a future date
+    day_name = next_match_date.day_name | ucfirst | html_entity;
+    month_name = next_match_date.month_name | ucfirst | html_entity;
+    
+    IF next_match_date.year == c.datetime.year;
+      SET matches_title = c.maketext("home-page.next-matches", day_name, next_match_date.day, month_name);
+    ELSE;
+      SET matches_title = c.maketext("home-page.next-matches-year", day_name, next_match_date.day, month_name, next_match_date.year);
+    END;
+  ELSE;
+    # Show today's matches
+    SET matches_title = c.maketext("home-page.todays-matches");
+  END;
+%]
+  <h4>[% matches_title %] ([% matches_to_show %])</h4>
 [%
 # Today's matches
 INCLUDE "html/fixtures-results/view-group-divisions-no-date-check-score.ttkt";
 -%]
   </div>
 </div>
+[%
+END;
+-%]
 <br /><br />
 <div id="users_online" class="clear-fix">
 [%

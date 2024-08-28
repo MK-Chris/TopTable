@@ -3,6 +3,7 @@ package TopTable::Schema::ResultSet::TeamMatch;
 use strict;
 use warnings;
 use base qw( TopTable::Schema::ResultSet );
+use DateTime;
 
 __PACKAGE__->load_components(qw(Helper::ResultSet::SetOperations));
 
@@ -453,6 +454,28 @@ sub matches_in_week {
     "club_season_2.season" => $season->id,
     "scheduled_week.id" => $week->id,
   }, $attrib);
+}
+
+=head2 next_match_date
+
+Get the next date with matches.
+
+=cut
+
+sub next_match_date {
+  my $class = shift;
+  my $schema = $class->result_source->schema;
+  my $dtf = $schema->storage->datetime_parser;
+  
+  my $date = $class->search({
+    played_date => {">=" => DateTime->now->ymd}
+  }, {
+    columns => [{
+      date => {min => "played_date"}
+    }],
+  })->single->get_column("date");
+  
+  return $dtf->parse_date($date);
 }
 
 =head2 matches_on_date

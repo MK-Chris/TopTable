@@ -429,6 +429,12 @@ msgstr "are"
 msgid "home-page.todays-matches"
 msgstr "Matches playing today"
 
+msgid "home-page.next-matches"
+msgstr "Next matches played: %1 %2 %3"
+
+msgid "home-page.next-matches-year"
+msgstr "Next matches played: %1 %2 %3 %4"
+
 ## Doubles
 msgid "menu.text.doubles"
 msgstr "Doubles"
