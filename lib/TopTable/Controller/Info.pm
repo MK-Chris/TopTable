@@ -290,13 +290,13 @@ sub do_contact :Path("send-email") {
       reply => [$email_address, $name],
       image => [$c->path_to( qw( root static images banner-logo-player-small.png ) )->stringify, "logo"],
       subject => $c->maketext("email.subject.contact-form", $c->config->{name}, $name, $reason->name),
-      plaintext => $c->maketext("email.plain-text.contact-form", $c->config->{name}, $name, $email_address, $message, $c->req->address),
+      plaintext => Encode::encode("UTF-8", $c->maketext("email.plain-text.contact-form", $c->config->{name}, $name, $email_address, $message, $c->req->address)),
       htmltext => [qw( html/generic/generic-message.ttkt :TT )],
       template_vars => {
         name => $html_site_name,
         home_uri => $c->uri_for("/"),
         email_subject => $c->maketext("email.subject.contact-form", $html_site_name, $html_name, $html_reason),
-        email_html_message => $c->maketext("email.html.contact-form", $html_site_name, $html_name, $html_email, $html_message, $c->req->address),
+        email_html_message => Encode::encode("UTF-8", $c->maketext("email.html.contact-form", $html_site_name, $html_name, $html_email, $html_message, $c->req->address)),
       },
     });
     
