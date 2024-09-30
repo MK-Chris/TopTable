@@ -307,7 +307,7 @@ sub create_or_edit {
     # Generate a new URL key
     my $url_key;
     if ( $action eq "edit" ) {
-      $url_key = $class->make_url_key($headline, $published_year, $published_month, $article->id);
+      $url_key = $class->make_url_key($headline, $published_year, $published_month, $article);
     } else {
       $url_key = $class->make_url_key($headline, $published_year, $published_month);
     }
