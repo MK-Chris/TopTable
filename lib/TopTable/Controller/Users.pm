@@ -555,7 +555,7 @@ sub process_form :Private {
         to => [$email_address, $username],
         image => [$c->path_to(qw( root static images banner-logo-player-small.png ))->stringify, "logo"],
         subject => $subject,
-        plaintext => $c->maketext("email.plain-text.users.activate-user", $username, $c->config->{name}, $c->uri_for_action("/users/activate", [$user->url_key, $response->{activation_key}])),
+        plaintext => Encode::encode("UTF-8", $c->maketext("email.plain-text.users.activate-user", $username, $c->config->{name}, $c->uri_for_action("/users/activate", [$user->url_key, $response->{activation_key}]))),
       };
       
       if ( $user->html_emails ) {
@@ -569,7 +569,7 @@ sub process_form :Private {
           name => $enc_site_name,
           home_uri => $c->uri_for("/"),
           email_subject => $html_subject,
-          email_html_message => $c->maketext("email.html.users.activate-user", $enc_username, $enc_site_name, $c->uri_for_action("/users/activate", [$user->url_key, $response->{activation_key}])),
+          email_html_message => Encode::encode("UTF-8", $c->maketext("email.html.users.activate-user", $enc_username, $enc_site_name, $c->uri_for_action("/users/activate", [$user->url_key, $response->{activation_key}]))),
         };
       }
       
@@ -695,7 +695,7 @@ sub regenerate_activation_key :Chained("base") :PathPart("regenerate-activation-
       to => [$user->email_address, $user->username],
       image => [$c->path_to(qw( root static images banner-logo-player-small.png ))->stringify, "logo"],
       subject => $subject,
-      plaintext => $c->maketext("email.plain-text.users.regenerate-activation", $user->username, $c->uri_for_action("/users/activate", [$user->username, $response->{activation_key}]), $c->config->{name}),
+      plaintext => Encode::encode("UTF-8", $c->maketext("email.plain-text.users.regenerate-activation", $user->username, $c->uri_for_action("/users/activate", [$user->username, $response->{activation_key}]), $c->config->{name})),
     };
     
     if ( $user->html_emails ) {
@@ -709,7 +709,7 @@ sub regenerate_activation_key :Chained("base") :PathPart("regenerate-activation-
         name => $enc_site_name,
         home_uri => $c->uri_for("/"),
         email_subject => $html_subject,
-        email_html_message => $c->maketext("email.html.users.regenerate-activation", $enc_username, $c->uri_for_action("/users/activate", [$user->username, $response->{activation_key}]), $enc_site_name),
+        email_html_message => Encode::encode("UTF-8", $c->maketext("email.html.users.regenerate-activation", $enc_username, $c->uri_for_action("/users/activate", [$user->username, $response->{activation_key}]), $enc_site_name)),
       };
     }
     
@@ -796,7 +796,7 @@ sub activate :Chained("base") :PathPart("activate") :Args(1) {
         to => [$user->email_address, $user->username],
         image => [$c->path_to(qw( root static images banner-logo-player-small.png ))->stringify, "logo"],
         subject => $subject,
-        plaintext => $plain_text,
+        plaintext => Encode::encode("UTF-8", $plain_text),
       };
       
       if ( $user->html_emails ) {
@@ -808,7 +808,7 @@ sub activate :Chained("base") :PathPart("activate") :Args(1) {
           name => $enc_site_name,
           home_uri => $c->uri_for("/"),
           email_subject => $enc_subject,
-          email_html_message => $html_text,
+          email_html_message => Encode::encode("UTF-8", $html_text),
         };
       }
       
@@ -833,13 +833,13 @@ sub activate :Chained("base") :PathPart("activate") :Args(1) {
           to => [$manual_approval_notification_email],
           image => [$c->path_to(qw( root static images banner-logo-player-small.png ))->stringify, "logo"],
           subject => $subject,
-          plaintext => $c->maketext("email.plain-text.users.approve-user", $user->username, $c->config->{name}, $user->registration_reason, $c->uri_for_action("/users/view", [$user->url_key]), $c->uri_for_action("/users/approval_list")),
+          plaintext => Encode::encode("UTF-8", $c->maketext("email.plain-text.users.approve-user", $user->username, $c->config->{name}, $user->registration_reason, $c->uri_for_action("/users/view", [$user->url_key]), $c->uri_for_action("/users/approval_list"))),
           htmltext => [qw( html/generic/generic-message.ttkt :TT )],
           template_vars => {
             name => $enc_site_name,
             home_uri => $c->uri_for("/"),
             email_subject => $enc_subject,
-            email_html_message => $c->maketext("email.html.users.approve-user", $enc_username, $enc_site_name, $enc_reason, $c->uri_for_action("/users/view", [$user->url_key]), $c->uri_for_action("/users/approval_list")),
+            email_html_message => Encode::encode("UTF-8", $c->maketext("email.html.users.approve-user", $enc_username, $enc_site_name, $enc_reason, $c->uri_for_action("/users/view", [$user->url_key]), $c->uri_for_action("/users/approval_list"))),
           },
         };
         
@@ -1025,7 +1025,7 @@ sub approve :Chained("base") :PathPart("approve") :Args(0) {
         to => [ $user->email_address, $username ],
         image => [$c->path_to( qw( root static images banner-logo-player-small.png ) )->stringify, "logo"],
         subject => $subject,
-        plaintext => $c->maketext("email.plain-text.users.approved", $username, $c->config->{name}, $c->uri_for("/login")),
+        plaintext => Encode::encode("UTF-8", $c->maketext("email.plain-text.users.approved", $username, $c->config->{name}, $c->uri_for("/login"))),
       };
       
       if ( $user->html_emails ) {
@@ -1039,7 +1039,7 @@ sub approve :Chained("base") :PathPart("approve") :Args(0) {
           name => $enc_site_name,
           home_uri => $c->uri_for("/"),
           email_subject => $enc_subject,
-          email_html_message => $html_text,
+          email_html_message => Encode::encode("UTF-8", $html_text),
         };
       }
       
@@ -1525,7 +1525,7 @@ sub send_reset_link :Path("send-reset-link") {
           to => [$user->email_address, $user->username],
           image => [$c->path_to(qw( root static images banner-logo-player-small.png ))->stringify, "logo"],
           subject => $subject,
-          plaintext => $c->maketext("email.plain-text.users.password-reset", $user->username, $c->config->{name}, $c->uri_for_action("/users/reset_password", [$user->url_key, $response->{password_reset_key}]), $c->req->address),
+          plaintext => Encode::encode("UTF-8", $c->maketext("email.plain-text.users.password-reset", $user->username, $c->config->{name}, $c->uri_for_action("/users/reset_password", [$user->url_key, $response->{password_reset_key}]), $c->req->address)),
         };
         
         if ( $user->html_emails ) {
@@ -1540,7 +1540,7 @@ sub send_reset_link :Path("send-reset-link") {
             name => $enc_site_name,
             home_uri => $c->uri_for("/"),
             email_subject => $html_subject,
-            email_html_message => $c->maketext("email.html.users.password-reset", $enc_username, $enc_site_name, $c->uri_for_action("/users/reset_password", [$user->url_key, $response->{password_reset_key}]), $c->req->address),
+            email_html_message => Encode::encode("UTF-8", $c->maketext("email.html.users.password-reset", $enc_username, $enc_site_name, $c->uri_for_action("/users/reset_password", [$user->url_key, $response->{password_reset_key}]), $c->req->address)),
           };
         }
         
@@ -1575,13 +1575,13 @@ sub send_reset_link :Path("send-reset-link") {
           to => [$email_address],
           image => [$c->path_to(qw( root static images banner-logo-player-small.png ))->stringify, "logo"],
           subject => $subject,
-          plaintext => $c->maketext("email.plain-text.users.password-reset.user-not-found", $c->config->{name}, $c->req->address),
+          plaintext => Encode::encode("UTF-8", $c->maketext("email.plain-text.users.password-reset.user-not-found", $c->config->{name}, $c->req->address)),
           htmltext => [ qw( html/generic/generic-message.ttkt :TT ) ],
           template_vars => {
             name => $enc_site_name,
             home_uri => $c->uri_for("/"),
             email_subject => $html_subject,
-            email_html_message  => $c->maketext("email.html.users.password-reset.user-not-found", $enc_site_name, $c->req->address),
+            email_html_message  => Encode::encode("UTF-8", $c->maketext("email.html.users.password-reset.user-not-found", $enc_site_name, $c->req->address)),
           },
         });
       }
@@ -1655,7 +1655,7 @@ sub reset_password :Chained("base") :PathPart("reset-password") :Args(1) {
         to => [$user->email_address, $user->username],
         image => [$c->path_to(qw( root static images banner-logo-player-small.png ))->stringify, "logo"],
         subject => $subject,
-        plaintext => $c->maketext("email.plain-text.users.password-reset-confirm", $user->username, $c->config->{name}, $c->uri_for("/login")),
+        plaintext => Encode::encode("UTF-8", $c->maketext("email.plain-text.users.password-reset-confirm", $user->username, $c->config->{name}, $c->uri_for("/login"))),
       };
       
       if ( $user->html_emails ) {
@@ -1670,7 +1670,7 @@ sub reset_password :Chained("base") :PathPart("reset-password") :Args(1) {
           name => $enc_site_name,
           home_uri => $c->uri_for("/"),
           email_subject => $html_subject,
-          email_html_message => $c->maketext("email.html.users.password-reset-confirm", $enc_username, $enc_site_name, $c->uri_for("/login")),
+          email_html_message => Encode::encode("UTF-8", $c->maketext("email.html.users.password-reset-confirm", $enc_username, $enc_site_name, $c->uri_for("/login"))),
         };
       }
       

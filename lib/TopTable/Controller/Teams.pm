@@ -746,13 +746,13 @@ sub send_email_captain :Private {
       reply => [$email_address, $name],
       image => [$c->path_to(qw( root static images banner-logo-player-small.png ))->stringify, "logo"],
       subject => $c->maketext("email.subject.contact-captain", $name, $c->config->{name}),
-      plaintext => $c->maketext("email.plain-text.contact-captain", $captain->first_name, $name, $team_name, $c->config->{name}, $email_address, $message, $c->req->address),
+      plaintext => Encode::encode("UTF-8", $c->maketext("email.plain-text.contact-captain", $captain->first_name, $name, $team_name, $c->config->{name}, $email_address, $message, $c->req->address)),
       htmltext => [qw( html/generic/generic-message.ttkt :TT )],
       template_vars => {
         name => $html_site_name,
         home_uri => $c->uri_for("/"),
         email_subject => $c->maketext("email.subject.contact-captain", $html_name, $html_site_name),
-        email_html_message => $c->maketext("email.html.contact-captain", $html_recp_name, $html_name, $enc_team_name, $html_site_name, $html_email, $html_message, $c->req->address),
+        email_html_message => Encode::encode("UTF-8", $c->maketext("email.html.contact-captain", $html_recp_name, $html_name, $enc_team_name, $html_site_name, $html_email, $html_message, $c->req->address)),
       },
     });
     
