@@ -2636,7 +2636,7 @@ sub update_doubles_pair {
             # Work out whether we need to take a game won, lost or drawn off
             if ( $self->complete and defined($self->winner) and $self->winner->id == $match->$location_team->id ) {
               # Game won
-              $doubles_pair->games_won($original_doubles_pair->games_won + 1);
+              $doubles_pair->games_won($doubles_pair->games_won + 1);
               $player1_season->doubles_games_won($player1_season->doubles_games_won + 1);
               $player2_season->doubles_games_won($player2_season->doubles_games_won + 1);
               
@@ -2644,12 +2644,12 @@ sub update_doubles_pair {
               $self->winner($match->$location_team->id);
             } elsif ( $self->complete and defined($self->winner) and $self->winner->id != $match->$location_team->id ) {
               # Game lost
-              $doubles_pair->games_lost($original_doubles_pair->games_lost + 1);
+              $doubles_pair->games_lost($doubles_pair->games_lost + 1);
               $player1_season->doubles_games_lost($player1_season->doubles_games_lost + 1);
               $player2_season->doubles_games_lost($player2_season->doubles_games_lost + 1);
             } elsif ( $self->complete and !defined( $self->winner ) ) {
               # Game complete but no winner: draw (only relevant for games with a static number of legs)
-              $doubles_pair->games_drawn($original_doubles_pair->games_drawn + 1);
+              $doubles_pair->games_drawn($doubles_pair->games_drawn + 1);
               $player1_season->doubles_games_drawn($player1_season->doubles_games_drawn + 1);
               $player2_season->doubles_games_drawn($player2_season->doubles_games_drawn + 1);
             }
