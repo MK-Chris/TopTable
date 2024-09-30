@@ -205,12 +205,10 @@ END;
 [%
   IF authorisation.person_create;
 -%]
-[%
-  END;
--%]
         <a href="[% c.uri_for_action("/people/create_with_team_by_url_key", [team.club.url_key, team.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0009-Add-icon-32.png") %]" alt="[% c.maketext("people.create-for", enc_name) %]" title="[% c.maketext("people.create-for", enc_name) %]" /></a>
         <h4>[% c.maketext("divisions.option.league-averages-singles") %]</h4>
 [%
+  END;
   # Singles averages
   INCLUDE "html/league-averages/view_singles.ttkt";
 -%]
