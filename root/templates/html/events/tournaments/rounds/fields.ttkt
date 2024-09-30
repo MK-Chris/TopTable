@@ -1,0 +1,148 @@
+[%
+IF c.flash.show_flashed;
+  IF c.flash.group_round;
+    SET group_round_checked = ' checked="checked"';
+    SET group_round = 1;
+  ELSE;
+    SET group_round_checked = '';
+    SET group_round = 0;
+  END;
+  
+  SET rank_template = c.flash.round_group_rank_template.id;
+  SET round_team_match_template = c.flash.round_team_match_template.id;
+  SET round_ind_match_template = c.flash.round_individual_match_template.id;
+  SET venue = c.flash.venue.id;
+ELSE;
+  IF round.group_round;
+    SET group_round_checked = ' checked="checked"';
+    SET group_round = 1;
+  ELSE;
+    SET group_round_checked = '';
+    SET group_round = 0;
+  END;
+  
+  SET rank_template = round.rank_template.id;
+  SET round_team_match_template = round.team_match_template.id;
+  SET round_ind_match_template = round.individual_match_template.id;
+  SET venue = round.venue.id;
+END;
+-%]
+  <div class="label-field-container">
+    <label for="round_name">[% c.maketext("tournaments.rounds.field.name") %]</label>
+    <div class="field-container">
+      <input type="text" id="round_name" name="round_name" value="[% c.flash.round_name OR round.name | html_entity %]" placeholder="[% c.maketext("tournaments.rounds.placeholder.name") %]" />
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+[%
+IF first;
+-%]
+  <input type="checkbox" id="round_group" name="round_group" data-label="[% c.maketext("tournaments.rounds.field.group-round") %]" value="1"[% group_round_checked %] />
+  
+  <div class="label-field-container" id="round-group-rank-tpl-container">
+    <label for="round_group_rank_template">[% c.maketext("events.tournament.field.group-ranking-template") %]</label>
+    <div class="field-container">
+      <select id="round_group_rank_template" name="round_group_rank_template" data-placeholder="[% c.maketext("events.tournament.field.group-ranking-template") %]">
+        <option value=""></option>
+[%
+FOREACH tpl IN rank_templates;
+  IF tpl.id == rank_template;
+    SET selected_text = ' selected="selected"';
+  ELSE;
+    SET selected_text = '';
+  END;
+-%]
+        <option value="[% tpl.id %]" title="[% tpl.name | html_entity %]"[% selected_text %]>[% tpl.name | html_entity %]</option>
+[%
+END;
+-%]
+      </select>
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+[%
+END;
+
+# Show both team and individual templates on create (create is only done when the event is first created); show only the one relevant to the entry type for this tournament on edit
+IF action == "create" OR event_season.event_detail.entry_type.id == "team";
+-%]
+  <div class="label-field-container" id="round-team-match-tpl-container">
+    <label for="round_team_match_template">[% c.maketext("events.tournament.field.match-template") %]</label>
+    <div class="field-container">
+      <select id="round_team_match_template" name="round_team_match_template" data-placeholder="[% c.maketext("events.tournament.field.match-template") %]">
+        <option value=""></option>
+[%
+  FOREACH tpl IN team_match_templates;
+    IF tpl.id == round_team_match_template;
+      SET selected_text = ' selected="selected"';
+    ELSE;
+      SET selected_text = '';
+    END;
+-%]
+        <option value="[% tpl.id %]" title="[% tpl.name | html_entity %]"[% selected_text %]>[% tpl.name | html_entity %]</option>
+[%
+  END;
+-%]
+      </select>
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+[%
+END;
+
+# Show both team and individual templates on create (create is only done when the event is first created); show only the one relevant to the entry type for this tournament on edit
+IF action == "create" OR event_season.event_detail.entry_type.id != "team";
+-%]
+  <div class="label-field-container" id="round-ind-match-tpl-container">
+    <label for="round_individual_match_template">[% c.maketext("events.tournament.field.match-template") %]</label>
+    <div class="field-container">
+      <select id="round_individual_match_template" name="round_individual_match_template" data-placeholder="[% c.maketext("events.tournament.field.match-template") %]">
+        <option value=""></option>
+[%
+  FOREACH tpl IN ind_match_templates;
+    IF tpl.id == round_ind_match_template;
+      SET selected_text = ' selected="selected"';
+    ELSE;
+      SET selected_text = '';
+    END;
+-%]
+        <option value="[% tpl.id %]" title="[% tpl.name | html_entity %]"[% selected_text %]>[% tpl.name | html_entity %]</option>
+[%
+  END;
+-%]
+      </select>
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+[%
+END;
+-%]
+  <div class="label-field-container">
+    <label for="round_date">[% c.maketext("tournaments.rounds.field.date") %]</label>
+    <div class="field-container">
+      <input type="text" id="round_date" name="round_date" class="date_picker" autocomplete="off" value="[% date.dmy("/") %]" />
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+  
+  <div class="label-field-container">
+    <label for="round_venue">[% c.maketext("tournaments.rounds.field.venue") %]</label>
+    <div class="field-container">
+      <select id="round_venue" name="round_venue" data-placeholder="[% venue_label %]">
+        <option value=""></option>
+[%
+FOREACH lookup_venue IN venues;
+  IF lookup_venue.id == venue.id;
+    SET selected = ' selected="selected"';
+  ELSE;
+    SET selected = '';
+  END;
+-%]
+        <option value="[% lookup_venue.id %]"[% selected %]>[% lookup_venue.name | html_entity %]</option>
+[%
+END;
+-%]
+      </select>
+    </div>
+    <div class="clear-fix"></div>
+  </div>

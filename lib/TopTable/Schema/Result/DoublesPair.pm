@@ -443,9 +443,24 @@ __PACKAGE__->belongs_to(
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
 );
 
+=head2 tournaments_doubles
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-11-20 08:35:58
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:TH/CxjrnYIMZ46gl9Css/A
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::TournamentDoubles>
+
+=cut
+
+__PACKAGE__->has_many(
+  "tournaments_doubles",
+  "TopTable::Schema::Result::TournamentDoubles",
+  { "foreign.season_pair" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-09-29 23:47:56
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:tpPWZqs0jEChIo0v+x3VWQ
 
 __PACKAGE__->add_columns(
     "last_updated",
@@ -566,7 +581,6 @@ sub contains {
   
   return ($self->person_season_person1_season_team->person->id == $person->id or $self->person_season_person2_season_team->person->id == $person->id) ? 1 : 0;
 }
-
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 __PACKAGE__->meta->make_immutable;

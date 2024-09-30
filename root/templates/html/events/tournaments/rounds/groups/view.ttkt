@@ -1,0 +1,18 @@
+<div id="tabs">
+  <ul>
+    <li><a href="#table">[% c.maketext("events.tournaments.rounds.groups.heading.table") %]</a></li>
+    <li><a href="#matches">[% c.maketext("events.tournaments.rounds.groups.heading.matches") %]</a></li>
+  </ul>
+  <div id="table">
+    <div class="table-wrap">
+      <div class="table-layout table-layout-centre">
+[%
+INCLUDE "html/tables/table.ttkt" tourn_group = 1;
+-%]
+      </div>
+    </div>
+  </div>
+  <div id="matches">
+    
+  </div>
+</div>

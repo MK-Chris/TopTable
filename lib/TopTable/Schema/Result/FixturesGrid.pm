@@ -185,9 +185,24 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
+=head2 tournament_round_groups
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-01-08 00:07:04
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:OqXSR9xArT9LLH+t1V2YIg
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::TournamentRoundGroup>
+
+=cut
+
+__PACKAGE__->has_many(
+  "tournament_round_groups",
+  "TopTable::Schema::Result::TournamentRoundGroup",
+  { "foreign.fixtures_grid" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-09-29 23:47:56
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:M5EjIIFX4S3F9PMsUq5bSg
 
 use HTML::Entities;
 

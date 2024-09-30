@@ -173,7 +173,7 @@ sub index :Path :Args(0) {
   my $online_users_last_active_limit = $c->datetime_tz({time_zone => "UTC"})->subtract(minutes => 15);
   my $online_user_count = $c->model("DB::Session")->get_online_users({datetime_limit => $online_users_last_active_limit})->count;
   
-  my ( $matches, $matches_today, $matches_started );
+  my ( $matches, $matches_started, $next_match_date );
   
   if ( defined($current_season) ) {
     $matches = $c->model("DB::TeamMatch")->matches_on_date({
@@ -182,10 +182,17 @@ sub index :Path :Args(0) {
     });
     
     $matches_started = $matches->matches_started->count;
-    $matches_today = $matches->count;
+    
+    if ( !$matches->count ) {
+      # No matches today, find the next match date
+      $next_match_date = $c->model("DB::TeamMatch")->next_match_date;
+      $matches = $c->model("DB::TeamMatch")->matches_on_date({
+        season => $current_season,
+        date => $next_match_date,
+      }) if defined($next_match_date);
+    }
   } else {
     $matches_started = 0;
-    $matches_today = 0;
   }
   
   my $news_articles_to_show = $c->config->{Index}{news_articles_visible};
@@ -231,8 +238,8 @@ sub index :Path :Args(0) {
     events => \@events,
     exclude_event_user => 1,
     matches => $matches,
-    matches_today => $matches_today,
     matches_started => $matches_started,
+    next_match_date => $next_match_date,
     articles => $articles,
     online_user_count => $online_user_count,
     index_text => $c->model("DB::PageText")->get_text("index"),

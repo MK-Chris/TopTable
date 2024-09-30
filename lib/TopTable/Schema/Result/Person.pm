@@ -627,32 +627,32 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
-=head2 tournament_round_group_individual_membership_person1s
+=head2 tournament_doubles_person1s
 
 Type: has_many
 
-Related object: L<TopTable::Schema::Result::TournamentRoundGroupIndividualMembership>
+Related object: L<TopTable::Schema::Result::TournamentDoubles>
 
 =cut
 
 __PACKAGE__->has_many(
-  "tournament_round_group_individual_membership_person1s",
-  "TopTable::Schema::Result::TournamentRoundGroupIndividualMembership",
+  "tournament_doubles_person1s",
+  "TopTable::Schema::Result::TournamentDoubles",
   { "foreign.person1" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
-=head2 tournament_round_group_individual_membership_person2s
+=head2 tournament_doubles_person2s
 
 Type: has_many
 
-Related object: L<TopTable::Schema::Result::TournamentRoundGroupIndividualMembership>
+Related object: L<TopTable::Schema::Result::TournamentDoubles>
 
 =cut
 
 __PACKAGE__->has_many(
-  "tournament_round_group_individual_membership_person2s",
-  "TopTable::Schema::Result::TournamentRoundGroupIndividualMembership",
+  "tournament_doubles_person2s",
+  "TopTable::Schema::Result::TournamentDoubles",
   { "foreign.person2" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
@@ -701,8 +701,8 @@ __PACKAGE__->many_to_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-04-01 10:43:54
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:wOktZiN7XWVKoLIp8ncSfQ
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-09-29 23:47:56
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:mTdsqIN261ONwow0dnl97Q
 
 use HTML::Entities;
 

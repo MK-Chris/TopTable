@@ -1,0 +1,19 @@
+<h4>[% team_match_template.name %]</h4>
+<form method="post" action="[% form_action %]">
+
+<fieldset>
+  <legend>[% c.maketext("tournaments.round.details") %]</legend>
+  
+[%
+IF round.round_number == 1;
+  SET first_round = 1;
+ELSE;
+  SET first_round = 0;
+END;
+
+PROCESS "html/events/tournaments/rounds/fields.ttkt" first = first_round;
+-%]
+</fieldset>
+
+<input type="submit" id="submit" name="submit" value="[% c.maketext("form.button.save") %]" />
+</form>

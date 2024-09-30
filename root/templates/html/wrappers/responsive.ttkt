@@ -246,8 +246,9 @@ IF nav_current_season;
 [%
   IF nav_events.size;
     FOREACH event IN nav_events;
+      event_html = event.name | html_entity;
 -%]
-      <li><a href="[% c.uri_for_action("/events/view_current_season", [event.url_key]) %]">[% event.name %]</a></li>
+      <li><a href="[% c.uri_for_action("/events/view_current_season", [event.url_key]) %]" title="[% c.maketext("menu.title.event.view", event_html, season_html) %]">[% event_html %]</a></li>
 [%
     END;
   ELSE;

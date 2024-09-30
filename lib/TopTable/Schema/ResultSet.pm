@@ -38,6 +38,8 @@ sub find_id_or_url_key {
     $attrib{prefetch} = "user" unless $no_prefetch;
   } elsif ( $class->isa(__PACKAGE__ . "::User") ) {
     $attrib{prefetch} = "person" unless $no_prefetch;
+  } elsif ( $class->isa(__PACKAGE__ . "::Team") ) {
+    $attrib{prefetch} = "club" unless $no_prefetch;
   }
   
   if ( $id_or_url_key =~ m/^\d+$/ ) {

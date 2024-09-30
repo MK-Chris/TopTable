@@ -503,6 +503,9 @@ sub contact_captain :Private {
   my ( $self, $c ) = @_;
   my $team = $c->stash->{team};
   
+  # Check the auth for contacting captains - we need the 'view contact details' permission for this
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["person_contact_view", $c->maketext("user.auth.contact-team-captains"), 1]);
+  
   # Check we can send the captain email - any error will detach / redirect from the routine, so if we get past here, we're okay
   $c->forward("can_send_captain_email", [$team]);
   
@@ -583,8 +586,10 @@ sub send_email_captain :Private {
   my ( $self, $c ) = @_;
   my $team = $c->stash->{team};
   my $jtest = $c->req->params->{jtest};
-  my $time = $c->session->{form_time_contact_captain};
-  delete $c->session->{form_time_contact_captain};
+  my $time = delete $c->session->{form_time_contact_captain};
+  
+  # Check the auth for contacting captains - we need the 'view contact details' permission for this
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["person_contact_view", $c->maketext("user.auth.contact-team-captains"), 1]);
   
   # Check we can send the captain email - any error will detach / redirect from the routine, so if we get past here, we're okay
   $c->forward("can_send_captain_email", [$team]);
@@ -688,6 +693,7 @@ sub send_email_captain :Private {
         REFFERRER => $c->req->referer,
         USER_AGENT => $c->req->user_agent,
       });
+      
       my $response = $c->model("Cleantalk::Contact")->request({
         method_name => "check_message",
         message => $message,

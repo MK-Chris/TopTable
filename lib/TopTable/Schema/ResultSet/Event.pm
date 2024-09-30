@@ -75,33 +75,36 @@ sub find_id_or_url_key {
   my $class = shift;
   my ( $id_or_url_key, $params ) = @_;
   my $type = $params->{type};
-  my $where;
+  my %where = ();
+  my %attrib = (prefetch  => [qw( event_type ), {
+    event_seasons => [qw( organiser meetings tournament )] # Tournaments will eventually be a hashref drilling down to rounds, groups, etc.
+  }]);
   
-  if ( $id_or_url_key =~ m/^\d+$/ ) {
-    # Numeric - look in ID or URL key
-    $where = [{
-      "me.id" => $id_or_url_key
-    }, {
-      "me.url_key" => $id_or_url_key
-    }];
-  } else {
-    # Not numeric - must be the URL key
-    $where = {"me.url_key" => $id_or_url_key};
-  }
   
   if ( defined($type) ) {
     if ( $type eq "tournament" ) {
-      $where->{event_type} = {-in => [qw( single_tournament multi_tournament )]};
+      $where{"event_type.id"} = {-in => [qw( single_tournament multi_tournament )]};
     } else {
-      $where->{event_type} = $type;
+      $where{"event_type.id"} = $type;
     }
   }
   
-  return $class->find($where, {
-    prefetch  => [qw( event_type ), {
-      event_seasons => [qw( organiser meetings tournaments )] # Tournaments will eventually be a hashref drilling down to rounds, groups, etc.
-    }],
-  });
+  if ( $id_or_url_key =~ m/^\d+$/ ) {
+    # Numeric value, check the ID first, then check the URL key
+    $where{"me.id"} = $id_or_url_key;
+    my $obj = $class->find(\%where, \%attrib);
+    return $obj if defined($obj);
+    
+    # If we get this far, we didn't find anything, so delete the ID key and add in the URL key for searching
+    delete $where{"me.id"};
+    $where{"me.url_key"} = $id_or_url_key;
+    $obj = $class->find(\%where, \%attrib);
+    return $obj;
+  } else {
+    # Not numeric, so it can't be the ID - just check the URL key
+    $where{"me.url_key"} = $id_or_url_key;
+    return $class->find(\%where, \%attrib);
+  }
 }
 
 =head2 create_or_edit
@@ -135,12 +138,21 @@ sub create_or_edit {
   my $end_date = $params->{end_date} || undef;
   my $end_hour = $params->{end_hour} || undef;
   my $end_minute = $params->{end_minute} || undef;
+  my $default_team_match_template = $params->{default_team_match_template} || undef;
+  my $default_individual_match_template = $params->{default_individual_match_template} || undef;
+  my $round_name = $params->{round_name} || undef;
+  my $round_group = $params->{round_group} || 0;
+  my $round_group_rank_template = $params->{round_group_rank_template} || undef;
+  my $round_team_match_template = $params->{round_team_match_template} || undef;
+  my $round_individual_match_template = $params->{round_individual_match_template} || undef;
+  my $round_date = $params->{round_date} || undef;
+  my $round_venue = $params->{round_venue} || undef;
   
   # Setup the dates in a hash for looping through
-  my @dates = ( $start_date, $end_date );
+  my @dates = ( $start_date, $end_date, $round_date );
   
   # Date errors hash, as the dates are checked together, not necessarily in the order we want them to appear, so store them here then push to errors when appropriate
-  my %date_errors = (start_date => "", end_date => "");
+  my %date_errors = (start_date => "", end_date => "", round_date => "");
   
   my $season = $schema->resultset("Season")->get_current;
   my $response = {
@@ -150,19 +162,20 @@ sub create_or_edit {
     success => [],
     fields => {
       name => $name,
+      round_name => $round_name,
     },
     completed => 0,
   };
   
   if ( $action ne "create" and $action ne "edit" ) {
     # Invalid action passed
-    push(@{$response->{errors}}, $lang->("admin.form.invalid-action", $action));
+    push(@{$response->{errors}}, $lang->maketext("admin.form.invalid-action", $action));
     
     # This error is fatal, so we return straight away
     return $response;
   } elsif ( $action eq "edit" ) {
     # Check the event passed is valid
-    unless ( defined($event) and ref($event) eq "TopTable::Model::DB::Event" ) {
+    unless ( defined($event) and $event->isa("TopTable::Schema::Result::Event") ) {
       push(@{$response->{errors}}, $lang->maketext("event.form.error.event-invalid"));
       
       # Another fatal error
@@ -178,10 +191,7 @@ sub create_or_edit {
   # Required fields - certain keys get deleted depending on the values of other fields
   # Note this is not ALL required fields, just the ones that may or may not be required
   # depending on other factors.
-  my ( $venue_required, $start_date_required, $start_time_required ) = qw( 1 1 1 );
-  
-  # Default to event type not editable (this is only effective when editing, obvisously)
-  my ( $event_type_editable, $tournament_type_editable ) = qw( 0 0 );
+  my ( $venue_required, $start_date_required, $start_time_required, $default_template_required, $first_round_required ) = qw( 1 1 1 0 0 );
   
   # Error checking
   # Check the names were entered and don't exist already.
@@ -193,63 +203,94 @@ sub create_or_edit {
     push(@{$response->{errors}}, $lang->maketext("events.form.error.name-blank"));
   }
   
-  if ( defined($event_type) ) {
-    # We have an event type passed, make sure it's either a valid event type object, or an ID we can look up
-    $event_type = $schema->resultset("LookupEventType")->find($event_type) unless ref($event_type) eq "TopTable::Model::DB::LookupEventType";
-    
+  if ( $action eq "create" or $event->can_edit_event_type ) {
     if ( defined($event_type) ) {
-      # Valid event type, check if it's a tournament
-      if ( $event_type->id eq "single-tournament" ) {
-        # Check we have a tournament type
-        if ( defined($tournament_type) ) {
-          $tournament_type = $schema->resultset("LookupTournamentType")->find($tournament_type) unless ref($tournament_type) eq "TopTable::Model::DB::LookupTournamentType";
+      # We have an event type passed, make sure it's either a valid event type object, or an ID we can look up
+      $event_type = $schema->resultset("LookupEventType")->find($event_type) unless $event_type->isa("TopTable::Schema::Result::LookupEventType");
+      
+      if ( defined($event_type) ) {
+        # Valid event type, check if it's a tournament
+        if ( $event_type->id eq "single_tournament" ) {
+          # If the event is a single-event tournament, then we have to have some default templates (team or individual, depending on entry type) and first round details
+          ( $default_template_required, $first_round_required ) = qw( 1 1 );
           
+          # Check we have a tournament type
           if ( defined($tournament_type) ) {
-            if ( $tournament_type->id eq "team" ) {
-              # Event type is 'single-tournament' and tournament type is 'team', so the venue, date, start time, all day flag and finish time are cleared
-              undef($venue);
-              undef($start_hour);
-              undef($start_minute);
-              undef($all_day);
-              undef($end_hour);
-              undef($end_minute);
-              $venue_required = 0;
-              $start_date_required = 0;
-              $start_time_required = 0;
-              $allow_online_entries = 0; # Don't allow online entries for team events
+            $tournament_type = $schema->resultset("LookupTournamentType")->find($tournament_type) unless $tournament_type->isa("TopTable::Schema::Result::LookupTournamentType");
+            
+            if ( defined($tournament_type) ) {
+              if ( $tournament_type->id eq "team" ) {
+                # Event type is 'single_tournament' and tournament type is 'team', so the venue, date, start time, all day flag and finish time are cleared
+                undef($venue);
+                undef($start_hour);
+                undef($start_minute);
+                undef($all_day);
+                undef($end_hour);
+                undef($end_minute);
+                ( $venue_required, $start_date_required, $start_time_required, $allow_online_entries ) = qw( 0 0 0 0 );
+              } else {
+                # Tournament, but not a team tournament - sanity check the allow online entries flag to ensure it's 1 or 0 but nothing else
+                $allow_online_entries = $allow_online_entries ? 1 : 0;
+              }
             } else {
-              # Tournament, but not a team tournament - sanity check the allow online entries flag to ensure it's 1 or 0 but nothing else
-              $allow_online_entries = $allow_online_entries ? 1 : 0;
+              # Invalid tournament type
+              push(@{$response->{errors}}, $lang->maketext("events.form.error.tournament-type-invalid"));
             }
           } else {
-            # Invalid tournament type
-            push(@{$response->{errors}}, $lang->maketext("events.form.error.tournament-type-invalid"));
+            # Tournament type not given
+            push(@{$response->{errors}}, $lang->maketext("events.form.error.tournament-type-blank"));
           }
         } else {
-          # Tournament type not given
-          push(@{$response->{errors}}, $lang->maketext("events.form.error.tournament-type-blank"));
+          # Not a tournament, so we don't need a tournament type
+          undef($tournament_type);
         }
       } else {
-        # Not a tournament, so we don't need a tournament type
-        undef($tournament_type);
+        # Event type invalid
+        push(@{$response->{errors}}, $lang->maketext("events.form.error.event-type-invalid"));
       }
     } else {
-      # Event type invalid
-      push(@{$response->{errors}}, $lang->maketext("events.form.error.event-type-invalid"));
+      # Event type blank
+      push(@{$response->{errors}}, $lang->maketext("events.form.error.event-type-blank"));
     }
-  } else {
-    # Event type blank
-    push(@{$response->{errors}}, $lang->maketext("events.form.error.event-type-blank"));
   }
   
   # Ensure the sanitised event / tournament type is passed back
   $response->{fields}{event_type} = $event_type;
   $response->{fields}{tournament_type} = $tournament_type;
   
+  if ( $default_template_required and defined($tournament_type) ) {
+    if ( $tournament_type->id eq "team" ) {
+      # Templates have to be team
+      if ( defined($default_team_match_template) ) {
+        $default_team_match_template = $schema->resultset("TemplateMatchTeam")->find_id_or_url_key($default_team_match_template) unless $default_team_match_template->isa("TopTable::Schema::Result::TemplateMatchTeam");
+        push(@{$response->{errors}}, $lang->maketext("events.form.error.def-match-template-invalid")) unless $default_team_match_template->isa("TopTable::Schema::Result::TemplateMatchTeam");
+      } else {
+        push(@{$response->{errors}}, $lang->maketext("events.form.error.def-match-template-blank"));
+      }
+      
+      # We don't want an individual match template for team entry events
+      undef($default_individual_match_template);
+    } else {
+      # Templates have to be individual for any tournament entry type other than team (singles or doubles)
+      if ( defined($default_individual_match_template) ) {
+        $default_individual_match_template = $schema->resultset("TemplateMatchIndividual")->find_id_or_url_key($default_individual_match_template) unless $default_individual_match_template->isa("TopTable::Schema::Result::TemplateMatchIndividual");
+        push(@{$response->{errors}}, $lang->maketext("events.form.error.def-match-template-invalid")) unless $default_individual_match_template->isa("TopTable::Schema::Result::TemplateMatchIndividual");
+      } else {
+        push(@{$response->{errors}}, $lang->maketext("events.form.error.def-match-template-blank"));
+      }
+      
+      # We don't want a team match template for singles or doubles entry events
+      undef($default_team_match_template);
+    }
+  }
+  
+  $response->{fields}{default_team_match_template} = $default_team_match_template;
+  $response->{fields}{default_individual_match_template} = $default_individual_match_template;
+  
   # Check the venue is valid passed and valid
   if ( defined($venue) ) {
     # Venue has been passed, make sure it's valid
-    if ( ref($venue) ne "TopTable::Model::DB::Venue" ) {
+    if ( !$venue->isa("TopTable::Schema::Result::Venue") ) {
       # Venue hasn't been passed in as an object, try and lookup as an ID / URL key
       $venue = $schema->resultset("Venue")->find_id_or_url_key($venue);
       push(@{$response->{errors}}, $lang->maketext("events.form.error.venue-invalid")) unless defined($venue);
@@ -267,7 +308,7 @@ sub create_or_edit {
   
   # Validate the organiser if it's been passed in - it's not required, so don't error if it hasn't
   if ( defined($organiser) ) {
-    if ( ref($organiser) ne "TopTable::Model::DB::Person" ) {
+    if ( !$organiser->isa("TopTable::Schema::Result::Person") ) {
       # Not passed in as an object, check if it's a valid ID / URL key
       $organiser = $schema->resultset("Person")->find_id_or_url_key($organiser);
       push(@{$response->{errors}}, $lang->maketext("events.form.error.organiser-invalid")) unless defined($organiser);
@@ -277,18 +318,29 @@ sub create_or_edit {
   # Push the sanitised field back
   $response->{fields}{organiser} = $organiser;
   
-  # Check the date
-  if ( $start_date_required ) {
-    # If the start date isn't required, we'll just undef it, as we don't want it (this is for team events)
-    foreach my $date_idx ( 0 .. $#dates ) {
+  # Check the dates
+  # If the start date isn't required, we'll just undef it, as we don't want it (this is for team events)
+  # If the start date is required, check all dates, otherwise just check the last one (round date)
+  my $start = $start_date_required ? 0 : 2;
+  
+  # Remove the first round date if we don't need a first round
+  pop(@dates) unless $first_round_required;
+  
+  # Loop through from start to end - but only if the start element isn't before the end element of the array (this can happen if we
+  # don't need a start date - because it's a team tournament - and there's no first round to process - because we're editing)
+  if ( $start <= $#dates ) {
+    foreach my $date_idx ( $start .. $#dates ) {
       my ( $date_fld, $date_required );
       
       if ( $date_idx == 0 ) {
         $date_required = 1;
         $date_fld = "start_date";
-      } else {
+      } elsif ( $date_idx == 1 ) {
         $date_required = 0;
         $date_fld = "end_date";
+      } else {
+        $date_required = 0;
+        $date_fld = "round_date";
       }
       
       my $date = $dates[$date_idx];
@@ -312,7 +364,7 @@ sub create_or_edit {
             $date_errors{$date_fld} = $lang->maketext("events.form.error.$date_fld-invalid");
             $date_valid = 0;
           };
-        } elsif ( ref($date) ne "DateTime" ) {
+        } elsif ( !$date->isa("DateTime") ) {
           # Not a hashref, not a DateTime
           $date_errors{$date_fld} = $lang->maketext("events.form.error.$date_fld-invalid");
           $date_valid = 0;
@@ -342,12 +394,18 @@ sub create_or_edit {
         # Date is invalid  - set date to undef
         if ( $date_fld eq "start_date" ) {
           undef($start_date);
-        } else {
+        } elsif ( $date_fld eq "end_date" ) {
           undef($end_date);
+        } else {
+          undef($round_date);
         }
       }
     }
   }
+  
+  $response->{fields}{start_date} = $start_date;
+  $response->{fields}{end_date} = $end_date;
+  $response->{fields}{round_date} = $round_date;
   
   # Push any start date error we found here
   push(@{$response->{errors}}, $date_errors{start_date}) if $date_errors{start_date};
@@ -378,7 +436,7 @@ sub create_or_edit {
     undef($end_minute);
   } else {
     # Push any start date error we found here
-    push(@{$response->{errors}}, $date_errors{start_date}) if $date_errors{start_date};
+    push(@{$response->{errors}}, $date_errors{end_date}) if $date_errors{end_date};
     
     # Check the finish time, if it's provided
     if ( defined($end_hour) ) {
@@ -416,6 +474,73 @@ sub create_or_edit {
     }
   }
   
+  if ( $first_round_required ) {
+    # Need first round details, so check those fields
+    # No need to check the name - the name is optional and only needs to be unique (when specified) within the current tournament;
+    # if we're creating, there are no other rounds to check this against yet, if we're editing there are no first round details to check.
+    
+    # Sanity check for the group round field
+    $round_group = $round_group ? 1 : 0;
+    $response->{fields}{round_group} = $round_group;
+    
+    if ( $round_group ) {
+      if ( defined($round_group_rank_template) ) {
+        # Check we have a valid table rank template
+        $round_group_rank_template = $schema->resultset("TemplateLeagueTableRanking")->find($round_group_rank_template) unless $round_group_rank_template->isa("TopTable::Schema::Result::TemplateLeagueTableRanking");
+        push(@{$response->{errors}}, $lang->maketext("events.tournaments.rounds.form.error.table-ranking-template-invalid")) unless defined($round_group_rank_template);
+      } else {
+        # Error, we need a table rank template in a group round
+        push(@{$response->{errors}}, $lang->maketext("events.tournaments.rounds.form.error.table-ranking-template-blank"));
+      }
+    } else {
+      # Not a group round, ensure the ranking template is undef
+      undef($round_group_rank_template);
+    }
+    
+    $response->{fields}{round_group_rank_template} = $round_group_rank_template;
+    
+    # Check the template - need to know the entry type for this - they are optional, as the tournament has a default, so only raise an error if it's specified and invalid
+    if ( $tournament_type->id eq "team" ) {
+      # Check the round team match template and undef the individual one
+      if ( defined($round_team_match_template) ) {
+        # Lookup the first round team match template if it's provided (and not already a template object)
+        $round_team_match_template = $schema->resultset("TemplateMatchTeam")->find($round_team_match_template) unless $round_team_match_template->isa("TopTable::Schema::Result::TemplateMatchTeam");
+        push(@{$response->{errors}}, $lang->maketext("events.tournaments.rounds.form.error.match-template-invalid")) unless defined($round_team_match_template);
+        
+        # Ensure the individual match template is undef
+        undef($round_individual_match_template);
+      }
+    } else {
+      # Any other entry type, we check the round individual match template and undef the team one
+      if ( defined($round_individual_match_template) ) {
+        # Lookup the first round team match template if it's provided (and not already a template object)
+        $round_individual_match_template = $schema->resultset("TemplateMatchIndividual")->find($round_individual_match_template) unless $round_individual_match_template->isa("TopTable::Schema::Result::TemplateMatchIndividual");
+        push(@{$response->{errors}}, $lang->maketext("events.tournaments.rounds.form.error.match-template-invalid")) unless defined($round_individual_match_template);
+        
+        # Ensure the individual match template is undef
+        undef($round_team_match_template);
+      }
+    }
+    
+    # The date is already checked in the dates loop above, put hte error here if we have one
+    push(@{$response->{errors}}, $date_errors{round_date}) if $date_errors{round_date};
+    
+    # Check the round venue if supplied
+    if ( defined($round_venue) ) {
+      $round_venue = $schema->resultset("Venue")->find_id_or_url_key($round_venue) unless $round_venue->isa("TopTable::Schema::Result::Venue");
+      
+      if ( defined($round_venue) ) {
+        # Venue is valid, but need to check it's active
+        push(@{$response->{errors}}, $lang->maketext("events.tournaments.rounds.form.error.venue-inactive", encode_entities($venue->name))) unless $round_venue->active;
+      } else {
+        # Invalid venue
+        push(@{$response->{errors}}, $lang->maketext("events.tournaments.rounds.form.error.venue-invalid"));
+      }
+    }
+    
+    $response->{fields}{round_venue} = $round_venue;
+  }
+  
   if ( scalar(@{$response->{errors}}) == 0 ) {
     # Success, we need to create / edit the event
     # Build the key from the name
@@ -428,6 +553,8 @@ sub create_or_edit {
     
     # Create a transaction to safeguard - if either operation fails, nothing is written / updated
     my $transaction = $class->result_source->schema->txn_scope_guard;
+    my $round_response;
+    my $commit = 1; # Default - revert to 0 if the first round doesn't create
     
     if ( $action eq "create" ) {
       $event = $class->create({
@@ -448,38 +575,56 @@ sub create_or_edit {
         venue => $venue,
       });
       
-      if ( $event_type->id eq "single-tournament" ) {
-        $event_season->create_related("tournaments", {
+      if ( $event_type->id eq "single_tournament" ) {
+        my $tournament = $event_season->create_related("tournament", {
           season => $season->id,
           name => $name,
           entry_type => $tournament_type->id,
           allow_online_entries => $allow_online_entries,
+          default_team_match_template => defined($default_team_match_template) ? $default_team_match_template->id : undef,
+          default_individual_match_template => defined($default_individual_match_template) ? $default_individual_match_template->id : undef,
         });
+        
+        if ( $first_round_required ) {
+          $round_response = $tournament->create_or_edit_round(undef, {
+            name => $round_name,
+            group => $round_group,
+            rank_template => defined($round_group_rank_template) ? $round_group_rank_template->id : undef,
+            team_match_template => defined($round_team_match_template) ? $round_team_match_template->id : undef,
+            individual_match_template => defined($round_individual_match_template) ? $round_individual_match_template->id : undef,
+            date => $round_date,
+            venue => $round_venue,
+          });
+          
+          # Push any responses we get back to the calling routine
+          push(@{$response->{errors}}, @{$round_response->{errors}});
+          push(@{$response->{warnings}}, @{$round_response->{warnings}});
+          push(@{$response->{info}}, @{$round_response->{info}});
+          push(@{$response->{success}}, @{$round_response->{success}});
+          $response->{round_completed} = $round_response->{completed};
+          $commit = 0 unless $response->{round_completed};
+        }
       } elsif ( $event_type->id eq "meeting" ) {
         my $meeting = $event_season->create_related("meetings", {season => $season->id});
       }
       
-      $response->{completed} = 1;
+      $response->{completed} = 1 if $commit;
       push(@{$response->{success}}, $lang->maketext("admin.forms.success", $event->name, $lang->maketext("admin.message.created")));
     } else {
-      if ( defined($event_type) and $event_type->id ne $event->event_type->id ) {
-        if ( $event->can_edit_event_type ) {
+      if ( $event->can_edit_event_type ) {
+        if ( defined($event_type) and $event_type->id ne $event->event_type->id ) {
           # Event type has changed, get the old value then update the field
           my $old_event_type = $event->event_type->id;
           $event->event_type($event_type->id);
           
           # Now depending on the old event type, we need to delete meetings or tournaments
-          if ( $old_event_type eq "single-tournament" ) {
+          if ( $old_event_type eq "single_tournament" ) {
             # Delete tournament matches
             
           } elsif ( $old_event_type eq "meeting" ) {
             # Delete meetings
             
           }
-        } else {
-          # Event type is not editable, return before we update
-          push(@{$response->{errors}}, $lang->maketext("events.form.error.cant-edit-event-type"));
-          return $response;
         }
       }
       
@@ -499,12 +644,12 @@ sub create_or_edit {
         venue => $venue,
       });
       
-      $response->{completed} = 1;
+      $response->{completed} = 1 if $commit;
       push(@{$response->{success}}, $lang->maketext("admin.forms.success", $event->name, $lang->maketext("admin.message.edited")));
     }
     
     # Commit the transaction if there are no errors
-    $transaction->commit;
+    $transaction->commit if $commit;
     
     $response->{event} = $event;
   }

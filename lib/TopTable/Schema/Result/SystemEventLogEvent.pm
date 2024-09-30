@@ -171,8 +171,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-01-08 00:07:05
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:o2WvQib7s6QFLkHMXa1opg
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-09-30 10:56:44
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:R2aKcw0aEIFSskJtexaLyg
 
 # Enable automatic date handling
 __PACKAGE__->add_columns(

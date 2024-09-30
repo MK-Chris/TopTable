@@ -1,0 +1,125 @@
+[%
+USE zeroes = format("%02d");
+-%]
+<div id="tabs">
+  <ul>
+[%
+IF tournament.has_group_round;
+-%]
+    <li><a href="#groups">[% tournament.rounds.first.name OR c.maketext("events.tournaments.heading.round-group") %]</a></li>
+[%
+END;
+-%]
+    <li><a href="#summary">[% c.maketext("events.tournaments.heading.summary") %]</a></li>
+  </ul>
+[%
+IF tournament.has_group_round;
+-%]
+  <div id="groups">
+[%
+  IF authorisation.event_edit;
+-%]
+    <a href="[% c.uri_for_action("/events/group_create", [event.url_key, rounds.item(0).url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0009-Add-icon-32.png") %]" alt="[% c.maketext("tournaments.round.create-group", enc_name) %]" title="[% c.maketext("tournaments.round.create-group", enc_name) %]" /></a><br /><br />
+[%
+  END;
+  IF groups.size;
+    # Counter to check if we're on a left or right column
+    SET counter = 1;
+    FOREACH group = groups;
+      IF specific_season;
+        SET group_uri = c.uri_for_action("/events/view_group_specific_season", [event.url_key, season.url_key, group_round.url_key, group.url_key]);
+      ELSE;
+        SET group_uri = c.uri_for_action("/events/view_group_current_season", [event.url_key, group_round.url_key, group.url_key]);
+      END;
+      
+      # Get the group table data
+      SET entrants = group.get_entrants_in_table_order;
+      
+      IF counter == 1;
+-%]
+    <div class="row">
+      <div class="column left">
+[%
+      ELSE;
+-%]
+      <div class="column right">
+[%
+      END;
+-%]
+        <h4><a href="[% group_uri %]">[% group.name %]</a></h4>
+[%
+      INCLUDE "html/tables/table.ttkt" tourn_group = 1, last_updated = group.get_tables_last_updated_timestamp;
+      IF counter == 1;
+        # This was a left column, set to 2 so we know the next column is right, just end the one column div
+        SET counter = 2;
+        
+%]
+      </div>
+[%
+      ELSE;
+        # This was a right column, set to 1 so we know the next column is left (new row); end both divs, as a new row will start on the next one
+        SET counter = 1;
+%]
+      </div>
+    </div>
+[%
+      END;
+    END;
+    
+    IF counter == 2;
+      # If the counter is now 2, we've only written the left column, therefore have an odd number of groups, therefore need to close the row div
+-%]
+    </div>
+[%
+    END;
+-%]
+
+[%
+  END;
+-%]
+  </div>
+[%
+END;
+-%]
+  <div id="summary">
+    <div class="table-wrap">
+      <div class="table-layout table-layout-centre">
+        <table class="vertical">
+          <tr>
+            <th scope="row">[% c.maketext("events.field.event-type") %]</th>
+            <td>[% c.maketext("tournaments.type.team") %]</td>
+          </tr>
+        </table>
+        
+[%
+IF rounds.size;
+-%]
+        <h4>[% c.maketext("events.tournaments.heading.rounds") %]</h4>
+        <ul class="option-list">
+[%
+  FOREACH round = rounds;
+    round_html = round.name | html_entity;
+    
+    IF specific_season;
+      SET view_uri = c.uri_for_action("/events/view_round_specific_season", [event.url_key, season.url_key, round.url_key]);
+    ELSE;
+      SET view_uri = c.uri_for_action("/events/view_round_current_season", [event.url_key, round.url_key]);
+    END;
+-%]
+          <li><a href="[% view_uri %]">[% round_html %] 
+[%-
+IF authorisation.event_edit;
+-%]
+<a href="[% c.uri_for_action("/events/edit_round", [event.url_key, round.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", round_html) %]" title="[% c.maketext("admin.edit-object", round_html) %]" /></a>
+[%-
+END;
+-%]</li>
+[%
+  END;
+END;
+-%]
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>

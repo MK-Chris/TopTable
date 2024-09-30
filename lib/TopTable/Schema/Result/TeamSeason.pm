@@ -786,14 +786,51 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
+=head2 tournament_teams
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-11-20 08:35:59
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:OlBX367bZ/PbRrSljNUtTg
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::TournamentTeam>
+
+=cut
+
+__PACKAGE__->has_many(
+  "tournament_teams",
+  "TopTable::Schema::Result::TournamentTeam",
+  { "foreign.season" => "self.season", "foreign.team" => "self.team" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-09-29 23:47:56
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:XMezkkVKon0wCE3jyGPY/Q
 
 __PACKAGE__->add_columns(
     "last_updated",
     { data_type => "datetime", timezone => "UTC", set_on_create => 1, set_on_update => 1, datetime_undef_if_invalid => 1, is_nullable => 1, },
 );
+
+=head2 full_name
+
+Return the club season's (short) name with the team name.
+
+=cut
+
+sub full_name {
+  my $self = shift;
+  return sprintf("%s %s", $self->club_season->short_name, $self->name);
+}
+
+=head2 abbreviated_name
+
+Return the club season's (abbreviated) name with the team name.
+
+=cut
+
+sub abbreviated_name {
+  my $self = shift;
+  return sprintf("%s %s", $self->club_season->abbreviated_name, $self->name);
+}
 
 =head2 league_position
 

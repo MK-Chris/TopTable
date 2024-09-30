@@ -1,0 +1,15 @@
+
+[%
+IF authorisation.event_edit;
+-%]
+<a href="[% c.uri_for_action("/events/group_create", [event.url_key, round.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0009-Add-icon-32.png") %]" alt="[% c.maketext("tournaments.round.create-group", enc_name) %]" title="[% c.maketext("tournaments.round.create-group", enc_name) %]" /></a>
+[%
+END;
+%]
+
+[%
+IF groups.size;
+%]
+[%
+END;
+%]

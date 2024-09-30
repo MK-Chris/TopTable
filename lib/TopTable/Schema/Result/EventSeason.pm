@@ -233,16 +233,16 @@ __PACKAGE__->belongs_to(
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
 );
 
-=head2 tournaments
+=head2 tournament
 
-Type: has_many
+Type: might_have
 
 Related object: L<TopTable::Schema::Result::Tournament>
 
 =cut
 
-__PACKAGE__->has_many(
-  "tournaments",
+__PACKAGE__->might_have(
+  "tournament",
   "TopTable::Schema::Result::Tournament",
   { "foreign.event" => "self.event", "foreign.season" => "self.season" },
   { cascade_copy => 0, cascade_delete => 0 },
@@ -269,8 +269,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-06-01 20:59:23
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:SfaFo9Gu0F5SG/RBHRuLdQ
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-09-29 23:47:56
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Jp4CJDt/vYQnTeL4Wko8EQ
 
 use DateTime;
 
@@ -308,7 +308,15 @@ sub event_detail {
   my $event_type = $self->event->event_type->id;
   
   if ( $event_type eq "meeting" ) {
-    return $self->search_related("meetings", undef, {rows => 1})->single;
+    return $self->search_related("meetings", {}, {rows => 1})->single;
+  } elsif ( $event_type eq "single_tournament" ) {
+    return $self->find_related("tournament", {}, {
+      prefetch => [qw( entry_type tournament_people tournaments_doubles tournament_teams ), {
+        tournament_rounds => [qw( venue ), {
+          tournament_round_groups => [qw( tournament_group_people tournament_groups_doubles tournament_group_teams )]
+        }]
+      }],
+    });
   }
 }
 

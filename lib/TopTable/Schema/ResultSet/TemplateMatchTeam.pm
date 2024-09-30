@@ -175,6 +175,7 @@ sub create_or_edit {
   my $name = $params->{name} || undef;
   my $singles_players_per_team  = $params->{singles_players_per_team} || undef;
   my $winner_type = $params->{winner_type} || undef;
+  my $handicapped = $params->{handicapped} || 0;
   my $response = {
     errors => [],
     warnings => [],
@@ -247,6 +248,10 @@ sub create_or_edit {
   
   $response->{fields}{winner_type} = $winner_type;
   
+  # Handicapped sanity check - should be 1 or 0, any other true value gets set to 1
+  $handicapped = $handicapped ? 1 : 0;
+  $response->{fields}{handicapped} = $handicapped;
+  
   if ( scalar(@{$response->{errors}}) == 0 ) {
     # No errors, build the key from the name
     my $url_key;
@@ -263,6 +268,7 @@ sub create_or_edit {
         name => $name,
         singles_players_per_team => $singles_players_per_team,
         winner_type => $winner_type->id,
+        handicapped => $handicapped
       });
       
       $response->{completed} = 1;
@@ -273,6 +279,7 @@ sub create_or_edit {
         name => $name,
         singles_players_per_team => $singles_players_per_team,
         winner_type => $winner_type->id,
+        handicapped => $handicapped,
       });
       
       $response->{completed} = 1;

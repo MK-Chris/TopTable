@@ -232,10 +232,13 @@ sub create :Local {
     external_scripts => [
       $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
       $c->uri_for("/static/script/standard/chosen.js"),
+      $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
+      $c->uri_for("/static/script/standard/prettycheckable.js"),
       $c->uri_for("/static/script/templates/match/team/create-edit.js"),
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
+      $c->uri_for("/static/css/prettycheckable/prettyCheckable.css"),
     ],
     form_action => $c->uri_for("do-create"),
     subtitle2 => $c->maketext("admin.create"),
@@ -283,10 +286,13 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
     external_scripts => [
       $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
       $c->uri_for("/static/script/standard/chosen.js"),
+      $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
+      $c->uri_for("/static/script/standard/prettycheckable.js"),
       $c->uri_for("/static/script/templates/match/team/create-edit.js"),
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
+      $c->uri_for("/static/css/prettycheckable/prettyCheckable.css"),
     ],
     subtitle2 => $c->maketext("admin.edit"),
     form_action => $c->uri_for_action("/templates/match/team/do_edit", [$tt_template->url_key]),
@@ -449,7 +455,7 @@ Forwarded from docreate and doedit to do the template creation / edit.
 sub process_form :Private {
   my ( $self, $c, $action ) = @_;
   my $tt_template = $c->stash->{tt_template};
-  my @field_names = qw( name singles_players_per_team winner_type );
+  my @field_names = qw( name singles_players_per_team winner_type handicapped );
   
   # The rest of the error checking is done in the Club model
   my $response = $c->model("DB::TemplateMatchTeam")->create_or_edit($action, {

@@ -164,9 +164,24 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
+=head2 tournament_rounds
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2015-09-13 08:59:34
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:P5nzd19ZyzDFKofhGKxvSg
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::TournamentRound>
+
+=cut
+
+__PACKAGE__->has_many(
+  "tournament_rounds",
+  "TopTable::Schema::Result::TournamentRound",
+  { "foreign.rank_template" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-09-29 23:47:56
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Gs75KWyrk0zs13jx6lmPRg
 
 use HTML::Entities;
 

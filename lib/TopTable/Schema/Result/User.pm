@@ -742,7 +742,6 @@ __PACKAGE__->many_to_many("roles", "user_roles", "role");
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:ZJpN8SPoLV5LkuWB6xfHOA
 
 use DateTime;
-use DateTime;
 use DateTime::TimeZone;
 use DateTime::Duration;
 use HTML::Entities;
@@ -831,9 +830,9 @@ sub activation_key {
   return $self->_keys(@_);
 }
 
-=head2 activation_key
+=head2 password_reset_key
 
-activation_key accessor, handles hashing of values before writing, and getting the inflated BlowfishCrypt inflated value back if reading (and not null).  This is required because DBIx::Class::PassphraseColumn, which can do all this automatically, doesn't like nullable columns.
+password_reset_key accessor, handles hashing of values before writing, and getting the inflated BlowfishCrypt inflated value back if reading (and not null).  This is required because DBIx::Class::PassphraseColumn, which can do all this automatically, doesn't like nullable columns.
 
 =cut
 

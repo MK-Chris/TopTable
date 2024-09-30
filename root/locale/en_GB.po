@@ -194,6 +194,9 @@ msgstr "Events"
 msgid "menu.title.events"
 msgstr "Events for %1"
 
+msgid "menu.title.event.view"
+msgstr "%1 for %2"
+
 msgid "menu.events.none"
 msgstr "No events to view"
 
@@ -428,6 +431,18 @@ msgstr "are"
 
 msgid "home-page.todays-matches"
 msgstr "Matches playing today"
+
+msgid "home-page.next-matches"
+msgstr "Next matches played: %1 %2 %3"
+
+msgid "home-page.next-matches-year"
+msgstr "Next matches played: %1 %2 %3 %4"
+
+msgid "home-page.next-match"
+msgstr "Next match played: %1 %2 %3"
+
+msgid "home-page.next-match-year"
+msgstr "Next match played: %1 %2 %3 %4"
 
 ## Doubles
 msgid "menu.text.doubles"
@@ -2366,7 +2381,7 @@ msgid "fixtures-grids.teams.error.matches-set"
 msgstr "There are already matches set from this grid in the current season.  If they are incorrect, delete them and then reset the team positions."
 
 msgid "fixtures-grids.teams.error.wrong-team-id"
-msgstr "%s is not a valid team identifier or is in the wrong division."
+msgstr "%1 is not a valid team identifier or is in the wrong division."
 
 msgid "fixtures-grids.seasons.count-text"
 msgstr "%1 has been used in %2 %3."
@@ -3106,6 +3121,9 @@ msgstr "F"
 msgid "stats.table-heading.against"
 msgstr "A"
 
+msgid "stats.table-heading.points"
+msgstr "Points"
+
 msgid "stats.table-heading.games-played"
 msgstr "Games"
 
@@ -3439,6 +3457,9 @@ msgstr "Event type"
 msgid "events.field.tournament-type"
 msgstr "Tournament type"
 
+msgid "events.field.tournament.default-match-template"
+msgstr "Default match template"
+
 msgid "events.field.allow-online-entries"
 msgstr "Allow users to enter online"
 
@@ -3447,6 +3468,9 @@ msgstr "Tournament details"
 
 msgid "events.legend.season-details"
 msgstr "%1 details"
+
+msgid "events.legend.tournament.first-round-details"
+msgstr "First round details"
 
 msgid "events.field.organiser"
 msgstr "Organiser"
@@ -3477,6 +3501,21 @@ msgstr "Minute"
 
 msgid "events.field.duration"
 msgstr "Approximate duration"
+
+msgid "events.tournament.field.round-name"
+msgstr "Round name"
+
+msgid "events.tournament.field.group-round"
+msgstr "Group round"
+
+msgid "events.tournament.field.group-ranking-template"
+msgstr "Ranking template"
+
+msgid "events.tournament.field.match-template"
+msgstr "Group table ranking template"
+
+msgid "events.tournament.field.match-template"
+msgstr "Match template"
 
 msgid "events.none"
 msgstr "There are no events to view."
@@ -3562,17 +3601,41 @@ msgstr "The event finish minute value is invalid; it must be selected from the l
 msgid "events.form.error.cant-edit-event-type"
 msgstr "The event type can&#39;t be edited because it has either been used in previous seasons with the current type or there are matches / meetings associated with it already."
 
+msgid "events.form.error.def-match-template-invalid"
+msgstr "The default match template selected is invalid."
+
+msgid "events.form.error.def-match-template-blank"
+msgstr "For tournaments, there must be a default match template selected."
+
+msgid "events.form.error.round.match-template-invalid"
+msgstr "The match template selected is invalid; select a valid one or leave blank to use the default selected for the tournament."
+
 msgid "events.edit.error.no-current-season"
-msgstr "You can&#39;t edit events until there is a current season to edit them in."
+msgstr "You can&#39;t edit events and tournaments until there is a current season to edit them in."
 
 msgid "events.delete.error.cannot-delete"
-msgstr "You cannot delete %1."
+msgstr "You cannot delete %1, as it has been used in seasons that have now been completed."
 
 msgid "events.edit-details.error.no-event-this-season"
 msgstr "%1 has not been created for %2; use this form to create an instance of the event for this season."
 
-msgid "events.tournaments.heading.details"
-msgstr "Details"
+msgid "events.tournaments.heading.summary"
+msgstr "Summary"
+
+msgid "events.tournaments.heading.rounds"
+msgstr "Rounds"
+
+msgid "events.tournaments.round.name.heading"
+msgstr "Round name"
+
+msgid "tournament.round.default-name"
+msgstr "Round %1"
+
+msgid "tournament.round.group.default-name"
+msgstr "Group %1"
+
+msgid "events.tournaments.heading.round-group"
+msgstr "Groups"
 
 ### Reports
 msgid "reports.name.loan-players"
@@ -3940,6 +4003,12 @@ msgstr "PINNED"
 msgid "templates.form.legend.template-rules"
 msgstr "Template rules"
 
+msgid "templates.heading.template-rules"
+msgstr "Template rules"
+
+msgid "templates.heading.template-games"
+msgstr "Template rules"
+
 msgid "templates.field.name"
 msgstr "Name"
 
@@ -4030,6 +4099,9 @@ msgstr "Serves"
 msgid "templates.individual-match.field.serves-deuce"
 msgstr "Serves in deuce"
 
+msgid "templates.individual-match.field.handicapped"
+msgstr "Handicapped"
+
 msgid "templates.individual-match.form.error.template-invalid"
 msgstr "The match template specified is invalid."
 
@@ -4105,6 +4177,9 @@ msgstr "Singles players per team"
 msgid "templates.team-match.field.winner-type"
 msgstr "Winner type"
 
+msgid "templates.team-match.field.handicapped"
+msgstr "Handicapped"
+
 msgid "templates.team-match.games.success"
 msgstr "%1 games for %2 have been created."
 
@@ -4143,6 +4218,9 @@ msgstr "The individual match template specified for game %1 is invalid."
 
 msgid "templates.team-match.games.error.ind-template-blank"
 msgstr "You must select a template for game %1."
+
+msgid "templates.team-match.games.error.ind-template-and-team-template-both-handicapped"
+msgstr "Game %1 has an individual match template with a handicap set; this is not allowed, since the team template has a handicap set as well."
 
 msgid "templates.team-match.games.error.home-player-number-invalid"
 msgstr "The singles home player number in game %1 is invalid; it must be a number between 1 and %2."
@@ -4581,6 +4659,9 @@ msgstr "Upload"
 msgid "admin.reorder"
 msgstr "Reorder"
 
+msgid "admin.edit-round"
+msgstr "Edit round %1 of %2"
+
 # Currently only used for people, but could be expanded, so keep it generic
 msgid "admin.import"
 msgstr "Import"
@@ -4845,6 +4926,9 @@ msgstr "edit teams"
 msgid "user.auth.delete-teams"
 msgstr "delete teams"
 
+msgid "user.auth.contact-team-captains"
+msgstr "contact team captains"
+
 msgid "user.auth.view-people"
 msgstr "view people"
 
@@ -5021,6 +5105,9 @@ msgstr "edit contact reasons"
 
 msgid "user.auth.delete-contact-reasons"
 msgstr "delete contact reasons"
+
+msgid "user.auth.team-contact-captain"
+msgstr "contact team captains"
 
 msgid "user.auth.view-officials"
 msgstr "view league officials"
@@ -5992,8 +6079,206 @@ msgid "tournament-type.description.team"
 msgstr "Entrants to tournaments are teams and the matches follow the same specification as league matches (where you supply a team match template and each game has an individual match template).  Unless otherwise specified (set per round), each match of the tournament is played at the home team&#39;s venue on the home team&#39;s home night at the default match start time for the home team.  For each round, you will specify a &#39;week&#39; of the season that the round takes place in."
 
 ### Tournaments
-msgid "tournament.round.details"
+msgid "tournaments.type.team"
+msgstr "Team tournament"
+
+msgid "tournaments.round.details"
 msgstr "Tournament round details"
+
+msgid "tournaments.rounds.field.name"
+msgstr "Name (optional)"
+
+msgid "tournaments.rounds.placeholder.name"
+msgstr "Left blank, the name will be &quot;Round X&quot;"
+
+msgid "tournaments.rounds.field.group-round"
+msgstr "Group round"
+
+msgid "tournaments.rounds.field.date"
+msgstr "Date (optional)"
+
+msgid "tournaments.rounds.field.date-team"
+msgstr "Date (leave blank to use home team nights)"
+
+msgid "tournaments.rounds.field.date-individual"
+msgstr "Date (leave blank to use the tournament date)"
+
+msgid "tournaments.rounds.field.venue"
+msgstr "Venue (optional)"
+
+msgid "tournaments.rounds.field.venue-team"
+msgstr "Venue (leave blank to use home team venues)"
+
+msgid "tournaments.rounds.field.venue-individual"
+msgstr "Venue (leave blank to use the tournament venue)"
+
+msgid "tournaments.rounds.group.details"
+msgstr "Group %1 details"
+
+msgid "tournaments.rounds.group.delete"
+msgstr "Delete group / match %1"
+
+msgid "tournaments.rounds.group.field.default-value"
+msgstr "Group / match %1"
+
+msgid "tournaments.round.form.error.season-not-current"
+msgstr "You can&#39;t add or edit rounds in a tournament that&#39;s not in the current season."
+
+msgid "tournaments.form.error.round-doesnt-exist"
+msgstr "Trying to edit a tournament round that doesn&#39;t exist."
+
+msgid "tournaments.form.error.round-name-exists"
+msgstr "The name &#39;%1&#39; is already in use for another round in %2."
+
+msgid "tournaments.form.error.group-round-past-round1-not-allowed"
+msgstr "Only the first round can be set as a group round; the group flag will be ignored."
+
+msgid "tournaments.form.error.group-round-needs-rank-template"
+msgstr "The first round is specified as a group round; it therefore needs to have a ranking template selected."
+
+msgid "tournaments.form.error.group-round-invalid-rank-template"
+msgstr "The first round ranking template is invalid."
+
+msgid "tournaments.form.error.date-invalid"
+msgstr "The specified round date is not valid."
+
+msgid "tournaments.form.error.venue-invalid"
+msgstr "The venue for the round is invalid."
+
+msgid "tournaments.form.error.venue-inactive"
+msgstr "%1 is not an active venue; you must select an active venue, or edit %1 to make it active first."
+
+msgid "tournaments.round.groups.details"
+msgstr "Group details"
+
+msgid "tournaments.rounds.group.field.name"
+msgstr "Name"
+
+msgid "tournaments.rounds.group.placeholder.name"
+msgstr "Left blank, the name will be &quot;Group X&quot;"
+
+msgid "tournaments.rounds.groups.field.manual-fixtures"
+msgstr "Manually set fixtures"
+
+msgid "tournaments.rounds.group.field.grid"
+msgstr "Fixtures grid"
+
+msgid "tournaments.rounds.group.field.members-team"
+msgstr "Teams in this group"
+
+msgid "tournaments.rounds.group.field.members-singles"
+msgstr "Players in this group"
+
+msgid "tournaments.rounds.group.field.members-doubles"
+msgstr "Doubles partnerships in this group"
+
+msgid "tournaments.rounds.group.field.automatic-qualifiers"
+msgstr "Number to go through the group"
+
+msgid "tournaments.round.create-group"
+msgstr "Create a group for %1"
+
+msgid "tournaments.round.group.form.error.season-not-current"
+msgstr "You can&#39;t add or edit groups in a tournament that&#39;s not in the current season."
+
+msgid "tournaments.round.group.form.error.not-group-round"
+msgstr "This round is not a group round and can&#39;t have groups added to it."
+
+msgid "tournaments.round.group.form.error.group-invalid"
+msgstr "The group specified is not valid."
+
+msgid "tournaments.round.group.form.error.name-exists"
+msgstr "A group with the name &#39;%1&#39; already exists."
+
+msgid "tournaments.round.group.form.error.name-blank-but-shouldnt-be"
+msgstr "The name field is blank; there are already named groups in this round, so all groups must be named."
+
+msgid "tournaments.round.group.form.error.name-not-blank-but-should-be"
+msgstr "The name must be left blank, as there are already unnamed groups in this round; there cannot be a mix of named and unnamed groups."
+
+msgid "tournaments.round.group.form.error.manual-fixtures-and-fixtures-grid"
+msgstr "You have selected to manually set fixtures, so cannot also select a fixtures grid."
+
+msgid "tournaments.round.group.form.error.no-fixtures-grid-or-manual-fixtures"
+msgstr "You must either select a fixtures grid or specify to manually set fixtures."
+
+msgid "tournaments.rounds.group.field.form.error.grid-invalid"
+msgstr "The fixtures grid specified is invalid."
+
+msgid "tournaments.rounds.group.add-doubles-pair"
+msgstr "Add a doubles pairing to this group"
+
+msgid "tournaments.round.group.form.error.doubles-members-not-array"
+msgstr "An array of two people must be submitted for members of a doubles tournament; please check entry %1."
+
+msgid "tournaments.round.group.form.error.doubles-members-needs-two-entries"
+msgstr "Please check entry %1; there must be two people submitted for each doubles pair, this entry has %2."
+
+msgid "tournaments.round.group.form.error.not-entered-season"
+msgstr "%1 has not entered the %2 season, so cannot be entered into competitions."
+
+msgid "tournaments.round.group.form.error.member-already-entered"
+msgstr "%1 is already entered into the competition and cannot be re-entered."
+
+msgid "tournaments.round.group.form.error.member-duplicates"
+msgstr "The following names have been entered multiple times: %1"
+
+msgid "tournaments.round.group.form.error.members-exceed-grid-maximum"
+msgstr "The number of members of the group (%1) exceeds the maximum number set in the grid &#39;%2&#39; (%3) - choose a different grid, or remove some members."
+
+msgid "tournaments.round.group.form.error.invalid-members-singular"
+msgstr "%1 of the members was invalid, so has been removed from the list; please check and resubmit with the correct members."
+
+msgid "tournaments.round.group.form.error.invalid-members-plural"
+msgstr "%1 of the members were invalid, so have been removed from the list; please check and resubmit with the correct members."
+
+msgid "tournaments.round.group.form.error.members-must-have-at-least-two"
+msgstr "You must enter at least two members of the group."
+
+msgid "tournaments.round.group.form.error.qualifiers-blank"
+msgstr "You must specify a number of competitors to go through the group."
+
+msgid "tournaments.round.group.form.error.qualifiers-invalid"
+msgstr "The number of competitors who will qualify must be a positive number that&#39;s not greater than the number of entrants in the group."
+
+msgid "events.tournaments.rounds.groups.heading.table"
+msgstr "Table"
+
+msgid "events.tournaments.rounds.groups.heading.matches"
+msgstr "Matches"
+
+msgid "events.tournaments.rounds.groups.teams.error.matches-already-set"
+msgstr "You cannot set the teams to their grid numbers in this group, as the fixtures for this group have already been created."
+
+msgid "events.tournaments.rounds.groups.teams.error.no-grid-assigned"
+msgstr "There is no grid assigned to this group, so fixtures must be manually created."
+
+msgid "events.tournaments.rounds.groups.fixtures-grids.error.wrong-id"
+msgstr "%1 is not a valid identifier or is in the wrong division."
+
+msgid "events.tournaments.rounds.groups.fixtures-grids.error.no-position-for-entrant"
+msgstr "%1 has been entered into the group, but has not been listed in a position for the fixtures grid."
+
+msgid "events.tournaments.rounds.groups.fixtures-grids.teams.error.position-used-more-than-once"
+msgstr "Position %1 is used more than once: %2.  Please ensure each position is used only once."
+
+msgid "events.tournaments.rounds.groups.fixtures-grids.form.teams.success"
+msgstr "The grid positions have been set."
+
+msgid "events.tournaments.rounds.form.error.match-template-invalid"
+msgstr "The round match template is invalid; select a valid one, or leave blank to use the default template for the event."
+
+msgid "events.tournaments.rounds.form.error.venue-invalid"
+msgstr "The round venue is invalid; select a valid one, or leave blank to use the default venue for the event."
+
+msgid "events.tournaments.rounds.form.error.venue-inactive"
+msgstr "%1 is not an active venue; select a valid active venue from the list, or leave blank to use the default venue for the event."
+
+msgid "events.tournaments.rounds.form.error.table-ranking-template-invalid"
+msgstr "The ranking template is invalid; please supply a valid template, or deselect the &#39;Group round&#39; field."
+
+msgid "events.tournaments.rounds.form.error.table-ranking-template-blank"
+msgstr "The ranking template is was not supplied; please supply a valid template, or deselect the &#39;Group round&#39; field."
 
 ### Images
 msgid "images.form.image"
@@ -6087,8 +6372,8 @@ msgstr "Archived %1%2."
 msgid "system-event-log.description.set-matches"
 msgstr "Set matches for %1%2."
 
-msgid "system-event-log.description.set-teams"
-msgstr "Set the team positions for %1%2."
+msgid "system-event-log.description.set-positions"
+msgstr "Set the grid positions for %1%2."
 
 msgid "system-event-log.description.update-score"
 msgstr "Updated the score for %1%2."
@@ -6185,6 +6470,24 @@ msgstr "Assigned the official position for %1%2."
 
 msgid "system-event-log.description.unassign-official"
 msgstr "Removed the official position for %1%2."
+
+msgid "system-event-log.description.create-round"
+msgstr "Created a round for %1%2."
+
+msgid "system-event-log.description.edit-round"
+msgstr "Edited a round for %1%2."
+
+msgid "system-event-log.description.delete-round"
+msgstr Deleted a round for %1%2."
+
+msgid "system-event-log.description.create-group"
+msgstr "Created a group for %1%2."
+
+msgid "system-event-log.description.edit-group"
+msgstr "Edited a group for %1%2."
+
+msgid "system-event-log.description.delete-group"
+msgstr "Deleted a group for %1%2."
 
 msgid "system-event-log.and"
 msgstr "and"

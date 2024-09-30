@@ -1,57 +1,68 @@
-[% # Note That the '-' at the beginning or end of TT code  -%]
-[% # "chomps" the whitespace/newline at that end of the    -%]
-[% # output (use View Source in browser to see the effect) -%]
-
-<div id="template_rules">
-  <h4>[% c.maketext("templates.form.legend.template-rules") %]</h4>
-  <table class="vertical">
-    <tr>
-      <th>[% c.maketext("templates.team-match.field.winner-type") %]</th>
-      <td>[% c.maketext("winner-type.description." _ tt_template.winner_type.id) %]</td>
-    </tr>
-    <tr>
-      <th>[% c.maketext("templates.team-match.field.singles-players-per-team") %]</th>
-      <td>[% tt_template.singles_players_per_team %]</td>
-    </tr>
-  </table>
-</div>
-
-<h4>Template Games</h4>
-<table id="datatable" class="stripe hover order-column row-border">
-  <thead>
-    <tr>
-      <th>[% c.maketext("templates.team-match.games.field.game-number") %]</th>
-      <th>[% c.maketext("templates.team-match.games.field.game-template") %]</th>
-      <th>[% c.maketext("templates.team-match.games.field.home-player") %]</th>
-      <th>[% c.maketext("templates.team-match.games.field.away-player") %]</th>
-    </tr>
-  </thead>
-  <tbody>
+<div class="table-wrap">
+  <div class="table-layout table-layout-centre">
+    <h4>[% c.maketext("templates.heading.template-rules") %]</h4>
+    <table class="vertical">
+      <tr>
+        <th>[% c.maketext("templates.team-match.field.winner-type") %]</th>
+        <td>[% c.maketext("winner-type.description." _ tt_template.winner_type.id) %]</td>
+      </tr>
+      <tr>
+        <th>[% c.maketext("templates.team-match.field.singles-players-per-team") %]</th>
+        <td>[% tt_template.singles_players_per_team %]</td>
+      </tr>
+      <tr>
+        <th>[% c.maketext("templates.team-match.field.handicapped") %]</th>
+[%
+  IF tt_template.handicapped;
+    SET img_src = c.uri_for("/static/images/icons/0007-Tick-icon-32.png");
+    SET img_title = c.maketext("msg.yes");
+  ELSE;
+    SET img_src = c.uri_for("/static/images/icons/0006-Cross-icon-32.png");
+    SET img_title = c.maketext("msg.no");
+  END;
+-%]
+        <td><img src="[% img_src %]" alt="[% img_title %]" title="[% img_title %]" /></td>
+      </tr>
+    </table>
+    
+    <h4>[% c.maketext("templates.heading.template-rules") %]</h4>
+    <table id="datatable" class="stripe hover order-column row-border">
+      <thead>
+        <tr>
+          <th>[% c.maketext("templates.team-match.games.field.game-number") %]</th>
+          <th>[% c.maketext("templates.team-match.games.field.game-template") %]</th>
+          <th>[% c.maketext("templates.team-match.games.field.home-player") %]</th>
+          <th>[% c.maketext("templates.team-match.games.field.away-player") %]</th>
+        </tr>
+      </thead>
+      <tbody>
 [%
 WHILE (game = tt_template_games.next);
 -%]
-    <tr>
-      <td data-label="[% c.maketext("templates.team-match.games.field.game-number") %]">[% game.match_game_number %]</td>
-      <td data-label="[% c.maketext("templates.team-match.games.field.game-template") %]"><a href="[% c.uri_for_action("/templates/match/individual/view", [game.individual_match_template.url_key]) %]">[% game.individual_match_template.name | html_entity %]</a></td>
+        <tr>
+          <td data-label="[% c.maketext("templates.team-match.games.field.game-number") %]">[% game.match_game_number %]</td>
+          <td data-label="[% c.maketext("templates.team-match.games.field.game-template") %]"><a href="[% c.uri_for_action("/templates/match/individual/view", [game.individual_match_template.url_key]) %]">[% game.individual_match_template.name | html_entity %]</a></td>
 [%
   IF game.doubles_game == 1;
 -%]
-      <td data-label="[% c.maketext("templates.team-match.games.field.players") %]">[% c.maketext("templates.team-match.games.field.players") %]</td>
-      <td data-label="[% c.maketext("templates.team-match.games.field.players") %]">&nbsp;</td>
+          <td data-label="[% c.maketext("templates.team-match.games.field.players") %]">[% c.maketext("templates.team-match.games.field.players") %]</td>
+          <td data-label="[% c.maketext("templates.team-match.games.field.players") %]">&nbsp;</td>
 [%
   ELSE;
 -%]
-      <td data-label="[% c.maketext("templates.team-match.games.field.home-player") %]">[% game.singles_home_player_number %]</td>
-      <td data-label="[% c.maketext("templates.team-match.games.field.away-player") %]">[% game.singles_away_player_number %]</td>
+          <td data-label="[% c.maketext("templates.team-match.games.field.home-player") %]">[% game.singles_home_player_number %]</td>
+          <td data-label="[% c.maketext("templates.team-match.games.field.away-player") %]">[% game.singles_away_player_number %]</td>
 [%
   END;
 -%]
-    </tr>
+        </tr>
 [%
 END;
 -%]
-  </tbody>
-</table>
+      </tbody>
+    </table>
+  </div>
+</div>
 [%
 IF authorisation.template_edit AND tt_template.can_edit_or_delete;
 -%]

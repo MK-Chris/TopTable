@@ -709,9 +709,66 @@ __PACKAGE__->belongs_to(
   { is_deferrable => 1, on_delete => "CASCADE", on_update => "RESTRICT" },
 );
 
+=head2 tournament_doubles_person1_season_person1_teams
 
-# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-03-18 23:57:35
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:a0GgLyoQ8JQhVMen56WQrw
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::TournamentDoubles>
+
+=cut
+
+__PACKAGE__->has_many(
+  "tournament_doubles_person1_season_person1_teams",
+  "TopTable::Schema::Result::TournamentDoubles",
+  {
+    "foreign.person1"      => "self.person",
+    "foreign.person1_team" => "self.team",
+    "foreign.season"       => "self.season",
+  },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+=head2 tournament_doubles_person2_season_person2_teams
+
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::TournamentDoubles>
+
+=cut
+
+__PACKAGE__->has_many(
+  "tournament_doubles_person2_season_person2_teams",
+  "TopTable::Schema::Result::TournamentDoubles",
+  {
+    "foreign.person2"      => "self.person",
+    "foreign.person2_team" => "self.team",
+    "foreign.season"       => "self.season",
+  },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+=head2 tournament_people
+
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::TournamentPerson>
+
+=cut
+
+__PACKAGE__->has_many(
+  "tournament_people",
+  "TopTable::Schema::Result::TournamentPerson",
+  {
+    "foreign.person" => "self.person",
+    "foreign.season" => "self.season",
+    "foreign.team"   => "self.team",
+  },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-09-29 23:47:56
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:DSkS7j6ImYO99a0djKcYjA
 
 __PACKAGE__->add_columns(
     "last_updated",

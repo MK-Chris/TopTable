@@ -269,6 +269,10 @@ Determines whether the event type is editable by searching for previous seasons
 sub can_edit_event_type {
   my $self = shift;
   
+  # We're going to set this to false for now - it's more complex than originally thought, so we'll just not allow editing of event types unless / until I can work out
+  # all the logic
+  return 0;
+  
   # First search for this event in previous (completed) seasons
   my $previous_events = $self->search_related("event_seasons", {
     "season.complete" => 1,

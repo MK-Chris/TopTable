@@ -145,7 +145,7 @@ sub retrieve_paged :Private {
   
   # Set up the template to use
   $c->stash({
-    template => "html/league-tables/list.ttkt",
+    template => "html/tables/list.ttkt",
     view_online_display => "Viewing League Tables",
     view_online_link => 1,
     divisions => $divisions,
@@ -181,11 +181,12 @@ sub view_current_season :Chained("view") :PathPart("") :Args(0) {
   if ( defined($season) ) {
     my $division_season = $division->get_season($season);
     
-    if ( defined( $division_season ) ) {
+    if ( defined($division_season) ) {
       my $encoded_season_name = encode_entities($season->name);
       
       $c->stash({
         season => $season,
+        division_season => $division_season,
         encoded_season_name => $encoded_season_name,
         page_description => $c->maketext("description.league-tables.view-current", $division_name, $site_name),
       });
@@ -219,11 +220,12 @@ sub view_specific_season :Chained("view") :PathPart("seasons") :Args(1) {
   if ( defined($season) ) {
     my $division_season = $division->get_season($season);
     
-    if ( defined( $division_season ) ) {
+    if ( defined($division_season) ) {
       my $encoded_season_name = encode_entities($season->name);
       
       $c->stash({
         season => $season,
+        division_season => $division_season,
         encoded_season_name => $encoded_season_name,
         specific_season => 1,
         page_description => $c->maketext("description.league-tables.view-specific", $division_name, $site_name, $encoded_season_name),
@@ -260,6 +262,7 @@ sub view_finalise :Private {
   my ( $self, $c ) = @_;
   my $division = $c->stash->{division};
   my $season = $c->stash->{season};
+  my $division_season = $c->stash->{division_season};
   my $encoded_division_name = $c->stash->{encoded_division_name};
   my $encoded_season_name = $c->stash->{encoded_season_name};
   
@@ -270,32 +273,38 @@ sub view_finalise :Private {
     ? $c->uri_for_action("league-tables/view_specific_season", [$division->url_key, $season->url_key])
     : $c->uri_for_action("league-tables/view_current_season", [$division->url_key]);
   
-  # Grab these here rather than the stash call, as it'll be forced into list context otherwise
-  my $league_tables = $c->model("DB::TeamSeason")->get_teams_in_division_in_league_table_order({
-    season => $season,
-    division => $division,
-  });
+  # Get the ranking template for the table - we need this before we stash because one of the scripts depends
+  # on whether or not we're assigning points (as there's an extra column if we are)
+  my $ranking_template = $division_season->league_table_ranking_template;
+  
+  my $table_view_js = $ranking_template->assign_points
+    ? $c->uri_for("/static/script/tables/view-points.js")
+    : $c->uri_for("/static/script/tables/view-no-points.js");
   
   # Stash the common details
   $c->stash({
-    template => "html/league-tables/view.ttkt",
+    template => "html/tables/view.ttkt",
     subtitle1 => $c->maketext("stats.table-title.division", $encoded_division_name),
     subtitle2 => $encoded_season_name,
-    divisions => [ $season->divisions ],
+    divisions => [$season->divisions],
     view_online_display => sprintf("Viewing %s table for %s", $division->name, $season->name),
     view_online_link => 1,
-    league_tables => $league_tables,
+    entrants => [$c->model("DB::TeamSeason")->get_teams_in_division_in_league_table_order({
+      season => $season,
+      division => $division,
+    })],
     last_updated => $c->model("DB::TeamSeason")->get_tables_last_updated_timestamp({
       season => $season,
       division => $division,
     }),
+    ranking_template => $ranking_template,
     canonical_uri => $canonical_uri,
     external_scripts => [
       $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
-      $c->uri_for("/static/script/league-tables/view.js", {v => 2}),
+      $table_view_js,
     ],
     external_styles => [
       $c->uri_for("/static/css/datatables/dataTables.dataTables.min.css"),
@@ -398,7 +407,7 @@ sub retrieve_paged_seasons :Private {
   
   # Set up the template to use
   $c->stash({
-    template => "html/league-tables/list-seasons.ttkt",
+    template => "html/tables/list-seasons.ttkt",
     view_online_display => sprintf( "Viewing seasons for ", $division->name ),
     view_online_link => 1,
     seasons => $seasons,

@@ -1,8 +1,10 @@
 [%
 IF c.flash.show_flashed;
   SET winner_type_selected = c.flash.winner_type.id;
+  SET handicap_checked = c.flash.handicapped;
 ELSE;
   SET winner_type_selected = tt_template.winner_type.id;
+  SET handicap_checked = tt_template.handicapped;
 END;
 %]
 
@@ -48,6 +50,14 @@ END;
       </select>
     </div>
     <div class="clear-fix"></div>
+[%
+IF handicap_checked;
+  SET checked = ' checked="checked"';
+ELSE;
+  SET checked = '';
+END;
+-%]
+    <input type="checkbox" id="handicapped" name="handicapped" value="1"[% checked %] data-label="[% c.maketext("templates.team-match.field.handicapped") %]" />
   </div>
 </fieldset>
 <input type="submit" name="submit" value="[% c.maketext("form.button.save") %]" />

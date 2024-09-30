@@ -647,7 +647,7 @@ sub display_description {
   my $returned_objects = {
     for_display => [],
     for_tooltip => [],
-    other       => [],
+    other => [],
   };
   
   # Get the SytemEventLog relation - this will tend to be the object type prefixed with "system_event_log_" and suffixed with "s" 
@@ -706,7 +706,7 @@ sub display_description {
       if ( $column =~ /^object_([a-z_]+)$/ ) {
         # Save away the stored value - the object relationship columns are set up such that the column name will always be "object_<relationship_name>", so that this can be extracted
         my $column_relation_accessor = $1;
-        $column_relation_accessor = "id" if ( $object_relation eq "system_event_log_bans" or $object_relation eq "system_event_log_banned_users" ) and $column eq "object_type"; 
+        $column_relation_accessor = "id" if ( ($object_relation eq "system_event_log_bans" or $object_relation eq "system_event_log_banned_users") and $column eq "object_type") or ( $object_relation eq "system_event_log_events" and ($column eq "object_round" or $column eq "object_group") );
         #$logger->( "debug", sprintf( "column: $column: get value. ref: %s, rel accessor: $column_relation_accessor, accessor ref: %s", ref( $object->$column ), ref( $object->$column->$column_relation_accessor ) ) );
         
         # The pushed values is a list, as we may push more than one (if we have a date, for example)

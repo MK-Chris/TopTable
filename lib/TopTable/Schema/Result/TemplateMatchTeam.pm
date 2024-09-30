@@ -78,6 +78,12 @@ __PACKAGE__->table("template_match_team");
   is_nullable: 0
   size: 10
 
+=head2 handicapped
+
+  data_type: 'tinyint'
+  default_value: 0
+  is_nullable: 0
+
 =cut
 
 __PACKAGE__->add_columns(
@@ -96,6 +102,8 @@ __PACKAGE__->add_columns(
   { data_type => "tinyint", extra => { unsigned => 1 }, is_nullable => 0 },
   "winner_type",
   { data_type => "varchar", is_foreign_key => 1, is_nullable => 0, size => 10 },
+  "handicapped",
+  { data_type => "tinyint", default_value => 0, is_nullable => 0 },
 );
 
 =head1 PRIMARY KEY
@@ -216,6 +224,21 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
+=head2 tournaments
+
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::Tournament>
+
+=cut
+
+__PACKAGE__->has_many(
+  "tournaments",
+  "TopTable::Schema::Result::Tournament",
+  { "foreign.default_team_match_template" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
 =head2 winner_type
 
 Type: belongs_to
@@ -232,8 +255,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-01-27 15:12:25
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:2JV7LWlLxPYFkJsh8BKttg
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-09-29 23:47:56
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:j+IpgdBvnN2FgrSPwb9i8A
 
 =head2 url_keys
 

@@ -2509,7 +2509,7 @@ msgstr "T�l�charg�e %1%2."
 msgid "system-event-log.description.set-matches"
 msgstr "Set matchs pour %1%2."
 
-msgid "system-event-log.description.set-teams"
+msgid "system-event-log.description.set-positions"
 msgstr "R�glez les positions de l'�quipe pour %1%2."
 
 msgid "system-event-log.description.update-score"

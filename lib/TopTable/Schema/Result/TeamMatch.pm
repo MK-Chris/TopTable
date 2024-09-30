@@ -74,6 +74,15 @@ __PACKAGE__->table("team_matches");
   is_foreign_key: 1
   is_nullable: 0
 
+=head2 tournament_group
+
+  data_type: 'integer'
+  extra: {unsigned => 1}
+  is_foreign_key: 1
+  is_nullable: 1
+
+If NULL and tournament_round is not, this is a tournament match but not in a group round.
+
 =head2 tournament_round
 
   data_type: 'integer'
@@ -88,7 +97,9 @@ If NULL, this is a league match.
   data_type: 'integer'
   extra: {unsigned => 1}
   is_foreign_key: 1
-  is_nullable: 0
+  is_nullable: 1
+
+If NULL, this must be part of a tournament
 
 =head2 venue
 
@@ -333,6 +344,13 @@ __PACKAGE__->add_columns(
     is_foreign_key => 1,
     is_nullable => 0,
   },
+  "tournament_group",
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_foreign_key => 1,
+    is_nullable => 1,
+  },
   "tournament_round",
   {
     data_type => "integer",
@@ -345,7 +363,7 @@ __PACKAGE__->add_columns(
     data_type => "integer",
     extra => { unsigned => 1 },
     is_foreign_key => 1,
-    is_nullable => 0,
+    is_nullable => 1,
   },
   "venue",
   {
@@ -593,7 +611,12 @@ __PACKAGE__->belongs_to(
   "division_season",
   "TopTable::Schema::Result::DivisionSeason",
   { division => "division", season => "season" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+  {
+    is_deferrable => 1,
+    join_type     => "LEFT",
+    on_delete     => "RESTRICT",
+    on_update     => "RESTRICT",
+  },
 );
 
 =head2 fixtures_grid
@@ -847,6 +870,26 @@ __PACKAGE__->belongs_to(
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
 );
 
+=head2 tournament_group
+
+Type: belongs_to
+
+Related object: L<TopTable::Schema::Result::TournamentRoundGroup>
+
+=cut
+
+__PACKAGE__->belongs_to(
+  "tournament_group",
+  "TopTable::Schema::Result::TournamentRoundGroup",
+  { id => "tournament_group" },
+  {
+    is_deferrable => 1,
+    join_type     => "LEFT",
+    on_delete     => "RESTRICT",
+    on_update     => "RESTRICT",
+  },
+);
+
 =head2 tournament_round
 
 Type: belongs_to
@@ -883,8 +926,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-02-03 10:04:06
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:jJ6MFf45ebvoa/5XEyFUVQ
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-09-29 23:47:56
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:V4cUXIwfEJYENpORrS6lWw
 
 use Try::Tiny;
 use DateTime::Duration;
