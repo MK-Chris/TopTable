@@ -187,7 +187,7 @@ sub index :Path :Args(0) {
     if ( !$matches_to_show ) {
       # No matches today, find the next match date
       $next_match_date = $c->model("DB::TeamMatch")->next_match_date;
-        $matches = $c->model("DB::TeamMatch")->matches_on_date({
+      $matches = $c->model("DB::TeamMatch")->matches_on_date({
         season => $current_season,
         date => $next_match_date,
       });
