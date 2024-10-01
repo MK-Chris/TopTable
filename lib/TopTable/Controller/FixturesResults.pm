@@ -1236,8 +1236,8 @@ sub view_outstanding :Private {
   my $season = $c->stash->{season};
   my $specific_season = $c->stash->{specific_season};
   my $outstanding_scorecard_hours = $c->config->{Matches}{Team}{outstanding_scorecard_hours};
-  $outstanding_scorecard_hours = 72 if !defined( $outstanding_scorecard_hours ) or !$outstanding_scorecard_hours or $outstanding_scorecard_hours !~ /^\d+$/ or $outstanding_scorecard_hours < 1;
-  my $date_cutoff = DateTime->now->subtract(hours => $outstanding_scorecard_hours);
+  $outstanding_scorecard_hours = 24 if !defined($outstanding_scorecard_hours) or !$outstanding_scorecard_hours or $outstanding_scorecard_hours !~ /^\d+$/ or $outstanding_scorecard_hours < 1;
+  my $date_cutoff = DateTime->now(time_zone => $c->stash->{timezone})->subtract(hours => $outstanding_scorecard_hours);
   
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["fixtures_view", $c->maketext("user.auth.view-fixtures"), 1]);
   $c->forward("TopTable::Controller::Users", "check_authorisation", [[ qw( match_update match_cancel ) ], "", 0]);

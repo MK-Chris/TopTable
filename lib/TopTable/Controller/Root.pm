@@ -178,7 +178,7 @@ sub index :Path :Args(0) {
   if ( defined($current_season) ) {
     $matches = $c->model("DB::TeamMatch")->matches_on_date({
       season => $current_season,
-      date => $c->datetime,
+      date => $c->datetime_tz({time_zone => $c->stash->{timezone}}),
     });
     
     $matches_started = $matches->matches_started->count;
