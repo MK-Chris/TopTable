@@ -940,6 +940,10 @@ use DateTime::Format::ICal;
 __PACKAGE__->add_columns(
     "updated_since",
     { data_type => "datetime", timezone => "UTC", set_on_create => 0, set_on_update => 1, datetime_undef_if_invalid => 1, is_nullable => 1, },
+    "scheduled_date",
+    { data_type => "date", timezone => "UTC", set_on_create => 0, set_on_update => 0, datetime_undef_if_invalid => 1, is_nullable => 0, },
+    "played_date",
+    { data_type => "date", timezone => "UTC", set_on_create => 0, set_on_update => 0, datetime_undef_if_invalid => 1, is_nullable => 0, },
 );
 
 =head2 url_keys
