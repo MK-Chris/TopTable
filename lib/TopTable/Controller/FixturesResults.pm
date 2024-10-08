@@ -500,14 +500,8 @@ sub view_team :Private {
   if ( $specific_season ) {
     $c->stash({canonical_uri => $c->uri_for_action("/fixtures-results/view_team_by_url_key_specific_season", [$season->url_key, $team->club->url_key, $team->url_key])});
   } else {
-    $c->stash({canonical_uri => $c->uri_for_action("/fixtures-results/view_team_by_url_key_current_season", [$team->club->url_key, $team->url_key])});
+    $c->stash({canonical_uri => $c->uri_for_action("/fixtures-results/view_team_by_url_key_current_season_end", [$team->club->url_key, $team->url_key])});
   }
-  
-  # Get the matches on this page
-  $matches = $c->model("DB::TeamMatch")->matches_for_team({
-    team => $team,
-    season => $season,
-  });
   
   # Team info is in the team season object if we're using a specific season
   my $team_info = $team->find_related("team_seasons", {season => $season->id});
@@ -535,7 +529,10 @@ sub view_team :Private {
     template => "html/fixtures-results/view-no-grouping.ttkt",
     view_online_display => $online_display,
     view_online_link => 1,
-    matches => $matches,
+    matches => scalar $c->model("DB::TeamMatch")->matches_for_team({
+      team => $team,
+      season => $season,
+    }),
     subtitle1 => $season->complete ? $c->maketext("fixtures-results.title.results", $old_club_and_team): $c->maketext("fixtures-results.title.fixtures-results", $old_club_and_team),
     title_links => [{
       image_uri => $c->uri_for("/static/images/icons/0038-Calender-icon-32.png"),
@@ -571,7 +568,7 @@ sub view_team :Private {
       path => $c->uri_for_action("/fixtures-results/filter_view_current_season", ["teams"]),
       label => $c->maketext("menu.text.fixtures-results-by-team"),
     }, {
-      path => $c->uri_for_action("/fixtures-results/view_team_by_url_key_current_season", [$team->club->url_key, $team->url_key]),
+      path => $c->uri_for_action("/fixtures-results/view_team_by_url_key_current_season_end", [$team->club->url_key, $team->url_key]),
       label => sprintf("%s %s", $enc_club_short_name, $enc_team_name),
     });
   }
@@ -796,7 +793,7 @@ sub view_division :Private {
   
   # Set up the template to use
   $c->stash({
-    template => "html/fixtures-results/view-group-weeks.ttkt",
+    template => "html/fixtures-results/view-group-weeks-no-comp.ttkt",
     view_online_display => $online_display,
     view_online_link => 1,
     matches => $matches,
@@ -1156,7 +1153,7 @@ sub view_month :Private {
   
   # Set up the template to use
   $c->stash({
-    template => "html/fixtures-results/view-group-divisions.ttkt",
+    template => "html/fixtures-results/view-group-competitions.ttkt",
     view_online_display => $online_display,
     view_online_link => 1,
     matches => $matches,
@@ -1172,7 +1169,7 @@ sub view_month :Private {
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
-      $c->uri_for("/static/script/fixtures-results/view-group-divisions.js", {v => 2}),
+      $c->uri_for("/static/script/fixtures-results/view-group-competitions.js"),
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
@@ -1257,7 +1254,7 @@ sub view_outstanding :Private {
   
   # Set up the template to use
   $c->stash({
-    template => "html/fixtures-results/view-group-weeks.ttkt",
+    template => "html/fixtures-results/view-group-weeks-ordering.ttkt",
     view_online_display => $online_display,
     view_online_link => 1,
     matches => $matches,
@@ -1268,7 +1265,7 @@ sub view_outstanding :Private {
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
-      $c->uri_for("/static/script/fixtures-results/view-group-weeks.js", {v => 2}),
+      $c->uri_for("/static/script/fixtures-results/view-group-weeks-ordering.js", {v => 2}),
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
@@ -1411,7 +1408,7 @@ sub view_week :Private {
   
   # Set up the template to use
   $c->stash({
-    template => "html/fixtures-results/view-group-divisions.ttkt",
+    template => "html/fixtures-results/view-group-competitions.ttkt",
     view_online_display => $online_display,
     view_online_link => 1,
     matches => $matches,
@@ -1427,7 +1424,7 @@ sub view_week :Private {
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
-      $c->uri_for("/static/script/fixtures-results/view-group-divisions.js", {v => 2}),
+      $c->uri_for("/static/script/fixtures-results/view-group-competitions.js"),
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
@@ -1589,7 +1586,7 @@ sub view_day :Private {
   
   # Set up the template to use
   $c->stash({
-    template => "html/fixtures-results/view-group-divisions-no-date.ttkt",
+    template => "html/fixtures-results/view-group-competitions-no-date.ttkt",
     view_online_display => $online_display,
     view_online_link => 1,
     matches => $matches,
@@ -1605,7 +1602,7 @@ sub view_day :Private {
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
-      $c->uri_for("/static/script/fixtures-results/view-group-divisions-no-date.js", {v => 2}),
+      $c->uri_for("/static/script/fixtures-results/view-group-competitions-no-date.js"),
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),

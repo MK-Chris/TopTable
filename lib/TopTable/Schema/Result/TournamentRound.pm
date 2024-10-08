@@ -500,7 +500,11 @@ sub find_group_by_id_or_url_key {
     return $obj;
   } else {
     # Not numeric, so it can't be the ID - just check the URL key
-    return $self->find_related("tournament_round_groups", {url_key => $group_id});
+    return $self->find_related("tournament_round_groups", {
+      url_key => $group_id
+    }, {
+      prefetch => [qw( fixtures_grid )]
+    });
   }
 }
 
@@ -713,9 +717,7 @@ sub create_or_edit_group {
         $member ||= undef;
         
         if ( defined($member) ) {
-          $logger->("debug", sprintf("look for %s: %s", $member_class, $member));
           $member = $schema->resultset($member_class)->find_id_or_url_key($member) unless blessed($member) and $member->isa("TopTable::Schema::Result::$member_class");
-          $logger->("debug", sprintf("found: %s (%s)", defined($member), $member));
           
           # Set the looked up value's ID back to the array (even if undef, the grep below will pick it out)
           # We are using ID here because we need to check it against existing lists / arrays and Set::Object

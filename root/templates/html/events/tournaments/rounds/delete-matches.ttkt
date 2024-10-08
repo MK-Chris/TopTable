@@ -1,0 +1,6 @@
+<div id="form">
+[% c.maketext("events.tournaments.rounds.delete-matches.explain", matches.count, obj_name) %]
+<form method="post" action="[% form_action %]">
+<input type="submit" name="Submit" value="[% c.maketext("form.button.delete") %]" />
+</form>
+</div>

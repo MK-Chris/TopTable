@@ -20,11 +20,11 @@ $(document).ready(function() {
       "dataSrc": 0
     },
     "columnDefs": [{
-      // Week beginning, week beginning sortable, date sortable, division rank - not visible, just used for sorting and / or grouping
+      // Week beginning (grouped by), week beginning sortable, date sortable, competition sort
       "visible": false,
       "targets": [0, 1, 3, 5]
     }, {
-      // Week beginning
+      // Week beginning - order by data in column 0
       "orderData": 1,
       "targets": 0
     }, {
@@ -33,7 +33,7 @@ $(document).ready(function() {
       "responsivePriority": 4,
       "targets": 2
     }, {
-      // Division
+      // Competition
       "orderData": 5,
       "responsivePriority": 5,
       "targets": 4

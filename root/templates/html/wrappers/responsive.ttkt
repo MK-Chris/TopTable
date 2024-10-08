@@ -84,8 +84,8 @@ END;
 
 <title>[% page_title %]</title>
 
-<link rel="stylesheet" href="[% c.uri_for('/static/css/main.css') %]?v14" type="text/css" media="screen" />
-<link rel="stylesheet" href="[% c.uri_for('/static/css/main-print.css') %]?v14" type="text/css" media="print" />
+<link rel="stylesheet" href="[% c.uri_for('/static/css/main.css') %]?v15" type="text/css" media="screen" />
+<link rel="stylesheet" href="[% c.uri_for('/static/css/main-print.css') %]?v15" type="text/css" media="print" />
 <link rel="stylesheet" href="[% c.uri_for('/static/css/jqueryui/jquery-ui.min.css') %]" type="text/css" media="screen" />
 <link rel="stylesheet" href="[% c.uri_for('/static/css/jqueryui/jquery-ui.structure.min.css') %]" type="text/css" media="screen" />
 <link rel="stylesheet" href="[% c.uri_for('/static/css/jqueryui/jquery-ui.theme.min.css') %]" type="text/css" media="screen" />
@@ -772,35 +772,82 @@ show_msgs("info");
 INCLUDE "html/generic/breadcrumbs.ttkt";
 
 # Titles / subtitles
-IF subtitle1;
--%]
-<h2>[%-
-subtitle1;
-IF title_links.size;
-  FOREACH title_link IN title_links;
-    SET text = title_link.text;
-    IF title_link.image_uri;
-      SET link = ' <a class="admin-links" href="' _ title_link.link_uri _ '"><img src="' _ title_link.image_uri _ '" title="' _ text _ '" alt="' _ text _ '" /></a>';
-    ELSE;
-      SET link = ' <a class="admin-links" href="' _ title_link.link_uri _ '">' _ text _ '</a>';
-    END;
-    link;
+MACRO show_headings(heading_level) BLOCK;
+  SWITCH heading_level;
+    CASE 1;
+      SET heading_text = subtitle1;
+      SET heading_uri = subtitle1_uri;
+      
+      IF title_links.size;
+        SET title_link_text = "";
+        FOREACH title_link IN title_links;
+          IF title_link.image_uri;
+            SET title_link_text = title_link_text _ ' <a class="admin-links" href="' _ title_link.link_uri _ '"><img src="' _ title_link.image_uri _ '" title="' _ title_link.text _ '" alt="' _ title_link.text _ '" /></a>';
+          ELSE;
+            SET title_link_text = title_link_text _ ' <a class="admin-links" href="' _ title_link.link_uri _ '">' _ title_link.text _ '</a>';
+          END;
+        END;
+      END;
+    CASE 2;
+      SET heading_text = subtitle2;
+      SET heading_uri = subtitle2_uri;
+      SET title_link_text = "";
+    CASE 3;
+      SET heading_text = subtitle3;
+      SET heading_uri = subtitle3_uri;
+      SET title_link_text = "";
+    CASE 4;
+      SET heading_text = subtitle4;
+      SET heading_uri = subtitle4_uri;
+      SET title_link_text = "";
+    CASE 5;
+      SET heading_text = subtitle5;
+      SET heading_uri = subtitle5_uri;
+      SET title_link_text = "";
   END;
+  
+  # Now use heading level for the <h[x]> tag - we don't use <h1>
+  #SET heading_level = heading_level + 1;
+  
+  # If we have heading text at this level, build it
+  IF heading_text;
+    # Opening <h[x]> tag
+    SET heading = "<h" _ heading_level _ ">";
+    
+    # Check if we have a link
+    IF heading_uri.link;
+      # Check if the link has a title
+      IF heading_uri.title;
+        # Add the title with the HTML attrib ready
+        SET heading_title = ' title="' _ heading_uri.title _ '"';
+      ELSE;
+        # No link title
+        SET heading_title = "";
+      END;
+      
+      # Place the link into the h tag with the heading text
+      SET heading = heading _ '<a href="' _ heading_uri.link _ '"' _ heading_title _ '>' _ heading_text _ '</a>';
+    ELSE;
+      # No link - place into the heading with no anchor tag
+      SET heading = heading _ heading_text;
+    END;
+    
+    # Set the end of the heading, including any title links (edit / delete / any other icons that come after) and the closing </h[x]> tag
+    SET heading = heading _ title_link_text _ "</h" _ heading_level _ ">";
+  ELSE;
+    SET heading = "";
+  END;
+  
+  heading;
 END;
--%]
-</h2>
-[%
-END;
-IF subtitle2;
--%]
-<h3>[% subtitle2 -%]</h3>
-[%
-END;
-IF subtitle3;
--%]
-<h4>[% subtitle3 %]</h4>
-[%
-END;
+
+show_headings(1);
+show_headings(2);
+show_headings(3);
+show_headings(4);
+show_headings(5);
+show_headings(6);
+
 # This is where TT will stick all of your template's contents.
 content;
 -%]

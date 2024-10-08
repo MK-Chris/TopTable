@@ -437,13 +437,13 @@ sub can_set_grid_positions {
   return 1 unless $self->matches->count;
 }
 
-=head2 can_create_fixtures
+=head2 can_create_matches
 
 Return 1 if fixtures can be created (either the grid positions are set, or there is no grid and fixtures are manually set, and there are no matches for this round already).
 
 =cut
 
-sub can_create_fixtures {
+sub can_create_matches {
   my $self = shift;
   
   if ( defined($self->fixtures_grid) ) {
@@ -456,13 +456,76 @@ sub can_create_fixtures {
   return $self->matches->count ? 0 : 1;
 }
 
-=head2 can_delete_fixtures
+=head2 can_delete
+
+Check if a group can be deleted.  It can only be deleted if it's in the current season and there are no matches attached to it.
+
+=cut
+
+sub can_delete {
+  my $self = shift;
+  my $season = $self->tournament_round->tournament->event_season->season;
+  
+  # Can't delete if the season is complete
+  return 0 if $season->complete;
+  
+  # Can delete if we have matches, otherwise we can't.
+  return $self->matches->count ? 0 : 1;
+}
+
+=head2 check_and_delete
+
+Process the deletion of the group; checks that we're able to do this first (via can_delete).
+
+=cut
+
+sub check_and_delete {
+  my $self = shift;
+  my ( $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  my $response = {
+    errors => [],
+    warnings => [],
+    info => [],
+    success => [],
+    completed => 0,
+  };
+  
+  # Get the name for messaging
+  my $name = $self->name;
+  
+  # Check we can delete
+  unless ( $self->can_delete ) {
+    push(@{$response->{errors}}, $lang->maketext("events.tournaments.rounds.groups.delete.error.cannot-delete", $name));
+    return $response;
+  }
+  
+  # Delete
+  my $ok = $self->delete;
+  
+  # Error if the delete was unsuccessful
+  if ( $ok ) {
+    $response->{completed} = 1;
+    push(@{$response->{success}}, $lang->maketext("admin.forms.success", $name, $lang->maketext("admin.message.deleted")));
+  } else {
+    push(@{$response->{errors}}, $lang->maketext("admin.delete.error.database", $name));
+  }
+  
+  return $response;
+}
+
+=head2 can_delete_matches
 
 Return 1 if fixtures can be created (either the grid positions are set, or there is no grid and fixtures are manually set, and there are no matches for this round already).
 
 =cut
 
-sub can_delete_fixtures {
+sub can_delete_matches {
   my $self = shift;
   
   my $matches = $self->matches;
@@ -472,7 +535,29 @@ sub can_delete_fixtures {
   
   # Now check if we have matches
   # If we have matches that have been started, cancelled or completed, we can't delete them; if we don't, we can
-  return $self->matches->search([{complete => 1}, {started => 1}, {cancelled => 1}]) ? 0 : 1;
+  return $self->matches->search([{complete => 1}, {started => 1}, {cancelled => 1}])->count ? 0 : 1;
+}
+
+=head2 get_entrants
+
+Retrieve entrants, in no particular order.
+
+=cut
+
+sub get_entrants {
+  my $self = shift;
+  my $member_rel;
+  my $entry_type = $self->tournament_round->tournament->entry_type->id;
+  
+  if ( $entry_type eq "team" ) {
+    $member_rel = "tournament_group_teams";
+  } elsif ( $entry_type eq "singles" ) {
+    $member_rel = "tournament_group_people";
+  } elsif ( $entry_type eq "doubles" ) {
+    $member_rel = "tournament_group_doubles";
+  }
+  
+  return $self->search_related($member_rel);
 }
 
 =head2 get_entrants_in_table_order
@@ -802,6 +887,93 @@ sub set_grid_positions {
     
     push(@{$response->{success}}, $lang->maketext("events.tournaments.rounds.groups.fixtures-grids.form.teams.success"));
     $response->{completed} = 1;
+  }
+  
+  return $response;
+}
+
+=head2 create_matches
+
+Create the matches for this group.  How we do this depends on whether the group has a grid assigned or not.
+
+=cut
+
+sub create_matches {
+  my $self = shift;
+  my ( $params ) = @_;
+  my $grid = $self->fixtures_grid;
+  my $response;
+  
+  if ( defined($grid) ) {
+    $response = $grid->create_matches($self, $params);
+  } else {
+    # Do the manual match creation
+  }
+}
+
+=head2 delete_matches
+
+
+
+=cut
+
+sub delete_matches {
+  my $self = shift;
+  my ( $params ) = @_;
+  
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  
+  # Grab the fields
+  my $response = {
+    errors => [],
+    warnings => [],
+    info => [],
+    success => [],
+    fields => {},
+    completed => 0,
+    can_complete => 1, # Default to 1, set to 0 if we hit certain errors.  This is so the application calling this routine knows not to return back to the form if we can't actually do it anyway
+  };
+  
+  if ( $self->can_delete_matches ) {
+    my @rows_to_delete = $self->matches;
+    
+    # These arrays will be used in event log creation
+    my ( @match_names, @match_ids );
+    
+    if ( scalar( @rows_to_delete ) ) {
+      foreach my $match ( @rows_to_delete ) {
+        push(@match_ids, {
+          home_team => undef,
+          away_team => undef,
+          scheduled_date => undef,
+        });
+        
+        push(@match_names, sprintf("%s %s v %s %s (%s)", $match->team_season_home_team_season->club_season->short_name, $match->team_season_home_team_season->name, $match->team_season_away_team_season->club_season->short_name, $match->team_season_away_team_season->name, $match->scheduled_date->dmy("/")));
+      }
+      
+      my $ok = $self->matches->delete;
+      
+      if ( $ok ) {
+        # Deleted ok
+        $response->{match_names} = \@match_names;
+        $response->{match_ids} = \@match_ids;
+        $response->{rows} = $ok;
+        $response->{completed} = 1;
+        push(@{$response->{success}}, $lang->maketext("events.tournaments.rounds.groups.delete-fixtures.success", $ok, $self->name));
+      } else {
+        # Not okay, log an error
+        push(@{$response->{errors}}, $lang->maktext("events.tournaments.rounds.groups.error.delete-failed"));
+      }
+    } else {
+      $response->{rows} = 0;
+    }
+  } else {
+    push(@{$response->{errors}}, $lang->maketext("events.tournaments.rounds.groups.delete-fixtures.error.cant-delete", $self->name));
   }
   
   return $response;

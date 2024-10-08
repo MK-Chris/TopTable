@@ -190,6 +190,7 @@ sub match_counts_by_division {
   
   return $class->search({
     "season.id" => $season->id,
+    "division.id" => {"!=" => undef},
   }, {
     select => [{
       count => "me.scheduled_date"
@@ -218,14 +219,15 @@ sub matches_for_team {
   
   # These attributes are constant
   my $attributes = {
-    prefetch => [{
+    prefetch => [qw( venue ), {
       team_season_home_team_season => [ qw( team ), {club_season => "club"}],
-    }, {
       team_season_away_team_season => [ qw( team ), {club_season => "club"}],
-    }, {
-      division_season => "division"
-    }, "venue"],
-    order_by =>  {
+      division_season => [qw( division )],
+      tournament_round => {
+        tournament => {event_season => [qw( event )]},
+      },
+    }],
+    order_by => {
       -asc => [qw( division.rank scheduled_date )]
     }
   };
@@ -276,7 +278,7 @@ sub matches_in_division {
       division_season => "division"
     }],
     order_by =>  {
-      -asc => [ qw( division.rank scheduled_date club_season.short_name team_season_home_team_season.name )]
+      -asc => [ qw( division.rank played_date club_season.short_name team_season_home_team_season.name )]
     }
   };
   
@@ -333,7 +335,6 @@ sub matches_in_date_range {
   
   return $class->search({
     "me.season" => $season->id,
-    "division_season.season" => $season->id,
     "team_season_home_team_season.season" => $season->id,
     "club_season.season" => $season->id,
     "team_season_away_team_season.season" => $season->id,
@@ -382,7 +383,6 @@ sub incomplete_matches {
   return $class->search([{
     "me.season" => $season->id,
     "scheduled_week.season" => $season->id,
-    "division_season.season" => $season->id,
     "team_season_home_team_season.season" => $season->id,
     "club_season.season" => $season->id,
     "team_season_away_team_season.season" => $season->id,
@@ -396,7 +396,6 @@ sub incomplete_matches {
   }, {
     "me.season" => $season->id,
     "scheduled_week.season" => $season->id,
-    "division_season.season" => $season->id,
     "team_season_home_team_season.season" => $season->id,
     "club_season.season" => $season->id,
     "team_season_away_team_season.season" => $season->id,
@@ -447,13 +446,35 @@ sub matches_in_week {
   
   return $class->search({
     "me.season" => $season->id,
-    "division_season.season" => $season->id,
     "team_season_home_team_season.season" => $season->id,
     "club_season.season" => $season->id,
     "team_season_away_team_season.season" => $season->id,
     "club_season_2.season" => $season->id,
     "scheduled_week.id" => $week->id,
   }, $attrib);
+}
+
+=head2 next_match_date
+
+Get the next date with matches.
+
+=cut
+
+sub next_match_date {
+  my $class = shift;
+  my $schema = $class->result_source->schema;
+  my $dtf = $schema->storage->datetime_parser;
+  
+  my $date = $class->search({
+    played_date => {">=" => DateTime->now->ymd}
+  }, {
+    columns => [{
+      date => {min => "played_date"}
+    }],
+  })->single->get_column("date");
+  
+  return $dtf->parse_date($date) if defined($date);
+  return undef;
 }
 
 =head2 matches_on_date
@@ -496,7 +517,6 @@ sub matches_on_date {
   
   return $class->search({
     "me.season" => $season->id,
-    "division_season.season" => $season->id,
     "team_season_home_team_season.season" => $season->id,
     "club_season.season" => $season->id,
     "team_season_away_team_season.season" => $season->id,
@@ -546,7 +566,7 @@ sub matches_at_venue {
   };
   
   # If we have a page number or a results_per_page parameter defined, we have to ensure both are provided and sane
-  if ( defined( $results_per_page ) or defined( $page_number ) ) {
+  if ( defined($results_per_page) or defined($page_number) ) {
     $results_per_page = 25 if !defined($results_per_page) or $results_per_page !~ m/^\d+$/;
     $page_number = 1 if !defined($page_number) or $page_number !~ m/^\d+$/;
     
@@ -557,7 +577,6 @@ sub matches_at_venue {
   if ( $season ) {
     $where = {
       "me.season" => $season->id,
-      "division_season.season" => $season->id,
       "team_season_home_team_season.season" => $season->id,
       "club_season.season" => $season->id,
       "team_season_away_team_season.season" => $season->id,
@@ -569,6 +588,34 @@ sub matches_at_venue {
   }
   
   return $class->search($where, $attrib);
+}
+
+=head2 competitions
+
+Get the competition count for a given resultset of team matches.
+
+=cut
+
+sub competitions {
+  my $class = shift;
+  my ( $params ) = @_;
+  my $exclude_league = $params->{exclude_league} || 0;
+  my $prefetch = $params->{prefetch} || 0;
+  
+  # Exclude league matches if we need
+  my %where = $exclude_league ? (tournament_round => {"!=" => undef}) : ();
+  
+  # Only prefetch if we want the extra data, otherwise join
+  my $relation_key = $prefetch ? "prefetch" : "join";
+  
+  return $class->search(\%where, {
+    $relation_key => {
+      tournament_round => {
+        tournament => {event_season => [qw( event )]},
+      },
+    },
+    group_by => [qw( event.id )],
+  });
 }
 
 =head2 get_match_by_ids

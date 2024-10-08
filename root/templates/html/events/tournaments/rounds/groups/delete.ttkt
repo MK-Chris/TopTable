@@ -1,0 +1,7 @@
+<form method="post" action="[% c.uri_for_action("/events/group_do_delete", [event.url_key, round.url_key, group.url_key]) %]">
+<input type="submit" name="Submit" value="[% c.maketext("form.button.delete") %]" />
+</form>
+
+[%
+INCLUDE "html/events/tournaments/rounds/groups/view.ttkt";
+%]

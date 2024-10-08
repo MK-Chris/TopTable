@@ -698,11 +698,33 @@ This just forwards to a get_round function that's common to the specific and cur
 
 sub rounds_current_season :Chained("base_current_season") :PathPart("rounds") :CaptureArgs(1) {
   my ( $self, $c, $round_id ) = @_;
+  my $event = $c->stash->{event};
+  my $round = $c->stash->{round};
+  my $enc_name = $c->stash->{enc_name};
+  
+  $c->stash({
+    subtitle1 => $enc_name,
+    subtitle1_uri => {link => $c->uri_for_action("/events/view_current_season", [$event->url_key]), title => $c->maketext("title.link.text.view-event", $enc_name)},
+  });
+  
   $c->forward("rounds", [$round_id]);
 }
 
 sub rounds_specific_season :Chained("base_specific_season") :PathPart("rounds") :CaptureArgs(1) {
   my ( $self, $c, $round_id ) = @_;
+  my $event = $c->stash->{event};
+  my $season = $c->stash->{season};
+  my $round = $c->stash->{round};
+  my $enc_name = $c->stash->{enc_name};
+  my $enc_season_name = $c->stash->{enc_season_name};
+  
+  $c->stash({
+    subtitle1 => $enc_name,
+    subtitle1_uri => {link => $c->uri_for_action("/events/view_specific_season", [$event->url_key, $season->url_key]), title => $c->maketext("title.link.text.view-event-specific-season", $enc_name, $enc_season_name)},
+    subtitle2 => $round->name,
+    subtitle3 => $enc_season_name,
+  });
+  
   $c->forward("rounds", [$round_id]);
 }
 
@@ -726,52 +748,37 @@ sub rounds :Private {
     return;
   }
   
-  $c->stash({round => $round});
+  $c->stash({
+    subtitle2 => $round->name,
+    round => $round,
+  });
 }
 
-=head2 view_round_current_season, view_round_specific_season
+=head2 round_view_current_season, round_view_specific_season
 
 Page to view the rounds for the given season.
 
-This just forwards to a view_rounds private function that's common to the specific and current season routines and shows the page for viewing those rounds.
+This just forwards to a round_view's private function that's common to the specific and current season routines and shows the page for viewing those rounds.
 
 =cut
 
-sub view_round_current_season :Chained("rounds_current_season") :PathPart("") :Args(0) {
+sub round_view_current_season :Chained("rounds_current_season") :PathPart("") :Args(0) {
   my ( $self, $c ) = @_;
-  my $enc_name = $c->stash->{enc_name};
-  my $round = $c->stash->{round};
-  
-  $c->stash({
-    subtitle1 => $round->name,
-    subtitle2 => $enc_name,
-  });
-  
-  $c->forward("view_round");
+  $c->forward("round_view");
 }
 
-sub view_round_specific_season :Chained("rounds_specific_season") :PathPart("") :Args(0) {
+sub round_view_specific_season :Chained("rounds_specific_season") :PathPart("") :Args(0) {
   my ( $self, $c ) = @_;
-  my $enc_name = $c->stash->{enc_name};
-  my $round = $c->stash->{round};
-  my $enc_season_name = $c->stash->{enc_season_name};
-  
-  $c->stash({
-    subtitle1 => $round->name,
-    subtitle2 => $enc_name,
-    subtitle3 => $enc_season_name,
-  });
-  
-  $c->forward("view_round");
+  $c->forward("round_view");
 }
 
-=head2 view_round
+=head2 round_view
 
 Show a page to view the round.
 
 =cut
 
-sub view_round :Private {
+sub round_view :Private {
   my ( $self, $c ) = @_;
   my $event = $c->stash->{event};
   my $season = $c->stash->{season};
@@ -794,8 +801,8 @@ sub view_round :Private {
   
   # Set up the canonical URI
   my $canonical_uri = ( $season->complete )
-    ? $c->uri_for_action("/events/view_round_current_season", [$event->url_key, $season->url_key, $round->url_key])
-    : $c->uri_for_action("/events/view_round_current_season", [$event->url_key, $round->url_key]);
+    ? $c->uri_for_action("/events/round_view_specific_season", [$event->url_key, $season->url_key, $round->url_key])
+    : $c->uri_for_action("/events/round_view_current_season", [$event->url_key, $round->url_key]);
   
   $c->stash({canonical_uri => $canonical_uri});
   
@@ -913,11 +920,37 @@ This just forwards to a groups function that's common to the specific and curren
 
 sub groups_current_season :Chained("rounds_current_season") :PathPart("groups") :CaptureArgs(1) {
   my ( $self, $c, $group_id ) = @_;
+  my $event = $c->stash->{event};
+  my $round = $c->stash->{round};
+  my $enc_name = $c->stash->{enc_name};
+  
+  # Setup the round view link
+  $c->stash({
+    subtitle2_uri => {
+      link => $c->uri_for_action("/events/round_view_current_season", [$event->url_key, $round->url_key]),
+      title => $c->maketext("title.link.text.view-event-round", $round->name, $enc_name),
+    },
+  });
+  
   $c->forward("groups", [$group_id]);
 }
 
 sub groups_specific_season :Chained("rounds_specific_season") :PathPart("groups") :CaptureArgs(1) {
   my ( $self, $c, $group_id ) = @_;
+  my $event = $c->stash->{event};
+  my $season = $c->stash->{season};
+  my $round = $c->stash->{round};
+  my $enc_name = $c->stash->{enc_name};
+  my $enc_season_name = $c->stash->{enc_season_name};
+  
+  # Setup the round view link
+  $c->stash({
+    subtitle2_uri => {
+      link => $c->uri_for_action("/events/round_view_current_season", [$event->url_key, $round->url_key]),
+      title => $c->maketext("title.link.text.view-event-round-specific-season", $round->name, $enc_name, $enc_season_name),
+    },
+  });
+  
   $c->forward("groups", [$group_id]);
 }
 
@@ -945,25 +978,25 @@ sub groups :Private {
   $c->stash({group => $group});
 }
 
-=head2 view_group_current_season, view_group_specific_season
+=head2 group_view_current_season, group_view_specific_season
 
 Page to view the rounds for the given season.
 
-This just forwards to a view_rounds private function that's common to the specific and current season routines and shows the page for viewing those rounds.
+This just forwards to a group_view's private function that's common to the specific and current season routines and shows the page for viewing those rounds.
 
 =cut
 
-sub view_group_current_season :Chained("groups_current_season") :PathPart("") :Args(0) {
+sub group_view_current_season :Chained("groups_current_season") :PathPart("") :Args(0) {
   my ( $self, $c ) = @_;
-  $c->forward("view_group");
+  $c->forward("group_view");
 }
 
-sub view_group_specific_season :Chained("groups_specific_season") :PathPart("") :Args(0) {
+sub group_view_specific_season :Chained("groups_specific_season") :PathPart("") :Args(0) {
   my ( $self, $c ) = @_;
-  $c->forward("view_group");
+  $c->forward("group_view");
 }
 
-sub view_group :Private {
+sub group_view :Private {
   my ( $self, $c ) = @_;
   my $event = $c->stash->{event};
   my $season = $c->stash->{season};
@@ -978,7 +1011,7 @@ sub view_group :Private {
   my @title_links = ();
   
   # Push edit link if we are authorised
-  if ( $c->stash->{authorisation}{event_edit} ) {
+  if ( $c->stash->{authorisation}{event_edit} and !$c->stash->{delete_screen} ) {
     push(@title_links, {
       image_uri => $c->uri_for("/static/images/icons/0018-Pencil-icon-32.png"),
       text => $c->maketext("admin.edit-object", $enc_name),
@@ -995,19 +1028,19 @@ sub view_group :Private {
       image_uri => $c->uri_for("/static/images/icons/fixtures-32.png"),
       text => $c->maketext("admin.fixtures-grid.create-fixtures", $enc_name),
       link_uri => $c->uri_for_action("/events/group_create_matches", [$event->url_key, $round->url_key, $group->url_key]),
-    }) if $group->can_create_fixtures;
+    }) if $group->can_create_matches;
     
     push(@title_links, {
       image_uri => $c->uri_for("/static/images/icons/fixturesdel-32.png"),
       text => $c->maketext("admin.fixtures-grid.delete-fixtures", $enc_name),
       link_uri => $c->uri_for_action("/events/group_delete_matches", [$event->url_key, $round->url_key, $group->url_key]),
-    }) if $group->can_delete_fixtures;
+    }) if $group->can_delete_matches;
   }
   
   # Set up the canonical URI
   my $canonical_uri = ( $season->complete )
-    ? $c->uri_for_action("/events/view_group_specific_season", [$event->url_key, $season->url_key, $round->url_key, $group->url_key])
-    : $c->uri_for_action("/events/view_group_current_season", [$event->url_key, $round->url_key, $group->url_key]);
+    ? $c->uri_for_action("/events/group_view_specific_season", [$event->url_key, $season->url_key, $round->url_key, $group->url_key])
+    : $c->uri_for_action("/events/group_view_current_season", [$event->url_key, $round->url_key, $group->url_key]);
   
   $c->stash({canonical_uri => $canonical_uri});
   
@@ -1106,6 +1139,51 @@ sub group_edit :Chained("groups_current_season") :PathPart("edit") :Args(0) {
     return;
   }
   $c->detach("prepare_form_group", [qw( edit )]);
+}
+
+=head2 group_delete
+
+Show the form to delete a group in the first round of a competition.
+
+We only need to chain this to the current season, as we don't allow deletion of groups from previous seasons.
+
+=cut
+
+sub group_delete :Chained("groups_current_season") :PathPart("delete") :Args(0) {
+  my ( $self, $c ) = @_;
+  my $event = $c->stash->{event};
+  my $tournament = $c->stash->{event_season}->event_detail;
+  my $round = $c->stash->{round};
+  my $group = $c->stash->{group};
+  
+  # Check that we are authorised to edit events
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.edit-events"), 1]);
+  
+  if ( !$group->can_delete ) {
+    $c->response->redirect( $c->uri_for_action("/events/group_view_current_season", [$event->url_key, $round->url_key, $group->url_key],
+                                {mid => $c->set_status_msg({error => $c->maketext("events.tournaments.rounds.groups.delete.error.cannot-delete", $group->name)})}));
+    $c->detach;
+    return;
+  }
+  
+  # We need to run the view_current_season routine to stash some display values.
+  # Before that, we stash a value to tell that routine that we're actually showing
+  # the delete screen, so it doesn't forward to view_finalise, which we don't need
+  $c->stash->{delete_screen} = 1;
+  $c->forward("view_current_season");
+  
+  $c->stash({
+    subtitle5 => $c->maketext("admin.delete"),
+    template => "html/events/tournaments/rounds/groups/delete.ttkt",
+    view_online_display => sprintf("Deleting %s", $group->name),
+    view_online_link => 0,
+  });
+  
+  # Push the breadcrumbs links
+  push(@{$c->stash->{breadcrumbs}}, {
+    path => $c->uri_for_action("/events/group_delete", [$event->url_key, $round->url_key, $group->url_key]),
+    label => $c->maketext("admin.delete"),
+  });
 }
 
 =head2 prepare_form_group
@@ -1240,7 +1318,7 @@ sub group_do_create :Chained("rounds_current_season") :PathPart("groups/do-creat
 
 =head2 group_do_edit
 
-Process the form to create a group in a group stage of a competition.
+Show the form to create a group in a group stage of a competition.
 
 We only need to chain this to the current season, as we don't allow editing of rounds from previous seasons.
 
@@ -1263,6 +1341,52 @@ sub group_do_edit :Chained("rounds_current_season") :PathPart("groups/do-edit") 
   
   # Forward to the create / edit routine
   $c->detach("process_form", [qw( group edit )]);
+}
+
+=head2 group_do_delete
+
+Process the form to create a group in a group stage of a competition.
+
+We only need to chain this to the current season, as we don't allow editing of rounds from previous seasons.
+
+=cut
+
+sub group_do_delete :Chained("groups_current_season") :PathPart("do-delete") :Args(0) {
+  my ( $self, $c ) = @_;
+  my $event = $c->stash->{event};
+  my $tournament = $c->stash->{event_season}->event_detail;
+  my $round = $c->stash->{round};
+  my $group = $c->stash->{group};
+  
+  # Check that we are authorised to edit events
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.edit-events"), 1]);
+  
+  my $name = $group->name;
+  my $response = $group->check_and_delete;
+  
+  # Set the status messages we need to show on redirect
+  my @errors = @{$response->{errors}};
+  my @warnings = @{$response->{warnings}};
+  my @info = @{$response->{info}};
+  my @success = @{$response->{success}};
+  my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});
+  my $redirect_uri;
+  
+  if ( $response->{completed} ) {
+    # Was completed, display the list page
+    $redirect_uri = $c->uri_for_action("/events/round_view_current_season", [$event->url_key, $round->url_key], {mid => $mid});
+    
+    # Completed, so we log an event
+    $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["group", "delete", {id => undef}, $name]);
+  } else {
+    # Not complete
+    $redirect_uri = $c->uri_for_action("/events/group_view_current_season", [$event->url_key, $round->url_key, $group->url_key], {mid => $mid});
+  }
+  
+  # Now actually do the redirection
+  $c->response->redirect($redirect_uri);
+  $c->detach;
+  return;
 }
 
 =head2 group_grid_positions
@@ -1290,7 +1414,7 @@ sub group_grid_positions :Chained("groups_current_season") :PathPart("grid-posit
   # Check the season hasn't had matches created already
   if ( $group->matches->count ) {
     # Error, matches set already
-    $c->response->redirect($c->uri_for_action("/events/view_group_current_season", [$event->url_key, $round->url_key, $group->url_key],
+    $c->response->redirect($c->uri_for_action("/events/group_view_current_season", [$event->url_key, $round->url_key, $group->url_key],
                                 {mid => $c->set_status_msg({error => $c->maketext("events.tournaments.rounds.groups.teams.error.matches-already-set")})}));
     $c->detach;
     return;
@@ -1298,7 +1422,7 @@ sub group_grid_positions :Chained("groups_current_season") :PathPart("grid-posit
   
   if ( !defined($group->fixtures_grid) ) {
     # Error, no grid for this group
-    $c->response->redirect($c->uri_for_action("/events/view_group_current_season", [$event->url_key, $round->url_key, $group->url_key],
+    $c->response->redirect($c->uri_for_action("/events/group_view_current_season", [$event->url_key, $round->url_key, $group->url_key],
                                 {mid => $c->set_status_msg({error => $c->maketext("events.tournaments.rounds.groups.teams.error.no-grid-assigned")})}));
     $c->detach;
     return;
@@ -1357,6 +1481,82 @@ Show the form to create the matches for a group.
 
 sub group_create_matches :Chained("groups_current_season") :PathPart("create-matches") {
   my ( $self, $c ) = @_;
+  my $season = $c->stash->{season};
+  my $event = $c->stash->{event};
+  my $tournament = $c->stash->{event_detail};
+  my $entry_type = $tournament->entry_type->id;
+  my $round = $c->stash->{round};
+  my $group = $c->stash->{group};
+  
+  # Check that we are authorised to edit events
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.edit-events"), 1]);
+  
+  # Check we're ready to create fixtures
+  if ( !$group->can_create_matches ) {
+    # Error, can't create fixtures
+    my $msg = defined($group->fixtures_grid)
+      ? $c->maketext("events.tournaments.rounds.groups.create-fixtures.error.grid-positions-not-set")
+      : $c->maketext("events.tournaments.rounds.groups.create-fixtures.error.matches-already-exist");
+    
+    $c->response->redirect($c->uri_for_action("/events/group_view_current_season", [$event->url_key, $round->url_key, $group->url_key],
+                                {mid => $c->set_status_msg({error => $msg})}));
+    $c->detach;
+    return;
+  }
+  
+  # Don't cache this page.
+  $c->response->header("Cache-Control" => "no-cache, no-store, must-revalidate");
+  $c->response->header("Pragma" => "no-cache");
+  $c->response->header("Expires" => 0);
+  
+  # Stash the bits we need that don't care if there's a grid or not
+  $c->stash({
+    subtitle2 => $round->name,
+    subtitle3 => $group->name,
+    subtitle4 => $c->maketext("fixtures-grids.create-fixtures"),
+    form_action => $c->uri_for_action("/events/group_do_create_matches", [$event->url_key, $round->url_key, $group->url_key]),
+  });
+  
+  if ( defined($group->fixtures_grid) ) {
+    # Show the grid form
+    $c->stash({
+      template => "html/fixtures-grids/create-fixtures.ttkt",
+      external_scripts => [
+        $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
+        $c->uri_for("/static/script/standard/chosen.js"),
+        $c->uri_for("/static/script/fixtures-grids/create-fixtures.js"),
+      ],
+      external_styles => [
+        $c->uri_for("/static/css/chosen/chosen.min.css"),
+      ],
+      view_online_display => "Creating fixtures for " . $group->name,
+      view_online_link => 0,
+      grid_weeks => [$group->fixtures_grid->rounds],
+      season_weeks => [$season->weeks],
+    });
+  } else {
+    # Show the grid form
+    $c->stash({
+      template => "html/events/rounds/create-matches.ttkt",
+      external_scripts => [
+        $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
+        $c->uri_for("/static/script/standard/chosen.js"),
+        $c->uri_for("/static/script/fixtures-grids/create-fixtures.js"),
+      ],
+      external_styles => [
+        $c->uri_for("/static/css/chosen/chosen.min.css"),
+      ],
+      view_online_display => "Creating fixtures for " . $group->name,
+      view_online_link => 0,
+      season_weeks => [$season->weeks],
+    });
+  }
+  
+  # Push the breadcrumbs links
+  push(@{$c->stash->{breadcrumbs}}, {
+    path => $c->uri_for_action("/events/group_create_matches", [$event->url_key, $round->url_key, $group->url_key]),
+    label => $c->maketext("events.tournaments.create-matches"),
+  });
 }
 
 =head2 group_do_create_matches
@@ -1367,6 +1567,22 @@ Process the form to create the matches for a group.
 
 sub group_do_create_matches :Chained("groups_current_season") :PathPart("do-create-matches") {
   my ( $self, $c ) = @_;
+  my $event = $c->stash->{event};
+  my $tournament = $c->stash->{event_detail};
+  my $entry_type = $tournament->entry_type->id;
+  my $round = $c->stash->{round};
+  my $group = $c->stash->{group};
+  
+  # Check that we are authorised to edit events
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.edit-events"), 1]);
+  
+  # Don't cache this page.
+  $c->response->header("Cache-Control" => "no-cache, no-store, must-revalidate");
+  $c->response->header("Pragma" => "no-cache");
+  $c->response->header("Expires" => 0);
+  
+  # Forward to the create / edit routine
+  $c->detach("process_form", [qw( group matches )]);
 }
 
 =head2 group_delete_matches
@@ -1377,6 +1593,39 @@ Show the form to delete the matches for a group.
 
 sub group_delete_matches :Chained("groups_current_season") :PathPart("delete-matches") {
   my ( $self, $c ) = @_;
+  my $event = $c->stash->{event};
+  my $tournament = $c->stash->{event_detail};
+  my $entry_type = $tournament->entry_type->id;
+  my $round = $c->stash->{round};
+  my $group = $c->stash->{group};
+  
+  # Check that we are authorised to edit events
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.edit-events"), 1]);
+  
+  unless ( $group->can_delete_matches ) {
+    $c->response->redirect($c->uri_for_action("/events/group_view_current_season", [$event->url_key, $round->url_key, $group->url_key],
+                                {mid => $c->set_status_msg({error => $c->maketext("events.tournaments.rounds.groups.delete-fixtures.error.cant-delete", $group->name)})}));
+    $c->detach;
+    return;
+  }
+  
+  $c->stash({
+    template => "html/events/tournaments/rounds/delete-matches.ttkt",
+    subtitle2 => $round->name,
+    subtitle3 => $group->name,
+    subtitle4 => $c->maketext("fixtures-grids.delete-fixtures"),
+    form_action => $c->uri_for_action("/events/group_do_delete_matches", [$event->url_key, $round->url_key, $group->url_key]),
+    view_online_display => sprintf("Deleting fixtures for grid %s", $group->name),
+    view_online_link => 0,
+    matches => scalar $group->matches,
+    obj_name => $group->name,
+  });
+  
+  # Push the breadcrumbs links
+  push(@{$c->stash->{breadcrumbs}}, {
+    path => $c->uri_for_action("/events/group_delete_matches", [$event->url_key, $round->url_key, $group->url_key]),
+    label => $c->maketext("events.tournaments.delete-matches"),
+  });
 }
 
 =head2 group_do_delete_matches
@@ -1387,6 +1636,38 @@ Process the form to create the matches for a group.
 
 sub group_do_delete_matches :Chained("groups_current_season") :PathPart("do-delete-matches") {
   my ( $self, $c ) = @_;
+  my $event = $c->stash->{event};
+  my $tournament = $c->stash->{event_detail};
+  my $entry_type = $tournament->entry_type->id;
+  my $round = $c->stash->{round};
+  my $group = $c->stash->{group};
+  
+  # Check that we are authorised to edit events
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.edit-events"), 1]);
+  
+  # Don't cache this page.
+  $c->response->header("Cache-Control" => "no-cache, no-store, must-revalidate");
+  $c->response->header("Pragma" => "no-cache");
+  $c->response->header("Expires" => 0);
+  
+  my $response = $group->delete_matches;
+  
+  # Set the status messages we need to show on redirect
+  my @errors = @{$response->{errors}};
+  my @warnings = @{$response->{warnings}};
+  my @info = @{$response->{info}};
+  my @success = @{$response->{success}};
+  my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});
+  my $redirect_uri = $c->uri_for_action("/events/group_view_current_season", [$event->url_key, $round->url_key, $group->url_key], {mid => $mid});
+  
+  
+  # If it was completed, we log an event
+  $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["team-match", "delete", $response->{match_ids}, $response->{match_names}]) if $response->{completed};
+  
+  # Redirect
+  $c->response->redirect($redirect_uri);
+  $c->detach;
+  return;
 }
 
 =head2 view_seasons
@@ -1555,6 +1836,17 @@ sub process_form :Private {
         grid_positions => [split(",", $c->req->params->{grid_positions})],
         map {$_ => $c->req->params->{$_}} @field_names, # All the fields from the form - put this last because otherwise the following elements are seen as part of the map
       });
+    } elsif ( $action eq "matches" ) {
+      # Create matches
+      my %weeks = ();
+      foreach ( keys %{$c->req->params } ) {
+        $weeks{$_} = $c->req->params->{$_} if m/^week_\d{1,2}$/;
+      }
+      
+      $response = $group->create_matches({
+        weeks => \%weeks,
+        logger => sub{ my $level = shift; $c->log->$level( @_ ); }
+      });
     }
   }
   
@@ -1583,15 +1875,20 @@ sub process_form :Private {
       %log_ids = (id => $event->id, round => $group->tournament_round->id, group => $group->id);
       
       # Set the action with a suffix, for event logging
-      $action = "group-$action";
-      $redirect_uri = $c->uri_for_action("/events/view_group_current_season", [$event->url_key, $round->url_key, $group->url_key], {mid => $mid});
+      $action = "group-$action" unless $action eq "matches";
+      $redirect_uri = $c->uri_for_action("/events/group_view_current_season", [$event->url_key, $round->url_key, $group->url_key], {mid => $mid});
     }
     
     # Completed, so we log an event
-    $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["event", $action, \%log_ids, $event->name]);
+    if ( $action eq "matches" ) {
+      # Matches have a match event to log
+      $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["team-match", "create", $response->{match_ids}, $response->{match_names}]);
+    } else {
+      # Everything else is related to the event
+      $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["event", $action, \%log_ids, $event->name]);
+    }
   } else {
     # Not complete - check if we need to redirect back to the create or view page
-    $c->log->debug("action: $action");
     if ( $type eq "event" ) {
       if ( $action eq "create" ) {
         $redirect_uri = $c->uri_for("/events/create", {mid => $mid});
@@ -1605,6 +1902,8 @@ sub process_form :Private {
         $redirect_uri = $c->uri_for_action("/events/group_edit", [$event->url_key, $round->url_key, $group->url_key], {mid => $mid});
       } elsif ( $action eq "positions" ) {
         $redirect_uri = $c->uri_for_action("/events/group_grid_positions", [$event->url_key, $round->url_key, $group->url_key], {mid => $mid});
+      } elsif ( $action eq "matches" ) {
+        $redirect_uri = $c->uri_for_action("/events/group_create_matches", [$event->url_key, $round->url_key, $group->url_key], {mid => $mid});
       }
     }
     

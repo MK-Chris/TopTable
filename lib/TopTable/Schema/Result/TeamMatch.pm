@@ -119,18 +119,11 @@ If NULL, this must be part of a tournament
 
   data_type: 'date'
   datetime_undef_if_invalid: 1
-  is_nullable: 1
+  is_nullable: 0
 
 =head2 start_time
 
   data_type: 'time'
-  is_nullable: 1
-
-=head2 played_week
-
-  data_type: 'integer'
-  extra: {unsigned => 1}
-  is_foreign_key: 1
   is_nullable: 1
 
 =head2 team_match_template
@@ -380,16 +373,9 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
   },
   "played_date",
-  { data_type => "date", datetime_undef_if_invalid => 1, is_nullable => 1 },
+  { data_type => "date", datetime_undef_if_invalid => 1, is_nullable => 0 },
   "start_time",
   { data_type => "time", is_nullable => 1 },
-  "played_week",
-  {
-    data_type => "integer",
-    extra => { unsigned => 1 },
-    is_foreign_key => 1,
-    is_nullable => 1,
-  },
   "team_match_template",
   {
     data_type => "integer",
@@ -679,26 +665,6 @@ __PACKAGE__->belongs_to(
   },
 );
 
-=head2 played_week
-
-Type: belongs_to
-
-Related object: L<TopTable::Schema::Result::FixturesWeek>
-
-=cut
-
-__PACKAGE__->belongs_to(
-  "played_week",
-  "TopTable::Schema::Result::FixturesWeek",
-  { id => "played_week" },
-  {
-    is_deferrable => 1,
-    join_type     => "LEFT",
-    on_delete     => "RESTRICT",
-    on_update     => "RESTRICT",
-  },
-);
-
 =head2 player_of_the_match
 
 Type: belongs_to
@@ -926,8 +892,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-09-29 23:47:56
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:V4cUXIwfEJYENpORrS6lWw
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-10-07 15:46:34
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:kxgltxOI5XYxPW3zQ6I/wQ
 
 use Try::Tiny;
 use DateTime::Duration;
@@ -953,7 +919,7 @@ Returns a hashref with the URL keys in the order we need to use them to generate
 =cut
 
 sub url_keys {
-  my ( $self ) = @_;
+  my $self = shift;
   return [$self->team_season_home_team_season->club_season->club->url_key, $self->team_season_home_team_season->team->url_key, $self->team_season_away_team_season->club_season->club->url_key, $self->team_season_away_team_season->team->url_key, $self->scheduled_date->year, sprintf("%02d", $self->scheduled_date->month), sprintf("%02d", $self->scheduled_date->day)];
 }
 
@@ -964,7 +930,7 @@ Return the match start time.  Uses start_time by default, or scheduled_start_tim
 =cut
 
 sub actual_start_time {
-  my ( $self ) = @_;
+  my $self = shift;
   return defined($self->start_time) ? substr($self->start_time, 0, 5) : substr($self->scheduled_start_time, 0, 5);
 }
 
@@ -975,7 +941,7 @@ Row-level helper method to get the match played date if there is one, or the sch
 =cut
 
 sub actual_date {
-  my ( $self ) = @_;
+  my $self = shift;
   
   if ( defined($self->played_date) ) {
     return $self->played_date;
@@ -991,10 +957,10 @@ Returns a simple true or false value based on whether played_date is defined (an
 =cut
 
 sub rescheduled {
-  my ( $self ) = @_;
+  my $self = shift;
   
-  # Return 1 if played date is defined and different from the scheduled date.
-  return ( defined($self->played_date) and $self->played_date->ymd ne $self->scheduled_date->ymd ) ? 1 : 0;
+  # Return 1 if played date is different from the scheduled date.
+  return $self->played_date->ymd ne $self->scheduled_date->ymd ? 1 : 0;
 }
 
 =head2 players_absent
@@ -1004,7 +970,7 @@ Returns the number of players missing from the match.
 =cut
 
 sub players_absent {
-  my ( $self ) = @_;
+  my $self = shift;
   return $self->search_related("team_match_players", {player_missing => 1})->count;
 }
 
@@ -1015,7 +981,7 @@ Returns the number of home players missing from the match.
 =cut
 
 sub home_players_absent {
-  my ( $self ) = @_;
+  my $self = shift;
   return $self->search_related("team_match_players", {player_missing => 1, location => "home"})->count;
 }
 
@@ -1026,7 +992,7 @@ Returns the number of home players missing from the match.
 =cut
 
 sub away_players_absent {
-  my ( $self ) = @_;
+  my $self = shift;
   return $self->search_related("team_match_players", {player_missing => 1, location => "away"})->count;
 }
 
@@ -1037,7 +1003,7 @@ Checks whether any 'actual_game_number' fields in games for this match differ fr
 =cut
 
 sub games_reordered {
-  my ( $self ) = @_;
+  my $self = shift;
   
   my $reordered_games = $self->search_related("team_match_games", undef, {
     where => {actual_game_number => \'!= scheduled_game_number'},
@@ -1053,7 +1019,7 @@ Retrieve the team season objects for the home and away teams in the season that 
 =cut
 
 sub get_team_seasons {
-  my ( $self ) = @_;
+  my $self = shift;
   my $season = $self->season;
   my $team_seasons = {
     home => $self->team_season_home_team_season,
@@ -1070,7 +1036,8 @@ Validate and update the played date.
 =cut
 
 sub update_played_date {
-  my ( $self, $played_date, $params ) = @_;
+  my $self = shift;
+  my ( $played_date, $params ) = @_;
   # Setup schema / logging
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
@@ -1124,6 +1091,20 @@ sub update_played_date {
   return $response;
 }
 
+=head2 played_week
+
+Return the Monday of the played_date week.
+
+=cut
+
+sub played_week {
+  my $self = shift;
+  my $played_week = $self->played_date->clone;
+  $played_week->subtract(days => ($played_week->day_of_week - 1)) unless $played_week->day_of_week == 1;
+  
+  return $played_week;
+}
+
 =head2 update_venue
 
 Validate and update the venue for a match.
@@ -1131,7 +1112,8 @@ Validate and update the venue for a match.
 =cut
 
 sub update_venue {
-  my ( $self, $venue, $params ) = @_;
+  my $self = shift;
+  my ( $venue, $params ) = @_;
   # Setup schema / logging
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
@@ -1183,7 +1165,8 @@ Updates the playing order (i.e., re-orders the the games within a match from the
 =cut
 
 sub update_playing_order {
-  my ( $self, $params ) = @_;
+  my $self = shift;
+  my ( $params ) = @_;
   # Setup schema / logging
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
@@ -1248,7 +1231,7 @@ Generate the home and away score of the given match based on the game scores.  A
 =cut
 
 sub calculate_match_score {
-  my ( $self ) = @_;
+  my $self = shift;
   my $match_scores = [];
   
   # The first two $home_won and $away_won will hold the score to be put against each game number, so 0 if it hasn't been played.
@@ -1355,7 +1338,7 @@ Check whether a match has started by whether at least one game is marked as comp
 =cut
 
 sub check_match_started {
-  my ( $self ) = @_;
+  my $self = shift;
   
   # Find games in this match that have been completed
   my $complete_games = $self->search_related("team_match_games", {complete => 1})->count;
@@ -1376,7 +1359,7 @@ Check whether a match is complete by whether all of the games are marked complet
 =cut
 
 sub check_match_complete {
-  my ( $self ) = @_;
+  my $self = shift;
   
   # Loop through the current resultset and push into the array of incomplete games if this one is not complete yet
   my $incomplete_games = $self->search_related("team_match_games", {complete => 0})->count;
@@ -1399,7 +1382,8 @@ Takes an optional $location parameter, which can specify whether only home or aw
 =cut
 
 sub eligible_players {
-  my ( $self, $params ) = @_;
+  my $self = shift;
+  my ( $params ) = @_;
   my $location = $params->{location} || undef;
   undef( $location ) if defined( $location ) and $location ne "home" and $location ne "away";
   my ( @home_players, @away_players );
@@ -1464,7 +1448,8 @@ Returns a list of players in the match, along with their 'person' and 'person_se
 =cut
 
 sub players {
-  my ( $self, $params ) = @_;
+  my $self = shift;
+  my ( $params ) = @_;
   my $location = $params->{location} || "home"; # home or away - default to home
   $location = "home" unless $location eq "home" or $location eq "away"; # Sanity check
   my $where = {"person_seasons.season" => $self->season->id};
@@ -1501,7 +1486,8 @@ Validates and then updates the details given in the scorecard.
 =cut
 
 sub update_scorecard {
-  my ( $self, $params ) = @_;
+  my $self = shift;
+  my ( $params ) = @_;
   # Setup schema / logging
   my $logger = $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
@@ -1578,7 +1564,8 @@ Cancels the match, removing any previous scores and players.
 =cut
 
 sub cancel {
-  my ( $self, $params ) = @_;
+  my $self = shift;
+  my ( $params ) = @_;
   # Setup schema / logging
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
@@ -1733,7 +1720,8 @@ Undo a match cancellation, remove the points awarded.
 =cut
 
 sub uncancel {
-  my ( $self, $params ) = @_;
+  my $self = shift;
+  my ( $params ) = @_;
   # Setup schema / logging
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
@@ -1841,7 +1829,8 @@ Return a hash of details containing various results.  If a location is supplied 
 =cut
 
 sub result {
-  my ( $self, $location, $params ) = @_;
+  my $self = shift;
+  my ( $location, $params ) = @_;
   # Setup schema / logging
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
@@ -1925,7 +1914,8 @@ Generate a hashref of data that can be easily manipulated into iCal format.  Tak
 =cut
 
 sub generate_ical_data {
-  my ( $self, $params ) = @_;
+  my $self = shift;
+  my ( $params ) = @_;
   # Setup schema / logging
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
@@ -1992,7 +1982,7 @@ Retrieve the reports for this match (reports is plural because it also retrieves
 =cut
 
 sub get_reports {
-  my ( $self ) = @_;
+  my $self = shift;
   
   return $self->search_related("team_match_reports", undef, {
     prefetch => "author",
@@ -2007,7 +1997,7 @@ Retrieve the original report for this match (useful for getting the author of th
 =cut
 
 sub get_original_report {
-  my ( $self ) = @_;
+  my $self = shift;
   
   return $self->search_related("team_match_reports", undef, {
     prefetch => "author",
@@ -2023,7 +2013,7 @@ Retrieve the original report for this match (useful for getting the author of th
 =cut
 
 sub get_latest_report {
-  my ( $self ) = @_;
+  my $self = shift;
   
   return $self->search_related("team_match_reports", undef, {
     prefetch => "author",
@@ -2039,7 +2029,8 @@ Test whether a match can be reported on.  If a user parameter is not passed, thi
 =cut
 
 sub can_report {
-  my ( $self, $user ) = @_;
+  my $self = shift;
+  my ( $user ) = @_;
   my $season = $self->season;
   
   # Just return false if the season is complete - no one can submit or edit a report in a completed season.
@@ -2106,7 +2097,8 @@ Add a report to the match.
 =cut
 
 sub add_report {
-  my ( $self, $params ) = @_;
+  my $self = shift;
+  my ( $params ) = @_;
   # Setup schema / logging
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.

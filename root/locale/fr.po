@@ -1190,7 +1190,7 @@ msgstr "Calendrier r�p�t�es"
 msgid "fixtures-grids.field.fixtures-repeated-times"
 msgstr "%1 fois"
 
-msgid "fixtures-grids.create-fixtures.legend.assign-weeks"
+msgid "fixtures-grids.create-fixtures.legend.assign-rounds"
 msgstr "Attribuer des num�ros de semaine de la grille � quelques semaines de la saison"
 
 msgid "fixtures-grids.field.week"

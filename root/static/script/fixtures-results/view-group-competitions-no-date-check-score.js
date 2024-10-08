@@ -15,25 +15,21 @@ $(document).ready(function() {
       "dataSrc": 0
     },
     "columnDefs": [{
-      // Division rank, division name - division name invisible because it's grouped
+      // Competition - invisible, as it's grouped
       "visible": false,
-      "targets": [0, 1]
-    }, {
-      // Division name
-      "orderData": 1,
       "targets": 0
     }, {
       // Home team
       "responsivePriority": 1,
-      "targets": 2
+      "targets": 1
     }, {
       // Away team
       "responsivePriority": 2,
-      "targets": 3
+      "targets": 2
     }, {
-      // Venue
+      // Venue / score
       "responsivePriority": 3,
-      "targets": 4
+      "targets": 3
     }]
   });
 });

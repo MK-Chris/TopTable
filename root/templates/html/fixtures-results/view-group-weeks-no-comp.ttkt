@@ -1,8 +1,9 @@
+
 <table id="fixtures-table" class="stripe hover order-column row-border" style="width: 100%;">
   <thead>
     <tr>
       <th>[% c.maketext("fixtures-results.heading.week-beginning") %]</th>
-      <th>[% c.maketext("fixtures-results.heading.competition") %]</th>
+      <th>[% c.maketext("fixtures-results.heading.division") %]</th>
       <th>[% c.maketext("fixtures-results.heading.date") %]</th>
       <th>[% c.maketext("fixtures-results.heading.home-team") %]</th>
       <th>[% c.maketext("fixtures-results.heading.away-team") %]</th>
@@ -30,41 +31,10 @@
     SET week_year = week.year;
     SET week_month = zeroes(week.month);
     SET week_day = zeroes(week.day);
-    week_day_html = FILTER html_entity; week.day_name; END;
-    week_month_html = FILTER html_entity; week.month_name; END;
+    week_day_html = week.day_name | html_entity;
+    week_month_html = week.month_name | html_entity;
     SET home_team = match.team_season_home_team_season;
     SET away_team = match.team_season_away_team_season;
-    
-    IF match.tournament_round;
-      # Display the competition name and round if it's a tournament match
-      competition = match.tournament_round.tournament.event_season.name | html_entity;
-      SET competition = competition _ " - " _ match.tournament_round.name;
-      
-      IF match.tournament_group;
-        competition = competition _ " (" _ match.tournament_group.name _ ")";
-        IF specific_season;
-          SET comp_uri = c.uri_for_action("/events/group_view_specific_season", [match.tournament_round.tournament.event_season.event.url_key, season.url_key, match.tournament_round.url_key, match.tournament_group.url_key]);
-        ELSE;
-          SET comp_uri = c.uri_for_action("/events/group_view_current_season", [match.tournament_round.tournament.event_season.event.url_key, match.tournament_round.url_key, match.tournament_group.url_key]);
-        END;
-      ELSE;
-        IF specific_season;
-          SET comp_uri = c.uri_for_action("/events/view_specific_season", [match.tournament_round.tournament.event_season.event.url_key, season.url_key]);
-        ELSE;
-          SET comp_uri = c.uri_for_action("/events/view_current_season", [match.tournament_round.tournament.event_season.event.url_key]);
-        END;
-      END;
-    ELSE;
-      # Display "League "and division if it's a league match
-      competition_div = match.division_season.name | html_entity;
-      SET competition = c.maketext("matches.field.competition.value.league") _ " - " _ competition_div;
-      
-      IF specific_season;
-        SET comp_uri = c.uri_for_action("/league-tables/view_specific_season", [match.division_season.division.url_key, season.url_key]);
-      ELSE;
-        SET comp_uri = c.uri_for_action("/league-tables/view_current_season", [match.division_season.division.url_key]);
-      END;
-    END;
     
     IF specific_season;
       SET division_uri = c.uri_for_action("/league-tables/view_specific_season", [match.division_season.division.url_key, season.url_key]);
@@ -88,11 +58,11 @@
     END;
 -%]
   <tr>
-    <td data-label="[% c.maketext("fixtures-results.heading.week-beginning") %]"><a href="[% fixtures_week_uri %]">[% c.maketext("fixtures-results.view.week-beginning", week_day_html _ ", " _ week.day _ " " _ week_month_html _ " " _ week_year) | html_entity %]</a></td>
-    <td data-label="[% c.maketext("fixtures-results.heading.competition") %]"><a href="[% comp_uri %]">[% competition %]</a></td>
+    <td data-label="[% c.maketext("fixtures-results.heading.week-beginning") %]"><a href="[% fixtures_week_uri %]">[% c.maketext("fixtures-results.view.week-beginning", week_day_html _ ", " _ week.day _ " " _ week_month_html _ " " _ week_year) %]</a></td>
+    <td data-label="[% c.maketext("fixtures-results.heading.division") %]"><a href="[% division_uri %]">[% match.division_season.name %]</a></td>
     <td data-label="[% c.maketext("fixtures-results.heading.date") %]"><a href="[% fixtures_day_uri %]">[% date.dmy("/") %]</a></td>
     <td data-label="[% c.maketext("fixtures-results.heading.home-team") %]"><a href="[% home_team_uri %]">[% home_team.full_name | html_entity %]</a></td>
-    <td data-label="[% c.maketext("fixtures-results.heading.away-team") %]"><a href="[% away_team_uri %]">[% away_team.full_name | html_entity %]</a></td>
+    <td data-label="[% c.maketext("fixtures-results.heading.away-team") %]"><a href="[% away_team_uri %]">[% away_team.full_name | html_entity%]</a></td>
     <td data-label="[% c.maketext("fixtures-results.heading.score-versus") %]"><a href="[% c.uri_for_action('/matches/team/view_by_url_keys', match.url_keys) %]" title="[% c.maketext("fixtures-results.view-scorecard") %]">[% score %]</a></td>
     <td data-label="[% c.maketext("fixtures-results.heading.venue") %]"><a href="[% c.uri_for_action('/venues/view', [match.venue.url_key]) %]">[% match.venue.name | html_entity %]</a></td>
 [%

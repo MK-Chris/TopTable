@@ -68,21 +68,21 @@ $(document).ready(function() {
     "columnDefs": [{
         // Day name
         "orderData": 1,
-        "responsivePriority": 7,
+        "responsivePriority": 8,
         "targets": 0
       }, {
-        // Day of week number
+        // Day of week number (1), date sortable (3)
         "visible": false,
-        "targets": 1
+        "targets": [1, 2]
       }, {
         // Date display
         "responsivePriority": 1,
         "orderData": 3,
         "targets": 2
       }, {
-        // Date sortable
-        "visible": false,
-        "targets": 3
+        // Competition
+        "responsivePriority": 6,
+        "targets": 4
       }, {
         // Home / away
         "responsivePriority": 3,
@@ -101,12 +101,12 @@ $(document).ready(function() {
         "targets": 7
       }, {
         // Venue
-        "responsivePriority": 6,
+        "responsivePriority": 7,
         "targets": 8
       }, {
         // Actions
-        "responsivePriority": 7,
-        "targets": 9
+        "responsivePriority": 9,
+        "targets": 10
       }
     ]
   });

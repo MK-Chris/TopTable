@@ -118,7 +118,7 @@ sub page_records {
     "system_event_log_type.object_description" => {-like => "%$search_val%"}
   }] : {};
   
-  push( @{ $where }, {ip_address => {-like => "%$search_val%"}} ) if defined( $search_val ) and $search_ips;
+  push(@{$where}, {ip_address => {-like => "%$search_val%"}}) if defined($search_val) and $search_ips;
   
   # Add the public event clause if we need to
   if ( $public_only ) {

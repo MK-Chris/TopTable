@@ -8,6 +8,10 @@ package TopTable::Schema::Result::FixturesWeek;
 
 TopTable::Schema::Result::FixturesWeek
 
+=head1 DESCRIPTION
+
+Created when a new season is created - the start date is taken as the first week, and the end date as the last week; each week in between will have an entry.
+
 =cut
 
 use strict;
@@ -127,7 +131,7 @@ __PACKAGE__->belongs_to(
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
 );
 
-=head2 team_matches_played_weeks
+=head2 team_matches
 
 Type: has_many
 
@@ -136,22 +140,7 @@ Related object: L<TopTable::Schema::Result::TeamMatch>
 =cut
 
 __PACKAGE__->has_many(
-  "team_matches_played_weeks",
-  "TopTable::Schema::Result::TeamMatch",
-  { "foreign.played_week" => "self.id" },
-  { cascade_copy => 0, cascade_delete => 0 },
-);
-
-=head2 team_matches_scheduled_weeks
-
-Type: has_many
-
-Related object: L<TopTable::Schema::Result::TeamMatch>
-
-=cut
-
-__PACKAGE__->has_many(
-  "team_matches_scheduled_weeks",
+  "team_matches",
   "TopTable::Schema::Result::TeamMatch",
   { "foreign.scheduled_week" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
@@ -187,8 +176,8 @@ __PACKAGE__->many_to_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2015-10-20 22:46:32
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Yn7271tUnywMDj6HQutcxA
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-10-07 15:45:30
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:iCC3mJulAKt9yhFPiOY4uw
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

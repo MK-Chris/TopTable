@@ -13,35 +13,46 @@ $(document).ready(function() {
     "info": true,
     "fixedHeader": true,
     "searching": true,
-    "order": [[1, "asc"]],
-    "ordering": false,
+    "orderFixed": {"pre": [4, "asc"]},
+    "order": [3, "asc"],
+    "ordering": true,
     "rowGroup": {
-      "dataSrc": 0
+      "dataSrc": 4
     },
     "columnDefs": [{
-      // Division rank, division name
+      // Day of week number, date sortable, competitions name (used in group), competition sort
       "visible": false,
-      "targets": [0, 1]
+      "targets": [1, 3, 4, 5]
     }, {
-      // Division name
-      "orderData": 1,
+      // Day name
+      "responsivePriority": 7,
       "targets": 0
     }, {
-      // Home team
+      // Date printable
       "responsivePriority": 1,
+      "orderData": 3,
       "targets": 2
     }, {
-      // Away team
-      "responsivePriority": 2,
-      "targets": 3
-    }, {
-      // Score
-      "responsivePriority": 3,
+      // Competition
+      "orderData": 5,
       "targets": 4
     }, {
-      // Venue
+      // Home team
+      "responsivePriority": 2,
+      "targets": 6
+    }, {
+      // Away team
+      "responsivePriority": 3,
+      "targets": 7
+    }, {
+      // Score
       "responsivePriority": 4,
-      "targets": 5
+      "orderable": false,
+      "targets": 8
+    }, {
+      // Venue
+      "responsivePriority": 6,
+      "targets": 9
     }]
   });
   

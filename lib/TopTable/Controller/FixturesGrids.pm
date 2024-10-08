@@ -313,13 +313,13 @@ sub view_finalise :Private {
         image_uri => $c->uri_for("/static/images/icons/fixtures-32.png"),
         text => $c->maketext("admin.fixtures-grid.create-fixtures", $enc_name),
         link_uri => $c->uri_for_action("/fixtures-grids/create_fixtures", [$grid->url_key]),
-      }) if !$season->complete and $grid->can_create_fixtures;
+      }) if !$season->complete and $grid->can_create_matches;
       
       push(@title_links, {
         image_uri => $c->uri_for("/static/images/icons/fixturesdel-32.png"),
         text => $c->maketext("admin.fixtures-grid.delete-fixtures", $enc_name),
         link_uri => $c->uri_for_action("/fixtures-grids/delete_fixtures", [$grid->url_key]),
-      }) if !$season->complete and $grid->can_delete_fixtures;
+      }) if !$season->complete and $grid->can_delete_matches;
     }
     
     # Push a delete link if we're authorised and the grid can be deleted
@@ -1044,21 +1044,6 @@ sub create_fixtures :Chained("base") :PathPart("create-fixtures") :Args(0) {
     return;
   }
   
-  my $season_weeks = $c->model("DB::FixturesWeek")->season_weeks($current_season);
-  my @season_weeks = ();
-  
-  while ( my $season_week = $season_weeks->next ) {
-    # Set the locale so we get proper strings
-    my $date = $season_week->week_beginning_date;
-    $date->set_locale($c->locale);
-    
-    push(@season_weeks, {
-      week_beginning_text => sprintf("%d %s %d", $date->day, $date->month_name, $date->year),
-      week_beginning_date => $date,
-      id => $season_week->id,
-    });
-  }
-  
   $c->stash({
     template => "html/fixtures-grids/create-fixtures.ttkt",
     subtitle1 => $enc_name,
@@ -1074,8 +1059,8 @@ sub create_fixtures :Chained("base") :PathPart("create-fixtures") :Args(0) {
     form_action => $c->uri_for_action("/fixtures-grids/do_create_fixtures", [$grid->url_key]),
     view_online_display => "Creating fixtures for grid " . $grid->name,
     view_online_link => 0,
-    grid_weeks => [$c->model("DB::FixturesGridWeek")->search({grid => $grid->id})],
-    season_weeks => \@season_weeks,
+    grid_weeks => [$grid->rounds],
+    season_weeks => [$current_season->weeks],
   });
   
   # Push the breadcrumbs links
@@ -1128,7 +1113,10 @@ sub do_create_fixtures :Chained("base") :PathPart("do-create-fixtures") :Args(0)
     $weeks{$_} = $c->req->params->{$_} if m/^week_\d{1,2}$/;
   }
   
-  my $response = $grid->create_matches({logger => sub{ my $level = shift; $c->log->$level( @_ ); }, weeks => \%weeks});
+  my $response = $grid->create_matches(undef, {
+    weeks => \%weeks,
+    logger => sub{ my $level = shift; $c->log->$level( @_ ); }
+  });
   
   # Set the status messages we need to show on redirect
   my @errors = @{$response->{errors}};
@@ -1180,7 +1168,7 @@ sub delete_fixtures :Chained("base") :PathPart("delete-fixtures") :Args(0) {
   # Check that we are authorised to delete fixtures
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["fixtures_delete", $c->maketext("user.auth.delete-fixtures"), 1]);
   
-  unless ( $grid->can_delete_fixtures ) {
+  unless ( $grid->can_delete_matches ) {
     $c->response->redirect($c->uri_for_action("/fixtures-grids/view_current_season", [$grid->url_key],
                                 {mid => $c->set_status_msg({error => $c->maketext("fixtures-grids.form.delete-fixtures.error.cant-delete", $grid->name)})}));
     $c->detach;
@@ -1219,13 +1207,6 @@ sub do_delete_fixtures :Chained("base") :PathPart("do-delete-fixtures") :Args(0)
   # Check that we are authorised to delete fixtures
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["fixtures_delete", $c->maketext("user.auth.delete-fixtures"), 1]);
   
-  unless ( $grid->can_delete_fixtures ) {
-    $c->response->redirect($c->uri_for_action("/fixtures-grids/view_current_season", [$grid->url_key],
-                                {mid => $c->set_status_msg({error => $c->maketext("fixtures-grids.form.delete-fixtures.error.cant-delete", $grid->name)})}));
-    $c->detach;
-    return;
-  }
-  
   my $response = $grid->delete_matches;
   
   # Set the status messages we need to show on redirect
@@ -1234,20 +1215,13 @@ sub do_delete_fixtures :Chained("base") :PathPart("do-delete-fixtures") :Args(0)
   my @info = @{$response->{info}};
   my @success = @{$response->{success}};
   my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});
-  my $redirect_uri;
+  my $redirect_uri = $c->uri_for_action("/fixtures-grids/view_current_season", [$grid->url_key], {mid => $mid});
   
-  if ( $response->{completed} ) {
-    # Was completed, display the view page
-    $redirect_uri = $c->uri_for_action("/fixtures-grids/view_current_season", [$grid->url_key], {mid => $mid});
-    
-    # Completed, so we log an event
-    $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["team-match", "delete", $response->{match_ids}, $response->{match_names}]);
-  } else {
-    # The errors given *do* prevent us from setting teams for this grid, so redirect back to the grid view page
-    $redirect_uri = $c->uri_for_action("/fixtures-grids/view_current_season", [$grid->url_key], {mid => $mid});
-  }
   
-  # Now actually do the redirection
+  # If it was completed, we log an event
+  $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["team-match", "delete", $response->{match_ids}, $response->{match_names}]) if $response->{completed};
+  
+  # Redirect
   $c->response->redirect($redirect_uri);
   $c->detach;
   return;

@@ -53,7 +53,7 @@ IF matches_to_show;
   <h4>[% matches_title %] ([% matches_to_show %])</h4>
 [%
 # Today's matches
-INCLUDE "html/fixtures-results/view-group-divisions-no-date-check-score.ttkt";
+INCLUDE "html/fixtures-results/view-group-competitions-no-date-check-score.ttkt";
 -%]
   </div>
 </div>

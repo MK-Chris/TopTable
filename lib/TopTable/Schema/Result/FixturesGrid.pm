@@ -294,13 +294,13 @@ sub check_and_delete {
   return $response;
 }
 
-=head2 can_create_fixtures
+=head2 can_create_matches
 
 Checks that all the requirements are in place to create the fixtures.  (i.e., the grid matches and team position numbers are filled out and there are no fixtures created for this grid already).
 
 =cut
 
-sub can_create_fixtures {
+sub can_create_matches {
   my $self = shift;
   my $schema = $self->result_source->schema;
   
@@ -342,13 +342,13 @@ sub can_create_fixtures {
   return 1;
 }
 
-=head2 can_delete_fixtures
+=head2 can_delete_matches
 
 Checks to see whether the fixtures for the current season that have been created by this grid are able to be deleted.  This is basically if there are no scores filled out for any matches.
 
 =cut
 
-sub can_delete_fixtures {
+sub can_delete_matches {
   my $self = shift;
   
   my $total_matches = $self->search_related("team_matches", {
@@ -439,6 +439,19 @@ sub get_divisions {
     order_by  => {
       -asc => [qw( division.rank team_seasons.grid_position )],
     }
+  });
+}
+
+=head2 rounds
+
+Get the rounds for this grid (this used to be called weeks because a fixtures grid used to only be used for a league season; now it can be used for tournaments, which doesn't necessarily have to include teams that are only playing one match per week).
+
+=cut
+
+sub rounds {
+  my $self = shift;
+  return $self->search_related("fixtures_grid_weeks", {}, {
+    order_by => {-asc => [qw( week )]}
   });
 }
 
@@ -928,7 +941,7 @@ Checks the given parameters and if everything is okay, populates the league matc
 
 sub create_matches {
   my $self = shift;
-  my ( $params ) = @_;
+  my ( $tourn_group, $params ) = @_;
   # Setup schema / logging
   my $logger = $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $locale = $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
@@ -951,14 +964,54 @@ sub create_matches {
   # Get the current season
   my $season = $schema->resultset("Season")->get_current;
   
+  # If there's no current season, we can't create matches - that's true whether we're creating league or tournament group matches
   unless ( defined($season) ) {
     push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.create-fixtures.error.no-current-season"));
     $response->{can_complete} = 0;
   }
   
-  # Check the season hasn't had matches created already.
-  if ( $self->result_source->schema->resultset("TeamMatch")->season_matches($season, {grid => $self})->count > 0 ) {
-    push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.create-fixtures.error.matches-exist", $season->name));
+  if ( defined($tourn_group) ) {
+    # If we have a tournament group, check it's correct
+    if ( $tourn_group->isa("TopTable::Schema::Result::TournamentRoundGroup") ) {
+      # It is a group - need to check that A) there's a fixtures grid and B) it's this grid
+      if ( defined($tourn_group->fixtures_grid) ) {
+        # There's a fixtures grid, need to check it's this one
+        push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.create-fixtures.error.group-wrong-grid", $tourn_group->name, encode_entities($self->name))) unless $tourn_group->fixtures_grid->id == $self->id;
+        $response->{can_complete} = 0;
+      } else {
+        # No fixtures grid
+        push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.create-fixtures.error.group-no-grid"));
+        $response->{can_complete} = 0;
+      }
+    } else {
+      # Not a tournament group
+      push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.create-fixtures.error.grid-invalid"));
+      $response->{can_complete} = 0;
+    }
+  }
+  
+  # If we have errors at the moment, just return straight away
+  return $response if scalar @{$response->{errors}};
+  
+  my ( $is_tournament, $entry_type, $team_entry, $comp_name );
+  
+  if ( defined($tourn_group) ) {
+    $is_tournament = 1;
+    $entry_type = $tourn_group->tournament_round->tournament->entry_type->id;
+    $team_entry = $entry_type eq "team" ? 1 : 0;
+    $comp_name = $tourn_group->tournament_round->tournament->event_season->name;
+  } else {
+    $is_tournament = 0;
+    $team_entry = 1; # Not a tournament, so a league division - must be team entry
+  }
+  
+  # Check we don't have matches for this grid already - in this season (if creating league matches) or group (if creating group matches for a tournament)
+  my $existing_matches = $is_tournament
+    ? $tourn_group->matches->count
+    : $schema->resultset("TeamMatch")->season_matches($season, {grid => $self})->count;
+  
+  if ( $existing_matches > 0 ) {
+    push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.create-fixtures.error.matches-exist"));
     $response->{can_complete} = 0;
   }
   
@@ -995,75 +1048,112 @@ sub create_matches {
   
   if ( $incomplete_grid_matches ) {
     # If not all the grid matches are filled out, we have to prompt to do that first
-    push(@{ $response->{error} }, $lang->maketext("fixtures-grids.form.create-fixtures.error.matches-incomplete"));
+    push(@{$response->{error}}, $lang->maketext("fixtures-grids.form.create-fixtures.error.matches-incomplete"));
     $response->{can_complete} = 0;
   }
   
   # Check if we have incomplete grid positions for any teams involved in divisions that use this fixtures grid for the current season
-  my $team_grid_positions = $self->search_related("division_seasons", {
-    "team_seasons.season" => $season->id,
-    "me.season" => $season->id,
-  }, {
-    prefetch => [qw( division ), {
-      league_match_template => {
-        template_match_team_games => "individual_match_template",
-      },
-      team_seasons => [qw( home_night team ), {club_season => [qw( club venue )]}]
-    }],
-    order_by => {
-      -asc => [ qw( division.rank template_match_team_games.match_game_number )],
-    },
-  });
+  my @grid_users;
   
-  # %division_positions will hold the positions for each division like so:
-  # $division_positions{$division_id}{$position} = $team (value is a team object).
-  # $incomplete_team_grid_positions will hold a count of the team grid positions that aren't yet completed.
-  my ( %division_positions, $incomplete_team_grid_positions, %division_templates );
+  if ( $is_tournament ) {
+    # Group
+    # Only one user of this grid in a tournament setting, and that's the current group we're working on
+    # It needs to be in the array so we can loop through regardless of setting
+    @grid_users = ( $tourn_group );
+  } else {
+    # League
+    @grid_users = $self->search_related("division_seasons", {
+      "team_seasons.season" => $season->id,
+      "me.season" => $season->id,
+    }, {
+      prefetch => [qw( division ), {
+        league_match_template => {
+          template_match_team_games => "individual_match_template",
+        },
+        team_seasons => [qw( home_night team ), {club_season => [qw( club venue )]}]
+      }],
+      order_by => {
+        -asc => [ qw( division.rank template_match_team_games.match_game_number )],
+      },
+    });
+  }
+  
+  # %position_info will hold the positions for each division like so:
+  # $position_info{($division_id|$group_id)}{$position} = ($team|$person|$doubles tournament pair) (value is a DB object).
+  # $incomplete_grid_positions will hold a count of the team grid positions that aren't yet completed.
+  my ( %position_info, $incomplete_grid_positions, %templates );
   
   # Loop through our divisions and within them the team season objects, saving away the grid position / team for each
-  while ( my $division_season = $team_grid_positions->next ) {
-    my $team_seasons = $division_season->team_seasons;
+  foreach my $grid_user ( @grid_users ) {
+    # Grid user (group or division) ID is used as a key in the %position_info hash
+    my $grid_user_id = $is_tournament ? $grid_user->id : $grid_user->division->id;
+    
+    my $grid_positions;
+    if ( $is_tournament ) {
+      $grid_positions = $grid_user->get_entrants;
+    } else {
+      # Not a tournament, this must be league, so it's a team
+      $grid_positions = $grid_user->team_seasons;
+    }
     
     # Loop through and store each team's grid position
-    while( my $team_season = $team_seasons->next ) {
-      if ( defined($team_season->grid_position) ) {
+    while( my $competitor = $grid_positions->next ) {
+      if ( defined($competitor->grid_position) ) {
         # The grid position is set; use it as a hashref key so we can easily access it when creating matches
-        $division_positions{$division_season->division->id}{$team_season->grid_position} = $team_season;
+        $position_info{$grid_user_id}{$competitor->grid_position} = $competitor;
       } else {
-        $incomplete_team_grid_positions++;
+        $incomplete_grid_positions++;
       }
     }
     
-    # Store this division's template information in a hashref.  This is better than a resultset that we need to keep resetting,
+    # Store this group user's template information in a hashref.  This is better than a resultset that we need to keep resetting,
     # as we'd be doing this a lot and it would slow us down.
-    $division_templates{$division_season->division->id} = {
-      id => $division_season->league_match_template->id,
-      singles_players_per_team => $division_season->league_match_template->singles_players_per_team,
-      games => [],
-    };
+    # How we get these depends on whether this is a tournament group (set at tournament round level) or a league match (set at division level)
+    my ( $match_template );
+    if ( $is_tournament ) {
+      # For tournaments we could either be storing a team match template, or an individual one
+      if ( $entry_type eq "team" ) {
+        # Team match template
+        $match_template = $tourn_group->tournament_round->team_match_template;
+        $match_template = $tourn_group->tournament_round->tournament->default_team_match_template unless defined($match_template);
+      } else {
+        # Individual match templates apply to both doubles and singles
+        $match_template = $tourn_group->tournament_round->individual_match_template;
+      }
+    } else {
+      # League - always a team match
+      $match_template = $grid_user->league_match_template;
+    }
     
-    # Loop through and add the games rules
-    my $template_games = $division_season->league_match_template->template_match_team_games;
-    while ( my $game = $template_games->next ) {
-      push(@{$division_templates{ $division_season->division->id }{games}}, {
-        singles_home_player_number => $game->singles_home_player_number,
-        singles_away_player_number => $game->singles_away_player_number,
-        doubles_game => $game->doubles_game,
-        match_template => $game->individual_match_template->id,
-        match_game_number => $game->match_game_number,
-        legs_per_game => $game->individual_match_template->legs_per_game,
-      });
+    $templates{$grid_user_id} = {match => $match_template};
+    
+    if ( $team_entry ) {
+      # Loop through and add the games rules for a team match
+      my $template_games = $match_template->template_match_team_games;
+      
+      # Empty array for games to push on to
+      $templates{$grid_user_id}{games} = [];
+      while ( my $game = $template_games->next ) {
+        push(@{$templates{$grid_user_id}{games}}, {
+          singles_home_player_number => $game->singles_home_player_number,
+          singles_away_player_number => $game->singles_away_player_number,
+          doubles_game => $game->doubles_game,
+          match_template => $game->individual_match_template,
+          match_game_number => $game->match_game_number,
+          legs_per_game => $game->individual_match_template->legs_per_game,
+        });
+      }
     }
   }
   
   # Check if we have any incomplete grid positions
-  if ( $incomplete_team_grid_positions ) {
+  if ( $incomplete_grid_positions ) {
     push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.create-fixtures.error.teams-incomplete"));
     $response->{can_complete} = 1;
   }
   
   # Return at this point if we have any errors so far
-  return $response if scalar( @{$response->{errors}} );
+  return $response if scalar @{$response->{errors}};
   
   # Now we've done our fatal error checks, we need to loop through the values we've been given and check them for errors
   # We store the last season week's date that we processed, so we can ensure this one does not occur before the last one. 
@@ -1076,16 +1166,16 @@ sub create_matches {
   # Go back to the first record
   $grid_weeks->reset;
   while ( my $week = $grid_weeks->next ) {
-    $week_allocations{"week_" . $week->week }{id} = $week->week;
+    $week_allocations{"week_" . $week->week}{id} = $week->week;
     
     if ( $weeks->{"week_" . $week->week} ) {
       # Find this week in the fixtures_weeks table
       my $season_week = $season->find_related("fixtures_weeks", {id => $weeks->{"week_" . $week->week}});
       
-      if ( defined( $season_week ) ) {
+      if ( defined($season_week) ) {
         # Set the week beginning date for that week ID so we can refer to it later without going back to the DB
-        $week_allocations{"week_" . $week->week }{week_beginning_id} = $season_week->id;
-        $week_allocations{"week_" . $week->week }{week_beginning_date} = $season_week->week_beginning_date;
+        $week_allocations{"week_" . $week->week}{week_beginning_id} = $season_week->id;
+        $week_allocations{"week_" . $week->week}{week_beginning_date} = $season_week->week_beginning_date;
         
         # The week is valid; ensure it doesn't occur prior to the last one.
         push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.create-fixtures.error.date-occurs-before-previous-date", $week->week))
@@ -1109,7 +1199,7 @@ sub create_matches {
     ############## CREATE MATCHES #############
     # Loop through our week allocations and in each loop, loop through the divisions.
     # This will be the MASSIVE arrayref that will hold all the matches (plus their contained players, games and legs)
-    my ( @matches, @match_ids, @match_names, $team_match_template );
+    my ( @matches, @match_ids, @match_names );
     my $matches = 0;
     
     # Loop through each week for the grid
@@ -1119,117 +1209,137 @@ sub create_matches {
       my $league_week_number = $week_allocations{$week_allocation}{id};
       my $week_beginning_date = $week_allocations{$week_allocation}{week_beginning_date};
       
-      # Loop through the divisions, getting each match for each division
-      foreach my $division ( sort keys( %division_positions ) ) {
-        # Store the template for this division
-        my $team_match_template = $division_templates{$division};
-        my $singles_players_per_team = $team_match_template->{singles_players_per_team};
-        my @team_match_games_templates = @{ $division_templates{$division}{games} };
+      # Loop through the grid users (division or tournament group), creating each match for each one
+      foreach my $grid_user_id ( sort keys( %position_info ) ) {
+        # Store the template for this grid user
+        my $match_template = $templates{$grid_user_id}{match};
         
-        foreach my $match ( @{$grid_matches{$league_week_number}} ) {
-          # Store the home and away team for easy access
-          my $home_team = $division_positions{$division}{$match->{home_team}}->team if defined($division_positions{$division}{$match->{home_team}});
-          my $away_team = $division_positions{$division}{$match->{away_team}}->team if defined($division_positions{$division}{$match->{away_team}});
-          
-          # This defined() check protects against teams that have a bye.
-          if ( defined($home_team) and defined($away_team) ) {
-            my $scheduled_date = TopTable::Controller::Root::get_day_in_same_week($week_beginning_date, $division_positions{$division}{$match->{home_team}}->home_night->weekday_number);
-            my $start_time = $home_team->default_match_start // $home_team->club->default_match_start // $season->default_match_start;
+        if ( $team_entry ) {
+          my $singles_players_per_team = $match_template->singles_players_per_team;
+          my @team_match_games_templates = @{$templates{$grid_user_id}{games}};
+        
+          foreach my $match ( @{$grid_matches{$league_week_number}} ) {
+            # Store the home and away team for easy access
+            my ( $home_team, $away_team, $home_team_season, $away_team_season );
             
-            # Empty arrayref for the games - these will be populated in the next loop
-            my @match_games = ();
+            if ( $is_tournament ) {
+              # If it's a tournament, the home and away team objects come from the tournament data
+              $home_team_season = $position_info{$grid_user_id}{$match->{home_team}}->tournament_round_team->tournament_team->team_season if defined($position_info{$grid_user_id}{$match->{home_team}});
+              $away_team_season = $position_info{$grid_user_id}{$match->{away_team}}->tournament_round_team->tournament_team->team_season if defined($position_info{$grid_user_id}{$match->{away_team}});
+            } else {
+              # League
+              $home_team_season = $position_info{$grid_user_id}{$match->{home_team}};
+              $away_team_season = $position_info{$grid_user_id}{$match->{away_team}};
+            }
             
-            # Set up the league team match games / legs
-            foreach my $game_template ( @team_match_games_templates ) {
-              # Loop through creating legs for each game
-              # Empty arrayref for the legs - this will be populated on the next loop
-              my @match_legs = ();
-              foreach my $i ( 1 .. $game_template->{legs_per_game} ) {
-                push(@match_legs, {
+            # This defined() check protects against teams that have a bye.
+            if ( defined($home_team_season) and defined($away_team_season) ) {
+              $home_team = $home_team_season->team;
+              $away_team = $away_team_season->team;
+              
+              my $scheduled_date = TopTable::Controller::Root::get_day_in_same_week($week_beginning_date, $home_team_season->home_night->weekday_number);
+              my $start_time = $home_team->default_match_start // $home_team->club->default_match_start // $season->default_match_start;
+              
+              # Empty arrayref for the games - these will be populated in the next loop
+              my @match_games = ();
+              
+              # Set up the league team match games / legs
+              foreach my $game_template ( @team_match_games_templates ) {
+                # Loop through creating legs for each game
+                # Empty arrayref for the legs - this will be populated on the next loop
+                my @match_legs = ();
+                foreach my $i ( 1 .. $game_template->{legs_per_game} ) {
+                  push(@match_legs, {
+                    home_team => $home_team->id,
+                    away_team => $away_team->id,
+                    scheduled_date => $scheduled_date->ymd,
+                    scheduled_game_number => $game_template->{match_game_number},
+                    leg_number => $i,
+                  });
+                }
+                
+                # What we populate will be different, depending on whether it's a doubles game or not
+                my $populate;
+                if ( $game_template->{doubles_game} ) {
+                  $populate = {
+                    home_team => $home_team->id,
+                    away_team => $away_team->id,
+                    scheduled_date => $scheduled_date->ymd,
+                    scheduled_game_number => $game_template->{match_game_number},
+                    individual_match_template => $game_template->{match_template}->id,
+                    actual_game_number => $game_template->{match_game_number},
+                    doubles_game => $game_template->{doubles_game},
+                    team_match_legs => \@match_legs,
+                  };
+                } else {
+                  $populate = {
+                    home_team => $home_team->id,
+                    away_team => $away_team->id,
+                    scheduled_date => $scheduled_date->ymd,
+                    scheduled_game_number => $game_template->{match_game_number},
+                    individual_match_template => $game_template->{match_template}->id,
+                    actual_game_number => $game_template->{match_game_number},
+                    home_player_number => $game_template->{singles_home_player_number},
+                    away_player_number => $game_template->{singles_away_player_number},
+                    doubles_game => $game_template->{doubles_game},
+                    team_match_legs => \@match_legs,
+                  }
+                }
+                
+                push(@match_games, $populate);
+              }
+              
+              # Now loop through and build the players.  We loop through twice for the number of players per team,
+              # so that we do it for both teams
+              # Empty arrayref to start off with
+              my @match_players = ();
+              foreach my $i ( 1 .. ( $singles_players_per_team * 2 ) ) {
+                # Is it home or away?  If our loop counter is greater than the number of players in a team, we must have moved on to the away team
+                my $location = $i > $singles_players_per_team ? "away" : "home";
+                
+                push(@match_players, {
                   home_team => $home_team->id,
                   away_team => $away_team->id,
-                  scheduled_date => $scheduled_date->ymd,
-                  scheduled_game_number => $game_template->{match_game_number},
-                  leg_number => $i,
+                  player_number => $i,
+                  location => $location,
                 });
               }
               
-              # What we populate will be different, depending on whether it's a doubles game or not
-              my $populate;
-              if ( $game_template->{doubles_game} ) {
-                $populate = {
-                  home_team => $home_team->id,
-                  away_team => $away_team->id,
-                  scheduled_date => $scheduled_date->ymd,
-                  scheduled_game_number => $game_template->{match_game_number},
-                  individual_match_template => $game_template->{match_template},
-                  actual_game_number => $game_template->{match_game_number},
-                  doubles_game => $game_template->{doubles_game},
-                  team_match_legs => \@match_legs,
-                };
-              } else {
-                $populate = {
-                  home_team => $home_team->id,
-                  away_team => $away_team->id,
-                  scheduled_date => $scheduled_date->ymd,
-                  scheduled_game_number => $game_template->{match_game_number},
-                  individual_match_template => $game_template->{match_template},
-                  actual_game_number => $game_template->{match_game_number},
-                  home_player_number => $game_template->{singles_home_player_number},
-                  away_player_number => $game_template->{singles_away_player_number},
-                  doubles_game => $game_template->{doubles_game},
-                  team_match_legs => \@match_legs,
-                }
-              }
-              
-              push(@match_games, $populate);
-            }
-            
-            # Now loop through and build the players.  We loop through twice for the number of players per team,
-            # so that we do it for both teams
-            # Empty arrayref to start off with
-            my @match_players = ();
-            foreach my $i ( 1 .. ( $singles_players_per_team * 2 ) ) {
-              # Is it home or away?  If our loop counter is greater than the number of players in a team, we must have moved on to the away team
-              my $location = $i > $singles_players_per_team ? "away" : "home";
-              
-              push(@match_players, {
+              # Push on to the array that will populate the DB
+              push(@matches, {
                 home_team => $home_team->id,
                 away_team => $away_team->id,
-                player_number => $i,
-                location => $location,
+                scheduled_date => $scheduled_date->ymd,
+                played_date => $scheduled_date->ymd,
+                scheduled_start_time => $start_time,
+                season => $season->id,
+                division => $is_tournament ? undef : $grid_user_id, # If it's not a tournament, this 
+                tournament_round => $is_tournament ? $tourn_group->tournament_round->id : undef,
+                tournament_group => $is_tournament ? $tourn_group->id: undef,
+                venue => $home_team->club->venue->id,
+                scheduled_week => $scheduled_week,
+                team_match_template => $match_template->id,
+                fixtures_grid => $self->id,
+                team_match_games => \@match_games,
+                team_match_players => \@match_players,
               });
+              
+              # Increase the number of matches we are creating
+              $matches++;
+              
+              # Push on to the IDs / names arrays that we'll use for the event log
+              push(@match_ids, {
+                home_team => $home_team->id,
+                away_team => $away_team->id,
+                scheduled_date => $scheduled_date->ymd,
+              });
+              
+              if ( $is_tournament ) {
+                push(@match_names, sprintf("%s %s-%s %s (%s - %s)", $home_team->club->short_name, $home_team->name, $away_team->club->short_name, $away_team->name, $comp_name, $scheduled_date->dmy("/")));
+              } else {
+                push(@match_names, sprintf("%s %s-%s %s (%s)", $home_team->club->short_name, $home_team->name, $away_team->club->short_name, $away_team->name, $scheduled_date->dmy("/")));
+              }
             }
-            
-            # Push on to the array that will populate the DB
-            push(@matches, {
-              home_team => $home_team->id,
-              away_team => $away_team->id,
-              scheduled_date => $scheduled_date->ymd,
-              played_date => $scheduled_date->ymd,
-              scheduled_start_time => $start_time,
-              season => $season->id,
-              division => $division, # This is an ID, not an object, as we've used it as the key of this hash
-              tournament_round => undef,
-              venue => $home_team->club->venue->id,
-              scheduled_week => $scheduled_week,
-              team_match_template => $team_match_template->{id},
-              fixtures_grid => $self->id,
-              team_match_games => \@match_games,
-              team_match_players => \@match_players,
-            });
-            
-            # Increase the number of matches we are creating
-            $matches++;
-            
-            # Push on to the IDs / names arrays that we'll use for the event log
-            push(@match_ids, {
-              home_team => $home_team->id,
-              away_team => $away_team->id,
-              scheduled_date => $scheduled_date->ymd,
-            });
-            
-            push(@match_names, sprintf("%s %s-%s %s (%s)", $home_team->club->short_name, $home_team->name, $away_team->club->short_name, $away_team->name, $scheduled_date->dmy("/")));
           }
         }
       }
@@ -1250,7 +1360,7 @@ sub create_matches {
 
 =head2 delete_matches
 
-Deletes the fixtures for the grid in the current season (so long as they are able to be deleted - this is checked with can_delete_fixtures).
+Deletes the fixtures for the grid in the current season (so long as they are able to be deleted - this is checked with can_delete_matches).
 
 =cut
 
@@ -1275,7 +1385,7 @@ sub delete_matches {
     can_complete => 1, # Default to 1, set to 0 if we hit certain errors.  This is so the application calling this routine knows not to return back to the form if we can't actually do it anyway
   };
   
-  if ( $self->can_delete_fixtures ) {
+  if ( $self->can_delete_matches ) {
     my @rows_to_delete = $self->search_related("team_matches", {
       "season.complete" => 0,
     }, {

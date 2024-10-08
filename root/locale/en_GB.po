@@ -86,11 +86,29 @@ msgstr "By Division"
 msgid "fixtures-results.heading.date"
 msgstr "Date"
 
+msgid "fixtures-results.heading.day"
+msgstr "Week day"
+
 msgid "fixtures-results.heading.week-beginning"
 msgstr "Week beginning"
 
+msgid "fixtures-results.heading.division"
+msgstr "Division"
+
+msgid "fixtures-results.heading.competition"
+msgstr "Competition"
+
+msgid "fixtures-results.heading.home-away"
+msgstr "Home / Away"
+
 msgid "fixtures-results.heading.home-team"
 msgstr "Home team"
+
+msgid "fixtures-results.heading.opponent"
+msgstr "Opponent"
+
+msgid "fixtures-results.heading.result"
+msgstr "Result"
 
 msgid "fixtures-results.heading.score-versus"
 msgstr "Score"
@@ -186,6 +204,19 @@ msgstr "%1 Doubles (Individuals) Averages for %2"
 
 msgid "menu.text.averagefilter"
 msgstr "Average Filters"
+
+### Title link text
+msgid "title.link.text.view-event"
+msgstr "View %1"
+
+msgid "title.link.text.view-event-specific-season"
+msgstr "View %1 in %2"
+
+msgid "title.link.text.view-event-round"
+msgstr "View %1 for %2"
+
+msgid "title.link.text.view-event-round-specific-season"
+msgstr "View %1 for %2 in %3"
 
 ## Events
 msgid "menu.text.event"
@@ -430,19 +461,19 @@ msgid "home-page.users-online.are"
 msgstr "are"
 
 msgid "home-page.todays-matches"
-msgstr "Matches playing today"
+msgstr "Today&#39;s matches"
 
 msgid "home-page.next-matches"
-msgstr "Next matches played: %1 %2 %3"
+msgstr "Next matches scheduled: %1 %2 %3"
 
 msgid "home-page.next-matches-year"
-msgstr "Next matches played: %1 %2 %3 %4"
+msgstr "Next matches scheduled: %1 %2 %3 %4"
 
 msgid "home-page.next-match"
-msgstr "Next match played: %1 %2 %3"
+msgstr "Next match scheduled: %1 %2 %3"
 
 msgid "home-page.next-match-year"
-msgstr "Next match played: %1 %2 %3 %4"
+msgstr "Next match scheduled: %1 %2 %3 %4"
 
 ## Doubles
 msgid "menu.text.doubles"
@@ -2220,6 +2251,15 @@ msgstr "The matches for %1 have been set."
 msgid "fixtures-grids.form.create-fixtures.error.no-current-season"
 msgstr "You cannot create any fixtures, as there is no current season; create a new season first."
 
+msgid "fixtures-grids.form.create-fixtures.error.grid-invalid"
+msgstr "The grid passed in is invalid."
+
+msgid "fixtures-grids.form.create-fixtures.error.group-wrong-grid"
+msgstr "%1 is not assigned to the %2 fixtures grid."
+
+msgid "fixtures-grids.form.create-fixtures.error.group-no-grid"
+msgstr "%1 is not assigned to a grid and matches neeed to be created manually."
+
 msgid "fixtures-grids.form.create-fixtures.error.fixtures-already-exist"
 msgstr "The fixtures for this grid have already been created."
 
@@ -2239,7 +2279,7 @@ msgid "fixtures-grids.form.create-fixtures.error.season-complete"
 msgstr "The season specified is complete, so matches cannot be populated."
 
 msgid "fixtures-grids.form.create-fixtures.error.matches-exist"
-msgstr "The fixtures for this grid have already been created for %1."
+msgstr "The matches have already been created."
 
 msgid "fixtures-grids.form.create-fixtures.error.date-occurs-before-previous-date"
 msgstr "The season week date for grid week number %1 occurs at the same time as, or prior to the previous week.  Each grid week must be assigned to a season week that occurs after the one before it."
@@ -2277,8 +2317,8 @@ msgstr "Fixtures repeated"
 msgid "fixtures-grids.field.fixtures-repeated-times"
 msgstr "%1 times"
 
-msgid "fixtures-grids.create-fixtures.legend.assign-weeks"
-msgstr "Assign grid week numbers to weeks in the season"
+msgid "fixtures-grids.create-fixtures.legend.assign-rounds"
+msgstr "Assign each round to a week within the season"
 
 msgid "fixtures-grids.field.week"
 msgstr "Round %1"
@@ -3636,6 +3676,12 @@ msgstr "Group %1"
 
 msgid "events.tournaments.heading.round-group"
 msgstr "Groups"
+
+msgid "events.tournaments.create-matches"
+msgstr "Create matches"
+
+msgid "events.tournaments.delete-matches"
+msgstr "Delete matches"
 
 ### Reports
 msgid "reports.name.loan-players"
@@ -6265,6 +6311,27 @@ msgstr "Position %1 is used more than once: %2.  Please ensure each position is 
 msgid "events.tournaments.rounds.groups.fixtures-grids.form.teams.success"
 msgstr "The grid positions have been set."
 
+msgid "events.tournaments.rounds.groups.create-fixtures.error.grid-positions-not-set"
+msgstr "Grid positions for this group must be set before the fixtures can be created."
+
+msgid "events.tournaments.rounds.groups.create-fixtures.error.grid-positions-not-set"
+msgstr "Grid positions for this group must be set before the fixtures can be created."
+
+msgid "events.tournaments.rounds.groups.create-fixtures.error.matches-already-exist"
+msgstr "Fixtures for this group have already been created."
+
+msgid "events.tournaments.rounds.groups.delete.error.cannot-delete"
+msgstr "You cannot delete %1, as it has matches, or the season is now complete."
+
+msgid "events.tournaments.rounds.groups.delete-fixtures.error.cant-delete"
+msgstr "You cannot delete fixtures in %1; it may have matches that have been completed or not have had matches created yet."
+
+msgid "events.tournaments.rounds.groups.delete-fixtures.success"
+msgstr "Deleted %1 matches from %2."
+
+msgid "events.tournaments.rounds.groups.error.delete-failed"
+msgstr "Failed to delete matches."
+
 msgid "events.tournaments.rounds.form.error.match-template-invalid"
 msgstr "The round match template is invalid; select a valid one, or leave blank to use the default template for the event."
 
@@ -6279,6 +6346,9 @@ msgstr "The ranking template is invalid; please supply a valid template, or dese
 
 msgid "events.tournaments.rounds.form.error.table-ranking-template-blank"
 msgstr "The ranking template is was not supplied; please supply a valid template, or deselect the &#39;Group round&#39; field."
+
+msgid "events.tournaments.rounds.delete-matches.explain"
+msgstr "Delete %1 matches in %2?  The matches will need to be recreated."
 
 ### Images
 msgid "images.form.image"

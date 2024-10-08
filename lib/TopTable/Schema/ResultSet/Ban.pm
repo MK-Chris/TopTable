@@ -104,7 +104,6 @@ sub create_or_edit {
   };
   
   # Check the passed in user
-  $logger->("debug", sprintf("user ref:%s", ref($banning_user)));
   push(@{$response->{errors}}, $lang->maketext("admin.performing-user-invalid")) unless defined($banning_user) and ref($banning_user) eq "Catalyst::Authentication::Store::DBIx::Class::User";
   
   # Check we have a valid ban type

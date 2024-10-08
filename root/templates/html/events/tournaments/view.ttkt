@@ -27,9 +27,9 @@ IF tournament.has_group_round;
     SET counter = 1;
     FOREACH group = groups;
       IF specific_season;
-        SET group_uri = c.uri_for_action("/events/view_group_specific_season", [event.url_key, season.url_key, group_round.url_key, group.url_key]);
+        SET group_uri = c.uri_for_action("/events/group_view_specific_season", [event.url_key, season.url_key, group_round.url_key, group.url_key]);
       ELSE;
-        SET group_uri = c.uri_for_action("/events/view_group_current_season", [event.url_key, group_round.url_key, group.url_key]);
+        SET group_uri = c.uri_for_action("/events/group_view_current_season", [event.url_key, group_round.url_key, group.url_key]);
       END;
       
       # Get the group table data
@@ -101,9 +101,9 @@ IF rounds.size;
     round_html = round.name | html_entity;
     
     IF specific_season;
-      SET view_uri = c.uri_for_action("/events/view_round_specific_season", [event.url_key, season.url_key, round.url_key]);
+      SET view_uri = c.uri_for_action("/events/round_view_specific_season", [event.url_key, season.url_key, round.url_key]);
     ELSE;
-      SET view_uri = c.uri_for_action("/events/view_round_current_season", [event.url_key, round.url_key]);
+      SET view_uri = c.uri_for_action("/events/round_view_current_season", [event.url_key, round.url_key]);
     END;
 -%]
           <li><a href="[% view_uri %]">[% round_html %] 

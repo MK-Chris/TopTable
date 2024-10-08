@@ -187,12 +187,18 @@ sub index :Path :Args(0) {
     if ( !$matches_to_show ) {
       # No matches today, find the next match date
       $next_match_date = $c->model("DB::TeamMatch")->next_match_date;
-      $matches = $c->model("DB::TeamMatch")->matches_on_date({
-        season => $current_season,
-        date => $next_match_date,
-      });
       
-      $matches_to_show = $matches->count;
+      if ( defined($next_match_date) ) {
+        $matches = $c->model("DB::TeamMatch")->matches_on_date({
+          season => $current_season,
+          date => $next_match_date,
+        });
+        
+        $matches_to_show = $matches->count;
+      } else {
+        $matches_started = 0;
+        $matches_to_show = 0;
+      }
     }
   } else {
     $matches_started = 0;
@@ -223,7 +229,7 @@ sub index :Path :Args(0) {
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
       $c->uri_for("/static/script/event-viewer/view-home.js", {v => 2}),
-      $c->uri_for("/static/script/fixtures-results/view-group-divisions-no-date-no-score.js"),
+      $c->uri_for("/static/script/fixtures-results/view-group-competitions-no-date-check-score.js"),
       $c->uri_for("/static/script/standard/option-list.js"),
     ],
     external_styles => [
@@ -539,6 +545,14 @@ sub end :ActionClass("RenderView") {
         errors => $c->error,
       });
       
+      # Clear any links
+      undef $c->stash->{subtitle1_uri};
+      undef $c->stash->{subtitle2_uri};
+      undef $c->stash->{subtitle3_uri};
+      undef $c->stash->{subtitle4_uri};
+      undef $c->stash->{subtitle5_uri};
+      undef $c->stash->{subtitle6_uri};
+      
       # Log the errors, then clear them
       $c->log->error($_) foreach @{$c->error};
       $c->clear_errors;
@@ -786,7 +800,7 @@ Takes as arguments:
  - The day that we want to call the start of the week (1 is Monday, 7 Sunday) (optional)
 NOTE: This may end up in a different month...
 Taken from:
-http://datetime.perl.org/wiki/datetime/page/FAQ%3A_Sample_Calculations#How_do_I_calculate_the_date_of_the_Wednesday_of_the_same_week_as_the_current_date_-5
+https://github.com/houseabsolute/DateTime.pm/wiki/Sample-Calculations#how-do-i-calculate-the-date-of-the-wednesday-of-the-same-week-as-the-current-date
 
 =cut
 
