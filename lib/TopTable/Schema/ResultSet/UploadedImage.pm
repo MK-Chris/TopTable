@@ -2,7 +2,7 @@ package TopTable::Schema::ResultSet::UploadedImage;
 
 use strict;
 use warnings;
-use base 'DBIx::Class::ResultSet';
+use base qw( TopTable::Schema::ResultSet );
 
 =head2 find_non_deleted
 
