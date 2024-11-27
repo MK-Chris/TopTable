@@ -1,15 +1,81 @@
-
 [%
 IF authorisation.event_edit;
+  IF tourn_view;
+    SET create_uri = c.uri_for_action("/events/group_create", [event.url_key, group_round.url_key]);
+  ELSE;
+    SET create_uri = c.uri_for_action("/events/group_create", [event.url_key, round.url_key]);
+  END;
 -%]
-<a href="[% c.uri_for_action("/events/group_create", [event.url_key, round.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0009-Add-icon-32.png") %]" alt="[% c.maketext("tournaments.round.create-group", enc_name) %]" title="[% c.maketext("tournaments.round.create-group", enc_name) %]" /></a>
+    <a href="[% create_uri %]"><img src="[% c.uri_for("/static/images/icons/0009-Add-icon-32.png") %]" alt="[% c.maketext("tournaments.round.create-group", enc_name) %]" title="[% c.maketext("tournaments.round.create-group", enc_name) %]" /></a><br /><br />
 [%
 END;
-%]
 
-[%
 IF groups.size;
+  # Counter to check if we're on a left or right column
+  SET counter = 1;
+  FOREACH group = groups;
+    IF specific_season;
+      IF tourn_view;
+        SET group_uri = c.uri_for_action("/events/group_view_specific_season", [event.url_key, season.url_key, group_round.url_key, group.url_key]);
+      ELSE;
+        SET group_uri = c.uri_for_action("/events/group_view_specific_season", [event.url_key, season.url_key, round.url_key, group.url_key]);
+      END;
+    ELSE;
+      IF tourn_view;
+        SET group_uri = c.uri_for_action("/events/group_view_current_season", [event.url_key, group_round.url_key, group.url_key]);
+      ELSE;
+        SET group_uri = c.uri_for_action("/events/group_view_current_season", [event.url_key, round.url_key, group.url_key]);
+      END;
+    END;
+    
+    # Get the group table data
+    SET entrants = group.get_entrants_in_table_order;
+    
+    IF counter == 1;
+-%]
+    <div class="row">
+      <div class="column left">
+[%
+    ELSE;
+-%]
+      <div class="column right">
+[%
+    END;
+-%]
+        <h4><a href="[% group_uri %]">[% group.name %]</a></h4>
+[%
+    INCLUDE "html/tables/table.ttkt" tourn_group = 1, last_updated = group.get_tables_last_updated_timestamp;
+    IF counter == 1;
+      # This was a left column, set to 2 so we know the next column is right, just end the one column div
+      SET counter = 2;
 %]
+      </div>
+[%
+    ELSE;
+      # This was a right column, set to 1 so we know the next column is left (new row); end both divs, as a new row will start on the next one
+      SET counter = 1;
+%]
+      </div>
+    </div>
+[%
+    END;
+  END;
+  
+  IF counter == 2;
+    # If the counter is now 2, we've only written the left column, therefore have an odd number of groups, therefore need to close the row div
+-%]
+    </div>
+[%
+  END;
+END;
+IF authorisation.event_edit;
+  IF tourn_view;
+    SET create_uri = c.uri_for_action("/events/group_create", [event.url_key, rounds.item(0).url_key]);
+  ELSE;
+    SET create_uri = c.uri_for_action("/events/group_create", [event.url_key, round.url_key]);
+  END;
+-%]
+    <a href="[% create_uri %]"><img src="[% c.uri_for("/static/images/icons/0009-Add-icon-32.png") %]" alt="[% c.maketext("tournaments.round.create-group", enc_name) %]" title="[% c.maketext("tournaments.round.create-group", enc_name) %]" /></a><br /><br />
 [%
 END;
-%]
+-%]

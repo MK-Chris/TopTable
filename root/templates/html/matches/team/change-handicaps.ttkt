@@ -1,0 +1,35 @@
+<form method="post" action="[% form_action %]">
+<fieldset>
+  <legend>[% c.maketext("matches.handicaps.form.legend.details") %]</legend>
+[%
+IF show_flashed;
+  SET home_team_handicap = c.flash.home_team_handicap;
+  SET away_team_handicap = c.flash.away_team_handicap;
+ELSE;
+  SET home_team_handicap = match.home_team_handicap;
+  SET away_team_handicap = match.away_team_handicap;
+END;
+
+home_team = match.team_season_home_team_season.full_name | html_entity;
+away_team = match.team_season_away_team_season.full_name | html_entity;
+-%]
+  
+  <div class="label-field-container">
+    <label for="home_team_handicap">[% c.maketext("matches.handicaps.points-headstart", home_team) %]</label>
+    <div class="field-container">
+      <input type="number" id="home_team_handicap" name="home_team_handicap" value="[% home_team_handicap OR "0" %]" />
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+  
+  <div class="label-field-container">
+    <label for="away_team_handicap">[% c.maketext("matches.cancel.points-awarded", away_team) %]</label>
+    <div class="field-container">
+      <input type="number" id="away_team_handicap" name="away_team_handicap" value="[% away_team_handicap OR "0" %]" />
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+      
+  <input type="submit" id="submit" name="submit" value="[% c.maketext("form.button.save") %]" />
+</fieldset>
+</form>

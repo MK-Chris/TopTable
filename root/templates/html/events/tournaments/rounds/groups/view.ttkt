@@ -13,6 +13,8 @@ INCLUDE "html/tables/table.ttkt" tourn_group = 1;
     </div>
   </div>
   <div id="matches">
-    
+[%
+INCLUDE "html/fixtures-results/view/group-weeks-ordering-no-comp.ttkt";
+-%]
   </div>
 </div>

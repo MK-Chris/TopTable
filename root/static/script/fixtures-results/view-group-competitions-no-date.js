@@ -13,8 +13,8 @@ $(document).ready(function() {
     "info": true,
     "fixedHeader": true,
     "searching": true,
-    "order": [[1, "asc"]],
-    "ordering": false,
+    "orderFixed": [0, "asc"],
+    "ordering": true,
     "rowGroup": {
       "dataSrc": 0
     },

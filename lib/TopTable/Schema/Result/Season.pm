@@ -97,12 +97,16 @@ __PACKAGE__->table("seasons");
   extra: {unsigned => 1}
   is_nullable: 0
 
+Allow loan players from a lower division than the match being played
+
 =head2 allow_loan_players_above
 
   data_type: 'tinyint'
   default_value: 0
   extra: {unsigned => 1}
   is_nullable: 0
+
+Allow loan players from a higher division than the match being played
 
 =head2 allow_loan_players_across
 
@@ -111,12 +115,16 @@ __PACKAGE__->table("seasons");
   extra: {unsigned => 1}
   is_nullable: 0
 
+Allow loan players from the same division as the match being played
+
 =head2 allow_loan_players_multiple_teams_per_division
 
   data_type: 'tinyint'
   default_value: 0
   extra: {unsigned => 1}
   is_nullable: 0
+
+Allow loan players to play on loan for more than one team in the same division
 
 =head2 allow_loan_players_same_club_only
 
@@ -125,12 +133,16 @@ __PACKAGE__->table("seasons");
   extra: {unsigned => 1}
   is_nullable: 0
 
+Only allow loan players from the same club as the team they are on loan for
+
 =head2 loan_players_limit_per_player
 
   data_type: 'tinyint'
   default_value: 0
   extra: {unsigned => 1}
   is_nullable: 0
+
+Maximum number of times a player may play on loan in total (0 for no limit)
 
 =head2 loan_players_limit_per_player_per_team
 
@@ -139,11 +151,16 @@ __PACKAGE__->table("seasons");
   extra: {unsigned => 1}
   is_nullable: 0
 
+Maximum number of times a player may play on loan for the same team (0 for no limit)
+
 =head2 loan_players_limit_per_player_per_opposition
 
   data_type: 'tinyint'
   default_value: 0
+  extra: {unsigned => 1}
   is_nullable: 0
+
+Maximum number of times a player may play on loan against the same team (0 for no limit)
 
 =head2 loan_players_limit_per_team
 
@@ -152,10 +169,13 @@ __PACKAGE__->table("seasons");
   extra: {unsigned => 1}
   is_nullable: 0
 
+Maximum number of times a team may play loan players (0 for no limit)
+
 =head2 void_unplayed_games_if_both_teams_incomplete
 
   data_type: 'tinyint'
   default_value: 0
+  extra: {unsigned => 1}
   is_nullable: 0
 
 Void games (no team wins) between a present and absent player if both teams have missing players
@@ -164,13 +184,19 @@ Void games (no team wins) between a present and absent player if both teams have
 
   data_type: 'tinyint'
   default_value: 0
+  extra: {unsigned => 1}
   is_nullable: 0
+
+Count a game as won in the player averages even if it was not started (the opposition player pulled out before the game started)
 
 =head2 missing_player_count_win_in_averages
 
   data_type: 'tinyint'
   default_value: 0
+  extra: {unsigned => 1}
   is_nullable: 0
+
+If a player is missing, count as a win for the opposition players in the player averages
 
 =head2 rules
 
@@ -251,7 +277,12 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
   },
   "loan_players_limit_per_player_per_opposition",
-  { data_type => "tinyint", default_value => 0, is_nullable => 0 },
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
   "loan_players_limit_per_team",
   {
     data_type => "tinyint",
@@ -260,11 +291,26 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
   },
   "void_unplayed_games_if_both_teams_incomplete",
-  { data_type => "tinyint", default_value => 0, is_nullable => 0 },
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
   "forefeit_count_averages_if_game_not_started",
-  { data_type => "tinyint", default_value => 0, is_nullable => 0 },
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
   "missing_player_count_win_in_averages",
-  { data_type => "tinyint", default_value => 0, is_nullable => 0 },
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
   "rules",
   { data_type => "longtext", is_nullable => 1 },
 );
@@ -463,8 +509,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-05-05 09:17:30
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:TXqdS4cnZSi+VdBwbEPKoA
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-11-21 12:21:46
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:UrK2VB2hJKZjQa4uPhwISw
 
 use HTML::Entities;
 

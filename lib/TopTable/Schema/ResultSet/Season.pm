@@ -476,7 +476,7 @@ sub create_or_edit {
       $allow_loan_players_multiple_teams_per_division = $allow_loan_players_multiple_teams_per_division ? 1 : 0;
       
       # Check the limits are numeric and not negative
-      push(@{$response->{errors}}, $lang->maketext("seasons.form.error.loan-playerss-limit-per-player-invalid")) unless $loan_players_limit_per_player =~ m/^\d{1,2}$/;
+      push(@{$response->{errors}}, $lang->maketext("seasons.form.error.loan-players-limit-per-player-invalid")) unless $loan_players_limit_per_player =~ m/^\d{1,2}$/;
       push(@{$response->{errors}}, $lang->maketext("seasons.form.error.loan-players-limit-per-player-per-team-invalid")) unless $loan_players_limit_per_player_per_team =~ m/^\d{1,2}$/;
       push(@{$response->{errors}}, $lang->maketext("seasons.form.error.loan-players-limit-per-player-per-opposition-invalid")) unless $loan_players_limit_per_player_per_opposition =~ m/^\d{1,2}$/;
       push(@{$response->{errors}}, $lang->maketext("seasons.form.error.loan-players-limit-per-team-invalid")) unless $loan_players_limit_per_team =~ m/^\d{1,2}$/;

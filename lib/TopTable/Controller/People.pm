@@ -315,7 +315,7 @@ sub get_person_season :Private {
     singles_games => $singles_games,
     doubles_games => $doubles_games,
     season => $season,
-    loan_matches => scalar $person->matches_on_loan({season => $season}),
+    loan_matches => scalar $person->matches_on_loan($season),
     inactive_memberships => scalar $person->inactive_memberships({season => $season}),
     captaincies => scalar $person->captaincies({season => $season}),
     secretaryships => scalar $person->secretaryships({season => $season}),

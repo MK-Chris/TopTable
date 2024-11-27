@@ -41,10 +41,20 @@
       # Then for competitions add the tournament name, then round number (padded 000), then group number (padded 000)
       competition_sort = "B" _ match.tournament_round.tournament.event_season.name _ zeroes3(match.tournament_round.round_number) | html_entity;
       
-      IF specific_season;
-        SET comp_uri = c.uri_for_action("/events/view_specific_season", [match.tournament_round.tournament.event_season.event.url_key, season.url_key]);
+      IF match.tournament_group;
+        competition = competition _ " (" _ match.tournament_group.name _ ")";
+        competition_sort = competition_sort _ zeroes3(match.tournament_group.group_order);
+        IF specific_season;
+          SET comp_uri = c.uri_for_action("/events/group_view_specific_season", [match.tournament_round.tournament.event_season.event.url_key, season.url_key, match.tournament_round.url_key, match.tournament_group.url_key]);
+        ELSE;
+          SET comp_uri = c.uri_for_action("/events/group_view_current_season", [match.tournament_round.tournament.event_season.event.url_key, match.tournament_round.url_key, match.tournament_group.url_key]);
+        END;
       ELSE;
-        SET comp_uri = c.uri_for_action("/events/view_current_season", [match.tournament_round.tournament.event_season.event.url_key]);
+        IF specific_season;
+          SET comp_uri = c.uri_for_action("/events/view_specific_season", [match.tournament_round.tournament.event_season.event.url_key, season.url_key]);
+        ELSE;
+          SET comp_uri = c.uri_for_action("/events/view_current_season", [match.tournament_round.tournament.event_season.event.url_key]);
+        END;
       END;
     ELSE;
       # Display "League "and division if it's a league match

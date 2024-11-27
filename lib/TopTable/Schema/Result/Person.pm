@@ -883,19 +883,39 @@ Return matches where a player has played on loan.
 =cut
 
 sub matches_on_loan {
-  my ( $self, $params ) = @_;
-  my $season = $params->{season} || undef;
+  my $self = shift;
+  my ( $comp, $params ) = @_;
+  my ( $season, $tournament, $is_tourn );
+  
+  # Work out if we're checking the tournament or the season (league matches check against the season)
+  if ( $comp->isa("TopTable::Schema::Result::Tournament") ) {
+    $is_tourn = 1;
+    $tournament = $comp;
+  } else {
+    $is_tourn = 0;
+    $season = $comp;
+  }
+  
   my $for_team = $params->{for_team} || undef;
   my $against_team = $params->{against_team} || undef;
   my $not_for_team = $params->{not_for_team} || undef;
   my $not_against_team = $params->{not_against_team} || undef;
   my $division = $params->{division} || undef;
-  my $where;
+  my ( $where );
+  
+  # Initial attributes
+  my %attrib = (
+    join => [qw( team_match_players ), {
+      team_season_home_team_season => [qw( team ), {club_season => "club"}],
+      team_season_away_team_season => [qw( team ), {club_season => "club"}],
+    }],
+    order_by => {-asc => [qw( me.scheduled_date me.home_team me.away_team )]},
+  );
   
   # If we have a for team or an away team
   if ( defined($for_team) or defined($against_team) or defined($not_for_team) or defined($not_against_team) ) {
-    # Setup an array with two hashes, since we need to either check the home team / location and away tema / location.
-    # Both will have the player = this player and loan team is not null
+    # Setup an array with two hashes, since we need to either check the home team / location and away team / location.
+    # Both will have the player as this person's ID and check the loan team is not null
     $where = [{
       "team_match_players.player" => $self->id,
       "team_match_players.loan_team" => {"<>" => undef},
@@ -905,10 +925,23 @@ sub matches_on_loan {
     }];
     
     # Add the season to both array elements, if it's provided
-    $where->[0]{"me.season"} = $season->id if defined($season);
-    $where->[1]{"me.season"} = $season->id if defined($season);
-    $where->[0]{"me.division"} = $division->id if defined($division);
-    $where->[1]{"me.division"} = $division->id if defined($division);
+    if ( $is_tourn ) {
+      # Tournament match, check against the tournament
+      $where->[0]{"tournament.id"} = $tournament->id;
+      $where->[1]{"tournament.id"} = $tournament->id;
+      
+      # Add to the attributes so we retrieve the tournament too
+      # Element 1 is the hash
+      $attrib{join}[1]{tournament_round} = [qw( tournament )];
+    } else {
+      # League match, check against the season
+      $where->[0]{"me.season"} = $season->id;
+      $where->[1]{"me.season"} = $season->id;
+      
+      # Add divisional criteria if passed in
+      $where->[0]{"me.division"} = $division->id if defined($division);
+      $where->[1]{"me.division"} = $division->id if defined($division);
+    }
     
     if ( defined($for_team) ) {
       # If we have a for team, we search for that where the player location is home and home team matches OR where the player location is away and away team matches
@@ -955,13 +988,7 @@ sub matches_on_loan {
     $where->{"me.division"} = $division->id if defined($division);
   }
   
-  return $self->result_source->schema->resultset("TeamMatch")->search($where, {
-    prefetch => [qw( team_match_players ), {
-      team_season_home_team_season => [qw( team ), {club_season => "club"}],
-      team_season_away_team_season => [qw( team ), {club_season => "club"}],
-    }],
-    order_by => {-asc => [qw( me.scheduled_date me.home_team me.away_team )]},
-  });
+  return $self->result_source->schema->resultset("TeamMatch")->search($where, \%attrib);
 }
 
 =head2 inactive_memberships

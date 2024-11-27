@@ -171,20 +171,20 @@ UNLESS averages_team_page;
   division_html = FILTER html_entity; division.name; END;
   
   IF specific_season;
-    SET heading_text            = c.maketext("menu.text.statistics-division-season", division_html, season_html);
-    SET tables_uri              = c.uri_for_action("/league-tables/view_specific_season", [division.url_key, season.url_key]);
+    SET header = c.maketext("menu.text.statistics-division-season", division_html, season_html);
+    SET tables_uri = c.uri_for_action("/league-tables/view_specific_season", [division.url_key, season.url_key]);
     SET doubles_individuals_uri = c.uri_for_action("/league-averages/view_specific_season", ["doubles-individuals", division.url_key, season.url_key]);
-    SET doubles_pairs_uri       = c.uri_for_action("/league-averages/view_specific_season", ["doubles-pairs", division.url_key, season.url_key]);
-    SET doubles_teams_uri       = c.uri_for_action("/league-averages/view_specific_season", ["doubles-teams", division.url_key, season.url_key]);
+    SET doubles_pairs_uri = c.uri_for_action("/league-averages/view_specific_season", ["doubles-pairs", division.url_key, season.url_key]);
+    SET doubles_teams_uri = c.uri_for_action("/league-averages/view_specific_season", ["doubles-teams", division.url_key, season.url_key]);
   ELSE;
-    SET heading_text            = c.maketext("menu.text.statistics-division", division_html);
-    SET tables_uri              = c.uri_for_action("/league-tables/view_current_season", [division.url_key]);
+    SET header = c.maketext("menu.text.statistics-division", division_html);
+    SET tables_uri = c.uri_for_action("/league-tables/view_current_season", [division.url_key]);
     SET doubles_individuals_uri = c.uri_for_action("/league-averages/view_current_season", ["doubles-individuals", division.url_key]);
-    SET doubles_pairs_uri       = c.uri_for_action("/league-averages/view_current_season", ["doubles-pairs", division.url_key]);
-    SET doubles_teams_uri       = c.uri_for_action("/league-averages/view_current_season", ["doubles-teams", division.url_key]);
+    SET doubles_pairs_uri = c.uri_for_action("/league-averages/view_current_season", ["doubles-pairs", division.url_key]);
+    SET doubles_teams_uri = c.uri_for_action("/league-averages/view_current_season", ["doubles-teams", division.url_key]);
   END;
 -%]
-  <div class="list-header">[% heading_text %]</div>
+  <div class="list-header">[% header %]</div>
   
   <a href="[% tables_uri %]">[% c.maketext("divisions.option.league-table") %]</a>
 | [% c.maketext("divisions.option.league-averages-singles") %]

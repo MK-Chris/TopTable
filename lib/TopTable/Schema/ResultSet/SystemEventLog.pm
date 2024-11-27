@@ -265,25 +265,34 @@ sub set_event_log {
       # We need to work through the IDs so we know what to use in our find()
       my $ids = {};
       # Add each key to the find IDs
-      $ids->{"object_" . $_} = $object_ids->[$i]{$_} foreach ( keys %{ $object_ids->[$i] } );
+      foreach my $id_key ( keys %{$object_ids->[$i]} ) {
+        my $id_obj = $object_ids->[$i]{$id_key};
+        
+        # Only add in if the value is defined; if it isn't, we'll need to create a new entry
+        $ids->{"object_" . $id_key} = $id_obj if defined($id_obj);
+      }
       
       my $event_objects = $event->$object_relation;
-      my $related_object = $event_objects->find( $ids );
+      my $related_object;
+      $logger->("debug", "keys: " . scalar keys %{$ids});
+      $related_object = $event_objects->find($ids) if scalar keys %{$ids};
       
-      if ( defined( $related_object ) ) {
+      if ( defined($related_object) ) {
         # If we have a related object, just update the count on it...
+        $logger->("debug", "update");
         my $update_count = $related_object->number_of_edits + 1;
         $related_object->update({number_of_edits => $update_count});
       } else {
         # ...otherwise create a new related object
         # Add in the event ID so we can link them
+        $logger->("debug", "create");
         my $event_log_object = {
           name => $object_name->[$i],
           number_of_edits => 1,
         };
         
         # Add our IDs in, then create the related item
-        $event_log_object->{$_} = $ids->{$_} foreach ( keys %{$ids} );
+        $event_log_object->{$_} = $ids->{$_} foreach keys %{$ids};
         $event->create_related($object_relation, $event_log_object);
       }
     }

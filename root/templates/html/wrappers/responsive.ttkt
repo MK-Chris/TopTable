@@ -769,10 +769,10 @@ show_msgs("warning");
 show_msgs("info");
 
 # Breadcrumbs
-INCLUDE "html/generic/breadcrumbs.ttkt";
+#INCLUDE "html/generic/breadcrumbs.ttkt";
 
 # Titles / subtitles
-MACRO show_headings(heading_level) BLOCK;
+MACRO show_heading(heading_level) BLOCK;
   SWITCH heading_level;
     CASE 1;
       SET heading_text = subtitle1;
@@ -837,16 +837,17 @@ MACRO show_headings(heading_level) BLOCK;
   ELSE;
     SET heading = "";
   END;
-  
-  heading;
+-%]
+[% heading %]
+[%
 END;
 
-show_headings(1);
-show_headings(2);
-show_headings(3);
-show_headings(4);
-show_headings(5);
-show_headings(6);
+show_heading(1);
+show_heading(2);
+show_heading(3);
+show_heading(4);
+show_heading(5);
+show_heading(6);
 
 # This is where TT will stick all of your template's contents.
 content;

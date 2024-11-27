@@ -54,7 +54,7 @@
       END;
       
       IF display_object.ids(0).item(0) AND event.system_event_log_type.view_action_for_uri;
-        SET display_object_text = display_object_text _ '<a href="' _ c.uri_for_action( event.system_event_log_type.view_action_for_uri, display_object.ids ) _ '">' _ display_object.name _ '</a>';
+        SET display_object_text = display_object_text _ '<a href="' _ c.uri_for_action(event.system_event_log_type.view_action_for_uri, display_object.ids) _ '">' _ display_object.name _ '</a>';
       ELSE;
         SET display_object_text = display_object_text _ display_object.name;
       END;
@@ -75,7 +75,11 @@
         END;
         
         # Set this name into the tooltip
-        SET tooltip_object_text = tooltip_object_text _ "<a class='tooltip' href='" _ c.uri_for_action( event.system_event_log_type.view_action_for_uri, tooltip_object.ids ) _ "'>" _ tooltip_object.name _ "</a>";
+        IF tooltip_object.ids.item(0) AND event.system_event_log_type.view_action_for_uri;
+          SET tooltip_object_text = tooltip_object_text _ "<a class='tooltip' href='" _ c.uri_for_action(event.system_event_log_type.view_action_for_uri, tooltip_object.ids) _ "'>" _ tooltip_object.name _ "</a>";
+        ELSE;
+          SET tooltip_object_text = tooltip_object_text _ tooltip_object.name;
+        END;
       END;
       
       # Set our 'others'

@@ -23,9 +23,9 @@ FOREACH entrant = entrants;
   # Entry type specific stuff
   SWITCH event_detail.entry_type.id;
     CASE "team";
-      SET team_season = entrant.tournament_round_team.tournament_team.team_season;
-      entrant_name = team_season.club_season.short_name _ " " _ team_season.name | html_entity;
-      SET id = team_season.team.id;
+      SET team_season = entrant.tournament_team.team_season;
+      entrant_name = entrant.object_name | html_entity;
+      SET id = entrant.object_id;
     CASE "singles";
     
     CASE "doubles";

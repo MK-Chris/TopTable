@@ -5,7 +5,6 @@ use DateTime;
 use DateTime::TimeZone;
 use DateTime::Duration;
 use HTML::Entities;
-#use DDP;
 
 BEGIN { extends 'Catalyst::Controller'; }
 

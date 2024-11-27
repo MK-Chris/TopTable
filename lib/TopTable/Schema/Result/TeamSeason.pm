@@ -115,7 +115,7 @@ __PACKAGE__->table("team_seasons");
 
   data_type: 'tinyint'
   default_value: 0
-  is_nullable: 1
+  is_nullable: 0
 
 =head2 games_played
 
@@ -152,6 +152,12 @@ __PACKAGE__->table("team_seasons");
   extra: {unsigned => 1}
   is_nullable: 0
 
+=head2 games_difference
+
+  data_type: 'smallint'
+  default_value: 0
+  is_nullable: 0
+
 =head2 legs_played
 
   data_type: 'smallint'
@@ -180,6 +186,12 @@ __PACKAGE__->table("team_seasons");
   extra: {unsigned => 1}
   is_nullable: 0
 
+=head2 legs_difference
+
+  data_type: 'smallint'
+  default_value: 0
+  is_nullable: 0
+
 =head2 points_played
 
   data_type: 'integer'
@@ -206,6 +218,18 @@ __PACKAGE__->table("team_seasons");
   data_type: 'float'
   default_value: 0
   extra: {unsigned => 1}
+  is_nullable: 0
+
+=head2 total_handicap
+
+  data_type: 'smallint'
+  default_value: 0
+  is_nullable: 0
+
+=head2 points_difference
+
+  data_type: 'smallint'
+  default_value: 0
   is_nullable: 0
 
 =head2 doubles_games_played
@@ -243,6 +267,12 @@ __PACKAGE__->table("team_seasons");
   extra: {unsigned => 1}
   is_nullable: 0
 
+=head2 doubles_games_difference
+
+  data_type: 'smallint'
+  default_value: 0
+  is_nullable: 0
+
 =head2 doubles_legs_played
 
   data_type: 'smallint'
@@ -271,6 +301,12 @@ __PACKAGE__->table("team_seasons");
   extra: {unsigned => 1}
   is_nullable: 0
 
+=head2 doubles_legs_difference
+
+  data_type: 'smallint'
+  default_value: 0
+  is_nullable: 0
+
 =head2 doubles_points_played
 
   data_type: 'integer'
@@ -297,6 +333,12 @@ __PACKAGE__->table("team_seasons");
   data_type: 'float'
   default_value: 0
   extra: {unsigned => 1}
+  is_nullable: 0
+
+=head2 doubles_points_difference
+
+  data_type: 'smallint'
+  default_value: 0
   is_nullable: 0
 
 =head2 home_night
@@ -396,7 +438,7 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
   },
   "table_points",
-  { data_type => "tinyint", default_value => 0, is_nullable => 1 },
+  { data_type => "tinyint", default_value => 0, is_nullable => 0 },
   "games_played",
   {
     data_type => "tinyint",
@@ -432,6 +474,8 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
+  "games_difference",
+  { data_type => "smallint", default_value => 0, is_nullable => 0 },
   "legs_played",
   {
     data_type => "smallint",
@@ -460,6 +504,8 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
+  "legs_difference",
+  { data_type => "smallint", default_value => 0, is_nullable => 0 },
   "points_played",
   {
     data_type => "integer",
@@ -488,6 +534,10 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
+  "total_handicap",
+  { data_type => "smallint", default_value => 0, is_nullable => 0 },
+  "points_difference",
+  { data_type => "smallint", default_value => 0, is_nullable => 0 },
   "doubles_games_played",
   {
     data_type => "tinyint",
@@ -523,6 +573,8 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
+  "doubles_games_difference",
+  { data_type => "smallint", default_value => 0, is_nullable => 0 },
   "doubles_legs_played",
   {
     data_type => "smallint",
@@ -551,6 +603,8 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
+  "doubles_legs_difference",
+  { data_type => "smallint", default_value => 0, is_nullable => 0 },
   "doubles_points_played",
   {
     data_type => "integer",
@@ -579,6 +633,8 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
+  "doubles_points_difference",
+  { data_type => "smallint", default_value => 0, is_nullable => 0 },
   "home_night",
   {
     data_type => "tinyint",
@@ -802,8 +858,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-09-29 23:47:56
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:XMezkkVKon0wCE3jyGPY/Q
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-11-18 10:55:43
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:mhSiz1KsLYGYqLl7ySiiiA
 
 __PACKAGE__->add_columns(
     "last_updated",
@@ -839,7 +895,7 @@ Returns the team's league position within the season.
 =cut
 
 sub league_position {
-  my ( $self ) = @_;
+  my $self = shift;
   
   my $teams_in_division = $self->result_source->schema->resultset("TeamSeason")->get_teams_in_division_in_league_table_order({
     season => $self->season,
@@ -867,7 +923,8 @@ Retrieve an arrayref of players registered for this team season.
 =cut
 
 sub get_players {
-  my ( $self, $parameters ) = @_;
+  my $self = shift;
+  my ( $parameters ) = @_;
   
   return $self->search_related("person_seasons", undef, {
     prefetch => "person",
@@ -882,7 +939,7 @@ Return the matches involving this team which have been cancelled.
 =cut
 
 sub cancelled_matches {
-  my ( $self ) = @_;
+  my $self = shift;
   
   my $home_matches = $self->search_related("team_matches_home_team_seasons", {cancelled => 1});
   my $away_matches = $self->search_related("team_matches_away_team_seasons", {cancelled => 1});

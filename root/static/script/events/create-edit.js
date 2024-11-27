@@ -21,6 +21,21 @@ $(document).ready(function() {
   }
   
   /*
+    Loan players fields
+  */
+  $("#allow_loan_players").on("change", function() {
+    var $allow_loan_players = $(this);
+    
+    if ( $allow_loan_players.prop("checked") ) {
+      // Checked, re-enable the other fields
+      $("#loan-players-nested-fields").show();
+    } else {
+      // Not checked, disable and uncheck / blank the other fields
+      $("#loan-players-nested-fields").hide();
+    }
+  });
+  
+  /*
     Sort out whether to show or hide the tournament details
   */
   handle_event_type();
@@ -84,11 +99,13 @@ function handle_tournament_type() {
     switch ( $("#tournament_type").val() ) {
       case "team":
         // Show team match template, hide individual
-        // Tournament defaults
+        // Tournament defaults and loan players
         $("#def-team-match-tpl-container").show();
         $("#def-ind-match-tpl-container").hide();
         $("#default_invididual_match_template").val("");
         $("#default_invididual_match_template").trigger("chosen:updated");
+        $("#loan-player-rules").show();
+        $("#game-forefeits").show();
         
         // First round
         $("#round-team-match-tpl-container").show();
@@ -99,11 +116,13 @@ function handle_tournament_type() {
       case "singles":
       case "doubles":
         // Hide team match template, show individual
-        // Tournament defaults
+        // Tournament defaults and loan players
         $("#def-team-match-tpl-container").hide();
         $("#def-ind-match-tpl-container").show();
         $("#default_team_match_template").val("");
         $("#default_team_match_template").trigger("chosen:updated");
+        $("#loan-player-rules").hide();
+        $("#game-forefeits").hide();
         
         // First round
         $("#round-team-match-tpl-container").hide();
@@ -113,13 +132,15 @@ function handle_tournament_type() {
         break;
       default:
         // Nothing selected, hide all
-        // Tournament defaults
+        // Tournament defaults and loan players
         $("#def-team-match-tpl-container").hide();
         $("#def-ind-match-tpl-container").hide();
         $("#default_invididual_match_template").val("");
         $("#default_invididual_match_template").trigger("chosen:updated");
         $("#default_team_match_template").val("");
         $("#default_team_match_template").trigger("chosen:updated");
+        $("#loan-player-rules").hide();
+        $("#game-forefeits").hide();
         
         // First round
         $("#round-team-match-tpl-container").hide();
@@ -141,6 +162,8 @@ function handle_tournament_type() {
     $("#default_invididual_match_template").trigger("chosen:updated");
     $("#default_team_match_template").val("");
     $("#default_team_match_template").trigger("chosen:updated");
+    $("#loan-player-rules").hide();
+    $("#game-forefeits").hide();
   }
 }
 

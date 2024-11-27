@@ -1,0 +1,184 @@
+<form method="post" action="[% form_action %]">
+[%
+SET round = 1;
+WHILE (round <= group.match_rounds);
+-%]
+<fieldset>
+<legend>[% c.maketext("events.tournaments.rounds.groups.create-matches.fieldset.match-round", round) %]</legend>
+  <div class="label-field-container">
+[%
+  IF event_detail.entry_type.id == "team";
+-%]
+    <label for="round_[% round %]_week">[% c.maketext("events.tournaments.rounds.groups.create-matches.field.week", round) %]</label>
+    <div class="field-container">
+      <select id="round_[% round %]_week" name="round_[% round %]_week" data-placeholder="[% c.maketext("events.tournaments.rounds.groups.create-matches.season-week") %]" data-round="[% round %]">
+        <option value=""></option>
+[%
+    FOREACH season_week IN season_weeks;
+      SET date = season_week.week_beginning_date;
+      CALL date.set_locale(c.locale);
+      week_beginning_text = date.day _ " " _ date.month_name _ " " _ date.year | html_entity;
+      IF c.flash.rounds.item(round).week.id == season_week.id;
+        SET selected = ' selected="selected"';
+      ELSE;
+        SET selected = '';
+      END;
+-%]
+        <option value="[% season_week.id %]"[% selected %]>[% c.maketext("events.tournaments.rounds.groups.create-matches.field.week-beginning", week_beginning_text) %]</option>
+[%
+    END;
+-%]
+      </select>
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+[%
+  END;
+  
+  # Loop through the matches in this round
+  SET match = 1;
+  WHILE (match <= group.matches_per_round);
+-%]
+  <fieldset>
+  <legend class="sub">[% c.maketext("events.tournaments.rounds.groups.create-matches.fieldset.match", match) %]</legend>
+    <div class="label-field-container">
+      <label for="round_[% round %]_match_[% match %]_home">[% c.maketext("events.tournaments.rounds.groups.create-matches.field.match-participants") %]</label>
+      <div class="field-container">
+        <select id="round_[% round %]_match_[% match %]_home" name="round_[% round %]_match_[% match %]_home" data-placeholder="[% c.maketext("events.tournaments.rounds.groups.create-matches.field.home") %]" data-round="[% round %]" data-match="[% match %]">
+          <option value=""></option>
+[%
+    FOREACH entrant IN entrants;
+      IF c.flash.rounds.item(round).matches.item(match).home.id == entrant.object_id;
+        SET selected = ' selected="selected"';
+      ELSE;
+        SET selected = '';
+      END;
+-%]
+          <option value="[% entrant.object_id %]"[% selected %]>[% entrant.object_name | html_entity %]</option>
+[%
+    END;
+-%]
+        </select>
+[%
+    c.maketext("matches.versus-abbreviation");
+-%]
+        <select id="round_[% round %]_match_[% match %]_away" name="round_[% round %]_match_[% match %]_away" data-placeholder="[% c.maketext("events.tournaments.rounds.groups.create-matches.field.away") %]" data-round="[% round %]" data-match="[% match %]">
+          <option value=""></option>
+[%
+    FOREACH entrant IN entrants;
+      IF c.flash.rounds.item(round).matches.item(match).away.id == entrant.object_id;
+        SET selected = ' selected="selected"';
+      ELSE;
+        SET selected = '';
+      END;
+-%]
+          <option value="[% entrant.object_id %]"[% selected %]>[% entrant.object_name | html_entity %]</option>
+[%
+    END;
+-%]
+        </select>
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+
+    <div class="label-field-container">
+      <label for="round_[% round %]_match_[% match %]_venue">[% c.maketext("events.tournaments.rounds.groups.create-matches.field.venue-override") %]</label>
+      <div class="field-container">
+        <select id="round_[% round %]_match_[% match %]_venue" name="round_[% round %]_match_[% match %]_venue" data-placeholder="[% c.maketext("events.tournaments.rounds.groups.create-matches.field.placeholder.venue") %]" data-round="[% round %]" data-match="[% match %]">
+          <option value=""></option>
+[%
+    FOREACH venue IN venues;
+      IF c.flash.rounds.item(round).matches.item(match).venue.id == season_week.id;
+        SET selected = ' selected="selected"';
+      ELSE;
+        SET selected = '';
+      END;
+-%]
+          <option value="[% venue.id %]"[% selected %]>[% venue.name | html_entity %]</option>
+[%
+    END;
+-%]
+        </select>
+      </div>
+      <div class="clear-fix"></div>
+      
+      <label for="round_[% round %]_match_[% match %]_day">[% c.maketext("events.tournaments.rounds.groups.create-matches.field.day-override") %]</label>
+      <div class="field-container">
+        <select id="round_[% round %]_match_[% match %]_day" name="round_[% round %]_match_[% match %]_day" data-placeholder="[% c.maketext("events.tournaments.rounds.groups.create-matches.field.placeholder.day") %]" data-round="[% round %]" data-match="[% match %]">
+          <option value=""></option>
+[%
+    FOREACH day IN days;
+      IF c.flash.rounds.item(round).matches.item(match).day.id == season_week.id;
+        SET selected = ' selected="selected"';
+      ELSE;
+        SET selected = '';
+      END;
+-%]
+          <option value="[% day.id %]"[% selected %]>[% c.maketext("weekdays." _ day.weekday_number) %]</option>
+[%
+    END;
+-%]
+        </select>
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+[%
+    IF group.tournament_round.match_template.handicapped;
+      SET fld = 'round_' _ round _ '_match_' _ match _ '_handicap_award';
+      SWITCH c.flash.rounds.item(round).matches.item(match).handicap.awarded_to;
+        CASE "scratch";
+          SET set_later_checked = "";
+          SET scratch_checked = ' checked="checked"';
+          SET home_checked = "";
+          SET away_checked = "";
+          SET handicap_display = ' style="display: none;"';
+        CASE ["set_later", ""];
+          SET set_later_checked = ' checked="checked"';
+          SET scratch_checked = "";
+          SET home_checked = "";
+          SET away_checked = "";
+          SET handicap_display = ' style="display: none;"';
+        CASE "home";
+          SET set_later_checked = "";
+          SET scratch_checked = "";
+          SET home_checked = ' selected="selected"';
+          SET away_checked = "";
+          SET handicap_display = "";
+        CASE "away";
+          SET set_later_checked = "";
+          SET scratch_checked = "";
+          SET home_checked = "";
+          SET away_checked = ' selected="selected"';
+          SET handicap_display = "";
+      END;
+-%]
+    <input type="radio" name="round_[% round %]_match_[% match %]_handicap_award" class="handicap_award" value="set_later" data-label="[% c.maketext("events.tournament.rounds.groups.create-matches.field.handicap-set-later") %]" data-round="[% round %]" data-match="[% match %]"[% set_later_checked %]>
+    <input type="radio" name="round_[% round %]_match_[% match %]_handicap_award" class="handicap_award" value="scratch" data-label="[% c.maketext("events.tournament.rounds.groups.create-matches.field.handicap-scratch") %]" data-round="[% round %]" data-match="[% match %]"[% scratch_checked %]>
+    <input type="radio" name="round_[% round %]_match_[% match %]_handicap_award" class="handicap_award" value="home" data-label="[% c.maketext("events.tournament.rounds.groups.create-matches.field.handicap-to-home") %]" data-round="[% round %]" data-match="[% match %]"[% home_checked %]>
+    <input type="radio" name="round_[% round %]_match_[% match %]_handicap_award" class="handicap_award" value="away" data-label="[% c.maketext("events.tournament.rounds.groups.create-matches.field.handicap-to-away") %]" data-round="[% round %]" data-match="[% match %]"[% home_checked %]>
+    <div class="clear-fix"></div>
+    <div class="label-field-container" id="round_[% round %]_match_[% match %]_handicap_div"[% handicap_display %]>
+      <label for="round_[% round %]_match_[% match %]_handicap">[% c.maketext("events.tournaments.rounds.groups.create-matches.field.handicap") %]</label>
+      <div class="field-container">
+[%
+      SET fld = 'round_' _ round _ '_match_' _ match _ '_handicap';
+-%]
+        <input type="number" id="round_[% round %]_match_[% match %]_handicap" min="1" name="round_[% round %]_match_[% match %]_handicap" value="[% c.flash.rounds.item(round).matches.item(round).handicap.headstart %]" />
+      </div>
+    </div>
+    <div class="clear-fix"></div>
+[%
+    END;
+-%]
+  </fieldset>
+[%
+    SET match = match + 1;
+  END; # End WHILE round <= group.matches_per_round loop
+-%]
+</fieldset>
+[%
+  SET round = round + 1;
+END; # End WHILE round <= group.match_rounds loop
+-%]
+<input type="submit" name="Submit" value="[% c.maketext("form.button.save") %]" />
+</form>

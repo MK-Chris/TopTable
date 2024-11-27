@@ -1,14 +1,25 @@
 [%
 IF c.flash.show_flashed;
   SET grid_selected = c.flash.fixtures_grid.id;
+  SET manual_fixtures = c.flash.manual_fixtures;
 ELSE;
-  SET grid_selected = groupd.fixtures_grid.id;
+  SET grid_selected = group.fixtures_grid.id;
+  
+  IF group.has_fixtures_grid;
+    SET manual_fixtures = 0;
+  ELSE;
+    SET manual_fixtures = 1;
+  END;
 END;
+
+CALL c.log.debug("manual: " _ manual_fixtures);
 -%]
 <form method="post" action="[% form_action %]">
 <fieldset>
   <legend>[% c.maketext("tournaments.round.groups.details") %]</legend>
-  
+[%
+IF round.groups_can_be_named;
+-%]
   <div class="label-field-container">
     <label for="name">[% c.maketext("tournaments.rounds.group.field.name") %]</label>
     <div class="field-container">
@@ -16,10 +27,21 @@ END;
     </div>
     <div class="clear-fix"></div>
   </div>
+[%
+END;
+
+IF manual_fixtures;
+  SET manual_fixtures_checked = ' checked="checked"';
+  SET grid_container_visible = ' style="display: none;"';
+ELSE;
+  SET manual_fixtures_checked = "";
+  SET grid_container_visible = '';
+END;
+-%]
   
-  <input type="checkbox" id="manual_fixtures" name="manual_fixtures" data-label="[% c.maketext("tournaments.rounds.groups.field.manual-fixtures") %]" value="1"[% group_round_checked %] />
+  <input type="checkbox" id="manual_fixtures" name="manual_fixtures" data-label="[% c.maketext("tournaments.rounds.groups.field.manual-fixtures") %]" value="1"[% manual_fixtures_checked %] />
   
-  <div class="label-field-container" id="group-grid-container">
+  <div class="label-field-container" id="group-grid-container"[% grid_container_visible %]>
     <label for="name">[% c.maketext("tournaments.rounds.group.field.grid") %]</label>
     <div class="field-container">
       <select id="fixtures_grid" name="fixtures_grid" data-placeholder="[% c.maketext("tournaments.rounds.group.field.grid") %]">

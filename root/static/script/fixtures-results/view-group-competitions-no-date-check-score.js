@@ -12,24 +12,29 @@ $(document).ready(function() {
     "order": [[1, "asc"]],
     "ordering": false,
     "rowGroup": {
-      "dataSrc": 0
+      "dataSrc": 1
     },
     "columnDefs": [{
-      // Competition - invisible, as it's grouped
+      // Competition - invisible, as it's sort data
       "visible": false,
       "targets": 0
     }, {
+      // Competition - invisible, as it's grouped
+      "visible": false,
+      "targets": 1,
+      "orderData": 0
+    }, {
       // Home team
       "responsivePriority": 1,
-      "targets": 1
+      "targets": 2
     }, {
       // Away team
       "responsivePriority": 2,
-      "targets": 2
+      "targets": 3
     }, {
       // Venue / score
       "responsivePriority": 3,
-      "targets": 3
+      "targets": 4
     }]
   });
 });

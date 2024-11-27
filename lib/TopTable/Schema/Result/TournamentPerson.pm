@@ -88,27 +88,6 @@ __PACKAGE__->table("tournament_people");
   is_foreign_key: 1
   is_nullable: 1
 
-=head2 first_name
-
-  data_type: 'varchar'
-  default_value: (empty string)
-  is_nullable: 0
-  size: 150
-
-=head2 surname
-
-  data_type: 'varchar'
-  default_value: (empty string)
-  is_nullable: 0
-  size: 150
-
-=head2 display_name
-
-  data_type: 'varchar'
-  default_value: (empty string)
-  is_nullable: 0
-  size: 301
-
 =head2 matches_played
 
   data_type: 'tinyint'
@@ -172,6 +151,12 @@ __PACKAGE__->table("tournament_people");
   extra: {unsigned => 1}
   is_nullable: 0
 
+=head2 games_difference
+
+  data_type: 'smallint'
+  default_value: 0
+  is_nullable: 0
+
 =head2 legs_played
 
   data_type: 'smallint'
@@ -200,6 +185,12 @@ __PACKAGE__->table("tournament_people");
   extra: {unsigned => 1}
   is_nullable: 0
 
+=head2 legs_difference
+
+  data_type: 'smallint'
+  default_value: 0
+  is_nullable: 0
+
 =head2 points_played
 
   data_type: 'integer'
@@ -226,6 +217,18 @@ __PACKAGE__->table("tournament_people");
   data_type: 'float'
   default_value: 0
   extra: {unsigned => 1}
+  is_nullable: 0
+
+=head2 total_handicap
+
+  data_type: 'smallint'
+  default_value: 0
+  is_nullable: 0
+
+=head2 points_difference
+
+  data_type: 'smallint'
+  default_value: 0
   is_nullable: 0
 
 =head2 doubles_games_played
@@ -263,6 +266,12 @@ __PACKAGE__->table("tournament_people");
   extra: {unsigned => 1}
   is_nullable: 0
 
+=head2 doubles_games_difference
+
+  data_type: 'smallint'
+  default_value: 0
+  is_nullable: 0
+
 =head2 doubles_legs_played
 
   data_type: 'smallint'
@@ -291,6 +300,12 @@ __PACKAGE__->table("tournament_people");
   extra: {unsigned => 1}
   is_nullable: 0
 
+=head2 doubles_legs_difference
+
+  data_type: 'smallint'
+  default_value: 0
+  is_nullable: 0
+
 =head2 doubles_points_played
 
   data_type: 'integer'
@@ -317,6 +332,12 @@ __PACKAGE__->table("tournament_people");
   data_type: 'float'
   default_value: 0
   extra: {unsigned => 1}
+  is_nullable: 0
+
+=head2 doubles_points_difference
+
+  data_type: 'smallint'
+  default_value: 0
   is_nullable: 0
 
 =head2 last_updated
@@ -370,12 +391,6 @@ __PACKAGE__->add_columns(
     is_foreign_key => 1,
     is_nullable => 1,
   },
-  "first_name",
-  { data_type => "varchar", default_value => "", is_nullable => 0, size => 150 },
-  "surname",
-  { data_type => "varchar", default_value => "", is_nullable => 0, size => 150 },
-  "display_name",
-  { data_type => "varchar", default_value => "", is_nullable => 0, size => 301 },
   "matches_played",
   {
     data_type => "tinyint",
@@ -439,6 +454,8 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
+  "games_difference",
+  { data_type => "smallint", default_value => 0, is_nullable => 0 },
   "legs_played",
   {
     data_type => "smallint",
@@ -467,6 +484,8 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
+  "legs_difference",
+  { data_type => "smallint", default_value => 0, is_nullable => 0 },
   "points_played",
   {
     data_type => "integer",
@@ -495,6 +514,10 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
+  "total_handicap",
+  { data_type => "smallint", default_value => 0, is_nullable => 0 },
+  "points_difference",
+  { data_type => "smallint", default_value => 0, is_nullable => 0 },
   "doubles_games_played",
   {
     data_type => "tinyint",
@@ -530,6 +553,8 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
+  "doubles_games_difference",
+  { data_type => "smallint", default_value => 0, is_nullable => 0 },
   "doubles_legs_played",
   {
     data_type => "smallint",
@@ -558,6 +583,8 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
+  "doubles_legs_difference",
+  { data_type => "smallint", default_value => 0, is_nullable => 0 },
   "doubles_points_played",
   {
     data_type => "integer",
@@ -586,6 +613,8 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
+  "doubles_points_difference",
+  { data_type => "smallint", default_value => 0, is_nullable => 0 },
   "last_updated",
   {
     data_type => "datetime",
@@ -679,8 +708,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-09-29 23:47:56
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:pnaCn4eayHPPXNANOYyKRQ
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-11-18 10:55:43
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:78PhMuQUtfFVSPJBca+7gA
 
 __PACKAGE__->add_columns(
     "last_updated",

@@ -3,6 +3,7 @@ use Moose;
 use namespace::autoclean;
 use HTML::Entities;
 use JSON;
+use DDP;
 
 BEGIN { extends 'Catalyst::Controller'; }
 
@@ -51,10 +52,10 @@ sub base_list :Chained("/") :PathPart("events") :CaptureArgs(0) {
   my $site_name = $c->stash->{enc_site_name};
   
   # Check that we are authorised to view events
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["event_view", $c->maketext("user.auth.view-events"), 1] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_view", $c->maketext("user.auth.view-events"), 1]);
   
   # Check the authorisation to edit events we can display the link if necessary
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", [[qw( event_edit event_delete event_create)], "", 0] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", [[qw( event_edit event_delete event_create)], "", 0]);
   
   # Page description
   $c->stash({
@@ -185,7 +186,7 @@ sub base_current_season :Chained("base") :PathPart("") :CaptureArgs(0) {
   
   # Try to find the current season (or the last completed season if there is no current season)
   my $season = $c->model("DB::Season")->get_current_or_last;
-    
+  
   if ( defined($season) ) {
     $c->stash({season => $season});
     
@@ -245,11 +246,15 @@ Obtain a event's details for a given season; forwarded from both base_current_se
 sub get_event_season :Private {
   my ( $self, $c ) = @_;
   my ( $event, $season ) = ( $c->stash->{event}, $c->stash->{season} );
+  
   my $event_season = $event->single_season($season);
   $c->stash({event_season => $event_season});
   
   if ( defined($event_season) ) {
     $c->stash({event_detail => $event_season->event_detail});
+    
+    # Add a warning, but not for meetings
+    $c->add_event_test_msg unless $event_season->event->event_type->id eq "meeting";
   }
 }
 
@@ -281,6 +286,7 @@ sub create :Local {
     view_online_display => sprintf("Creating events"),
     subtitle2 => $c->maketext("admin.create"),
     action => "create",
+    season => $current_season,
   });
   
   # Push the breadcrumbs links
@@ -637,7 +643,7 @@ sub view_finalise :Private {
     });
   } elsif ( $event->event_type->id eq "single_tournament" ) {
     # Grab the tournament details
-    my $tournament = $event_season->event_detail;
+    my $tournament = $c->stash->{event_detail};
     $template_path = "events/tournaments/view.ttkt";
     my @rounds = $tournament->rounds;
     
@@ -650,10 +656,13 @@ sub view_finalise :Private {
       # Get the ranking template for the table - we need this before we stash because one of the scripts depends
       # on whether or not we're assigning points (as there's an extra column if we are)
       my $ranking_template = $rounds[0]->rank_template;
-      
-      my $table_view_js = $ranking_template->assign_points
-        ? $c->uri_for("/static/script/tables/view-points.js")
-        : $c->uri_for("/static/script/tables/view-no-points.js");
+      my $match_template = $rounds[0]->match_template;
+  
+      # Base JS name - add to it based on whether we have points or not / handicaps or not
+      my $table_view_js = "view";
+      $table_view_js .= "-points" if $ranking_template->assign_points;
+      $table_view_js .= "-hcp" if $match_template->handicapped;
+      $table_view_js = $c->uri_for("/static/script/tables/$table_view_js.js", {v => 3});
       
       push(@external_scripts,
         $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
@@ -670,10 +679,12 @@ sub view_finalise :Private {
         $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
       );
       
+      my @groups = $rounds[0]->groups;
       $c->stash({
         group_round => $rounds[0],
-        groups => [$tournament->find_round_by_number_or_url_key(1)->groups],
+        groups => \@groups,
         ranking_template => $ranking_template,
+        match_template => $match_template,
       });
     }
   }
@@ -739,7 +750,9 @@ sub rounds :Private {
     return;
   }
   
-  my $tournament = $c->stash->{event_season}->event_detail;
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["match_cancel", "", 0]);
+  
+  my $tournament = $c->stash->{event_detail};
   my $round = $tournament->find_round_by_number_or_url_key($round_id);
   
   if ( !defined($round) ) {
@@ -770,6 +783,36 @@ sub round_view_current_season :Chained("rounds_current_season") :PathPart("") :A
 sub round_view_specific_season :Chained("rounds_specific_season") :PathPart("") :Args(0) {
   my ( $self, $c ) = @_;
   $c->forward("round_view");
+}
+
+=head2 round_view_by_id
+
+Provide a path to view the round just by ID.  This is basically so we can more easily link to rounds from the event log with just an ID; it performs an HTTP redirect to the round_view_current_season (or round_view_specific_season) routine.
+
+=cut
+
+sub round_view_by_id :Path("rounds") :Args(1) {
+  my ( $self, $c, $round_id ) = @_;
+  
+  # Get the round
+  my $round = $c->model("DB::TournamentRound")->find_with_tournament_and_season($round_id);
+  
+  # Check it's valid
+  if ( defined($round) ) {
+    # Round is valid, check if the season is current or not
+    my $season = $round->tournament->event_season->season;
+    my $event = $round->tournament->event_season->event;
+    my $uri = $season->complete
+      ? $c->uri_for_action("/events/round_view_specific_season", [$event->url_key, $season->url_key, $round->url_key])
+      : $c->uri_for_action("/events/round_view_current_season", [$event->url_key, $round->url_key]);
+    
+    $c->response->redirect($uri);
+    $c->detach;
+    return;
+  } else {
+    # Round invalid
+    $c->detach(qw(TopTable::Controller::Root default));
+  }
 }
 
 =head2 round_view
@@ -806,9 +849,41 @@ sub round_view :Private {
   
   $c->stash({canonical_uri => $canonical_uri});
   
-  my $template;
+  my ( $template, @external_scripts, @external_styles );
   if ( $round->group_round ) {
-    $c->stash({groups => [$round->groups]});
+    
+    # Get the ranking template for the table - we need this before we stash because one of the scripts depends
+    # on whether or not we're assigning points (as there's an extra column if we are)
+    my $ranking_template = $round->rank_template;
+    my $match_template = $round->match_template;
+
+    # Base JS name - add to it based on whether we have points or not / handicaps or not
+    my $table_view_js = "view";
+    $table_view_js .= "-points" if $ranking_template->assign_points;
+    $table_view_js .= "-hcp" if $match_template->handicapped;
+    $table_view_js = $c->uri_for("/static/script/tables/$table_view_js.js", {v => 3});
+    
+    @external_scripts = (
+      $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
+      $table_view_js,
+    );
+    
+    @external_styles = (
+      $c->uri_for("/static/css/datatables/dataTables.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/fixedColumns.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
+    );
+    
+    $c->stash({
+      groups => [$round->groups],
+      ranking_template => $ranking_template,
+      match_template => $match_template,
+    });
+    
     $template = "view-groups";
   } else {
     $template = "view";
@@ -819,16 +894,8 @@ sub round_view :Private {
     title_links => \@title_links,
     view_online_display => sprintf("Viewing %s", $enc_name),
     view_online_link => 1,
-    external_scripts => [
-      $c->uri_for("/static/script/plugins/responsive-tabs/jquery.responsiveTabs.mod.js"),
-      $c->uri_for("/static/script/standard/responsive-tabs.js"),
-      $c->uri_for("/static/script/standard/vertical-table.js"),
-      $c->uri_for("/static/script/standard/option-list.js"),
-    ],
-    external_styles => [
-      $c->uri_for("/static/css/responsive-tabs/responsive-tabs.css"),
-      $c->uri_for("/static/css/responsive-tabs/style-jqueryui.css"),
-    ],
+    external_scripts => \@external_scripts,
+    external_styles => \@external_styles,
   });
 }
 
@@ -975,7 +1042,11 @@ sub groups :Private {
     return;
   }
   
-  $c->stash({group => $group});
+  $c->stash({
+    group => $group,
+    subtitle2 => $round->name,
+    subtitle3 => $group->name,
+  });
 }
 
 =head2 group_view_current_season, group_view_specific_season
@@ -996,6 +1067,37 @@ sub group_view_specific_season :Chained("groups_specific_season") :PathPart("") 
   $c->forward("group_view");
 }
 
+=head2 group_view_by_id
+
+Provide a path to view the group just by ID.  This is basically so we can more easily link to rounds from the event log with just an ID; it performs an HTTP redirect to the group_view_current_season (or group_view_specific_season) routine.
+
+=cut
+
+sub group_view_by_id :Path("groups") :Args(1) {
+  my ( $self, $c, $group_id ) = @_;
+  
+  # Get the round
+  my $group = $c->model("DB::TournamentRoundGroup")->find_with_round_tournament_and_season($group_id);
+  
+  # Check it's valid
+  if ( defined($group) ) {
+    # Round is valid, check if the season is current or not
+    my $round = $group->tournament_round;
+    my $season = $round->tournament->event_season->season;
+    my $event = $round->tournament->event_season->event;
+    my $uri = $season->complete
+      ? $c->uri_for_action("/events/group_view_specific_season", [$event->url_key, $season->url_key, $round->url_key, $group->url_key])
+      : $c->uri_for_action("/events/group_view_current_season", [$event->url_key, $round->url_key, $group->url_key]);
+    
+    $c->response->redirect($uri);
+    $c->detach;
+    return;
+  } else {
+    # Round invalid
+    $c->detach(qw(TopTable::Controller::Root default));
+  }
+}
+
 sub group_view :Private {
   my ( $self, $c ) = @_;
   my $event = $c->stash->{event};
@@ -1011,30 +1113,38 @@ sub group_view :Private {
   my @title_links = ();
   
   # Push edit link if we are authorised
-  if ( $c->stash->{authorisation}{event_edit} and !$c->stash->{delete_screen} ) {
-    push(@title_links, {
-      image_uri => $c->uri_for("/static/images/icons/0018-Pencil-icon-32.png"),
-      text => $c->maketext("admin.edit-object", $enc_name),
-      link_uri => $c->uri_for_action("/events/group_edit", [$event->url_key, $round->url_key, $group->url_key]),
-    });
-    
-    push(@title_links, {
-      image_uri => $c->uri_for("/static/images/icons/reorder-32.png"),
-      text => $c->maketext("admin.fixtures-grid.set-positions", $enc_name),
-      link_uri => $c->uri_for_action("/events/group_grid_positions", [$event->url_key, $round->url_key, $group->url_key]),
-    }) if $group->can_set_grid_positions;
-    
-    push(@title_links, {
-      image_uri => $c->uri_for("/static/images/icons/fixtures-32.png"),
-      text => $c->maketext("admin.fixtures-grid.create-fixtures", $enc_name),
-      link_uri => $c->uri_for_action("/events/group_create_matches", [$event->url_key, $round->url_key, $group->url_key]),
-    }) if $group->can_create_matches;
-    
-    push(@title_links, {
-      image_uri => $c->uri_for("/static/images/icons/fixturesdel-32.png"),
-      text => $c->maketext("admin.fixtures-grid.delete-fixtures", $enc_name),
-      link_uri => $c->uri_for_action("/events/group_delete_matches", [$event->url_key, $round->url_key, $group->url_key]),
-    }) if $group->can_delete_matches;
+  if ( !$season->complete and !$c->stash->{delete_screen} ) {
+    if ( $c->stash->{authorisation}{event_edit} ) {
+      push(@title_links, {
+        image_uri => $c->uri_for("/static/images/icons/0018-Pencil-icon-32.png"),
+        text => $c->maketext("admin.edit-object", $group->name),
+        link_uri => $c->uri_for_action("/events/group_edit", [$event->url_key, $round->url_key, $group->url_key]),
+      });
+      
+      push(@title_links, {
+        image_uri => $c->uri_for("/static/images/icons/reorder-32.png"),
+        text => $c->maketext("admin.fixtures-grid.set-positions", $group->name),
+        link_uri => $c->uri_for_action("/events/group_grid_positions", [$event->url_key, $round->url_key, $group->url_key]),
+      }) if $group->can_set_grid_positions;
+      
+      push(@title_links, {
+        image_uri => $c->uri_for("/static/images/icons/fixtures-32.png"),
+        text => $c->maketext("admin.fixtures-grid.create-fixtures", $group->name),
+        link_uri => $c->uri_for_action("/events/group_create_matches", [$event->url_key, $round->url_key, $group->url_key]),
+      }) if $group->can_create_matches;
+      
+      push(@title_links, {
+        image_uri => $c->uri_for("/static/images/icons/fixturesdel-32.png"),
+        text => $c->maketext("admin.fixtures-grid.delete-fixtures", $group->name),
+        link_uri => $c->uri_for_action("/events/group_delete_matches", [$event->url_key, $round->url_key, $group->url_key]),
+      }) if $group->can_delete_matches;
+      
+      push(@title_links, {
+        image_uri => $c->uri_for("/static/images/icons/0005-Delete-icon-32.png"),
+        text => $c->maketext("admin.delete-object", $group->name),
+        link_uri => $c->uri_for_action("/events/group_delete", [$event->url_key, $round->url_key, $group->url_key]),
+      }) if $group->can_delete;
+    }
   }
   
   # Set up the canonical URI
@@ -1047,37 +1157,45 @@ sub group_view :Private {
   # Get the ranking template for the table - we need this before we stash because one of the scripts depends
   # on whether or not we're assigning points (as there's an extra column if we are)
   my $ranking_template = $round->rank_template;
+  my $match_template = $round->match_template;
   
-  my $table_view_js = $ranking_template->assign_points
-    ? $c->uri_for("/static/script/tables/view-points.js")
-    : $c->uri_for("/static/script/tables/view-no-points.js");
+  # Base JS name - add to it based on whether we have points or not / handicaps or not
+  my $table_view_js = "view";
+  $table_view_js .= "-points" if $ranking_template->assign_points;
+  $table_view_js .= "-hcp" if $match_template->handicapped;
+  $table_view_js = $c->uri_for("/static/script/tables/$table_view_js.js", {v => 3});
   
   $c->stash({
     template => "html/events/tournaments/rounds/groups/view.ttkt",
-    subtitle2 => $round->name,
-    subtitle3 => $group->name,
     title_links => \@title_links,
     view_online_display => sprintf("Viewing %s", $enc_name),
     view_online_link => 1,
     entrants => [$group->get_entrants_in_table_order],
     last_updated => $group->get_tables_last_updated_timestamp,
     ranking_template => $ranking_template,
+    match_template => $match_template,
+    matches => scalar $group->matches,
     external_scripts => [
       $c->uri_for("/static/script/plugins/responsive-tabs/jquery.responsiveTabs.mod.js"),
       $c->uri_for("/static/script/standard/responsive-tabs.js"),
+      $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
       $table_view_js,
+      $c->uri_for("/static/script/fixtures-results/view-group-weeks-ordering-no-comp.js", {v => 2}),
     ],
     external_styles => [
       $c->uri_for("/static/css/responsive-tabs/responsive-tabs.css"),
       $c->uri_for("/static/css/responsive-tabs/style-jqueryui.css"),
+      $c->uri_for("/static/css/chosen/chosen.min.css"),
       $c->uri_for("/static/css/datatables/dataTables.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/fixedColumns.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/rowGroup.dataTables.min.css"),
     ],
   });
 }
@@ -1170,7 +1288,7 @@ sub group_delete :Chained("groups_current_season") :PathPart("delete") :Args(0) 
   # Before that, we stash a value to tell that routine that we're actually showing
   # the delete screen, so it doesn't forward to view_finalise, which we don't need
   $c->stash->{delete_screen} = 1;
-  $c->forward("view_current_season");
+  $c->forward("group_view_current_season");
   
   $c->stash({
     subtitle5 => $c->maketext("admin.delete"),
@@ -1240,8 +1358,8 @@ sub prepare_form_group :Private {
     ## TODO
   } else {
     $members_tokeninput_options->{prePopulate} = [map({
-      id => $_->id,
-      name => $entry_type eq "team" ? encode_entities($_->display_name) : encode_entities($_->full_name),
+      id => $_->object_id,
+      name => $_->object_name,
     }, @{$members})] if ref($members) eq "ARRAY" and scalar @{$members};
   }
   
@@ -1265,7 +1383,7 @@ sub prepare_form_group :Private {
       $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
       $c->uri_for("/static/script/standard/prettycheckable.js"),
       $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js", {v => 2}),
-      $c->uri_for("/static/script/tournaments/create-edit-group.js"),
+      $c->uri_for("/static/script/events/tournaments/rounds/groups/create-edit.js"),
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
@@ -1324,7 +1442,7 @@ We only need to chain this to the current season, as we don't allow editing of r
 
 =cut
 
-sub group_do_edit :Chained("rounds_current_season") :PathPart("groups/do-edit") :Args(0) {
+sub group_do_edit :Chained("groups_current_season") :PathPart("do-edit") :Args(0) {
   my ( $self, $c ) = @_;
   my $event = $c->stash->{event};
   my $tournament = $c->stash->{event_season}->event_detail;
@@ -1377,7 +1495,7 @@ sub group_do_delete :Chained("groups_current_season") :PathPart("do-delete") :Ar
     $redirect_uri = $c->uri_for_action("/events/round_view_current_season", [$event->url_key, $round->url_key], {mid => $mid});
     
     # Completed, so we log an event
-    $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["group", "delete", {id => undef}, $name]);
+    $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["event-group", "delete", {id => undef}, $name]);
   } else {
     # Not complete
     $redirect_uri = $c->uri_for_action("/events/group_view_current_season", [$event->url_key, $round->url_key, $group->url_key], {mid => $mid});
@@ -1525,6 +1643,7 @@ sub group_create_matches :Chained("groups_current_season") :PathPart("create-mat
         $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
         $c->uri_for("/static/script/standard/chosen.js"),
         $c->uri_for("/static/script/fixtures-grids/create-fixtures.js"),
+        $c->uri_for("/static/script/fixtures-grids/create-fixtures.js"),
       ],
       external_styles => [
         $c->uri_for("/static/css/chosen/chosen.min.css"),
@@ -1537,15 +1656,21 @@ sub group_create_matches :Chained("groups_current_season") :PathPart("create-mat
   } else {
     # Show the grid form
     $c->stash({
-      template => "html/events/rounds/create-matches.ttkt",
+      template => "html/events/tournaments/rounds/groups/create-matches.ttkt",
       external_scripts => [
         $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
         $c->uri_for("/static/script/standard/chosen.js"),
-        $c->uri_for("/static/script/fixtures-grids/create-fixtures.js"),
+        $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
+        $c->uri_for("/static/script/standard/prettycheckable.js"),
+        $c->uri_for("/static/script/events/tournaments/rounds/groups/create-matches-manual.js"),
       ],
       external_styles => [
         $c->uri_for("/static/css/chosen/chosen.min.css"),
+        $c->uri_for("/static/css/prettycheckable/prettyCheckable.css"),
       ],
+      entrants => [$group->get_entrants],
+      venues => [$c->model("DB::Venue")->active_venues],
+      days => [$c->model("DB::LookupWeekday")->all_days],
       view_online_display => "Creating fixtures for " . $group->name,
       view_online_link => 0,
       season_weeks => [$season->weeks],
@@ -1789,8 +1914,8 @@ sub process_form :Private {
   my $response = {}; # Store the response from the form processing
   
   if ( $type eq "event" ) {
-    my @field_names = qw( name event_type tournament_type venue organiser start_hour start_minute all_day end_hour end_minute default_team_match_template default_individual_match_template round_name round_group round_group_rank_template round_team_match_template round_individual_match_template round_venue );
-    my @processed_field_names = qw( name event_type tournament_type venue organiser start_date start_hour start_minute all_day end_date end_hour end_minute default_team_match_template default_individual_match_template round_name round_group round_group_rank_template round_team_match_template round_individual_match_template round_venue );
+    my @field_names = qw( name event_type tournament_type venue organiser start_hour start_minute all_day end_hour end_minute default_team_match_template default_individual_match_template allow_loan_players allow_loan_players_above allow_loan_players_below allow_loan_players_across allow_loan_players_same_club_only allow_loan_players_multiple_teams loan_players_limit_per_player loan_players_limit_per_player_per_team loan_players_limit_per_player_per_opposition loan_players_limit_per_team void_unplayed_games_if_both_teams_incomplete forefeit_count_averages_if_game_not_started missing_player_count_win_in_averages rules round_name round_group round_group_rank_template round_team_match_template round_individual_match_template round_venue );
+    my @processed_field_names = ( @field_names, qw( start_date end_date round_date ) );
     
     # The rest of the error checking is done in the Club model
     $response = $c->model("DB::Event")->create_or_edit($action, {
@@ -1838,13 +1963,15 @@ sub process_form :Private {
       });
     } elsif ( $action eq "matches" ) {
       # Create matches
-      my %weeks = ();
+      @processed_field_names = qw( rounds );
+      my %rounds = ();
       foreach ( keys %{$c->req->params } ) {
-        $weeks{$_} = $c->req->params->{$_} if m/^week_\d{1,2}$/;
+        # Pass in anything that starts with 'round_' - the rest will be dealt with in the model.
+        $rounds{$_} = $c->req->params->{$_} if m/^round_/;
       }
       
       $response = $group->create_matches({
-        weeks => \%weeks,
+        rounds => \%rounds,
         logger => sub{ my $level = shift; $c->log->$level( @_ ); }
       });
     }
@@ -1863,29 +1990,31 @@ sub process_form :Private {
   if ( $response->{completed} ) {
     # Was completed, display the view page
     my %log_ids = ();
+    my ( $obj_type, $obj_name );
     if ( $type eq "event" ) {
       $event = $response->{event};
+      $obj_type = "event";
       $log_obj = $event;
-      
+      $obj_name = $event->name;
       %log_ids = (id => $event->id);
       $redirect_uri = $c->uri_for_action("/events/view_current_season", [$event->url_key], {mid => $mid});
     } elsif ( $type eq "group" ) {
       $group = $response->{group} if $action eq "create";
+      $obj_type = "event-group";
       $log_obj = $group;
-      %log_ids = (id => $event->id, round => $group->tournament_round->id, group => $group->id);
-      
-      # Set the action with a suffix, for event logging
-      $action = "group-$action" unless $action eq "matches";
+      $obj_name = sprintf("%s %s", $event->name, $group->name);
+      %log_ids = (id => $group->id);
       $redirect_uri = $c->uri_for_action("/events/group_view_current_season", [$event->url_key, $round->url_key, $group->url_key], {mid => $mid});
     }
     
     # Completed, so we log an event
+    $c->log->debug("log event");
     if ( $action eq "matches" ) {
       # Matches have a match event to log
       $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["team-match", "create", $response->{match_ids}, $response->{match_names}]);
     } else {
-      # Everything else is related to the event
-      $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["event", $action, \%log_ids, $event->name]);
+      # Everything else is related to the event, group or round
+      $c->forward("TopTable::Controller::SystemEventLog", "add_event", [$obj_type, $action, \%log_ids, $obj_name]);
     }
   } else {
     # Not complete - check if we need to redirect back to the create or view page

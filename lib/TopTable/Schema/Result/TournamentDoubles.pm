@@ -67,19 +67,25 @@ __PACKAGE__->table("tournament_doubles");
   is_foreign_key: 1
   is_nullable: 1
 
+Only populated for team tournaments, as it refers specifically to the player 1 / player 2 / season / team combination that gets set in the team match game doubles pairing fields.  Doubles tournaments will set person1 / person2 instead.
+
 =head2 person1
 
   data_type: 'integer'
   extra: {unsigned => 1}
   is_foreign_key: 1
-  is_nullable: 0
+  is_nullable: 1
+
+Only populated for doubles tournaments.
 
 =head2 person2
 
   data_type: 'integer'
   extra: {unsigned => 1}
   is_foreign_key: 1
-  is_nullable: 0
+  is_nullable: 1
+
+Only populated for doubles tournaments.
 
 =head2 season
 
@@ -93,7 +99,7 @@ __PACKAGE__->table("tournament_doubles");
   data_type: 'integer'
   extra: {unsigned => 1}
   is_foreign_key: 1
-  is_nullable: 0
+  is_nullable: 1
 
 References the active team membership for this person, unless this is a team entry tournament, in which case it specifically references the doubles paring for this team
 
@@ -102,59 +108,16 @@ References the active team membership for this person, unless this is a team ent
   data_type: 'integer'
   extra: {unsigned => 1}
   is_foreign_key: 1
-  is_nullable: 0
+  is_nullable: 1
 
 References the active team membership for this person, unless this is a team entry tournament, in which case it specifically references the doubles paring for this team
 
-=head2 person1_first_name
+=head2 tournament_team
 
-  data_type: 'varchar'
-  is_nullable: 0
-  size: 150
-
-=head2 person1_surname
-
-  data_type: 'varchar'
-  is_nullable: 0
-  size: 150
-
-=head2 person1_display_name
-
-  data_type: 'varchar'
-  is_nullable: 0
-  size: 301
-
-=head2 person1_loan
-
-  data_type: 'tinyint'
-  default_value: 0
+  data_type: 'integer'
   extra: {unsigned => 1}
-  is_nullable: 0
-
-=head2 person2_first_name
-
-  data_type: 'varchar'
-  is_nullable: 0
-  size: 150
-
-=head2 person2_surname
-
-  data_type: 'varchar'
-  is_nullable: 0
-  size: 150
-
-=head2 person2_display_name
-
-  data_type: 'varchar'
-  is_nullable: 0
-  size: 301
-
-=head2 person2_loan
-
-  data_type: 'tinyint'
-  default_value: 0
-  extra: {unsigned => 1}
-  is_nullable: 0
+  is_foreign_key: 1
+  is_nullable: 1
 
 =head2 games_played
 
@@ -191,6 +154,12 @@ References the active team membership for this person, unless this is a team ent
   extra: {unsigned => 1}
   is_nullable: 0
 
+=head2 games_difference
+
+  data_type: 'smallint'
+  default_value: 0
+  is_nullable: 0
+
 =head2 legs_played
 
   data_type: 'smallint'
@@ -219,6 +188,12 @@ References the active team membership for this person, unless this is a team ent
   extra: {unsigned => 1}
   is_nullable: 0
 
+=head2 legs_difference
+
+  data_type: 'smallint'
+  default_value: 0
+  is_nullable: 0
+
 =head2 points_played
 
   data_type: 'integer'
@@ -245,6 +220,18 @@ References the active team membership for this person, unless this is a team ent
   data_type: 'float'
   default_value: 0
   extra: {unsigned => 1}
+  is_nullable: 0
+
+=head2 total_handicap
+
+  data_type: 'smallint'
+  default_value: 0
+  is_nullable: 0
+
+=head2 points_difference
+
+  data_type: 'smallint'
+  default_value: 0
   is_nullable: 0
 
 =head2 last_updated
@@ -282,14 +269,14 @@ __PACKAGE__->add_columns(
     data_type => "integer",
     extra => { unsigned => 1 },
     is_foreign_key => 1,
-    is_nullable => 0,
+    is_nullable => 1,
   },
   "person2",
   {
     data_type => "integer",
     extra => { unsigned => 1 },
     is_foreign_key => 1,
-    is_nullable => 0,
+    is_nullable => 1,
   },
   "season",
   {
@@ -303,40 +290,21 @@ __PACKAGE__->add_columns(
     data_type => "integer",
     extra => { unsigned => 1 },
     is_foreign_key => 1,
-    is_nullable => 0,
+    is_nullable => 1,
   },
   "person2_team",
   {
     data_type => "integer",
     extra => { unsigned => 1 },
     is_foreign_key => 1,
-    is_nullable => 0,
+    is_nullable => 1,
   },
-  "person1_first_name",
-  { data_type => "varchar", is_nullable => 0, size => 150 },
-  "person1_surname",
-  { data_type => "varchar", is_nullable => 0, size => 150 },
-  "person1_display_name",
-  { data_type => "varchar", is_nullable => 0, size => 301 },
-  "person1_loan",
+  "tournament_team",
   {
-    data_type => "tinyint",
-    default_value => 0,
+    data_type => "integer",
     extra => { unsigned => 1 },
-    is_nullable => 0,
-  },
-  "person2_first_name",
-  { data_type => "varchar", is_nullable => 0, size => 150 },
-  "person2_surname",
-  { data_type => "varchar", is_nullable => 0, size => 150 },
-  "person2_display_name",
-  { data_type => "varchar", is_nullable => 0, size => 301 },
-  "person2_loan",
-  {
-    data_type => "tinyint",
-    default_value => 0,
-    extra => { unsigned => 1 },
-    is_nullable => 0,
+    is_foreign_key => 1,
+    is_nullable => 1,
   },
   "games_played",
   {
@@ -373,6 +341,8 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
+  "games_difference",
+  { data_type => "smallint", default_value => 0, is_nullable => 0 },
   "legs_played",
   {
     data_type => "smallint",
@@ -401,6 +371,8 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
+  "legs_difference",
+  { data_type => "smallint", default_value => 0, is_nullable => 0 },
   "points_played",
   {
     data_type => "integer",
@@ -429,6 +401,10 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
+  "total_handicap",
+  { data_type => "smallint", default_value => 0, is_nullable => 0 },
+  "points_difference",
+  { data_type => "smallint", default_value => 0, is_nullable => 0 },
   "last_updated",
   {
     data_type => "datetime",
@@ -463,7 +439,12 @@ __PACKAGE__->belongs_to(
   "person1",
   "TopTable::Schema::Result::Person",
   { id => "person1" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+  {
+    is_deferrable => 1,
+    join_type     => "LEFT",
+    on_delete     => "RESTRICT",
+    on_update     => "RESTRICT",
+  },
 );
 
 =head2 person2
@@ -478,7 +459,12 @@ __PACKAGE__->belongs_to(
   "person2",
   "TopTable::Schema::Result::Person",
   { id => "person2" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+  {
+    is_deferrable => 1,
+    join_type     => "LEFT",
+    on_delete     => "RESTRICT",
+    on_update     => "RESTRICT",
+  },
 );
 
 =head2 person_season_person1_season_person1_team
@@ -493,7 +479,12 @@ __PACKAGE__->belongs_to(
   "person_season_person1_season_person1_team",
   "TopTable::Schema::Result::PersonSeason",
   { person => "person1", season => "season", team => "person1_team" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+  {
+    is_deferrable => 1,
+    join_type     => "LEFT",
+    on_delete     => "RESTRICT",
+    on_update     => "RESTRICT",
+  },
 );
 
 =head2 person_season_person2_season_person2_team
@@ -508,7 +499,12 @@ __PACKAGE__->belongs_to(
   "person_season_person2_season_person2_team",
   "TopTable::Schema::Result::PersonSeason",
   { person => "person2", season => "season", team => "person2_team" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+  {
+    is_deferrable => 1,
+    join_type     => "LEFT",
+    on_delete     => "RESTRICT",
+    on_update     => "RESTRICT",
+  },
 );
 
 =head2 season_pair
@@ -561,9 +557,29 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
+=head2 tournament_team
 
-# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-09-29 23:47:56
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Zj3vijh8ftTbFwekgQmdcA
+Type: belongs_to
+
+Related object: L<TopTable::Schema::Result::TournamentTeam>
+
+=cut
+
+__PACKAGE__->belongs_to(
+  "tournament_team",
+  "TopTable::Schema::Result::TournamentTeam",
+  { id => "tournament_team" },
+  {
+    is_deferrable => 1,
+    join_type     => "LEFT",
+    on_delete     => "RESTRICT",
+    on_update     => "RESTRICT",
+  },
+);
+
+
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-11-18 10:55:43
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:pbzkuMTZZenG5aB31WQD4w
 
 __PACKAGE__->add_columns(
     "last_updated",

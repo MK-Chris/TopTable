@@ -94,7 +94,7 @@ sub base_by_url_keys :Chained("/") PathPart("matches/team/game") CaptureArgs(8) 
 
 Sets or removes a doubles pairing from a given game (obviously checking that the game specified is a doubles game first).
 
-This method chains to base_by_ids in order to do the URI matching, it detaches to set_doubles, which does the real work.
+This method chains to base_by_ids in order to do the URI matching, it detaches to doubles_pair, which does the real work.
 
 =cut
 
@@ -107,7 +107,7 @@ sub doubles_pair_by_ids :Chained("base_by_ids") :PathPart("set-doubles") :Args(0
 
 Sets or removes a doubles pairing from a given game (obviously checking that the game specified is a doubles game first).
 
-This method chains to base_by_url_keys in order to do the URI matching, it detaches to set_doubles, which does the real work.
+This method chains to base_by_url_keys in order to do the URI matching, it detaches to doubles_pair, which does the real work.
 
 =cut
 

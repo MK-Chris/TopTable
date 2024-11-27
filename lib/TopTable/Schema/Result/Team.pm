@@ -356,9 +356,19 @@ Return matches where the team has played a loan player (in a given season if sup
 
 sub loan_players {
   my $self = shift;
-  my ( $params ) = @_;
-  my $season = delete $params->{season} || undef;
-  my $where = [{
+  my ( $comp, $params ) = @_;
+  my ( $season, $tournament, $is_tourn );
+  
+  # Work out if we're checking the tournament or the season (league matches check against the season)
+  if ( $comp->isa("TopTable::Schema::Result::Tournament") ) {
+    $is_tourn = 1;
+    $tournament = $comp;
+  } else {
+    $is_tourn = 0;
+    $season = $comp;
+  }
+  
+  my @where = ({
     "me.home_team" => $self->id,
     "me.location" => "home",
     "me.loan_team" => {"<>" => undef},
@@ -366,23 +376,36 @@ sub loan_players {
     "me.away_team" => $self->id,
     "me.location" => "away",
     "me.loan_team" => {"<>" => undef},
-  }];
+  });
   
-  if ( defined( $season ) ) {
-    $where->[0]{"team_match.season"} = $season->id;
-    $where->[1]{"team_match.season"} = $season->id;
-  }
-  
-  return $self->result_source->schema->resultset("TeamMatchPlayer")->search($where, {
-    prefetch => ["player", {
-      team_match  => [{
+  my %attrib = (
+    join => [qw( player ), {
+      team_match  => {
         team_season_home_team_season => [qw( team ), {club_season => "club"}],
-      }, {
         team_season_away_team_season => [qw( team ), {club_season => "club"}],
-      }],
+      },
     }],
     order_by => {-asc => [qw( me.scheduled_date me.home_team me.away_team )]},
-  });
+  );
+  
+  if ( $is_tourn ) {
+    # Tournament match, check against the tournament
+    $where[0]{"tournament.id"} = $tournament->id;
+    $where[1]{"tournament.id"} = $tournament->id;
+    
+    # Add to the attributes so we retrieve the tournament too
+    # Element 1 is the hash
+    $attrib{join}[1]{team_match}{tournament_round} = [qw( tournament )];
+  } else {
+    # League match, check against the season
+    $where[0]{"team_match.season"} = $season->id;
+    $where[1]{"team_match.season"} = $season->id;
+  }
+  
+  if ( defined($season) ) {
+  }
+  
+  return $self->result_source->schema->resultset("TeamMatchPlayer")->search(\@where, \%attrib);
 }
 
 =head2 get_captain
@@ -417,7 +440,7 @@ sub get_season {
   return $self->search_related("team_seasons", {
     "me.season" => $season->id,
   }, {
-    prefetch => [qw( captain ), {
+    prefetch => [qw( captain home_night ), {
       division_season => "division",
       club_season => "club"
     }],

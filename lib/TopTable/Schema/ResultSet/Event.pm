@@ -77,7 +77,7 @@ sub find_id_or_url_key {
   my $type = $params->{type};
   my %where = ();
   my %attrib = (prefetch  => [qw( event_type ), {
-    event_seasons => [qw( organiser meetings tournament )] # Tournaments will eventually be a hashref drilling down to rounds, groups, etc.
+    event_seasons => [qw( organiser meetings tournaments )] # Tournaments will eventually be a hashref drilling down to rounds, groups, etc.
   }]);
   
   
@@ -140,6 +140,19 @@ sub create_or_edit {
   my $end_minute = $params->{end_minute} || undef;
   my $default_team_match_template = $params->{default_team_match_template} || undef;
   my $default_individual_match_template = $params->{default_individual_match_template} || undef;
+  my $allow_loan_players = $params->{allow_loan_players} || 0;
+  my $allow_loan_players_above = $params->{allow_loan_players_above} || 0;
+  my $allow_loan_players_below = $params->{allow_loan_players_below} || 0;
+  my $allow_loan_players_across = $params->{allow_loan_players_across} || 0;
+  my $allow_loan_players_same_club_only = $params->{allow_loan_players_same_club_only} || 0;
+  my $allow_loan_players_multiple_teams = $params->{allow_loan_players_multiple_teams} || 0;
+  my $loan_players_limit_per_player = $params->{loan_players_limit_per_player} || 0;
+  my $loan_players_limit_per_player_per_team = $params->{loan_players_limit_per_player_per_team} || 0;
+  my $loan_players_limit_per_player_per_opposition = $params->{loan_players_limit_per_player_per_opposition} || 0;
+  my $loan_players_limit_per_team = $params->{loan_players_limit_per_team} || 0;
+  my $void_unplayed_games_if_both_teams_incomplete = $params->{void_unplayed_games_if_both_teams_incomplete} || 0;
+  my $forefeit_count_averages_if_game_not_started = $params->{forefeit_count_averages_if_game_not_started} || 0;
+  my $missing_player_count_win_in_averages = $params->{missing_player_count_win_in_averages} || 0;
   my $round_name = $params->{round_name} || undef;
   my $round_group = $params->{round_group} || 0;
   my $round_group_rank_template = $params->{round_group_rank_template} || undef;
@@ -270,6 +283,53 @@ sub create_or_edit {
       
       # We don't want an individual match template for team entry events
       undef($default_individual_match_template);
+      
+      # Check the loan player options
+      
+      # Loan player rules
+      if ( $allow_loan_players ) {
+        # Allow loan players - check rules - the booleans are just sanity checks - set to 1 if the value is true, or 0 if not
+        $allow_loan_players = 1; # Sanity - make sure a true value is 1
+        $allow_loan_players_above = $allow_loan_players_above ? 1 : 0;
+        $allow_loan_players_below = $allow_loan_players_below ? 1 : 0;
+        $allow_loan_players_across = $allow_loan_players_across ? 1 : 0;
+        $allow_loan_players_same_club_only = $allow_loan_players_same_club_only ? 1 : 0;
+        $allow_loan_players_multiple_teams = $allow_loan_players_multiple_teams ? 1 : 0;
+        
+        # Check the limits are numeric and not negative
+        push(@{$response->{errors}}, $lang->maketext("events.form.error.loan-playerss-limit-per-player-invalid")) unless $loan_players_limit_per_player =~ m/^\d{1,2}$/;
+        push(@{$response->{errors}}, $lang->maketext("events.form.error.loan-players-limit-per-player-per-team-invalid")) unless $loan_players_limit_per_player_per_team =~ m/^\d{1,2}$/;
+        push(@{$response->{errors}}, $lang->maketext("events.form.error.loan-players-limit-per-player-per-opposition-invalid")) unless $loan_players_limit_per_player_per_opposition =~ m/^\d{1,2}$/;
+        push(@{$response->{errors}}, $lang->maketext("events.form.error.loan-players-limit-per-team-invalid")) unless $loan_players_limit_per_team =~ m/^\d{1,2}$/;
+      } else {
+        # No loan players, zero all other options
+        $allow_loan_players_above = 0;
+        $allow_loan_players_below = 0;
+        $allow_loan_players_across = 0;
+        $allow_loan_players_same_club_only = 0;
+        $loan_players_limit_per_player = 0;
+        $loan_players_limit_per_player_per_team = 0;
+        $loan_players_limit_per_team = 0;
+      }
+      
+      # Rules covering unplayed games / missing players
+      $void_unplayed_games_if_both_teams_incomplete = $void_unplayed_games_if_both_teams_incomplete ? 1 : 0;
+      $forefeit_count_averages_if_game_not_started = $forefeit_count_averages_if_game_not_started ? 1 : 0;
+      $missing_player_count_win_in_averages = $missing_player_count_win_in_averages ? 1 : 0;
+      
+      $response->{fields}{allow_loan_players} = $allow_loan_players;
+      $response->{fields}{allow_loan_players_above} = $allow_loan_players_above;
+      $response->{fields}{allow_loan_players_below} = $allow_loan_players_below;
+      $response->{fields}{allow_loan_players_across} = $allow_loan_players_across;
+      $response->{fields}{allow_loan_players_same_club_only} = $allow_loan_players_same_club_only;
+      $response->{fields}{allow_loan_players_multiple_teams} = $allow_loan_players_multiple_teams;
+      $response->{fields}{loan_players_limit_per_player} = $loan_players_limit_per_player;
+      $response->{fields}{loan_players_limit_per_player_per_team} = $loan_players_limit_per_player_per_team;
+      $response->{fields}{loan_players_limit_per_player_per_opposition} = $loan_players_limit_per_player_per_opposition;
+      $response->{fields}{loan_players_limit_per_team} = $loan_players_limit_per_team;
+      $response->{fields}{void_unplayed_games_if_both_teams_incomplete} = $void_unplayed_games_if_both_teams_incomplete;
+      $response->{fields}{forefeit_count_averages_if_game_not_started} = $forefeit_count_averages_if_game_not_started;
+      $response->{fields}{missing_player_count_win_in_averages} = $missing_player_count_win_in_averages;
     } else {
       # Templates have to be individual for any tournament entry type other than team (singles or doubles)
       if ( defined($default_individual_match_template) ) {
@@ -576,13 +636,25 @@ sub create_or_edit {
       });
       
       if ( $event_type->id eq "single_tournament" ) {
-        my $tournament = $event_season->create_related("tournament", {
+        my $tournament = $event_season->create_related("tournaments", {
           season => $season->id,
           name => $name,
           entry_type => $tournament_type->id,
           allow_online_entries => $allow_online_entries,
           default_team_match_template => defined($default_team_match_template) ? $default_team_match_template->id : undef,
           default_individual_match_template => defined($default_individual_match_template) ? $default_individual_match_template->id : undef,
+          allow_loan_players_above => $allow_loan_players_above,
+          allow_loan_players_below => $allow_loan_players_below,
+          allow_loan_players_across => $allow_loan_players_across,
+          allow_loan_players_same_club_only => $allow_loan_players_same_club_only,
+          allow_loan_players_multiple_teams => $allow_loan_players_multiple_teams,
+          loan_players_limit_per_player => $loan_players_limit_per_player,
+          loan_players_limit_per_player_per_team => $loan_players_limit_per_player_per_team,
+          loan_players_limit_per_player_per_opposition => $loan_players_limit_per_player_per_opposition,
+          loan_players_limit_per_team => $loan_players_limit_per_team,
+          void_unplayed_games_if_both_teams_incomplete => $void_unplayed_games_if_both_teams_incomplete,
+          forefeit_count_averages_if_game_not_started => $forefeit_count_averages_if_game_not_started,
+          missing_player_count_win_in_averages => $missing_player_count_win_in_averages,
         });
         
         if ( $first_round_required ) {

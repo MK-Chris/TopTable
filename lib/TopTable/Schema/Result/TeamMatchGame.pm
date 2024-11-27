@@ -152,14 +152,14 @@ __PACKAGE__->table("team_match_games");
 
 =head2 home_team_match_score
 
-  data_type: 'tinyint'
+  data_type: 'smallint'
   default_value: 0
   extra: {unsigned => 1}
   is_nullable: 0
 
 =head2 away_team_match_score
 
-  data_type: 'tinyint'
+  data_type: 'smallint'
   default_value: 0
   extra: {unsigned => 1}
   is_nullable: 0
@@ -329,14 +329,14 @@ __PACKAGE__->add_columns(
   },
   "home_team_match_score",
   {
-    data_type => "tinyint",
+    data_type => "smallint",
     default_value => 0,
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
   "away_team_match_score",
   {
-    data_type => "tinyint",
+    data_type => "smallint",
     default_value => 0,
     extra => { unsigned => 1 },
     is_nullable => 0,
@@ -603,8 +603,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-05-12 10:08:14
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:8+qndEG8ts9/aQHMTH5pGQ
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-11-13 00:10:04
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:wGSAZZrqR4e6LifTKLf09g
 
 use HTML::Entities;
 
@@ -828,12 +828,46 @@ sub update_score {
   $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
   my $lang = $schema->lang;
   
-  # Get the fields and setup the response hash
+  # Get the objects we need and setup the response hash
   my $match = $self->team_match;
-  my $season_home_team = $match->team_season_home_team_season;
-  my $season_away_team = $match->team_season_away_team_season;
-  my $home_team = $season_home_team->team;
-  my $away_team = $season_away_team->team;
+  my $winner_type = $self->team_match->team_match_template->winner_type->id;
+  
+  # Home / away team seasons are most of the time what we'll be using to updating stats, however for tournaments we'll need a different object to update
+  # We do need the home / away seasons in order to access the team objects though, so we'll get them regardless
+  my $home_team_season = $match->team_season_home_team_season;
+  my $away_team_season = $match->team_season_away_team_season;
+  
+  # Team objects for accessing IDs
+  my $home_team = $home_team_season->team;
+  my $away_team = $away_team_season->team;
+  
+  # Stats update objects - for league matches, this is the same as $home_team_season and $away_team_season;
+  # for tournaments they're the tournament team objects
+  # Arrays to hold stats objects to update - tournament groups will have two for each home and away (tournament team object and tournament group team object),
+  # whereas tournament rounds (not in a group) and league matches will just have one - tournament team and team season respectively
+  my ( @home_team_stats, @away_team_stats, $home_round_team, $home_tourn_team, $away_round_team, $away_tourn_team );
+  
+  my $tourn_match = defined($match->tournament_round) ? 1 : 0;
+  if ( $tourn_match ) {
+    # This match is part of a tournament, find the team membership.  No need to check if the tournament round team exists, as the team is not user defined,
+    # it's taken from a match object - we'll never have a match in a tournament round that doesn't contain any of the teams in that round.
+    my %attribs = (
+      join => [qw( tournament_team )],
+    );
+    
+    $home_round_team = $match->tournament_round->find_related("tournament_round_teams", {"tournament_team.team" => $home_team->id}, \%attribs);
+    $home_tourn_team = $home_round_team->tournament_team;
+    $away_round_team = $match->tournament_round->find_related("tournament_round_teams", {"tournament_team.team" => $away_team->id}, \%attribs);
+    $away_tourn_team = $away_round_team->tournament_team;
+    @home_team_stats = ( $home_round_team, $home_tourn_team );
+    @away_team_stats = ( $away_round_team, $away_tourn_team );
+  } else {
+    # League matches will always just have the one object per team in the match, but we put it in the array to save on complicated logic later on
+    @home_team_stats = ( $home_team_season );
+    @away_team_stats = ( $away_team_season );
+  }
+  
+  # Season is used for getting the season rules (unplayed games rules) and for accessing the season ID
   my $season = $match->season;
   my ( $home_player, $away_player ) = $self->doubles_game ? ( $self->home_doubles_pair, $self->away_doubles_pair ) : ( $self->home_player, $self->away_player );
   my $awarded = $params->{awarded} || 0;
@@ -848,12 +882,14 @@ sub update_score {
     info => [],
     success => [],
     completed => 0,
+    match_scores => [],
   };
   
   # Get our season forefeit / void settings
-  my $void_unplayed_games_if_both_teams_incomplete = $season->void_unplayed_games_if_both_teams_incomplete;
-  my $forefeit_count_averages_if_game_not_started = $season->forefeit_count_averages_if_game_not_started;
-  my $missing_player_count_win_in_averages = $season->missing_player_count_win_in_averages;
+  my %match_rules = $match->rules;
+  my $void_unplayed_games_if_both_teams_incomplete = $match_rules{void_unplayed_games_if_both_teams_incomplete};
+  my $forefeit_count_averages_if_game_not_started = $match_rules{forefeit_count_averages_if_game_not_started};
+  my $missing_player_count_win_in_averages = $match_rules{missing_player_count_win_in_averages};
   
   #$logger->("debug", "Settings: void_unplayed_games_if_both_teams_incomplete: $void_unplayed_games_if_both_teams_incomplete, forefeit_count_averages_if_game_not_started: $forefeit_count_averages_if_game_not_started, missing_player_count_win_in_averages: $missing_player_count_win_in_averages");
   
@@ -864,7 +900,7 @@ sub update_score {
   }
   
   # These are needed further down when updating matches played for the player as well as for error checking, so need to be declared here.
-  my ( $match_home_player, $match_away_player ) = @_;
+  my ( $match_home_player, $match_away_player );
   
   # Store the template rules
   my $game_rules = $self->individual_match_template;
@@ -1105,12 +1141,24 @@ sub update_score {
                 $game_winner = $winner;
               } elsif ( !defined($legs_required_to_win) && $legs_played < $game_rules->legs_per_game ) {
                 # If we play a static number of games, we need to work out the winner (if there is one)
-                if ( $home_legs > $away_legs ) {
-                  $game_winner = $home_team->id;
-                } elsif ( $home_legs < $away_legs ) {
-                  $game_winner = $away_team->id;
+                if ( $winner_type eq "games" ) {
+                  if ( $home_legs > $away_legs ) {
+                    $game_winner = $home_team->id;
+                  } elsif ( $home_legs < $away_legs ) {
+                    $game_winner = $away_team->id;
+                  } else {
+                    # Draw
+                    undef($game_winner);
+                  }
                 } else {
-                  undef($game_winner);
+                  # Most points wins
+                  if ( $home_team_points > $away_team_points ) {
+                    $game_winner = $home_team->id;
+                  } elsif ( $home_team_points < $away_team_points ) {
+                    $game_winner = $away_team->id;
+                  } else {
+                    undef($game_winner);
+                  }
                 }
               }
               
@@ -1237,13 +1285,15 @@ sub update_score {
   my $match_complete = $match->check_match_complete;
   
   # Loop through our returned array (in reverse) to get the final match score; the first game we come across with a match score, we'll break out
-  my ( $current_home_match_score, $current_away_match_score, $current_games_drawn );
+  my ( $current_home_match_score, $current_away_match_score, $current_home_games_won, $current_away_games_won, $current_games_drawn );
   
   foreach my $game_index ( reverse 0 .. $#{$match_scores} ) {
-    if ( $match_scores->[$game_index]{home_won} || $match_scores->[$game_index]{away_won} ) {
-      $current_home_match_score = $match_scores->[$game_index]{home_won};
-      $current_away_match_score = $match_scores->[$game_index]{away_won};
-      $current_games_drawn = $match_scores->[$game_index]{drawn};
+    if ( $match_scores->[$game_index]{home_score} || $match_scores->[$game_index]{away_score} || $match_scores->[$game_index]{drawn} ) {
+      $current_home_match_score = $match_scores->[$game_index]{home_score};
+      $current_away_match_score = $match_scores->[$game_index]{away_score};
+      $current_home_games_won = $match_scores->[$game_index]{home_games_won};
+      $current_away_games_won = $match_scores->[$game_index]{away_games_won};
+      $current_games_drawn = $match_scores->[$game_index]{games_drawn};
       last;
     }
   }
@@ -1252,6 +1302,8 @@ sub update_score {
   # when they should be zero.
   $current_home_match_score = 0 unless defined($current_home_match_score);
   $current_away_match_score = 0 unless defined($current_away_match_score);
+  $current_home_games_won = 0 unless defined($current_home_games_won);
+  $current_away_games_won = 0 unless defined($current_away_games_won);
   $current_games_drawn = 0 unless defined($current_games_drawn);
   
   # Work out the number of legs / points in this match now.  Because we could be editing a previously filled out scorecard, we need to do some maths:
@@ -1267,12 +1319,25 @@ sub update_score {
   my $match_away_team_points_won = ( $match->away_team_points_won - $game_original_away_team_points ) + $away_team_points;
   
   # Get the ranking rules
-  my $ranking_template = $match->division_season->league_table_ranking_template;
+  my ( $ranking_template, $assign_points, $points_per_win, $points_per_draw, $points_per_loss );
   
-  my $assign_points = $ranking_template->assign_points;
-  my $points_per_win = $ranking_template->points_per_win;
-  my $points_per_draw = $ranking_template->points_per_draw;
-  my $points_per_loss = $ranking_template->points_per_loss;
+  if ( defined($match->division_season) ) {
+    # Ranking template comes from the division
+    $ranking_template = $match->division_season->league_table_ranking_template;
+  } elsif ( defined($match->tournament_group) ) {
+    # Although it relates to the group, the rank template is held at round level
+    $ranking_template = $match->tournament_round->rank_template;
+  }
+  
+  if ( defined($ranking_template) ) {
+    # If the ranking template is defined either through division ranking template or tournament group ranking template
+    $assign_points = $ranking_template->assign_points;
+    $points_per_win = $ranking_template->points_per_win;
+    $points_per_draw = $ranking_template->points_per_draw;
+    $points_per_loss = $ranking_template->points_per_loss;
+  }
+  
+  
   my ( $home_points_adjustment, $away_points_adjustment ) = qw( 0 0 );
   
   # If the match was originally complete or is now complete, we may need to change the number of matches won, lost or drawn for each team
@@ -1318,6 +1383,7 @@ sub update_score {
     },
   );
   
+  # Games adjustments for teams 
   my %team_games_adjustments = (
     home => {
       games_played => 0,
@@ -1973,10 +2039,10 @@ sub update_score {
   ### UPDATING
   # Update the match fields
   $match->started($match_started);
-  $match->home_team_games_won($current_home_match_score);
-  $match->home_team_games_lost($current_away_match_score);
-  $match->away_team_games_won($current_away_match_score);
-  $match->away_team_games_lost($current_home_match_score);
+  $match->home_team_games_won($current_home_games_won);
+  $match->home_team_games_lost($current_away_games_won);
+  $match->away_team_games_won($current_away_games_won);
+  $match->away_team_games_lost($current_home_games_won);
   $match->games_drawn($current_games_drawn);
   $match->home_team_legs_won($match_home_team_legs_won);
   $match->away_team_legs_won($match_away_team_legs_won);
@@ -2053,303 +2119,497 @@ sub update_score {
     }
   }
   
-  # Team match statistics were updated during the match update routine, so we just need to do the season statistics
-  if ( defined($match->tournament_round) ) {
-    # Tournament stuff to go here
+  # We already know what we need to do to each matches / games won / drawn / lost total, just loop through and do it
+  # First loop is through the matches adjustments hash to get the fields to update / what to update them with.  Keys are home or away,
+  # values are another hash with the field to update as keys, and the value to update with as the values - see %matches_adjustments declaration
+  # to see the structure
+  foreach my $stat_team ( keys %matches_adjustments ) {
+    # Work out which team we're modifying at the moment
+    my @team_stats = $stat_team eq "home" ? @home_team_stats : @away_team_stats;
     
-  } else {
-    # Team season statistics - these are done regardless of whether it's a doubles game or not; doubles contributes to the team's legs / points played
-    $season_home_team->legs_played($season_home_team->legs_played - ( $game_original_home_team_score + $game_original_away_team_score ) + ( $home_legs + $away_legs ));
-    $season_home_team->legs_won($season_home_team->legs_won - $game_original_home_team_score + $home_legs);
-    $season_home_team->legs_lost($season_home_team->legs_lost - $game_original_away_team_score + $away_legs);
-    $season_away_team->legs_played($season_away_team->legs_played - ( $game_original_home_team_score + $game_original_away_team_score ) +  ( $home_legs + $away_legs ));
-    $season_away_team->legs_won($season_away_team->legs_won - $game_original_away_team_score + $away_legs);
-    $season_away_team->legs_lost($season_away_team->legs_lost - $game_original_home_team_score + $home_legs);
-    $season_home_team->points_played($season_home_team->points_played - ( $game_original_home_team_points + $game_original_away_team_points ) + ( $home_team_points + $away_team_points ));
-    $season_home_team->points_won($season_home_team->points_won - $game_original_home_team_points + $home_team_points);
-    $season_home_team->points_lost($season_home_team->points_lost - $game_original_away_team_points + $away_team_points);
-    $season_away_team->points_played($season_away_team->points_played - ( $game_original_home_team_points + $game_original_away_team_points ) + ( $home_team_points + $away_team_points ));
-    $season_away_team->points_won($season_away_team->points_won - $game_original_away_team_points + $away_team_points);
-    $season_away_team->points_lost($season_away_team->points_lost - $game_original_home_team_points + $home_team_points);
+    # Now loop through each of the fields to update (i.e., matches_played, matches_won, etc)
+    foreach my $field ( keys %{$matches_adjustments{$stat_team}} ) {
+      # For every team stat object to update, update it!
+      # For league matches, this is just the team season object; for tournaments, there will be the tournament team object,
+      # then if it's a group round, it'll be the tournament group team object too.
+      $_->$field($_->$field + $matches_adjustments{$stat_team}{$field}) foreach @team_stats;
+    }
+  }
+  
+  # Do the same now for team games adjustments
+  foreach my $stat_team ( keys %team_games_adjustments ) {
+    # Work out which team we're modifying at the moment
+    my @team_stats = $stat_team eq "home" ? @home_team_stats : @away_team_stats;
     
-    # Table points
-    if ( $assign_points ) {
-      $season_home_team->table_points($season_home_team->table_points + $home_points_adjustment);
-      $season_away_team->table_points($season_away_team->table_points + $away_points_adjustment);
+    # Now loop through each of the fields to update (i.e., matches_played, matches_won, etc)
+    foreach my $field ( keys %{$team_games_adjustments{$stat_team}} ) {
+      # For every team stat object to update, update it!
+      # For league matches, this is just the team season object; for tournaments, there will be the tournament team object,
+      # then if it's a group round, it'll be the tournament group team object too.
+      $_->$field($_->$field + $team_games_adjustments{$stat_team}{$field}) foreach @team_stats;
+    }
+  }
+  
+  # Team match statistics were updated during the match update routine, so we just need to do the season (or tournament) statistics
+  # Team statistics - these are done regardless of whether it's a doubles game or not; doubles contributes to the team's legs / points played
+  foreach my $home_team_stat ( @home_team_stats ) {
+    $home_team_stat->games_difference($home_team_stat->games_won - $home_team_stat->games_lost);
+    $home_team_stat->legs_played($home_team_stat->legs_played - ( $game_original_home_team_score + $game_original_away_team_score ) + ( $home_legs + $away_legs ));
+    $home_team_stat->legs_won($home_team_stat->legs_won - $game_original_home_team_score + $home_legs);
+    $home_team_stat->legs_lost($home_team_stat->legs_lost - $game_original_away_team_score + $away_legs);
+    $home_team_stat->legs_difference($home_team_stat->legs_won - $home_team_stat->legs_lost);
+    $home_team_stat->points_played($home_team_stat->points_played - ( $game_original_home_team_points + $game_original_away_team_points ) + ( $home_team_points + $away_team_points ));
+    $home_team_stat->points_won($home_team_stat->points_won - $game_original_home_team_points + $home_team_points);
+    $home_team_stat->points_lost($home_team_stat->points_lost - $game_original_away_team_points + $away_team_points);
+    
+    my $points_difference = $home_team_stat->points_won - $home_team_stat->points_lost;
+    
+    if ( $match->handicapped ) {
+      # Grab a list of handicapped matches whose handicaps we need to take into account
+      # Regardless of tournament or round, this function exists
+      my $matches = $home_team_stat->matches_for_team({team => $home_team, started => 1});
+      
+      if ( $matches->count ) {
+        while ( my $other_match = $matches->next ) {
+          $logger->("debug", sprintf("home: %s, away: %s", $other_match->home_team, $other_match->away_team));
+          if ( $other_match->home_team == $home_team->id ) {
+            # Home team
+            $points_difference += $other_match->home_team_handicap - $other_match->away_team_handicap;
+          } else {
+            # Away team
+            $points_difference += $other_match->away_team_handicap - $other_match->home_team_handicap;
+          }
+        }
+      } else {
+        $logger->("debug", "home, no started matches");
+      }
+    }
+    
+    $home_team_stat->points_difference($points_difference);
+    
+    # Averages
+    $home_team_stat->games_played ? $home_team_stat->average_game_wins(( $home_team_stat->games_won / $home_team_stat->games_played ) * 100) : $home_team_stat->average_game_wins(0);
+    $home_team_stat->legs_played ? $home_team_stat->average_leg_wins(( $home_team_stat->legs_won / $home_team_stat->legs_played ) * 100) : $home_team_stat->average_leg_wins(0);
+    $home_team_stat->points_played ? $home_team_stat->average_point_wins(( $home_team_stat->points_won / $home_team_stat->points_played ) * 100) : $home_team_stat->average_point_wins(0);
+    
+    # Table points - update if points are assigned and this table has a table_points column (team_seasons or tournament_group_teams, but not tournament_teams)
+    $home_team_stat->table_points($home_team_stat->table_points + $home_points_adjustment) if $assign_points and $home_team_stat->result_source->has_column("table_points");
+    
+    # Handicap totals for table displays
+    if ( $match->handicapped ) {
+      if ( $match_originally_started and !$match_started ) {
+        # If we're deleting the only score we have in this match, the handicap will be removed from the total (because we only show
+        # handicap totals for matches that have been started in the table)
+        # yet and therefore we'll remove one from matches_played
+        $home_team_stat->total_handicap($home_team_stat->total_handicap - ($match->home_team_handicap - $match->away_team_handicap));
+      } elsif ( !$match_originally_started and $match_started ) {
+        # If we're adding the first score, the handicap will be added to the team's total handicap stats
+        $home_team_stat->total_handicap($home_team_stat->total_handicap + ($match->home_team_handicap - $match->away_team_handicap));
+      }
+    }
+  }
+  
+  foreach my $away_team_stat ( @away_team_stats ) {
+    $away_team_stat->games_difference($away_team_stat->games_won - $away_team_stat->games_lost);
+    $away_team_stat->legs_played($away_team_stat->legs_played - ( $game_original_home_team_score + $game_original_away_team_score ) +  ( $home_legs + $away_legs ));
+    $away_team_stat->legs_won($away_team_stat->legs_won - $game_original_away_team_score + $away_legs);
+    $away_team_stat->legs_lost($away_team_stat->legs_lost - $game_original_home_team_score + $home_legs);
+    $away_team_stat->legs_difference($away_team_stat->legs_won - $away_team_stat->legs_lost);
+    $away_team_stat->points_played($away_team_stat->points_played - ( $game_original_home_team_points + $game_original_away_team_points ) + ( $home_team_points + $away_team_points ));
+    $away_team_stat->points_won($away_team_stat->points_won - $game_original_away_team_points + $away_team_points);
+    $away_team_stat->points_lost($away_team_stat->points_lost - $game_original_home_team_points + $home_team_points);
+    
+    my $points_difference = $away_team_stat->points_won - $away_team_stat->points_lost;
+    
+    if ( $match->handicapped ) {
+      my $matches = $away_team_stat->matches_for_team({team => $away_team, started => 1});
+      
+      if ( $matches->count ) {
+        while ( my $other_match = $matches->next ) {
+          $logger->("debug", sprintf("home: %s, away: %s", $other_match->home_team, $other_match->away_team));
+          if ( $other_match->home_team == $away_team->id ) {
+            # Home team
+            $points_difference += $other_match->home_team_handicap - $other_match->away_team_handicap;
+          } else {
+            # Away team
+            $points_difference += $other_match->away_team_handicap - $other_match->home_team_handicap;
+          }
+        }
+      } else {
+        $logger->("debug", "away, no started matches");
+      }
+    }
+    
+    $away_team_stat->points_difference($points_difference);
+    
+    # Averages
+    $away_team_stat->games_played ? $away_team_stat->average_game_wins(( $away_team_stat->games_won / $away_team_stat->games_played ) * 100) : $away_team_stat->average_game_wins(0);
+    $away_team_stat->legs_played ? $away_team_stat->average_leg_wins(( $away_team_stat->legs_won / $away_team_stat->legs_played ) * 100) : $away_team_stat->average_leg_wins(0);
+    $away_team_stat->points_played ? $away_team_stat->average_point_wins(( $away_team_stat->points_won / $away_team_stat->points_played ) * 100) : $away_team_stat->average_point_wins(0);
+    
+    # Table points - update if points are assigned and this table has a table_points column (team_seasons or tournament_group_teams, but not tournament_teams)
+    $away_team_stat->table_points($away_team_stat->table_points + $away_points_adjustment) if $assign_points and $away_team_stat->result_source->has_column("table_points");
+    
+    # Handicap totals for table displays
+    if ( $match->handicapped ) {
+      if ( $match_originally_started and !$match_started ) {
+        # If we're deleting the only score we have in this match, the handicap will be removed from the total (because we only show
+        # handicap totals for matches that have been started in the table)
+        # yet and therefore we'll remove one from matches_played
+        $away_team_stat->total_handicap($away_team_stat->total_handicap - ($match->away_team_handicap - $match->home_team_handicap));
+      } elsif ( !$match_originally_started and $match_started ) {
+        # If we're adding the first score, the handicap will be added to the team's total handicap stats
+        $away_team_stat->total_handicap($away_team_stat->total_handicap + ($match->away_team_handicap - $match->home_team_handicap));
+      }
+    }
+  }
+  
+  # If it's a doubles game, we work those statistics out too.
+  if ( $self->doubles_game ) {
+    foreach my $home_team_stat ( @home_team_stats ) {
+      # Home legs and points
+      $home_team_stat->doubles_games_difference($home_team_stat->doubles_games_won - $home_team_stat->doubles_games_lost);
+      $home_team_stat->doubles_legs_played($home_team_stat->doubles_legs_played + ( $home_legs + $away_legs ) - ( $game_original_home_team_score + $game_original_away_team_score ));
+      $home_team_stat->doubles_legs_won($home_team_stat->doubles_legs_won + ( $home_legs - $game_original_home_team_score ));
+      $home_team_stat->doubles_legs_lost($home_team_stat->doubles_legs_lost + ( $away_legs - $game_original_away_team_score ));
+      $home_team_stat->doubles_legs_difference($home_team_stat->doubles_legs_won - $home_team_stat->doubles_legs_lost);
+      $home_team_stat->doubles_points_played($home_team_stat->doubles_points_played + ( $home_team_points + $away_team_points ) - ( $game_original_home_team_points  + $game_original_away_team_points ));
+      $home_team_stat->doubles_points_won($home_team_stat->doubles_points_won + ( $home_team_points - $game_original_home_team_points ));
+      $home_team_stat->doubles_points_lost($home_team_stat->doubles_points_lost + ( $away_team_points - $game_original_away_team_points ));
+      $home_team_stat->doubles_points_difference($home_team_stat->doubles_points_won - $home_team_stat->doubles_points_lost);
+      
+      # Home averages
+      $home_team_stat->doubles_games_played ? $home_team_stat->doubles_average_game_wins(( $home_team_stat->doubles_games_won / $home_team_stat->doubles_games_played ) * 100) : $home_team_stat->doubles_average_game_wins(0);
+      $home_team_stat->doubles_legs_played ? $home_team_stat->doubles_average_leg_wins(( $home_team_stat->doubles_legs_won / $home_team_stat->doubles_legs_played ) * 100) : $home_team_stat->doubles_average_leg_wins(0);
+      $home_team_stat->doubles_points_played ? $home_team_stat->doubles_average_point_wins(( $home_team_stat->doubles_points_won / $home_team_stat->doubles_points_played ) * 100) : $home_team_stat->doubles_average_point_wins(0);
+    }
+    
+    foreach my $away_team_stat ( @away_team_stats ) {
+      # Away legs and points
+      $away_team_stat->doubles_games_difference($away_team_stat->doubles_games_won - $away_team_stat->doubles_games_lost);
+      $away_team_stat->doubles_legs_played($away_team_stat->doubles_legs_played + ( $home_legs + $away_legs ) - ( $game_original_home_team_score + $game_original_away_team_score ));
+      $away_team_stat->doubles_legs_won($away_team_stat->doubles_legs_won + ( $away_legs - $game_original_away_team_score ));
+      $away_team_stat->doubles_legs_lost($away_team_stat->doubles_legs_lost + ( $home_legs - $game_original_home_team_score ));
+      $away_team_stat->doubles_legs_difference($away_team_stat->doubles_legs_won - $away_team_stat->doubles_legs_lost);
+      $away_team_stat->doubles_points_played($away_team_stat->doubles_points_played + ( $home_team_points + $away_team_points ) - ( $game_original_home_team_points  + $game_original_away_team_points ));
+      $away_team_stat->doubles_points_won($away_team_stat->doubles_points_won + ( $away_team_points - $game_original_away_team_points ));
+      $away_team_stat->doubles_points_lost($away_team_stat->doubles_points_lost + ( $home_team_points - $game_original_home_team_points ));
+      $away_team_stat->doubles_points_difference($away_team_stat->doubles_points_won - $away_team_stat->doubles_points_lost);
+      
+      # Away averages
+      $away_team_stat->doubles_games_played ? $away_team_stat->doubles_average_game_wins(( $away_team_stat->doubles_games_won / $away_team_stat->doubles_games_played ) * 100) : $away_team_stat->doubles_average_game_wins(0);
+      $away_team_stat->doubles_legs_played ? $away_team_stat->doubles_average_leg_wins(( $away_team_stat->doubles_legs_won / $away_team_stat->doubles_legs_played ) * 100) : $away_team_stat->doubles_average_leg_wins(0);
+      $away_team_stat->doubles_points_played ? $away_team_stat->doubles_average_point_wins(( $away_team_stat->doubles_points_won / $away_team_stat->doubles_points_played ) * 100) : $away_team_stat->doubles_average_point_wins(0);
+    }
+    
+    # Get the person_season objects we need to update for the individual doubles statistics
+    my ( $home_doubles1, $home_doubles2, $away_doubles1, $away_doubles2 );
+    my ( @home_doubles_stats, @home_doubles_player_stats, @away_doubles_stats, @away_doubles_player_stats );
+
+    if ( $tourn_match ) {
+      # This match is part of a tournament, find the team membership.  No need to check if the tournament round team exists, as the team is not user defined,
+      # it's taken from a match object - we'll never have a match in a tournament round that doesn't contain any of the teams in that round.
+      # Common attribs to get the initial round doubles pair for both teams
+      # Home
+      my $home_player1 = $home_player->person_season_person1_season_team->person;
+      my $home_player2 = $home_player->person_season_person2_season_team->person;
+      
+      my $home_tourn_doubles = $home_tourn_team->find_related("tournaments_doubles", {
+        "me.season_pair" => $home_player->id,
+        "tournament_rounds_doubles.tournament_round" => $match->tournament_round->id,
+      }, {
+        prefetch => [qw( tournament_rounds_doubles )],
+      });
+      
+      my $home_round_doubles = $home_tourn_doubles->tournament_rounds_doubles->single;
+      
+      my $home_tourn_player1 = $match->tournament_round->tournament->find_related("tournament_people", {"me.person" => $home_player1->id});
+      my $home_round_player1 = $home_tourn_player1->find_related("tournament_round_people", {"me.tournament_round" => $match->tournament_round->id});
+      my $home_tourn_player2 = $match->tournament_round->tournament->find_related("tournament_people", {"me.person" => $home_player2->id});
+      my $home_round_player2 = $home_tourn_player2->find_related("tournament_round_people", {"me.tournament_round" => $match->tournament_round->id});
+      
+      # Away
+      my $away_player1 = $away_player->person_season_person1_season_team->person;
+      my $away_player2 = $away_player->person_season_person2_season_team->person;
+      
+      my $away_tourn_doubles = $away_tourn_team->find_related("tournaments_doubles", {
+        "me.season_pair" => $away_player->id,
+        "tournament_rounds_doubles.tournament_round" => $match->tournament_round->id,
+      }, {
+        prefetch => [qw( tournament_rounds_doubles )],
+      });
+      
+      my $away_round_doubles = $away_tourn_doubles->tournament_rounds_doubles->single;
+      
+      my $away_tourn_player1 = $match->tournament_round->tournament->find_related("tournament_people", {"me.person" => $away_player1->id});
+      my $away_round_player1 = $away_tourn_player1->find_related("tournament_round_people", {"me.tournament_round" => $match->tournament_round->id});
+      my $away_tourn_player2 = $match->tournament_round->tournament->find_related("tournament_people", {"me.person" => $away_player2->id});
+      my $away_round_player2 = $away_tourn_player2->find_related("tournament_round_people", {"me.tournament_round" => $match->tournament_round->id});
+      
+      @home_doubles_stats = ( $home_tourn_doubles, $home_round_doubles );
+      @home_doubles_stats = ( $away_tourn_doubles, $away_round_doubles );
+      @home_doubles_player_stats = ( $home_tourn_player1, $home_tourn_player2, $home_round_player1, $home_round_player2 );
+      @away_doubles_player_stats = ( $away_tourn_player1, $away_tourn_player2, $away_round_player1, $away_round_player2 );
+    } else {
+      # League matches will always just have the one object per team in the match, but we put it in the array to save on complicated logic later on
+      @home_doubles_stats = ( $home_player );
+      @away_doubles_stats = ( $away_player );
+      @home_doubles_player_stats = ( $home_player->person_season_person1_season_team, $home_player->person_season_person2_season_team );
+      @away_doubles_player_stats = ( $away_player->person_season_person1_season_team, $away_player->person_season_person2_season_team );
     }
     
     # We already know what we need to do to each matches / games won / drawn / lost total, just loop through and do it
-    foreach my $stat_team ( keys %matches_adjustments ) {
-      # Work out which team we're modifying at the moment
-      my $mod_team = $stat_team eq "home" ? $season_home_team : $season_away_team;
-      
-      foreach my $field ( keys %{$matches_adjustments{$stat_team}} ) {
-        $mod_team->$field($mod_team->$field + $matches_adjustments{$stat_team}{$field});
+    foreach my $stat_team ( keys %player_games_adjustments ) {
+      # Work out which objects we're modifying at the moment - home or away
+      my ( @mod_pairs, @mod_players );
+      if ( $stat_team eq "home" ) {
+        @mod_pairs = @home_doubles_stats;
+        @mod_players = @home_doubles_player_stats;
+      } else {
+        @mod_pairs = @away_doubles_stats;
+        @mod_players = @away_doubles_player_stats;
       }
-    }
-    
-    foreach my $stat_team ( keys %team_games_adjustments ) {
-      # Work out which team we're modifying at the moment
-      my $mod_team = $stat_team eq "home" ? $season_home_team : $season_away_team;
       
-      foreach my $field ( keys %{$team_games_adjustments{$stat_team}} ) {
-        $mod_team->$field($mod_team->$field + $team_games_adjustments{$stat_team}{$field});
-      }
-    }
-    
-    # Work out the averages
-    $season_home_team->games_played ? $season_home_team->average_game_wins(( $season_home_team->games_won / $season_home_team->games_played ) * 100) : $season_home_team->average_game_wins(0);
-    $season_home_team->legs_played ? $season_home_team->average_leg_wins(( $season_home_team->legs_won / $season_home_team->legs_played ) * 100) : $season_home_team->average_leg_wins(0);
-    $season_home_team->points_played ? $season_home_team->average_point_wins(( $season_home_team->points_won / $season_home_team->points_played ) * 100) : $season_home_team->average_point_wins(0);
-    $season_away_team->games_played ? $season_away_team->average_game_wins(( $season_away_team->games_won / $season_away_team->games_played ) * 100) : $season_away_team->average_game_wins(0);
-    $season_away_team->legs_played ? $season_away_team->average_leg_wins(( $season_away_team->legs_won / $season_away_team->legs_played ) * 100) : $season_away_team->average_leg_wins(0);
-    $season_away_team->points_played ? $season_away_team->average_point_wins(( $season_away_team->points_won / $season_away_team->points_played ) * 100) : $season_away_team->average_point_wins(0);
-    
-    # If it's a doubles game, we work those statistics out too.
-    if ( $self->doubles_game ) {
-      # Legs and points - these can be calculated regardless of anything else, because if we're deleting or modifying the score, the calculation is the same
-      $season_home_team->doubles_legs_played($season_home_team->doubles_legs_played + ( $home_legs + $away_legs ) - ( $game_original_home_team_score + $game_original_away_team_score ));
-      $season_away_team->doubles_legs_played($season_away_team->doubles_legs_played + ( $home_legs + $away_legs ) - ( $game_original_home_team_score + $game_original_away_team_score ));
-      $season_home_team->doubles_legs_won($season_home_team->doubles_legs_won + ( $home_legs - $game_original_home_team_score ));
-      $season_away_team->doubles_legs_won($season_away_team->doubles_legs_won + ( $away_legs - $game_original_away_team_score ));
-      $season_home_team->doubles_legs_lost($season_home_team->doubles_legs_lost + ( $away_legs - $game_original_away_team_score ));
-      $season_away_team->doubles_legs_lost($season_away_team->doubles_legs_lost + ( $home_legs - $game_original_home_team_score ));
-      $season_home_team->doubles_points_played($season_home_team->doubles_points_played + ( $home_team_points + $away_team_points ) - ( $game_original_home_team_points  + $game_original_away_team_points ));
-      $season_away_team->doubles_points_played($season_away_team->doubles_points_played + ( $home_team_points + $away_team_points ) - ( $game_original_home_team_points  + $game_original_away_team_points ));
-      $season_home_team->doubles_points_won($season_home_team->doubles_points_won + ( $home_team_points - $game_original_home_team_points ));
-      $season_away_team->doubles_points_won($season_away_team->doubles_points_won + ( $away_team_points - $game_original_away_team_points ));
-      $season_home_team->doubles_points_lost($season_home_team->doubles_points_lost + ( $away_team_points - $game_original_away_team_points ));
-      $season_away_team->doubles_points_lost($season_away_team->doubles_points_lost + ( $home_team_points - $game_original_home_team_points ));
-      
-      # Work out the averages
-      $season_home_team->doubles_games_played ? $season_home_team->doubles_average_game_wins(( $season_home_team->doubles_games_won / $season_home_team->doubles_games_played ) * 100) : $season_home_team->doubles_average_game_wins(0);
-      $season_home_team->doubles_legs_played ? $season_home_team->doubles_average_leg_wins(( $season_home_team->doubles_legs_won / $season_home_team->doubles_legs_played ) * 100) : $season_home_team->doubles_average_leg_wins(0);
-      $season_home_team->doubles_points_played ? $season_home_team->doubles_average_point_wins(( $season_home_team->doubles_points_won / $season_home_team->doubles_points_played ) * 100) : $season_home_team->doubles_average_point_wins(0);
-      $season_away_team->doubles_games_played ? $season_away_team->doubles_average_game_wins(( $season_away_team->doubles_games_won / $season_away_team->doubles_games_played ) * 100) : $season_away_team->doubles_average_game_wins(0);
-      $season_away_team->doubles_legs_played ? $season_away_team->doubles_average_leg_wins(( $season_away_team->doubles_legs_won / $season_away_team->doubles_legs_played ) * 100) : $season_away_team->doubles_average_leg_wins(0);
-      $season_away_team->doubles_points_played ? $season_away_team->doubles_average_point_wins(( $season_away_team->doubles_points_won / $season_away_team->doubles_points_played ) * 100) : $season_away_team->doubles_average_point_wins(0);
-      
-      # Get the person_season objects we need to update for the individual doubles statistics
-      my $home_doubles1 = $home_player->person_season_person1_season_team;
-      my $home_doubles2 = $home_player->person_season_person2_season_team;
-      my $away_doubles1 = $away_player->person_season_person1_season_team;
-      my $away_doubles2 = $away_player->person_season_person2_season_team;
-      
-      # We already know what we need to do to each matches / games won / drawn / lost total, just loop through and do it
-      foreach my $stat_team ( keys %player_games_adjustments ) {
-        # Work out which objects we're modifying at the moment - home or away
-        my ( $mod_pair, $mod_player1, $mod_player2 ) = $stat_team eq "home" ? ( $home_player, $home_doubles1, $home_doubles2 ) : ( $away_player, $away_doubles1, $away_doubles2 );
-        
-        foreach my $field ( keys %{$player_games_adjustments{$stat_team}} ) {
-          # The pair ($mod_pair is $home_player or $away_player, which is always the doubles pair for a doubles game) fields are unchanged - games_played for example
+      foreach my $field ( keys %{$player_games_adjustments{$stat_team}} ) {
+        # The pair ($mod_pair is $home_player or $away_player, which is always the doubles pair for a doubles game) fields are unchanged - games_played for example
+        foreach my $mod_pair ( @mod_pairs ) {
           $mod_pair->$field($mod_pair->$field + $player_games_adjustments{$stat_team}{$field}) if $mod_pair->result_source->has_column($field);
-          
+        }
+        
+        foreach my $mod_player ( @mod_players ) {
           # The individual players - $mod_player1, $mod_player2 - are preceded with doubles - doubles_games_played for example
           my $doubles_field = "doubles_" . $field;
-          $mod_player1->$doubles_field($mod_player1->$doubles_field + $player_games_adjustments{$stat_team}{$field}) if $mod_player1->result_source->has_column($doubles_field);
-          $mod_player2->$doubles_field($mod_player2->$doubles_field + $player_games_adjustments{$stat_team}{$field}) if $mod_player2->result_source->has_column($doubles_field);
-        }
-      }
-      
-      # Legs and points
-      $home_player->legs_played($home_player->legs_played + ( $home_legs + $away_legs ) - ( $game_original_home_team_score + $game_original_away_team_score ));
-      $away_player->legs_played($away_player->legs_played + ( $home_legs + $away_legs ) - ( $game_original_home_team_score + $game_original_away_team_score ));
-      $home_player->legs_won($home_player->legs_won + ( $home_legs - $game_original_home_team_score ));
-      $away_player->legs_won($away_player->legs_won + ( $away_legs - $game_original_away_team_score ));
-      $home_player->legs_lost($home_player->legs_lost + ( $away_legs - $game_original_away_team_score ));
-      $away_player->legs_lost($away_player->legs_lost + ( $home_legs - $game_original_home_team_score ));
-      
-      $home_player->points_played($home_player->points_played + ( ( $home_team_points + $away_team_points ) - ( $game_original_home_team_points  + $game_original_away_team_points ) ));
-      $away_player->points_played($away_player->points_played + ( ( $home_team_points + $away_team_points ) - ( $game_original_home_team_points  + $game_original_away_team_points ) ));
-      $home_player->points_won($home_player->points_won + ( $home_team_points - $game_original_home_team_points ));
-      $away_player->points_won($away_player->points_won + ( $away_team_points - $game_original_away_team_points ));
-      $home_player->points_lost($home_player->points_lost + ( $away_team_points - $game_original_away_team_points ));
-      $away_player->points_lost($away_player->points_lost + ( $home_team_points - $game_original_home_team_points ));
-      
-      $home_doubles1->doubles_legs_played($home_doubles1->doubles_legs_played + ( $home_legs + $away_legs ) - ( $game_original_home_team_score + $game_original_away_team_score ));
-      $home_doubles2->doubles_legs_played($home_doubles2->doubles_legs_played + ( $home_legs + $away_legs ) - ( $game_original_home_team_score + $game_original_away_team_score ));
-      $away_doubles1->doubles_legs_played($away_doubles1->doubles_legs_played + ( $home_legs + $away_legs ) - ( $game_original_home_team_score + $game_original_away_team_score ));
-      $away_doubles2->doubles_legs_played($away_doubles2->doubles_legs_played + ( $home_legs + $away_legs ) - ( $game_original_home_team_score + $game_original_away_team_score ));
-      $home_doubles1->doubles_legs_won($home_doubles1->doubles_legs_won + ( $home_legs - $game_original_home_team_score ));
-      $home_doubles2->doubles_legs_won($home_doubles2->doubles_legs_won + ( $home_legs - $game_original_home_team_score ));
-      $away_doubles1->doubles_legs_won($away_doubles1->doubles_legs_won + ( $away_legs - $game_original_away_team_score ));
-      $away_doubles2->doubles_legs_won($away_doubles2->doubles_legs_won + ( $away_legs - $game_original_away_team_score ));
-      $home_doubles1->doubles_legs_lost($home_doubles1->doubles_legs_lost + ( $away_legs - $game_original_away_team_score ));
-      $home_doubles2->doubles_legs_lost($home_doubles2->doubles_legs_lost + ( $away_legs - $game_original_away_team_score ));
-      $away_doubles1->doubles_legs_lost($away_doubles1->doubles_legs_lost + ( $home_legs - $game_original_home_team_score ));
-      $away_doubles2->doubles_legs_lost($away_doubles2->doubles_legs_lost + ( $home_legs - $game_original_home_team_score ));
-      $home_doubles1->doubles_points_played($home_doubles1->doubles_points_played + ( $home_team_points + $away_team_points ) - ( $game_original_home_team_points  + $game_original_away_team_points ));
-      $home_doubles2->doubles_points_played($home_doubles2->doubles_points_played + ( $home_team_points + $away_team_points ) - ( $game_original_home_team_points  + $game_original_away_team_points ));
-      $away_doubles1->doubles_points_played($away_doubles1->doubles_points_played + ( $home_team_points + $away_team_points ) - ( $game_original_home_team_points  + $game_original_away_team_points ));
-      $away_doubles2->doubles_points_played($away_doubles2->doubles_points_played + ( $home_team_points + $away_team_points ) - ( $game_original_home_team_points  + $game_original_away_team_points ));
-      $home_doubles1->doubles_points_won($home_doubles1->doubles_points_won + ( $home_team_points - $game_original_home_team_points ));
-      $home_doubles2->doubles_points_won($home_doubles2->doubles_points_won + ( $home_team_points - $game_original_home_team_points ));
-      $away_doubles1->doubles_points_won($away_doubles1->doubles_points_won + ( $away_team_points - $game_original_away_team_points ));
-      $away_doubles2->doubles_points_won($away_doubles2->doubles_points_won + ( $away_team_points - $game_original_away_team_points ));
-      $home_doubles1->doubles_points_lost($home_doubles1->doubles_points_lost + ( $away_team_points - $game_original_away_team_points ));
-      $home_doubles2->doubles_points_lost($home_doubles2->doubles_points_lost + ( $away_team_points - $game_original_away_team_points ));
-      $away_doubles1->doubles_points_lost($away_doubles1->doubles_points_lost + ( $home_team_points - $game_original_home_team_points ));
-      $away_doubles2->doubles_points_lost($away_doubles2->doubles_points_lost + ( $home_team_points - $game_original_home_team_points ));
-      
-      # Work out the averages
-      $home_player->games_played ? $home_player->average_game_wins(( $home_player->games_won / $home_player->games_played ) * 100) : $home_player->average_game_wins(0);
-      $home_player->legs_played ? $home_player->average_leg_wins(( $home_player->legs_won / $home_player->legs_played ) * 100) : $home_player->average_leg_wins(0);
-      $home_player->points_played ? $home_player->average_point_wins(( $home_player->points_won / $home_player->points_played ) * 100) : $home_player->average_point_wins(0);
-      $away_player->games_played ? $away_player->average_game_wins(( $away_player->games_won / $away_player->games_played ) * 100) : $away_player->average_game_wins(0);
-      $away_player->legs_played ? $away_player->average_leg_wins(( $away_player->legs_won / $away_player->legs_played ) * 100) : $away_player->average_leg_wins(0);
-      $away_player->points_played ? $away_player->average_point_wins(( $away_player->points_won / $away_player->points_played ) * 100) : $away_player->average_point_wins(0);
-      
-      $home_doubles1->doubles_games_played ? $home_doubles1->doubles_average_game_wins(( $home_doubles1->doubles_games_won / $home_doubles1->doubles_games_played ) * 100) : $home_doubles1->doubles_average_game_wins(0);
-      $home_doubles2->doubles_games_played ? $home_doubles2->doubles_average_game_wins(( $home_doubles2->doubles_games_won / $home_doubles2->doubles_games_played ) * 100) : $home_doubles2->doubles_average_game_wins(0);
-      $home_doubles1->doubles_legs_played ? $home_doubles1->doubles_average_leg_wins(( $home_doubles1->doubles_legs_won / $home_doubles1->doubles_legs_played ) * 100) : $home_doubles1->doubles_average_leg_wins(0);
-      $home_doubles2->doubles_legs_played ? $home_doubles2->doubles_average_leg_wins(( $home_doubles2->doubles_legs_won / $home_doubles2->doubles_legs_played ) * 100) : $home_doubles2->doubles_average_leg_wins(0);
-      $home_doubles1->doubles_points_played ? $home_doubles1->doubles_average_point_wins(( $home_doubles1->doubles_points_won / $home_doubles1->doubles_points_played ) * 100) : $home_doubles1->doubles_average_point_wins(0);
-      $home_doubles2->doubles_points_played ? $home_doubles2->doubles_average_point_wins(( $home_doubles2->doubles_points_won / $home_doubles2->doubles_points_played ) * 100) : $home_doubles2->doubles_average_point_wins(0);
-      $away_doubles1->doubles_games_played ? $away_doubles1->doubles_average_game_wins(( $away_doubles1->doubles_games_won / $away_doubles1->doubles_games_played ) * 100) : $away_doubles1->doubles_average_game_wins(0);
-      $away_doubles2->doubles_games_played ? $away_doubles2->doubles_average_game_wins(( $away_doubles2->doubles_games_won / $away_doubles2->doubles_games_played ) * 100) : $away_doubles2->doubles_average_game_wins(0);
-      $away_doubles1->doubles_legs_played ? $away_doubles1->doubles_average_leg_wins(( $away_doubles1->doubles_legs_won / $away_doubles1->doubles_legs_played ) * 100) : $away_doubles1->doubles_average_leg_wins(0);
-      $away_doubles2->doubles_legs_played ? $away_doubles2->doubles_average_leg_wins(( $away_doubles2->doubles_legs_won / $away_doubles2->doubles_legs_played ) * 100) : $away_doubles2->doubles_average_leg_wins(0);
-      $away_doubles1->doubles_points_played ? $away_doubles1->doubles_average_point_wins(( $away_doubles1->doubles_points_won / $away_doubles1->doubles_points_played ) * 100) : $away_doubles1->doubles_average_point_wins(0);
-      $away_doubles2->doubles_points_played ? $away_doubles2->doubles_average_point_wins(( $away_doubles2->doubles_points_won / $away_doubles2->doubles_points_played ) * 100) : $away_doubles2->doubles_average_point_wins(0);
-      
-      $home_player->update;
-      $away_player->update;
-      $home_doubles1->update;
-      $home_doubles2->update;
-      $away_doubles1->update;
-      $away_doubles2->update;
-      
-      # If there are player matches played / won / lost to update, do it here for all players in the match
-      # We also need to do that for the other players in the match
-      my $home_players = $match->search_related("team_match_players", {
-        "person_seasons.season" => $season->id,
-        "person_seasons.team" => $home_team->id,
-        location => "home",
-      }, {
-        prefetch => {player => "person_seasons"}
-      });
-      
-      while ( my $_home_player = $home_players->next ) {
-        my $_player = $_home_player->player->person_seasons->first;
-        
-        foreach my $field ( keys %{$matches_adjustments{home}} ) {
-          $_player->$field($_player->$field + $matches_adjustments{home}{$field});
-        }
-        
-        $_player->update;
-      }
-      
-      my $away_players = $match->search_related("team_match_players", {
-        "person_seasons.season" => $season->id,
-        "person_seasons.team" => $away_team->id,
-        location => "away",
-      }, {
-        prefetch => {player => "person_seasons"}
-      });
-      
-      while ( my $_away_player = $away_players->next ) {
-        my $_player = $_away_player->player->person_seasons->first;
-        
-        foreach my $field ( keys %{$matches_adjustments{away}} ) {
-          $_player->$field($_player->$field + $matches_adjustments{away}{$field});
-        }
-        
-        $_player->update;
-      }
-    } else {
-      # Not a doubles game - work out which season stats to update
-      # Check for each stat whether we need to update or not (home or away)
-      foreach my $location ( qw( home away ) ) {
-        my ( $match_player, $for_team, $against_team, $orig_score_for, $orig_score_against, $orig_points_for, $orig_points_against, $legs_for, $legs_against, $points_for, $points_against );
-        
-        if ( $location eq "home" ) {
-          $match_player = $home_player;
-          $for_team = $home_team;
-          $against_team = $away_team;
-          $orig_score_for = $game_original_home_team_score;
-          $orig_score_against = $game_original_away_team_score;
-          $orig_points_for = $game_original_home_team_points;
-          $orig_points_against = $game_original_away_team_points;
-          $legs_for = $home_legs;
-          $legs_against = $away_legs;
-          $points_for = $home_team_points;
-          $points_against = $away_team_points;
-        } else {
-          $match_player = $away_player;
-          $for_team = $away_team;
-          $against_team = $home_team;
-          $orig_score_for = $game_original_away_team_score;
-          $orig_score_against = $game_original_home_team_score;
-          $orig_points_for = $game_original_away_team_points;
-          $orig_points_against = $game_original_home_team_points;
-          $legs_for = $away_legs;
-          $legs_against = $home_legs;
-          $points_for = $away_team_points;
-          $points_against = $home_team_points;
-        }
-        
-        # Get the person season object (assuming they're defined - they may not be if we've set a missing player)
-        if ( defined($match_player) ) {
-          my $season_player = $match_player->find_related("person_seasons", {season => $season->id, team => $for_team->id});
-          
-          # Create them as a loan player if not already existing (we should never have to do this, as even loan players should
-          # be created when added to their match position, before the scores are filled out, but just to triple check).
-          # Ensure the player isn't missing, as trying to create will result in an error
-          $season_player = $match_player->create_related("person_seasons", {
-            season => $season->id,
-            team => $for_team->id,
-            first_name => $match_player->first_name,
-            surname => $match_player->surname,
-            display_name => $match_player->display_name,
-            team_membership_type => "loan",
-          }) unless defined($season_player);
-          
-          # Update the season stats for the player - games we already know and are stored in %player_games_adjustments
-          foreach my $field ( keys %{$player_games_adjustments{$location}} ) {
-            $season_player->$field($season_player->$field + $player_games_adjustments{$location}{$field});
-          }
-          
-          # Legs / points
-          $season_player->legs_played($season_player->legs_played + ( $legs_for + $legs_against ) - ( $orig_score_for + $orig_score_against ));
-          $season_player->legs_won($season_player->legs_won + ( $legs_for - $orig_score_for ));
-          $season_player->legs_lost($season_player->legs_lost + ( $legs_against - $orig_score_against ));
-          $season_player->points_played($season_player->points_played + ( $points_for + $points_against ) - ( $orig_points_for  + $orig_points_against ));
-          $season_player->points_won($season_player->points_won + ( $points_for - $orig_points_for ));
-          $season_player->points_lost($season_player->points_lost + ( $points_against - $orig_points_against ));
-          
-          # Averages
-          $season_player->legs_played ? $season_player->average_leg_wins(( $season_player->legs_won / $season_player->legs_played ) * 100) : $season_player->average_leg_wins(0);
-          $season_player->points_played ? $season_player->average_point_wins(( $season_player->points_won / $season_player->points_played  ) * 100) : $season_player->average_point_wins(0);
-          $season_player->games_played ? $season_player->average_game_wins(( $season_player->games_won / $season_player->games_played ) * 100) : $season_player->average_game_wins(0);
-          
-          # Do the update
-          $season_player->update;
-        }
-        
-        # Update match stats for all players if required - do this whether we're updating the player stats or not
-        my $match_players = $match->search_related("team_match_players", {
-          "person_seasons.season" => $season->id,
-          "person_seasons.team" => $for_team->id,
-          location => $location,
-        }, {
-          prefetch => {player => "person_seasons"}
-        });
-        
-        while ( my $_match_player = $match_players->next ) {
-          my $_player = $_match_player->player->person_seasons->first;
-          
-          foreach my $field ( keys %{$matches_adjustments{$location}} ) {
-            $_player->$field($_player->$field + $matches_adjustments{$location}{$field});
-          }
-          
-          $_player->update;
+          $mod_player->$doubles_field($mod_player->$doubles_field + $player_games_adjustments{$stat_team}{$doubles_field}) if $mod_player->result_source->has_column($doubles_field);
         }
       }
     }
     
-    $season_home_team->update;
-    $season_away_team->update;
+    # Legs and points
+    foreach my $stat ( @home_doubles_stats ) {
+      $stat->legs_played($stat->legs_played + ( $home_legs + $away_legs ) - ( $game_original_home_team_score + $game_original_away_team_score ));
+      $stat->legs_won($stat->legs_won + ( $home_legs - $game_original_home_team_score ));
+      $stat->legs_lost($stat->legs_lost + ( $away_legs - $game_original_away_team_score ));
+      
+      $stat->points_played($stat->points_played + ( ( $home_team_points + $away_team_points ) - ( $game_original_home_team_points  + $game_original_away_team_points ) ));
+      $stat->points_won($stat->points_won + ( $home_team_points - $game_original_home_team_points ));
+      $stat->points_lost($stat->points_lost + ( $away_team_points - $game_original_away_team_points ));
+      
+      $stat->games_played ? $stat->average_game_wins(( $stat->games_won / $stat->games_played ) * 100) : $stat->average_game_wins(0);
+      $stat->legs_played ? $stat->average_leg_wins(( $stat->legs_won / $stat->legs_played ) * 100) : $stat->average_leg_wins(0);
+      $stat->points_played ? $stat->average_point_wins(( $stat->points_won / $stat->points_played ) * 100) : $stat->average_point_wins(0);
+      
+      $stat->update;
+    }
+    
+    foreach my $stat ( @home_doubles_stats ) {
+      $stat->legs_played($stat->legs_played + ( $home_legs + $away_legs ) - ( $game_original_home_team_score + $game_original_away_team_score ));
+      $stat->legs_won($stat->legs_won + ( $away_legs - $game_original_away_team_score ));
+      $stat->legs_lost($stat->legs_lost + ( $home_legs - $game_original_home_team_score ));
+      
+      $stat->points_played($stat->points_played + ( ( $home_team_points + $away_team_points ) - ( $game_original_home_team_points  + $game_original_away_team_points ) ));
+      $stat->points_won($stat->points_won + ( $away_team_points - $game_original_away_team_points ));
+      $stat->points_lost($stat->points_lost + ( $home_team_points - $game_original_home_team_points ));
+      $stat->games_played ? $stat->average_game_wins(( $stat->games_won / $stat->games_played ) * 100) : $stat->average_game_wins(0);
+      $stat->legs_played ? $stat->average_leg_wins(( $stat->legs_won / $stat->legs_played ) * 100) : $stat->average_leg_wins(0);
+      $stat->points_played ? $stat->average_point_wins(( $stat->points_won / $stat->points_played ) * 100) : $stat->average_point_wins(0);
+      
+      $stat->update;
+    }
+    
+    foreach my $stat ( @home_doubles_player_stats ) {
+      $stat->doubles_legs_played($stat->doubles_legs_played + ( $home_legs + $away_legs ) - ( $game_original_home_team_score + $game_original_away_team_score ));
+      $stat->doubles_legs_won($stat->doubles_legs_won + ( $home_legs - $game_original_home_team_score ));
+      $stat->doubles_legs_lost($stat->doubles_legs_lost + ( $away_legs - $game_original_away_team_score ));
+      $stat->doubles_points_played($stat->doubles_points_played + ( $home_team_points + $away_team_points ) - ( $game_original_home_team_points  + $game_original_away_team_points ));
+      $stat->doubles_points_won($stat->doubles_points_won + ( $home_team_points - $game_original_home_team_points ));
+      $stat->doubles_points_lost($stat->doubles_points_lost + ( $away_team_points - $game_original_away_team_points ));
+      
+      $stat->doubles_games_played ? $stat->doubles_average_game_wins(( $stat->doubles_games_won / $stat->doubles_games_played ) * 100) : $stat->doubles_average_game_wins(0);
+      $stat->doubles_legs_played ? $stat->doubles_average_leg_wins(( $stat->doubles_legs_won / $stat->doubles_legs_played ) * 100) : $stat->doubles_average_leg_wins(0);
+      $stat->doubles_points_played ? $stat->doubles_average_point_wins(( $stat->doubles_points_won / $stat->doubles_points_played ) * 100) : $stat->doubles_average_point_wins(0);
+      
+      $stat->update;
+    }
+    
+    foreach my $stat ( @away_doubles_player_stats ) {
+      $stat->doubles_legs_played($stat->doubles_legs_played + ( $home_legs + $away_legs ) - ( $game_original_home_team_score + $game_original_away_team_score ));
+      $stat->doubles_legs_won($stat->doubles_legs_won + ( $away_legs - $game_original_away_team_score ));
+      $stat->doubles_legs_lost($stat->doubles_legs_lost + ( $home_legs - $game_original_home_team_score ));
+      $stat->doubles_points_played($stat->doubles_points_played + ( $home_team_points + $away_team_points ) - ( $game_original_home_team_points  + $game_original_away_team_points ));
+      $stat->doubles_points_won($stat->doubles_points_won + ( $away_team_points - $game_original_away_team_points ));
+      $stat->doubles_points_lost($stat->doubles_points_lost + ( $home_team_points - $game_original_home_team_points ));
+      
+      $stat->doubles_games_played ? $stat->doubles_average_game_wins(( $stat->doubles_games_won / $stat->doubles_games_played ) * 100) : $stat->doubles_average_game_wins(0);
+      $stat->doubles_legs_played ? $stat->doubles_average_leg_wins(( $stat->doubles_legs_won / $stat->doubles_legs_played ) * 100) : $stat->doubles_average_leg_wins(0);
+      $stat->doubles_points_played ? $stat->doubles_average_point_wins(( $stat->doubles_points_won / $stat->doubles_points_played ) * 100) : $stat->doubles_average_point_wins(0);
+      
+      $stat->update;
+    }
+  } else {
+    # Not a doubles game - work out which season stats to update
+    # Check for each stat whether we need to update or not (home or away)
+    foreach my $location ( qw( home away ) ) {
+      my ( $match_player, $for_team, $against_team, $orig_score_for, $orig_score_against, $orig_points_for, $orig_points_against, $legs_for, $legs_against, $points_for, $points_against );
+      
+      if ( $location eq "home" ) {
+        $match_player = $home_player;
+        $for_team = $home_team;
+        $against_team = $away_team;
+        $orig_score_for = $game_original_home_team_score;
+        $orig_score_against = $game_original_away_team_score;
+        $orig_points_for = $game_original_home_team_points;
+        $orig_points_against = $game_original_away_team_points;
+        $legs_for = $home_legs;
+        $legs_against = $away_legs;
+        $points_for = $home_team_points;
+        $points_against = $away_team_points;
+      } else {
+        $match_player = $away_player;
+        $for_team = $away_team;
+        $against_team = $home_team;
+        $orig_score_for = $game_original_away_team_score;
+        $orig_score_against = $game_original_home_team_score;
+        $orig_points_for = $game_original_away_team_points;
+        $orig_points_against = $game_original_home_team_points;
+        $legs_for = $away_legs;
+        $legs_against = $home_legs;
+        $points_for = $away_team_points;
+        $points_against = $home_team_points;
+      }
+      
+      # Get the person season object (assuming they're defined - they may not be if we've set a missing player)
+      if ( defined($match_player) ) {
+        my $season_player = $match_player->find_related("person_seasons", {season => $season->id, team => $for_team->id});
+        
+        # Create them as a loan player if not already existing (we should never have to do this, as even loan players should
+        # be created when added to their match position, before the scores are filled out, but just to triple check).
+        # Ensure the player isn't missing, as trying to create will result in an error
+        
+        # We still need to do this even for tournaments, as the stats won't update here, but the record is needed for the foreign key
+        $season_player = $match_player->create_related("person_seasons", {
+          season => $season->id,
+          team => $for_team->id,
+          first_name => $match_player->first_name,
+          surname => $match_player->surname,
+          display_name => $match_player->display_name,
+          team_membership_type => "loan",
+        }) unless defined($season_player);
+        
+        my ( @player_stats );
+        
+        if ( $tourn_match ) {
+          my $tourn_player = $season_player->find_related("tournament_people", {
+            "me.event" => $match->tournament_round->tournament->event_season->event->id,
+            "me.season" => $season->id,
+            "me.team" => $for_team->id,
+          });
+          
+          my $round_player = $tourn_player->find_related("tournament_round_people", {
+            "me.tournament_round" => $match->tournament_round->id,
+          });
+          
+          @player_stats = ( $tourn_player, $round_player );
+        } else {
+          # League match, home player stats are just the person season object
+          @player_stats = ( $season_player );
+        }
+        
+        # Update the season stats for the player - games we already know and are stored in %player_games_adjustments
+        foreach my $field ( keys %{$player_games_adjustments{$location}} ) {
+          $_->$field($_->$field + $player_games_adjustments{$location}{$field}) foreach @player_stats;
+        }
+        
+        # Legs / points
+        foreach my $stat ( @player_stats ) {
+          $stat->legs_played($stat->legs_played + ( $legs_for + $legs_against ) - ( $orig_score_for + $orig_score_against ));
+          $stat->legs_won($stat->legs_won + ( $legs_for - $orig_score_for ));
+          $stat->legs_lost($stat->legs_lost + ( $legs_against - $orig_score_against ));
+          $stat->points_played($stat->points_played + ( $points_for + $points_against ) - ( $orig_points_for  + $orig_points_against ));
+          $stat->points_won($stat->points_won + ( $points_for - $orig_points_for ));
+          $stat->points_lost($stat->points_lost + ( $points_against - $orig_points_against ));
+          
+          # Averages
+          $stat->legs_played ? $stat->average_leg_wins(( $stat->legs_won / $stat->legs_played ) * 100) : $stat->average_leg_wins(0);
+          $stat->points_played ? $stat->average_point_wins(( $stat->points_won / $stat->points_played  ) * 100) : $stat->average_point_wins(0);
+          $stat->games_played ? $stat->average_game_wins(( $stat->games_won / $stat->games_played ) * 100) : $stat->average_game_wins(0);
+          
+          # Do the update
+          $stat->update;
+        }
+      }
+    }
   }
+  
+  # Update the match played / won / lost stats for all players in the match
+  foreach my $location ( qw( home away ) ) {
+    my $for_team = $location eq "home" ? $home_team : $away_team;
+    
+    # If there are player matches played / won / lost to update, do it here for all players in the match
+    my ( @match_players );
+    my ( %where, %attribs );
+    
+    if ( $tourn_match ) {
+      # Tournament criteria and prefetches
+      %where = (
+        "me.location" => $location,
+        "person_seasons.season" => $season->id,
+        "person_seasons.team" => $for_team->id,
+        "tournament_people.event" => $match->tournament_round->tournament->event_season->event->id,
+        "tournament_people.season" => $season->id,
+        "tournament_round_people.tournament_round" => $match->tournament_round->id,
+      );
+      
+      %attribs = (
+        prefetch => {
+          player => {
+            person_seasons => {
+              tournament_people => [qw( tournament_round_people )],
+            },
+          }
+        }
+      );
+    } else {
+      # League match criteria and prefetches
+      %where = (
+        "person_seasons.season" => $season->id,
+        "person_seasons.team" => $for_team->id,
+      );
+      
+      %attribs = (prefetch => {player => "person_seasons"});
+    }
+    
+    # Grab the players for home and away with the prefetches we need
+    my $players = $match->search_related("team_match_players", \%where, \%attribs);
+    
+    # Loop through the home and away resultsets    
+    while ( my $match_player = $players->next ) {
+      my $player_season = $match_player->player->person_seasons->first;
+      
+      if ( $tourn_match ) {
+        # Tournament match, we want the tournament player and round player objects
+        my $tourn_person = $player_season->tournament_people->first;
+        my $round_person = $tourn_person->tournament_round_people->first;
+        push(@match_players, $tourn_person, $round_person);
+      } else {
+        # League match, we just want the player season
+        push(@match_players, $player_season);
+      }
+    }
+    
+    # Loop through the keys of matches adjustments (home / away)
+    # Loop through the players array
+    foreach my $player ( @match_players ) {
+      # Loop through each field subkey
+      foreach my $field ( keys %{$matches_adjustments{$location}} ) {
+        # Loop through the players array updating
+        $player->$field($player->$field + $matches_adjustments{$location}{$field});
+      }
+      
+      $player->update;
+    }
+  }
+  
+  $_->update foreach ( @home_team_stats, @away_team_stats );
   
   # Finally commit the transaction if there are no errors
   $transaction->commit;
@@ -2433,24 +2693,137 @@ sub update_doubles_pair {
         }
         
         # Get the team and relevant DB fields for updating
-        my $location_team = $location eq "home" ? "team_season_home_team_season" : "team_season_away_team_season";
-        my $location_doubles_pair = $location eq "home" ? "home_doubles_pair" : "away_doubles_pair";
-        my $team_legs_won = $location eq "home" ? "home_team_legs_won" : "away_team_legs_won";
-        my $opposition_legs_won = $location eq "home" ? "away_team_legs_won" : "home_team_legs_won";
-        my $team_points_won = $location eq "home" ? "home_team_points_won" : "away_team_points_won";
-        my $opposition_points_won = $location eq "home" ? "away_team_points_won" : "home_team_points_won";
+        my ( $location_team, $location_doubles_pair, $team_legs_won, $opposition_legs_won, $team_points_won, $opposition_points_won );
+        
+        if ( $location eq "home" ) {
+          $location_team = "team_season_home_team_season";
+          $location_doubles_pair = "home_doubles_pair";
+          $team_legs_won = "home_team_legs_won";
+          $opposition_legs_won = "away_team_legs_won";
+          $team_points_won = "home_team_points_won";
+          $opposition_points_won = "away_team_points_won";
+        } else {
+          $location_team = "team_season_away_team_season";
+          $location_doubles_pair = "away_doubles_pair";
+          $team_legs_won = "away_team_legs_won";
+          $opposition_legs_won = "home_team_legs_won";
+          $team_points_won = "away_team_points_won";
+          $opposition_points_won = "home_team_points_won";
+        }
+        
         my $team = $match->$location_team->team;
         my $team_name = sprintf("%s %s", $team->club->short_name, $team->name);
         my $enc_team_name = encode_entities($team_name);
-        my $original_doubles_pair = $self->$location_doubles_pair;
+        my $og_doubles_pair = $self->$location_doubles_pair;
         
         my $transaction = $self->result_source->schema->txn_scope_guard;
+        
+        my ( @og_pair_stats, @og_player_stats, %og_stats, %og_stats_deletable, $round_team, $tourn_team, $tourn_round, $tourn_group );
+        my $tourn_match = defined($match->tournament_round) ? 1 : 0;
+        my $tourn_group_round = $tourn_match and defined($match->tournament_group) ? 1 : 0;
+        
+        # Grab the tournament / round team objects up here, so we can do the lookups 
+        if ( $tourn_match ) {
+          # This match is part of a tournament, find the team membership.  No need to check if the tournament round team exists, as the team is not user defined,
+          # it's taken from a match object - we'll never have a match in a tournament round that doesn't contain any of the teams in that round.
+          $tourn_round = $match->tournament_round;
+          $round_team = $tourn_round->find_related("tournament_round_teams", {"tournament_team.team" => $team->id}, {prefetch => [qw( tournament_team )]});
+          $tourn_team = $round_team->tournament_team;
+          $tourn_group = $match->tournament_group if $tourn_group_round;
+        }
+        
+        if ( defined($og_doubles_pair) ) {
+          # If we've had an original doubles pair, do all the lookups for them
+          # The pairing has changed, and there was originally a pair entered.  We need to transfer stats for this
+          # game from one to the other
+          if ( $tourn_match ) {
+            # This match is part of a tournament, find the team membership.  No need to check if the tournament round team exists, as the team is not user defined,
+            # it's taken from a match object - we'll never have a match in a tournament round that doesn't contain any of the teams in that round.
+            # Get the people involved so we can look based on their IDs.
+            my $og_player1 = $og_doubles_pair->person_season_person1_season_team->person;
+            my $og_player2 = $og_doubles_pair->person_season_person2_season_team->person;
+            
+            # Tournament pair
+            my $og_tourn_pair = $tourn_team->find_related("tournaments_doubles", {
+              "season_pair.id" => $og_doubles_pair->id,
+              "me.event" => $match->tournament_round->tournament->event_season->event->id,
+              "me.season" => $season->id,
+            }, {
+              join => [qw( season_pair )],
+              prefetch => [qw( tournament_rounds_doubles )],
+            });
+            
+            # Round pair
+            my $og_round_pair = $og_tourn_pair->find_related("tournament_rounds_doubles", {
+              "tournament_team.id" => $tourn_team->id,
+              "tournament_round.id" => $match->tournament_round->id,
+            }, {
+              prefetch => [qw( tournament_pair )],
+              join => [qw( tournament_round ), {
+                tournament_pair => [qw( season_pair )],
+                tournament_round_team => [qw( tournament_team )],
+              }],
+            });
+            
+            # Lookup player 1 and 2 stats
+            my $og_tourn_player1 = $tourn_team->find_related("tournament_people", {
+              "me.event" => $match->tournament_round->tournament->event_season->event->id,
+              "me.season" => $season->id,
+              "me.person" => $og_player1->id,
+            }, {
+              prefetch => [qw( tournament_round_people ), {
+                person_season => [qw( person )],
+              }],
+            });
+            
+            my $og_round_player1 = $og_tourn_player1->find_related("tournament_round_people", {
+              "tournament_team.id" => $tourn_team->id,
+              "tournament_round.id" => $match->tournament_round->id,
+            }, {
+              join => [qw( tournament_round ), {
+                tournament_person => [qw( tournament_team )],
+              }],
+            });
+            
+            my $og_tourn_player2 = $tourn_team->find_related("tournament_people", {
+              "me.event" => $match->tournament_round->tournament->event_season->event->id,
+              "me.season" => $season->id,
+              "me.person" => $og_player2->id,
+            }, {
+              prefetch => [qw( tournament_round_people ), {
+                person_season => [qw( person )],
+              }],
+            });
+            
+            my $og_round_player2 = $og_tourn_player2->find_related("tournament_round_people", {
+              "tournament_team.id" => $tourn_team->id,
+              "tournament_round.id" => $match->tournament_round->id,
+            }, {
+              join => [qw( tournament_round ), {
+                tournament_person => [qw( tournament_team )],
+              }],
+            });
+            
+            @og_pair_stats = ( $og_tourn_pair, $og_round_pair );
+            @og_player_stats = ( $og_tourn_player1, $og_round_player1, $og_tourn_player2, $og_round_player2 );
+          } else {
+            # League match
+            @og_pair_stats = ( $og_doubles_pair );
+            @og_player_stats = ( $og_doubles_pair->person_season_person1_season_team, $og_doubles_pair->person_season_person2_season_team );
+          }
+          
+          # Add to a hash so we can loop through keys and do all the updates at once
+          %og_stats = (pair => \@og_pair_stats, player => \@og_player_stats);
+          %og_stats_deletable = $tourn_match
+           ? (pair => \@og_pair_stats, player => \@og_player_stats) # Tournament match, everything is deletable if relevant (no games played)
+           : (pair => \@og_pair_stats, player => []); # League match, the pair is deletable, but the players are not
+        }
         
         # Check if we are adding or removing - if $player_ids is undefined, we'll remove
         if ( $action eq "add" ) {
           # Add - first check the players are valid people
           if ( defined($player1) ) {
-            $player1 = $schema->resultset("Person")->find_id_or_url_key($player1) unless ref($player1) eq "TopTable::Model::DB::Person";
+            $player1 = $schema->resultset("Person")->find_id_or_url_key($player1) unless $player1->isa("TopTable::Schema::Result::Person");
             push(@{$response->{errors}}, $lang->maketext("matches.game.update-doubles.error.$location-player1-invalid")) unless defined($player1);
           } else {
             # We shouldn't get here, but just to make sure
@@ -2458,7 +2831,7 @@ sub update_doubles_pair {
           }
           
           if ( defined($player2) ) {
-            $player2 = $schema->resultset("Person")->find_id_or_url_key($player2) unless ref($player2) eq "TopTable::Model::DB::Person";
+            $player2 = $schema->resultset("Person")->find_id_or_url_key($player2) unless $player2->isa("TopTable::Schema::Result::Person");
             push(@{$response->{errors}}, $lang->maketext("matches.game.update-doubles.error.$location-player2-invalid")) unless defined($player2);
           } else {
             # We shouldn't get here, but just to make sure
@@ -2489,7 +2862,7 @@ sub update_doubles_pair {
           # Now check if there's a doubles pairing with the two players
           my $doubles_pair1 = $person1_season->search_related("doubles_pairs_person1_season_teams", {season => $season->id, person2 => $player2->id, team => $team->id});
           my $doubles_pair2 = $person1_season->search_related("doubles_pairs_person2_season_teams", {season => $season->id, person1 => $player2->id, team => $team->id});
-          my $doubles_pair = $doubles_pair1->union_all($doubles_pair2)->first;
+          $doubles_pair = $doubles_pair1->union_all($doubles_pair2)->first;
           
           # Work out if either player is a loan player
           my $person1_active_season = $player1->search_related("person_seasons", {season => $season->id, team => $team->id, team_membership_type => "active"}, {rows => 1})->single;
@@ -2498,7 +2871,7 @@ sub update_doubles_pair {
           my $person2_loan = defined($person2_active_season) ? 0 : 1;
           
           # If the doubles pair was returned okay, we don't need to do any more verification, just use the existing one
-          unless ( defined($doubles_pair) ) {
+          if ( !defined($doubles_pair) ) {
             # The doubles pair doesn't exist, so we need to verify the people specified are eligible to play in the
             # doubles game; to do this we first need to get a list of eligible players (which will include all players
             # registered for the team plus any players playing as a loan player if appropriate).
@@ -2542,203 +2915,286 @@ sub update_doubles_pair {
           # Update the statistics for the original doubles pair if it's changed and there was an original doubles pair specified
           if ( $self->is_column_changed($location_doubles_pair) ) {
             # The doubles pair column has changed, so we need to recalculate some values
+            # Grab some of the values we'll be checking frequently
+            my $complete = $self->complete;
+            my $winner = defined($self->winner) ? $self->winner->id : undef;
+            my $team_id = $match->$location_team->id;
             
-            if ( defined($original_doubles_pair) ) {
-              # Get the original player 1 / player 2 objects to update their individual statistics
-              my $original_player1 = $original_doubles_pair->person_season_person1_season_team;
-              my $original_player2 = $original_doubles_pair->person_season_person2_season_team;
-              
+            if ( defined($og_doubles_pair) ) {
               # There is an original doubles pair to take some games off
-              if ( $self->complete ) {
-                $original_doubles_pair->games_played($original_doubles_pair->games_played - 1);
-                $original_player1->doubles_games_played($original_player1->doubles_games_played - 1);
-                $original_player2->doubles_games_played($original_player2->doubles_games_played - 1);
+              foreach my $stat_type ( keys %og_stats ) {
+                # Field names - setup initial names, as these bits don't change regardless.  If it's an individual stat, we need to prefix "doubles_"
+                my ( $fld_games_played, $fld_games_won, $fld_games_lost, $fld_games_drawn, $fld_legs_played, $fld_legs_won, $fld_legs_lost, $fld_points_played, $fld_points_won, $fld_points_lost, $fld_average_game_wins, $fld_average_leg_wins, $fld_average_point_wins );
+                
+                if ( $stat_type eq "pair" ) {
+                  $fld_games_played = "games_played";
+                  $fld_games_won = "games_won";
+                  $fld_games_lost = "games_lost";
+                  $fld_games_drawn = "games_drawn";
+                  $fld_legs_played = "legs_played";
+                  $fld_legs_won = "legs_won";
+                  $fld_legs_lost = "legs_lost";
+                  $fld_points_played = "points_played";
+                  $fld_points_won = "points_won";
+                  $fld_points_lost = "points_lost";
+                  $fld_average_game_wins = "average_game_wins";
+                  $fld_average_leg_wins = "average_leg_wins";
+                  $fld_average_point_wins = "average_point_wins";
+                } else {
+                  $fld_games_played = "doubles_games_played";
+                  $fld_games_won = "doubles_games_won";
+                  $fld_games_lost = "doubles_games_lost";
+                  $fld_games_drawn = "doubles_games_drawn";
+                  $fld_legs_played = "doubles_legs_played";
+                  $fld_legs_won = "doubles_legs_won";
+                  $fld_legs_lost = "doubles_legs_lost";
+                  $fld_points_played = "doubles_points_played";
+                  $fld_points_won = "doubles_points_won";
+                  $fld_points_lost = "doubles_points_lost";
+                  $fld_average_game_wins = "doubles_average_game_wins";
+                  $fld_average_leg_wins = "doubles_average_leg_wins";
+                  $fld_average_point_wins = "doubles_average_point_wins";
+                }
+                
+                foreach my $stat ( @{$og_stats{$stat_type}} ) {
+                  # Games - remove as appropriate from played, won, lost and drawn
+                  if ( $complete ) {
+                    # If the game is complete, we have to remove one played from the original pair
+                    $stat->$fld_games_played($stat->$fld_games_played - 1);
+                    
+                    if ( defined($winner) ) {
+                      # If we have a winner, we have to remove 1 from either games won or lost, depending on the winner
+                      if ( $winner == $team_id ) {
+                        # Game won by the doubles pairing we're changing
+                        $stat->$fld_games_won($stat->$fld_games_won - 1);
+                      } else {
+                        # Game lost by the doubles pairing we're changing
+                        $stat->$fld_games_lost($stat->$fld_games_lost - 1);
+                      }
+                    } else {
+                      # Game complete but no winner: draw (only relevant for games with a static number of legs)
+                      $stat->$fld_games_drawn($stat->$fld_games_drawn - 1);
+                    }
+                  }
+                  
+                  # Legs
+                  $stat->$fld_legs_played($stat->$fld_legs_played - ( $self->$team_legs_won + $self->$opposition_legs_won ));
+                  $stat->$fld_legs_won($stat->$fld_legs_won - $self->$team_legs_won);
+                  $stat->$fld_legs_lost($stat->$fld_legs_lost - $self->$opposition_legs_won);
+                  
+                  # Points
+                  $stat->$fld_points_played($stat->$fld_points_played - ( $self->$team_points_won + $self->$opposition_points_won ));
+                  $stat->$fld_points_won($stat->$fld_points_won - $self->$team_points_won);
+                  $stat->$fld_points_lost($stat->$fld_points_lost - $self->$opposition_points_won);
+                  
+                  # Game / leg / point averages
+                  $stat->$fld_games_played ? $stat->$fld_average_game_wins(( $stat->$fld_games_won / $stat->$fld_games_played ) * 100) : $stat->$fld_average_game_wins(0);
+                  $stat->$fld_legs_played ? $stat->$fld_average_leg_wins(( $stat->$fld_legs_won / $stat->$fld_legs_played ) * 100) : $stat->$fld_average_leg_wins(0);
+                  $stat->$fld_points_played ? $stat->$fld_average_point_wins(( $stat->$fld_points_won / $stat->$fld_points_played ) * 100) : $stat->$fld_average_point_wins(0);
+                  
+                  # All fields have been calculated, do the update
+                  $stat->update;
+                }
+              }
+            }
+            
+            # Stats arrays - league matches will only have one item per array (season stats for the pair / players)
+            # tournaments will have at least one - stats for the pair / player in the tournament; if it's a group round,
+            # there will be a stats element for that too
+            my ( @pair_stats, @player_stats );
+            
+            if ( $tourn_match ) {
+              # This match is part of a tournament, find the team membership.  No need to check if the tournament round team exists, as the team is not user defined,
+              # it's taken from a match object - we'll never have a match in a tournament round that doesn't contain any of the teams in that round.
+              # Tournament pair
+              my $tourn_pair = $tourn_team->find_or_create_related("tournaments_doubles", {
+                "me.season_pair" => $doubles_pair->id,
+                "me.event" => $match->tournament_round->tournament->event_season->event->id,
+                "me.season" => $season->id,
+                "me.tournament_team" => $tourn_team->id,
+              }, {
+                join => [qw( season_pair )],
+                prefetch => [qw( tournament_rounds_doubles )],
+              });
+              
+              # Round pair
+              my $round_pair = $tourn_pair->find_or_create_related("tournament_rounds_doubles", {
+                "me.tournament_round_team" => $round_team->id,
+                "me.tournament_round" => $match->tournament_round->id,
+                "me.tournament_group" => $tourn_group_round ? $tourn_group->id : undef,
+              }, {
+                prefetch => [qw( tournament_pair tournament_round_team )],
+              });
+              
+              # Lookup player 1 and 2 stats
+              my $tourn_player1 = $tourn_team->find_or_create_related("tournament_people", {
+                "me.event" => $match->tournament_round->tournament->event_season->event->id,
+                "me.season" => $season->id,
+                "me.person" => $player1->id,
+                "me.team" => $team->id,
+              }, {
+                prefetch => [qw( tournament_round_people ), {
+                  person_season => [qw( person )],
+                }],
+              });
+              
+              my $round_player1 = $tourn_player1->find_or_create_related("tournament_round_people", {
+                "tournament_team.id" => $tourn_team->id,
+                "me.tournament_round" => $match->tournament_round->id,
+                "me.tournament_round_team" => $round_team->id,
+                "me.tournament_group" => $tourn_group_round ? $tourn_group->id : undef,
+              }, {
+                join => [qw( tournament_round ), {
+                  tournament_person => [qw( tournament_team )],
+                }],
+              });
+              
+              my $tourn_player2 = $tourn_team->find_or_create_related("tournament_people", {
+                "me.event" => $match->tournament_round->tournament->event_season->event->id,
+                "me.season" => $season->id,
+                "me.person" => $player2->id,
+                "me.team" => $team->id,
+              }, {
+                prefetch => [qw( tournament_round_people )], {
+                  person_season => [qw( person )],
+                },
+              });
+              
+              my $round_player2 = $tourn_player2->find_or_create_related("tournament_round_people", {
+                "tournament_team.id" => $tourn_team->id,
+                "me.tournament_round" => $match->tournament_round->id,
+                "me.tournament_round_team" => $round_team->id,
+                "me.tournament_group" => $tourn_group_round ? $tourn_group->id : undef,
+              }, {
+                join => [qw( tournament_round ), {
+                  tournament_person => [qw( tournament_team )],
+                }],
+              });
+              
+              @pair_stats = ( $tourn_pair, $round_pair );
+              @player_stats = ( $tourn_player1, $round_player1, $tourn_player2, $round_player2 );
+            } else {
+              # League matches will always just have the one object per team / doubles player in the game, but we put it in the array to save on complicated logic later on
+              @pair_stats = ( $doubles_pair );
+              @player_stats = ( $doubles_pair->person_season_person1_season_team, $doubles_pair->person_season_person2_season_team );
+            }
+            
+            # Add to a hash so we can loop through keys and do all the updates at once
+            my %stats = (pair => \@pair_stats, player => \@player_stats);
+              
+            # There is an original doubles pair to take some games off
+            foreach my $stat_type ( keys %stats ) {
+              # Field names - setup initial names, as these bits don't change regardless.  If it's an individual stat, we need to prefix "doubles_"
+              my ( $fld_games_played, $fld_games_won, $fld_games_lost, $fld_games_drawn, $fld_legs_played, $fld_legs_won, $fld_legs_lost, $fld_points_played, $fld_points_won, $fld_points_lost, $fld_average_game_wins, $fld_average_leg_wins, $fld_average_point_wins );
+              
+              if ( $stat_type eq "pair" ) {
+                $fld_games_played = "games_played";
+                $fld_games_won = "games_won";
+                $fld_games_lost = "games_lost";
+                $fld_games_drawn = "games_drawn";
+                $fld_legs_played = "legs_played";
+                $fld_legs_won = "legs_won";
+                $fld_legs_lost = "legs_lost";
+                $fld_points_played = "points_played";
+                $fld_points_won = "points_won";
+                $fld_points_lost = "points_lost";
+                $fld_average_game_wins = "average_game_wins";
+                $fld_average_leg_wins = "average_leg_wins";
+                $fld_average_point_wins = "average_point_wins";
+              } else {
+                $fld_games_played = "doubles_games_played";
+                $fld_games_won = "doubles_games_won";
+                $fld_games_lost = "doubles_games_lost";
+                $fld_games_drawn = "doubles_games_drawn";
+                $fld_legs_played = "doubles_legs_played";
+                $fld_legs_won = "doubles_legs_won";
+                $fld_legs_lost = "doubles_legs_lost";
+                $fld_points_played = "doubles_points_played";
+                $fld_points_won = "doubles_points_won";
+                $fld_points_lost = "doubles_points_lost";
+                $fld_average_game_wins = "doubles_average_game_wins";
+                $fld_average_leg_wins = "doubles_average_leg_wins";
+                $fld_average_point_wins = "doubles_average_point_wins";
               }
               
-              # Work out whether we need to take a game won, lost or drawn off
-              if ( $self->complete and defined($self->winner) and $self->winner->id == $match->$location_team->id ) {
-                # Game won
-                $original_doubles_pair->games_won($original_doubles_pair->games_won - 1);
-                $original_player1->doubles_games_won($original_player1->doubles_games_won - 1);
-                $original_player2->doubles_games_won($original_player2->doubles_games_won - 1);
-              } elsif ( $self->complete and defined($self->winner) and $self->winner->id != $match->$location_team->id ) {
-                # Game lost
-                $original_doubles_pair->games_lost($original_doubles_pair->games_lost - 1);
-                $original_player1->doubles_games_lost($original_player1->doubles_games_lost - 1);
-                $original_player2->doubles_games_lost($original_player2->doubles_games_lost - 1);
-              } elsif ( $self->complete and !defined($self->winner) ) {
-                # Game complete but no winner: draw (only relevant for games with a static number of legs)
-                $original_doubles_pair->games_drawn($original_doubles_pair->games_drawn - 1);
-                $original_player1->doubles_games_drawn($original_player1->doubles_games_drawn - 1);
-                $original_player2->doubles_games_drawn($original_player2->doubles_games_drawn - 1);
+              foreach my $stat ( @{$og_stats{$stat_type}} ) {
+                # Games - add as appropriate from played, won, lost and drawn
+                if ( $complete ) {
+                  # If the game is complete, we have to add one played to the new pair
+                  $stat->$fld_games_played($stat->$fld_games_played + 1);
+                  
+                  if ( defined($winner) ) {
+                    # If we have a winner, we have to add 1 to either games won or lost, depending on the winner
+                    if ( $winner == $team_id ) {
+                      # Game won by the doubles pairing we're changing
+                      $stat->$fld_games_won($stat->$fld_games_won + 1);
+                    } else {
+                      # Game lost by the doubles pairing we're changing
+                      $stat->$fld_games_lost($stat->$fld_games_lost + 1);
+                    }
+                  } else {
+                    # Game complete but no winner: draw (only relevant for games with a static number of legs)
+                    $stat->$fld_games_drawn($stat->$fld_games_drawn + 1);
+                  }
+                }
+                
+                # Legs
+                $stat->$fld_legs_played($stat->$fld_legs_played + ( $self->$team_legs_won + $self->$opposition_legs_won ));
+                $stat->$fld_legs_won($stat->$fld_legs_won + $self->$team_legs_won);
+                $stat->$fld_legs_lost($stat->$fld_legs_lost + $self->$opposition_legs_won);
+                
+                # Points
+                $stat->$fld_points_played($stat->$fld_points_played + ( $self->$team_points_won + $self->$opposition_points_won ));
+                $stat->$fld_points_won($stat->$fld_points_won + $self->$team_points_won);
+                $stat->$fld_points_lost($stat->$fld_points_lost + $self->$opposition_points_won);
+                
+                # Game / leg / point averages
+                $stat->$fld_games_played ? $stat->$fld_average_game_wins(( $stat->$fld_games_won / $stat->$fld_games_played ) * 100) : $stat->$fld_average_game_wins(0);
+                $stat->$fld_legs_played ? $stat->$fld_average_leg_wins(( $stat->$fld_legs_won / $stat->$fld_legs_played ) * 100) : $stat->$fld_average_leg_wins(0);
+                $stat->$fld_points_played ? $stat->$fld_average_point_wins(( $stat->$fld_points_won / $stat->$fld_points_played ) * 100) : $stat->$fld_average_point_wins(0);
+                
+                # All fields have been calculated, do the update
+                $stat->update;
               }
-              
-              # Take away the legs that have been played, won and lost in this game from the original pair
-              # In each game, we don't have a specific legs_played field, so we have to add the legs won for this team to the legs won for the opposition team,
-              # then subtract that figure from the original legs_played value in the doubles pair, which will be the combination of all the legs they've played
-              $original_doubles_pair->legs_played($original_doubles_pair->legs_played - ( $self->$team_legs_won + $self->$opposition_legs_won ));
-              $original_player1->doubles_legs_played($original_player1->doubles_legs_played - ( $self->$team_legs_won + $self->$opposition_legs_won ));
-              $original_player2->doubles_legs_played($original_player2->doubles_legs_played - ( $self->$team_legs_won + $self->$opposition_legs_won ));
-              
-              $original_doubles_pair->legs_won($original_doubles_pair->legs_won - $self->$team_legs_won);
-              $original_player1->doubles_legs_won($original_player1->doubles_legs_won - $self->$team_legs_won);
-              $original_player2->doubles_legs_won($original_player2->doubles_legs_won - $self->$team_legs_won);
-              
-              $original_doubles_pair->legs_lost($original_doubles_pair->legs_lost - $self->$opposition_legs_won);
-              $original_player1->doubles_legs_lost($original_player1->doubles_legs_lost - $self->$opposition_legs_won);
-              $original_player2->doubles_legs_lost($original_player2->doubles_legs_lost - $self->$opposition_legs_won);
-              
-              # Take away the points that have been played, won and lost in this game from the original pair
-              # In each game, we don't have a specific legs_played field, so we have to add the legs won for this team to the legs won for the opposition team,
-              # then subtract that figure from the original legs_played value in the doubles pair, which will be the combination of all the legs they've played
-              $original_doubles_pair->points_played($original_doubles_pair->points_played - ( $self->$team_points_won + $self->$opposition_points_won ));
-              $original_player1->doubles_points_played($original_player1->doubles_points_played - ( $self->$team_points_won + $self->$opposition_points_won ));
-              $original_player2->doubles_points_played($original_player2->doubles_points_played - ( $self->$team_points_won + $self->$opposition_points_won ));
-              
-              $original_doubles_pair->points_won($original_doubles_pair->points_won - $self->$team_points_won);
-              $original_player1->doubles_points_won($original_player1->doubles_points_won - $self->$team_points_won);
-              $original_player2->doubles_points_won($original_player2->doubles_points_won - $self->$team_points_won);
-              
-              $original_doubles_pair->points_lost($original_doubles_pair->points_lost - $self->$opposition_points_won);
-              $original_player1->doubles_points_lost($original_player1->doubles_points_lost - $self->$opposition_points_won);
-              $original_player2->doubles_points_lost($original_player2->doubles_points_lost - $self->$opposition_points_won);
-              
-              # Work out the averages again
-              $original_doubles_pair->games_played ? $original_doubles_pair->average_game_wins(( $original_doubles_pair->games_won / $original_doubles_pair->games_played ) * 100) : $original_doubles_pair->average_game_wins(0);
-              $original_player1->doubles_games_played ? $original_player1->doubles_average_game_wins(( $original_player1->doubles_games_won / $original_player1->doubles_games_played ) * 100) : $original_player1->doubles_average_game_wins(0);
-              $original_player2->doubles_games_played ? $original_player2->doubles_average_game_wins(( $original_player2->doubles_games_won / $original_player2->doubles_games_played ) * 100) : $original_player2->doubles_average_game_wins(0);
-              
-              $original_doubles_pair->legs_played ? $original_doubles_pair->average_leg_wins(( $original_doubles_pair->legs_won / $original_doubles_pair->legs_played ) * 100) : $original_doubles_pair->average_leg_wins(0);
-              $original_player1->doubles_legs_played ? $original_player1->doubles_average_leg_wins(( $original_player1->doubles_legs_won / $original_player1->doubles_legs_played ) * 100) : $original_player1->doubles_average_leg_wins(0);
-              $original_player2->doubles_legs_played ? $original_player2->doubles_average_leg_wins(( $original_player2->doubles_legs_won / $original_player2->doubles_legs_played ) * 100) : $original_player2->doubles_average_leg_wins(0);
-              
-              $original_doubles_pair->points_played ? $original_doubles_pair->average_point_wins(( $original_doubles_pair->points_won / $original_doubles_pair->points_played ) * 100) : $original_doubles_pair->average_point_wins(0);
-              $original_player1->doubles_points_played ? $original_player1->doubles_average_point_wins(( $original_player1->doubles_points_won / $original_player1->doubles_points_played ) * 100) : $original_player1->doubles_average_point_wins(0);
-              $original_player2->doubles_points_played ? $original_player2->doubles_average_point_wins(( $original_player2->doubles_points_won / $original_player2->doubles_points_played ) * 100) : $original_player2->doubles_average_point_wins(0);
-              
-              # Do the actual update after everything's been calculated
-              $original_doubles_pair->update;
-              $original_player1->update;
-              $original_player2->update;
             }
-            
-            my $player1_season = $doubles_pair->person_season_person1_season_team;
-            my $player2_season = $doubles_pair->person_season_person2_season_team;
-            
-            # Now add those values on to the current doubles pair
-            # Add one to the games played
-            if ( $self->complete ) {
-              $doubles_pair->games_played($doubles_pair->games_played + 1);
-              $player1_season->doubles_games_played($player1_season->doubles_games_played + 1);
-              $player2_season->doubles_games_played($player2_season->doubles_games_played + 1);
-            }
-            
-            # Work out whether we need to take a game won, lost or drawn off
-            if ( $self->complete and defined($self->winner) and $self->winner->id == $match->$location_team->id ) {
-              # Game won
-              $doubles_pair->games_won($doubles_pair->games_won + 1);
-              $player1_season->doubles_games_won($player1_season->doubles_games_won + 1);
-              $player2_season->doubles_games_won($player2_season->doubles_games_won + 1);
-              
-              # Change the winner
-              $self->winner($match->$location_team->id);
-            } elsif ( $self->complete and defined($self->winner) and $self->winner->id != $match->$location_team->id ) {
-              # Game lost
-              $doubles_pair->games_lost($doubles_pair->games_lost + 1);
-              $player1_season->doubles_games_lost($player1_season->doubles_games_lost + 1);
-              $player2_season->doubles_games_lost($player2_season->doubles_games_lost + 1);
-            } elsif ( $self->complete and !defined( $self->winner ) ) {
-              # Game complete but no winner: draw (only relevant for games with a static number of legs)
-              $doubles_pair->games_drawn($doubles_pair->games_drawn + 1);
-              $player1_season->doubles_games_drawn($player1_season->doubles_games_drawn + 1);
-              $player2_season->doubles_games_drawn($player2_season->doubles_games_drawn + 1);
-            }
-            
-            # Add away the legs that have been played, won and lost in this game to the new pair
-            # In each game, we don't have a specific legs_played field, so we have to add the legs won for this team to the legs won for the opposition team,
-            # then subtract that figure from the original legs_played value in the doubles pair, which will be the combination of all the legs they've played
-            my $team_legs_won_val = defined($self->$team_legs_won) ? $self->$team_legs_won : 0;
-            my $opposition_legs_won_val = defined($self->$opposition_legs_won) ? $self->$opposition_legs_won : 0;
-            $doubles_pair->legs_played($doubles_pair->legs_played + ( $team_legs_won_val + $opposition_legs_won_val ));
-            $player1_season->doubles_legs_played($player1_season->doubles_legs_played + ( $team_legs_won_val + $opposition_legs_won_val ));
-            $player2_season->doubles_legs_played($player2_season->doubles_legs_played + ( $team_legs_won_val + $opposition_legs_won_val ));
-              
-            $doubles_pair->legs_won($doubles_pair->legs_won + $team_legs_won_val);
-            $player1_season->doubles_legs_won($player1_season->doubles_legs_won + $team_legs_won_val);
-            $player2_season->doubles_legs_won($player2_season->doubles_legs_won + $team_legs_won_val);
-            
-            $doubles_pair->legs_lost($doubles_pair->legs_lost + $opposition_legs_won_val);
-            $player1_season->doubles_legs_lost($player1_season->doubles_legs_lost + $opposition_legs_won_val);
-            $player2_season->doubles_legs_lost($player2_season->doubles_legs_lost + $opposition_legs_won_val);
-            
-            # Add the points that have been played, won and lost in this game to the new pair
-            # In each game, we don't have a specific legs_played field, so we have to add the legs won for this team to the legs won for the opposition team,
-            # then subtract that figure from the original legs_played value in the doubles pair, which will be the combination of all the legs they've played
-            my $team_points_won_val = defined($self->$team_points_won) ? $self->$team_points_won : 0;
-            my $opposition_points_won_val = defined($self->$opposition_points_won) ? $self->$opposition_points_won : 0;
-            $doubles_pair->points_played($doubles_pair->points_played + ( $team_points_won_val + $self->$opposition_points_won ));
-            $player1_season->doubles_points_played($player1_season->doubles_points_played + ( $team_points_won_val + $opposition_points_won_val ));
-            $player2_season->doubles_points_played($player2_season->doubles_points_played + ( $team_points_won_val + $opposition_points_won_val ));
-            
-            $doubles_pair->points_won($doubles_pair->points_won + $self->$team_points_won);
-            $player1_season->doubles_points_won($player1_season->doubles_points_won + $team_points_won_val);
-            $player2_season->doubles_points_won($player2_season->doubles_points_won + $team_points_won_val);
-            
-            $doubles_pair->points_lost($doubles_pair->points_lost + $opposition_points_won_val );
-            $player1_season->doubles_points_lost($player1_season->doubles_points_lost + $opposition_points_won_val);
-            $player2_season->doubles_points_lost($player2_season->doubles_points_lost + $opposition_points_won_val);
-            
-            # Work out the averages again
-            $doubles_pair->games_played ? $doubles_pair->average_game_wins(( $doubles_pair->games_won / $doubles_pair->games_played ) * 100) : $doubles_pair->average_game_wins(0);
-            $player1_season->doubles_games_played ? $player1_season->doubles_average_game_wins(( $player1_season->doubles_games_won / $player1_season->doubles_games_played ) * 100) : $player1_season->doubles_average_game_wins(0);
-            $player2_season->doubles_games_played ? $player2_season->doubles_average_game_wins(( $player2_season->doubles_games_won / $player2_season->doubles_games_played ) * 100) : $player2_season->doubles_average_game_wins(0);
-            
-            $doubles_pair->legs_played ? $doubles_pair->average_leg_wins(( $doubles_pair->legs_won / $doubles_pair->legs_played ) * 100) : $doubles_pair->average_leg_wins(0);
-            $player1_season->doubles_legs_played ? $player1_season->doubles_average_leg_wins(( $player1_season->doubles_legs_won / $player1_season->doubles_legs_played ) * 100) : $player1_season->doubles_average_leg_wins(0);
-            $player2_season->doubles_legs_played ? $player2_season->doubles_average_leg_wins(( $player2_season->doubles_legs_won / $player2_season->doubles_legs_played ) * 100) : $player2_season->doubles_average_leg_wins(0);
-            
-            $doubles_pair->points_played ? $doubles_pair->average_point_wins(( $doubles_pair->points_won / $doubles_pair->points_played ) * 100) : $doubles_pair->average_point_wins(0);
-            $player1_season->doubles_points_played ? $player1_season->doubles_average_point_wins(( $player1_season->doubles_points_won / $player1_season->doubles_points_played ) * 100) : $player1_season->doubles_average_point_wins(0);
-            $player2_season->doubles_points_played ? $player2_season->doubles_average_point_wins(( $player2_season->doubles_points_won / $player2_season->doubles_points_played ) * 100) : $player2_season->doubles_average_point_wins(0);
-            
-            # Do the actual update after everything's been calculated
-            $doubles_pair->update;
-            $player1_season->update;
-            $player2_season->update;
           }
           
           # Update our column if needed - we've already 'changed' the value, but not committed it
           $self->update;
-          
-          # Delete the original doubles pair IF:
-          #  * There was a doubles pair set previously AND
-          #  * it's different to the submitted doubles pair AND
-          #  * there are no games played for the original doubles pair AND
-          #  * either player for the original doubles pair are loan players
-          $original_doubles_pair->delete if defined($original_doubles_pair) and $original_doubles_pair->id != $doubles_pair->id and $original_doubles_pair->games_played == 0 and ( $person1_loan or $person2_loan );
           
           # Complete
           $response->{completed} = 1;
           push(@{$response->{success}}, $lang->maketext("matches.game.update-doubles.add.success", $enc_player1_display, $enc_player2_display, $location, $self->scheduled_game_number));
         } elsif ( $action eq "remove" ) {
           # Remove
-          if ( defined($original_doubles_pair) ) {
-            # There is an original doubles pair, we need to delete the score - this will handle the statistics for that doubles pair too
-            $self->update_score({delete => 1});
-          }
+          # There is an original doubles pair, we need to delete the score - this will handle the statistics for that doubles pair too
+          $self->update_score({delete => 1}) if defined($og_doubles_pair);
           
           # Blank the doubles pair in this game
           $self->update({$location_doubles_pair => undef});
           
-          # Delete the original doubles pair IF:
-          #  * There was a doubles pair set previously AND
-          #  * it's different to the submitted doubles pair AND
-          #  * there are no games played for the original doubles pair
-          $original_doubles_pair->delete if defined($original_doubles_pair) and $original_doubles_pair->games_played == 0;
-          
           # Complete
           $response->{completed} = 1;
           push(@{$response->{success}}, $lang->maketext("matches.game.update-doubles.remove.success", $location, $self->scheduled_game_number));
+        }
+        
+        # Go through the deletable stats deleting if the games played are 0 (doubles games played AND games played for players)
+        if ( ($action eq "add" and defined($og_doubles_pair) and $og_doubles_pair->id != $doubles_pair->id) or ($action eq "remove") and defined($og_doubles_pair) ) {
+          # * If we're removing, we'll delete (subject to games played checks) regardless if the original doubles pair is defined (i.e., was set)
+          # * If we're adding, we'll delete (subject to games played checks) only if the original doubles pair is defined (was set as a pair) AND is different to the new one.
+          foreach my $stat_type ( reverse sort keys %og_stats_deletable ) {
+            
+            foreach my $stat ( reverse @{$og_stats_deletable{$stat_type}} ) {
+              
+              if ( $stat_type eq "pair" ) {
+                # Pair stat - just check games played
+                $stat->delete if defined($stat) and $stat->games_played == 0;
+              } else {
+                # Player - check games played and doubles games played
+                $stat->delete if defined($stat) and $stat->games_played == 0 and $stat->doubles_games_played == 0;
+              }
+            }
+          }
         }
         
         $transaction->commit;

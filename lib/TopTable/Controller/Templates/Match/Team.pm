@@ -455,7 +455,7 @@ Forwarded from docreate and doedit to do the template creation / edit.
 sub process_form :Private {
   my ( $self, $c, $action ) = @_;
   my $tt_template = $c->stash->{tt_template};
-  my @field_names = qw( name singles_players_per_team winner_type handicapped );
+  my @field_names = qw( name singles_players_per_team winner_type handicapped allow_final_score_override );
   
   # The rest of the error checking is done in the Club model
   my $response = $c->model("DB::TemplateMatchTeam")->create_or_edit($action, {

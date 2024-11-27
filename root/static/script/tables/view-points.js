@@ -13,12 +13,13 @@ $(document).ready(function() {
     "columns": [
       {"responsivePriority": 1}, // Pos
       {"responsivePriority": 2}, // Team / competitor
-      {"responsivePriority": 4}, // Played
-      {"responsivePriority": 7}, // Won
-      {"responsivePriority": 9}, // Drawn
-      {"responsivePriority": 8}, // Lost
-      {"responsivePriority": 5}, // For
-      {"responsivePriority": 6}, // Against
+      {"responsivePriority": 5}, // Played
+      {"responsivePriority": 8}, // Won
+      {"responsivePriority": 10}, // Drawn
+      {"responsivePriority": 9}, // Lost
+      {"responsivePriority": 6}, // For
+      {"responsivePriority": 7}, // Against
+      {"responsivePriority": 4}, // Points / games difference
       {"responsivePriority": 3} // Points
     ],
   });

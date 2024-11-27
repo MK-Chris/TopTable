@@ -230,6 +230,10 @@ sub can_delete {
   my $divisions = $self->search_related("division_seasons")->count;
   return 0 if $divisions;
   
+  # Then check tournament groups
+  my $tourn_groups = $self->search_related("tournament_round_groups")->count;
+  return 0 if $tourn_groups;
+  
   my $matches = $self->search_related("team_matches")->count;
   return 0 if $matches;
   
@@ -424,7 +428,8 @@ Return the DivisionSeason objects that relate to this grid for the given season.
 
 sub get_divisions {
   my $self = shift;
-  my ( $season ) = @_;
+  my ( $params ) = @_;
+  my $season = $params->{season};
   
   return $self->search_related("division_seasons", {
     "me.season" => $season->id,
@@ -950,7 +955,7 @@ sub create_matches {
   my $lang = $schema->lang;
   
   # Grab the fields
-  my $weeks = $params->{weeks};
+  my $rounds = $params->{rounds};
   my $response = {
     errors => [],
     warnings => [],
@@ -1168,9 +1173,9 @@ sub create_matches {
   while ( my $week = $grid_weeks->next ) {
     $week_allocations{"week_" . $week->week}{id} = $week->week;
     
-    if ( $weeks->{"week_" . $week->week} ) {
+    if ( $rounds->{"round_" . $week->week} ) {
       # Find this week in the fixtures_weeks table
-      my $season_week = $season->find_related("fixtures_weeks", {id => $weeks->{"week_" . $week->week}});
+      my $season_week = $season->find_related("fixtures_weeks", {id => $rounds->{"round_" . $week->week}});
       
       if ( defined($season_week) ) {
         # Set the week beginning date for that week ID so we can refer to it later without going back to the DB
@@ -1224,8 +1229,8 @@ sub create_matches {
             
             if ( $is_tournament ) {
               # If it's a tournament, the home and away team objects come from the tournament data
-              $home_team_season = $position_info{$grid_user_id}{$match->{home_team}}->tournament_round_team->tournament_team->team_season if defined($position_info{$grid_user_id}{$match->{home_team}});
-              $away_team_season = $position_info{$grid_user_id}{$match->{away_team}}->tournament_round_team->tournament_team->team_season if defined($position_info{$grid_user_id}{$match->{away_team}});
+              $home_team_season = $position_info{$grid_user_id}{$match->{home_team}}->tournament_team->team_season if defined($position_info{$grid_user_id}{$match->{home_team}});
+              $away_team_season = $position_info{$grid_user_id}{$match->{away_team}}->tournament_team->team_season if defined($position_info{$grid_user_id}{$match->{away_team}});
             } else {
               # League
               $home_team_season = $position_info{$grid_user_id}{$match->{home_team}};
@@ -1335,9 +1340,9 @@ sub create_matches {
               });
               
               if ( $is_tournament ) {
-                push(@match_names, sprintf("%s %s-%s %s (%s - %s)", $home_team->club->short_name, $home_team->name, $away_team->club->short_name, $away_team->name, $comp_name, $scheduled_date->dmy("/")));
+                push(@match_names, sprintf("%s, (%s - %s)", $lang->maketext("matches.name", $home_team->full_name, $away_team->full_name), $comp_name, $scheduled_date->dmy("/")));
               } else {
-                push(@match_names, sprintf("%s %s-%s %s (%s)", $home_team->club->short_name, $home_team->name, $away_team->club->short_name, $away_team->name, $scheduled_date->dmy("/")));
+                push(@match_names, sprintf("%s, (%s)", $lang->maketext("matches.name", $home_team->full_name, $away_team->full_name), $scheduled_date->dmy("/")));
               }
             }
           }
@@ -1457,18 +1462,106 @@ sub can_edit_matches {
 
 =head2 get_seasons
 
-Get the seasons that this grid has been used in.
+Get the seasons that this grid has been used in either as a divisional grid or a tournament group grid (or both technically, this is unlikely though).
 
 =cut
 
 sub get_seasons {
   my $self = shift;
+  my ( $params ) = @_;
   my $schema = $self->result_source->schema;
-  return $schema->resultset("Season")->search({"fixtures_grid.id" => $self->id}, {
-    join => {
-      division_seasons => [qw( fixtures_grid )]
+  my $no_prefetch = $params->{no_prefetch} || 0;
+  my $join = $no_prefetch ? "join" : "prefetch";
+  
+  # fixtures_grid is the division_seasons relationship; fixtures_grid_2 is the tournament group one.
+  return $schema->resultset("Season")->search([{"fixtures_grid.id" => $self->id}, {"fixtures_grid_2.id" => $self->id}], {
+    $join => {
+      division_seasons => [qw( fixtures_grid )],
+      event_seasons => {
+        tournaments => {
+          tournament_rounds => {
+            tournament_round_groups => [qw( fixtures_grid )],
+          },
+        },
+      },
     },
-    group_by => [qw( me.id )]
+    group_by => [qw( me.id )],
+  });
+}
+
+=head2 get_uses
+
+Retrieve objects that use this season - that's division seasons or tournament groups.  Return in a hash with keys {divisions => [array], tournament_groups => [array]}.
+
+If either of the keys have no items, it'll be an empty array.
+
+=cut
+
+sub get_uses {
+  my $self = shift;
+  my ( $params ) = @_;
+  my $season = $params->{season}; # We can limit uses to a specific season with this parameter
+  my $no_prefetch = $params->{no_prefetch} || 0;
+  my ( %where );
+  my $join = $no_prefetch ? "join" : "prefetch";
+  
+  # Attribs setup for division first of all
+  my %attrib = (
+    $join => [qw( division season )],
+  );
+  
+  # Setup season criteria
+  %where = ("season.id" => $season->id) if defined($season);
+  
+  # Lookup divisions
+  my @divisions = $self->search_related("division_seasons", \%where, \%attrib);
+  
+  # Setup join or prefetch for tournaments
+  $attrib{$join} = {
+    tournament_round => {
+      tournament => {
+        event_season => [qw( season )],
+      },
+    },
+  };
+  
+  my @tourn_groups = $self->search_related("tournament_round_groups", \%where, \%attrib);
+  
+  return {divisions => \@divisions, tourn_groups => \@tourn_groups};
+}
+
+=head2 get_tournaments
+
+Get tournaments the group is used in; 
+
+=cut
+
+sub get_tournament_groups {
+  my $self = shift;
+  my ( $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $schema = $self->result_source->schema;
+  
+  my $season = $params->{season};
+  
+  # Initial criteria is just that the fixtures grid is set to this one in the group (and that the event type is a tournament)
+  my %where = ("me.fixtures_grid" => $self->id);
+  
+  # Add the season in if it's provided
+  $where{"season.id"} = $season->id if defined($season);
+  
+  return $schema->resultset("TournamentRoundGroup")->search(\%where, {
+    prefetch => {
+      tournament_round => {
+        tournament => [qw( entry_type ), {
+          event_season => [qw( event season )],
+        }],
+      },
+    },
+    order_by => {
+      -asc => [qw( event_season.name tournament_round.round_number me.group_order )],
+    },
   });
 }
 

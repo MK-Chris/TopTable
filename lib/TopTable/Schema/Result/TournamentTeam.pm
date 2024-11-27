@@ -137,6 +137,12 @@ __PACKAGE__->table("tournament_teams");
   extra: {unsigned => 1}
   is_nullable: 0
 
+=head2 games_difference
+
+  data_type: 'smallint'
+  default_value: 0
+  is_nullable: 0
+
 =head2 legs_played
 
   data_type: 'smallint'
@@ -165,6 +171,12 @@ __PACKAGE__->table("tournament_teams");
   extra: {unsigned => 1}
   is_nullable: 0
 
+=head2 legs_difference
+
+  data_type: 'smallint'
+  default_value: 0
+  is_nullable: 0
+
 =head2 points_played
 
   data_type: 'integer'
@@ -191,6 +203,18 @@ __PACKAGE__->table("tournament_teams");
   data_type: 'float'
   default_value: 0
   extra: {unsigned => 1}
+  is_nullable: 0
+
+=head2 total_handicap
+
+  data_type: 'smallint'
+  default_value: 0
+  is_nullable: 0
+
+=head2 points_difference
+
+  data_type: 'smallint'
+  default_value: 0
   is_nullable: 0
 
 =head2 doubles_games_played
@@ -228,6 +252,12 @@ __PACKAGE__->table("tournament_teams");
   extra: {unsigned => 1}
   is_nullable: 0
 
+=head2 doubles_games_difference
+
+  data_type: 'smallint'
+  default_value: 0
+  is_nullable: 0
+
 =head2 doubles_legs_played
 
   data_type: 'smallint'
@@ -256,6 +286,12 @@ __PACKAGE__->table("tournament_teams");
   extra: {unsigned => 1}
   is_nullable: 0
 
+=head2 doubles_legs_difference
+
+  data_type: 'smallint'
+  default_value: 0
+  is_nullable: 0
+
 =head2 doubles_points_played
 
   data_type: 'integer'
@@ -282,6 +318,12 @@ __PACKAGE__->table("tournament_teams");
   data_type: 'float'
   default_value: 0
   extra: {unsigned => 1}
+  is_nullable: 0
+
+=head2 doubles_points_difference
+
+  data_type: 'smallint'
+  default_value: 0
   is_nullable: 0
 
 =head2 last_updated
@@ -384,6 +426,8 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
+  "games_difference",
+  { data_type => "smallint", default_value => 0, is_nullable => 0 },
   "legs_played",
   {
     data_type => "smallint",
@@ -412,6 +456,8 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
+  "legs_difference",
+  { data_type => "smallint", default_value => 0, is_nullable => 0 },
   "points_played",
   {
     data_type => "integer",
@@ -440,6 +486,10 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
+  "total_handicap",
+  { data_type => "smallint", default_value => 0, is_nullable => 0 },
+  "points_difference",
+  { data_type => "smallint", default_value => 0, is_nullable => 0 },
   "doubles_games_played",
   {
     data_type => "tinyint",
@@ -475,6 +525,8 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
+  "doubles_games_difference",
+  { data_type => "smallint", default_value => 0, is_nullable => 0 },
   "doubles_legs_played",
   {
     data_type => "smallint",
@@ -503,6 +555,8 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
+  "doubles_legs_difference",
+  { data_type => "smallint", default_value => 0, is_nullable => 0 },
   "doubles_points_played",
   {
     data_type => "integer",
@@ -531,6 +585,8 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
+  "doubles_points_difference",
+  { data_type => "smallint", default_value => 0, is_nullable => 0 },
   "last_updated",
   {
     data_type => "datetime",
@@ -583,21 +639,6 @@ __PACKAGE__->belongs_to(
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
 );
 
-=head2 tournament_groups_doubles
-
-Type: has_many
-
-Related object: L<TopTable::Schema::Result::TournamentGroupDoubles>
-
-=cut
-
-__PACKAGE__->has_many(
-  "tournament_groups_doubles",
-  "TopTable::Schema::Result::TournamentGroupDoubles",
-  { "foreign.tournament_group_team" => "self.id" },
-  { cascade_copy => 0, cascade_delete => 0 },
-);
-
 =head2 tournament_people
 
 Type: has_many
@@ -628,9 +669,24 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
+=head2 tournaments_doubles
 
-# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-09-29 23:47:56
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:f5RiZ3rF1+FAKuir3cpjvA
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::TournamentDoubles>
+
+=cut
+
+__PACKAGE__->has_many(
+  "tournaments_doubles",
+  "TopTable::Schema::Result::TournamentDoubles",
+  { "foreign.tournament_team" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-11-18 10:55:43
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:v1blubmQbg18+5yok20LDA
 
 __PACKAGE__->add_columns(
     "last_updated",
@@ -657,6 +713,56 @@ Get the name of the team from the team season object linked.
 sub object_name {
   my $self = shift;
   return sprintf("%s %s", $self->team_season->club_season->short_name, $self->team_season->name);
+}
+
+=head2 matches_for_team
+
+Return a list of all matches where the given team is playing
+
+=cut
+
+sub matches_for_team {
+  my $self = shift;
+  my $schema = $self->result_source->schema;
+  
+  my ( $params ) = @_;
+  my $team = $params->{team};
+  my $started = $params->{started};
+  my $complete = $params->{complete};
+  my $cancelled = $params->{cancelled};
+  
+  # Default criteria, always there
+  my @where = ({
+    "me.home_team" => $team->id,
+    "tournament.season" => $self->season,
+    "tournament.event" => $self->event,
+  }, {
+    "me.away_team" => $team->id,
+    "tournament.season" => $self->season,
+    "tournament.event" => $self->event,
+  });
+  
+  # Add status stipulations if required
+  if ( $started ) {
+    $where[0]{"me.started"} = 1;
+    $where[1]{"me.started"} = 1;
+  }
+  
+  if ( $complete ) {
+    $where[0]{"me.complete"} = 1;
+    $where[1]{"me.complete"} = 1;
+  }
+  
+  if ( $cancelled ) {
+    $where[0]{"me.cancelled"} = 1;
+    $where[1]{"me.cancelled"} = 1;
+  }
+  
+  return $schema->resultset("TeamMatch")->search(\@where, {
+    join => {
+      tournament_round => [qw( tournament )]
+    },
+  });
 }
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

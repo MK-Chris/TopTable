@@ -86,17 +86,29 @@ msgstr "By Division"
 msgid "fixtures-results.heading.date"
 msgstr "Date"
 
+msgid "fixtures-results.heading.date-sort"
+msgstr "Date (sortable)"
+
 msgid "fixtures-results.heading.day"
 msgstr "Week day"
 
+msgid "fixtures-results.heading.day-sort"
+msgstr "Week day (sortable)"
+
 msgid "fixtures-results.heading.week-beginning"
 msgstr "Week beginning"
+
+msgid "fixtures-results.heading.week-beginning-sort"
+msgstr "Week beginning (sortable)"
 
 msgid "fixtures-results.heading.division"
 msgstr "Division"
 
 msgid "fixtures-results.heading.competition"
 msgstr "Competition"
+
+msgid "fixtures-results.heading.competition-sort"
+msgstr "Competition (sortable)"
 
 msgid "fixtures-results.heading.home-away"
 msgstr "Home / Away"
@@ -2045,6 +2057,9 @@ msgstr "Events"
 msgid "seasons.list.season-name"
 msgstr "Season"
 
+msgid "seasons.list.season-name-sort"
+msgstr "Season (sortable)"
+
 ### Divisions
 msgid "divisions.option.league-tables"
 msgstr "League Tables"
@@ -2149,8 +2164,11 @@ msgstr "Summary"
 msgid "fixtures-grids.matches"
 msgstr "Matches"
 
-msgid "fixtures-grids.positions"
+msgid "fixtures-grids.division-positions"
 msgstr "League divisional positions for %1"
+
+msgid "fixtures-grids.tournament-positions"
+msgstr "Tournament positions for %1"
 
 msgid "fixtures-grid.matches.round"
 msgstr "Round #"
@@ -2387,11 +2405,23 @@ msgstr "Division"
 msgid "fixtures-grid.positions.division-sortable"
 msgstr "Division (sortable)"
 
+msgid "fixtures-grid.positions.competition"
+msgstr "Competition"
+
+msgid "fixtures-grid.positions.tourn-group"
+msgstr "Group name"
+
+msgid "fixtures-grid.positions.tourn-group-sort"
+msgstr "Group order"
+
 msgid "fixtures-grid.positions.position"
 msgstr "Position"
 
 msgid "fixtures-grid.positions.team"
 msgstr "Team"
+
+msgid "fixtures-grid.positions.team-player"
+msgstr "Team / player"
 
 msgid "fixtures-grid.positions.team-home-night"
 msgstr "Home night"
@@ -2426,10 +2456,52 @@ msgstr "%1 is not a valid team identifier or is in the wrong division."
 msgid "fixtures-grids.seasons.count-text"
 msgstr "%1 has been used in %2 %3."
 
+msgid "fixtures-grids.seasons.divisions"
+msgstr "Divisions"
+
+msgid "fixtures-grids.seasons.tourn-groups"
+msgstr "Tournament groups"
+
 msgid "fixtures-grids.info"
 msgstr "Fixtures grids are used to create matches in any division assigned to that grid, but can also be used for tournament groups."
 
 ### Fixtures and results
+msgid "fixtures-results.options.heading.team"
+msgstr "Team"
+
+msgid "fixtures-results.options.heading.club"
+msgstr "Club"
+
+msgid "fixtures-results.options.heading.division"
+msgstr "Division"
+
+msgid "fixtures-results.options.heading.division-sort"
+msgstr "Division (sortable)"
+
+msgid "fixtures-results.options.heading.venue"
+msgstr "Venue"
+
+msgid "fixtures-results.options.heading.month"
+msgstr "Month"
+
+msgid "fixtures-results.options.heading.month-sort"
+msgstr "Month (sortable)"
+
+msgid "fixtures-results.options.heading.week"
+msgstr "Week beginning"
+
+msgid "fixtures-results.options.heading.week-sort"
+msgstr "Week (sortable)"
+
+msgid "fixtures-results.options.heading.day"
+msgstr "Day"
+
+msgid "fixtures-results.options.heading.day-sort"
+msgstr "Day (sortable)"
+
+msgid "fixtures-results.options.heading.number"
+msgstr "Matches"
+
 msgid "fixtures-results.title.fixtures-results"
 msgstr "%1 Fixtures &amp; Results"
 
@@ -2473,7 +2545,7 @@ msgid "fixtures-results.no-matches"
 msgstr "There are no matches to display."
 
 msgid "fixtures-results.view-week.week-beginning"
-msgstr "Week Beginning %1"
+msgstr "Week beginning %1"
 
 msgid "fixtures-results.view.outstanding-scorecards"
 msgstr "Outstanding Scorecards"
@@ -2523,8 +2595,17 @@ msgstr "Download these events to your calendar"
 msgid "matches.versus-abbreviation"
 msgstr "v"
 
+msgid "matches.name"
+msgstr "%1 v %2"
+
 msgid "matches.versus.not-yet-played"
 msgstr "Not yet played"
+
+msgid "matches.handicap.not-yet-set"
+msgstr "Handicap not yet set"
+
+msgid "matches.handicap.scratch"
+msgstr "Scratch handicap (no start)"
 
 msgid "matches.update-score"
 msgstr "Update score"
@@ -2546,6 +2627,12 @@ msgstr "Competition"
 
 msgid "matches.field.competition.value.league"
 msgstr "League"
+
+msgid "matches.field.tournament-round"
+msgstr "Round"
+
+msgid "matches.field.tournament-group"
+msgstr "Group"
 
 msgid "matches.field.venue"
 msgstr "Venue"
@@ -2683,7 +2770,7 @@ msgstr "You must select a venue for the match."
 msgid "matches.update-venue.error.venue-inactive"
 msgstr "%1 is not an active venue; you must select an active venue, or edit %1 to make it active first."
 
-msgid "matches.update-match-date.error.database-update-failed"
+msgid "matches.update-match-venue.error.database-update-failed"
 msgstr "Failed to update venue."
 
 msgid "matches.loan-player.tokeninput.hint-text"
@@ -2791,6 +2878,12 @@ msgstr "The match specified is invalid."
 msgid "matches.update.error.season-complete"
 msgstr "You cannot update a match in a season that&#39;s already been completed."
 
+msgid "matches.update.warning.handicap-not-set"
+msgstr "The handicap for this match hasn&#39;t been set, so scores cannot be updated.  The match date, venue and players may be set.  Set the handicap, before updating the score."
+
+msgid "matches.update.error.handicap-not-set"
+msgstr "Unable to update the score for this handicapped match before the handicap has been set."
+
 msgid "matches.update-single.error.game-invalid"
 msgstr "The game specified is invalid."
 
@@ -2804,7 +2897,7 @@ msgid "matches.game.update-doubles.error.location-invalid"
 msgstr "The location must be specified as &#39;home&#39; or &#39;away&#39; to indicate which team is being updated."
 
 msgid "matches.game.update-doubles.error.wrong-number-of-players"
-msgstr "The wrong number of players has been specified; you must either specify two players or no players (to remove the doubles pair from the game).  You may also specify a single doubles pair ID."
+msgstr "The wrong number of players has been specified; you must either specify two players or no players (to remove the doubles pair from the game)."
 
 msgid "matches.game.update-doubles.error.home-player1-invalid"
 msgstr "The person specified as the first home doubles player is invalid."
@@ -2880,6 +2973,9 @@ msgstr "Reset game score to 0-0.  This game will have to have the score re-enter
 
 msgid "matches.message.info.not-started"
 msgstr "This match scorecard has not yet been filled out."
+
+msgid "matches.message.info.handicap-not-set"
+msgstr "This is a handicapped match, but the handicap has not yet been set."
 
 msgid "matches.message.info.cancelled"
 msgstr "This match was cancelled and any match scores showing have been awarded."
@@ -3049,6 +3145,15 @@ msgstr "Match details"
 msgid "matches.heading.date"
 msgstr "Date"
 
+msgid "matches.heading.new-date"
+msgstr "New date"
+
+msgid "matches.heading.start-time"
+msgstr "Start time"
+
+msgid "matches.heading.og-date"
+msgstr "Original date"
+
 msgid "matches.text.date-scheduled"
 msgstr "%1, %2 %3 %4 at %5"
 
@@ -3094,6 +3199,27 @@ msgstr "Cancel this match?  (You may revisit this page and untick the box to und
 msgid "matches.cancel.points-awarded"
 msgstr "Points to award to %1"
 
+msgid "matches.handicaps.form.legend.details"
+msgstr "Match handicaps"
+
+msgid "matches.handicaps.points-headstart"
+msgstr "%1 points headstart"
+
+msgid "matches.handicaps.error.not-a-handicapped-match"
+msgstr "This match is not using a template that has a handicap, so handicaps can&#39;t be set."
+
+msgid "matches.handicaps.error.match-started"
+msgstr "The handicaps cannot be updated if the match has some completed scores in."
+
+msgid "matches.handicaps.error.error.handicap-invalid"
+msgstr "The handicap for %1 is invalid; please enter a number between 0 and 99."
+
+msgid "matches.handicapes.update.success"
+msgstr "The match handicaps have been updated."
+
+msgid "matches.handicaps.error.database-update-failed"
+msgstr "Failed to update handicaps."
+
 msgid "matches.report.heading"
 msgstr "Match report"
 
@@ -3122,6 +3248,9 @@ msgstr "There are no divisions to display."
 msgid "stats.table-heading.position"
 msgstr "#"
 
+msgid "stats.table-heading.position.full"
+msgstr "Position"
+
 msgid "stats.table-heading.player"
 msgstr "Player"
 
@@ -3140,29 +3269,71 @@ msgstr "Matches"
 msgid "stats.table-heading.team-matches-played"
 msgstr "P"
 
+msgid "stats.table-heading.team-matches-played.full"
+msgstr "Played"
+
 msgid "stats.table-heading.matches-available"
 msgstr "Matches available"
 
 msgid "stats.table-heading.matches-won"
 msgstr "W"
 
+msgid "stats.table-heading.matches-won.full"
+msgstr "Won"
+
 msgid "stats.table-heading.matches-drawn"
 msgstr "D"
+
+msgid "stats.table-heading.matches-drawn.full"
+msgstr "Drawn"
 
 msgid "stats.table-heading.matches-lost"
 msgstr "L"
 
+msgid "stats.table-heading.matches-lost.full"
+msgstr "Lost"
+
 msgid "stats.table-heading.matches-available"
 msgstr "Matches available"
+
+msgid "stats.table-heading.games-difference"
+msgstr "GD"
+
+msgid "stats.table-heading.games-difference.full"
+msgstr "Games difference"
+
+msgid "stats.table-heading.points-difference"
+msgstr "PD"
+
+msgid "stats.table-heading.points-difference.full"
+msgstr "Points difference"
 
 msgid "stats.table-heading.for"
 msgstr "F"
 
+msgid "stats.table-heading.games-for.full"
+msgstr "Games for"
+
+msgid "stats.table-heading.points-for.full"
+msgstr "Points for"
+
 msgid "stats.table-heading.against"
 msgstr "A"
 
+msgid "stats.table-heading.games-against.full"
+msgstr "Games against"
+
+msgid "stats.table-heading.points-against.full"
+msgstr "Points against"
+
 msgid "stats.table-heading.points"
 msgstr "Points"
+
+msgid "stats.table-heading.handicap"
+msgstr "HCP"
+
+msgid "stats.table-heading.handicap.full"
+msgstr "Total handicap"
 
 msgid "stats.table-heading.games-played"
 msgstr "Games"
@@ -3506,6 +3677,66 @@ msgstr "Allow users to enter online"
 msgid "events.legend.tournament-details"
 msgstr "Tournament details"
 
+msgid "events.legend.loan-players"
+msgstr "Loan players"
+
+msgid "events.form.field.allow-loan-players"
+msgstr "Allow loan players"
+
+msgid "events.form.field.allow-loan-players-from-lower"
+msgstr "Allow loan players from divisions below"
+
+msgid "events.form.field.allow-loan-players-from-higher"
+msgstr "Allow loan players from divisions above"
+
+msgid "events.form.field.allow-loan-players-from-same-level"
+msgstr "Allow loan players from the same division"
+
+msgid "events.form.field.loan-players-from-same-club-only"
+msgstr "Loan players must play for the same club"
+
+msgid "events.form.field.allow-loan-players-multiple-teams-per-division"
+msgstr "Allow loan players to play for more than one team"
+
+msgid "events.form.loan-players.limits-message"
+msgstr "For the fields below, 0 or blank means &#39;no limit&#39;."
+
+msgid "events.form.field.loan-players-limit-per-player"
+msgstr "Maximum number of times a player may play on loan"
+
+msgid "events.form.field.loan-players-limit-per-player-per-team"
+msgstr "Maximum number of times a player may play on loan <i><u><b>for</b></u></i> the same team"
+
+msgid "events.form.field.loan-players-limit-per-opposition"
+msgstr "Maximum number of times a player may play on loan <i><u><b>against</b></u></i> the same team"
+
+msgid "events.allowed-yes"
+msgstr "Yes"
+
+msgid "events.allowed-no"
+msgstr "No"
+
+msgid "events.loan-players.no-limit"
+msgstr "No limit"
+
+msgid "events.award-forefeit-rules"
+msgstr "Award &amp; forefeit rules"
+
+msgid "events.form.legend.rules-when-games-not-completed"
+msgstr "What to do when games can&#39;t be completed"
+
+msgid "events.form.field.void-unplayed-games-if-both-teams-incomplete"
+msgstr "Void unplayed games if both teams have missing players"
+
+msgid "events.form.field.forefeit-count-averages-if-game-not-started"
+msgstr "Count a forefeited game in the averages, even if it wasn&#39;t started"
+
+msgid "events.form.field.seasons.form.field.missing-player-count-win-in-averages"
+msgstr "Count an unplayed game due to a missing player as a win in the averages for the other player (not relevant if both teams have players missing and the void games setting is in effect)"
+
+msgid "events.legend.award-forefeit-rules"
+msgstr "Award &amp; forefeit rules"
+
 msgid "events.legend.season-details"
 msgstr "%1 details"
 
@@ -3646,6 +3877,18 @@ msgstr "The default match template selected is invalid."
 
 msgid "events.form.error.def-match-template-blank"
 msgstr "For tournaments, there must be a default match template selected."
+
+msgid "events.form.error.loan-players-limit-per-player-invalid"
+msgstr "The maximum number of times a player may play as loan player must be number between 0 and 99; set to zero for unlimited."
+
+msgid "events.form.error.loan-players-limit-per-player-per-team-invalid"
+msgstr "The maximum number of times a player may play as a loan player <b>for</b> the same team must be number between 0 and 99; set to zero for unlimited."
+
+msgid "events.form.error.loan-players-limit-per-player-per-opposition-invalid"
+msgstr "The maximum number of times a player may play as a loan player <b>against</b> the same team must be number between 0 and 99; set to zero for unlimited."
+
+msgid "events.form.error.loan-players-limit-per-team-invalid"
+msgstr "The maximum number of times a team may play loan players must be number between 0 and 99; set to zero for unlimited."
 
 msgid "events.form.error.round.match-template-invalid"
 msgstr "The match template selected is invalid; select a valid one or leave blank to use the default selected for the tournament."
@@ -4053,7 +4296,7 @@ msgid "templates.heading.template-rules"
 msgstr "Template rules"
 
 msgid "templates.heading.template-games"
-msgstr "Template rules"
+msgstr "Template games"
 
 msgid "templates.field.name"
 msgstr "Name"
@@ -4226,6 +4469,9 @@ msgstr "Winner type"
 msgid "templates.team-match.field.handicapped"
 msgstr "Handicapped"
 
+msgid "templates.team-match.field.allow-score-override"
+msgstr "Allow final score override"
+
 msgid "templates.team-match.games.success"
 msgstr "%1 games for %2 have been created."
 
@@ -4283,8 +4529,8 @@ msgstr "You must select an away player in game %2, or tick to specify a doubles 
 msgid "templates.team-match.games.form.legend.game"
 msgstr "Game"
 
-msgid "templates.team-match.games.add"
-msgstr "Add a game"
+msgid "templates.team-match.games.modify"
+msgstr "Modify match games"
 
 ### Contact reasons
 msgid "contact-reasons.none"
@@ -6311,14 +6557,74 @@ msgstr "Position %1 is used more than once: %2.  Please ensure each position is 
 msgid "events.tournaments.rounds.groups.fixtures-grids.form.teams.success"
 msgstr "The grid positions have been set."
 
-msgid "events.tournaments.rounds.groups.create-fixtures.error.grid-positions-not-set"
-msgstr "Grid positions for this group must be set before the fixtures can be created."
+msgid "events.tournaments.rounds.groups.create-fixtures.error.season-complete"
+msgstr "Matches cannot be created for this group, because the season it occurs in has been archived."
 
 msgid "events.tournaments.rounds.groups.create-fixtures.error.grid-positions-not-set"
 msgstr "Grid positions for this group must be set before the fixtures can be created."
 
 msgid "events.tournaments.rounds.groups.create-fixtures.error.matches-already-exist"
 msgstr "Fixtures for this group have already been created."
+
+msgid "events.tournaments.rounds.groups.create-fixtures.error.round-blank"
+msgstr "The date for round %1 has not been selected."
+
+msgid "events.tournaments.rounds.groups.create-fixtures.error.week-invalid"
+msgstr "The date for round %1 is not valid; please select from the list."
+
+msgid "events.tournaments.rounds.groups.create-fixtures.error.date-occurs-before-previous-date"
+msgstr "The week commencing date for week number %1 occurs at the same time as, or prior to the previous week.  Each round must be assigned to a week that occurs after the one before it."
+
+msgid "events.tournaments.rounds.groups.create-fixtures.home"
+msgstr "home"
+
+msgid "events.tournaments.rounds.groups.create-fixtures.away"
+msgstr "away"
+
+msgid "events.tournaments.rounds.groups.create-fixtures.error.comp-blank"
+msgstr "The %1 team in round %2, match %3 was not selected."
+
+msgid "events.tournaments.rounds.groups.create-fixtures.error.comp-invalid"
+msgstr "The %1 team in round %2, match %3 is invalid."
+
+msgid "events.tournaments.rounds.groups.create-fixtures.error.comp-not-in-group"
+msgstr "%1 has been selected as the %2 team in round %3, match %4; however they are not a member of the group."
+
+msgid "events.tournaments.rounds.groups.create-fixtures.error.venue-invalid"
+msgstr "The venue override in round %1, match %2 is invalid."
+
+msgid "events.tournaments.rounds.groups.create-fixtures.error.venue-inactive"
+msgstr "%1 is set as the venue override in round %2, match %3, but is inactive; activate the venue or choose an active venue."
+
+msgid "events.tournaments.rounds.groups.create-fixtures.error.day-invalid"
+msgstr "The day override in round %1, match %2 is invalid."
+
+msgid "events.tournaments.rounds.groups.create-fixtures.error.handicap-option-blank"
+msgstr "You must select a handicap option, even if the option is to set the handicap later."
+
+msgid "events.tournaments.rounds.groups.create-fixtures.error.handicap-set-needlessly"
+msgstr "A handicap option was set, but the tournament isn't handicapped, so the handicap options were ignored."
+
+msgid "events.tournaments.rounds.groups.create-fixtures.error.invalid-handicap-option"
+msgstr "In invalid handicap option was set for round %1, match %2."
+
+msgid "events.tournaments.rounds.groups.create-fixtures.error.handicap-not-set"
+msgstr "You must set a handicap, or select &#39;Scratch (no handicap)&#39 or &#39;Set handicaps later&#39; for round %1, match %2."
+
+msgid "events.tournaments.rounds.groups.create-fixtures.error.handicap-invalid"
+msgstr "The handicap for round %1, match %2 is invalid; it must be a positive number above 0."
+
+msgid "events.tournaments.rounds.groups.create-fixtures.entrant-used-too-many-times"
+msgstr "In round %1, %2 is used %3 times; each entrant in the group must only be used once per round."
+
+msgid "events.tournaments.rounds.groups.create-fixtures.entrants-unused"
+msgstr "In round %1, there are entrants not being used - you must use all entrants in each round."
+
+msgid "events.tournaments.rounds.groups.create-fixtures.entrants-unused-with-bye"
+msgstr "In round %1, there are entrants not being used - you must use all entrants in each round, other than one that has a bye."
+
+msgid "events.tournaments.create-fixtures.success"
+msgstr "%1 fixtures for the group have been created."
 
 msgid "events.tournaments.rounds.groups.delete.error.cannot-delete"
 msgstr "You cannot delete %1, as it has matches, or the season is now complete."
@@ -6349,6 +6655,57 @@ msgstr "The ranking template is was not supplied; please supply a valid template
 
 msgid "events.tournaments.rounds.delete-matches.explain"
 msgstr "Delete %1 matches in %2?  The matches will need to be recreated."
+
+msgid "events.tournaments.rounds.groups.create-matches.fieldset.match-round"
+msgstr "Round %1 of matches"
+
+msgid "events.tournaments.rounds.groups.create-matches.fieldset.match"
+msgstr "Match %1"
+
+msgid "events.tournaments.rounds.groups.create-matches.field.week"
+msgstr "Round %1"
+
+msgid "events.tournaments.rounds.groups.create-matches.season-week"
+msgstr "Week"
+
+msgid "events.tournaments.rounds.groups.create-matches.field.week-beginning"
+msgstr "Week beginning %1"
+
+msgid "events.tournaments.rounds.groups.create-matches.field.match-participants"
+msgstr "Match participants"
+
+msgid "events.tournaments.rounds.groups.create-matches.field.home"
+msgstr "Home participant"
+
+msgid "events.tournaments.rounds.groups.create-matches.field.away"
+msgstr "Away participant"
+
+msgid "events.tournaments.rounds.groups.create-matches.field.placeholder.venue"
+msgstr "Venue"
+
+msgid "events.tournaments.rounds.groups.create-matches.field.venue-override"
+msgstr "Venue override (optional)"
+
+msgid "events.tournaments.rounds.groups.create-matches.field.placeholder.day"
+msgstr "Day"
+
+msgid "events.tournaments.rounds.groups.create-matches.field.day-override"
+msgstr "Match day override (optional)"
+
+msgid "events.tournaments.rounds.groups.create-matches.field.handicap"
+msgstr "Handicap"
+
+msgid "events.tournament.rounds.groups.create-matches.field.handicap-set-later"
+msgstr "Set handicaps later"
+
+msgid "events.tournament.rounds.groups.create-matches.field.handicap-scratch"
+msgstr "Scratch (no handicap)"
+
+msgid "events.tournament.rounds.groups.create-matches.field.handicap-to-home"
+msgstr "Handicap awarded to home"
+
+msgid "events.tournament.rounds.groups.create-matches.field.handicap-to-away"
+msgstr "Handicap awarded to away"
 
 ### Images
 msgid "images.form.image"
@@ -6454,6 +6811,9 @@ msgstr "Changed the match date for %1%2."
 msgid "system-event-log.description.venue-change"
 msgstr "Changed the venue for %1%2."
 
+msgid "system-event-log.description.handicap-change"
+msgstr "Changed the handicap for %1%2."
+
 msgid "system-event-log.description.cancel"
 msgstr "Cancelled %1%2."
 
@@ -6542,22 +6902,22 @@ msgid "system-event-log.description.unassign-official"
 msgstr "Removed the official position for %1%2."
 
 msgid "system-event-log.description.create-round"
-msgstr "Created a round for %1%2."
+msgstr "Created %1%2."
 
 msgid "system-event-log.description.edit-round"
-msgstr "Edited a round for %1%2."
+msgstr "Edited %1%2."
 
 msgid "system-event-log.description.delete-round"
-msgstr Deleted a round for %1%2."
+msgstr Deleted %1%2."
 
 msgid "system-event-log.description.create-group"
-msgstr "Created a group for %1%2."
+msgstr "Created %1%2."
 
 msgid "system-event-log.description.edit-group"
-msgstr "Edited a group for %1%2."
+msgstr "Edited %1%2."
 
 msgid "system-event-log.description.delete-group"
-msgstr "Deleted a group for %1%2."
+msgstr "Deleted %1%2."
 
 msgid "system-event-log.and"
 msgstr "and"
@@ -6622,6 +6982,18 @@ msgstr "event"
 
 msgid "object.plural.events"
 msgstr "events"
+
+msgid "object.singular.tournament-rounds"
+msgstr "event round"
+
+msgid "object.plural.tournament-rounds"
+msgstr "tournament rounds"
+
+msgid "object.singular.tournament-groups"
+msgstr "tournament group"
+
+msgid "object.plural.tournament-groups"
+msgstr "tournament groups"
 
 msgid "object.singular.news-articles"
 msgstr "news article"

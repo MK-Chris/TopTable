@@ -84,6 +84,14 @@ __PACKAGE__->table("template_match_team");
   default_value: 0
   is_nullable: 0
 
+=head2 allow_final_score_override
+
+  data_type: 'tinyint'
+  default_value: 0
+  is_nullable: 0
+
+Particularly helpful if the winner is calculated by points won and teams have calculated incorrectly, there may be rules in place to state the signed scorecard submitted has the final score.
+
 =cut
 
 __PACKAGE__->add_columns(
@@ -103,6 +111,8 @@ __PACKAGE__->add_columns(
   "winner_type",
   { data_type => "varchar", is_foreign_key => 1, is_nullable => 0, size => 10 },
   "handicapped",
+  { data_type => "tinyint", default_value => 0, is_nullable => 0 },
+  "allow_final_score_override",
   { data_type => "tinyint", default_value => 0, is_nullable => 0 },
 );
 
@@ -255,8 +265,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-09-29 23:47:56
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:j+IpgdBvnN2FgrSPwb9i8A
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-11-05 09:18:28
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:5nY8Da0qetlvGg8xkNwvKA
 
 =head2 url_keys
 

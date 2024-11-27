@@ -1,0 +1,42 @@
+<div class="table-wrap">
+  <div class="table-layout table-layout-centre">
+    <table id="fixtures-options" class="stripe hover order-column row-border" style="width: 100%;">
+      <thead>
+        <tr>
+          <th>[% c.maketext("fixtures-results.options.heading.month") %]</th>
+          <th>[% c.maketext("fixtures-results.options.heading.month-sort") %]</th>
+          <th>[% c.maketext("fixtures-results.options.heading.week") %]</th>
+          <th>[% c.maketext("fixtures-results.options.heading.week-sort") %]</th>
+          <th>[% c.maketext("fixtures-results.options.heading.number") %]</th>
+        </tr>
+      </thead>
+      <tbody>
+[%
+USE zeroes = format("%02d");
+FOREACH option IN display_options;
+  SET week_date = option.played_week;
+  CALL week_date.set_locale(c.locale);
+  SET month_number = zeroes(week_date.month);
+  SET month = week_date.month_name;
+  SET day_number = zeroes(week_date.day);
+  
+  IF specific_season;
+    SET uri = c.uri_for_action("/fixtures-results/view_week_specific_season_end", [option.season_url, week_date.year, month_number, day_number]);
+  ELSE;
+    SET uri = c.uri_for_action("/fixtures-results/view_week_current_season_end", [week_date.year, month_number, day_number]);
+  END;
+-%]
+        <tr>
+          <td data-label="[% c.maketext("fixtures-results.options.heading.month") %]">[% month | html_entity | ucfirst %] [% week_date.year %]</td>
+          <td data-label="[% c.maketext("fixtures-results.options.heading.month-sort") %]">[% week_date.year %][% month_number %]</td>
+          <td data-label="[% c.maketext("fixtures-results.options.heading.week") %]"><a href="[% uri %]">[% c.i18n_datetime_format_date_long.format_datetime(week_date) %]</a></td>
+          <td data-label="[% c.maketext("fixtures-results.options.heading.week") %]">[% week_date.ymd("") %]</td>
+          <td data-label="[% c.maketext("fixtures-results.options.heading.number") %]">[% option.number_of_matches %]</td>
+        </tr>
+[%
+END;
+-%]
+      </tbody>
+    </table>
+  </div>
+</div>

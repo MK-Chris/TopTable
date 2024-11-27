@@ -70,6 +70,141 @@ __PACKAGE__->table("tournament_round_doubles");
   is_foreign_key: 1
   is_nullable: 0
 
+=head2 tournament_group
+
+  data_type: 'integer'
+  extra: {unsigned => 1}
+  is_foreign_key: 1
+  is_nullable: 1
+
+=head2 table_points
+
+  data_type: 'smallint'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 0
+
+=head2 games_played
+
+  data_type: 'tinyint'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 0
+
+=head2 games_won
+
+  data_type: 'tinyint'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 0
+
+=head2 games_drawn
+
+  data_type: 'tinyint'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 0
+
+=head2 games_lost
+
+  data_type: 'tinyint'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 0
+
+=head2 average_game_wins
+
+  data_type: 'float'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 0
+
+=head2 games_difference
+
+  data_type: 'smallint'
+  default_value: 0
+  is_nullable: 0
+
+=head2 legs_played
+
+  data_type: 'smallint'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 0
+
+=head2 legs_won
+
+  data_type: 'smallint'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 0
+
+=head2 legs_lost
+
+  data_type: 'smallint'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 0
+
+=head2 average_leg_wins
+
+  data_type: 'float'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 0
+
+=head2 legs_difference
+
+  data_type: 'smallint'
+  default_value: 0
+  is_nullable: 0
+
+=head2 points_played
+
+  data_type: 'integer'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 0
+
+=head2 points_won
+
+  data_type: 'integer'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 0
+
+=head2 points_lost
+
+  data_type: 'integer'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 0
+
+=head2 average_point_wins
+
+  data_type: 'integer'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 0
+
+=head2 total_handicap
+
+  data_type: 'smallint'
+  default_value: 0
+  is_nullable: 0
+
+=head2 points_difference
+
+  data_type: 'smallint'
+  default_value: 0
+  is_nullable: 0
+
+=head2 grid_position
+
+  data_type: 'tinyint'
+  extra: {unsigned => 1}
+  is_nullable: 1
+
 =head2 last_updated
 
   data_type: 'datetime'
@@ -107,6 +242,121 @@ __PACKAGE__->add_columns(
     is_foreign_key => 1,
     is_nullable => 0,
   },
+  "tournament_group",
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_foreign_key => 1,
+    is_nullable => 1,
+  },
+  "table_points",
+  {
+    data_type => "smallint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
+  "games_played",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
+  "games_won",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
+  "games_drawn",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
+  "games_lost",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
+  "average_game_wins",
+  {
+    data_type => "float",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
+  "games_difference",
+  { data_type => "smallint", default_value => 0, is_nullable => 0 },
+  "legs_played",
+  {
+    data_type => "smallint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
+  "legs_won",
+  {
+    data_type => "smallint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
+  "legs_lost",
+  {
+    data_type => "smallint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
+  "average_leg_wins",
+  {
+    data_type => "float",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
+  "legs_difference",
+  { data_type => "smallint", default_value => 0, is_nullable => 0 },
+  "points_played",
+  {
+    data_type => "integer",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
+  "points_won",
+  {
+    data_type => "integer",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
+  "points_lost",
+  {
+    data_type => "integer",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
+  "average_point_wins",
+  {
+    data_type => "integer",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
+  "total_handicap",
+  { data_type => "smallint", default_value => 0, is_nullable => 0 },
+  "points_difference",
+  { data_type => "smallint", default_value => 0, is_nullable => 0 },
+  "grid_position",
+  { data_type => "tinyint", extra => { unsigned => 1 }, is_nullable => 1 },
   "last_updated",
   {
     data_type => "datetime",
@@ -129,19 +379,24 @@ __PACKAGE__->set_primary_key("id");
 
 =head1 RELATIONS
 
-=head2 tournament_groups_doubles
+=head2 tournament_group
 
-Type: has_many
+Type: belongs_to
 
-Related object: L<TopTable::Schema::Result::TournamentGroupDoubles>
+Related object: L<TopTable::Schema::Result::TournamentRoundGroup>
 
 =cut
 
-__PACKAGE__->has_many(
-  "tournament_groups_doubles",
-  "TopTable::Schema::Result::TournamentGroupDoubles",
-  { "foreign.tournament_round_pair" => "self.id" },
-  { cascade_copy => 0, cascade_delete => 0 },
+__PACKAGE__->belongs_to(
+  "tournament_group",
+  "TopTable::Schema::Result::TournamentRoundGroup",
+  { id => "tournament_group" },
+  {
+    is_deferrable => 1,
+    join_type     => "LEFT",
+    on_delete     => "RESTRICT",
+    on_update     => "RESTRICT",
+  },
 );
 
 =head2 tournament_pair
@@ -156,7 +411,7 @@ __PACKAGE__->belongs_to(
   "tournament_pair",
   "TopTable::Schema::Result::TournamentDoubles",
   { id => "tournament_pair" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+  { is_deferrable => 1, on_delete => "CASCADE", on_update => "RESTRICT" },
 );
 
 =head2 tournament_round
@@ -195,8 +450,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-09-29 23:47:56
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:PP7uBIWIcvfGFymlgTagOg
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-11-24 23:59:16
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:yq0rJVTiAALXBajoI2YY6Q
 
 __PACKAGE__->add_columns(
     "last_updated",

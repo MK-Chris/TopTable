@@ -42,6 +42,12 @@ __PACKAGE__->table("tournaments");
 
 =head1 ACCESSORS
 
+=head2 id
+
+  data_type: 'bigint'
+  is_auto_increment: 1
+  is_nullable: 0
+
 =head2 event
 
   data_type: 'integer'
@@ -90,9 +96,119 @@ __PACKAGE__->table("tournaments");
   is_foreign_key: 1
   is_nullable: 1
 
+=head2 allow_loan_players_below
+
+  data_type: 'tinyint'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 1
+
+Allow loan players from a lower division than the match being played.  NULL inherits the setting from the season.
+
+=head2 allow_loan_players_above
+
+  data_type: 'tinyint'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 1
+
+Allow loan players from a higher division than the match being played.  NULL inherits the setting from the season.
+
+=head2 allow_loan_players_across
+
+  data_type: 'tinyint'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 1
+
+Allow loan players from the same division as the match being played.  NULL inherits the setting from the season.
+
+=head2 allow_loan_players_multiple_teams
+
+  data_type: 'tinyint'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 1
+
+Allow loan players to play on loan for more than one team.  NULL inherits the setting from the season.
+
+=head2 allow_loan_players_same_club_only
+
+  data_type: 'tinyint'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 1
+
+Only allow loan players from the same club as the team they are on loan for.  NULL inherits the setting from the season.
+
+=head2 loan_players_limit_per_player
+
+  data_type: 'tinyint'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 1
+
+Maximum number of times a player may play on loan in total (0 for no limit).  NULL inherits the setting from the season.
+
+=head2 loan_players_limit_per_player_per_team
+
+  data_type: 'tinyint'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 1
+
+Maximum number of times a player may play on loan for the same team (0 for no limit).  NULL inherits the setting from the season.
+
+=head2 loan_players_limit_per_player_per_opposition
+
+  data_type: 'tinyint'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 1
+
+Maximum number of times a player may play on loan against the same team (0 for no limit).  NULL inherits the setting from the season.
+
+=head2 loan_players_limit_per_team
+
+  data_type: 'tinyint'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 1
+
+Maximum number of times a team may play loan players (0 for no limit).  NULL inherits the setting from the season.
+
+=head2 void_unplayed_games_if_both_teams_incomplete
+
+  data_type: 'tinyint'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 1
+
+Void games (no team wins) between a present and absent player if both teams have missing players.  NULL inherits the setting from the season.
+
+=head2 forefeit_count_averages_if_game_not_started
+
+  data_type: 'tinyint'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 1
+
+Count a game as won in the player averages even if it was not started (the opposition player pulled out before the game started).  NULL inherits the setting from the season.
+
+=head2 missing_player_count_win_in_averages
+
+  data_type: 'tinyint'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 1
+
+If a player is missing, count as a win for the opposition players in the player averages.  NULL inherits the setting from the season.
+
 =cut
 
 __PACKAGE__->add_columns(
+  "id",
+  { data_type => "bigint", is_auto_increment => 1, is_nullable => 0 },
   "event",
   {
     data_type => "integer",
@@ -132,21 +248,103 @@ __PACKAGE__->add_columns(
     is_foreign_key => 1,
     is_nullable => 1,
   },
+  "allow_loan_players_below",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 1,
+  },
+  "allow_loan_players_above",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 1,
+  },
+  "allow_loan_players_across",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 1,
+  },
+  "allow_loan_players_multiple_teams",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 1,
+  },
+  "allow_loan_players_same_club_only",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 1,
+  },
+  "loan_players_limit_per_player",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 1,
+  },
+  "loan_players_limit_per_player_per_team",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 1,
+  },
+  "loan_players_limit_per_player_per_opposition",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 1,
+  },
+  "loan_players_limit_per_team",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 1,
+  },
+  "void_unplayed_games_if_both_teams_incomplete",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 1,
+  },
+  "forefeit_count_averages_if_game_not_started",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 1,
+  },
+  "missing_player_count_win_in_averages",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 1,
+  },
 );
 
 =head1 PRIMARY KEY
 
 =over 4
 
-=item * L</event>
-
-=item * L</season>
+=item * L</id>
 
 =back
 
 =cut
 
-__PACKAGE__->set_primary_key("event", "season");
+__PACKAGE__->set_primary_key("id");
 
 =head1 RELATIONS
 
@@ -281,8 +479,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-09-29 23:47:56
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:v+jDIQqYSdXn1OKvjjkz8g
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-11-25 16:29:37
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:zXGd/SsNUDmgatdvZbvNBQ
 use HTML::Entities;
 
 =head2 create_or_edit_round

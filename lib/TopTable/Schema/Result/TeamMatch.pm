@@ -162,6 +162,12 @@ Denotes that the match has started (remains 1 after the match has started, even 
   extra: {unsigned => 1}
   is_nullable: 0
 
+=head2 home_team_handicap
+
+  data_type: 'smallint'
+  extra: {unsigned => 1}
+  is_nullable: 1
+
 =head2 away_team_games_won
 
   data_type: 'tinyint'
@@ -175,6 +181,12 @@ Denotes that the match has started (remains 1 after the match has started, even 
   default_value: 0
   extra: {unsigned => 1}
   is_nullable: 0
+
+=head2 away_team_handicap
+
+  data_type: 'smallint'
+  extra: {unsigned => 1}
+  is_nullable: 1
 
 =head2 games_drawn
 
@@ -241,14 +253,14 @@ Denotes that the match has started (remains 1 after the match has started, even 
 
 =head2 home_team_match_score
 
-  data_type: 'tinyint'
+  data_type: 'smallint'
   default_value: 0
   extra: {unsigned => 1}
   is_nullable: 0
 
 =head2 away_team_match_score
 
-  data_type: 'tinyint'
+  data_type: 'smallint'
   default_value: 0
   extra: {unsigned => 1}
   is_nullable: 0
@@ -410,6 +422,8 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
+  "home_team_handicap",
+  { data_type => "smallint", extra => { unsigned => 1 }, is_nullable => 1 },
   "away_team_games_won",
   {
     data_type => "tinyint",
@@ -424,6 +438,8 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
+  "away_team_handicap",
+  { data_type => "smallint", extra => { unsigned => 1 }, is_nullable => 1 },
   "games_drawn",
   {
     data_type => "tinyint",
@@ -489,14 +505,14 @@ __PACKAGE__->add_columns(
   },
   "home_team_match_score",
   {
-    data_type => "tinyint",
+    data_type => "smallint",
     default_value => 0,
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
   "away_team_match_score",
   {
-    data_type => "tinyint",
+    data_type => "smallint",
     default_value => 0,
     extra => { unsigned => 1 },
     is_nullable => 0,
@@ -892,8 +908,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-10-07 15:46:34
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:kxgltxOI5XYxPW3zQ6I/wQ
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-11-13 00:10:04
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:d10SdC4laQSYak9IKJgdSA
 
 use Try::Tiny;
 use DateTime::Duration;
@@ -901,6 +917,7 @@ use Set::Object;
 use Data::ICal::Entry::Event;
 use DateTime;
 use DateTime::Format::ICal;
+use HTML::Entities;
 
 # Enable automatic date handling
 __PACKAGE__->add_columns(
@@ -921,6 +938,211 @@ Returns a hashref with the URL keys in the order we need to use them to generate
 sub url_keys {
   my $self = shift;
   return [$self->team_season_home_team_season->club_season->club->url_key, $self->team_season_home_team_season->team->url_key, $self->team_season_away_team_season->club_season->club->url_key, $self->team_season_away_team_season->team->url_key, $self->scheduled_date->year, sprintf("%02d", $self->scheduled_date->month), sprintf("%02d", $self->scheduled_date->day)];
+}
+
+=head2 name
+
+Match name - param scoreless - returns the teams separated by "v" even if there is a score; if this is not present or passed as false, the return format will be Home Team HScore-AScore Away Team, unless there is no score to show yet.
+
+=cut
+
+sub name {
+  my $self = shift;
+  my ( $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  
+  # Grab the scoreless param
+  my $scoreless = $params->{scoreless} || 0;
+  
+  # Shorten the team seasons link
+  my $home_season = $self->team_season_home_team_season;
+  my $away_season = $self->team_season_away_team_season;
+  
+  if ( $self->handicapped ) {
+    # Start off with both team names
+    my $home_team_with_handicap = $home_season->full_name;
+    my $away_team_with_handicap = $away_season->full_name;
+    
+    if ( defined($self->home_team_handicap) or defined($self->away_team_handicap) ) {
+      # Handicaps are defined, so are set
+      if ( !$self->home_team_handicap and !$self->away_team_handicap ) {
+        # Scratch handicap, since they are defined and both 0
+        $away_team_with_handicap .= sprintf(" (%s)", $lang->maketext("matches.handicap.scratch"));
+      } else {
+        if ( $self->home_team_handicap ) {
+          $home_team_with_handicap .= sprintf(" (+%s)", $self->home_team_handicap);
+        } else {
+          $home_team_with_handicap = $home_season->full_name;
+        }
+        
+        if ( $self->away_team_handicap ) {
+          $away_team_with_handicap .= sprintf(" (+%s)", $self->away_team_handicap);
+        } else {
+          $away_team_with_handicap = $away_season->full_name;
+        }
+      }
+    } else {
+      # Handicaps are not defined, so need to be set
+      # Add this after the away team
+      $away_team_with_handicap .= sprintf(" (%s)", $lang->maketext("matches.handicap.not-yet-set"));
+    }
+    
+    if ( $scoreless or (!$self->home_team_match_score and !$self->away_team_match_score) ) {
+      # Scoreless, or there are no scores yet, return Home Team v Away Team; "v" is from the lang files, so needs to be HTML decoded, as it could technically contain HTML and the controller will encode the whole string
+      return sprintf("%s %s %s", $home_team_with_handicap, decode_entities($lang->maketext("matches.versus-abbreviation")), $away_team_with_handicap);
+    } else {
+      # There's a score and we're not asking for scoreless, return with the score
+      return sprintf("%s %d-%d %s", $home_team_with_handicap, $self->home_team_match_score, $self->away_team_match_score, $away_team_with_handicap);
+    }
+  } else {
+    if ( $scoreless or (!$self->home_team_match_score and !$self->away_team_match_score) ) {
+      # Scoreless, or there are no scores yet, return Home Team v Away Team; "v" is from the lang files, so needs to be HTML decoded, as it could technically contain HTML and the controller will encode the whole string
+      return sprintf("%s %s %s", $home_season->full_name, decode_entities($lang->maketext("matches.versus-abbreviation")), $away_season->full_name);
+    } else {
+      # There's a score and we're not asking for scoreless, return with the score
+      return sprintf("%s %d-%d %s", $home_season->full_name, $self->home_team_match_score, $self->away_team_match_score, $away_season->full_name);
+    }
+  }
+}
+
+=head2 handicap_set
+
+Tells us if the handicap has been set or needs setting.  Returns undef if this isn't a handicapped match.
+
+=cut
+
+sub handicap_set {
+  my $self = shift;
+  
+  if ( $self->handicapped ) {
+    if ( defined($self->home_team_handicap) or defined($self->away_team_handicap) ) {
+      # Handicaps are defined, so are set
+      return 1;
+    } else {
+      # Handicaps are not defined, so need to be set
+      return 0;
+    }
+  } else {
+    # Not handicapped, undef
+    return undef;
+  }
+}
+
+=head2 rules
+
+Return the rules for the match.  Optionally takes a $rule_name argument, which means only that rule is returned, otherwise all are returned as a hash in list context, or hashref in scalar context.
+
+Where these come from depend on the match type (tournament or league); if it's a tournament match and those rules are NULL, we fall back to the season rules.
+
+=cut
+
+sub rules {
+  my $self = shift;
+  my ( $rule_name ) = @_;
+  my $tournament = defined($self->tournament_round) ? $self-tournament_round->tournament : undef;
+  my $season = $self->season;
+  
+  if ( defined($rule_name) ) {
+    if ( defined($tournament) ) {
+      # Default to tournament rule, if null (not defined) fall back to season
+      return $tournament->$rule_name // $season->$rule_name;
+    } else {
+      # League match, return from the season rules
+      return $self->season->$rule_name;
+    }
+  } else {
+    # Return all the rules
+    my %rules = defined($tournament)
+      ? # Tournament rules, but fall back to season rules if undef
+        (
+          allow_loan_players_below => $tournament->allow_loan_players_below // $season->allow_loan_players_below,
+          allow_loan_players_above => $tournament->allow_loan_players_above // $season->allow_loan_players_above,
+          allow_loan_players_across => $tournament->allow_loan_players_across // $season->allow_loan_players_across,
+          allow_loan_players_multiple_teams => $tournament->allow_loan_players_multiple_teams // $season->allow_loan_players_multiple_teams_per_division,
+          allow_loan_players_same_club_only => $tournament->allow_loan_players_same_club_only // $season->allow_loan_players_same_club_only,
+          loan_players_limit_per_player => $tournament->loan_players_limit_per_player // $season->loan_players_limit_per_player,
+          loan_players_limit_per_player_per_team => $tournament->loan_players_limit_per_player_per_team // $season->loan_players_limit_per_player_per_team,
+          loan_players_limit_per_player_per_opposition => $tournament->loan_players_limit_per_player_per_opposition // $season->loan_players_limit_per_player_per_opposition,
+          loan_players_limit_per_team => $tournament->loan_players_limit_per_team // $season->loan_players_limit_per_team,
+          void_unplayed_games_if_both_teams_incomplete => $tournament->void_unplayed_games_if_both_teams_incomplete // $season->void_unplayed_games_if_both_teams_incomplete,
+          forefeit_count_averages_if_game_not_started => $tournament->forefeit_count_averages_if_game_not_started // $season->forefeit_count_averages_if_game_not_started,
+          missing_player_count_win_in_averages => $tournament->missing_player_count_win_in_averages // $season->missing_player_count_win_in_averages,
+        )
+      : # Season rules (league match)
+        (
+          allow_loan_players_below => $season->allow_loan_players_below,
+          allow_loan_players_above => $season->allow_loan_players_above,
+          allow_loan_players_across => $season->allow_loan_players_across,
+          allow_loan_players_multiple_teams_per_division => $season->allow_loan_players_multiple_teams_per_division,
+          allow_loan_players_same_club_only => $season->allow_loan_players_same_club_only,
+          loan_players_limit_per_player => $season->loan_players_limit_per_player,
+          loan_players_limit_per_player_per_team => $season->loan_players_limit_per_player_per_team,
+          loan_players_limit_per_player_per_opposition => $season->loan_players_limit_per_player_per_opposition,
+          loan_players_limit_per_team => $season->loan_players_limit_per_team,
+          void_unplayed_games_if_both_teams_incomplete => $season->void_unplayed_games_if_both_teams_incomplete,
+          forefeit_count_averages_if_game_not_started => $season->forefeit_count_averages_if_game_not_started,
+          missing_player_count_win_in_averages => $season->missing_player_count_win_in_averages,
+        );
+    
+    return wantarray ? %rules : \%rules;
+  }
+}
+
+=head2 scheduled_start_hour
+
+Return the start hour, split out from the scheduled start time.
+
+=cut
+
+sub scheduled_start_hour {
+  my $self = shift;
+  
+  my @time_bits = split(":", $self->scheduled_start_time);
+  return $time_bits[0];
+}
+
+=head2 scheduled_start_minute
+
+Return the start hour, split out from the scheduled start time.
+
+=cut
+
+sub scheduled_start_minute {
+  my $self = shift;
+  
+  my @time_bits = split(":", $self->scheduled_start_time);
+  return $time_bits[1];
+}
+
+=head2 actual_start_hour
+
+Return the start hour, split out from the scheduled start time.
+
+=cut
+
+sub actual_start_hour {
+  my $self = shift;
+  
+  my @time_bits = split(":", $self->actual_start_time);
+  return $time_bits[0];
+}
+
+=head2 actual_start_minute
+
+Return the start hour, split out from the scheduled start time.
+
+=cut
+
+sub actual_start_minute {
+  my $self = shift;
+  
+  my @time_bits = split(":", $self->actual_start_time);
+  return $time_bits[1];
 }
 
 =head2 actual_start_time
@@ -950,6 +1172,17 @@ sub actual_date {
   }
 }
 
+=head2 handicapped
+
+Return 1 if the match is handicapped, or 0 if not.
+
+=cut
+
+sub handicapped {
+  my $self = shift;
+  return $self->team_match_template->handicapped;
+}
+
 =head2 rescheduled
 
 Returns a simple true or false value based on whether played_date is defined (and if so whether or not it matches scheduled_date).
@@ -960,7 +1193,11 @@ sub rescheduled {
   my $self = shift;
   
   # Return 1 if played date is different from the scheduled date.
-  return $self->played_date->ymd ne $self->scheduled_date->ymd ? 1 : 0;
+  if ( $self->played_date->ymd ne $self->scheduled_date->ymd or defined($self->start_time) ) {
+    return 1;
+  } else {
+    return 0;
+  }
 }
 
 =head2 players_absent
@@ -1142,7 +1379,7 @@ sub update_venue {
           push(@{$response->{success}}, $lang->maketext("matches.update-venue.success"));
           $response->{completed} = 1;
         } else {
-          push(@{$response->{errors}}, $lang->maketext("matches.update-match-date.error.database-update-failed"));
+          push(@{$response->{errors}}, $lang->maketext("matches.update-match-venue.error.database-update-failed"));
         }
       }
     } else {
@@ -1153,6 +1390,80 @@ sub update_venue {
   } else {
     # Error, invalid venue
     push(@{$response->{errors}}, $lang->maketext("matches.update-venue.error.venue-blank"));
+  }
+  
+  return $response;
+}
+
+=head2 update_handicaps
+
+Validate and update the handicaps for a match.
+
+=cut
+
+sub update_handicaps {
+  my $self = shift;
+  my ( $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  
+  my $home_team_handicap = $params->{home_team_handicap} || 0;
+  my $away_team_handicap = $params->{away_team_handicap} || 0;
+  
+  my $response = {
+    errors => [],
+    warnings => [],
+    info => [],
+    success => [],
+    completed => 0,
+    fields => {},
+  };
+  
+  # First check if this is a handicapped match
+  if ( !$self->handicapped ) {
+    push(@{$response->{errors}}, $lang->maketext("matches.handicaps.error.not-a-handicapped-match"));
+    return $response;
+  }
+  
+  if ( $self->started ) {
+    push(@{$response->{errors}}, $lang->maketext("matches.handicaps.error.match-started"));
+    return $response;
+  }
+  
+  # Put in a hash so we can loop through
+  my %handicaps = (
+    home => $home_team_handicap,
+    away => $away_team_handicap,
+  );
+  
+  foreach my $location ( reverse sort keys %handicaps ) {
+    if ( $handicaps{$location} ) {
+      my $team = $location eq "home" ? $self->team_season_home_team_season->full_name : $self->team_season_away_team_season->full_name;
+      push(@{$response->{errors}}, $lang->maketext("matches.handicaps.error.error.handicap-invalid", encode_entities($team))) unless $handicaps{$location} =~ /^-?[1-9]\d{0,2}$/;
+    } else {
+      # Sanity check - false must be 0
+      $handicaps{$location} = 0;
+    }
+  }
+  
+  $home_team_handicap = $handicaps{home};
+  $away_team_handicap = $handicaps{away};
+  $response->{fields}{home_team_handicap} = $home_team_handicap;
+  $response->{fields}{away_team_handicap} = $away_team_handicap;
+  
+  if ( scalar @{$response->{errors}} == 0 ) {
+    my $ok = $self->update({home_team_handicap => $home_team_handicap, away_team_handicap => $away_team_handicap});
+    
+    if ( $ok ) {
+      push(@{$response->{success}}, $lang->maketext("matches.handicapes.update.success"));
+      $response->{completed} = 1;
+    } else {
+      push(@{$response->{errors}}, $lang->maketext("matches.handicaps.error.database-update-failed"));
+    }
   }
   
   return $response;
@@ -1232,12 +1543,15 @@ Generate the home and away score of the given match based on the game scores.  A
 
 sub calculate_match_score {
   my $self = shift;
+  my ( $params ) = @_;
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $match_scores = [];
   
-  # The first two $home_won and $away_won will hold the score to be put against each game number, so 0 if it hasn't been played.
-  # The internal ones ($_home_won and $_away_won) will be hold the calculated score for each game that's been played and will
+  # The first two $home_score and $away_score will hold the score to be put against each game number, so 0 if it hasn't been played.
+  # The internal ones ($_home_score and $_away_score) will be hold the calculated score for each game that's been played and will
   # hold the running score each way through, so if the game hasn't been played this is ignored.
-  my ( $home_won, $away_won, $drawn, $_home_won, $_away_won, $_drawn ) = qw( 0 0 0 0 0 0 );
+  my ( $home_score, $away_score, $_home_score, $_away_score ) = qw( 0 0 0 0 );
+  my ( $home_games_won, $away_games_won, $games_drawn, $_home_games_won, $_away_games_won, $_games_drawn ) = qw( 0 0 0 0 0 0 );
   my $winner_type = $self->team_match_template->winner_type->id;
   
   # Home and away teams to check the winner against in the even of walkovers
@@ -1250,6 +1564,12 @@ sub calculate_match_score {
     order_by => {-asc => "actual_game_number"}
   });
   
+  if ( $self->check_match_started and $self->handicapped ) {
+    # If it's handicapped and the match is started, apply the handicaps first
+    $_home_score = $self->home_team_handicap;
+    $_away_score = $self->away_team_handicap;
+  }
+  
   # Now loop through the games
   foreach my $game ( @games ) {
     if ( $winner_type eq "games" ) {
@@ -1259,29 +1579,46 @@ sub calculate_match_score {
         if ( defined($game->winner) ) {
           if ( $game->winner->id == $home_team->team->id ) {
             # Awarded to the home team
-            $_home_won++;
+            $_home_score++;
+            $_home_games_won++;
           } else {
             # Awarded to the away team
-            $_away_won++;
+            $_away_score++;
+            $_away_games_won++;
           }
         } else {
-          # Winner not specified, game is void, no scores are incremented.  Do nothing here
+          # Winner not specified, game is void or a draw
+          $_games_drawn++ if !$game->void;
         }
       } else {
         # Game not played or in progress, don't increment anything
       }
         
-      ( $home_won, $away_won ) = ( $_home_won, $_away_won );
+      ( $home_score, $away_score, $home_games_won, $away_games_won, $games_drawn ) = ( $_home_score, $_away_score, $_home_games_won, $_away_games_won, $_games_drawn );
     } elsif ( $winner_type eq "points" ) {
       # Match scores are determined by the number of points won
       if ( $game->started and $game->complete ) {
         # Add the legs won for each team to the total
-        $_home_won += $game->home_team_points_won;
-        $_away_won += $game->away_team_points_won;
-        ( $home_won, $away_won ) = ( $_home_won, $_away_won );
+        $_home_score += $game->home_team_points_won;
+        $_away_score += $game->away_team_points_won;
+        
+        if ( defined($game->winner) ) {
+          if ( $game->winner->id == $home_team->id ) {
+            # Awarded to the home team - current home points plus the points we need for a win multiplied by the number of legs
+            $_home_games_won++;
+          } else {
+            # Awarded to the away team - current away points plus the points we need for a win multiplied by the number of legs
+            $_away_games_won++;
+          }
+        } else {
+          # Must be a draw - it can't be void because it was started
+          $_games_drawn++;
+        }
+        
+        ( $home_score, $away_score, $home_games_won, $away_games_won, $games_drawn ) = ( $_home_score, $_away_score, $_home_games_won, $_away_games_won, $_games_drawn );
       } elsif ( $game->complete ) {
         # If the game is complete, but wasn't started, it must be a walkover - check the winner field.
-        if ( defined( $game->winner ) ) {
+        if ( defined($game->winner) ) {
           # Get the number of points required to win a leg - this will be added to the winner's score for each leg
           my $game_rules = $game->individual_match_template;
           my $minimum_points_win = $game_rules->minimum_points_win;
@@ -1294,37 +1631,41 @@ sub calculate_match_score {
           
           if ( $self->winner->id == $home_team->id ) {
             # Awarded to the home team - current home points plus the points we need for a win multiplied by the number of legs
-            $_home_won += ( $legs_per_game * $minimum_points_win );
+            $_home_score += ( $legs_per_game * $minimum_points_win );
+            $_home_games_won++;
           } else {
             # Awarded to the away team - current away points plus the points we need for a win multiplied by the number of legs
-            $_away_won += ( $legs_per_game * $minimum_points_win );
+            $_away_score += ( $legs_per_game * $minimum_points_win );
+            $_away_games_won++;
           }
           
-          ( $home_won, $away_won ) = ( $_home_won, $_away_won );
+          ( $home_score, $away_score, $home_games_won, $away_games_won, $games_drawn ) = ( $_home_score, $_away_score, $_home_games_won, $_away_games_won, $_games_drawn );
         } else {
           # If no winner is defined, the match is void
-          ( $home_won, $away_won ) = qw( 0 0 );
+          ( $home_score, $away_score ) = qw( 0 0 );
         }
       } else {
         # Not played yet
-        ( $home_won, $away_won ) = qw( 0 0 );
+        ( $home_score, $away_score ) = qw( 0 0 );
       }
     }
     
     # Add the score after this match to the array
     push(@{$match_scores}, {
       scheduled_game_number => $game->scheduled_game_number,
-      home_won => $home_won,
-      away_won => $away_won,
-      drawn => $drawn,
+      home_score => $home_score,
+      away_score => $away_score,
+      home_games_won => $home_games_won,
+      away_games_won => $away_games_won,
+      games_drawn => $games_drawn,
       complete => $game->complete,
       game_in_progress => $game->game_in_progress,
     });
     
     # Check if the database running score is correct; if not, update it
     $game->update({
-      home_team_match_score => $home_won,
-      away_team_match_score => $away_won,
+      home_team_match_score => $home_score,
+      away_team_match_score => $away_score,
     });
   }
   
@@ -1500,6 +1841,7 @@ sub update_scorecard {
     info => [],
     success => [],
     completed => 0,
+    match_scores => [],
   };
   
   my %game_scores = ();
@@ -1510,6 +1852,12 @@ sub update_scorecard {
   # Initial error check that the match is in the current season
   if ( $self->season->complete ) {
     push(@{$response->{errors}}, $lang->maketext("matches.update.error.season-complete"));
+    return $response;
+  }
+  
+  
+  if ( $self->handicapped and !$self->handicap_set ) {
+    push(@{$response->{errors}}, $lang->maketext("matches.update.error.handicap-not-set"));
     return $response;
   }
   
@@ -1925,7 +2273,7 @@ sub generate_ical_data {
   my ( $home_team, $away_team ) = ( $self->team_season_home_team_season, $self->team_season_away_team_season );
   
   # Split the start time for setting the hour and minute
-  my ( $start_hour, $start_minute ) = split( ":", $self->actual_start_time );
+  my ( $start_hour, $start_minute ) = split(":", $self->actual_start_time);
   
   # Get the URI
   my $uri = $params->{get_uri}($self->url_keys);

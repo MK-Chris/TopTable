@@ -233,16 +233,16 @@ __PACKAGE__->belongs_to(
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
 );
 
-=head2 tournament
+=head2 tournaments
 
-Type: might_have
+Type: has_many
 
 Related object: L<TopTable::Schema::Result::Tournament>
 
 =cut
 
-__PACKAGE__->might_have(
-  "tournament",
+__PACKAGE__->has_many(
+  "tournaments",
   "TopTable::Schema::Result::Tournament",
   { "foreign.event" => "self.event", "foreign.season" => "self.season" },
   { cascade_copy => 0, cascade_delete => 0 },
@@ -269,8 +269,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-09-29 23:47:56
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Jp4CJDt/vYQnTeL4Wko8EQ
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-11-21 16:36:40
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:xqih/JGxlswNcHqibfaH6g
 
 use DateTime;
 
@@ -306,17 +306,60 @@ sub event_detail {
   
   # Get the event type
   my $event_type = $self->event->event_type->id;
+  my %attribs = ();
   
   if ( $event_type eq "meeting" ) {
     return $self->search_related("meetings", {}, {rows => 1})->single;
   } elsif ( $event_type eq "single_tournament" ) {
-    return $self->find_related("tournament", {}, {
-      prefetch => [qw( entry_type tournament_people tournaments_doubles tournament_teams ), {
-        tournament_rounds => [qw( venue ), {
-          tournament_round_groups => [qw( tournament_group_people tournament_groups_doubles tournament_group_teams )]
-        }]
-      }],
-    });
+    my $tournament = $self->find_related("tournaments", {});
+    my $entry_type = $tournament->entry_type->id;
+    my $has_group_round = $tournament->has_group_round;
+    
+    # Set the initial prefetch that will hold the rounds / groups
+    if ( $has_group_round ) {
+      # Get the groups along with participants
+      if ( $entry_type eq "teams" ) {
+        # Grab the teams
+        %attribs = (
+          prefetch => [qw( entry_type tournament_teams ), {
+            tournament_rounds => [qw( tournament_round_groups )],
+          }],
+        );
+      } elsif ( $entry_type eq "singles" ) {
+        # Grab the players
+        %attribs = (
+          prefetch => [qw( entry_type tournament_people ), {
+            tournament_rounds => [qw( tournament_round_groups )],
+          }],
+        );
+      } elsif ( $entry_type eq "doubles" ) {
+        # Grab the pairs
+        %attribs = (
+          prefetch => [qw( entry_type tournament_doubles ), {
+            tournament_rounds => [qw( tournament_round_groups )],
+          }],
+        );
+      }
+    } else {
+      if ( $entry_type eq "teams" ) {
+        # Grab the teams
+        %attribs = (
+          prefetch => [qw( entry_type tournament_teams tournament_rounds )],
+        );
+      } elsif ( $entry_type eq "singles" ) {
+        # Grab the players
+        %attribs = (
+          prefetch => [qw( entry_type tournament_people tournament_rounds )],
+        );
+      } elsif ( $entry_type eq "doubles" ) {
+        # Grab the pairs
+        %attribs = (
+          prefetch => [qw( entry_type tournament_doubles tournament_rounds )],
+        );
+      }
+    }
+    
+    return $self->find_related("tournaments", {}, \%attribs);
   }
 }
 

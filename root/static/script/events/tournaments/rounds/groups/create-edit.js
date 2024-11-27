@@ -7,13 +7,14 @@ $(document).ready(function() {
   /*
     Focus on the first available field
   */
-  if ( $("#group_name").val() == "" ) {
+  
+  if ( $("#group_name").length && $("#group_name").val() === "" ) {
     $("#group_name").focus();
-  } else if ( $("#fixtures_grid").val() === "" ) {
+  } else if ( $("#manual_fixtures").prop("checked") === false && $("#fixtures_grid").val() === "" ) {
     $("#fixtures_grid").trigger("chosen:activate");
   } else {
     // Default back to name
-    $("#group_name").focus();
+    $("#members1").focus();
   }
   
   $("#manual_fixtures").on("change", function() {

@@ -271,6 +271,21 @@ __PACKAGE__->belongs_to(
   },
 );
 
+=head2 system_event_log_event_rounds
+
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::SystemEventLogEventRound>
+
+=cut
+
+__PACKAGE__->has_many(
+  "system_event_log_event_rounds",
+  "TopTable::Schema::Result::SystemEventLogEventRound",
+  { "foreign.object_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
 =head2 team_match_template
 
 Type: belongs_to
@@ -402,8 +417,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-09-30 10:56:44
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:rNb0mORgnLD1TOUiGhC8zA
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-11-24 00:42:40
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:W8jkhzTTxSC8Rz+QUt+wFg
 
 use HTML::Entities;
 use List::MoreUtils qw( duplicates );
@@ -437,6 +452,25 @@ sub name {
   my $lang = $schema->lang;
   
   return defined($self->_name) ? encode_entities($self->_name) : $lang->maketext("tournament.round.default-name", $self->round_number);
+}
+
+=head2 match_template
+
+Return either the team match template or the individual match template, depending on the entry type.  Return from the round, if it's specifically set, if not return from the tournament.
+
+=cut
+
+sub match_template {
+  my $self = shift;
+  my $entry_type = $self->tournament->entry_type->id;
+  
+  if ( $entry_type eq "team" ) {
+    # Team match template
+    return defined($self->team_match_template) ? $self->team_match_template : $self->tournament->default_team_match_template;
+  } else {
+    # Individual match template for singles and doubles
+    return defined($self->individual_match_template) ? $self->individual_match_template : $self->tournament->default_individual_match_template;
+  }
 }
 
 =head2 groups
@@ -482,6 +516,31 @@ sub groups_must_be_named {
   })->count ? 1 : 0;
 }
 
+=head2 recalculate_groups_order
+
+Recalculate the order for all groups in this round.
+
+=cut
+
+sub recalculate_groups_order {
+  my $self = shift;
+  
+  my $groups = $self->search_related("tournament_round_groups", {}, {
+    order_by => {-asc => [qw( group_order )]},
+  });
+  
+  my $transaction = $self->result_source->schema->txn_scope_guard;
+  my $i = 0;
+  while ( my $group = $groups->next ) {
+    $i++;
+    $group->update({
+      group_order => $i,
+    });
+  }
+  
+  $transaction->commit;
+}
+
 =head2 find_group_by_id_or_url_key
 
 Get a specific round number, either by round number or URL key.
@@ -490,13 +549,19 @@ Get a specific round number, either by round number or URL key.
 
 sub find_group_by_id_or_url_key {
   my $self = shift;
-  my ( $group_id ) = @_;
+  my ( $group_id, $params ) = @_;
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   
   if ( $group_id =~ m/^\d+$/ ) {
     # Numeric value, check the ID first, then check the URL key
     my $obj = $self->find_related("tournament_round_groups", {group_order => $group_id});
-    return $obj if defined($obj);
-    $obj = $self->find_related("tournament_round_groups", {url_key => $group_id});
+    
+    if ( defined($obj) ) {
+      return $obj;
+    } else {
+      $obj = $self->find_related("tournament_round_groups", {url_key => $group_id});
+    }
+    
     return $obj;
   } else {
     # Not numeric, so it can't be the ID - just check the URL key
@@ -664,7 +729,7 @@ sub create_or_edit_group {
   
   $response->{fields}{manual_fixtures} = $manual_fixtures;
   
-  my ( $member_class, $tourn_member_class, $round_member_class, $group_member_class, $member_rel_round, $member_rel_group );
+  my ( $member_class, $tourn_member_class, $round_member_class, $group_member_class, $member_rel_round );
   if ( $can_edit{members} ) {
     # Check the members of the group
     # First check we're checking the right table
@@ -672,15 +737,12 @@ sub create_or_edit_group {
     if ( $entry_type eq "team" ) {
       $member_class = "Team";
       $member_rel_round = "tournament_round_teams";
-      $member_rel_group = "tournament_group_teams";
     } elsif ( $entry_type eq "singles" ) {
       $member_class = "Person";
       $member_rel_round = "tournament_round_people";
-      $member_rel_group = "tournament_group_people";
     } elsif ( $entry_type eq "doubles" ) {
       $member_class = "Person";
       $member_rel_round = "tournament_rounds_doubles";
-      $member_rel_group = "tournament_groups_doubles";
     }
     
     $tourn_member_class = "Tournament$member_class";
@@ -733,29 +795,23 @@ sub create_or_edit_group {
               my $conflicting_groups;
               if ( $entry_type eq "team" ) {
                 # Search the team membership table
-                $conflicting_groups = $schema->resultset("TournamentGroupTeam")->search({
-                  "tournament_round.id" => $self->id,
+                $conflicting_groups = $schema->resultset("TournamentRoundTeam")->search({
+                  "me.id" => $self->id,
                   "tournament_team.team" => $member->id,
                 }, {
-                  join => {
-                    tournament_round_team => [qw( tournament_team )],
-                    tournament_group => [qw( tournament_round )]
-                  }
+                  join => [qw( tournament_team )]
                 });
               } elsif ( $entry_type eq "singles" ) {
                 # Search the person member table
-                $conflicting_groups = $schema->resultset("TournamentGroupTeam")->search({
-                  "tournament_round.id" => $self->id,
+                $conflicting_groups = $schema->resultset("TournamentRoundPerson")->search({
+                  "me.id" => $self->id,
                   "tournament_person.person" => $member->id,
                 }, {
-                  join => {
-                    tournament_round_person => [qw( tournament_person )],
-                    tournament_group => [qw( tournament_round )]
-                  }
+                  join => [qw( tournament_person )]
                 });
               } elsif ( $entry_type eq "doubles" ) {
                 # Search the person member table
-                $conflicting_groups = $schema->resultset("TournamentGroupDoubles")->search({
+                $conflicting_groups = $schema->resultset("TournamentRoundDoubles")->search({
                   -and => {
                     "tournament_round.id" => $self->id,
                     "tournament.season" => $season->id,
@@ -766,10 +822,7 @@ sub create_or_edit_group {
                     "tournament_pair.person2" => $member->id,
                   }],
                 }, {
-                  join => {
-                    tournament_round_pair => [qw( tournament_pair )],
-                    tournament_group => [qw( tournament_round )]
-                  }
+                  join => [qw( tournament_pair )]
                 });
               }
               
@@ -878,12 +931,22 @@ sub create_or_edit_group {
       if ( $action eq "edit" ) {
         # First delete the memberships we have that don't match this one - search query will differ depending on entry type
         # We need to setup the delete / creation search hashes - initially they with both refer to the current tournament (event / season combination)
-        my %delete_search = (event => $self->tournament->event, season => $self->tournament->season);
-        my %create_search = %delete_search;
+        my $round_rel;
+        if ( $entry_type eq "team" ) {
+          $round_rel = "tournament_round_teams";
+        } elsif ( $entry_type eq "singles" ) {
+          $round_rel = "tournament_round_people";
+        } elsif ( $entry_type eq "doubles" ) {
+          $round_rel = "tournament_rounds_doubles";
+        }
         
-        $schema->resultset($group_member_class)->search(\%delete_search)->delete;
-        $schema->resultset($round_member_class)->search(\%delete_search)->delete;
-        $schema->resultset($tourn_member_class)->search(\%delete_search)->delete;
+        $schema->resultset($tourn_member_class)->search({
+          "tournament_group.id" => $group->id,
+        }, {
+          join => {
+            $round_rel => [qw( tournament_group )]
+          },
+        })->delete;
       }
       
       # Setup the member data
@@ -894,9 +957,7 @@ sub create_or_edit_group {
           season => $self->tournament->season,
           $member_rel_round => [{
             tournament_round => $round->id,
-            $member_rel_group => [{
-              tournament_group => $group->id,
-            }]
+            tournament_group => $group->id,
           }],
         );
         
@@ -911,6 +972,14 @@ sub create_or_edit_group {
         
         my $tourn_member = $schema->resultset($tourn_member_class)->create(\%member_data);
       }
+    }
+    
+    if ( $action eq "create" ) {
+      # Create
+      push(@{$response->{success}}, $lang->maketext("admin.forms.success", encode_entities($group->name), $lang->maketext("admin.message.created")));
+    } else {
+      # Edit
+      push(@{$response->{success}}, $lang->maketext("admin.forms.success", encode_entities($group->name), $lang->maketext("admin.message.edited")));
     }
     
     $transaction->commit;

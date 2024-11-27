@@ -10,8 +10,10 @@ IF authorisation.news_create;
 [%
 END;
 IF articles.count;
-  PROCESS "html/generic/pagination.ttkt" OBJECT_PLURAL = c.maketext("object.plural.news-articles");
-  page_links_text;
+  UNLESS index;
+    PROCESS "html/generic/pagination.ttkt" OBJECT_PLURAL = c.maketext("object.plural.news-articles");
+    page_links_text;
+  END;
 -%]
 <ul class="option-list">
 [%
@@ -48,7 +50,9 @@ IF articles.count;
 -%]
 </ul>
 [%
-  page_links_text;
+  UNLESS index;
+    page_links_text;
+  END;
 ELSE;
 -%]
 <ul class="option-list">

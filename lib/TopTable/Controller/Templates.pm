@@ -47,11 +47,11 @@ sub index :Path :Args(0) {
   
   # Display the types of options
   $c->stash({
-    template            => "html/templates/options.ttkt",
+    template => "html/templates/options.ttkt",
     view_online_display => "Viewing templates",
-    view_online_link    => 0,
-    subtitle1           => $c->maketext("menu.text.template"),
-    external_scripts    => [
+    view_online_link => 0,
+    subtitle1 => $c->maketext("menu.text.template"),
+    external_scripts => [
       $c->uri_for("/static/script/standard/option-list.js"),
     ],
   });

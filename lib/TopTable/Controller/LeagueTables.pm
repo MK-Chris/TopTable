@@ -276,10 +276,13 @@ sub view_finalise :Private {
   # Get the ranking template for the table - we need this before we stash because one of the scripts depends
   # on whether or not we're assigning points (as there's an extra column if we are)
   my $ranking_template = $division_season->league_table_ranking_template;
+  my $match_template = $division_season->league_match_template;
   
-  my $table_view_js = $ranking_template->assign_points
-    ? $c->uri_for("/static/script/tables/view-points.js")
-    : $c->uri_for("/static/script/tables/view-no-points.js");
+  # Base JS name - add to it based on whether we have points or not / handicaps or not
+  my $table_view_js = "view";
+  $table_view_js .= "-points" if $ranking_template->assign_points;
+  $table_view_js .= "-hcp" if $match_template->handicapped;
+  $table_view_js = $c->uri_for("/static/script/tables/$table_view_js.js", {v => 3});
   
   # Stash the common details
   $c->stash({
@@ -298,6 +301,7 @@ sub view_finalise :Private {
       division => $division,
     }),
     ranking_template => $ranking_template,
+    match_template => $match_template,
     canonical_uri => $canonical_uri,
     external_scripts => [
       $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
