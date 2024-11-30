@@ -438,7 +438,8 @@ sub view_finalise :Private {
     season => $season,
   });
   
-  my $team_view_js_suffix = ( $c->stash->{authorisation}{match_update} or $c->stash->{authorisation}{match_cancel} ) ? "-with-actions" : "";
+  # Add handicapped flag for template / JS if there are handicapped matches
+  my $handicapped = $matches->handicapped_matches->count ? "/hcp" : "";
   
   # Set up the template to use
   $c->stash({
@@ -448,16 +449,18 @@ sub view_finalise :Private {
     canonical_uri => $canonical_uri,
     external_scripts => [
       $c->uri_for("/static/script/plugins/responsive-tabs/jquery.responsiveTabs.mod.js"),
+      $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/standard/vertical-table.js"),
-      $c->uri_for(sprintf("/static/script/teams/view%s.js", $team_view_js_suffix), {v => 3}),
+      $c->uri_for("/static/script/teams$handicapped/view.js", {v => 3}),
     ],
     external_styles => [
       $c->uri_for("/static/css/responsive-tabs/responsive-tabs.css"),
       $c->uri_for("/static/css/responsive-tabs/style-jqueryui.css"),
+      $c->uri_for("/static/css/chosen/chosen.min.css"),
       $c->uri_for("/static/css/datatables/dataTables.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/fixedColumns.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
@@ -467,6 +470,7 @@ sub view_finalise :Private {
     view_online_link => 1,
     no_filter => 1, # Don't include the averages filter form on a team averages view
     matches => $matches,
+    handicapped => $handicapped,
     seasons => $team->team_seasons->count,
   });
 }

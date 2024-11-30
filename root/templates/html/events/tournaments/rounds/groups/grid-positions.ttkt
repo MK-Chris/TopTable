@@ -9,8 +9,8 @@ SET team_ids = "";
 # numbers are set, it's likely we'll need to fit it in the middle somewhere (where there is a missing grid
 # position number).
 SET bye_printed = 0;
-SET positions_filled = division.team_seasons_rs.grid_positions_filled;
-IF division.team_seasons_rs.count % 2 == 1;
+SET positions_filled = group.grid_positions_set;
+IF entrants.size % 2 == 1;
   SET bye_required = 1;
 ELSE;
   SET bye_required = 0;

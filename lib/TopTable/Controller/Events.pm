@@ -1165,6 +1165,11 @@ sub group_view :Private {
   $table_view_js .= "-hcp" if $match_template->handicapped;
   $table_view_js = $c->uri_for("/static/script/tables/$table_view_js.js", {v => 3});
   
+  my $matches = $group->matches;
+  
+  # Add handicapped flag for template / JS if there are handicapped matches
+  my $handicapped = $matches->handicapped_matches->count ? "/hcp" : "";
+  
   $c->stash({
     template => "html/events/tournaments/rounds/groups/view.ttkt",
     title_links => \@title_links,
@@ -1174,7 +1179,8 @@ sub group_view :Private {
     last_updated => $group->get_tables_last_updated_timestamp,
     ranking_template => $ranking_template,
     match_template => $match_template,
-    matches => scalar $group->matches,
+    matches => $matches,
+    handicapped => $handicapped,
     external_scripts => [
       $c->uri_for("/static/script/plugins/responsive-tabs/jquery.responsiveTabs.mod.js"),
       $c->uri_for("/static/script/standard/responsive-tabs.js"),
@@ -1185,7 +1191,7 @@ sub group_view :Private {
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
       $table_view_js,
-      $c->uri_for("/static/script/fixtures-results/view-group-weeks-ordering-no-comp.js", {v => 2}),
+      $c->uri_for("/static/script/fixtures-results/view$handicapped/group-weeks-ordering-no-comp.js"),
     ],
     external_styles => [
       $c->uri_for("/static/css/responsive-tabs/responsive-tabs.css"),

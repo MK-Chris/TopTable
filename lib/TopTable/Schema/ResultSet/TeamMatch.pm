@@ -611,7 +611,9 @@ Return the subset of matches within a resultset that are handicapped.
 
 sub handicapped_matches {
   my $class = shift;
-  return $class->search({handicapped => 1});
+  return $class->search({"team_match_template.handicapped" => 1}, {
+    join => [qw( team_match_template )],
+  });
 }
 
 =head2 get_match_by_ids

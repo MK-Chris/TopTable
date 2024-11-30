@@ -116,6 +116,12 @@ msgstr "Home / Away"
 msgid "fixtures-results.heading.home-team"
 msgstr "Home team"
 
+msgid "fixtures-results.heading.home-team-hcp"
+msgstr "Home HCP"
+
+msgid "fixtures-results.heading.home-team-hcp-full"
+msgstr "Home team handicap"
+
 msgid "fixtures-results.heading.opponent"
 msgstr "Opponent"
 
@@ -127,6 +133,18 @@ msgstr "Score"
 
 msgid "fixtures-results.heading.away-team"
 msgstr "Away team"
+
+msgid "fixtures-results.heading.away-team-hcp"
+msgstr "Away HCP"
+
+msgid "fixtures-results.heading.away-team-hcp-full"
+msgstr "Away team handicap"
+
+msgid "fixtures-results.heading.hcp"
+msgstr "HCP"
+
+msgid "fixtures-results.heading.hcp-full"
+msgstr "Handicap"
 
 msgid "fixtures-results.heading.venue"
 msgstr "Venue"
@@ -2604,11 +2622,23 @@ msgstr "Not yet played"
 msgid "matches.handicap.not-yet-set"
 msgstr "Handicap not yet set"
 
+msgid "matches.handicap.scratch-hcp"
+msgstr "Scratch handicap"
+
 msgid "matches.handicap.scratch"
-msgstr "Scratch handicap (no start)"
+msgstr "Scratch"
+
+msgid "matches.handicap.format.not-handicapped"
+msgstr "N/A"
+
+msgid "matches.handicap.format.not-set"
+msgstr "Not yet set"
 
 msgid "matches.update-score"
-msgstr "Update score"
+msgstr "Update match date, venue, players and score"
+
+msgid "matches.update-handicap"
+msgstr "Update handicap"
 
 msgid "matches.cancel"
 msgstr "Cancel match"

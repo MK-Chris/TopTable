@@ -173,7 +173,7 @@ sub index :Path :Args(0) {
   my $online_users_last_active_limit = $c->datetime_tz({time_zone => "UTC"})->subtract(minutes => 15);
   my $online_user_count = $c->model("DB::Session")->get_online_users({datetime_limit => $online_users_last_active_limit})->count;
   
-  my ( $matches, $matches_to_show, $matches_started, $next_match_date );
+  my ( $matches, $matches_to_show, $matches_started, $next_match_date, $handicapped );
   
   if ( defined($current_season) ) {
     $matches = $c->model("DB::TeamMatch")->matches_on_date({
@@ -200,6 +200,9 @@ sub index :Path :Args(0) {
         $matches_to_show = 0;
       }
     }
+    
+    # Add handicapped flag for template / JS if there are handicapped matches
+    $handicapped = $matches->handicapped_matches->count ? "/hcp" : "";
   } else {
     $matches_started = 0;
     $matches_to_show = 0;
@@ -229,7 +232,7 @@ sub index :Path :Args(0) {
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
       $c->uri_for("/static/script/event-viewer/view-home.js", {v => 2}),
-      $c->uri_for("/static/script/fixtures-results/view-group-competitions-no-date-check-score.js"),
+      $c->uri_for("/static/script/fixtures-results/view$handicapped/group-competitions-no-date-check-score.js"),
       $c->uri_for("/static/script/standard/option-list.js"),
     ],
     external_styles => [
@@ -248,6 +251,7 @@ sub index :Path :Args(0) {
     events => \@events,
     exclude_event_user => 1,
     matches => $matches,
+    handicapped => $handicapped,
     matches_to_show => $matches_to_show,
     matches_started => $matches_started,
     next_match_date => $next_match_date,

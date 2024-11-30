@@ -230,7 +230,7 @@ END;
   <div id="fixtures-results">
 [%
   # Fixtures / results
-  INCLUDE "html/fixtures-results/view/by-team.ttkt";
+  INCLUDE "html/fixtures-results/view$handicapped/by-team.ttkt";
 -%]
   </div>
 </div>

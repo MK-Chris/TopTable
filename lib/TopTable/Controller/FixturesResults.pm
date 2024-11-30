@@ -521,9 +521,6 @@ sub view_team :Private {
   my $season = $c->stash->{season};
   my $team = $c->stash->{team};
   
-  # $display_options will be a list of teams, divisions or dates, depending on our view method, to display on the page as links
-  my ( $matches, $display_options );
-  
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["fixtures_view", $c->maketext("user.auth.view-fixtures"), 1]);
   $c->forward("TopTable::Controller::Users", "check_authorisation", [[qw( match_update match_cancel )], "", 0]);
   
@@ -554,15 +551,21 @@ sub view_team :Private {
     $online_display = sprintf("Viewing fixtures & results for %s %s", $enc_club_short_name, $enc_old_team_name);
   }
   
+  # Grab the matches and check if there are handicapped ones in there
+  my $matches = $c->model("DB::TeamMatch")->matches_for_team({
+    team => $team,
+    season => $season,
+  });
+  
+  # Add handicapped flag for template / JS if there are handicapped matches
+  my $handicapped = $matches->handicapped_matches->count ? "/hcp" : "";
+  
   # Set up the template to use
   $c->stash({
-    template => "html/fixtures-results/view/no-grouping.ttkt",
+    template => "html/fixtures-results/view$handicapped/no-grouping.ttkt",
     view_online_display => $online_display,
     view_online_link => 1,
-    matches => scalar $c->model("DB::TeamMatch")->matches_for_team({
-      team => $team,
-      season => $season,
-    }),
+    matches => $matches,
     subtitle1 => $season->complete ? $c->maketext("fixtures-results.title.results", $old_club_and_team): $c->maketext("fixtures-results.title.fixtures-results", $old_club_and_team),
     title_links => [{
       image_uri => $c->uri_for("/static/images/icons/0038-Calender-icon-32.png"),
@@ -574,7 +577,7 @@ sub view_team :Private {
       $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
-      $c->uri_for("/static/script/fixtures-results/view-no-grouping.js", {v => 2}),
+      $c->uri_for("/static/script/fixtures-results/view$handicapped/no-grouping.js", {v => 3}),
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
@@ -803,6 +806,9 @@ sub view_division :Private {
     season => $season,
   });
   
+  # Add handicapped flag for template / JS if there are handicapped matches
+  my $handicapped = $matches->handicapped_matches->count ? "/hcp" : "";
+  
   # Make sure this division has an association with the given season
   my $division_season = $division->get_season($season);
   $c->detach(qw(TopTable::Controller::Root default)) unless defined($division_season);
@@ -823,7 +829,7 @@ sub view_division :Private {
   
   # Set up the template to use
   $c->stash({
-    template => "html/fixtures-results/view/group-weeks-ordering-no-comp.ttkt",
+    template => "html/fixtures-results/view$handicapped/group-weeks-ordering-no-comp.ttkt",
     view_online_display => $online_display,
     view_online_link => 1,
     matches => $matches,
@@ -839,7 +845,7 @@ sub view_division :Private {
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
-      $c->uri_for("/static/script/fixtures-results/view-group-weeks-ordering-no-comp.js", {v => 2}),
+      $c->uri_for("/static/script/fixtures-results/view$handicapped/group-weeks-ordering-no-comp.js"),
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
@@ -984,6 +990,9 @@ sub view_venue :Private {
     season => $season,
   });
   
+  # Add handicapped flag for template / JS if there are handicapped matches
+  my $handicapped = $matches->handicapped_matches->count ? "/hcp" : "";
+  
   my $online_display;
   if ( $specific_season ) {
     $online_display = sprintf("Viewing fixtures & results taking place at %s in %s", $venue->name, $season->name);
@@ -995,7 +1004,7 @@ sub view_venue :Private {
   
   # Set up the template to use
   $c->stash({
-    template => "html/fixtures-results/view/group-weeks-ordering.ttkt",
+    template => "html/fixtures-results/view$handicapped/group-weeks-ordering-no-venue.ttkt",
     matches => $matches,
     subtitle1 => $season->complete ? $c->maketext("fixtures-results.title.results", $enc_venue_name): $c->maketext("fixtures-results.title.fixtures-results", $enc_venue_name),
     view_online_display => sprintf( "Viewing fixtures & results taking place at %s in %s", $venue->name, $season->name ),
@@ -1012,7 +1021,7 @@ sub view_venue :Private {
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
-      $c->uri_for("/static/script/fixtures-results/view-group-weeks-ordering.js", {v => 2}),
+      $c->uri_for("/static/script/fixtures-results/view$handicapped/group-weeks-ordering-no-venue.js"),
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
@@ -1171,6 +1180,9 @@ sub view_month :Private {
     end_date => $end_date,
   });
   
+  # Add handicapped flag for template / JS if there are handicapped matches
+  my $handicapped = $matches->handicapped_matches->count ? "/hcp" : "";
+  
   my $online_display;
   if ( $specific_season ) {
     $online_display = sprintf("Viewing fixtures & results in %s %d", $start_date->month_name, $start_date->year);
@@ -1183,7 +1195,7 @@ sub view_month :Private {
   
   # Set up the template to use
   $c->stash({
-    template => "html/fixtures-results/view/group-week-competitions.ttkt",
+    template => "html/fixtures-results/view$handicapped/group-week-competitions.ttkt",
     view_online_display => $online_display,
     view_online_link => 1,
     matches => $matches,
@@ -1199,7 +1211,7 @@ sub view_month :Private {
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
-      $c->uri_for("/static/script/fixtures-results/view-group-week-competitions.js"),
+      $c->uri_for("/static/script/fixtures-results/view$handicapped/group-week-competitions.js"),
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
@@ -1275,6 +1287,9 @@ sub view_outstanding :Private {
     date_cutoff => $date_cutoff,
   });
   
+  # Add handicapped flag for template / JS if there are handicapped matches
+  my $handicapped = $matches->handicapped_matches->count ? "/hcp" : "";
+  
   my $online_display;
   if ( $specific_season ) {
     $online_display = "Viewing outstanding scorecards";
@@ -1284,7 +1299,7 @@ sub view_outstanding :Private {
   
   # Set up the template to use
   $c->stash({
-    template => "html/fixtures-results/view/group-weeks.ttkt",
+    template => "html/fixtures-results/view$handicapped/group-weeks-ordering.ttkt",
     view_online_display => $online_display,
     view_online_link => 1,
     matches => $matches,
@@ -1295,7 +1310,7 @@ sub view_outstanding :Private {
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
-      $c->uri_for("/static/script/fixtures-results/view-group-weeks.js", {v => 2}),
+      $c->uri_for("/static/script/fixtures-results/view$handicapped/group-weeks-ordering.js"),
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
@@ -1421,8 +1436,6 @@ sub view_week :Private {
   my $season = $c->stash->{season};
   my $specific_season = $c->stash->{specific_season};
   
-  $c->log->debug(sprintf("start date: %s, end date: %s", $week_start_date, $week_end_date));
-  
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["fixtures_view", $c->maketext("user.auth.view-fixtures"), 1]);
   $c->forward("TopTable::Controller::Users", "check_authorisation", [[ qw( match_update match_cancel ) ], "", 0]);
   
@@ -1433,13 +1446,16 @@ sub view_week :Private {
     end_date => $week_end_date,
   });
   
+  # Add handicapped flag for template / JS if there are handicapped matches
+  my $handicapped = $matches->handicapped_matches->count ? "/hcp" : "";
+  
   my $week_text = $c->i18n_datetime_format_date_long->format_datetime($week_start_date);
   my $online_display = "Viewing fixtures & reults in week beginning $week_text";
   my $enc_week_text = $c->maketext("fixtures-results.view-week.week-beginning", $week_text);
   
   # Set up the template to use
   $c->stash({
-    template => "html/fixtures-results/view/group-competitions.ttkt",
+    template => "html/fixtures-results/view$handicapped/group-competitions.ttkt",
     view_online_display => $online_display,
     view_online_link => 1,
     matches => $matches,
@@ -1455,7 +1471,7 @@ sub view_week :Private {
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
-      $c->uri_for("/static/script/fixtures-results/view-group-competitions.js"),
+      $c->uri_for("/static/script/fixtures-results/view$handicapped/group-competitions.js"),
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
@@ -1605,6 +1621,9 @@ sub view_day :Private {
     date => $date,
   });
   
+  # Add handicapped flag for template / JS if there are handicapped matches
+  my $handicapped = $matches->handicapped_matches->count ? "/hcp" : "";
+  
   my $online_display;
   if ( $specific_season ) {
     $online_display = sprintf("Viewing fixtures & reults on week beginning %s, %d %s %d", $date->day_name, $date->day, $date->month_name, $date->year);
@@ -1617,7 +1636,7 @@ sub view_day :Private {
   
   # Set up the template to use
   $c->stash({
-    template => "html/fixtures-results/view/group-competitions-no-date.ttkt",
+    template => "html/fixtures-results/view$handicapped/group-competitions-no-date.ttkt",
     view_online_display => $online_display,
     view_online_link => 1,
     matches => $matches,
@@ -1633,7 +1652,7 @@ sub view_day :Private {
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
-      $c->uri_for("/static/script/fixtures-results/view-group-competitions-no-date.js"),
+      $c->uri_for("/static/script/fixtures-results/view$handicapped/group-competitions-no-date.js"),
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
@@ -2010,7 +2029,7 @@ sub download :Private {
         $c->stash({
           template => "html/fixtures-results/calendar/type-other.ttkt",
           external_scripts => [
-            $c->uri_for("/static/script/fixtures-results/calendar-type-other.js"),
+            $c->uri_for("/static/script/fixtures-results/calendar/type-other.js"),
           ],
           webcal_uri => $webcal_uri,
           form_action => $c->uri_for_action($c->action, $c->req->captures, $download_type),
@@ -2023,7 +2042,7 @@ sub download :Private {
             $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
             $c->uri_for("/static/script/standard/chosen.js"),
             $c->uri_for("/static/script/standard/prettycheckable.js"),
-            $c->uri_for("/static/script/fixtures-results/calendar-types.js", {v => "1.1"}),
+            $c->uri_for("/static/script/fixtures-results/calendar/types.js"),
           ],
           external_styles => [
             $c->uri_for("/static/css/chosen/chosen.min.css"),

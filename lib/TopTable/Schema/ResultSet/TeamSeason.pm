@@ -97,13 +97,13 @@ sub get_tables_last_updated_timestamp {
   return $last_updated_team->last_updated if defined($last_updated_team);
 }
 
-=head2 grid_positions_filled
+=head2 grid_positions_set
 
 Loop through a resultset and if any positions are filled with a number, return 1, else return 0.
 
 =cut
 
-sub grid_positions_filled {
+sub grid_positions_set {
   my $class = shift;
   my $count = $class->search({
     grid_position => {

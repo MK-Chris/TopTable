@@ -972,7 +972,7 @@ sub name {
       # Handicaps are defined, so are set
       if ( !$self->home_team_handicap and !$self->away_team_handicap ) {
         # Scratch handicap, since they are defined and both 0
-        $away_team_with_handicap .= sprintf(" (%s)", $lang->maketext("matches.handicap.scratch"));
+        $away_team_with_handicap .= sprintf(" (%s)", $lang->maketext("matches.handicap.scratch-hcp"));
       } else {
         if ( $self->home_team_handicap ) {
           $home_team_with_handicap .= sprintf(" (+%s)", $self->home_team_handicap);
@@ -1008,6 +1008,160 @@ sub name {
       return sprintf("%s %d-%d %s", $home_season->full_name, $self->home_team_match_score, $self->away_team_match_score, $away_season->full_name);
     }
   }
+}
+
+=head2 competition_name
+
+Return the competition name - this will be "League - [division]" or "[Tournament name] - [round]" (if this is part of a group round, the group name will also be returned)
+
+=cut
+
+sub competition_name {
+  my $self = shift;
+  my ( $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  
+  my $comp;
+  if ( defined($self->tournament_round) ) {
+    # Only encode the tournament name, the round name comes encoded
+    $comp = sprintf("%s - %s", encode_entities($self->tournament_round->tournament->event_season->name), $self->tournament_round->name);
+    $comp .= sprintf(" (%s)", $self->tournament_group->name) if defined($self->tournament_group);
+  } else {
+    $comp = sprintf("%s - %s", $lang->maketext("matches.field.competition.value.league"), encode_entities($self->division_season->name));
+  }
+  
+  return $comp;
+}
+
+=head2 competition_sort
+
+Return a sortable representation of the competition.  This will be in the format of:
+
+A|B (league = A, tournament = B) - this ensures league is always ahead of tournaments.
+League - division rank padded to 3 characters, i.e., 001
+Tournament - tournament name, then the round number padded to 3 characters, then optionally the group order number if this is in a group, padded to 3 characters.
+
+Example:
+League, Premier Division (or top division):
+A001
+
+Tournament "Challenge Cup", round 1, group 10:
+BChallenge Cup001010
+
+=cut
+
+sub competition_sort {
+  my $self = shift;
+  
+  my $sort;
+  if ( defined($self->tournament_round) ) {
+    # Only encode the tournament name, the round name comes encoded
+    $sort = sprintf("B%s%03d", encode_entities($self->tournament_round->tournament->event_season->name), $self->tournament_round->round_number);
+    $sort .= sprintf("%03d", $self->tournament_group->group_order) if defined($self->tournament_group);
+  } else {
+    $sort = sprintf("A%03d", encode_entities($self->division_season->division->rank));
+  }
+  
+  return $sort;
+}
+
+=head2 handicapped
+
+Return 1 if the match is handicapped, or 0 if not.
+
+=cut
+
+sub handicapped {
+  my $self = shift;
+  return $self->team_match_template->handicapped;
+}
+
+=head2 handicap_format
+
+Tells us if the handicap has been set or needs setting.  Returns undef if this isn't a handicapped match.
+
+=cut
+
+sub handicap_format {
+  my $self = shift;
+  my ( $location, $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  
+  # Pick up the right field to format
+  my $hcp_fld = $location eq "home" ? $self->home_team_handicap : $self->away_team_handicap;
+  my $hcp_text;
+  if ( $self->handicapped ) {
+    if ( $self->handicap_set ) {
+      # Handicap is set, if it's greater than 0, add a +
+      $hcp_text = $hcp_fld >= 1 ? sprintf("+%d", $hcp_fld) : $hcp_fld;
+    } else {
+      # Handicap not yet set
+      $hcp_text = $lang->maketext("matches.handicap.format.not-set");
+    }
+  } else {
+    # Not a handicapped match
+    $hcp_text = "";
+  }
+  
+  return $hcp_text;
+}
+
+=head2 relative_handicap
+
+Pass in "home" or "away" as the first argument, the handicap returned is relative to what is passed in (i.e., 'home', the handicap is relative to the home team - if the home team gets the headstart, the handicap will return as a positive; if the away team gets the start, it'll be negative).
+
+=cut
+
+sub relative_handicap {
+  my $self = shift;
+  my ( $location, $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  
+  # Pick up the right field to format
+  my $hcp_text;
+  if ( $self->handicapped ) {
+    if ( $self->handicap_set ) {
+      # Handicap is set
+      if ( $location eq "home" ) {
+        $hcp_text = $self->home_team_handicap - $self->away_team_handicap;
+      } elsif ( $location eq "away" ) {
+        $hcp_text = $self->away_team_handicap - $self->home_team_handicap;
+      } else {
+        return undef;
+      }
+      
+      if ( $hcp_text == 0 ) {
+        # Zero - return scratch text
+        $hcp_text = $lang->maketext("matches.handicap.scratch");
+      } else {
+        # Add + if we need to
+        $hcp_text = $hcp_text >= 1 ? sprintf("+%d", $hcp_text) : $hcp_text;
+      }
+    } else {
+      # Handicap not yet set
+      $hcp_text = $lang->maketext("matches.handicap.format.not-set");
+    }
+  } else {
+    # Not a handicapped match
+    $hcp_text = "";
+  }
+  
+  return $hcp_text;
 }
 
 =head2 handicap_set
@@ -1170,17 +1324,6 @@ sub actual_date {
   } else {
     return $self->scheduled_date;
   }
-}
-
-=head2 handicapped
-
-Return 1 if the match is handicapped, or 0 if not.
-
-=cut
-
-sub handicapped {
-  my $self = shift;
-  return $self->team_match_template->handicapped;
 }
 
 =head2 rescheduled
