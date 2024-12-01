@@ -576,7 +576,7 @@ sub head_to_head :Chained("base") :PathPart("head-to-head") :Args(0) {
             $leg_scores .= ", ";
           }
           
-          $leg_scores .= $leg_score->{home} . '-' . $leg_score->{away};
+          $leg_scores .= sprintf("%d-%d", $leg_score->{home}, $leg_score->{away});
           $leg_number++;
         }
         
@@ -588,12 +588,18 @@ sub head_to_head :Chained("base") :PathPart("head-to-head") :Args(0) {
         $score = $c->maketext("msg.not-applicable");
       }
       
-      if ( $game->winner->id == $for_team->id ) { 
-        $result = $c->maketext("matches.result.win");
-      } elsif ( $game->winner->id == $against_team->id ) {
-        $result = $c->maketext("matches.result.loss");
+      if ( $game->complete ) {
+        if ( defined($game->winner) ) {
+          if ( $game->winner->id == $for_team->id ) { 
+            $result = $game->started ? $c->maketext("matches.result.win") : $c->maketext("matches-result.forefeited-win");
+          } elsif ( $game->winner->id == $against_team->id ) {
+            $result = $game->started ? $c->maketext("matches.result.loss") : $c->maketext("matches-result.forefeited-loss");
+          }
+        } else {
+          $result = $c->maketext("matches.result.draw");
+        }
       } else {
-        $result = $c->maketext("matches.result.draw");
+        $result = $c->maketext("matches.result.not-played");
       }
       
       my $season = $match->season;

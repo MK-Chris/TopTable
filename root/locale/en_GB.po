@@ -3169,6 +3169,15 @@ msgstr "Drawing"
 msgid "matches.result.cancelled"
 msgstr "Cancelled"
 
+msgid "matches.result.not-played"
+msgstr "Not played"
+
+msgid "matches.result.forefeited-win"
+msgstr "Won by forefeit"
+
+msgid "matches.result.forefeited-loss"
+msgstr "Forefeited"
+
 msgid "matches.heading.details"
 msgstr "Match details"
 

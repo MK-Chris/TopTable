@@ -996,6 +996,7 @@ sub update_score {
   my ( $home_legs, $away_legs, $void ) = qw( 0 0 0 );
   my $game_started = 0; # Flag for whether the game's started - if not and it's been awarded, we won't update any averages (unless the season setting forefeit_count_averages_if_game_not_started is set)
   my $game_finished = 0; # Flag (when the game's been awarded) to notify us the game's finished even if the score doesn't look complete.
+  my ( $home_points_awarded, $away_points_awarded ) = qw( 0 0 );
   while ( my $leg = $legs->next ) {
     my $leg_number = $leg->leg_number;
     
@@ -1049,6 +1050,8 @@ sub update_score {
         $winner = $away_team->id;
         $awarded = 1;
         $void = 0;
+        $home_points_awarded = $game_rules->minimum_points_win if $winner_type eq "points" and ((defined($legs_required_to_win) and $leg_number <= $legs_required_to_win) or !defined($legs_required_to_win));
+        
         #$logger->("debug", sprintf("game %s, home missing, award to away team", $self->scheduled_game_number));
       } else {
         # Away player missing, award to home team
@@ -1056,13 +1059,14 @@ sub update_score {
         $winner = $home_team->id;
         $awarded = 1;
         $void = 0;
+        $away_points_awarded = $game_rules->minimum_points_win if $winner_type eq "points" and ((defined($legs_required_to_win) and $leg_number <= $legs_required_to_win) or !defined($legs_required_to_win));
         #$logger->("debug", sprintf("game %s, home missing, award to home team", $self->scheduled_game_number));
       }
       
       $game_scores{"leg_$leg_number"} = {
         leg_object => $leg,
-        home_score => 0,
-        away_score => 0,
+        home_score => $home_points_awarded,
+        away_score => $away_points_awarded,
         started => 0,
         complete => 1,
         winner => $winner,
@@ -1187,7 +1191,6 @@ sub update_score {
                 $winner = $away_team->id;
                 $away_legs++ if $game_started and ( $home_score or $away_score );
               }
-              
               
               $winner = $awarded_winner eq "home" ? $home_team->id : $away_team->id;
               $game_winner = $winner;

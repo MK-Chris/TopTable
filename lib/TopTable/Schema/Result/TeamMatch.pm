@@ -1198,7 +1198,7 @@ Where these come from depend on the match type (tournament or league); if it's a
 sub rules {
   my $self = shift;
   my ( $rule_name ) = @_;
-  my $tournament = defined($self->tournament_round) ? $self-tournament_round->tournament : undef;
+  my $tournament = defined($self->tournament_round) ? $self->tournament_round->tournament : undef;
   my $season = $self->season;
   
   if ( defined($rule_name) ) {
@@ -1772,7 +1772,7 @@ sub calculate_match_score {
             $legs_per_game = int($legs_per_game); # Truncate any decimal placeas
           }
           
-          if ( $self->winner->id == $home_team->id ) {
+          if ( $game->winner->id == $home_team->id ) {
             # Awarded to the home team - current home points plus the points we need for a win multiplied by the number of legs
             $_home_score += ( $legs_per_game * $minimum_points_win );
             $_home_games_won++;
