@@ -12,11 +12,11 @@ $(document).ready(function() {
     info: true,
     fixedHeader: true,
     searching: true,
-    orderFixed: {pre: [4, "asc"]},
-    order: [3, "asc"],
+    orderFixed: {pre: [5, "asc"]},
+    order: [1, "asc"],
     ordering: true,
     rowGroup: {
-      dataSrc: 4
+      dataSrc: 5
     },
     columnDefs: [{
       // Date sortable, week day sortable, competition sortable, competition (used in group)
