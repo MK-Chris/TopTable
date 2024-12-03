@@ -80,6 +80,7 @@
     ELSE;
       SET score = c.maketext("matches.versus.not-yet-played");
     END;
+    CALL stats.profile("row " _ i) IF stats;
 -%]
   <tr>
     <td data-label="[% c.maketext("fixtures-results.heading.week-beginning-sort") %]">[% week.ymd %]</td>
@@ -121,7 +122,6 @@
 -%]
   </tr>
 [%
-    SET last_week_beginning_date = week;
     SET i = i + 1;
   END;
 -%]

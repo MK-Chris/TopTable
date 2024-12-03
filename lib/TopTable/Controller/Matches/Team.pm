@@ -142,16 +142,23 @@ sub base :Private {
   
   my ( $subtitle2, $subtitle3, $subtitle4, $subtitle5 );
   my $date = $match->played_date->set_locale($c->locale);
+  my $date_str = $c->i18n_datetime_format_date_long->format_datetime($date);
   
   if ( defined($match->division_season) ) {
-    $subtitle2 = encode_entities($match->division_season->name);
-    $subtitle3 = $c->maketext("matches.field.competition.value.league");
-    $subtitle4 = sprintf("%s %d %s %d", ucfirst($date->day_name), $date->day, $date->month_name, $date->year);
+    $subtitle2 = $c->maketext("matches.field.competition.value.league");
+    $subtitle3 = encode_entities($match->division_season->name);
+    $subtitle4 = $date_str;
   } else {
     $subtitle2 = encode_entities($match->tournament_round->tournament->event_season->name);
-    $subtitle3 = encode_entities($match->tournament_round->name);
-    $subtitle3 = encode_entities($match->tournament_group->name) if defined($match->tournament_group);
-    $subtitle5 = sprintf("%s %d %s %d", ucfirst($date->day_name), $date->day, $date->month_name, $date->year);
+    $subtitle3 = $match->tournament_round->name;
+    
+    if ( defined($match->tournament_group) ) {
+      $subtitle4 = $match->tournament_group->name if defined($match->tournament_group);
+      $subtitle5 = $date_str;
+    } else {
+      $subtitle4 = $date_str;
+      
+    }
     
     # Add a warning for matches that don't have a division (attached to an event instead)
     $c->add_event_test_msg;
@@ -658,7 +665,13 @@ sub change_played_date :Private {
   # Check that we are authorised to update scorecards
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["match_update", $c->maketext("user.auth.update-matches"), 1]);
   
-  my $response = $match->update_played_date($c->i18n_datetime_format_date->parse_datetime($c->req->params->{date}));
+  # $c->log->debug(sprintf("played date: %s", $c->req->params->{date}));
+  # $c->log->debug(sprintf("parsed date: %s", $c->i18n_datetime_format_date->parse_datetime($c->req->params->{date})->ymd("/")));
+  my $cldr = $c->i18n_datetime_format_date;
+  $cldr->time_zone("UTC");
+  my $response = $match->update_played_date($cldr->parse_datetime($c->req->params->{date}), {
+    logger => sub{ my $level = shift; $c->log->$level( @_ ); },
+  });
   
   # Set the status messages we need to show back to the user
   my @errors = @{$response->{errors}};

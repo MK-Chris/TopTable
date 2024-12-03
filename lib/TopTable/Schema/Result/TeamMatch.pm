@@ -1432,6 +1432,7 @@ sub update_played_date {
     completed => 0,
   };
   
+  #$logger->("debug", sprintf("date passed: %s, ref: %s", $played_date, ref($played_date)));
   if ( defined($played_date) ) {
     # Do the date checking; eval it to trap DateTime errors and pass them into $error
     if ( ref($played_date) eq "HASH" ) {
@@ -1458,7 +1459,9 @@ sub update_played_date {
   }
   
   if ( scalar @{$response->{errors}} == 0 ) {
-    my $ok = $self->update({played_date => $played_date});
+    #$logger->("debug", sprintf("update played date to %s", $played_date));
+    my $ok = $self->update({played_date => $played_date->ymd});
+    #$logger->("debug", sprintf("played date is now %s", $self->played_date->ymd));
     
     if ( $ok ) {
       push(@{$response->{success}}, $lang->maketext("matches.update-match-date.success"));

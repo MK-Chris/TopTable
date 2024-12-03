@@ -274,7 +274,7 @@ sub set_event_log {
       
       my $event_objects = $event->$object_relation;
       my $related_object;
-      $logger->("debug", "keys: " . scalar keys %{$ids});
+      #$logger->("debug", "keys: " . scalar keys %{$ids});
       $related_object = $event_objects->find($ids) if scalar keys %{$ids};
       
       if ( defined($related_object) ) {
