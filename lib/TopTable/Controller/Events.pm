@@ -579,6 +579,7 @@ Finalise the view routine, whether we were given a season or not
 sub view_finalise :Private {
   my ( $self, $c ) = @_;
   my $event = $c->stash->{event};
+  my $event_type = $event->event_type->id;
   my $season = $c->stash->{season};
   my $event_season = $c->stash->{event_season};
   my $enc_name = $c->stash->{enc_name};
@@ -600,7 +601,7 @@ sub view_finalise :Private {
         image_uri => $c->uri_for("/static/images/icons/0037-Notepad-icon-32.png"),
         text => $c->maketext("admin.edit-object-details", $enc_name),
         link_uri => $c->uri_for_action("/events/edit_details", [$event->url_key]),
-      }) if $event->event_type->id eq "meeting" and $event->can_edit_details;
+      }) if $event_type eq "meeting" and $event->can_edit_details;
     }
     
     # Push a delete link if we're authorised and the event can be deleted
@@ -632,7 +633,7 @@ sub view_finalise :Private {
   );
   
   my $template_path;
-  if ( $event->event_type->id eq "meeting" ) {
+  if ( $event_type eq "meeting" ) {
     my $meeting = $event_season->get_meeting;
     $template_path = "events/view-meeting.ttkt";
     
@@ -641,7 +642,7 @@ sub view_finalise :Private {
       attendees => [$meeting->attendees],
       apologies => [$meeting->apologies],
     });
-  } elsif ( $event->event_type->id eq "single_tournament" ) {
+  } elsif ( $event_type eq "single_tournament" ) {
     # Grab the tournament details
     my $tournament = $c->stash->{event_detail};
     $template_path = "events/tournaments/view.ttkt";
@@ -687,6 +688,8 @@ sub view_finalise :Private {
         match_template => $match_template,
       });
     }
+  } elsif ( $event_type eq "multi_tournament" ) {
+    $template_path = "events/tournaments/multi-event/view.ttkt";
   }
   
   $c->stash({
@@ -1921,7 +1924,7 @@ sub process_form :Private {
   
   if ( $type eq "event" ) {
     my @field_names = qw( name event_type tournament_type venue organiser start_hour start_minute all_day end_hour end_minute default_team_match_template default_individual_match_template allow_loan_players allow_loan_players_above allow_loan_players_below allow_loan_players_across allow_loan_players_same_club_only allow_loan_players_multiple_teams loan_players_limit_per_player loan_players_limit_per_player_per_team loan_players_limit_per_player_per_opposition loan_players_limit_per_team void_unplayed_games_if_both_teams_incomplete forefeit_count_averages_if_game_not_started missing_player_count_win_in_averages rules round_name round_group round_group_rank_template round_team_match_template round_individual_match_template round_venue );
-    my @processed_field_names = ( @field_names, qw( start_date end_date round_date ) );
+    @processed_field_names = ( @field_names, qw( start_date end_date round_date ) );
     
     # The rest of the error checking is done in the Club model
     $response = $c->model("DB::Event")->create_or_edit($action, {
@@ -2014,7 +2017,6 @@ sub process_form :Private {
     }
     
     # Completed, so we log an event
-    $c->log->debug("log event");
     if ( $action eq "matches" ) {
       # Matches have a match event to log
       $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["team-match", "create", $response->{match_ids}, $response->{match_names}]);

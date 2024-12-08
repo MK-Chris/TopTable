@@ -1,0 +1,68 @@
+[%
+SET start_date = event_season.start_date_time;
+SET all_day = event_season.all_day;
+SET end_date = event_season.end_date_time;
+SET venue = event_season.venue;
+SET organiser = event_season.organiser;
+
+CALL start_date.set_locale(c.locale);
+CALL end_date.set_locale(c.locale);
+CALL start_date.set_time_zone(c.timezone);
+CALL end_date.set_time_zone(c.timezone);
+SET start_hour = start_date.hour;
+SET start_minute = start_date.minute;
+SET end_hour = end_date.hour;
+SET end_minute = end_date.minute;
+
+USE zeroes = format("%02d");
+SET start_hour = zeroes(start_hour) IF defined(start_hour);
+SET start_minute = zeroes(start_minute) IF defined(start_minute);
+SET end_hour = zeroes(end_hour) IF defined(end_hour);
+SET end_minute = zeroes(end_minute) IF defined(end_minute);
+
+IF all_day;
+  # Specifically set as all day
+  SET date_display = c.maketext("meetings.display.date-all-day", start_date.day_name, start_date.day, start_date.month_name, start_date.year, zeroes(start_hour), zeroes(start_minute));
+ELSIF end_date AND event_season.ends_on_different_day;
+  # End date is different to the start date
+  SET date_display = c.maketext("meetings.display.date-with-finish-date-time", start_date.day_name, start_date.day, start_date.month_name, start_date.year, zeroes(start_hour), zeroes(start_minute), end_date.day_name, end_date.day, end_date.month_name, end_date.year, zeroes(end_hour), zeroes(end_minute));
+ELSIF end_date;
+  # End date / time is specified, but isn't on a different day
+  SET date_display = c.maketext("meetings.display.date-with-finish-time", start_date.day_name, start_date.day, start_date.month_name, start_date.year, zeroes(start_hour), zeroes(start_minute), zeroes(end_hour), zeroes(end_minute));
+ELSE;
+  # End date not specified
+  SET date_display = c.maketext("meetings.display.date", start_date.day_name, start_date.day, start_date.month_name, start_date.year, zeroes(start_hour), zeroes(start_minute));
+END;
+ 
+-%]
+<div id="tabs">
+  <ul>
+    <li><a href="#details">[% c.maketext("meetings.heading.details") %]</a></li>
+  </ul>
+  <div id="details">
+    <div class="table-wrap">
+      <div class="table-layout table-layout-centre">
+        <table class="vertical">
+          <tr>
+            <th scope="row">[% c.maketext("meetings.field.date") %]</th>
+            <td>[% date_display %]</td>
+          </tr>
+          <tr>
+            <th scope="row">[% c.maketext("meetings.field.venue") %]</th>
+            <td><a href="[% c.uri_for_action("/venues/view", [venue.url_key]) %]">[% venue.name | html_entity %]</a></td>
+[%
+IF organiser;
+-%]
+          </tr>
+          <tr>
+            <th scope="row">[% c.maketext("meetings.field.organiser") %]</th>
+            <td><a href="[% c.uri_for_action("/people/view_current_season", [organiser.url_key]) %]">[% organiser.display_name | html_entity %]</a></td>
+[%
+END;
+-%]
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

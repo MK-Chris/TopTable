@@ -1,5 +1,6 @@
 [%
 USE zeroes = format("%02d");
+CALL c.log.debug("flashed: " _ c.flash.show_flashed);
 IF c.flash.show_flashed;
   SET event_name = c.flash.name;
   SET start_date = c.flash.start_date;
@@ -31,7 +32,7 @@ IF c.flash.show_flashed;
   SET forefeit_count_averages_if_game_not_started = c.flash.forefeit_count_averages_if_game_not_started;
   SET missing_player_count_win_in_averages = c.flash.missing_player_count_win_in_averages;
 ELSE;
-  event_name = event.name | html_entity;
+  event_name = event.name;
   start_date = event_season.start_date_time;
   end_date = event_season.end_date_time;
   CALL start_date.set_time_zone(c.timezone);
@@ -72,14 +73,11 @@ ELSE;
   SET missing_player_count_win_in_averages = event_detail.missing_player_count_win_in_averages;
 END;
 
-IF start_date;
-  SET start_date = c.i18n_datetime_format_date.format_datetime(start_date);
-END;
-
-IF end_date;
-  SET start_date = c.i18n_datetime_format_date.format_datetime(end_date);
-END;
+SET start_date = c.i18n_datetime_format_date.format_datetime(start_date) IF start_date;
+SET start_date = c.i18n_datetime_format_date.format_datetime(end_date) IF end_date;
 season_name = season.name | html_entity;
+CALL c.log.debug("flashed name: " _ c.flash.name);
+CALL c.log.debug("var name: " _ event_name);
 -%]
 
 <form method="post" action="[% form_action %]">
@@ -89,7 +87,7 @@ season_name = season.name | html_entity;
   <div class="label-field-container">
     <label for="name">[% c.maketext("events.field.name") %]</label>
     <div class="field-container">
-      <input type="text" id="name" name="name" value="[% event_name %]" />
+      <input type="text" id="name" name="name" value="[% event_name | html_entity %]" />
     </div>
     <div class="clear-fix"></div>
   </div>
