@@ -9,7 +9,7 @@ $(document).ready(function() {
     fixedHeader: true,
     searching: false,
     info: false,
-    order: [[1, "asc"]],
+    order: [[2, "asc"]],
     ordering: false,
     rowGroup: {
       dataSrc: 1

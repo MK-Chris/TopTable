@@ -15,17 +15,17 @@ $(document).ready(function() {
     ordering: true,
     order: [[1, "asc"]],
     columnDefs: [{
-      // Date sortable, day of week sortable, competition sortable
+      // Day of week sortable, date sortable, competition sortable
       visible: false,
       targets: [0, 2, 4]
     }, {
-      // Date
-      responsivePriority: 3,
+      // Day of week
+      responsivePriority: 6,
       orderData: 0,
       targets: 1
     }, {
-      // Day of week
-      responsivePriority: 6,
+      // Date
+      responsivePriority: 3,
       orderData: 2,
       targets: 3
     }, {

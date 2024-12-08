@@ -13,7 +13,7 @@ $(document).ready(function() {
     fixedHeader: true,
     searching: true,
     orderFixed: {pre: [5, "asc"]},
-    order: [1, "asc"],
+    order: [[3, "asc"], [6, "asc"]],
     ordering: true,
     rowGroup: {
       dataSrc: 5
@@ -23,13 +23,13 @@ $(document).ready(function() {
       visible: false,
       targets: [0, 2, 4, 5]
     }, {
-      // Date
-      responsivePriority: 3,
+      // Week day
+      responsivePriority: 5,
       orderData: 0,
       targets: 1
     }, {
-      // Week day
-      responsivePriority: 7,
+      // Date
+      responsivePriority: 3,
       orderData: 2,
       targets: 3
     }, {

@@ -14,7 +14,7 @@ $(document).ready(function() {
     searching: true,
     ordering: true,
     orderFixed: {pre: [1, "asc"]},
-    order: [[2, "asc"], [4, "asc"]],
+    order: [[5, "asc"], [6, "asc"]],
     rowGroup: {
       dataSrc: 1
     },
@@ -27,14 +27,14 @@ $(document).ready(function() {
       orderData: 0,
       targets: 1
     }, {
-      // Date
+      // Week day
       orderData: 2,
-      responsivePriority: 3,
+      responsivePriority: 7,
       targets: 3
     }, {
-      // Day
+      // Date
       orderData: 4,
-      responsivePriority: 7,
+      responsivePriority: 5,
       targets: 5
     }, {
       // Home team

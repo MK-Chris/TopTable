@@ -14,7 +14,7 @@ $(document).ready(function() {
     searching: true,
     ordering: true,
     orderFixed: {pre: [1, "asc"]},
-    order: [[2, "asc"], [4, "asc"]],
+    order: [[5, "asc"], [6, "asc"]],
     rowGroup: {
       dataSrc: 1
     },
@@ -27,32 +27,32 @@ $(document).ready(function() {
       orderData: 0,
       targets: 1
     }, {
-      // Date
-      orderData: 3,
-      responsivePriority: 4,
-      targets: 2
+      // Week day
+      orderData: 2,
+      responsivePriority: 7,
+      targets: 3
     }, {
       // Date
-      orderData: 3,
-      responsivePriority: 4,
-      targets: 2
+      orderData: 4,
+      responsivePriority: 5,
+      targets: 5
     }, {
       // Home team
       responsivePriority: 1,
-      targets: 4
+      targets: 6
     }, {
       // Away team
       responsivePriority: 2,
-      targets: 5
+      targets: 7
     }, {
       // Score
       responsivePriority: 3,
       orderable: false,
-      targets: 6
+      targets: 8
     }, {
       // Venue
-      responsivePriority: 5,
-      targets: 7
+      responsivePriority: 6,
+      targets: 9
     }]
   });
   

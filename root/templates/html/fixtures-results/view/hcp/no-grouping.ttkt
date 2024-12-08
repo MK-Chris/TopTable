@@ -1,10 +1,10 @@
 <table id="fixtures-table" class="stripe hover order-column row-border" style="width: 100%;">
   <thead>
     <tr>
-      <th>[% c.maketext("fixtures-results.heading.date-sort") %]</th>
-      <th>[% c.maketext("fixtures-results.heading.date") %]</th>
       <th>[% c.maketext("fixtures-results.heading.day-sort") %]</th>
       <th>[% c.maketext("fixtures-results.heading.day") %]</th>
+      <th>[% c.maketext("fixtures-results.heading.date-sort") %]</th>
+      <th>[% c.maketext("fixtures-results.heading.date") %]</th>
       <th>[% c.maketext("fixtures-results.heading.competition-sort") %]</th>
       <th>[% c.maketext("fixtures-results.heading.competition") %]</th>
       <th>[% c.maketext("fixtures-results.heading.home-team") %]</th>
@@ -77,10 +77,10 @@
     CALL date.set_locale(c.locale);
 -%]
     <tr>
-      <td data-label="[% c.maketext("fixtures-results.heading.date-sort") %]">[% date.ymd %]</td>
-      <td data-label="[% c.maketext("fixtures-results.heading.date") %]"><a href="[% fixtures_day_uri %]">[% c.i18n_datetime_format_date.format_datetime(date) %]</a></td>
       <td data-label="[% c.maketext("fixtures-results.heading.day-sort") %]">[% date.day_of_week %]</td>
       <td data-label="[% c.maketext("fixtures-results.heading.day") %]">[% date.day_name | ucfirst | html_entity %]</td>
+      <td data-label="[% c.maketext("fixtures-results.heading.date-sort") %]">[% date.ymd %]</td>
+      <td data-label="[% c.maketext("fixtures-results.heading.date") %]"><a href="[% fixtures_day_uri %]">[% c.i18n_datetime_format_date.format_datetime(date) %]</a></td>
       <td data-label="[% c.maketext("fixtures-results.heading.competition-sort") %]">[% match.competition_sort %]</td>
       <td data-label="[% c.maketext("fixtures-results.heading.competition") %]"><a href="[% comp_uri %]">[% match.competition_name %]</a></td>
       <td data-label="[% c.maketext("fixtures-results.heading.home-team") %]"><a href="[% home_team_uri %]">[% home_team.full_name | html_entity %]</a></td>

@@ -69,20 +69,20 @@ $(document).ready(function() {
     fixedHeader: true,
     searching: true,
     ordering: true,
-    order: [[1, "asc"]],
+    order: [[3, "asc"]],
     columnDefs: [{
       // Date sort, week day sort, competition sort
       visible: false,
       targets: [0, 2, 4]
     }, {
-      // Date
-      orderData: 0,
-      responsivePriority: 1,
-      targets: 1
-    }, {
       // Week day
       responsivePriority: 8,
+      orderData: 0,
+      targets: 1
+    }, {
+      // Date
       orderData: 2,
+      responsivePriority: 1,
       targets: 3
     }, {
       // Competition

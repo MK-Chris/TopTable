@@ -1279,7 +1279,7 @@ sub view_outstanding :Private {
   my $date_cutoff = DateTime->now(time_zone => $c->stash->{timezone})->subtract(hours => $outstanding_scorecard_hours);
   
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["fixtures_view", $c->maketext("user.auth.view-fixtures"), 1]);
-  $c->forward("TopTable::Controller::Users", "check_authorisation", [[ qw( match_update match_cancel ) ], "", 0]);
+  $c->forward("TopTable::Controller::Users", "check_authorisation", [[qw( match_update match_cancel )], "", 0]);
   
   # Get the start / end date to look for matches; the start date will always be 1 and the end date will always be the last date of that particular month.
   my $matches = $c->model("DB::TeamMatch")->incomplete_matches({
@@ -1310,7 +1310,7 @@ sub view_outstanding :Private {
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
-      $c->uri_for("/static/script/fixtures-results/view$handicapped/group-weeks-ordering.js"),
+      $c->uri_for("/static/script/fixtures-results/view$handicapped/group-weeks-ordering.js", {v => 2}),
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),

@@ -17,9 +17,9 @@ $(document).ready(function() {
       dataSrc: 1
     },
     orderFixed: [1, "asc"],
-    order: [[3, "asc"], [5, "asc"]],
+    order: [[3, "asc"], [7, "asc"], [8, "asc"]],
     columnDefs: [{
-      // Week beginning sort, wek beginning (grouped), competition sort, date sort, day sort
+      // Week beginning sort, week beginning (grouped), competition sort, day sort, date sort
       visible: false,
       targets: [0, 1, 2, 4, 6]
     }, {
@@ -32,13 +32,13 @@ $(document).ready(function() {
       orderData: 2,
       targets: 3
     }, {
-      // Date
-      responsivePriority: 4,
+      // Day
+      responsivePriority: 6,
       orderData: 4,
       targets: 5
     }, {
-      // Day
-      responsivePriority: 6,
+      // Date
+      responsivePriority: 4,
       orderData: 6,
       targets: 7
     }, {

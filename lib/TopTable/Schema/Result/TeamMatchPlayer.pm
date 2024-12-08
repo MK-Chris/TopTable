@@ -561,7 +561,7 @@ sub update_person {
           my $loan_allow_player_limit_per_team = $match_rules{loan_players_limit_per_player_per_team};
           my $loan_allow_player_limit_per_opposition = $match_rules{loan_players_limit_per_player_per_opposition};
           my $loan_allow_team_limit = $match_rules{loan_players_limit_per_team};
-          my $loan_allow_div_multi_team = $match_rules{allow_loan_players_multiple_teams};
+          my $loan_allow_div_multi_team = $match_rules{allow_loan_players_multiple_teams_per_division};
           
           # If it's a loan player, there's an initial check to ensure they are not actively playing for either of the teams involved in the match
           if ( $active_season->team_season->team->id == $match->team_season_home_team_season->team->id or $active_season->team_season->team->id == $match->team_season_away_team_season->team->id ) {

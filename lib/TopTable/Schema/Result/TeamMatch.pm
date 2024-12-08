@@ -1392,6 +1392,25 @@ sub games_reordered {
   return $reordered_games ? 1 : 0;
 }
 
+=head2 score
+
+Return the score of this match in the format $home_score-$away_score, or the lang code for "not yet played" if the match isn't played yet.
+
+=cut
+
+sub score {
+  my $self = shift;
+  my ( $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  
+  return $self->started ? sprintf("%d-%d", $self->home_team_match_score, $self->away_team_match_score) : $lang->maketext("matches.versus.not-yet-played");
+}
+
 =head2 get_team_seasons
 
 Retrieve the team season objects for the home and away teams in the season that the match took place.  This returns a hashref with 'home' and 'away' keys.

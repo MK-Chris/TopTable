@@ -15,7 +15,7 @@ $(document).ready(function() {
     orderFixed: {
       pre: [[1, "asc"], [3, "asc"]]
     },
-    order: [4, "asc"],
+    order: [7, "asc"],
     ordering: true,
     rowGroup: {
       dataSrc: [1, 3]
@@ -26,8 +26,8 @@ $(document).ready(function() {
         1 = week beginning (used in group)
         2 = competition sort
         3 = competitions name (used in group)
-        4 = date sortable
-        6 = Weekday sortable
+        4 = week day sortable
+        6 = date sortable
       */
       visible: false,
       targets: [0, 1, 2, 3, 4, 6]
@@ -40,13 +40,13 @@ $(document).ready(function() {
       orderData: 2,
       targets: 3
     }, {
-      // Date printable
-      responsivePriority: 3,
+      // Day name
+      responsivePriority: 5,
       orderData: 4,
       targets: 5
     }, {
-      // Day name
-      responsivePriority: 7,
+      // Date printable
+      responsivePriority: 3,
       orderData: 6,
       targets: 7
     }, {

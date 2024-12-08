@@ -94,16 +94,16 @@ sub base_by_url_keys :Chained("/") :PathPart("matches/team") :CaptureArgs(7) {
   # Do the date checking; eval it to trap DateTime errors and pass them into $error
   my $scheduled_date;
   try {
-    $scheduled_date =  $c->datetime(
-      year  => $match_scheduled_date_year,
+    $scheduled_date =$c->datetime(
+      year => $match_scheduled_date_year,
       month => $match_scheduled_date_month,
-      day   => $match_scheduled_date_day,
+      day => $match_scheduled_date_day,
     );
   } catch {
     $c->detach(qw( TopTable::Controller::Root default ));
   };
   
-  my $match = $c->model("DB::TeamMatch")->get_match_by_url_keys( $match_home_club_url_key, $match_home_team_url_key, $match_away_club_url_key, $match_away_team_url_key, $scheduled_date );
+  my $match = $c->model("DB::TeamMatch")->get_match_by_url_keys($match_home_club_url_key, $match_home_team_url_key, $match_away_club_url_key, $match_away_team_url_key, $scheduled_date);
   
   if ( defined($match) ) {
     $c->stash({match => $match});
@@ -669,9 +669,7 @@ sub change_played_date :Private {
   # $c->log->debug(sprintf("parsed date: %s", $c->i18n_datetime_format_date->parse_datetime($c->req->params->{date})->ymd("/")));
   my $cldr = $c->i18n_datetime_format_date;
   $cldr->time_zone("UTC");
-  my $response = $match->update_played_date($cldr->parse_datetime($c->req->params->{date}), {
-    logger => sub{ my $level = shift; $c->log->$level( @_ ); },
-  });
+  my $response = $match->update_played_date($cldr->parse_datetime($c->req->params->{date}));
   
   # Set the status messages we need to show back to the user
   my @errors = @{$response->{errors}};

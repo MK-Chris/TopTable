@@ -14,6 +14,7 @@ $(document).ready(function() {
     searching: true,
     orderFixed: [1, "asc"],
     ordering: true,
+    order: [2, "asc"],
     rowGroup: {
       dataSrc: 1
     },

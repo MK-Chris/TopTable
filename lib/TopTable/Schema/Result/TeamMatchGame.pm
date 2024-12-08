@@ -2174,7 +2174,6 @@ sub update_score {
       
       if ( $matches->count ) {
         while ( my $other_match = $matches->next ) {
-          $logger->("debug", sprintf("home: %s, away: %s", $other_match->home_team, $other_match->away_team));
           if ( $other_match->home_team == $home_team->id ) {
             # Home team
             $points_difference += $other_match->home_team_handicap - $other_match->away_team_handicap;
@@ -2183,8 +2182,6 @@ sub update_score {
             $points_difference += $other_match->away_team_handicap - $other_match->home_team_handicap;
           }
         }
-      } else {
-        $logger->("debug", "home, no started matches");
       }
     }
     
@@ -2229,7 +2226,6 @@ sub update_score {
       
       if ( $matches->count ) {
         while ( my $other_match = $matches->next ) {
-          $logger->("debug", sprintf("home: %s, away: %s", $other_match->home_team, $other_match->away_team));
           if ( $other_match->home_team == $away_team->id ) {
             # Home team
             $points_difference += $other_match->home_team_handicap - $other_match->away_team_handicap;
@@ -2238,8 +2234,6 @@ sub update_score {
             $points_difference += $other_match->away_team_handicap - $other_match->home_team_handicap;
           }
         }
-      } else {
-        $logger->("debug", "away, no started matches");
       }
     }
     
@@ -2376,13 +2370,15 @@ sub update_score {
       foreach my $field ( keys %{$player_games_adjustments{$stat_team}} ) {
         # The pair ($mod_pair is $home_player or $away_player, which is always the doubles pair for a doubles game) fields are unchanged - games_played for example
         foreach my $mod_pair ( @mod_pairs ) {
+          $logger->("debug", sprintf("location: %s, field: %s, adj: %s, has column: %s", $stat_team, $field, $player_games_adjustments{$stat_team}{$field}), $mod_pair->result_source->has_column($field));
           $mod_pair->$field($mod_pair->$field + $player_games_adjustments{$stat_team}{$field}) if $mod_pair->result_source->has_column($field);
         }
         
         foreach my $mod_player ( @mod_players ) {
           # The individual players - $mod_player1, $mod_player2 - are preceded with doubles - doubles_games_played for example
           my $doubles_field = "doubles_" . $field;
-          $mod_player->$doubles_field($mod_player->$doubles_field + $player_games_adjustments{$stat_team}{$doubles_field}) if $mod_player->result_source->has_column($doubles_field);
+          $logger->("debug", sprintf("location: %s, doubles field: %s, adj: %s, has column: %s", $stat_team, $doubles_field, $player_games_adjustments{$stat_team}{$field}), $mod_player->result_source->has_column($doubles_field));
+          $mod_player->$doubles_field($mod_player->$doubles_field + $player_games_adjustments{$stat_team}{$field}) if $mod_player->result_source->has_column($doubles_field);
         }
       }
     }
@@ -2404,7 +2400,7 @@ sub update_score {
       $stat->update;
     }
     
-    foreach my $stat ( @home_doubles_stats ) {
+    foreach my $stat ( @away_doubles_stats ) {
       $stat->legs_played($stat->legs_played + ( $home_legs + $away_legs ) - ( $game_original_home_team_score + $game_original_away_team_score ));
       $stat->legs_won($stat->legs_won + ( $away_legs - $game_original_away_team_score ));
       $stat->legs_lost($stat->legs_lost + ( $home_legs - $game_original_home_team_score ));
