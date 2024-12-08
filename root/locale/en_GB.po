@@ -2822,19 +2822,19 @@ msgid "matches.loan-player.add.error.team-played-too-many-loan-players"
 msgstr "%1 has played loan players the maximum number of times and cannot play any more; the maximum number is %2."
 
 msgid "matches.loan-player.add.error.cannot-play-for-more-than-one-team-in-division"
-msgstr "%1 has already played for another team in %2 and the current rules stipulate that you cannot play on loan for more than one team in a given division."
+msgstr "%1 has already played for another team in %2; players cannot play on loan for more than one team in a given division."
 
 msgid "matches.loan-player.add.error.cant-add-from-division-below"
-msgstr "%1 plays in %2, which is ranked below %3, where this match is being played.  The current rules do not allow for players to play on loan from a division below that which the match is being played in."
+msgstr "%1 plays in %2, which is ranked below %3, where this match is being played.  Players cannot play on loan from a division below that which the match is being played in."
 
 msgid "matches.loan-player.add.error.cant-add-from-division-above"
-msgstr "%1 plays in %2, which is ranked above %3, where this match is being played.  The current rules do not allow for players to play on loan from a division above that which the match is being played in."
+msgstr "%1 plays in %2, which is ranked above %3, where this match is being played.  Players cannot play on loan from a division above that which the match is being played in."
 
 msgid "matches.loan-player.add.error.cant-add-from-same-division"
-msgstr "%1 plays in %2, which is the same division as this match.  The current rules do not allow for players to play on loan from the same division as that which the match is being played in."
+msgstr "%1 plays in %2, which is the same division as this match.  Players cannot play on loan from the same division as the match is being played in."
 
 msgid "matches.loan-player.add.error.cant-play-for-different-clubs"
-msgstr "%1 is unable to play on loan for teams from %2 because they play at %3.  The current rules stipulate that players may only play on loan for teams from the same club."
+msgstr "%1 is unable to play on loan for teams from %2 because they play at %3.  Players may only play on loan for teams from the same club."
 
 msgid "matches.add-player.error.player-already-set"
 msgstr "%1 is already set in position %2, so can't be set in another position until they are removed from this one."

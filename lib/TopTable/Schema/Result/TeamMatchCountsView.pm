@@ -46,7 +46,7 @@ FROM team_matches `match`
 JOIN team_seasons ts ON `match`.home_team = ts.team AND `match`.season = ts.season
 JOIN teams t ON ts.team = t.id
 JOIN club_seasons cs ON ts.club = cs.club AND ts.season = cs.season
-JOIN clubs c ON cs.club = c.id
+JOIN clubs c ON t.club = c.id
 JOIN seasons s ON `match`.season = s.id)
 UNION ALL
 (SELECT `match`.away_team as team_id, c.url_key AS club_url, t.url_key AS team_url, cs.full_name AS club_full_name, cs.short_name AS club_short_name, ts.`name` AS team_name, s.id AS season_id, s.url_key AS season_url, s.`name` AS season_name
@@ -54,9 +54,8 @@ FROM team_matches `match`
 JOIN team_seasons ts ON `match`.away_team = ts.team AND `match`.season = ts.season
 JOIN teams t ON ts.team = t.id
 JOIN club_seasons cs ON ts.club = cs.club AND ts.season = cs.season
-JOIN clubs c ON cs.club = c.id
+JOIN clubs c ON t.club = c.id
 JOIN seasons s ON `match`.season = s.id)) AS matches
-WHERE season_id = 9
 GROUP BY team_id, season_id"
 );
 

@@ -329,13 +329,16 @@ END; # END for IF match.cancelled
 [%
 IF season.complete;
   # Specific season player links
-  SET home_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [home_team.club_season.club.url_key, home_team.team.url_key, season.url_key]);
-  SET away_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [away_team.club_season.club.url_key, away_team.team.url_key, season.url_key]);
+  SET home_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [home_team.team.club.url_key, home_team.team.url_key, season.url_key]);
+  SET away_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [away_team.team.club.url_key, away_team.team.url_key, season.url_key]);
 ELSE;
   # Current season player links
   SET home_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [home_team.club_season.club.url_key, home_team.team.url_key]);
   SET away_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [away_team.club_season.club.url_key, away_team.team.url_key]);
-END;g
+END;
+
+home_team_html = team_seasons.home.full_name | html_entity;
+away_team_html = team_seasons.away.full_name | html_entity;
 -%]
     <div class="table-wrap">
       <div class="table-layout table-layout-centre">
@@ -351,14 +354,14 @@ END;g
           </thead>
           <tbody>
             <tr>
-              <td data-label="[% c.maketext("matches.summaries.heading.team") %]"><a href="[% home_uri %]">[% team_seasons.home.club_season.short_name | html_entity %] [% team_seasons.home.team.name | html_entity %]</a></td>
+              <td data-label="[% c.maketext("matches.summaries.heading.team") %]"><a href="[% home_uri %]">[% home_team_html %]</a></td>
               <td class="numeric">[% match.home_team_legs_won %]</td>
               <td class="numeric">[% match.home_team_average_leg_wins | format('%.2f') %]</td>
               <td class="numeric">[% match.home_team_points_won %]</td>
               <td class="numeric">[% match.home_team_average_point_wins | format('%.2f') %]</td>
             </tr>
             <tr>
-              <td data-label="[% c.maketext("matches.summaries.heading.team") %]"><a href="[% away_uri %]">[% team_seasons.away.club_season.short_name | html_entity %] [% team_seasons.away.team.name | html_entity %]</a></td>
+              <td data-label="[% c.maketext("matches.summaries.heading.team") %]"><a href="[% away_uri %]">[% away_team_html %]</a></td>
               <td class="numeric">[% match.away_team_legs_won %]</td>
               <td class="numeric">[% match.away_team_average_leg_wins | format('%.2f') %]</td>
               <td class="numeric">[% match.away_team_points_won %]</td>
@@ -371,10 +374,6 @@ END;g
   </div>
   
   <div id="players">
-[%
-home_team_html = FILTER html_entity; team_seasons.home.club_season.short_name _ " " _ team_seasons.home.name; END;
-away_team_html = FILTER html_entity; team_seasons.away.club_season.short_name _ " " _ team_seasons.away.name; END;
--%]
     <div class="table-wrap">
       <div class="table-layout table-layout-centre">
         <table id="players-table" class="stripe hover order-column row-border" style="width: 100%;">
