@@ -76,7 +76,7 @@ FOREACH division IN divisions;
   END;
 -%]
         <tr>
-          <td>[% division.name %]</td>
+          <td>[% division.name | html_entity %]</td>
           <td><a href="[% tables_uri %]">Tables</a></td>
           <td><a href="[% singles_uri %]">Averages (Singles)</a></td>
           <td><a href="[% doubles_individuals_uri %]">Averages (Individuals)</a></td>

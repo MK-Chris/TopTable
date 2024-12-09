@@ -37,7 +37,7 @@ var DEFAULT_SETTINGS = {
 
 	// Prepopulation settings
     prePopulate: null,
-    processPrePopulate: false,
+    processPrePopulate: true,
 
 	// Manipulation settings
     idPrefix: "token-input-",

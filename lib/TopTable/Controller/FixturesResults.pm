@@ -321,26 +321,57 @@ sub filter_view :Private {
   
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["fixtures_view", $c->maketext("user.auth.view-fixtures"), 1]);
   
+  my @external_scripts = (
+    $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
+    $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
+    $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
+    $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
+  );
+  
+  my @external_styles = (
+    $c->uri_for("/static/css/chosen/chosen.min.css"),
+    $c->uri_for("/static/css/datatables/dataTables.dataTables.min.css"),
+    $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
+    $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
+  );
+  
   if ( $view_method eq "teams" ) {
     # View by team; display a list of teams
-    $display_options = [$c->model("DB::Team")->teams_in_season_by_club_by_team_name($season)];
+    $display_options = [$c->model("DB::TeamMatchCountsView")->search_by_season($season)];
     $view_method_display = $c->maketext("fixtures-results.title.category.by-team");
+    push(@external_scripts,
+      $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
+      $c->uri_for("/static/script/fixtures-results/options/teams.js"),
+    );
+    push(@external_styles, $c->uri_for("/static/css/datatables/rowGroup.dataTables.min.css"));
   } elsif ( $view_method eq "divisions" ) {
     # View by division; display a list of divisions
     $display_options = [$c->model("DB::TeamMatch")->match_counts_by_division($season)];
     $view_method_display = $c->maketext("fixtures-results.title.category.by-division");
+    push(@external_scripts, $c->uri_for("/static/script/fixtures-results/options/standard-sort-column.js"));
   } elsif ( $view_method eq "days" ) {
     # View by day; display a list of dates with matches
     $display_options = [$c->model("DB::TeamMatch")->match_counts_by_day($season)];
     $view_method_display = $c->maketext("fixtures-results.title.category.by-day");
+    push(@external_scripts,
+      $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
+      $c->uri_for("/static/script/fixtures-results/options/weeks.js"),
+    );
+    push(@external_styles, $c->uri_for("/static/css/datatables/rowGroup.dataTables.min.css"));
   } elsif ( $view_method eq "weeks" ) {
     # View by week; display a list of weeks with matches
-    $display_options = [$c->model("DB::TeamMatch")->match_counts_by_week($season)];
+    $display_options = [$c->model("DB::TeamMatchWeeksView")->search_by_season($season)];
     $view_method_display = $c->maketext("fixtures-results.title.category.by-week");
+    push(@external_scripts,
+      $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
+      $c->uri_for("/static/script/fixtures-results/options/weeks.js"),
+    );
+    push(@external_styles, $c->uri_for("/static/css/datatables/rowGroup.dataTables.min.css"));
   } elsif ( $view_method eq "months" ) {
     # View by month; display a list of months with matches
     $display_options = [$c->model("DB::TeamMatch")->match_counts_by_month($season)];
     $view_method_display = $c->maketext("fixtures-results.title.category.by-month");
+    push(@external_scripts, $c->uri_for("/static/script/fixtures-results/options/standard-sort-column.js"));
   } elsif ( $view_method eq "date-range" ) {
     # Fixtures in a date range
     
@@ -349,6 +380,7 @@ sub filter_view :Private {
     # Fixtures in a venue
     $display_options = [$c->model("DB::TeamMatch")->match_counts_by_venue($season)];
     $view_method_display = $c->maketext("fixtures-results.title.category.by-venue");
+    push(@external_scripts, $c->uri_for("/static/script/fixtures-results/options/standard.js"));
   } else {
     # Detach to the 404 error if we don't recognise the view method.
     $c->detach(qw(TopTable::Controller::Root default));
@@ -364,11 +396,9 @@ sub filter_view :Private {
   
   # Set up the template to use
   $c->stash({
-    template => "html/fixtures-results/options-$view_method.ttkt",
-    external_scripts => [
-      $c->uri_for("/static/script/standard/accordion.js"),
-      $c->uri_for("/static/script/standard/option-list.js"),
-    ],
+    template => "html/fixtures-results/options/$view_method.ttkt",
+    external_scripts => \@external_scripts,
+    external_styles => \@external_styles,
     view_online_display => "Viewing fixtures & results for season " . $c->stash->{season}->name,
     view_online_link => 1,
     seasons => [$c->model("DB::Season")->all_seasons],
@@ -491,23 +521,14 @@ sub view_team :Private {
   my $season = $c->stash->{season};
   my $team = $c->stash->{team};
   
-  # $display_options will be a list of teams, divisions or dates, depending on our view method, to display on the page as links
-  my ( $matches, $display_options );
-  
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["fixtures_view", $c->maketext("user.auth.view-fixtures"), 1]);
   $c->forward("TopTable::Controller::Users", "check_authorisation", [[qw( match_update match_cancel )], "", 0]);
   
   if ( $specific_season ) {
     $c->stash({canonical_uri => $c->uri_for_action("/fixtures-results/view_team_by_url_key_specific_season", [$season->url_key, $team->club->url_key, $team->url_key])});
   } else {
-    $c->stash({canonical_uri => $c->uri_for_action("/fixtures-results/view_team_by_url_key_current_season", [$team->club->url_key, $team->url_key])});
+    $c->stash({canonical_uri => $c->uri_for_action("/fixtures-results/view_team_by_url_key_current_season_end", [$team->club->url_key, $team->url_key])});
   }
-  
-  # Get the matches on this page
-  $matches = $c->model("DB::TeamMatch")->matches_for_team({
-    team => $team,
-    season => $season,
-  });
   
   # Team info is in the team season object if we're using a specific season
   my $team_info = $team->find_related("team_seasons", {season => $season->id});
@@ -530,9 +551,18 @@ sub view_team :Private {
     $online_display = sprintf("Viewing fixtures & results for %s %s", $enc_club_short_name, $enc_old_team_name);
   }
   
+  # Grab the matches and check if there are handicapped ones in there
+  my $matches = $c->model("DB::TeamMatch")->matches_for_team({
+    team => $team,
+    season => $season,
+  });
+  
+  # Add handicapped flag for template / JS if there are handicapped matches
+  my $handicapped = $matches->handicapped_matches->count ? "/hcp" : "";
+  
   # Set up the template to use
   $c->stash({
-    template => "html/fixtures-results/view-no-grouping.ttkt",
+    template => "html/fixtures-results/view$handicapped/no-grouping.ttkt",
     view_online_display => $online_display,
     view_online_link => 1,
     matches => $matches,
@@ -547,7 +577,7 @@ sub view_team :Private {
       $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
-      $c->uri_for("/static/script/fixtures-results/view-no-grouping.js", {v => 2}),
+      $c->uri_for("/static/script/fixtures-results/view$handicapped/no-grouping.js", {v => 3}),
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
@@ -571,7 +601,7 @@ sub view_team :Private {
       path => $c->uri_for_action("/fixtures-results/filter_view_current_season", ["teams"]),
       label => $c->maketext("menu.text.fixtures-results-by-team"),
     }, {
-      path => $c->uri_for_action("/fixtures-results/view_team_by_url_key_current_season", [$team->club->url_key, $team->url_key]),
+      path => $c->uri_for_action("/fixtures-results/view_team_by_url_key_current_season_end", [$team->club->url_key, $team->url_key]),
       label => sprintf("%s %s", $enc_club_short_name, $enc_team_name),
     });
   }
@@ -776,6 +806,9 @@ sub view_division :Private {
     season => $season,
   });
   
+  # Add handicapped flag for template / JS if there are handicapped matches
+  my $handicapped = $matches->handicapped_matches->count ? "/hcp" : "";
+  
   # Make sure this division has an association with the given season
   my $division_season = $division->get_season($season);
   $c->detach(qw(TopTable::Controller::Root default)) unless defined($division_season);
@@ -796,7 +829,7 @@ sub view_division :Private {
   
   # Set up the template to use
   $c->stash({
-    template => "html/fixtures-results/view-group-weeks.ttkt",
+    template => "html/fixtures-results/view$handicapped/group-weeks-ordering-no-comp.ttkt",
     view_online_display => $online_display,
     view_online_link => 1,
     matches => $matches,
@@ -812,7 +845,7 @@ sub view_division :Private {
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
-      $c->uri_for("/static/script/fixtures-results/view-group-weeks.js", {v => 2}),
+      $c->uri_for("/static/script/fixtures-results/view$handicapped/group-weeks-ordering-no-comp.js"),
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
@@ -957,6 +990,9 @@ sub view_venue :Private {
     season => $season,
   });
   
+  # Add handicapped flag for template / JS if there are handicapped matches
+  my $handicapped = $matches->handicapped_matches->count ? "/hcp" : "";
+  
   my $online_display;
   if ( $specific_season ) {
     $online_display = sprintf("Viewing fixtures & results taking place at %s in %s", $venue->name, $season->name);
@@ -968,7 +1004,7 @@ sub view_venue :Private {
   
   # Set up the template to use
   $c->stash({
-    template => "html/fixtures-results/view-group-weeks-ordering.ttkt",
+    template => "html/fixtures-results/view$handicapped/group-weeks-ordering-no-venue.ttkt",
     matches => $matches,
     subtitle1 => $season->complete ? $c->maketext("fixtures-results.title.results", $enc_venue_name): $c->maketext("fixtures-results.title.fixtures-results", $enc_venue_name),
     view_online_display => sprintf( "Viewing fixtures & results taking place at %s in %s", $venue->name, $season->name ),
@@ -985,7 +1021,7 @@ sub view_venue :Private {
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
-      $c->uri_for("/static/script/fixtures-results/view-group-weeks-ordering.js", {v => 2}),
+      $c->uri_for("/static/script/fixtures-results/view$handicapped/group-weeks-ordering-no-venue.js"),
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
@@ -1144,6 +1180,9 @@ sub view_month :Private {
     end_date => $end_date,
   });
   
+  # Add handicapped flag for template / JS if there are handicapped matches
+  my $handicapped = $matches->handicapped_matches->count ? "/hcp" : "";
+  
   my $online_display;
   if ( $specific_season ) {
     $online_display = sprintf("Viewing fixtures & results in %s %d", $start_date->month_name, $start_date->year);
@@ -1156,7 +1195,7 @@ sub view_month :Private {
   
   # Set up the template to use
   $c->stash({
-    template => "html/fixtures-results/view-group-divisions.ttkt",
+    template => "html/fixtures-results/view$handicapped/group-week-competitions.ttkt",
     view_online_display => $online_display,
     view_online_link => 1,
     matches => $matches,
@@ -1172,7 +1211,7 @@ sub view_month :Private {
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
-      $c->uri_for("/static/script/fixtures-results/view-group-divisions.js", {v => 2}),
+      $c->uri_for("/static/script/fixtures-results/view$handicapped/group-week-competitions.js"),
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
@@ -1240,13 +1279,16 @@ sub view_outstanding :Private {
   my $date_cutoff = DateTime->now(time_zone => $c->stash->{timezone})->subtract(hours => $outstanding_scorecard_hours);
   
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["fixtures_view", $c->maketext("user.auth.view-fixtures"), 1]);
-  $c->forward("TopTable::Controller::Users", "check_authorisation", [[ qw( match_update match_cancel ) ], "", 0]);
+  $c->forward("TopTable::Controller::Users", "check_authorisation", [[qw( match_update match_cancel )], "", 0]);
   
   # Get the start / end date to look for matches; the start date will always be 1 and the end date will always be the last date of that particular month.
   my $matches = $c->model("DB::TeamMatch")->incomplete_matches({
     season => $season,
     date_cutoff => $date_cutoff,
   });
+  
+  # Add handicapped flag for template / JS if there are handicapped matches
+  my $handicapped = $matches->handicapped_matches->count ? "/hcp" : "";
   
   my $online_display;
   if ( $specific_season ) {
@@ -1257,7 +1299,7 @@ sub view_outstanding :Private {
   
   # Set up the template to use
   $c->stash({
-    template => "html/fixtures-results/view-group-weeks.ttkt",
+    template => "html/fixtures-results/view$handicapped/group-weeks-ordering.ttkt",
     view_online_display => $online_display,
     view_online_link => 1,
     matches => $matches,
@@ -1268,7 +1310,7 @@ sub view_outstanding :Private {
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
-      $c->uri_for("/static/script/fixtures-results/view-group-weeks.js", {v => 2}),
+      $c->uri_for("/static/script/fixtures-results/view$handicapped/group-weeks-ordering.js", {v => 2}),
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
@@ -1357,27 +1399,27 @@ sub download_week_specific_season :Chained("view_week_specific_season") :PathPar
 
 =head2 get_week
 
-Get and stash the week from the given year and month numbers.
+Get and stash the day from the given year and month numbers.
 
 =cut
 
 sub get_week :Private {
   my ( $self, $c, $year, $month, $day ) = @_;
-  my $season = $c->stash->{season};
   
-  my $week_date;
+  # Get the start / end date to look for matches; the start date will always be 1 and the end date will always be the last date of that particular month.
+  my $week_start_date;
   try { 
-    $week_date = DateTime->new(year => $year, month => $month, day => $day, locale => $c->locale);
+    $week_start_date = DateTime->new(year => $year, month => $month, day => $day, locale => $c->locale);
   } catch {
     $c->detach(qw(TopTable::Controller::Root default));
   };
   
-  my $fixtures_week = $c->model("DB::FixturesWeek")->find({season => $season->id, week_beginning_date => $week_date->ymd});
-  $c->detach(qw(TopTable::Controller::Root default)) unless defined($fixtures_week);
+  # 404 if the day isn't a Monday
+  $c->detach(qw(TopTable::Controller::Root default)) if $week_start_date->day_of_week != 1;
   
   $c->stash({
-    fixtures_week => $fixtures_week,
-    week_date => $week_date,
+    week_start_date => $week_start_date,
+    week_end_date => $week_start_date->clone->add(days => 6), # Add 6 days to get the week end date (today and the following 6 days make up the week)
   });
 }
 
@@ -1389,29 +1431,31 @@ Private routine that all of the view_week_* functions end up at.  This does the 
 
 sub view_week :Private {
   my ( $self, $c ) = @_;
-  my $fixtures_week = $c->stash->{fixtures_week};
-  my $week_date = $c->stash->{week_date};
+  my $week_start_date = $c->stash->{week_start_date};
+  my $week_end_date = $c->stash->{week_end_date};
   my $season = $c->stash->{season};
   my $specific_season = $c->stash->{specific_season};
   
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["fixtures_view", $c->maketext("user.auth.view-fixtures"), 1]);
   $c->forward("TopTable::Controller::Users", "check_authorisation", [[ qw( match_update match_cancel ) ], "", 0]);
   
-  # Get the start / end date to look for matches; the start date will always be 1 and the end date will always be the last date of that particular month.
-  my $matches = $c->model("DB::TeamMatch")->matches_in_week({
+  # Get the matches
+  my $matches = $c->model("DB::TeamMatch")->matches_in_date_range({
     season => $season,
-    week => $fixtures_week,
+    start_date => $week_start_date,
+    end_date => $week_end_date,
   });
   
-  my $week_text = sprintf("%s %d %s %d", $week_date->day_name, $week_date->day, $week_date->month_name, $week_date->year);
+  # Add handicapped flag for template / JS if there are handicapped matches
+  my $handicapped = $matches->handicapped_matches->count ? "/hcp" : "";
+  
+  my $week_text = $c->i18n_datetime_format_date_long->format_datetime($week_start_date);
   my $online_display = "Viewing fixtures & reults in week beginning $week_text";
-  my $enc_day_name = encode_entities($week_date->day_name);
-  my $enc_month_name = encode_entities($week_date->month_name);
-  my $enc_week_text = $c->maketext("fixtures-results.view-week.week-beginning", sprintf("%s %d %s %d", $enc_day_name, $week_date->day, $enc_month_name, $week_date->year));
+  my $enc_week_text = $c->maketext("fixtures-results.view-week.week-beginning", $week_text);
   
   # Set up the template to use
   $c->stash({
-    template => "html/fixtures-results/view-group-divisions.ttkt",
+    template => "html/fixtures-results/view$handicapped/group-competitions.ttkt",
     view_online_display => $online_display,
     view_online_link => 1,
     matches => $matches,
@@ -1419,7 +1463,7 @@ sub view_week :Private {
     title_links => [{
       image_uri => $c->uri_for("/static/images/icons/0038-Calender-icon-32.png"),
       text => $c->maketext("calendar.download"),
-      link_uri => $c->uri_for_action("/fixtures-results/download_week_specific_season", [$season->url_key, $week_date->year, sprintf("%02d", $week_date->month), sprintf("%02d", $week_date->day), "calendar"]),
+      link_uri => $c->uri_for_action("/fixtures-results/download_week_specific_season", [$season->url_key, $week_start_date->year, sprintf("%02d", $week_start_date->month), sprintf("%02d", $week_start_date->day), "calendar"]),
     }],
     external_scripts => [
       $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
@@ -1427,7 +1471,7 @@ sub view_week :Private {
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
-      $c->uri_for("/static/script/fixtures-results/view-group-divisions.js", {v => 2}),
+      $c->uri_for("/static/script/fixtures-results/view$handicapped/group-competitions.js"),
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
@@ -1444,16 +1488,16 @@ sub view_week :Private {
       path => $c->uri_for_action("/fixtures-results/filter_view_specific_season", [$season->url_key, "weeks"]),
       label => $c->maketext("menu.text.fixtures-results-by-week"),
     }, {
-      path => $c->uri_for_action("/fixtures-results/view_week_specific_season", [$season->url_key, $week_date->year, $week_date->month, $week_date->day]),
-      label => sprintf( "Week beginning %s, %d %s %d", $week_date->day_name, $week_date->day, $week_date->month_name, $week_date->year ),
+      path => $c->uri_for_action("/fixtures-results/view_week_specific_season", [$season->url_key, $week_start_date->year, $week_start_date->month, $week_start_date->day]),
+      label => sprintf( "Week beginning %s, %d %s %d", $week_start_date->day_name, $week_start_date->day, $week_start_date->month_name, $week_start_date->year ),
     });
   } else {
     push(@{$c->stash->{breadcrumbs}}, {
       path => $c->uri_for_action("/fixtures-results/filter_view_specific_season", ["weeks"]),
       label => $c->maketext("menu.text.fixtures-results-by-week"),
     }, {
-      path => $c->uri_for_action("/fixtures-results/view_week_current_season_end", [$week_date->year, $week_date->month, $week_date->day]),
-      label => sprintf("Week beginning %s, %d %s %d", $week_date->day_name, $week_date->day, $week_date->month_name, $week_date->year),
+      path => $c->uri_for_action("/fixtures-results/view_week_current_season_end", [$week_start_date->year, $week_start_date->month, $week_start_date->day]),
+      label => sprintf("Week beginning %s, %d %s %d", $week_start_date->day_name, $week_start_date->day, $week_start_date->month_name, $week_start_date->year),
     });
   }
 }
@@ -1577,6 +1621,9 @@ sub view_day :Private {
     date => $date,
   });
   
+  # Add handicapped flag for template / JS if there are handicapped matches
+  my $handicapped = $matches->handicapped_matches->count ? "/hcp" : "";
+  
   my $online_display;
   if ( $specific_season ) {
     $online_display = sprintf("Viewing fixtures & reults on week beginning %s, %d %s %d", $date->day_name, $date->day, $date->month_name, $date->year);
@@ -1589,7 +1636,7 @@ sub view_day :Private {
   
   # Set up the template to use
   $c->stash({
-    template => "html/fixtures-results/view-group-divisions-no-date.ttkt",
+    template => "html/fixtures-results/view$handicapped/group-competitions-no-date.ttkt",
     view_online_display => $online_display,
     view_online_link => 1,
     matches => $matches,
@@ -1605,7 +1652,7 @@ sub view_day :Private {
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
-      $c->uri_for("/static/script/fixtures-results/view-group-divisions-no-date.js", {v => 2}),
+      $c->uri_for("/static/script/fixtures-results/view$handicapped/group-competitions-no-date.js"),
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
@@ -1826,8 +1873,8 @@ Download the given week's fixtures.
 sub download_week :Private {
   my ( $self, $c ) = @_;
   my $season = $c->stash->{season};
-  my $fixtures_week = $c->stash->{fixtures_week};
-  my $week_date = $c->stash->{week_date};
+  my $week_start_date = $c->stash->{week_start_date};
+  my $week_end_date = $c->stash->{week_end_date};
   my $download_type = $c->stash->{download_type};
   my $calendar_type = $c->req->params->{type} || undef;
   
@@ -1838,27 +1885,29 @@ sub download_week :Private {
     # If we're downloading, stash the matches for the generic download routine to loop through.  Stash the download file name as well,
     # which is generated without an extension (the download routine will add this on to the end, depending on the download type).
     if ( defined( $calendar_type ) and $calendar_type eq "download" ) {
-      my $matches = $c->model("DB::TeamMatch")->matches_in_week({
+      # Get the matches
+      my $matches = $c->model("DB::TeamMatch")->matches_in_date_range({
         season => $season,
-        week => $fixtures_week,
+        start_date => $week_start_date,
+        end_date => $week_end_date,
       });
       
       $c->stash({
         matches => $matches,
-        file_name => sprintf("fixtures_week_%s-%s-%s", $week_date->year, sprintf("%02d", $week_date->month), sprintf("%02d", $week_date->day)),
-        calendar_name => sprintf("%s | %s %d %s %d | %s", $c->config->{"Model::ICal"}{args}{calname}, $week_date->day_name, $week_date->day, $week_date->month_name, $week_date->year, $season->name),
+        file_name => sprintf("fixtures_week_%s-%s-%s", $week_start_date->year, sprintf("%02d", $week_start_date->month), sprintf("%02d", $week_start_date->day)),
+        calendar_name => sprintf("%s | %s %d %s %d | %s", $c->config->{"Model::ICal"}{args}{calname}, $week_start_date->day_name, $week_start_date->day, $week_start_date->month_name, $week_start_date->year, $season->name),
       });
     }
   }
   
   # Stash the calendar type and detach to the download routine
-  $week_date->set_locale($c->locale);
-  my $enc_day_name = encode_entities($week_date->day_name);
-  my $enc_month_name = encode_entities($week_date->month_name);
+  #$week_start_date->set_locale($c->locale);
+  my $enc_day_name = encode_entities($week_start_date->day_name);
+  my $enc_month_name = encode_entities($week_start_date->month_name);
   
   $c->stash({
     calendar_type => $calendar_type,
-    subtitle2 => $c->maketext("fixtures-results.view-week.week-beginning", sprintf("%s %d %s %d", $week_date->day_name, $week_date->day, $week_date->month_name, $week_date->year)),
+    subtitle2 => $c->maketext("fixtures-results.view-week.week-beginning", sprintf("%s %d %s %d", $week_start_date->day_name, $week_start_date->day, $week_start_date->month_name, $week_start_date->year)),
   });
   
   $c->detach("download");
@@ -1978,22 +2027,22 @@ sub download :Private {
         $webcal_uri->scheme("webcal");
         
         $c->stash({
-          template => "html/fixtures-results/calendar-type-other.ttkt",
+          template => "html/fixtures-results/calendar/type-other.ttkt",
           external_scripts => [
-            $c->uri_for("/static/script/fixtures-results/calendar-type-other.js"),
+            $c->uri_for("/static/script/fixtures-results/calendar/type-other.js"),
           ],
           webcal_uri => $webcal_uri,
           form_action => $c->uri_for_action($c->action, $c->req->captures, $download_type),
         });
       } else {
         $c->stash({
-          template => "html/fixtures-results/calendar-types.ttkt",
+          template => "html/fixtures-results/calendar/types.ttkt",
           external_scripts => [
             $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
             $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
             $c->uri_for("/static/script/standard/chosen.js"),
             $c->uri_for("/static/script/standard/prettycheckable.js"),
-            $c->uri_for("/static/script/fixtures-results/calendar-types.js", {v => "1.1"}),
+            $c->uri_for("/static/script/fixtures-results/calendar/types.js"),
           ],
           external_styles => [
             $c->uri_for("/static/css/chosen/chosen.min.css"),

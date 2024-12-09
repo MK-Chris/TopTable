@@ -105,6 +105,12 @@ __PACKAGE__->table("template_match_individual");
   extra: {unsigned => 1}
   is_nullable: 1
 
+=head2 handicapped
+
+  data_type: 'tinyint'
+  default_value: 0
+  is_nullable: 0
+
 =cut
 
 __PACKAGE__->add_columns(
@@ -133,6 +139,8 @@ __PACKAGE__->add_columns(
   { data_type => "tinyint", extra => { unsigned => 1 }, is_nullable => 1 },
   "serves_deuce",
   { data_type => "tinyint", extra => { unsigned => 1 }, is_nullable => 1 },
+  "handicapped",
+  { data_type => "tinyint", default_value => 0, is_nullable => 0 },
 );
 
 =head1 PRIMARY KEY
@@ -253,9 +261,24 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
+=head2 tournaments
 
-# Created by DBIx::Class::Schema::Loader v0.07043 @ 2015-11-14 12:15:45
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:RL+6yG+wW+3t/rmX+QkJZQ
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::Tournament>
+
+=cut
+
+__PACKAGE__->has_many(
+  "tournaments",
+  "TopTable::Schema::Result::Tournament",
+  { "foreign.default_individual_match_template" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-09-29 23:47:56
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:xGpSUgKHYlk9RI4/ZtCw9w
 
 use HTML::Entities;
 

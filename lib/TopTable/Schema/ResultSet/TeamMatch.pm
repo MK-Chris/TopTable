@@ -143,13 +143,13 @@ sub match_counts_by_day {
     "season.id" => $season->id,
   }, {
     select => [{
-      count => "me.scheduled_date"
+      count => "me.played_date"
     },
-    "scheduled_date"],
-    as => [ qw(number_of_matches scheduled_date) ],
-    join => {scheduled_week => "season"},
-    group_by => "scheduled_date",
-    order_by => {-asc => "scheduled_date"},
+    "played_date"],
+    as => [ qw(number_of_matches played_date) ],
+    join => [qw( season )],
+    group_by => [qw( me.played_date )],
+    order_by => {-asc => [qw( me.played_date )]},
   });
 }
 
@@ -171,9 +171,9 @@ sub match_counts_by_venue {
     },
     "venue"],
     as => [ qw(number_of_matches venue)],
-    prefetch => "venue",
-    join => {scheduled_week => "season"},
-    group_by => "venue.id",
+    prefetch => [qw( venue )],
+    join => [qw( season )],
+    group_by => [qw( venue.id )],
     order_by => {-asc => "venue.name"},
   });
 }
@@ -190,6 +190,7 @@ sub match_counts_by_division {
   
   return $class->search({
     "season.id" => $season->id,
+    "division.id" => {"!=" => undef},
   }, {
     select => [{
       count => "me.scheduled_date"
@@ -200,6 +201,33 @@ sub match_counts_by_division {
     join => {scheduled_week => "season"},
     group_by => "division.id",
     order_by => {-asc => "division.rank"},
+  });
+}
+
+=head2 match_counts_by_team
+
+Returns, in date order, all of the months that have matches within a season and the number of matches.  
+
+=cut
+
+sub match_counts_by_team {
+  my $class = shift;
+  my ( $season ) = @_;
+  
+  return $class->search({
+    "me.season" => $season->id,
+  }, {
+    select => [{
+      count => "me.scheduled_date"
+    },
+    qw( me.home_team me.away_team )],
+    as => [qw( number_of_matches home_team away_team )],
+    prefetch => {
+      team_season_home_team_season => [ qw( team ), {club_season => "club"}],
+      team_season_away_team_season => [ qw( team ), {club_season => "club"}],
+    },
+    group_by => [qw( team.id team_2.id )],
+    order_by => {-asc => [qw( club_season.short_name team_season_home_team_season )]},
   });
 }
 
@@ -218,15 +246,16 @@ sub matches_for_team {
   
   # These attributes are constant
   my $attributes = {
-    prefetch => [{
+    prefetch => [qw( venue ), {
       team_season_home_team_season => [ qw( team ), {club_season => "club"}],
-    }, {
       team_season_away_team_season => [ qw( team ), {club_season => "club"}],
-    }, {
-      division_season => "division"
-    }, "venue"],
-    order_by =>  {
-      -asc => [qw( division.rank scheduled_date )]
+      division_season => [qw( division )],
+      tournament_round => {
+        tournament => {event_season => [qw( event )]},
+      },
+    }],
+    order_by => {
+      -asc => [qw( division.rank played_date )]
     }
   };
   
@@ -267,32 +296,30 @@ sub matches_in_division {
   my $season = $params->{season};
   my $page_number = $params->{page_number};
   my $results_per_page = $params->{results_per_page};
-  my $attrib = {
-    prefetch  => [ qw( venue ), {
-      team_season_home_team_season => [ qw( team ), {club_season => "club"}],
-    }, {
-      team_season_away_team_season => [ qw( team ), {club_season => "club"}],
-    }, {
-      division_season => "division"
+  my %attrib = (
+    prefetch  => [qw( venue ), {
+      team_season_home_team_season => [qw( team ), {club_season => [qw( club )]}],
+      team_season_away_team_season => [qw( team ), {club_season => [qw( club )]}],
+      division_season => [qw( division )],
     }],
-    order_by =>  {
-      -asc => [ qw( division.rank scheduled_date club_season.short_name team_season_home_team_season.name )]
-    }
-  };
+    order_by => {
+      -asc => [qw( division.rank played_date club_season.short_name team_season_home_team_season.name )]
+    },
+  );
   
   # If we have a page number or a results_per_page parameter defined, we have to ensure both are provided and sane
   if ( defined($results_per_page) or defined($page_number) ) {
     $results_per_page = 25 if !defined($results_per_page) or $results_per_page !~ m/^\d+$/;
     $page_number = 1 if !defined($page_number) or $page_number !~ m/^\d+$/;
     
-    $attrib->{page} = $page_number;
-    $attrib->{rows} = $results_per_page;
+    $attrib{page} = $page_number;
+    $attrib{rows} = $results_per_page;
   }
   
   return $class->search({
     "me.season" => $season->id,
     "me.division" => $division->id,
-  }, $attrib);
+  }, \%attrib);
 }
 
 =head2 matches_in_date_range
@@ -309,39 +336,41 @@ sub matches_in_date_range {
   my $season = $params->{season};
   my $page_number = $params->{page_number};
   my $results_per_page = $params->{results_per_page};
-  my $attributes = {
+  my %attrib = (
     prefetch  => [qw( venue ), {
       team_season_home_team_season => [qw( team ), {club_season => "club"}],
-    }, {
       team_season_away_team_season => [qw( team ), {club_season => "club"}],
-    }, {
-      division_season => "division"
+      division_season => [qw( division )],
+      tournament_round => {
+        tournament => {
+          event_season => [qw( event )]
+        },
+      },
     }],
     order_by  =>  {
-      -asc => [qw( division.rank scheduled_date club_season.short_name team_season_home_team_season.name )]
+      -asc => [qw( scheduled_date division.rank tournament.name tournament_round.round_number club_season.short_name team_season_home_team_season.name )],
     }
-  };
+  );
   
   # If we have a page number or a results_per_page parameter defined, we have to ensure both are provided and sane
-  if ( defined( $results_per_page ) or defined( $page_number ) ) {
+  if ( defined($results_per_page) or defined($page_number) ) {
     $results_per_page = 25 if !defined($results_per_page) or $results_per_page !~ m/^\d+$/;
     $page_number = 1 if !defined($page_number) or $page_number !~ m/^\d+$/;
     
-    $attributes->{page} = $page_number;
-    $attributes->{rows} = $results_per_page;
+    $attrib{page} = $page_number;
+    $attrib{rows} = $results_per_page;
   }
   
   return $class->search({
     "me.season" => $season->id,
-    "division_season.season" => $season->id,
     "team_season_home_team_season.season" => $season->id,
     "club_season.season" => $season->id,
     "team_season_away_team_season.season" => $season->id,
     "club_season_2.season" => $season->id,
-    scheduled_date => {
+    "me.played_date" => {
       -between => [$start_date->ymd, $end_date->ymd]
     },
-  }, $attributes);
+  }, \%attrib);
 }
 
 =head2 incomplete_matches
@@ -358,81 +387,13 @@ sub incomplete_matches {
   my $page_number = $params->{page_number};
   my $results_per_page = $params->{results_per_page};
   my $attrib = {
-    prefetch => [qw( venue scheduled_week ), {
+    prefetch => [qw( venue ), {
       team_season_home_team_season => [qw( team ), {club_season => "club"}],
-    }, {
       team_season_away_team_season => [qw( team ), {club_season => "club"}],
-    }, {
-      division_season => "division"
+      division_season => [qw( division )],
     }],
     order_by  =>  {
-      -asc => [qw( scheduled_week.week_beginning_date division.rank scheduled_date club_season.short_name team_season_home_team_season.name )]
-    }
-  };
-  
-  # If we have a page number or a results_per_page parameter defined, we have to ensure both are provided and sane
-  if ( defined( $results_per_page ) or defined( $page_number ) ) {
-    $results_per_page = 25 if !defined($results_per_page) or $results_per_page !~ m/^\d+$/;
-    $page_number = 1 if !defined($page_number) or $page_number !~ m/^\d+$/;
-    
-    $attrib->{page} = $page_number;
-    $attrib->{rows} = $results_per_page;
-  }
-  
-  return $class->search([{
-    "me.season" => $season->id,
-    "scheduled_week.season" => $season->id,
-    "division_season.season" => $season->id,
-    "team_season_home_team_season.season" => $season->id,
-    "club_season.season" => $season->id,
-    "team_season_away_team_season.season" => $season->id,
-    "club_season_2.season" => $season->id,
-    "me.complete" => 0,
-    "me.cancelled" => 0,
-    played_date => undef,
-    scheduled_date => {
-      "<=" => sprintf("%s %s", $date_cutoff->ymd, $date_cutoff->hms),
-    }
-  }, {
-    "me.season" => $season->id,
-    "scheduled_week.season" => $season->id,
-    "division_season.season" => $season->id,
-    "team_season_home_team_season.season" => $season->id,
-    "club_season.season" => $season->id,
-    "team_season_away_team_season.season" => $season->id,
-    "club_season_2.season" => $season->id,
-    "me.complete" => 0,
-    "me.cancelled" => 0,
-    played_date => {"<>" => undef},
-    played_date => {
-      "<=" => sprintf( "%s %s", $date_cutoff->ymd, $date_cutoff->hms ),
-    }
-  }], $attrib);
-}
-
-=head2 matches_in_week
-
-A search for matches in the specified fixtures week.
-
-=cut
-
-sub matches_in_week {
-  my $class = shift;
-  my ( $params ) = @_;
-  my $season = $params->{season};
-  my $week = $params->{week};
-  my $page_number = $params->{page_number};
-  my $results_per_page = $params->{results_per_page};
-  my $attrib = {
-    prefetch => [qw( venue scheduled_week ), {
-      team_season_home_team_season => [qw( team ), {club_season => "club"}],
-    }, {
-      team_season_away_team_season => [qw( team ), {club_season => "club"}],
-    }, {
-      division_season => "division"
-    }],
-    order_by  =>  {
-      -asc => [ qw( division.rank scheduled_date club_season.short_name team_season_home_team_season.name )]
+      -asc => [qw( played_date division.rank club_season.short_name team_season_home_team_season.name )]
     }
   };
   
@@ -446,13 +407,12 @@ sub matches_in_week {
   }
   
   return $class->search({
-    "me.season" => $season->id,
-    "division_season.season" => $season->id,
-    "team_season_home_team_season.season" => $season->id,
-    "club_season.season" => $season->id,
-    "team_season_away_team_season.season" => $season->id,
-    "club_season_2.season" => $season->id,
-    "scheduled_week.id" => $week->id,
+    "me.complete" => 0,
+    "me.cancelled" => 0,
+    played_date => {"<>" => undef},
+    played_date => {
+      "<=" => sprintf( "%s %s", $date_cutoff->ymd, $date_cutoff->hms ),
+    }
   }, $attrib);
 }
 
@@ -475,7 +435,8 @@ sub next_match_date {
     }],
   })->single->get_column("date");
   
-  return $dtf->parse_date($date);
+  return $dtf->parse_date($date) if defined($date);
+  return undef;
 }
 
 =head2 matches_on_date
@@ -500,11 +461,11 @@ sub matches_on_date {
   
   my $attributes = {
     prefetch  => [qw( venue ), {
-      team_season_home_team_season => [qw( team ), {club_season => "club"}],
+      team_season_home_team_season => [qw( team ), {club_season => [qw( club )]}],
     }, {
-      team_season_away_team_season => [qw( team ), {club_season => "club"}],
+      team_season_away_team_season => [qw( team ), {club_season => [qw( club )]}],
     }, {
-      division_season => "division"
+      division_season => [qw( division )],
     }],
     order_by  =>  {
       -asc => [qw( division.rank scheduled_date club_season.short_name team_season_home_team_season.name )]
@@ -518,7 +479,6 @@ sub matches_on_date {
   
   return $class->search({
     "me.season" => $season->id,
-    "division_season.season" => $season->id,
     "team_season_home_team_season.season" => $season->id,
     "club_season.season" => $season->id,
     "team_season_away_team_season.season" => $season->id,
@@ -554,32 +514,32 @@ sub matches_at_venue {
   my $results_per_page = $params->{results_per_page};
   my $where;
   
-  my $attrib = {
-    prefetch  => [qw( venue ), {
-      team_season_home_team_season  => [qw( team ), {club_season => "club"}],
+  my %attrib = (
+    prefetch  => [{
+      team_season_home_team_season => [qw( team ), {club_season => [qw( club )]}],
     }, {
-      team_season_away_team_season => [qw( team ), {club_season => "club"}],
+      team_season_away_team_season => [qw( team ), {club_season => [qw( club )]}],
     }, {
-      division_season => "division"
+      division_season => [qw( division )],
     }],
+    join => [qw( venue )],
     order_by =>  {
       -asc => [ qw( scheduled_date division.rank club_season.short_name team_season_home_team_season.name )]
     }
-  };
+  );
   
   # If we have a page number or a results_per_page parameter defined, we have to ensure both are provided and sane
-  if ( defined( $results_per_page ) or defined( $page_number ) ) {
+  if ( defined($results_per_page) or defined($page_number) ) {
     $results_per_page = 25 if !defined($results_per_page) or $results_per_page !~ m/^\d+$/;
     $page_number = 1 if !defined($page_number) or $page_number !~ m/^\d+$/;
     
-    $attrib->{page} = $page_number;
-    $attrib->{rows} = $results_per_page;
+    $attrib{page} = $page_number;
+    $attrib{rows} = $results_per_page;
   }
   
   if ( $season ) {
     $where = {
       "me.season" => $season->id,
-      "division_season.season" => $season->id,
       "team_season_home_team_season.season" => $season->id,
       "club_season.season" => $season->id,
       "team_season_away_team_season.season" => $season->id,
@@ -590,7 +550,48 @@ sub matches_at_venue {
     $where = {venue => $venue->id};
   }
   
-  return $class->search($where, $attrib);
+  return $class->search($where, \%attrib);
+}
+
+=head2 competitions
+
+Get the competition count for a given resultset of team matches.
+
+=cut
+
+sub competitions {
+  my $class = shift;
+  my ( $params ) = @_;
+  my $exclude_league = $params->{exclude_league} || 0;
+  my $prefetch = $params->{prefetch} || 0;
+  
+  # Exclude league matches if we need
+  my %where = $exclude_league ? (tournament_round => {"!=" => undef}) : ();
+  
+  # Only prefetch if we want the extra data, otherwise join
+  my $relation_key = $prefetch ? "prefetch" : "join";
+  
+  return $class->search(\%where, {
+    $relation_key => {
+      tournament_round => {
+        tournament => {event_season => [qw( event )]},
+      },
+    },
+    group_by => [qw( event.id )],
+  });
+}
+
+=head2 handicapped_matches
+
+Return the subset of matches within a resultset that are handicapped.
+
+=cut
+
+sub handicapped_matches {
+  my $class = shift;
+  return $class->search({"team_match_template.handicapped" => 1}, {
+    join => [qw( team_match_template )],
+  });
 }
 
 =head2 get_match_by_ids
@@ -609,6 +610,13 @@ sub get_match_by_ids {
     scheduled_date => $scheduled_date->ymd,
   }, {
     prefetch  => [qw( venue season ), {
+      team_season_home_team_season => [qw( team ), {club_season => [qw( club )]}],
+    }, {
+      team_season_away_team_season => [qw( team ), {club_season => [qw( club )]}],
+    }, {
+      team_match_players => [qw( loan_team location player )],
+      division_season => [qw( division )],
+      team_match_template => "winner_type",
       team_match_games => [qw( home_player away_player umpire ), {
         individual_match_template => [qw( game_type serve_type )],
         team_match_legs => [qw( first_server next_point_server )],
@@ -617,18 +625,6 @@ sub get_match_by_ids {
       }, {
         away_doubles_pair => [qw(person_season_person1_season_team person_season_person2_season_team)],
       }],
-    }, {
-      team_match_players => [qw( loan_team location ), {
-        player => "gender",
-      }]
-    }, {
-      team_season_home_team_season => [qw( team ), {club_season => "club"}],
-    }, {
-      team_season_away_team_season => [qw( team ), {club_season => "club"}],
-    }, {
-      division_season => "division"
-    }, {
-      team_match_template => "winner_type",
     }],
     order_by  => {
       -asc  => [qw(team_match_games.actual_game_number team_match_legs.leg_number team_match_players.player_number)],
@@ -644,7 +640,8 @@ Returns a match in the same way that ->find() would, but prefetches related play
 
 sub get_match_by_url_keys {
   my $class = shift;
-  my ( $home_club_url_key, $home_team_url_key, $away_club_url_key, $away_team_url_key, $scheduled_date ) = @_;
+  my ( $home_club_url_key, $home_team_url_key, $away_club_url_key, $away_team_url_key, $scheduled_date, $params ) = @_;
+  my $logger = $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   
   return $class->find({
     "club.url_key" => $home_club_url_key,
@@ -654,23 +651,21 @@ sub get_match_by_url_keys {
     scheduled_date => $scheduled_date->ymd,
   }, {
     prefetch  => [qw( venue season ), {
-      team_match_games => ["home_player", "away_player", "umpire", "team_match_legs", {
-        home_doubles_pair => [ qw(person_season_person1_season_team person_season_person2_season_team) ],
-        away_doubles_pair => [ qw(person_season_person1_season_team person_season_person2_season_team) ],
-        individual_match_template => [ qw( game_type serve_type ) ],
-      }],
+      team_season_home_team_season => [qw( team ), {club_season => [qw( club )]}],
     }, {
-      team_match_players => [qw( loan_team location ), {
-        player => "gender",
-      }]
+      team_season_away_team_season => [qw( team ), {club_season => [qw( club )]}],
     }, {
-      team_season_home_team_season => ["team", {club_season => "club"}],
-    }, {
-      team_season_away_team_season => ["team", {club_season => "club"}],
-    }, {
-      division_season => "division"
-    }, {
+      team_match_players => [qw( loan_team location player )],
+      division_season => [qw( division )],
       team_match_template => "winner_type",
+      team_match_games => [qw( home_player away_player umpire ), {
+        individual_match_template => [qw( game_type serve_type )],
+        team_match_legs => [qw( first_server next_point_server )],
+      }, {
+        home_doubles_pair => [qw(person_season_person1_season_team person_season_person2_season_team)],
+      }, {
+        away_doubles_pair => [qw(person_season_person1_season_team person_season_person2_season_team)],
+      }],
     }],
     order_by => {
       -asc => [qw( team_match_games.actual_game_number team_match_legs.leg_number team_match_players.player_number )],
@@ -695,9 +690,8 @@ sub matches_involving_player_in_season {
   }, {
     prefetch => {
       team_match_players => "player",
-    }, join => {
-      scheduled_week => "season",
     },
+    join => [qw( season )],
   });
 }
 

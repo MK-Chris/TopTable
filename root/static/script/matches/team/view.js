@@ -48,10 +48,7 @@ $(document).ready(function(){
       "dataSrc": 0
     },
     "columns": [
-      {
-        "responsivePriority": 10,
-        "visible": false
-      },
+      {"visible": false},
       {"responsivePriority": 1},
       {"responsivePriority": 2},
       {"responsivePriority": 3},
@@ -77,7 +74,7 @@ $(document).ready(function(){
       } else if (tab.selector == "#teams") {
         // Recalculate the teams table
         teams_table.responsive.recalc();
-      } else if (tab.selector == "#teams") {
+      } else if (tab.selector == "#players") {
         // Recalculate the players tables
         players_table.responsive.recalc();
       }

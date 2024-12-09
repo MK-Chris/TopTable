@@ -126,6 +126,7 @@ sub create_or_edit {
   my $serve_type = $params->{serve_type} || undef;
   my $serves = $params->{serves} || undef;
   my $serves_deuce = $params->{serves_deuce} || undef;
+  my $handicapped = $params->{handicapped} || 0;
   my $response = {
     errors => [],
     warnings => [],
@@ -267,6 +268,10 @@ sub create_or_edit {
   $response->{fields}{serves} = $serves;
   $response->{fields}{serves_deuce} = $serves_deuce;
   
+  # Handicapped sanity check - should be 1 or 0, any other true value gets set to 1
+  $handicapped = $handicapped ? 1 : 0;
+  $response->{fields}{handicapped} = $handicapped;
+  
   if ( scalar(@{$response->{errors}}) == 0 ) {
     # No errors, build the key from the name
     my $url_key;
@@ -288,6 +293,7 @@ sub create_or_edit {
         serve_type => $serve_type,
         serves => $serves,
         serves_deuce => $serves_deuce,
+        handicapped => $handicapped,
       });
       
       $response->{completed} = 1;
@@ -303,6 +309,7 @@ sub create_or_edit {
         serve_type => $serve_type,
         serves => $serves,
         serves_deuce => $serves_deuce,
+        handicapped => $handicapped,
       });
       
       $response->{completed} = 1;

@@ -117,8 +117,8 @@ sub create_or_edit {
   my $lang = $schema->lang;
   
   # Grab the fields
-  my $tt_template = $params->{tt_template} || undef;
-  my $name = $params->{name} || undef;
+  my $tt_template = $params->{tt_template};
+  my $name = $params->{name};
   my $assign_points = $params->{assign_points} || 0;
   my $points_per_win = $params->{points_per_win};
   my $points_per_draw = $params->{points_per_draw};
@@ -143,7 +143,7 @@ sub create_or_edit {
     push(@{$response->{errors}}, $lang->maketext("admin.form.invalid-action", $action));
   } elsif ( $action eq "edit" ) {
     if ( defined($tt_template) ) {
-      if ( ref($tt_template) ne "TopTable::Model::DB::TemplateRanking" ) {
+      if ( !$tt_template->isa("TopTable::Schema::Result::TemplateLeagueTableRanking") ) {
         # This may not be an error, we may just need to find from an ID or URL key
         $tt_template = $class->find_id_or_url_key($tt_template);
         

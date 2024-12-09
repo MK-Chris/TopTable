@@ -1,8 +1,12 @@
 [%
 IF c.flash.show_flashed;
   SET winner_type_selected = c.flash.winner_type.id;
+  SET handicap_checked = c.flash.handicapped;
+  SET score_override_checked = c.flash.allow_final_score_override;
 ELSE;
   SET winner_type_selected = tt_template.winner_type.id;
+  SET handicap_checked = tt_template.handicapped;
+  SET score_override_checked = tt_template.allow_final_score_override;
 END;
 %]
 
@@ -48,6 +52,22 @@ END;
       </select>
     </div>
     <div class="clear-fix"></div>
+[%
+IF handicap_checked;
+  SET checked = ' checked="checked"';
+ELSE;
+  SET checked = '';
+END;
+-%]
+    <input type="checkbox" id="handicapped" name="handicapped" value="1"[% checked %] data-label="[% c.maketext("templates.team-match.field.handicapped") %]" />
+[%
+IF score_override_checked;
+  SET checked = ' checked="checked"';
+ELSE;
+  SET checked = '';
+END;
+-%]
+    <input type="checkbox" id="allow_final_score_override" name="allow_final_score_override" value="1"[% checked %] data-label="[% c.maketext("templates.team-match.field.allow-score-override") %]" />
   </div>
 </fieldset>
 <input type="submit" name="submit" value="[% c.maketext("form.button.save") %]" />

@@ -8,7 +8,13 @@ USE scalar;
 [%
 IF grid.used_in_league_season(season);
 -%]
-    <li><a href="#positions">[% c.maketext("fixtures-grids.positions", enc_season_name) %]</a></li>
+    <li><a href="#division-positions">[% c.maketext("fixtures-grids.division-positions", enc_season_name) %]</a></li>
+[%
+END;
+
+IF tournament_groups.count;
+-%]
+    <li><a href="#tournament-positions">[% c.maketext("fixtures-grids.tournament-positions", enc_season_name) %]</a></li>
 [%
 END;
 -%]
@@ -70,10 +76,10 @@ END;
 [%
 IF grid.used_in_league_season(season);
 -%]
-  <div id="positions">
+  <div id="division-positions">
     <div class="table-wrap">
       <div class="table-layout table-layout-centre">
-        <table id="positions-table" width="100%" class="stripe hover row-border">
+        <table id="division-positions-table" width="100%" class="stripe hover row-border">
           <thead>
             <tr>
               <th>[% c.maketext("fixtures-grid.positions.division-sortable") %]</th>
@@ -144,6 +150,94 @@ IF grid.used_in_league_season(season);
 [%
 # End check for if used in league season
 END;
+IF tournament_groups.count;
+-%]
+  <div id="tournament-positions">
+    <div class="table-wrap">
+      <div class="table-layout table-layout-centre">
+        <table id="tournament-positions-table" width="100%" class="stripe hover row-border">
+          <thead>
+            <tr>
+              <th>[% c.maketext("fixtures-grid.positions.competition") %]</th>
+              <th>[% c.maketext("fixtures-grid.positions.tourn-group-sort") %]</th>
+              <th>[% c.maketext("fixtures-grid.positions.tourn-group") %]</th>
+              <th>[% c.maketext("fixtures-grid.positions.position") %]</th>
+              <th>[% c.maketext("fixtures-grid.positions.team-player") %]</th>
+            </tr>
+          </thead>
+          <tbody>
+[%
+  WHILE (group = tournament_groups.next);
+    SET round = group.tournament_round;
+    SET event_season = round.tournament.event_season;
+    SET event = event_season.event;
+    IF specific_season;
+      SET event_uri = c.uri_for_action("/events/view_specific_season", [event.url_key, season.url_key]);
+      SET group_uri = c.uri_for_action("/events/group_view_specific_season", [event.url_key, season.url_key, round.url_key, group.url_key]);
+    ELSE;
+      SET event_uri = c.uri_for_action("/events/view_current_season", [event.url_key]);
+      SET group_uri = c.uri_for_action("/events/group_view_current_season", [event.url_key, round.url_key, group.url_key]);
+    END;
+    CALL c.log.debug(group.name);
+    
+    SET last_grid_position = 0;
+    SET entrants = group.scalar.get_entrants_in_grid_position_order;
+    CALL c.log.debug(entrants.count);
+    WHILE (entrant = entrants.next);
+      IF entrant.grid_position;
+        IF entrant.grid_position - last_grid_position > 1 AND last_position_set;
+          # We have a bye position, as the current grid position is more than one more than the previous one
+      
+-%]
+            <tr>
+              <td data-label="[% c.maketext("fixtures-grid.positions.competition") %]"><a href="[% event_uri %]">[% event_season.name | html_entity %]</a></td>
+              <td data-label="[% c.maketext("fixtures-grid.positions.tourn-group-sort") %]">[% group.group_order %]</td>
+              <td data-label="[% c.maketext("fixtures-grid.positions.tourn-group") %]"><a href="[% group_uri %]">[% group.name %]</a></td>
+              <td data-label="[% c.maketext("fixtures-grid.positions.position") %]">[% last_grid_position + 1 %]</td>
+              <td data-label="[% c.maketext("fixtures-grid.positions.team-player") %]">&laquo; [% c.maketext("fixtures-grids.form.teams.bye") %] &raquo;</td>
+            </tr>
+[%
+        END;
+        
+        SET last_grid_position = entrant.grid_position;
+        SET last_position_set = 1;
+      ELSE;
+        SET last_position_set = 0;
+      END;
+      
+      SWITCH tournament.entry_type.id;
+        CASE "team";
+          SET team_season = entrant.tournament_team.team_season;
+          IF specific_season;
+            SET entrant_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [team_season.club_season.club.url_key, team_season.team.url_key, season.url_key]);
+          ELSE;
+            SET entrant_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [team_season.club_season.club.url_key, team_season.team.url_key]);
+          END;
+        CASE "singles";
+          # Still to do
+        CASE "doubles";
+          # Still to do
+      END;
+-%]
+            <tr>
+              <td data-label="[% c.maketext("fixtures-grid.positions.competition") %]"><a href="[% event_uri %]">[% event_season.name | html_entity %]</a></td>
+              <td data-label="[% c.maketext("fixtures-grid.positions.tourn-group-sort") %]">[% group.group_order %]</td>
+              <td data-label="[% c.maketext("fixtures-grid.positions.tourn-group") %]"><a href="[% group_uri %]">[% group.name %]</a></td>
+              <td data-label="[% c.maketext("fixtures-grid.positions.position") %]">[% entrant.grid_position OR c.maketext("fixtures-grids.positions.view.position-not-set") %]</td>
+              <td data-label="[% c.maketext("fixtures-grid.positions.team-player") %]"><a href="[% team_uri %]">[% entrant.object_name | html_entity %]</a></td>
+            </tr>
+[%
+    END;
+  END;
+-%]
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+[%
+END;
+# End check for if used in tournament this season
 -%]
 </div>
 [%
@@ -154,4 +248,4 @@ ELSE;
 END;
 -%]
 
-<div class="seasons-count"><a href="[% c.uri_for_action("/fixtures-grids/view_seasons_first_page", [grid.url_key]) %]">[% c.maketext("fixtures-grids.seasons.count-text", enc_name, seasons, season_text) %]</a></div>
+<div class="seasons-count"><a href="[% c.uri_for_action("/fixtures-grids/view_seasons", [grid.url_key]) %]">[% c.maketext("fixtures-grids.seasons.count-text", enc_name, seasons, season_text) %]</a></div>

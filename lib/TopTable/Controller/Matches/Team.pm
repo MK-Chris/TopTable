@@ -94,16 +94,16 @@ sub base_by_url_keys :Chained("/") :PathPart("matches/team") :CaptureArgs(7) {
   # Do the date checking; eval it to trap DateTime errors and pass them into $error
   my $scheduled_date;
   try {
-    $scheduled_date =  $c->datetime(
-      year  => $match_scheduled_date_year,
+    $scheduled_date =$c->datetime(
+      year => $match_scheduled_date_year,
       month => $match_scheduled_date_month,
-      day   => $match_scheduled_date_day,
+      day => $match_scheduled_date_day,
     );
   } catch {
     $c->detach(qw( TopTable::Controller::Root default ));
   };
   
-  my $match = $c->model("DB::TeamMatch")->get_match_by_url_keys( $match_home_club_url_key, $match_home_team_url_key, $match_away_club_url_key, $match_away_team_url_key, $scheduled_date );
+  my $match = $c->model("DB::TeamMatch")->get_match_by_url_keys($match_home_club_url_key, $match_home_team_url_key, $match_away_club_url_key, $match_away_team_url_key, $scheduled_date);
   
   if ( defined($match) ) {
     $c->stash({match => $match});
@@ -125,8 +125,8 @@ sub base :Private {
   my $season = $match->season;
   my ( $home_team, $away_team ) = ( $match->team_season_home_team_season, $match->team_season_away_team_season );
   my $score = ( $match->home_team_match_score or $match->away_team_match_score ) ? sprintf("%d-%d", $match->home_team_match_score, $match->away_team_match_score) : $c->maketext("matches.versus-abbreviation");
-  my $encoded_name = sprintf("%s %s %s %s %s", encode_entities($home_team->club_season->short_name), encode_entities($home_team->name), $score, encode_entities($away_team->club_season->short_name), encode_entities($away_team->name));
-  my $scoreless_name = sprintf("%s %s %s %s %s", encode_entities($home_team->club_season->short_name), encode_entities($home_team->name), $c->maketext("matches.versus-abbreviation"), encode_entities($away_team->club_season->short_name), encode_entities($away_team->name));
+  my $encoded_name = encode_entities($match->name);
+  my $scoreless_name = encode_entities($match->name({scoreless => 1}));
   
   # Breadcrumbs
   push(@{$c->stash->{breadcrumbs}}, {
@@ -140,12 +140,41 @@ sub base :Private {
   my $noindex = $match->noindex_set(1)->count;
   $c->stash->{noindex} = 1 if $noindex;
   
+  my ( $subtitle2, $subtitle3, $subtitle4, $subtitle5 );
+  my $date = $match->played_date->set_locale($c->locale);
+  my $date_str = $c->i18n_datetime_format_date_long->format_datetime($date);
+  
+  if ( defined($match->division_season) ) {
+    $subtitle2 = $c->maketext("matches.field.competition.value.league");
+    $subtitle3 = encode_entities($match->division_season->name);
+    $subtitle4 = $date_str;
+  } else {
+    $subtitle2 = encode_entities($match->tournament_round->tournament->event_season->name);
+    $subtitle3 = $match->tournament_round->name;
+    
+    if ( defined($match->tournament_group) ) {
+      $subtitle4 = $match->tournament_group->name if defined($match->tournament_group);
+      $subtitle5 = $date_str;
+    } else {
+      $subtitle4 = $date_str;
+      
+    }
+    
+    # Add a warning for matches that don't have a division (attached to an event instead)
+    $c->add_event_test_msg;
+  }
+  
   # Get and stash the season / team_season / division_season objects so we don't need to look them up later
   $c->stash({
     encoded_name => $encoded_name,
     scoreless_name => $scoreless_name,
     score => $score,
     subtitle1 => $encoded_name,
+    subtitle2 => $subtitle2,
+    subtitle3 => $subtitle3,
+    subtitle4 => $subtitle4,
+    subtitle5 => $subtitle5,
+    date => $date,
     team_seasons => $match->get_team_seasons,
     division_season => $match->division_season,
     home_players => $home_players,
@@ -184,6 +213,7 @@ sub view :Private {
   my $match = $c->stash->{match};
   my $scoreless_name = $c->stash->{scoreless_name};
   my $score = $c->stash->{score};
+  my $date = $c->stash->{date};
   
   # Check that we are authorised to view matches
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["match_view", $c->maketext("user.auth.view-matches"), 1]);
@@ -192,28 +222,24 @@ sub view :Private {
   # Set up the title links if we need them
   my @title_links = ();
   
-  unless ( exists( $c->stash->{delete_screen} ) ) {
-    # Push update / cancel links if we are authorised
-    push(@title_links, {
-      image_uri => $c->uri_for("/static/images/icons/0018-Pencil-icon-32.png"),
-      text => $c->maketext("admin.update-object",  $scoreless_name),
-      link_uri => $c->uri_for_action("/matches/team/update_by_url_keys", $match->url_keys),
-    }) if $c->stash->{authorisation}{match_update};
-    
-    push(@title_links, {
-      image_uri => $c->uri_for("/static/images/icons/0006-Cross-icon-32.png"),
-      text => $c->maketext("admin.cancel-object",  $scoreless_name),
-      link_uri => $c->uri_for_action("/matches/team/cancel_by_url_keys", $match->url_keys),
-    }) if $c->stash->{authorisation}{match_cancel};
-    
-    push(@title_links, {
-      image_uri => $c->uri_for("/static/images/icons/0037-Notepad-icon-32.png"),
-      text => $c->maketext("admin.report-object",  $scoreless_name),
-      link_uri => $c->uri_for_action("/matches/team/report_by_url_keys", $match->url_keys),
-    }) if $match->can_report( $c->user );
-  }
+  # Push update / cancel links if we are authorised
+  push(@title_links, {
+    image_uri => $c->uri_for("/static/images/icons/0018-Pencil-icon-32.png"),
+    text => $c->maketext("admin.update-object", $scoreless_name),
+    link_uri => $c->uri_for_action("/matches/team/update_by_url_keys", $match->url_keys),
+  }) if $c->stash->{authorisation}{match_update};
   
-  my $date = $match->actual_date->set_locale( $c->locale );
+  push(@title_links, {
+    image_uri => $c->uri_for("/static/images/icons/0006-Cross-icon-32.png"),
+    text => $c->maketext("admin.cancel-object", $scoreless_name),
+    link_uri => $c->uri_for_action("/matches/team/cancel_by_url_keys", $match->url_keys),
+  }) if $c->stash->{authorisation}{match_cancel};
+  
+  push(@title_links, {
+    image_uri => $c->uri_for("/static/images/icons/0037-Notepad-icon-32.png"),
+    text => $c->maketext("admin.report-object", $scoreless_name),
+    link_uri => $c->uri_for_action("/matches/team/report_by_url_keys", $match->url_keys),
+  }) if $match->can_report($c->user);
   
   # Set up the external scripts - if the match has a score, we'll use a different script - the plugin will always be there
   my @external_scripts = (
@@ -228,10 +254,10 @@ sub view :Private {
   
   if ( $match->started ) {
     # The match has started, we don't specify a tab and it will default to the first one (games)
-    push(@external_scripts, $c->uri_for("/static/script/matches/team/view.js", {v => 2}));
+    push(@external_scripts, $c->uri_for("/static/script/matches/team/view.js", {v => 3}));
   } else {
     # The match has not started, start on the match details tab
-    push(@external_scripts, $c->uri_for("/static/script/matches/team/view-not-started.js"));
+    push(@external_scripts, $c->uri_for("/static/script/matches/team/view-not-started.js", {v => 3}));
   }
   
   # Inform that the scorecard is not yet complete if it's started but not complete
@@ -253,6 +279,8 @@ sub view :Private {
     $page_description = $c->maketext("description.team-matches.view-completed", $scoreless_name, $score, $c->i18n_datetime_format_date->format_datetime($date));
   }
   
+  $c->add_status_messages({info => $c->maketext("matches.message.info.handicap-not-set")}) if $match->handicapped and !$match->handicap_set;
+  
   # Set up the template to use
   $c->stash({
     template => "html/matches/team/view.ttkt",
@@ -267,7 +295,7 @@ sub view :Private {
       $c->uri_for("/static/css/datatables/rowGroup.dataTables.min.css"),
     ],
     title_links => \@title_links,
-    subtitle2 => sprintf("%s %d %s %d", ucfirst( $date->day_name ), $date->day, $date->month_name, $date->year),
+    #subtitle2 => sprintf("%s %d %s %d", ucfirst( $date->day_name ), $date->day, $date->month_name, $date->year),
     view_online_display => sprintf("Viewing match %s", $scoreless_name),
     view_online_link => 1,
     reports => $match->get_reports->count,
@@ -319,6 +347,9 @@ sub update :Private {
   $c->res->header("Pragma" => "no-cache");
   $c->res->header("Expires" => 0);
   
+  
+  $c->add_status_messages({warning => $c->maketext("matches.update.warning.handicap-not-set")}) if $match->handicapped and !$match->handicap_set;
+  
   my $players = $match->team_match_players;
   my $players_count = $match->team_match_template->singles_players_per_team;
   
@@ -327,20 +358,20 @@ sub update :Private {
   
   if ( $season->complete ) {
     my ( $scheduled_year, $scheduled_month, $scheduled_day ) = split("/", $match->scheduled_date->ymd("/"));
-    $c->response->redirect($c->uri_for_action("/matches/team/view_by_url_keys", [$match->home_team->club->url_key, $match->home_team->url_key, $match->away_team->club->url_key, $match->away_team->url_key, $scheduled_year, sprintf("%02d", $scheduled_month), sprintf("%02d", $scheduled_day)],
+    $c->response->redirect($c->uri_for_action("/matches/team/view_by_url_keys", $match->url_keys,
       {mid => $c->set_status_msg({error => $c->maketext("matches.update.error.season-complete")})}));
     $c->detach;
     return;
   } elsif ( $match->cancelled ) {
     my ( $scheduled_year, $scheduled_month, $scheduled_day ) = split("/", $match->scheduled_date->ymd("/"));
-    $c->response->redirect($c->uri_for_action("/matches/team/view_by_url_keys", [$match->home_team->club->url_key, $match->home_team->url_key, $match->away_team->club->url_key, $match->away_team->url_key, $scheduled_year, sprintf("%02d", $scheduled_month), sprintf("%02d", $scheduled_day)],
+    $c->response->redirect($c->uri_for_action("/matches/team/view_by_url_keys", $match->url_keys,
       {mid => $c->set_status_msg({error => $c->maketext("matches.update.error.match-cancelled")})}));
     $c->detach;
     return;
   }
   
   # Set up the page titles
-  my $date = $match->scheduled_date->set_locale($c->locale);
+  my $date = $c->stash->{date};
     
   # Get the player lists
   $c->forward("get_player_lists");
@@ -368,8 +399,6 @@ sub update :Private {
       $c->uri_for("/static/css/tokeninput/token-input-tt2.css"),
       $c->uri_for("/static/css/toastmessage/jquery.toastmessage.css"),
     ],
-    subtitle2 => encode_entities($match->division_season->name),
-    subtitle3 => sprintf("%s %d %s %d", ucfirst($date->day_name), $date->day, $date->month_name, $date->year),
     view_online_display => sprintf("Updating match %s %s v %s %s", $match->team_season_home_team_season->club_season->short_name, $match->team_season_home_team_season->name, $match->team_season_away_team_season->club_season->short_name, $match->team_season_away_team_season->name),
     view_online_link => 0,
     total_players => $players_count * 2, # $players_count is the number of players per team
@@ -497,7 +526,10 @@ sub update_game_score :Private {
   
   if ( $response->{completed} ) {
     # Completed, log that we updated the match
-    $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["team-match", "update", {home_team => $match->team_season_home_team_season->team->id, away_team => $match->team_season_away_team_season->team->id, scheduled_date => $match->scheduled_date->ymd}, sprintf("%s %s %s %s", $match->team_season_home_team_season->club_season->short_name, $match->team_season_home_team_season->name, $match->team_season_away_team_season->club_season->short_name, $match->team_season_away_team_season->name)]);
+    my $match_name = $c->maketext("matches.name", $match->team_season_home_team_season->full_name, $match->team_season_away_team_season->full_name);
+    $match_name .= " (" . $match->tournament_round->tournament->event_season->name . ")" if defined($match->tournament_round);
+    
+    $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["team-match", "update", {home_team => $match->team_season_home_team_season->team->id, away_team => $match->team_season_away_team_season->team->id, scheduled_date => $match->scheduled_date->ymd}, $match_name]);
   } else {
     # Wasn't completed, return with an error code
     $c->res->status(400);
@@ -633,7 +665,11 @@ sub change_played_date :Private {
   # Check that we are authorised to update scorecards
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["match_update", $c->maketext("user.auth.update-matches"), 1]);
   
-  my $response = $match->update_played_date($c->i18n_datetime_format_date->parse_datetime($c->req->params->{date}));
+  # $c->log->debug(sprintf("played date: %s", $c->req->params->{date}));
+  # $c->log->debug(sprintf("parsed date: %s", $c->i18n_datetime_format_date->parse_datetime($c->req->params->{date})->ymd("/")));
+  my $cldr = $c->i18n_datetime_format_date;
+  $cldr->time_zone("UTC");
+  my $response = $match->update_played_date($cldr->parse_datetime($c->req->params->{date}));
   
   # Set the status messages we need to show back to the user
   my @errors = @{$response->{errors}};
@@ -749,8 +785,8 @@ sub get_player_lists :Private {
   my ( $self, $c ) = @_;
   my $content_type = $c->req->params->{"content-type"} || "html";
   my $match = $c->stash->{match};
-  my @home_player_list = $c->model("DB::PersonSeason")->get_people_in_team_in_name_order( $match->season, $match->team_season_home_team_season->team );
-  my @away_player_list = $c->model("DB::PersonSeason")->get_people_in_team_in_name_order( $match->season, $match->team_season_away_team_season->team );
+  my @home_player_list = $c->model("DB::PersonSeason")->get_people_in_team_in_name_order($match->season, $match->team_season_home_team_season->team);
+  my @away_player_list = $c->model("DB::PersonSeason")->get_people_in_team_in_name_order($match->season, $match->team_season_away_team_season->team);
   my $home_doubles_list = [];
   my $away_doubles_list = [];
   
@@ -905,7 +941,7 @@ sub cancel :Private {
   $c->add_status_messages({warning => $c->maketext("matches.cancel.warning.has-score")}) if $match->started;
   
   # Set up the page titles
-  my $date = $match->scheduled_date->set_locale( $c->locale );
+  my $date = $c->stash->{date};
   
   # Stash the template values
   $c->stash({
@@ -919,8 +955,8 @@ sub cancel :Private {
     external_styles => [
       $c->uri_for("/static/css/prettycheckable/prettyCheckable.css"),
     ],
-    subtitle2 => encode_entities($match->division_season->name),
-    subtitle3 => sprintf("%s, %d %s %d", ucfirst($date->day_name), $date->day, $date->month_name, $date->year),
+    #subtitle2 => encode_entities($match->division_season->name),
+    #subtitle3 => sprintf("%s, %d %s %d", ucfirst($date->day_name), $date->day, $date->month_name, $date->year),
     view_online_display => sprintf("Cancelling match %s %s v %s %s", $match->team_season_home_team_season->club_season->short_name, $match->team_season_home_team_season->name, $match->team_season_away_team_season->club_season->short_name, $match->team_season_away_team_season->name),
     view_online_link => 0,
   });
@@ -1108,7 +1144,7 @@ sub publish_report :Private {
   
   my $response = $match->add_report({
     user => $c->user,
-    report => $report
+    report => $report,
   });
   
   # Set the status messages we need to show on redirect
@@ -1204,6 +1240,160 @@ sub check_report_create_edit_authorisation :Private {
     live_report => $live_report,
     original_report => $original_report,
   });
+}
+
+=head2 change_handicaps_by_ids
+
+Provides the change_handicap URL chaining to base_by_ids, then forwards to the real routine
+
+=cut
+
+sub change_handicaps_by_ids :Chained("base_by_ids") :PathPart("handicaps") Args(0) {
+  my ( $self, $c )  = @_;
+  $c->detach("change_handicaps");
+}
+
+=head2 change_handicap_by_url_keys
+
+Provides the change_venue URL chaining to base_by_ids, then forwards to the real routine
+
+=cut
+
+sub change_handicaps_by_url_keys :Chained("base_by_url_keys") :PathPart("handicaps") Args(0) {
+  my ( $self, $c )  = @_;
+  $c->detach("change_handicaps");
+}
+
+=head2 change_handicaps
+
+Change the match handicaps.
+
+=cut
+
+sub change_handicaps :Private {
+  my ( $self, $c )  = @_;
+  my $match = $c->stash->{match};
+  my $match_type = $c->stash->{match_type};
+  
+  # Check that we are authorised to update scorecards
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["match_update", $c->maketext("user.auth.update-matches"), 1]);
+  
+  # First check if this is a handicapped match
+  if ( !$match->handicapped ) {
+    $c->response->redirect($c->uri_for_action("/matches/team/view_by_url_keys", $match->url_keys,
+                                {mid => $c->set_status_msg({error => $c->maketext("matches.handicaps.error.not-a-handicapped-match")})}));
+    $c->detach;
+    return;
+  }
+  
+  if ( $match->started ) {
+    $c->response->redirect($c->uri_for_action("/matches/team/view_by_url_keys", $match->url_keys,
+                                {mid => $c->set_status_msg({error => $c->maketext("matches.handicaps.error.match-started")})}));
+    $c->detach;
+    return;
+  }
+  
+  # Stash the template values
+  $c->stash({
+    template => "html/matches/team/change-handicaps.ttkt",
+    form_action => $c->uri_for_action("/matches/team/set_handicaps_by_ids", [$match->team_season_home_team_season->team->id, $match->team_season_away_team_season->team->id, $match->scheduled_date->year, $match->scheduled_date->month, $match->scheduled_date->day]),
+    external_scripts => [
+      $c->uri_for("/static/script/matches/team/change-handicaps.js"),
+    ],
+    view_online_display => sprintf("Changing handicaps for match %s %s v %s %s", $match->team_season_home_team_season->club_season->short_name, $match->team_season_home_team_season->name, $match->team_season_away_team_season->club_season->short_name, $match->team_season_away_team_season->name),
+    view_online_link => 0,
+  });
+  
+  # Breadcrumbs
+  push(@{$c->stash->{breadcrumbs}}, {
+    path => $c->uri_for_action("/matches/team/update_by_url_keys", $match->url_keys),
+    label => $c->maketext("admin.update"),
+  });
+}
+
+=head2 set_handicaps_by_ids
+
+Provides the set_handicap URL chaining to base_by_ids, then forwards to the real routine
+
+=cut
+
+sub set_handicaps_by_ids :Chained("base_by_ids") :PathPart("set-handicaps") Args(0) {
+  my ( $self, $c )  = @_;
+  $c->detach("set_handicaps");
+}
+
+=head2 set_handicap_by_url_keys
+
+Provides the change_venue URL chaining to base_by_ids, then forwards to the real routine
+
+=cut
+
+sub set_handicaps_by_url_keys :Chained("base_by_url_keys") :PathPart("set-handicaps") Args(0) {
+  my ( $self, $c )  = @_;
+  $c->detach("set_handicaps");
+}
+
+=head2 set_handicaps
+
+Change the match handicaps.
+
+=cut
+
+sub set_handicaps :Private {
+  my ( $self, $c )  = @_;
+  my $match = $c->stash->{match};
+  my $match_type = $c->stash->{match_type};
+  
+  # Check that we are authorised to update scorecards
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["match_update", $c->maketext("user.auth.update-matches"), 1]);
+  
+  # First check if this is a handicapped match
+  if ( !$match->handicapped ) {
+    $c->response->redirect($c->uri_for_action("/matches/team/view_by_url_keys", $match->url_keys,
+                                {mid => $c->set_status_msg({error => $c->maketext("matches.handicaps.error.not-a-handicapped-match")})}));
+    $c->detach;
+    return;
+  }
+  
+  if ( $match->started ) {
+    $c->response->redirect($c->uri_for_action("/matches/team/view_by_url_keys", $match->url_keys,
+                                {mid => $c->set_status_msg({error => $c->maketext("matches.handicaps.error.match-started")})}));
+    $c->detach;
+    return;
+  }
+  
+  my @field_names = qw( home_team_handicap away_team_handicap );
+  my $response = $match->update_handicaps({
+    logger => sub{ my $level = shift; $c->log->$level( @_ ); },
+    map {$_ => $c->req->params->{$_}} @field_names, # All the fields from the form
+  });
+  
+  # Set the status messages we need to show back to the user
+  my @errors = @{$response->{errors}};
+  my @warnings = @{$response->{warnings}};
+  my @info = @{$response->{info}};
+  my @success = @{$response->{success}};
+  my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});
+  my $redirect_uri;
+  
+  if ( $response->{completed} ) {
+    # Was completed, display the view page
+    $redirect_uri = $c->uri_for_action("/matches/team/view_by_url_keys", $match->url_keys, {mid => $mid});
+    
+    # Completed, so we log an event
+    $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["team-match", "handicap-change", {home_team => $match->team_season_home_team_season->team->id, away_team => $match->team_season_away_team_season->team->id, scheduled_date => $match->scheduled_date->ymd}, $c->maketext("matches.name", $match->team_season_home_team_season->full_name, $match->team_season_away_team_season->full_name)]);
+  } else {
+    # Not complete - check if we need to redirect back to the create or view page
+    $redirect_uri = $c->uri_for_action("/matches/team/change_handicaps_by_url_keys", $match->url_keys, {mid => $mid});
+    
+    # Flash the entered values we've got so we can set them into the form
+    $c->flash->{$_} = $response->{fields}{$_} foreach @field_names;
+  }
+  
+  # Now actually do the redirection
+  $c->response->redirect($redirect_uri);
+  $c->detach;
+  return;
 }
 
 =head2 search

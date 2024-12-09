@@ -627,32 +627,32 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
-=head2 tournament_round_group_individual_membership_person1s
+=head2 tournament_doubles_person1s
 
 Type: has_many
 
-Related object: L<TopTable::Schema::Result::TournamentRoundGroupIndividualMembership>
+Related object: L<TopTable::Schema::Result::TournamentDoubles>
 
 =cut
 
 __PACKAGE__->has_many(
-  "tournament_round_group_individual_membership_person1s",
-  "TopTable::Schema::Result::TournamentRoundGroupIndividualMembership",
+  "tournament_doubles_person1s",
+  "TopTable::Schema::Result::TournamentDoubles",
   { "foreign.person1" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
-=head2 tournament_round_group_individual_membership_person2s
+=head2 tournament_doubles_person2s
 
 Type: has_many
 
-Related object: L<TopTable::Schema::Result::TournamentRoundGroupIndividualMembership>
+Related object: L<TopTable::Schema::Result::TournamentDoubles>
 
 =cut
 
 __PACKAGE__->has_many(
-  "tournament_round_group_individual_membership_person2s",
-  "TopTable::Schema::Result::TournamentRoundGroupIndividualMembership",
+  "tournament_doubles_person2s",
+  "TopTable::Schema::Result::TournamentDoubles",
   { "foreign.person2" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
@@ -701,8 +701,8 @@ __PACKAGE__->many_to_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-04-01 10:43:54
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:wOktZiN7XWVKoLIp8ncSfQ
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-09-29 23:47:56
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:mTdsqIN261ONwow0dnl97Q
 
 use HTML::Entities;
 
@@ -715,6 +715,17 @@ Return the URL key for this object as an array ref (even if there's only one, an
 sub url_keys {
   my ( $self ) = @_;
   return [$self->url_key];
+}
+
+=head2 object_name
+
+Used for compatibility with person tournament memberships, so we can refer to object_name regardless of whether we're accessing a tournament or direct person object.
+
+=cut
+
+sub object_name {
+  my $self = shift;
+  return $self->display_name;
 }
 
 =head2 get_seasons
@@ -883,19 +894,39 @@ Return matches where a player has played on loan.
 =cut
 
 sub matches_on_loan {
-  my ( $self, $params ) = @_;
-  my $season = $params->{season} || undef;
+  my $self = shift;
+  my ( $comp, $params ) = @_;
+  my ( $season, $tournament, $is_tourn );
+  
+  # Work out if we're checking the tournament or the season (league matches check against the season)
+  if ( $comp->isa("TopTable::Schema::Result::Tournament") ) {
+    $is_tourn = 1;
+    $tournament = $comp;
+  } else {
+    $is_tourn = 0;
+    $season = $comp;
+  }
+  
   my $for_team = $params->{for_team} || undef;
   my $against_team = $params->{against_team} || undef;
   my $not_for_team = $params->{not_for_team} || undef;
   my $not_against_team = $params->{not_against_team} || undef;
   my $division = $params->{division} || undef;
-  my $where;
+  my ( $where );
+  
+  # Initial attributes
+  my %attrib = (
+    join => [qw( team_match_players ), {
+      team_season_home_team_season => [qw( team ), {club_season => "club"}],
+      team_season_away_team_season => [qw( team ), {club_season => "club"}],
+    }],
+    order_by => {-asc => [qw( me.scheduled_date me.home_team me.away_team )]},
+  );
   
   # If we have a for team or an away team
   if ( defined($for_team) or defined($against_team) or defined($not_for_team) or defined($not_against_team) ) {
-    # Setup an array with two hashes, since we need to either check the home team / location and away tema / location.
-    # Both will have the player = this player and loan team is not null
+    # Setup an array with two hashes, since we need to either check the home team / location and away team / location.
+    # Both will have the player as this person's ID and check the loan team is not null
     $where = [{
       "team_match_players.player" => $self->id,
       "team_match_players.loan_team" => {"<>" => undef},
@@ -905,10 +936,23 @@ sub matches_on_loan {
     }];
     
     # Add the season to both array elements, if it's provided
-    $where->[0]{"me.season"} = $season->id if defined($season);
-    $where->[1]{"me.season"} = $season->id if defined($season);
-    $where->[0]{"me.division"} = $division->id if defined($division);
-    $where->[1]{"me.division"} = $division->id if defined($division);
+    if ( $is_tourn ) {
+      # Tournament match, check against the tournament
+      $where->[0]{"tournament.id"} = $tournament->id;
+      $where->[1]{"tournament.id"} = $tournament->id;
+      
+      # Add to the attributes so we retrieve the tournament too
+      # Element 1 is the hash
+      $attrib{join}[1]{tournament_round} = [qw( tournament )];
+    } else {
+      # League match, check against the season
+      $where->[0]{"me.season"} = $season->id;
+      $where->[1]{"me.season"} = $season->id;
+      
+      # Add divisional criteria if passed in
+      $where->[0]{"me.division"} = $division->id if defined($division);
+      $where->[1]{"me.division"} = $division->id if defined($division);
+    }
     
     if ( defined($for_team) ) {
       # If we have a for team, we search for that where the player location is home and home team matches OR where the player location is away and away team matches
@@ -955,13 +999,7 @@ sub matches_on_loan {
     $where->{"me.division"} = $division->id if defined($division);
   }
   
-  return $self->result_source->schema->resultset("TeamMatch")->search($where, {
-    prefetch => [qw( team_match_players ), {
-      team_season_home_team_season => [qw( team ), {club_season => "club"}],
-      team_season_away_team_season => [qw( team ), {club_season => "club"}],
-    }],
-    order_by => {-asc => [qw( me.scheduled_date me.home_team me.away_team )]},
-  });
+  return $self->result_source->schema->resultset("TeamMatch")->search($where, \%attrib);
 }
 
 =head2 inactive_memberships

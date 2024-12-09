@@ -50,7 +50,7 @@ Chain base for getting the venue ID and checking it.
 sub base :Chained("/") PathPart("venues") CaptureArgs(1) {
   my ( $self, $c, $id_or_url_key ) = @_;
   
-  my $venue = $c->model("DB::Venue")->find_id_or_url_key( $id_or_url_key );
+  my $venue = $c->model("DB::Venue")->find_id_or_url_key($id_or_url_key);
   
   if ( defined($venue) ) {
     my $enc_name = encode_entities($venue->name);

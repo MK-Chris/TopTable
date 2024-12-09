@@ -19,6 +19,7 @@ __PACKAGE__->config(
   TIMER => 0,
   # Wrapper template
   WRAPPER => "html/wrappers/wraparoundthewrapper.ttkt",
+  ENCODING => "utf-8",
 );
 
 =head1 NAME

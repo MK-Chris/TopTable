@@ -97,12 +97,16 @@ __PACKAGE__->table("seasons");
   extra: {unsigned => 1}
   is_nullable: 0
 
+Allow loan players from a lower division than the match being played
+
 =head2 allow_loan_players_above
 
   data_type: 'tinyint'
   default_value: 0
   extra: {unsigned => 1}
   is_nullable: 0
+
+Allow loan players from a higher division than the match being played
 
 =head2 allow_loan_players_across
 
@@ -111,12 +115,16 @@ __PACKAGE__->table("seasons");
   extra: {unsigned => 1}
   is_nullable: 0
 
+Allow loan players from the same division as the match being played
+
 =head2 allow_loan_players_multiple_teams_per_division
 
   data_type: 'tinyint'
   default_value: 0
   extra: {unsigned => 1}
   is_nullable: 0
+
+Allow loan players to play on loan for more than one team in the same division
 
 =head2 allow_loan_players_same_club_only
 
@@ -125,12 +133,16 @@ __PACKAGE__->table("seasons");
   extra: {unsigned => 1}
   is_nullable: 0
 
+Only allow loan players from the same club as the team they are on loan for
+
 =head2 loan_players_limit_per_player
 
   data_type: 'tinyint'
   default_value: 0
   extra: {unsigned => 1}
   is_nullable: 0
+
+Maximum number of times a player may play on loan in total (0 for no limit)
 
 =head2 loan_players_limit_per_player_per_team
 
@@ -139,11 +151,16 @@ __PACKAGE__->table("seasons");
   extra: {unsigned => 1}
   is_nullable: 0
 
+Maximum number of times a player may play on loan for the same team (0 for no limit)
+
 =head2 loan_players_limit_per_player_per_opposition
 
   data_type: 'tinyint'
   default_value: 0
+  extra: {unsigned => 1}
   is_nullable: 0
+
+Maximum number of times a player may play on loan against the same team (0 for no limit)
 
 =head2 loan_players_limit_per_team
 
@@ -152,10 +169,13 @@ __PACKAGE__->table("seasons");
   extra: {unsigned => 1}
   is_nullable: 0
 
+Maximum number of times a team may play loan players (0 for no limit)
+
 =head2 void_unplayed_games_if_both_teams_incomplete
 
   data_type: 'tinyint'
   default_value: 0
+  extra: {unsigned => 1}
   is_nullable: 0
 
 Void games (no team wins) between a present and absent player if both teams have missing players
@@ -164,13 +184,19 @@ Void games (no team wins) between a present and absent player if both teams have
 
   data_type: 'tinyint'
   default_value: 0
+  extra: {unsigned => 1}
   is_nullable: 0
+
+Count a game as won in the player averages even if it was not started (the opposition player pulled out before the game started)
 
 =head2 missing_player_count_win_in_averages
 
   data_type: 'tinyint'
   default_value: 0
+  extra: {unsigned => 1}
   is_nullable: 0
+
+If a player is missing, count as a win for the opposition players in the player averages
 
 =head2 rules
 
@@ -251,7 +277,12 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
   },
   "loan_players_limit_per_player_per_opposition",
-  { data_type => "tinyint", default_value => 0, is_nullable => 0 },
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
   "loan_players_limit_per_team",
   {
     data_type => "tinyint",
@@ -260,11 +291,26 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
   },
   "void_unplayed_games_if_both_teams_incomplete",
-  { data_type => "tinyint", default_value => 0, is_nullable => 0 },
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
   "forefeit_count_averages_if_game_not_started",
-  { data_type => "tinyint", default_value => 0, is_nullable => 0 },
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
   "missing_player_count_win_in_averages",
-  { data_type => "tinyint", default_value => 0, is_nullable => 0 },
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
   "rules",
   { data_type => "longtext", is_nullable => 1 },
 );
@@ -463,8 +509,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-05-05 09:17:30
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:TXqdS4cnZSi+VdBwbEPKoA
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-11-21 12:21:46
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:UrK2VB2hJKZjQa4uPhwISw
 
 use HTML::Entities;
 
@@ -475,7 +521,7 @@ Return the URL key for this object as an array ref (even if there's only one, an
 =cut
 
 sub url_keys {
-  my ( $self ) = @_;
+  my $self = shift;
   return [$self->url_key];
 }
 
@@ -486,7 +532,7 @@ Returns the number of weeks in the season.
 =cut
 
 sub number_of_weeks {
-  my ( $self ) = @_;
+  my $self = shift;
   
   my $season_weeks;
   for (my $dt = $self->start_date->clone; $dt <= $self->end_date; $dt->add(weeks => 1) ) {
@@ -503,7 +549,7 @@ Return the long start date for the season.
 =cut
 
 sub start_date_long {
-  my ( $self ) = @_;
+  my $self = shift;
   return sprintf("%s, %s %s %s", ucfirst($self->start_date->day_name), $self->start_date->day, $self->start_date->month_name, $self->start_date->year);
 }
 
@@ -514,7 +560,7 @@ Return the long end date for the season.
 =cut
 
 sub end_date_long {
-  my ( $self ) = @_;
+  my $self = shift;
   return sprintf("%s, %s %s %s", ucfirst($self->end_date->day_name), $self->end_date->day, $self->end_date->month_name, $self->end_date->year);
 }
 
@@ -525,7 +571,7 @@ Return a list of teams who have entered this season.
 =cut
 
 sub all_clubs {
-  my ( $self ) = @_;
+  my $self = shift;
   
   return $self->search_related("club_seasons", undef, {
     order_by  => {-asc => [qw( full_name )]},
@@ -539,7 +585,7 @@ Return a list of teams who have entered this season.
 =cut
 
 sub all_teams {
-  my ( $self ) = @_;
+  my $self = shift;
   
   return $self->search_related("team_seasons", undef, {
     join => "club_season",
@@ -554,7 +600,7 @@ Return a list of players who have entered this season.
 =cut
 
 sub all_players {
-  my ( $self ) = @_;
+  my $self = shift;
   return $self->search_related("person_seasons", {team_membership_type => "active"});
 }
 
@@ -570,7 +616,8 @@ Return a list of mamtches for a given season.  If the 'mode' is given, only thos
 =cut
 
 sub league_matches {
-  my ( $self, $params ) = @_;
+  my $self = shift;
+  my ( $params ) = @_;
   my $mode = $params->{mode} || undef;
   
   # A lot of these are only used to get a count, in which case we don't need to do expensive prefetches - so we make it a manual option.
@@ -616,11 +663,25 @@ Return the divisions that have an association with the season.
 =cut
 
 sub divisions {
-  my ( $self ) = @_;
+  my $self = shift;
   
   return $self->search_related("division_seasons", undef, {
     prefetch => "division",
     order_by => {-asc => [qw( division.rank )]}
+  });
+}
+
+=head2 weeks
+
+Get the fixtures weeks objects related to this season.
+
+=cut
+
+sub weeks {
+  my $self = shift;
+  
+  return $self->search_related("fixtures_weeks", {}, {
+    order_by => {-asc => [qw( week_beginning_date )]}
   });
 }
 
@@ -631,7 +692,7 @@ Checks whether or not we can complete this season, by checking that the matches 
 =cut
 
 sub can_complete {
-  my ( $self ) = @_;
+  my $self = shift;
   
   # First check the season is not already complete - if it is, we can't complete it again.
   return 0 if $self->complete;
@@ -650,7 +711,8 @@ Update the season to show that it's now complete (if possible).
 =cut
 
 sub check_and_complete {
-  my ( $self, $params ) = @_;
+  my $self = shift;
+  my ( $params ) = @_;
   # Setup schema / logging
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
@@ -700,7 +762,7 @@ This is here so we can call it from controllers, but there's no routine to uncom
 =cut
 
 sub can_uncomplete {
-  my ( $self ) = @_;
+  my $self = shift;
   return 0;
 }
 
@@ -711,7 +773,7 @@ Performs some logic checks to see whether or not a season can be deleted.  A sea
 =cut
 
 sub can_delete {
- my ( $self ) = @_;
+  my $self = shift;
  
  my $matches = $self->search_related("team_matches")->count;
  return $matches == 0 ? 1 : 0;
@@ -730,7 +792,8 @@ Checks the club can be deleted (via can_delete) and then performs the deletion.
 =cut
 
 sub check_and_delete {
-  my ( $self, $params ) = @_;
+  my $self = shift;
+  my ( $params ) = @_;
   # Setup schema / logging
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
@@ -787,7 +850,8 @@ Function in all searchable objects to give a common accessor to the text to disp
 =cut
 
 sub search_display {
-  my ( $self, $params ) = @_;
+  my $self = shift;
+  my ( $params ) = @_;
   
   return {
     id => $self->id,

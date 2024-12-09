@@ -283,6 +283,21 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
+=head2 tournament_rounds
+
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::TournamentRound>
+
+=cut
+
+__PACKAGE__->has_many(
+  "tournament_rounds",
+  "TopTable::Schema::Result::TournamentRound",
+  { "foreign.venue" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
 =head2 venue_timetables
 
 Type: has_many
@@ -299,8 +314,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2022-06-07 12:04:02
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:LEfkflIy5qtqTfbOqHHUnA
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-09-29 23:47:56
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:WClnG5gi5QQPhA1xKPzehQ
 
 use HTML::Entities;
 

@@ -173,7 +173,7 @@ sub index :Path :Args(0) {
   my $online_users_last_active_limit = $c->datetime_tz({time_zone => "UTC"})->subtract(minutes => 15);
   my $online_user_count = $c->model("DB::Session")->get_online_users({datetime_limit => $online_users_last_active_limit})->count;
   
-  my ( $matches, $matches_to_show, $matches_started, $next_match_date );
+  my ( $matches, $matches_to_show, $matches_started, $next_match_date, $handicapped );
   
   if ( defined($current_season) ) {
     $matches = $c->model("DB::TeamMatch")->matches_on_date({
@@ -187,13 +187,22 @@ sub index :Path :Args(0) {
     if ( !$matches_to_show ) {
       # No matches today, find the next match date
       $next_match_date = $c->model("DB::TeamMatch")->next_match_date;
-      $matches = $c->model("DB::TeamMatch")->matches_on_date({
-        season => $current_season,
-        date => $next_match_date,
-      });
       
-      $matches_to_show = $matches->count;
+      if ( defined($next_match_date) ) {
+        $matches = $c->model("DB::TeamMatch")->matches_on_date({
+          season => $current_season,
+          date => $next_match_date,
+        });
+        
+        $matches_to_show = $matches->count;
+      } else {
+        $matches_started = 0;
+        $matches_to_show = 0;
+      }
     }
+    
+    # Add handicapped flag for template / JS if there are handicapped matches
+    $handicapped = $matches->handicapped_matches->count ? "/hcp" : "";
   } else {
     $matches_started = 0;
     $matches_to_show = 0;
@@ -223,7 +232,7 @@ sub index :Path :Args(0) {
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
       $c->uri_for("/static/script/event-viewer/view-home.js", {v => 2}),
-      $c->uri_for("/static/script/fixtures-results/view-group-divisions-no-date-no-score.js"),
+      $c->uri_for("/static/script/fixtures-results/view$handicapped/group-competitions-no-date-check-score.js"),
       $c->uri_for("/static/script/standard/option-list.js"),
     ],
     external_styles => [
@@ -242,6 +251,7 @@ sub index :Path :Args(0) {
     events => \@events,
     exclude_event_user => 1,
     matches => $matches,
+    handicapped => $handicapped,
     matches_to_show => $matches_to_show,
     matches_started => $matches_started,
     next_match_date => $next_match_date,
@@ -372,26 +382,35 @@ Attempt to render a view, if needed.
 
 sub end :ActionClass("RenderView") {
   my ( $self, $c ) = @_;
+  #my $stats = $c->stats;
+  #$c->stash({stats => $stats});
+  #$stats->profile("noindex");
   $c->res->header("X-Robots-Tag" => "noindex") if exists($c->stash->{noindex}) and $c->stash->{noindex};
   
+  #$stats->profile(begin => "ajax check");
   if ( !$c->stash->{no_wrapper} and !$c->is_ajax ) {
     ## Nav drop down menus
     # Current season, clubs in current season, archived seasons
     my $current_season = $c->model("DB::Season")->get_current;
+    #$stats->profile("got current season");
     my $clubs = [$c->model("DB::Club")->clubs_with_teams_in_season({
       season => $current_season,
       get_teams => $c->config->{Menu}{show_teams} || 0,
       get_players => $c->config->{Menu}{show_players} || 0,
     })] if defined($current_season);
+    #$stats->profile("got clubs");
     my $events = [$c->model("DB::Event")->events_in_season({
       season => $current_season,
     })] if defined($current_season);
+    #$stats->profile("got events");
     my $venues = [$c->model("DB::Venue")->active_venues];
+    #$stats->profile("got venues");
     
     # Check admin authorisation for showing an admin menu
     $c->forward("TopTable::Controller::Users", "check_authorisation", [[qw( match_update user_approve_new admin_issue_bans template_view person_create person_view role_create role_edit role_delete )], "", 0]);
     
     my $nav_ban_types = $c->model("DB::LookupBanType")->all_types if $c->stash->{authorisation}{admin_issue_bans};
+    #$stats->profile("got ban tyes");
     
     # See if we need to stash the search script; first grab the external scripts
     my $scripts = $c->stash->{scripts} || [];
@@ -434,29 +453,34 @@ sub end :ActionClass("RenderView") {
       external_styles => $external_styles,
     });
     
+    #$stats->profile("stashed");
+    
     # Check the authorisation for showing / creating clubs, events, seasons, venues, meetings, teams and people.
     $c->forward("TopTable::Controller::Users", "check_authorisation", [[qw( club_view club_create event_view event_create season_view season_create venue_view venue_create meeting_view meetingtype_view meetingtype_create team_create team_view fixtures_create contactreason_create )], "", 0]);
+    #$stats->profile("done auth check");
     
     # If we can view meeting types, get the meeting types to show
     if ( $c->stash->{authorisation}{meetingtype_view} ) {
       $c->stash({nav_meeting_types => [$c->model("DB::MeetingType")->all_meeting_types]});
+      #$stats->profile("got meeting types");
     }
     
     if ( $c->stash->{authorisation}{fixtures_create} ) {
       $c->stash({nav_fixtures_grids => [$c->model("DB::FixturesGrid")->all_grids]});
+      #$stats->profile("got meeting grids");
     }
     
     if ( $c->stash->{authorisation}{contactreason_create} ) {
       $c->stash({nav_contact_reasons => [$c->model("DB::ContactReason")->all_reasons]});
+      #$stats->profile("got contact reasons");
     }
-  }
   
-  unless ( $c->stash->{no_wrapper} or $c->is_ajax ) {
     # Additional session / user functionality
     my $last_active_datetime = $c->datetime_tz({time_zone => "UTC"});
     my ( $session, $user, $hide_online );
     
-    $session = $c->model("DB::Session")->find({id => sprintf( "session:%s", $c->sessionid )});
+    $session = $c->model("DB::Session")->find({id => sprintf("session:%s", $c->sessionid)});
+    #$stats->profile("got session");
     
     # Set up the session update / create data
     # Check if we have a user
@@ -466,7 +490,8 @@ sub end :ActionClass("RenderView") {
       $hide_online = $c->user->hide_online;
       
       # User last active stuff
-      $c->user->update({last_active_date => sprintf("%s %s", $last_active_datetime->ymd, $last_active_datetime->hms) });
+      $c->user->update({last_active_date => sprintf("%s %s", $last_active_datetime->ymd, $last_active_datetime->hms)});
+      #$stats->profile("done user update");
     } else {
       # Not logged in, user ID is null, view online is true
       $user = undef;
@@ -476,12 +501,14 @@ sub end :ActionClass("RenderView") {
     my $session_data = {};
     my ( $invalid_logins, $invalid_login_date );
     if ( exists( $c->stash->{invalid_login_attempt} ) ) {
-      $session_data->{invalid_logins}     = $session->invalid_logins + 1;
-      $session_data->{last_invalid_login} = sprintf( "%s %s", $last_active_datetime->ymd, $last_active_datetime->hms );
+      $session_data->{invalid_logins} = $session->invalid_logins + 1;
+      $session_data->{last_invalid_login} = sprintf("%s %s", $last_active_datetime->ymd, $last_active_datetime->hms);
     } elsif ( exists( $c->stash->{successful_login} ) ) {
-      $session_data->{invalid_logins}     = 0;
+      $session_data->{invalid_logins} = 0;
       $session_data->{last_invalid_login} = undef;
     }
+    
+    #$stats->profile("done invalid login stuff");
     
     if ( !exists( $c->stash->{skip_view_online} ) and exists( $c->stash->{view_online_display} ) and $c->req->path !~ /\.js$/ ) {
       # The title bar will always have
@@ -506,10 +533,12 @@ sub end :ActionClass("RenderView") {
     if ( defined($session) ) {
       # If it does update it
       $session->update($session_data);
+      #$stats->profile("done session data update");
     } elsif ( $c->sessionid ) {
       # If not, create it - we need the session ID to be added to the hash for this
       $session_data->{id} = "session:" . $c->sessionid;
       $c->model("DB::Session")->create($session_data);
+      #$stats->profile("done session DB create");
     }
     
     # Add IE rendering header
@@ -517,9 +546,11 @@ sub end :ActionClass("RenderView") {
     
     # Add X-Frame-Options header to avoid clickjacking - https://www.owasp.org/index.php/Clickjacking_Defense_Cheat_Sheet
     $c->res->header("X-Frame-Options", "SAMEORIGIN");
+    #$stats->profile("sent headers");
     
     # Filter meta description for HTML
     $c->stash({meta_description => $c->model("FilterHTML")->filter($c->stash->{page_description})}) if exists($c->stash->{page_description}) and defined($c->stash->{page_description});
+    #$stats->profile("filtered meta descriptions");
     
     # Error handling
     if ( scalar @{$c->error} ) {
@@ -539,9 +570,18 @@ sub end :ActionClass("RenderView") {
         errors => $c->error,
       });
       
+      # Clear any links
+      undef $c->stash->{subtitle1_uri};
+      undef $c->stash->{subtitle2_uri};
+      undef $c->stash->{subtitle3_uri};
+      undef $c->stash->{subtitle4_uri};
+      undef $c->stash->{subtitle5_uri};
+      undef $c->stash->{subtitle6_uri};
+      
       # Log the errors, then clear them
       $c->log->error($_) foreach @{$c->error};
       $c->clear_errors;
+      #$stats->profile("done error stuff");
     }
     
     # Join our title and subtitled elements
@@ -564,7 +604,9 @@ sub end :ActionClass("RenderView") {
     
     # Stash it for use in the web page title bar
     $c->stash({page_title => $page_title});
+    #$stats->profile("stashed title");
   }
+  #$stats->profile(end => "ajax check");
 }
 
 =head2 recaptcha
@@ -786,7 +828,7 @@ Takes as arguments:
  - The day that we want to call the start of the week (1 is Monday, 7 Sunday) (optional)
 NOTE: This may end up in a different month...
 Taken from:
-http://datetime.perl.org/wiki/datetime/page/FAQ%3A_Sample_Calculations#How_do_I_calculate_the_date_of_the_Wednesday_of_the_same_week_as_the_current_date_-5
+https://github.com/houseabsolute/DateTime.pm/wiki/Sample-Calculations#how-do-i-calculate-the-date-of-the-wednesday-of-the-same-week-as-the-current-date
 
 =cut
 

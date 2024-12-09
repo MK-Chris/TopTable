@@ -1,24 +1,27 @@
 <form method="post" action="[% form_action %]">
 <fieldset id="fixtures-weeks">
-<legend>[% c.maketext("fixtures-grids.create-fixtures.legend.assign-weeks") %]</legend>
+<legend>[% c.maketext("fixtures-grids.create-fixtures.legend.assign-rounds") %]</legend>
 [%
 FOREACH grid_week IN grid_weeks;
 -%]
 
 <div class="label-field-container">
-  <label for="week_[% grid_week.week %]">[% c.maketext("fixtures-grids.field.week", grid_week.week) %]</label>
+  <label for="round_[% grid_week.week %]">[% c.maketext("fixtures-grids.field.week", grid_week.week) %]</label>
   <div class="field-container">
-    <select id="week_[% grid_week.week %]" name="week_[% grid_week.week %]" data-placeholder="[% c.maketext("fixtures-grids.create-fixtures.label.season-week") %]" data-week="[% grid_week.week %]">
+    <select id="round_[% grid_week.week %]" name="round_[% grid_week.week %]" data-placeholder="[% c.maketext("fixtures-grids.create-fixtures.label.season-week") %]" data-week="[% grid_week.week %]">
       <option value=""></option>
 [%
   FOREACH season_week IN season_weeks;
-    IF c.flash.week_allocations.item('week_' _ grid_week.week).id != "" and c.flash.week_allocations.item('week_' _ grid_week.week).id == season_week.id;
-      SET SELECTED = ' selected="selected"';
+    SET date = season_week.week_beginning_date;
+    CALL date.set_locale(c.locale);
+    SET week_beginning_text = date.day _ " " _ date.month_name _ " " _ date.year;
+    IF c.flash.week_allocations.item('round_' _ grid_week.week).id != "" and c.flash.week_allocations.item('round_' _ grid_week.week).id == season_week.id;
+      SET selected = ' selected="selected"';
     ELSE;
-      SET SELECTED = '';
+      SET selected = '';
     END;
 -%]
-      <option value="[% season_week.id %]"[% SELECTED %]>[% c.maketext("fixtures-grids.create-fixtures.field.week-beginning", season_week.week_beginning_text) | html_entity %]</option>
+      <option value="[% season_week.id %]"[% selected %]>[% c.maketext("fixtures-grids.create-fixtures.field.week-beginning", week_beginning_text) | html_entity %]</option>
 [%
   END;
 -%]

@@ -14,7 +14,7 @@ INCLUDE "html/event-viewer/view-preloaded.ttkt";
 IF matches_to_show;
 -%]
 <div class="row">
-  <div class="column left">
+  <div class="column-narrow left">
 [%
 ELSE;
 -%]
@@ -33,7 +33,7 @@ INCLUDE "html/news/list.ttkt" index = 1;
 # If there are matches to show, display as two columns
 IF matches_to_show;
 -%]
-  <div class="column right">
+  <div class="column-wide right">
 [%
   IF next_match_date;
     # No matches today, we'll be showing a future date
@@ -53,7 +53,7 @@ IF matches_to_show;
   <h4>[% matches_title %] ([% matches_to_show %])</h4>
 [%
 # Today's matches
-INCLUDE "html/fixtures-results/view-group-divisions-no-date-check-score.ttkt";
+INCLUDE "html/fixtures-results/view$handicapped/group-competitions-no-date-check-score.ttkt";
 -%]
   </div>
 </div>

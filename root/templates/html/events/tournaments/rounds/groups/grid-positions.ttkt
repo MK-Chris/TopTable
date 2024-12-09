@@ -1,0 +1,86 @@
+<h4>[% grid.name %]</h4>
+<form method="post" action="[% form_action %]">
+[%
+# Reset the team list
+SET team_ids = "";
+
+# We need to work out whether or not we need a bye; if there's an odd number of teams, we will need one, but
+# we also need to know where to put it; if there are no grid numbers yet, it will go at the end, but if grid
+# numbers are set, it's likely we'll need to fit it in the middle somewhere (where there is a missing grid
+# position number).
+SET bye_printed = 0;
+SET positions_filled = group.grid_positions_set;
+IF entrants.size % 2 == 1;
+  SET bye_required = 1;
+ELSE;
+  SET bye_required = 0;
+END;
+-%]
+<ul class="sortable" id="group-list" data-group="[% group.group_order %]">
+[%
+SET position_number = 0;
+FOREACH entrant = entrants;
+  # Entry type specific stuff
+  SWITCH event_detail.entry_type.id;
+    CASE "team";
+      SET team_season = entrant.tournament_team.team_season;
+      entrant_name = entrant.object_name | html_entity;
+      SET id = entrant.object_id;
+    CASE "singles";
+    
+    CASE "doubles";
+    
+  END;
+  
+  # Check if we need to put a bye here
+  IF bye_required AND positions_filled AND !bye_printed AND (team_season.grid_position - last_position) > 1;
+    SET bye_printed = 1;
+    
+    # Increment the position number
+    SET position_number = position_number + 1;
+    
+    # Set 0 to the array of IDs
+    IF team_ids == "";
+      SET team_ids = "0";
+    ELSE;
+      SET team_ids = team_ids _ ",0";
+    END;
+-%]
+  <li class="ui-state-default grid-team" data-entrant-id="0"><span class="ui-icon ui-icon-arrowthick-2-n-s"></span> <span class="entrant-position-number" id="entrant-0-position">[% position_number %]</span> <span class="team-position-name">[[% c.maketext("fixtures-grids.form.teams.bye") %]]</span></li>
+[%
+  END;
+  
+  # Build the IDs string for the hidden field
+  IF team_ids == "";
+    SET team_ids = team_season.team.id;
+  ELSE;
+    SET team_ids = team_ids _ "," _ team_season.team.id;
+  END;
+  
+  # Increment the position number
+  SET position_number = position_number + 1;
+-%]
+  <li class="ui-state-default grid-team" data-entrant-id="[% id %]"><span class="ui-icon ui-icon-arrowthick-2-n-s"></span> <span class="team-position-number" id="entrant-[% id %]-position">[% position_number %]</span> <span class="team-position-name">[% entrant_name %]</span></li>
+[%
+END;
+
+# If we need a bye and we've not yet had one, print it at the bottom here
+SET last_position = team_season.grid_position;
+IF bye_required AND !bye_printed;
+  IF team_ids == "";
+    SET team_ids = "0";
+  ELSE;
+    SET team_ids = team_ids _ ",0";
+  END;
+  
+  # Increment the position number
+  SET position_number = position_number + 1;
+-%]
+  <li class="ui-state-default grid-team" data-entrant-id="0"><span class="ui-icon ui-icon-arrowthick-2-n-s"></span> <span class="team-position-number" id="entrant-0-position">[% position_number %]</span> <span class="team-position-name">[[% c.maketext("fixtures-grids.form.teams.bye") %]]</span></li>
+[%
+END;
+-%]
+</ul><br />
+<input type="hidden" id="grid_positions" name="grid_positions" value="[% team_ids %]" />
+<input type="submit" name="Submit" value="Save" />
+</form>

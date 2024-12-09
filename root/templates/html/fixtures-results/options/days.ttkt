@@ -1,0 +1,43 @@
+<div class="table-wrap">
+  <div class="table-layout table-layout-centre">
+    <table id="fixtures-options" class="stripe hover order-column row-border" style="width: 100%;">
+      <thead>
+        <tr>
+          <th>[% c.maketext("fixtures-results.options.heading.week") %]</th>
+          <th>[% c.maketext("fixtures-results.options.heading.week-sort") %]</th>
+          <th>[% c.maketext("fixtures-results.options.heading.day") %]</th>
+          <th>[% c.maketext("fixtures-results.options.heading.day-sort") %]</th>
+          <th>[% c.maketext("fixtures-results.options.heading.number") %]</th>
+        </tr>
+      </thead>
+      <tbody>
+[%
+USE zeroes = format("%02d");
+FOREACH option IN display_options;
+  SET played_week = option.played_week;
+  CALL played_week.set_locale(c.locale);
+  SET played_date = option.played_date;
+  CALL played_date.set_locale(c.locale);
+  SET month_number = zeroes(played_date.month);
+  SET month_day = zeroes(played_date.day);
+  
+  IF specific_season;
+    SET uri = c.uri_for_action("/fixtures-results/view_day_specific_season_end", [option.season.url_key, played_date.year, month_number, month_day]);
+  ELSE;
+    SET uri = c.uri_for_action("/fixtures-results/view_day_current_season_end", [played_date.year, month_number, month_day]);
+  END;
+-%]
+        <tr>
+          <td data-label="[% c.maketext("fixtures-results.options.heading.week") %]">[% c.maketext("fixtures-results.view-week.week-beginning", c.i18n_datetime_format_date_long.format_datetime(played_week)) %]</td>
+          <td data-label="[% c.maketext("fixtures-results.options.heading.week-sort") %]">[% played_week.ymd("") %]</td>
+          <td data-label="[% c.maketext("fixtures-results.options.heading.day") %]"><a href="[% uri %]">[% c.i18n_datetime_format_date_long.format_datetime(played_date) %]</a></td>
+          <td data-label="[% c.maketext("fixtures-results.options.heading.day-sort") %]">[% played_date.ymd("") %]</td>
+          <td data-label="[% c.maketext("fixtures-results.options.heading.number") %]">[% option.get_column("number_of_matches") %]</td>
+        </tr>
+[%
+END;
+-%]
+      </tbody>
+    </table>
+  </div>
+</div>

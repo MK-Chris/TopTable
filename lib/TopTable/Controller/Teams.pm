@@ -438,7 +438,8 @@ sub view_finalise :Private {
     season => $season,
   });
   
-  my $team_view_js_suffix = ( $c->stash->{authorisation}{match_update} or $c->stash->{authorisation}{match_cancel} ) ? "-with-actions" : "";
+  # Add handicapped flag for template / JS if there are handicapped matches
+  my $handicapped = $matches->handicapped_matches->count ? "/hcp" : "";
   
   # Set up the template to use
   $c->stash({
@@ -448,16 +449,18 @@ sub view_finalise :Private {
     canonical_uri => $canonical_uri,
     external_scripts => [
       $c->uri_for("/static/script/plugins/responsive-tabs/jquery.responsiveTabs.mod.js"),
+      $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/standard/vertical-table.js"),
-      $c->uri_for(sprintf("/static/script/teams/view%s.js", $team_view_js_suffix), {v => 2}),
+      $c->uri_for("/static/script/teams$handicapped/view.js", {v => 3}),
     ],
     external_styles => [
       $c->uri_for("/static/css/responsive-tabs/responsive-tabs.css"),
       $c->uri_for("/static/css/responsive-tabs/style-jqueryui.css"),
+      $c->uri_for("/static/css/chosen/chosen.min.css"),
       $c->uri_for("/static/css/datatables/dataTables.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/fixedColumns.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
@@ -467,6 +470,7 @@ sub view_finalise :Private {
     view_online_link => 1,
     no_filter => 1, # Don't include the averages filter form on a team averages view
     matches => $matches,
+    handicapped => $handicapped,
     seasons => $team->team_seasons->count,
   });
 }
@@ -502,6 +506,9 @@ Display a form to email the captain of this team.
 sub contact_captain :Private {
   my ( $self, $c ) = @_;
   my $team = $c->stash->{team};
+  
+  # Check the auth for contacting captains - we need the 'view contact details' permission for this
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["person_contact_view", $c->maketext("user.auth.contact-team-captains"), 1]);
   
   # Check we can send the captain email - any error will detach / redirect from the routine, so if we get past here, we're okay
   $c->forward("can_send_captain_email", [$team]);
@@ -583,8 +590,10 @@ sub send_email_captain :Private {
   my ( $self, $c ) = @_;
   my $team = $c->stash->{team};
   my $jtest = $c->req->params->{jtest};
-  my $time = $c->session->{form_time_contact_captain};
-  delete $c->session->{form_time_contact_captain};
+  my $time = delete $c->session->{form_time_contact_captain};
+  
+  # Check the auth for contacting captains - we need the 'view contact details' permission for this
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["person_contact_view", $c->maketext("user.auth.contact-team-captains"), 1]);
   
   # Check we can send the captain email - any error will detach / redirect from the routine, so if we get past here, we're okay
   $c->forward("can_send_captain_email", [$team]);
@@ -688,6 +697,7 @@ sub send_email_captain :Private {
         REFFERRER => $c->req->referer,
         USER_AGENT => $c->req->user_agent,
       });
+      
       my $response = $c->model("Cleantalk::Contact")->request({
         method_name => "check_message",
         message => $message,

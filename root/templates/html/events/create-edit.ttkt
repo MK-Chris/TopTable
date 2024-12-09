@@ -1,43 +1,83 @@
 [%
 USE zeroes = format("%02d");
+CALL c.log.debug("flashed: " _ c.flash.show_flashed);
 IF c.flash.show_flashed;
-  event_name = c.flash.name | html_entity;
-  start_date = c.flash.start_date;
-  end_date = c.flash.end_date;
-  event_type = c.flash.event_type.id;
-  tournament_type = c.flash.tournament_type;
-  online_entry_check = c.flash.allow_online_entries;
-  venue = c.flash.venue;
-  start_hour = start_date.hour;
-  start_minute = start_date.minute;
-  all_day = c.flash.all_day;
-  end_hour = end_date.hour;
-  end_minute = end_date.minute;
+  SET event_name = c.flash.name;
+  SET start_date = c.flash.start_date;
+  SET end_date = c.flash.end_date;
+  SET event_type = c.flash.event_type.id;
+  SET tournament_type = c.flash.tournament_type.id;
+  SET online_entry_check = c.flash.allow_online_entries;
+  SET def_team_match_tpl = c.flash.default_team_match_template.id;
+  SET def_ind_match_tpl = c.flash.default_individual_match_template.id;
+  SET venue = c.flash.venue;
+  SET start_hour = start_date.hour;
+  SET start_minute = start_date.minute;
+  SET all_day = c.flash.all_day;
+  SET end_hour = end_date.hour;
+  SET end_minute = end_date.minute;
+  
+  # Loan / forefeit rules
+  SET allow_loan_players = c.flash.allow_loan_players;
+  SET allow_loan_players_below = c.flash.allow_loan_players_below;
+  SET allow_loan_players_above = c.flash.allow_loan_players_above;
+  SET allow_loan_players_across = c.flash.allow_loan_players_across;
+  SET allow_loan_players_same_club_only = c.flash.allow_loan_players_same_club_only;
+  SET allow_loan_players_multiple_teams_per_division = c.flash.allow_loan_players_multiple_teams_per_division;
+  SET loan_players_limit_per_player = c.flash.loan_players_limit_per_player;
+  SET loan_players_limit_per_player_per_team = c.flash.loan_players_limit_per_player_per_team;
+  SET loan_players_limit_per_player_per_opposition = c.flash.loan_players_limit_per_player_per_opposition;
+  SET loan_players_limit_per_team = c.flash.loan_players_limit_per_team;
+  SET void_unplayed_games_if_both_teams_incomplete = c.flash.void_unplayed_games_if_both_teams_incomplete;
+  SET forefeit_count_averages_if_game_not_started = c.flash.forefeit_count_averages_if_game_not_started;
+  SET missing_player_count_win_in_averages = c.flash.missing_player_count_win_in_averages;
 ELSE;
-  event_name = event.name | html_entity;
+  event_name = event.name;
   start_date = event_season.start_date_time;
   end_date = event_season.end_date_time;
   CALL start_date.set_time_zone(c.timezone);
   CALL end_date.set_time_zone(c.timezone);
   event_type = event.event_type.id;
-  tournament_type = event.tournament_type.id;
+  tournament_type = event_season.event_detail.entry_type.id;
   online_entry_check = event.allow_online_entries;
+  def_team_match_tpl = event.default_team_match_template;
+  def_ind_match_tpl = event.default_individual_match_template;
   venue = event_season.venue;
   start_hour = start_date.hour;
   start_minute = start_date.minute;
   all_day = event_season.all_day;
   end_hour = end_date.hour;
   end_minute = end_date.minute;
+  
+  # Loan / forefeit rules
+  # We don't have a specific 'allow_loan_players' field in the DB, so the value of this is determined from at least one of the other fields being 1
+  SET allow_loan_players_below = event_detail.allow_loan_players_below;
+  SET allow_loan_players_above = event_detail.allow_loan_players_above;
+  SET allow_loan_players_across = event_detail.allow_loan_players_across;
+  
+  IF allow_loan_players_across OR allow_loan_players_above OR allow_loan_players_below OR !season;
+    # Default to true for a new season, hence the !season being in the if statement
+    SET allow_loan_players = 1;
+  ELSE;
+    SET allow_loan_players = 0;
+  END;
+  
+  SET allow_loan_players_same_club_only = event_detail.allow_loan_players_same_club_only;
+  SET allow_loan_players_multiple_teams_per_division = event_detail.allow_loan_players_multiple_teams_per_division;
+  SET loan_players_limit_per_player = event_detail.loan_players_limit_per_player;
+  SET loan_players_limit_per_player_per_team = event_detail.loan_players_limit_per_player_per_team;
+  SET loan_players_limit_per_player_per_opposition = event_detail.loan_players_limit_per_player_per_opposition;
+  SET loan_players_limit_per_team = event_detail.loan_players_limit_per_team;
+  SET void_unplayed_games_if_both_teams_incomplete = event_detail.void_unplayed_games_if_both_teams_incomplete;
+  SET forefeit_count_averages_if_game_not_started = event_detail.forefeit_count_averages_if_game_not_started;
+  SET missing_player_count_win_in_averages = event_detail.missing_player_count_win_in_averages;
 END;
 
-IF start_date;
-  SET start_date = c.i18n_datetime_format_date.format_datetime(start_date);
-END;
-
-IF end_date;
-  SET start_date = c.i18n_datetime_format_date.format_datetime(end_date);
-END;
+SET start_date = c.i18n_datetime_format_date.format_datetime(start_date) IF start_date;
+SET start_date = c.i18n_datetime_format_date.format_datetime(end_date) IF end_date;
 season_name = season.name | html_entity;
+CALL c.log.debug("flashed name: " _ c.flash.name);
+CALL c.log.debug("var name: " _ event_name);
 -%]
 
 <form method="post" action="[% form_action %]">
@@ -47,7 +87,7 @@ season_name = season.name | html_entity;
   <div class="label-field-container">
     <label for="name">[% c.maketext("events.field.name") %]</label>
     <div class="field-container">
-      <input type="text" id="name" name="name" value="[% event_name %]" />
+      <input type="text" id="name" name="name" value="[% event_name | html_entity %]" />
     </div>
     <div class="clear-fix"></div>
   </div>
@@ -55,10 +95,10 @@ season_name = season.name | html_entity;
   <div class="label-field-container">
     <label for="event_type">[% c.maketext("events.field.event-type") %]</label>
     <div class="field-container">
-      <select type="text" id="event_type" name="event_type" data-placeholder="[% c.maketext("events.field.event-type") %]">
+      <select id="event_type" name="event_type" data-placeholder="[% c.maketext("events.field.event-type") %]">
         <option value=""></option>
 [%
-FOREACH type IN event_types;
+FOREACH type = event_types;
   IF type.id == event_type;
     SET selected_text = ' selected="selected"';
   ELSE;
@@ -81,10 +121,10 @@ END;
   <div class="label-field-container">
     <label for="tournament_type">[% c.maketext("events.field.tournament-type") %]</label>
     <div class="field-container">
-      <select type="text" id="tournament_type" name="tournament_type" data-placeholder="[% c.maketext("events.field.tournament-type") %]">
+      <select id="tournament_type" name="tournament_type" data-placeholder="[% c.maketext("events.field.tournament-type") %]">
         <option value=""></option>
 [%
-FOREACH type IN tournament_types;
+FOREACH type = tournament_types;
   IF type.id == tournament_type;
     SET selected_text = ' selected="selected"';
   ELSE;
@@ -98,6 +138,7 @@ END;
       </select>
     </div>
     <div class="clear-fix"></div>
+  </div>
 [%
 IF online_entry_check;
   SET checked = ' checked="checked"';
@@ -105,17 +146,192 @@ ELSE;
   SET checked = '';
 END;
 -%]
+  <div id="enter-online">
     <input type="checkbox" id="allow_online_entries" name="allow_online_entries" value="1"[% checked %] data-label="[% c.maketext("events.field.allow-online-entries") %]" />
   </div>
+  
+  <div class="label-field-container" id="def-team-match-tpl-container">
+    <label for="default_team_match_template">[% c.maketext("events.field.tournament.default-match-template") %]</label>
+    <div class="field-container">
+      <select id="default_team_match_template" name="default_team_match_template" data-placeholder="[% c.maketext("events.field.tournament.default-match-template") %]">
+        <option value=""></option>
+[%
+FOREACH tpl IN team_match_templates;
+  IF tpl.id == def_team_match_tpl;
+    SET selected_text = ' selected="selected"';
+  ELSE;
+    SET selected_text = '';
+  END;
+-%]
+        <option value="[% tpl.id %]" title="[% tpl.name | html_entity %]"[% selected_text %]>[% tpl.name | html_entity %]</option>
+[%
+END;
+-%]
+      </select>
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+  
+  <div class="label-field-container" id="def-ind-match-tpl-container">
+    <label for="default_individual_match_template">[% c.maketext("events.field.tournament.default-match-template") %]</label>
+    <div class="field-container">
+      <select id="default_individual_match_template" name="default_individual_match_template" data-placeholder="[% c.maketext("events.field.tournament.default-match-template") %]">
+        <option value=""></option>
+[%
+FOREACH tpl IN ind_match_templates;
+  IF tpl.id == def_ind_match_tpl;
+    SET selected_text = ' selected="selected"';
+  ELSE;
+    SET selected_text = '';
+  END;
+-%]
+        <option value="[% tpl.id %]" title="[% tpl.name | html_entity %]"[% selected_text %]>[% tpl.name | html_entity %]</option>
+[%
+END;
+-%]
+      </select>
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+  
+  
+  <fieldset id="loan-player-rules">
+    <legend>[% c.maketext("seasons.form.legend.loan-players") %]</legend>
+[%
+IF allow_loan_players;
+  # Loan players allowed
+  SET subs_checked = ' checked="checked"';
+  SET subs_opts_visible = '';
+  
+  IF allow_loan_players_below;
+    SET subs_checked_below = ' checked="checked"';
+  ELSE;
+    SET subs_checked_below = '';
+  END;
+  
+  IF allow_loan_players_above;
+    SET subs_checked_above = ' checked="checked"';
+  ELSE;
+    SET subs_checked_above = '';
+  END;
+  
+  IF allow_loan_players_across;
+    SET subs_checked_across = ' checked="checked"';
+  ELSE;
+    SET subs_checked_across = '';
+  END;
+  
+  IF allow_loan_players_same_club_only;
+    SET subs_checked_same_club = ' checked="checked"';
+  ELSE;
+    SET subs_checked_same_club = '';
+  END;
+  
+  IF allow_loan_players_multiple_teams_per_division;
+    SET subs_checked_multi_teams_div = ' checked="checked"';
+  ELSE;
+    SET subs_checked_multi_teams_div = '';
+  END;
+ELSE;
+  # Loan players not allowed
+  SET subs_checked = '';
+  SET subs_opts_visible = ' style="display: none;"';
+  SET subs_checked_below = '';
+  SET subs_checked_above = '';
+  SET subs_checked_across = '';
+  SET subs_checked_same_club = '';
+  SET subs_checked_multi_teams_div = '';
+END;
+-%]
+    <div class="form-column-single">
+      <input type="checkbox" id="allow_loan_players" name="allow_loan_players" data-label="[% c.maketext("events.form.field.allow-loan-players") %]" value="1"[% restricted_disabled _ subs_checked %] />
+    </div>
+    
+    <div id="loan-players-nested-fields"[% subs_opts_visible %]>
+      <div class="form-column">
+        <input type="checkbox" id="allow_loan_players_below" name="allow_loan_players_below" data-label="[% c.maketext("events.form.field.allow-loan-players-from-lower") %]" value="1"[% subs_checked_below %] />
+        <input type="checkbox" id="allow_loan_players_above" name="allow_loan_players_above" data-label="[% c.maketext("events.form.field.allow-loan-players-from-higher") %]" value="1"[% subs_checked_above %] />
+        <input type="checkbox" id="allow_loan_players_across" name="allow_loan_players_across" data-label="[% c.maketext("events.form.field.allow-loan-players-from-same-level") %]" value="1"[% subs_checked_across %] />
+        <input type="checkbox" id="allow_loan_players_same_club_only" name="allow_loan_players_same_club_only" data-label="[% c.maketext("events.form.field.loan-players-from-same-club-only") %]" value="1"[% subs_checked_same_club %] />
+        <input type="checkbox" id="allow_loan_players_multiple_teams" name="allow_loan_players_multiple_teams" data-label="[% c.maketext("events.form.field.allow-loan-players-multiple-teams-per-division") %]" value="1"[% restricted_disabled _ subs_checked_multi_teams_div %] />
+      </div>
+      <div class="form-column">
+        <div class="info-message-small">
+          <span class="message-text">[% c.maketext("events.form.loan-players.limits-message") %]</span>
+        </div>
+        <div class="label-field-container">
+          <label for="loan_players_limit_per_player">[% c.maketext("events.form.field.loan-players-limit-per-player") %]</label>
+          <div class="field-container">
+            <input type="number" id="loan_players_limit_per_player" name="loan_players_limit_per_player" min="0" value="[% loan_players_limit_per_player | html_entity %]" />
+          </div>
+          <div class="clear-fix"></div>
+        </div>
+        
+        <div class="label-field-container">
+          <label for="loan_players_limit_per_player_per_team">[% c.maketext("seasons.form.field.loan-players-limit-per-player-per-team") %]</label>
+          <div class="field-container">
+            <input type="number" id="loan_players_limit_per_player_per_team" name="loan_players_limit_per_player_per_team" min="0" value="[% loan_players_limit_per_player_per_team | html_entity %]" />
+          </div>
+          <div class="clear-fix"></div>
+        </div>
+        
+        <div class="label-field-container">
+          <label for="loan_players_limit_per_player_per_opposition">[% c.maketext("seasons.form.field.loan-players-limit-per-opposition") %]</label>
+          <div class="field-container">
+            <input type="number" id="loan_players_limit_per_player_per_opposition" name="loan_players_limit_per_player_per_opposition" min="0" value="[% loan_players_limit_per_player_per_opposition | html_entity %]" />
+          </div>
+          <div class="clear-fix"></div>
+        </div>
+        
+        <div class="label-field-container">
+          <label for="loan_players_limit_per_team">[% c.maketext("seasons.form.field.loan-players-limit-per-team") %]</label>
+          <div class="field-container">
+            <input type="number" id="loan_players_limit_per_team" name="loan_players_limit_per_team" min="0" value="[% loan_players_limit_per_team %]" />
+          </div>
+          <div class="clear-fix"></div>
+        </div>
+      </div>
+    </div>
+  </fieldset>
+  
+  <fieldset id="game-forefeits">
+    <legend>[% c.maketext("events.legend.award-forefeit-rules") %]</legend>
+  [%
+  IF void_unplayed_games_if_both_teams_incomplete;
+    SET void_checked = ' checked="checked"';
+  ELSE;
+    SET void_checked = '';
+  END;
+
+  IF forefeit_count_averages_if_game_not_started;
+    SET forefeit_count_averages_checked = ' checked="checked"';
+  ELSE;
+    SET forefeit_count_averages_checked = '';
+  END;
+
+  IF missing_player_count_win_in_averages;
+    SET missing_player_count_averages = ' checked="checked"';
+  ELSE;
+    SET missing_player_count_averages = '';
+  END;
+  -%]
+    <div class="form-column">
+      <input type="checkbox" id="void_unplayed_games_if_both_teams_incomplete" name="void_unplayed_games_if_both_teams_incomplete" data-label="[% c.maketext("seasons.form.field.void-unplayed-games-if-both-teams-incomplete") %]" value="1"[% void_checked %] />
+      <input type="checkbox" id="forefeit_count_averages_if_game_not_started" name="forefeit_count_averages_if_game_not_started" data-label="[% c.maketext("seasons.form.field.forefeit-count-averages-if-game-not-started") %]" value="1"[% forefeit_count_averages_checked %] />
+    </div>
+    <div class="form-column">
+      <input type="checkbox" id="missing_player_count_win_in_averages" name="missing_player_count_win_in_averages" data-label="[% c.maketext("seasons.form.field.seasons.form.field.missing-player-count-win-in-averages") %]" value="1"[% missing_player_count_averages %] />
+    </div>
+  </fieldset>
 </fieldset>
 
-<fieldset>
+<fieldset id="season-details">
   <legend>[% c.maketext("events.legend.season-details", season_name) %]</legend>
   
   <div class="label-field-container" id="venue-container">
     <label for="venue">[% c.maketext("events.field.venue") %]</label>
     <div class="field-container">
-      <select type="text" id="venue" name="venue" data-placeholder="[% c.maketext("events.field.venue") %]">
+      <select id="venue" name="venue" data-placeholder="[% c.maketext("events.field.venue") %]">
         <option value=""></option>
 [%
 FOREACH lookup_venue IN venues;
@@ -265,5 +481,20 @@ END;
     <div class="clear-fix"></div>
   </div>
 </fieldset>
+
+[%
+# Only show this on creation, if we're editing, round 1 will exist
+IF action == "create";
+%]
+<fieldset id="tournament-round-container">
+  <legend>[% c.maketext("events.legend.tournament.first-round-details") %]</legend>
+  
+[%
+PROCESS "html/events/tournaments/rounds/fields.ttkt" first = 1;
+-%]
+</fieldset>
+[%
+END;
+%]
 <input type="submit" name="Submit" value="[% c.maketext("form.button.save") %]" />
 </form>

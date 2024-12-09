@@ -1,0 +1,140 @@
+[%
+IF c.flash.show_flashed;
+  SET grid_selected = c.flash.fixtures_grid.id;
+  SET manual_fixtures = c.flash.manual_fixtures;
+ELSE;
+  SET grid_selected = group.fixtures_grid.id;
+  
+  IF group.has_fixtures_grid;
+    SET manual_fixtures = 0;
+  ELSE;
+    SET manual_fixtures = 1;
+  END;
+END;
+
+-%]
+<form method="post" action="[% form_action %]">
+<fieldset>
+  <legend>[% c.maketext("tournaments.round.groups.details") %]</legend>
+[%
+IF round.groups_can_be_named;
+-%]
+  <div class="label-field-container">
+    <label for="name">[% c.maketext("tournaments.rounds.group.field.name") %]</label>
+    <div class="field-container">
+      <input type="text" id="name" name="name" value="[% c.flash.name OR group.name | html_entity %]" placeholder="[% c.maketext("tournaments.rounds.group.placeholder.name") %]" />
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+[%
+END;
+
+IF manual_fixtures;
+  SET manual_fixtures_checked = ' checked="checked"';
+  SET grid_container_visible = ' style="display: none;"';
+ELSE;
+  SET manual_fixtures_checked = "";
+  SET grid_container_visible = '';
+END;
+-%]
+  
+  <input type="checkbox" id="manual_fixtures" name="manual_fixtures" data-label="[% c.maketext("tournaments.rounds.groups.field.manual-fixtures") %]" value="1"[% manual_fixtures_checked %] />
+  
+  <div class="label-field-container" id="group-grid-container"[% grid_container_visible %]>
+    <label for="name">[% c.maketext("tournaments.rounds.group.field.grid") %]</label>
+    <div class="field-container">
+      <select id="fixtures_grid" name="fixtures_grid" data-placeholder="[% c.maketext("tournaments.rounds.group.field.grid") %]">
+        <option value=""></option>
+[%
+FOREACH grid IN fixtures_grids;
+  IF grid_selected == grid.id;
+    SET selected = ' selected="selected"';
+  ELSE;
+    SET selected = '';
+  END;
+-%]
+        <option value="[% grid.id %]"[% selected %]>[% grid.name | html_entity %]</option>
+[%
+END;
+-%]
+      </select>
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+  
+  <div id="members-container">
+    <div class="label-field-container">
+      <label for="members1">[% c.maketext("tournaments.rounds.group.field.members-" _ tournament.entry_type.id) %]</label>
+      <div class="field-container">
+        <input type="text" id="members1" name="members1" class="ti-trigger" />
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+    
+[%
+IF tournament.entry_type.id == "doubles";
+-%]
+    <div id="new-member-fields"></div>
+    <div class="label-field-container">
+      <div class="label-placeholder">&nbsp;</div>
+      <div class="field-container">
+        <a href="javascript:void(0)" id="btn-add-pair"><img src="[% c.uri_for("/static/images/icons/0009-Add-icon-32.png") %]" alt="[% c.maketext("tournaments.rounds.group.add-doubles-pair") %]" title="[% c.maketext("tournaments.rounds.group.add-doubles-pair") %]" /></a>
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+[%
+END;
+-%]
+  </div>
+
+  <div class="label-field-container">
+    <label for="automatic_qualifiers">[% c.maketext("tournaments.rounds.group.field.automatic-qualifiers") %]</label>
+    <div class="field-container">
+      <input type="number" id="automatic_qualifiers" name="automatic_qualifiers" min="1" value="[% c.flash.automatic_qualifiers OR group.automatic_qualifiers %]" />
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+</fieldset>
+
+<input type="submit" id="submit" name="submit" value="[% c.maketext("form.button.save") %]" />
+</form>
+
+
+[%
+IF tournament.entry_type.id == "doubles";
+-%]
+<script>
+$(document).ready(function() {
+  // Setup the number of members and the tokeninput options we'll be using when we add the fields
+  var members = 1;
+  var tokeninput_opts = {
+    "jsonContainer":"json_search",
+    "noResultsText":"[% c.maketext("tokeninput.text.no-results") %]",
+    "hintText":"[% c.maketext("person.tokeninput.type") %]",
+    "searchingText":"[% c.maketext("tokeninput.text.searching") %]",
+    "tokenLimit":2
+  };
+  
+  // TokenInput-ify any existing fields
+  $(".ti-trigger").tokenInput("[% c.uri_for("/people/search") %]",
+    tokeninput_opts
+  );
+  
+  // When the button is clicked, add a new field and tokeninput it.
+  $("#btn-add-pair").on("click", function() {
+    members++;
+    var fld_name = "members" + members;
+    var html_fld = '<div class="label-field-container"><div class="label-placeholder">&nbsp;</div><div class="field-container"><input type="text" id="' + fld_name + '" name="' + fld_name + '" /></div><div class="clear-fix"></div></div>';
+    $("#new-member-fields").append(html_fld);
+    $("#" + fld_name).tokenInput("[% c.uri_for("/people/search") %]",
+      tokeninput_opts
+    );
+  });
+});
+  //$("#[% tokeninput_conf.selector %]").tokenInput("[% tokeninput_conf.script %]",
+  //  [% tokeninput_conf.options %]
+  //);
+</script>
+[%
+END;
+-%]

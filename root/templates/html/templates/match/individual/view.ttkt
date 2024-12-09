@@ -1,45 +1,56 @@
-[% # Note That the '-' at the beginning or end of TT code  -%]
-[% # "chomps" the whitespace/newline at that end of the    -%]
-[% # output (use View Source in browser to see the effect) -%]
-
-<div id="template_rules">
-<h4>Template Rules</h4>
+<div class="table-wrap">
+  <div class="table-layout table-layout-centre">
+    <h4>[% c.maketext("templates.heading.template-rules") %]</h4>
 [% # Match score type: use the number of games or points won / lost as the match score? 
 IF tt_template.game_type.id == "best-of";
   SET NUMBER_OF_LEGS_TEXT = "Best of " _ tt_template.legs_per_game _ " legs wins.";
 ELSE;
   SET NUMBER_OF_LEGS_TEXT = "Static: " _ tt_template.legs_per_game _ " legs are played regardless of the score.";
 END %]
-<table class="vertical">
-  <tr>
-    <th>[% c.maketext("templates.individual-match.field.legs-per-game") %]</th>
-    <td>[% NUMBER_OF_LEGS_TEXT %]</td>
-  </tr>
-  <tr>
-    <th>[% c.maketext("templates.individual-match.field.minimum-points-win") %]</th>
-    <td>[% tt_template.minimum_points_win %]</td>
-  </tr>
-  <tr>
-    <th>[% c.maketext("templates.individual-match.field.clear-points-win") %]</th>
-    <td>[% tt_template.clear_points_win %]</td>
-  </tr>
-  <tr>
-    <th>[% c.maketext("templates.individual-match.field.serve-type") %]</th>
-    <td>[% c.maketext("serve-type.name." _ tt_template.serve_type.id) %]</td>
-  </tr>
+    <table class="vertical">
+      <tr>
+        <th>[% c.maketext("templates.individual-match.field.legs-per-game") %]</th>
+        <td>[% NUMBER_OF_LEGS_TEXT %]</td>
+      </tr>
+      <tr>
+        <th>[% c.maketext("templates.individual-match.field.minimum-points-win") %]</th>
+        <td>[% tt_template.minimum_points_win %]</td>
+      </tr>
+      <tr>
+        <th>[% c.maketext("templates.individual-match.field.clear-points-win") %]</th>
+        <td>[% tt_template.clear_points_win %]</td>
+      </tr>
+      <tr>
+        <th>[% c.maketext("templates.individual-match.field.serve-type") %]</th>
+        <td>[% c.maketext("serve-type.name." _ tt_template.serve_type.id) %]</td>
+      </tr>
 [%
 IF tt_template.serve_type.id == "static";
 -%]
-  <tr>
-    <th>[% c.maketext("templates.individual-match.field.serves") %]</th>
-    <td>[% tt_template.serves %]</td>
-  </tr>
-  <tr>
-    <th>[% c.maketext("templates.individual-match.field.serves-deuce") %]</th>
-    <td>[% tt_template.serves_deuce %]</td>
-  </tr>
+      <tr>
+        <th>[% c.maketext("templates.individual-match.field.serves") %]</th>
+        <td>[% tt_template.serves %]</td>
+      </tr>
+      <tr>
+        <th>[% c.maketext("templates.individual-match.field.serves-deuce") %]</th>
+        <td>[% tt_template.serves_deuce %]</td>
+      </tr>
 [%
 END;
 -%]
-</table>
+      <tr>
+        <th>[% c.maketext("templates.individual-match.field.handicapped") %]</th>
+[%
+  IF tt_template.handicapped;
+    SET img_src = c.uri_for("/static/images/icons/0007-Tick-icon-32.png");
+    SET img_title = c.maketext("msg.yes");
+  ELSE;
+    SET img_src = c.uri_for("/static/images/icons/0006-Cross-icon-32.png");
+    SET img_title = c.maketext("msg.no");
+  END;
+-%]
+        <td><img src="[% img_src %]" alt="[% img_title %]" title="[% img_title %]" /></td>
+      </tr>
+    </table>
+  </div>
 </div>

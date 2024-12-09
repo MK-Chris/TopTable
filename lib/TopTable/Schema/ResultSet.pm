@@ -22,6 +22,7 @@ Same as find(), but searches for both the id and key columns.  So we can use hum
 
 sub find_id_or_url_key {
   my ( $class, $id_or_url_key, $params ) = @_;
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $no_prefetch = $params->{no_prefetch} || 0;
   my $schema = $class->result_source->schema;
   
@@ -38,13 +39,20 @@ sub find_id_or_url_key {
     $attrib{prefetch} = "user" unless $no_prefetch;
   } elsif ( $class->isa(__PACKAGE__ . "::User") ) {
     $attrib{prefetch} = "person" unless $no_prefetch;
+  } elsif ( $class->isa(__PACKAGE__ . "::Team") ) {
+    $attrib{prefetch} = "club" unless $no_prefetch;
   }
   
   if ( $id_or_url_key =~ m/^\d+$/ ) {
     # Numeric value, check the ID first, then check the URL key
     my $obj = $class->find({"me.id" => $id_or_url_key}, \%attrib);
-    return $obj if defined($obj);
-    $obj = $class->find({"me.url_key" => $id_or_url_key}, \%attrib);
+    
+    if ( defined($obj) ) {
+      return $obj;
+    } else {
+      $obj = $class->find({"me.url_key" => $id_or_url_key}, \%attrib);
+    }
+    
     return $obj;
   } else {
     # Not numeric, so it can't be the ID - just check the URL key

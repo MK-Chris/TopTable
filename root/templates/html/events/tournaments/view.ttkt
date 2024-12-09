@@ -1,0 +1,67 @@
+[%
+USE zeroes = format("%02d");
+-%]
+<div id="tabs">
+  <ul>
+[%
+IF tournament.has_group_round;
+-%]
+    <li><a href="#groups">[% tournament.rounds.first.name OR c.maketext("events.tournaments.heading.round-group") %]</a></li>
+[%
+END;
+-%]
+    <li><a href="#summary">[% c.maketext("events.tournaments.heading.summary") %]</a></li>
+  </ul>
+[%
+IF tournament.has_group_round;
+-%]
+  <div id="groups">
+[%
+INCLUDE "html/events/tournaments/rounds/view-groups.ttkt" tourn_view = 1;
+-%]
+  </div>
+[%
+END;
+-%]
+  <div id="summary">
+    <div class="table-wrap">
+      <div class="table-layout table-layout-centre">
+        <table class="vertical">
+          <tr>
+            <th scope="row">[% c.maketext("events.field.event-type") %]</th>
+            <td>[% c.maketext("tournaments.type.team") %]</td>
+          </tr>
+        </table>
+        
+[%
+IF rounds.size;
+-%]
+        <h4>[% c.maketext("events.tournaments.heading.rounds") %]</h4>
+        <ul class="option-list">
+[%
+  FOREACH round = rounds;
+    round_html = round.name | html_entity;
+    
+    IF specific_season;
+      SET view_uri = c.uri_for_action("/events/round_view_specific_season", [event.url_key, season.url_key, round.url_key]);
+    ELSE;
+      SET view_uri = c.uri_for_action("/events/round_view_current_season", [event.url_key, round.url_key]);
+    END;
+-%]
+          <li><a href="[% view_uri %]">[% round_html %] 
+[%-
+IF authorisation.event_edit;
+-%]
+<a href="[% c.uri_for_action("/events/edit_round", [event.url_key, round.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", round_html) %]" title="[% c.maketext("admin.edit-object", round_html) %]" /></a>
+[%-
+END;
+-%]</li>
+[%
+  END;
+END;
+-%]
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>

@@ -219,10 +219,13 @@ sub create :Local {
     external_scripts => [
       $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
       $c->uri_for("/static/script/standard/chosen.js"),
+      $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
+      $c->uri_for("/static/script/standard/prettycheckable.js"),
       $c->uri_for("/static/script/templates/match/individual/create-edit.js"),
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
+      $c->uri_for("/static/css/prettycheckable/prettyCheckable.css"),
     ],
     form_action => $c->uri_for("do-create"),
     subtitle2 => $c->maketext("admin.create"),
@@ -270,10 +273,13 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
     external_scripts => [
       $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
       $c->uri_for("/static/script/standard/chosen.js"),
+      $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
+      $c->uri_for("/static/script/standard/prettycheckable.js"),
       $c->uri_for("/static/script/templates/match/individual/create-edit.js"),
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
+      $c->uri_for("/static/css/prettycheckable/prettyCheckable.css"),
     ],
     form_action => $c->uri_for_action("/templates/match/individual/do_edit", [$tt_template->url_key]),
     view_online_display => sprintf("Editing individual match template %s", $tt_template->name),
@@ -437,7 +443,7 @@ Forwarded from docreate and doedit to do the template creation / edit.
 sub process_form :Private {
   my ( $self, $c, $action ) = @_;
   my $tt_template = $c->stash->{tt_template};
-  my @field_names = qw( name game_type legs_per_game minimum_points_win clear_points_win serve_type serves serves_deuce );
+  my @field_names = qw( name game_type legs_per_game minimum_points_win clear_points_win serve_type serves serves_deuce  handicapped );
   
   # The rest of the error checking is done in the Club model
   my $response = $c->model("DB::TemplateMatchIndividual")->create_or_edit($action, {

@@ -1,5 +1,5 @@
 <div id="template_rules">
-<h4>[% c.maketext("templates.rules") %]</h4><div class="table-wrap">
+<h4>[% c.maketext("templates.rules") %]</h4>
 <div class="table-wrap">
   <div class="table-layout table-layout-centre">
     <table class="vertical">

@@ -167,8 +167,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-06-14 11:42:30
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:54lSHs3MU1HUdpaB7Cm3Yw
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-11-24 00:42:39
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:6dZLzqyVFZmgW0XSuKhGyg
 
 =head2 single_season
 
@@ -268,6 +268,10 @@ Determines whether the event type is editable by searching for previous seasons
 
 sub can_edit_event_type {
   my $self = shift;
+  
+  # We're going to set this to false for now - it's more complex than originally thought, so we'll just not allow editing of event types unless / until I can work out
+  # all the logic
+  return 0;
   
   # First search for this event in previous (completed) seasons
   my $previous_events = $self->search_related("event_seasons", {

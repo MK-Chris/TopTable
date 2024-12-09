@@ -83,6 +83,7 @@ __PACKAGE__->config(
     Request => { params => [ qr/password/ ] },
   },
   compression_format => "gzip",
+  encoding => "UTF-8",
 );
 
 
@@ -121,6 +122,46 @@ sub datetime_tz {
   }
   
   return $c->datetime(%{$params});
+}
+
+sub i18n_datetime_format_datetime_long {
+  my ( $c ) = @_;
+  
+  my $config = $c->i18n_config;
+
+  my $datetime_locale = $c->i18n_datetime_locale;
+  my $datetime_timezone = $c->i18n_datetime_timezone;
+
+  # Set datetime_format_date
+  my $datetime_format_datetime =
+      $config->{format_datetime_long} ||
+      $datetime_locale->datetime_format_medium;
+
+  return DateTime::Format::CLDR->new(
+      locale => $datetime_locale,
+      time_zone => $datetime_timezone,
+      pattern => $datetime_format_datetime
+  );
+}
+
+sub i18n_datetime_format_date_long {
+  my ( $c ) = @_;
+  
+  my $config = $c->i18n_config;
+
+  my $datetime_locale = $c->i18n_datetime_locale;
+  my $datetime_timezone = $c->i18n_datetime_timezone;
+
+  # Set datetime_format_date
+  my $datetime_format_datetime =
+      $config->{format_date_long} ||
+      $datetime_locale->datetime_format_medium;
+
+  return DateTime::Format::CLDR->new(
+      locale => $datetime_locale,
+      time_zone => $datetime_timezone,
+      pattern => $datetime_format_datetime
+  );
 }
 
 =head2 add_status_messages
@@ -252,6 +293,17 @@ sub warn_on_non_https {
     $uri->scheme("https");
     $c->add_status_messages({warning => $c->maketext("msg.insecure-password-form", $uri)});
   }
+}
+
+=head2
+
+Temporary warning message for events
+
+=cut
+
+sub add_event_test_msg {
+  my ( $c ) = @_;
+  $c->add_status_messages({warning => "<strong><u>Please note:</u></strong> the events system is currently in test; results, group tables and details of these events may not reflect the final result and is subject to override by the committee."});
 }
 
 =head2 toptable_version

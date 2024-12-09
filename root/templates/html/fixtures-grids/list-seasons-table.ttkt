@@ -1,0 +1,40 @@
+<div class="table-wrap">
+  <div class="table-layout table-layout-centre">
+    <table id="datatable" class="stripe hover order-column row-border">
+    <thead>
+      <tr>
+        <th>[% c.maketext("seasons.list.season-name-sort") %]</th>
+        <th>[% c.maketext("seasons.list.season-name") %]</th>
+        <th>[% c.maketext("fixtures-grids.seasons.divisions") %]</th>
+        <th>[% c.maketext("fixtures-grids.seasons.tourn-groups") %]</th>
+      </tr>
+    <thead>
+    <tbody>
+[%
+  WHILE (grid_season = seasons.next);
+    IF grid_season.season.complete;
+      SET current_text = "";
+    ELSE;
+      SET current_text = " (" _ c.maketext("seasons.text.current") _ ")";
+    END;
+    
+    SET season_start = grid_season.season.start_date;
+    SET season_end = grid_season.season.end_date;
+    CALL season_start.set_locale( c.locale );
+    CALL season_end.set_locale( c.locale );
+    SET season_sort = season_start("ymd") _ " " _ season_end("ymd");
+    SET uses = grid.get_uses({season => grid_season, no_prefetch => 1});
+-%]
+
+      <tr>
+        <td>[% season_sort %]</td>
+        <td><a href="[% c.uri_for_action("/fixtures-grids/view_specific_season", [grid.url_key, grid_season.url_key]) %]">[% grid_season.name | html_entity %]</a>[% current_text %]</td>
+        <td>[% uses.divisions.size %]</td>
+        <td>[% uses.tourn_groups.size %]</td>
+      </tr>
+[%
+  END;
+-%]
+    </table>
+  </div>
+</div>

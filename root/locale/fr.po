@@ -1190,7 +1190,7 @@ msgstr "Calendrier r�p�t�es"
 msgid "fixtures-grids.field.fixtures-repeated-times"
 msgstr "%1 fois"
 
-msgid "fixtures-grids.create-fixtures.legend.assign-weeks"
+msgid "fixtures-grids.create-fixtures.legend.assign-rounds"
 msgstr "Attribuer des num�ros de semaine de la grille � quelques semaines de la saison"
 
 msgid "fixtures-grids.field.week"
@@ -2509,7 +2509,7 @@ msgstr "T�l�charg�e %1%2."
 msgid "system-event-log.description.set-matches"
 msgstr "Set matchs pour %1%2."
 
-msgid "system-event-log.description.set-teams"
+msgid "system-event-log.description.set-positions"
 msgstr "R�glez les positions de l'�quipe pour %1%2."
 
 msgid "system-event-log.description.update-score"

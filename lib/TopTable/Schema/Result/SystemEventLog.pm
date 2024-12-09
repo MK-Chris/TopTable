@@ -251,6 +251,36 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
+=head2 system_event_log_event_groups
+
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::SystemEventLogEventGroup>
+
+=cut
+
+__PACKAGE__->has_many(
+  "system_event_log_event_groups",
+  "TopTable::Schema::Result::SystemEventLogEventGroup",
+  { "foreign.system_event_log_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+=head2 system_event_log_event_rounds
+
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::SystemEventLogEventRound>
+
+=cut
+
+__PACKAGE__->has_many(
+  "system_event_log_event_rounds",
+  "TopTable::Schema::Result::SystemEventLogEventRound",
+  { "foreign.system_event_log_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
 =head2 system_event_log_events
 
 Type: has_many
@@ -572,8 +602,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-03-17 23:33:10
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:yFbpUmygCXF1qk4xJoMhGw
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-11-23 09:33:07
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:5pJ+dMuJILlaedf3tx5JgA
 
 # Enable automatic date handling
 __PACKAGE__->add_columns(
@@ -617,7 +647,7 @@ sub log_updated_tz {
 
 =head2 display_description
 
-Groups all the related objects for this row into hashrefs of 'for_display', 'for_tooltip' and 'other' for ease of creating a description string.
+Groups all the related objects for this row into hashrefs of 'for_display', 'for_tooltip' and 'other' for ease of creating a description string.  These will each have an array, each element of which is a hashref with keys 'ids' and 'name'; 'name' is the display string, 'ids' is an array of object IDs.
 
 =cut
 
@@ -627,7 +657,7 @@ sub display_description {
   # Maximum objects to display in the main text - default to 2 if not specified or invalid (non-numeric or less than 0)
   $maximum_items_display = 2 if !defined($maximum_items_display) or $maximum_items_display !~ /^\d+$/ or $maximum_items_display < 0;
   $maximum_items_tooltip = 10 if !defined($maximum_items_tooltip) or $maximum_items_tooltip !~ /^\d+$/ or $maximum_items_tooltip < 0;
-  #my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   
   # Returned objects will be a hashref like this:
   # $returned_objects = {
@@ -647,14 +677,11 @@ sub display_description {
   my $returned_objects = {
     for_display => [],
     for_tooltip => [],
-    other       => [],
+    other => [],
   };
   
-  # Get the SytemEventLog relation - this will tend to be the object type prefixed with "system_event_log_" and suffixed with "s" 
-  my $object_relation = sprintf("system_event_log_%ss", $self->object_type);
-  
-  # Dashes will have underscores instead
-  $object_relation =~ s/-/_/g;
+  # Get the SytemEventLog relation - this will tend to be the object type prefixed with "system_event_log_" and suffixed with "s", but there are exceptions
+  my $object_relation;
   
   # Exceptions to the rule
   if ( $self->object_type eq "person" ) {
@@ -666,15 +693,18 @@ sub display_description {
   } elsif ( $self->object_type eq "news" ) {
     # news instead of newss
     $object_relation = "system_event_log_news";
+  } else {
+    # Otherwise, it's "system_event_log_[object_type]s"
+    # Dashes will have underscores instead
+    $object_relation = sprintf("system_event_log_%ss", $self->object_type);
+    $object_relation =~ s/-/_/g;
   }
   
   # Get this event's objects to loop through
-  my $objects = $self->search_related($object_relation, undef, {
-    order_by => {-desc => qw( log_updated )},
-  });
+  my $objects = $self->search_related($object_relation, undef, {order_by => {-desc => qw( log_updated )}});
   
   # Get an array of columns on this event's related objects - we only need to do this on a single record, as all columns will be the same
-  my @columns = $objects->search(undef, {rows => 1})->single->columns;
+  my @columns = $objects->result_source->columns;
   
   my $i = 0;
   while ( my $object = $objects->next ) {
@@ -699,15 +729,12 @@ sub display_description {
     # to tables with multiple primary keys).
     my $ids = [];
     
-    # Push 'league' on to the IDs so the URL is correct for league matches
-    push(@{$ids}, "league") if $self->object_type eq "league-team-match";
-    
     foreach my $column ( @columns ) {
       if ( $column =~ /^object_([a-z_]+)$/ ) {
         # Save away the stored value - the object relationship columns are set up such that the column name will always be "object_<relationship_name>", so that this can be extracted
         my $column_relation_accessor = $1;
-        $column_relation_accessor = "id" if ( $object_relation eq "system_event_log_bans" or $object_relation eq "system_event_log_banned_users" ) and $column eq "object_type"; 
-        #$logger->( "debug", sprintf( "column: $column: get value. ref: %s, rel accessor: $column_relation_accessor, accessor ref: %s", ref( $object->$column ), ref( $object->$column->$column_relation_accessor ) ) );
+        $column_relation_accessor = "id" if ( ($object_relation eq "system_event_log_bans" or $object_relation eq "system_event_log_banned_users") and $column eq "object_type" );
+        #$logger->("debug", sprintf("column: $column: get value. ref: %s, rel accessor: $column_relation_accessor, accessor ref: %s", ref($object->$column), ref($object->$column->$column_relation_accessor)));
         
         # The pushed values is a list, as we may push more than one (if we have a date, for example)
         my @pushed_values = ();
@@ -746,8 +773,8 @@ sub display_description {
   }
   
   # If we only have one tooltip element, it's pointless, so move it on to for_display and empty for_tooltip.
-  if (@{$returned_objects->{for_tooltip}} == 1 ) {
-    push(@{$returned_objects->{for_display}}, ${$returned_objects->{for_tooltip}}[0] );
+  if ( @{$returned_objects->{for_tooltip}} == 1 ) {
+    push(@{$returned_objects->{for_display}}, ${$returned_objects->{for_tooltip}}[0]);
     @{$returned_objects->{for_tooltip}} = [];
   }
   

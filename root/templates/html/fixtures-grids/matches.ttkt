@@ -145,13 +145,13 @@ WHILE (week = weeks.next);
       
       WHILE i <= loop_end;
         # Check if we need to select this option or not
-        IF team_type.id _ "_" _ i == home_select_check;
-          SET home_selected = ' selected="selected"';
+        IF team_type.id _ "_" _ i == away_select_check;
+          SET away_selected = ' selected="selected"';
         ELSE;
-          SET home_selected = '';
+          SET away_selected = '';
         END;
   -%]
-        <option value="[% team_type.id %]_[% i %]"[% home_selected %]>[% c.maketext("fixtures-grids.form.matches.field.competitor." _ team_type.id, week.week - 1, i) %]</option>
+        <option value="[% team_type.id %]_[% i %]"[% away_selected %]>[% c.maketext("fixtures-grids.form.matches.field.competitor." _ team_type.id, week.week - 1, i) %]</option>
   [%
         SET i = i + 1;
       END;

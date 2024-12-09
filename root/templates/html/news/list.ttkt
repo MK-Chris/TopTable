@@ -1,8 +1,3 @@
-[% # This is a TT comment. -%]
-[% # Note That the '-' at the beginning or end of TT code  -%]
-[% # "chomps" the whitespace/newline at that end of the    -%]
-[% # output (use View Source in browser to see the effect) -%]
-[% # Some basic HTML with a loop to display clubs -%]
 [%
 IF authorisation.news_create;
   IF index;
@@ -15,8 +10,10 @@ IF authorisation.news_create;
 [%
 END;
 IF articles.count;
-  PROCESS "html/generic/pagination.ttkt" OBJECT_PLURAL = c.maketext("object.plural.news-articles");
-  page_links_text;
+  UNLESS index;
+    PROCESS "html/generic/pagination.ttkt" OBJECT_PLURAL = c.maketext("object.plural.news-articles");
+    page_links_text;
+  END;
 -%]
 <ul class="option-list">
 [%
@@ -53,7 +50,9 @@ IF articles.count;
 -%]
 </ul>
 [%
-  page_links_text;
+  UNLESS index;
+    page_links_text;
+  END;
 ELSE;
 -%]
 <ul class="option-list">

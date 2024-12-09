@@ -121,15 +121,17 @@ sub create_or_edit {
     
     # Now we've set our variables up, do some error checking
     if ( defined($ind_match_tpl) ) {
-      if ( ref($ind_match_tpl) ne "TopTable::Model::DB::TemplateMatchIndividual" ) {
+      if ( !$ind_match_tpl->isa("TopTable::Schema::Result::TemplateMatchIndividual") ) {
           # Not passed as an object, try and look it up
           $ind_match_tpl = $schema->resultset("TemplateMatchIndividual")->find_id_or_url_key($ind_match_tpl);
-          
           push(@{$response->{errors}}, $lang->maketext("templates.team-match.games.error.ind-template-invalid", $game_num)) unless defined($ind_match_tpl);
         }
     } else {
       push(@{$response->{errors}}, $lang->maketext("templates.team-match.games.error.ind-template-blank", $game_num));
     }
+    
+    # Can't have an individual match template with a handicap if the overall team template has a handicap
+    push(@{$response->{errors}}, $lang->maketext("templates.team-match.games.error.ind-template-and-team-template-both-handicapped", $game_num)) if defined($ind_match_tpl) and $tt_template->handicapped and $ind_match_tpl->handicapped;
     
     if ( $doubles ) {
       # Undef home / away players

@@ -34,7 +34,7 @@ $(document).ready(function() {
     width: "75px"
   });
   
-  var positions = $("#positions-table").DataTable({
+  var division_positions = $("#division-positions-table").DataTable({
     "ordering": false,
     "fixedHeader": true,
     "responsive": true,
@@ -60,7 +60,40 @@ $(document).ready(function() {
     }]
   });
   
-  $("select[name=positions-table_length]").chosen({
+  $("select[name=division-positions-table_length]").chosen({
+    disable_search: true,
+    single_backstroke_delete: false,
+    allow_single_deselect: true,
+    width: "75px"
+  });
+  
+  var tournament_positions = $("#tournament-positions-table").DataTable({
+    "ordering": false,
+    "fixedHeader": true,
+    "responsive": true,
+    "info": true,
+    "orderFixed": {"pre": [[0, "asc"], [2, "asc"]]},
+    "order": [[2, "asc"]],
+    "paging": true,
+    "pageLength": 25,
+    "lengthChange": true,
+    "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+    "ordering": false,
+    "rowGroup": {
+      "dataSrc": [0, 2]
+    },
+    "columnDefs": [{
+      // Competition name invisible because it's grouped, group order column because it's a sort column
+      "visible": false,
+      "targets": [0, 1, 2]
+    }, {
+      // Order data for group column will be the group_order column
+      "orderData": 1,
+      "targets": 2
+    }]
+  });
+  
+  $("select[name=tournament-positions-table_length]").chosen({
     disable_search: true,
     single_backstroke_delete: false,
     allow_single_deselect: true,
@@ -77,9 +110,11 @@ $(document).ready(function() {
       if (tab.selector == "#matches") {
         // Redraw the matches tables
         matches.responsive.recalc();
-      } else if (tab.selector == "#positions") {
+      } else if (tab.selector == "#division-positions") {
         // Redraw the fixtures table
-        positions.responsive.recalc();
+        division_positions.responsive.recalc();
+      } else if (tab.selector == "#tournament-positions") {
+        tournament_positions.responsive.recalc();
       }
     }
   });

@@ -1,0 +1,29 @@
+<div class="table-wrap">
+  <div class="table-layout table-layout-centre">
+    <table id="fixtures-options" class="stripe hover order-column row-border" style="width: 100%;">
+      <thead>
+        <tr>
+          <th>[% c.maketext("fixtures-results.options.heading.venue") %]</th>
+          <th>[% c.maketext("fixtures-results.options.heading.number") %]</th>
+        </tr>
+      </thead>
+      <tbody>
+[%
+FOREACH option IN display_options;
+  IF specific_season;
+    SET uri = c.uri_for_action("/fixtures-results/view_venue_specific_season_end", [season.url_key, option.venue.url_key]);
+  ELSE;
+    SET uri = c.uri_for_action("/fixtures-results/view_venue_current_season_end", [option.venue.url_key]);
+  END;
+-%]
+        <tr>
+          <td data-label="[% c.maketext("fixtures-results.options.heading.venue") %]"><a href="[% uri %]">[% option.venue.name | html_entity %]</a></td>
+          <td data-label="[% c.maketext("fixtures-results.options.heading.number") %]">[% option.get_column("number_of_matches") %]</td>
+        </tr>
+[%
+END;
+-%]
+      </tbody>
+    </table>
+  </div>
+</div>

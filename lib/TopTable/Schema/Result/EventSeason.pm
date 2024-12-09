@@ -269,8 +269,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-06-01 20:59:23
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:SfaFo9Gu0F5SG/RBHRuLdQ
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-11-21 16:36:40
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:xqih/JGxlswNcHqibfaH6g
 
 use DateTime;
 
@@ -306,9 +306,60 @@ sub event_detail {
   
   # Get the event type
   my $event_type = $self->event->event_type->id;
+  my %attribs = ();
   
   if ( $event_type eq "meeting" ) {
-    return $self->search_related("meetings", undef, {rows => 1})->single;
+    return $self->search_related("meetings", {}, {rows => 1})->single;
+  } elsif ( $event_type eq "single_tournament" ) {
+    my $tournament = $self->find_related("tournaments", {});
+    my $entry_type = $tournament->entry_type->id;
+    my $has_group_round = $tournament->has_group_round;
+    
+    # Set the initial prefetch that will hold the rounds / groups
+    if ( $has_group_round ) {
+      # Get the groups along with participants
+      if ( $entry_type eq "teams" ) {
+        # Grab the teams
+        %attribs = (
+          prefetch => [qw( entry_type tournament_teams ), {
+            tournament_rounds => [qw( tournament_round_groups )],
+          }],
+        );
+      } elsif ( $entry_type eq "singles" ) {
+        # Grab the players
+        %attribs = (
+          prefetch => [qw( entry_type tournament_people ), {
+            tournament_rounds => [qw( tournament_round_groups )],
+          }],
+        );
+      } elsif ( $entry_type eq "doubles" ) {
+        # Grab the pairs
+        %attribs = (
+          prefetch => [qw( entry_type tournament_doubles ), {
+            tournament_rounds => [qw( tournament_round_groups )],
+          }],
+        );
+      }
+    } else {
+      if ( $entry_type eq "teams" ) {
+        # Grab the teams
+        %attribs = (
+          prefetch => [qw( entry_type tournament_teams tournament_rounds )],
+        );
+      } elsif ( $entry_type eq "singles" ) {
+        # Grab the players
+        %attribs = (
+          prefetch => [qw( entry_type tournament_people tournament_rounds )],
+        );
+      } elsif ( $entry_type eq "doubles" ) {
+        # Grab the pairs
+        %attribs = (
+          prefetch => [qw( entry_type tournament_doubles tournament_rounds )],
+        );
+      }
+    }
+    
+    return $self->find_related("tournaments", {}, \%attribs);
   }
 }
 

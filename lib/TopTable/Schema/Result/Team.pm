@@ -262,26 +262,44 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
-=head2 tournament_round_group_team_memberships
 
-Type: has_many
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-09-29 23:47:56
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:izvVcij50MYlkFylPAoMNA
 
-Related object: L<TopTable::Schema::Result::TournamentRoundGroupTeamMembership>
+use HTML::Entities;
+
+=head2 full_name
+
+Return the club (short) name with the team name.
 
 =cut
 
-__PACKAGE__->has_many(
-  "tournament_round_group_team_memberships",
-  "TopTable::Schema::Result::TournamentRoundGroupTeamMembership",
-  { "foreign.team" => "self.id" },
-  { cascade_copy => 0, cascade_delete => 0 },
-);
+sub full_name {
+  my $self = shift;
+  return sprintf("%s %s", $self->club->short_name, $self->name);
+}
 
+=head2 abbreviated_name
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2021-11-20 08:25:35
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:qgunySBHcrxmHwLIwL4BKA
+Return the club (abbreviated) name with the team name.
 
-use HTML::Entities;
+=cut
+
+sub abbreviated_name {
+  my $self = shift;
+  return sprintf("%s %s", $self->club->abbreviated_name, $self->name);
+}
+
+=head2 object_name
+
+Used for compatibility with person tournament memberships, so we can refer to object_name regardless of whether we're accessing a tournament or direct team object.
+
+=cut
+
+sub object_name {
+  my $self = shift;
+  return $self->full_name;
+}
 
 =head2 get_seasons
 
@@ -290,7 +308,8 @@ Get team_seasons for this team (all seasons this team has entered).
 =cut
 
 sub get_seasons {
-  my ( $self, $params ) = @_;
+  my $self = shift;
+  my ( $params ) = @_;
   my $page_number = $params->{page_number} || undef;
   my $results_per_page = $params->{results_per_page} || undef;
   
@@ -327,7 +346,8 @@ Retrieve an arrayref of players registered for this team for the given season.
 =cut
 
 sub get_players {
-  my ( $self, $params ) = @_;
+  my $self = shift;
+  my ( $params ) = @_;
   my $season = $params->{season};
   
   return $self->search_related("team_seasons")->search_related("person_seasons", {
@@ -346,9 +366,20 @@ Return matches where the team has played a loan player (in a given season if sup
 =cut
 
 sub loan_players {
-  my ( $self, $params ) = @_;
-  my $season = delete $params->{season} || undef;
-  my $where = [{
+  my $self = shift;
+  my ( $comp, $params ) = @_;
+  my ( $season, $tournament, $is_tourn );
+  
+  # Work out if we're checking the tournament or the season (league matches check against the season)
+  if ( $comp->isa("TopTable::Schema::Result::Tournament") ) {
+    $is_tourn = 1;
+    $tournament = $comp;
+  } else {
+    $is_tourn = 0;
+    $season = $comp;
+  }
+  
+  my @where = ({
     "me.home_team" => $self->id,
     "me.location" => "home",
     "me.loan_team" => {"<>" => undef},
@@ -356,23 +387,36 @@ sub loan_players {
     "me.away_team" => $self->id,
     "me.location" => "away",
     "me.loan_team" => {"<>" => undef},
-  }];
+  });
   
-  if ( defined( $season ) ) {
-    $where->[0]{"team_match.season"} = $season->id;
-    $where->[1]{"team_match.season"} = $season->id;
-  }
-  
-  return $self->result_source->schema->resultset("TeamMatchPlayer")->search($where, {
-    prefetch => ["player", {
-      team_match  => [{
+  my %attrib = (
+    join => [qw( player ), {
+      team_match  => {
         team_season_home_team_season => [qw( team ), {club_season => "club"}],
-      }, {
         team_season_away_team_season => [qw( team ), {club_season => "club"}],
-      }],
+      },
     }],
     order_by => {-asc => [qw( me.scheduled_date me.home_team me.away_team )]},
-  });
+  );
+  
+  if ( $is_tourn ) {
+    # Tournament match, check against the tournament
+    $where[0]{"tournament.id"} = $tournament->id;
+    $where[1]{"tournament.id"} = $tournament->id;
+    
+    # Add to the attributes so we retrieve the tournament too
+    # Element 1 is the hash
+    $attrib{join}[1]{team_match}{tournament_round} = [qw( tournament )];
+  } else {
+    # League match, check against the season
+    $where[0]{"team_match.season"} = $season->id;
+    $where[1]{"team_match.season"} = $season->id;
+  }
+  
+  if ( defined($season) ) {
+  }
+  
+  return $self->result_source->schema->resultset("TeamMatchPlayer")->search(\@where, \%attrib);
 }
 
 =head2 get_captain
@@ -382,7 +426,8 @@ Retrieve the captain registered for this team for the given season.
 =cut
 
 sub get_captain {
-  my ( $self, $params ) = @_;
+  my $self = shift;
+  my ( $params ) = @_;
   my $season = $params->{season};
   
   return $self->search_related("team_seasons", {
@@ -400,12 +445,13 @@ Retrieve details for the specified season for this team.
 =cut
 
 sub get_season {
-  my ( $self, $season ) = @_;
+  my $self = shift;
+  my ( $season ) = @_;
   
   return $self->search_related("team_seasons", {
     "me.season" => $season->id,
   }, {
-    prefetch => [qw( captain ), {
+    prefetch => [qw( captain home_night ), {
       division_season => "division",
       club_season => "club"
     }],
@@ -420,7 +466,8 @@ Get the last season that a team competed in.
 =cut
 
 sub last_competed_season {
-  my ( $self, $parameters ) = @_;
+  my $self = shift;
+  my ( $parameters ) = @_;
   my $complete_only = delete $parameters->{complete_only} || 0;
   
   my $where = {complete => 1} if $complete_only;
@@ -441,7 +488,7 @@ Return the season this team was last entered in.
 =cut
 
 sub last_season_entered {
-  my ( $self ) = @_;
+  my $self = shift;
   
   return $self->result_source->schema->resultset("Season")->search({
     "team_seasons.team" => $self->id,
@@ -459,7 +506,7 @@ Retrieve all seasons associated with the team.
 =cut
 
 sub seasons {
-  my ( $self ) = @_;
+  my $self = shift;
   
   return $self->search_related("team_seasons", undef, {
     prefetch  => [qw( captain division club )],
@@ -473,7 +520,7 @@ Performs checks to ensure the team can be deleted.  The team cannot be deleted i
 =cut
 
 sub can_delete {
-  my ( $self ) = @_;
+  my $self = shift;
   
   my $players = $self->search_related("team_seasons")->search_related("person_seasons")->count;
   
@@ -523,7 +570,8 @@ Checks we can delete the team (via can_delete) and then performs the deletion.
 =cut
 
 sub check_and_delete {
-  my ( $self, $params ) = @_;
+  my $self = shift;
+  my ( $params ) = @_;
   # Setup schema / logging
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.

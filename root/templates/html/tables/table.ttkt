@@ -1,0 +1,105 @@
+[%
+SET winner_type = match_template.winner_type.id;
+-%]
+        <table class="league-table stripe hover row-border">
+          <thead>
+            <tr>
+              <th title="[% c.maketext("stats.table-heading.position.full") %]" class="numeric">[% c.maketext("stats.table-heading.position") %]</th>
+              <th>[% c.maketext("stats.table-heading.team") %]</th>
+              <th class="numeric" title="[% c.maketext("stats.table-heading.team-matches-played.full") %]">[% c.maketext("stats.table-heading.team-matches-played") %]</th>
+              <th class="numeric" title="[% c.maketext("stats.table-heading.matches-won.full") %]">[% c.maketext("stats.table-heading.matches-won") %]</th>
+              <th class="numeric" title="[% c.maketext("stats.table-heading.matches-drawn.full") %]">[% c.maketext("stats.table-heading.matches-drawn") %]</th>
+              <th class="numeric" title="[% c.maketext("stats.table-heading.matches-lost.full") %]">[% c.maketext("stats.table-heading.matches-lost") %]</th>
+              <th class="numeric" title="[% c.maketext("stats.table-heading." _ winner_type _ "-for.full") %]">[% c.maketext("stats.table-heading.for") %]</th>
+              <th class="numeric" title="[% c.maketext("stats.table-heading." _ winner_type _ "-against.full") %]">[% c.maketext("stats.table-heading.against") %]</th>
+[%
+IF match_template.handicapped;
+-%]
+              <th class="numeric"><span title="[% c.maketext("stats.table-heading.handicap.full") %]">[% c.maketext("stats.table-heading.handicap") %]</span></th>
+[%
+END;
+-%]
+              <th class="numeric" title="[% c.maketext("stats.table-heading."_ winner_type _ "-difference.full") %]">[% c.maketext("stats.table-heading."_ winner_type _"-difference") %]</th>
+[%
+IF ranking_template.assign_points;
+-%]
+              <th class="numeric">[% c.maketext("stats.table-heading.points") %]</th>
+[%
+END;
+-%]
+            </tr>
+          </thead>
+          <tbody>
+[%
+# Count up as we go
+SET i = 0;
+FOREACH entrant = entrants;
+  i = i + 1;
+  IF tourn_group;
+    SET team_season = entrant.tournament_team.team_season;
+  ELSE;
+    SET team_season = entrant;
+  END;
+  
+  IF specific_season;
+    SET team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [team_season.team.club.url_key, team_season.team.url_key, season.url_key]);
+  ELSE;
+    SET team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [team_season.team.club.url_key, team_season.team.url_key]);
+  END;
+  
+  team_name = team_season.club_season.short_name _ " " _ team_season.name | html_entity;
+  
+  IF winner_type == "games";
+    SET for = entrant.games_won;
+    SET against = entrant.games_lost;
+    SET diff = entrant.games_difference;
+  ELSE;
+    SET for = entrant.points_won;
+    SET against = entrant.points_lost;
+    SET diff = entrant.points_difference;
+  END;
+-%]
+            <tr>
+              <td data-label="[% c.maketext("stats.table-heading.position.full") %]" class="numeric">[% i %]</td>
+              <td data-label="[% c.maketext("stats.table-heading.team") %]"><a href="[% team_uri %]"><nobr>[% team_season.club_season.short_name | html_entity %]</nobr> [% team_season.name | html_entity %]</a>
+[%-
+  IF authorisation.team_edit;
+-%]
+ <a class="admin-links" href="[% c.uri_for_action("/teams/edit_by_url_key", [entrant.team.club.url_key, entrant.team.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", team_name) %]" title="[% c.maketext("admin.edit-object", team_name) %]" /></a>
+[%-
+  END;
+  IF authorisation.team_delete AND average.team_season.team.can_delete;
+-%]
+ <a class="admin-links" href="[% c.uri_for_action("/teams/delete_by_url_key", [entrant.team.club.url_key, entrant.team.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", team_name) %]" title="[% c.maketext("admin.delete-object", team_name) %]" /></a>
+[%-
+  END;
+-%]
+</td>
+              <td data-label="[% c.maketext("stats.table-heading.team-matches-played.full") %]" class="numeric">[% c.i18n_numberformat.format_number(entrant.matches_played) %]</td>
+              <td data-label="[% c.maketext("stats.table-heading.matches-won.full") %]" class="numeric">[% c.i18n_numberformat.format_number(entrant.matches_won) %]</td>
+              <td data-label="[% c.maketext("stats.table-heading.matches-drawn.full") %]" class="numeric">[% c.i18n_numberformat.format_number(entrant.matches_drawn) %]</td>
+              <td data-label="[% c.maketext("stats.table-heading.matches-lost") %]" class="numeric">[% c.i18n_numberformat.format_number(entrant.matches_lost) %]</td>
+              <td data-label="[% c.maketext("stats.table-heading." _ winner_type _ "-for.full") %]" class="numeric">[% c.i18n_numberformat.format_number(for) %]</td>
+              <td data-label="[% c.maketext("stats.table-heading." _ winner_type _ "-against.full") %]" class="numeric">[% c.i18n_numberformat.format_number(against) %]</td>
+[%
+IF match_template.handicapped;
+-%]
+              <td data-label="[% c.maketext("stats.table-heading.handicap.full") %]" class="numeric">[% c.i18n_numberformat.format_number(entrant.total_handicap) %]</td>
+[%
+END;
+-%]
+              <td data-label="[% c.maketext("stats.table-heading." _ winner_type _ "-difference.full") %]" class="numeric">[% c.i18n_numberformat.format_number(diff) %]</td>
+[%
+IF ranking_template.assign_points;
+-%]
+              <td data-label="[% c.maketext("stats.table-heading.points") %]" class="numeric">[% c.i18n_numberformat.format_number(entrant.table_points) %]</td>
+[%
+END;
+-%]
+            </tr>
+[%
+END;
+-%]
+          </tbody>
+        </table>
+        <div class="dataTables_info" id="league-table_info" role="status" aria-live="polite">[% c.maketext("updated.time", c.i18n_datetime_format_datetime.format_datetime(last_updated)) %]</div>

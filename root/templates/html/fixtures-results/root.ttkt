@@ -1,69 +1,26 @@
-[% # This is a TT comment. -%]
-
-[% # Note That the '-' at the beginning or end of TT code  -%]
-[% # "chomps" the whitespace/newline at that end of the    -%]
-[% # output (use View Source in browser to see the effect) -%]
-
-[% # Some basic HTML with a loop to display clubs -%]
 <ul class="option-list">
-  <li>
 [%
-IF specific_season;
-  SET uri = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "teams"]);
-ELSE;
-  SET uri = c.uri_for_action("/fixtures-results/filter_view_current_season", ["teams"]);
+FOREACH option IN ["team" "division" "venue" "month" "week" "day"];
+  SET link_text = c.maketext("menu.text.fixtures-results-by-" _ option);
+  SET option_plural = option _ "s";
+  IF specific_season;
+    SET link_uri = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, option_plural]);
+    #SET teams_uri = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "teams"]);
+    #SET divisions_uri = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "divisions"]);
+    #SET days_uri = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "days"]);
+    #SET weeks_uri = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "weeks"]);
+    #SET months_uri = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "months"]);
+  ELSE;
+    SET link_uri = c.uri_for_action("/fixtures-results/filter_view_current_season", [option_plural]);
+    #SET teams_uri = c.uri_for_action("/fixtures-results/filter_view_current_season", ["teams"]);
+    #SET divisions_uri = c.uri_for_action("/fixtures-results/filter_view_current_season", ["divisions"]);
+    #SET days_uri = c.uri_for_action("/fixtures-results/filter_view_current_season", ["days"]);
+    #SET weeks_uri = c.uri_for_action("/fixtures-results/filter_view_current_season", ["weeks"]);
+    #SET months_uri = c.uri_for_action("/fixtures-results/filter_view_current_season", ["months"]);
+  END;
+-%]
+  <li><a href="[% link_uri %]">[% link_text %]</a></li>
+[%
 END;
 -%]
-    <a href="[% uri %]">[% c.maketext("menu.text.fixtures-results-by-team") %]</a>
-  </li>
-  <li>
-[%
-IF specific_season;
-  SET uri = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "divisions"]);
-ELSE;
-  SET uri = c.uri_for_action("/fixtures-results/filter_view_current_season", ["divisions"]);
-END;
--%]
-    <a href="[% uri %]">[% c.maketext("menu.text.fixtures-results-by-division") %]</a>
-  </li>
-  <li>
-[%
-IF specific_season;
-  SET uri = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "days"]);
-ELSE;
-  SET uri = c.uri_for_action("/fixtures-results/filter_view_current_season", ["days"]);
-END;
--%]
-    <a href="[% uri %]">[% c.maketext("menu.text.fixtures-results-by-day") %]</a>
-  </li>
-  <li>
-[%
-IF specific_season;
-  SET uri = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "weeks"]);
-ELSE;
-  SET uri = c.uri_for_action("/fixtures-results/filter_view_current_season", ["weeks"]);
-END;
--%]
-    <a href="[% uri %]">[% c.maketext("menu.text.fixtures-results-by-week") %]</a>
-  </li>
-  <li>
-[%
-IF specific_season;
-  SET uri = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "months"]);
-ELSE;
-  SET uri = c.uri_for_action("/fixtures-results/filter_view_current_season", ["months"]);
-END;
--%]
-    <a href="[% uri %]">[% c.maketext("menu.text.fixtures-results-by-month") %]</a>
-  </li>
-  <li>
-[%
-IF specific_season;
-  SET uri = c.uri_for_action("/fixtures-results/filter_view_specific_season", [season.url_key, "venues"]);
-ELSE;
-  SET uri = c.uri_for_action("/fixtures-results/filter_view_current_season", ["venues"]);
-END;
--%]
-    <a href="[% uri %]">[% c.maketext("menu.text.fixtures-results-by-venue") %]</a>
-  </li>
 </ul>

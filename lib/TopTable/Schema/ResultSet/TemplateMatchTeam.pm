@@ -175,6 +175,8 @@ sub create_or_edit {
   my $name = $params->{name} || undef;
   my $singles_players_per_team  = $params->{singles_players_per_team} || undef;
   my $winner_type = $params->{winner_type} || undef;
+  my $handicapped = $params->{handicapped} || 0;
+  my $allow_final_score_override = $params->{allow_final_score_override} || 0;
   my $response = {
     errors => [],
     warnings => [],
@@ -247,6 +249,14 @@ sub create_or_edit {
   
   $response->{fields}{winner_type} = $winner_type;
   
+  # Handicapped sanity check - should be 1 or 0, any other true value gets set to 1
+  $handicapped = $handicapped ? 1 : 0;
+  $response->{fields}{handicapped} = $handicapped;
+  
+  # Allow score override sanity check
+  $allow_final_score_override = $allow_final_score_override ? 1 : 0;
+  $response->{fields}{allow_final_score_override} = $allow_final_score_override;
+  
   if ( scalar(@{$response->{errors}}) == 0 ) {
     # No errors, build the key from the name
     my $url_key;
@@ -263,6 +273,8 @@ sub create_or_edit {
         name => $name,
         singles_players_per_team => $singles_players_per_team,
         winner_type => $winner_type->id,
+        handicapped => $handicapped,
+        allow_final_score_override => $allow_final_score_override,
       });
       
       $response->{completed} = 1;
@@ -273,6 +285,8 @@ sub create_or_edit {
         name => $name,
         singles_players_per_team => $singles_players_per_team,
         winner_type => $winner_type->id,
+        handicapped => $handicapped,
+        allow_final_score_override => $allow_final_score_override,
       });
       
       $response->{completed} = 1;
