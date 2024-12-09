@@ -458,7 +458,7 @@ sub do_update :Private {
     # Log an update
     my $match_name = $c->maketext("matches.name", $match->team_season_home_team_season->full_name, $match->team_season_away_team_season->full_name);
     $match_name .= " (" . $match->tournament_round->tournament->event_season->name . ")" if defined($match->tournament_round);
-    $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["team-match", "update", {home_team => $match->home_team->id, away_team => $match->away_team->id, scheduled_date => $match->scheduled_date->ymd}, $c->maketext("matches.name", $match_name]);
+    $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["team-match", "update", {home_team => $match->home_team->id, away_team => $match->away_team->id, scheduled_date => $match->scheduled_date->ymd}, $match_name]);
   }
 }
 
