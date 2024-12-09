@@ -258,12 +258,28 @@ Denotes that the match has started (remains 1 after the match has started, even 
   extra: {unsigned => 1}
   is_nullable: 0
 
+=head2 home_team_match_score_override
+
+  data_type: 'smallint'
+  extra: {unsigned => 1}
+  is_nullable: 1
+
+If populated, this will be the home team score, overridden from the one calculated by the system.
+
 =head2 away_team_match_score
 
   data_type: 'smallint'
   default_value: 0
   extra: {unsigned => 1}
   is_nullable: 0
+
+=head2 away_team_match_score_override
+
+  data_type: 'smallint'
+  extra: {unsigned => 1}
+  is_nullable: 1
+
+If populated, this will be the away team score, overridden from the one calculated by the system.
 
 =head2 player_of_the_match
 
@@ -510,6 +526,8 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
+  "home_team_match_score_override",
+  { data_type => "smallint", extra => { unsigned => 1 }, is_nullable => 1 },
   "away_team_match_score",
   {
     data_type => "smallint",
@@ -517,6 +535,8 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
+  "away_team_match_score_override",
+  { data_type => "smallint", extra => { unsigned => 1 }, is_nullable => 1 },
   "player_of_the_match",
   {
     data_type => "integer",
@@ -908,8 +928,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-11-13 00:10:04
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:d10SdC4laQSYak9IKJgdSA
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-12-08 23:13:50
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:zWj57DUyQ32OUHOEjaaRBQ
 
 use Try::Tiny;
 use DateTime::Duration;

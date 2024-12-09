@@ -6746,6 +6746,9 @@ msgstr "Handicap awarded to home"
 msgid "events.tournament.rounds.groups.create-matches.field.handicap-to-away"
 msgstr "Handicap awarded to away"
 
+msgid "events.tournament.details"
+msgstr "Tournament details"
+
 ### Images
 msgid "images.form.image"
 msgstr "Image"

@@ -37,7 +37,7 @@ END;
 -%]
 <div id="tabs">
   <ul>
-    <li><a href="#details">[% c.maketext("meetings.heading.details") %]</a></li>
+    <li><a href="#details">[% c.maketext("events.tournament.details") %]</a></li>
   </ul>
   <div id="details">
     <div class="table-wrap">

@@ -785,8 +785,8 @@ sub get_player_lists :Private {
   my ( $self, $c ) = @_;
   my $content_type = $c->req->params->{"content-type"} || "html";
   my $match = $c->stash->{match};
-  my @home_player_list = $c->model("DB::PersonSeason")->get_people_in_team_in_name_order( $match->season, $match->team_season_home_team_season->team );
-  my @away_player_list = $c->model("DB::PersonSeason")->get_people_in_team_in_name_order( $match->season, $match->team_season_away_team_season->team );
+  my @home_player_list = $c->model("DB::PersonSeason")->get_people_in_team_in_name_order($match->season, $match->team_season_home_team_season->team);
+  my @away_player_list = $c->model("DB::PersonSeason")->get_people_in_team_in_name_order($match->season, $match->team_season_away_team_season->team);
   my $home_doubles_list = [];
   my $away_doubles_list = [];
   
