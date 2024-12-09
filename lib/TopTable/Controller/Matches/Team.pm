@@ -358,13 +358,13 @@ sub update :Private {
   
   if ( $season->complete ) {
     my ( $scheduled_year, $scheduled_month, $scheduled_day ) = split("/", $match->scheduled_date->ymd("/"));
-    $c->response->redirect($c->uri_for_action("/matches/team/view_by_url_keys", [$match->home_team->club->url_key, $match->home_team->url_key, $match->away_team->club->url_key, $match->away_team->url_key, $scheduled_year, sprintf("%02d", $scheduled_month), sprintf("%02d", $scheduled_day)],
+    $c->response->redirect($c->uri_for_action("/matches/team/view_by_url_keys", $match->url_keys,
       {mid => $c->set_status_msg({error => $c->maketext("matches.update.error.season-complete")})}));
     $c->detach;
     return;
   } elsif ( $match->cancelled ) {
     my ( $scheduled_year, $scheduled_month, $scheduled_day ) = split("/", $match->scheduled_date->ymd("/"));
-    $c->response->redirect($c->uri_for_action("/matches/team/view_by_url_keys", [$match->home_team->club->url_key, $match->home_team->url_key, $match->away_team->club->url_key, $match->away_team->url_key, $scheduled_year, sprintf("%02d", $scheduled_month), sprintf("%02d", $scheduled_day)],
+    $c->response->redirect($c->uri_for_action("/matches/team/view_by_url_keys", $match->url_keys,
       {mid => $c->set_status_msg({error => $c->maketext("matches.update.error.match-cancelled")})}));
     $c->detach;
     return;
