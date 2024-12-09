@@ -3,7 +3,6 @@ use Moose;
 use namespace::autoclean;
 use HTML::Entities;
 use JSON;
-use DDP;
 
 BEGIN { extends 'Catalyst::Controller'; }
 
@@ -1367,7 +1366,7 @@ sub prepare_form_group :Private {
     ## TODO
   } else {
     $members_tokeninput_options->{prePopulate} = [map({
-      id => $_->object_id,
+      id => $_->url_key,
       name => $_->object_name,
     }, @{$members})] if ref($members) eq "ARRAY" and scalar @{$members};
   }
@@ -1938,7 +1937,6 @@ sub process_form :Private {
   } elsif ( $type eq "group" ) {
     # Group forms to process
     @field_names = qw( name manual_fixtures fixtures_grid automatic_qualifiers );
-    @processed_field_names = @field_names;
     
     my @members = ();
     foreach my $key ( keys %{$c->req->params} ) {
@@ -1948,7 +1946,7 @@ sub process_form :Private {
     if ( $action eq "create" or $action eq "edit" ) {
       # Create or edit group
       @field_names = qw( name manual_fixtures fixtures_grid automatic_qualifiers );
-      @processed_field_names = @field_names;
+      @processed_field_names = ( @field_names, qw( members ) );
       
       my @members = ();
       foreach my $key ( keys %{$c->req->params} ) {

@@ -717,6 +717,17 @@ sub url_keys {
   return [$self->url_key];
 }
 
+=head2 object_name
+
+Used for compatibility with person tournament memberships, so we can refer to object_name regardless of whether we're accessing a tournament or direct person object.
+
+=cut
+
+sub object_name {
+  my $self = shift;
+  return $self->display_name;
+}
+
 =head2 get_seasons
 
 Get person_seasons for this person (all seasons this person has entered).

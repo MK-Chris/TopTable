@@ -12,7 +12,6 @@ ELSE;
   END;
 END;
 
-CALL c.log.debug("manual: " _ manual_fixtures);
 -%]
 <form method="post" action="[% form_action %]">
 <fieldset>

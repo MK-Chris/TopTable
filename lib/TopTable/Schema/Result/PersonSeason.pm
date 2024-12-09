@@ -775,6 +775,17 @@ __PACKAGE__->add_columns(
     { data_type => "datetime", timezone => "UTC", set_on_create => 1, set_on_update => 1, datetime_undef_if_invalid => 1, is_nullable => 0, },
 );
 
+=head2 object_name
+
+Used for compatibility with person tournament memberships, so we can refer to object_name regardless of whether we're accessing a tournament or direct person object.
+
+=cut
+
+sub object_name {
+  my $self = shift;
+  return $self->display_name;
+}
+
 =head2 averages_position
 
 Get the averages position of this person for the team / season association.

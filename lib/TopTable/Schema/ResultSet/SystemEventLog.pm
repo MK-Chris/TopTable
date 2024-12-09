@@ -279,13 +279,11 @@ sub set_event_log {
       
       if ( defined($related_object) ) {
         # If we have a related object, just update the count on it...
-        $logger->("debug", "update");
         my $update_count = $related_object->number_of_edits + 1;
         $related_object->update({number_of_edits => $update_count});
       } else {
         # ...otherwise create a new related object
         # Add in the event ID so we can link them
-        $logger->("debug", "create");
         my $event_log_object = {
           name => $object_name->[$i],
           number_of_edits => 1,

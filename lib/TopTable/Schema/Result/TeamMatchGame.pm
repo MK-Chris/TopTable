@@ -2370,14 +2370,12 @@ sub update_score {
       foreach my $field ( keys %{$player_games_adjustments{$stat_team}} ) {
         # The pair ($mod_pair is $home_player or $away_player, which is always the doubles pair for a doubles game) fields are unchanged - games_played for example
         foreach my $mod_pair ( @mod_pairs ) {
-          $logger->("debug", sprintf("location: %s, field: %s, adj: %s, has column: %s", $stat_team, $field, $player_games_adjustments{$stat_team}{$field}), $mod_pair->result_source->has_column($field));
           $mod_pair->$field($mod_pair->$field + $player_games_adjustments{$stat_team}{$field}) if $mod_pair->result_source->has_column($field);
         }
         
         foreach my $mod_player ( @mod_players ) {
           # The individual players - $mod_player1, $mod_player2 - are preceded with doubles - doubles_games_played for example
           my $doubles_field = "doubles_" . $field;
-          $logger->("debug", sprintf("location: %s, doubles field: %s, adj: %s, has column: %s", $stat_team, $doubles_field, $player_games_adjustments{$stat_team}{$field}), $mod_player->result_source->has_column($doubles_field));
           $mod_player->$doubles_field($mod_player->$doubles_field + $player_games_adjustments{$stat_team}{$field}) if $mod_player->result_source->has_column($doubles_field);
         }
       }

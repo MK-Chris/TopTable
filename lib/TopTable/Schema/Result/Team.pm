@@ -290,6 +290,17 @@ sub abbreviated_name {
   return sprintf("%s %s", $self->club->abbreviated_name, $self->name);
 }
 
+=head2 object_name
+
+Used for compatibility with person tournament memberships, so we can refer to object_name regardless of whether we're accessing a tournament or direct team object.
+
+=cut
+
+sub object_name {
+  my $self = shift;
+  return $self->full_name;
+}
+
 =head2 get_seasons
 
 Get team_seasons for this team (all seasons this team has entered).

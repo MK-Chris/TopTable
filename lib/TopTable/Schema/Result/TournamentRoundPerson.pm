@@ -731,6 +731,17 @@ sub object_id {
   return $self->tournament_person->person_season->person->id;
 }
 
+=head2 url_key
+
+Return the URL key of the person linked.
+
+=cut
+
+sub url_key {
+  my $self = shift;
+  return $self->tournament_person->person_season->person->url_key;
+}
+
 =head2 object_name
 
 Get the name of the person from the person season object linked.

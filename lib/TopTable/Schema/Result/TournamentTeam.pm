@@ -704,6 +704,17 @@ sub object_id {
   return $self->team_season->team->id;
 }
 
+=head2 url_key
+
+Return the ID of the team linked.
+
+=cut
+
+sub url_key {
+  my $self = shift;
+  return $self->team_season->team->url_key;
+}
+
 =head2 object_name
 
 Get the name of the team from the team season object linked.

@@ -729,7 +729,7 @@ sub create_or_edit_group {
   
   $response->{fields}{manual_fixtures} = $manual_fixtures;
   
-  my ( $member_class, $tourn_member_class, $round_member_class, $group_member_class, $member_rel_round );
+  my ( $member_class, %member_cls_attrib, $tourn_member_class, $round_member_class, $group_member_class, $member_rel_round );
   if ( $can_edit{members} ) {
     # Check the members of the group
     # First check we're checking the right table
@@ -737,6 +737,7 @@ sub create_or_edit_group {
     if ( $entry_type eq "team" ) {
       $member_class = "Team";
       $member_rel_round = "tournament_round_teams";
+      %member_cls_attrib = (prefetch => [qw( club )]);
     } elsif ( $entry_type eq "singles" ) {
       $member_class = "Person";
       $member_rel_round = "tournament_round_people";
@@ -896,7 +897,8 @@ sub create_or_edit_group {
     }
   }
   
-  $response->{fields}{members} = \@members;
+  # Look up the members from the IDs stored for the response field
+  $response->{fields}{members} = [map($schema->resultset($member_class)->find($_, \%member_cls_attrib), @members)];
   
   # Check the number of qualifiers
   if ( $can_edit{qualifiers} ) {
