@@ -2466,9 +2466,15 @@ sub generate_ical_data {
   # Get the timezone
   my $zone = $params->{timezone};
   
-  my $description = defined($self->tournament_round)
-    ? undef
-    : sprintf("%s: %s\n%s: %s\n%s: %s\n%s", $lang->maketext("matches.field.competition"), $lang->maketext("matches.field.competition.value.league"), $lang->maketext("matches.field.division"), $self->division_season->name, $lang->maketext("matches.field.season"), $self->season->name, $uri);
+  my $description;
+  
+  if ( defined($self->tournament_round) ) {
+    $description = sprintf("%s: %s\n%s: %s", $lang->maketext("matches.field.competition"), $self->tournament_round->tournament->event_season->name, $lang->maketext("matches.field.tournament-round"), $self->tournament_round->name);
+    $description .= sprintf("\n%s: %s", $lang->maketext("matches.field.tournament-group"), $self->tournament_group->name) if defined($self->tournament_group);
+    $description .= sprintf("%s: %s\n%s", $lang->maketext("matches.field.season"), $self->season->name, $uri);
+  } else {
+    $description = sprintf("%s: %s\n%s: %s\n%s: %s\n%s", $lang->maketext("matches.field.competition"), $lang->maketext("matches.field.competition.value.league"), $lang->maketext("matches.field.division"), $self->division_season->name, $lang->maketext("matches.field.season"), $self->season->name, $uri);
+  }
   
   # Current date / time in UTC
   my $now_utc = DateTime->now(time_zone => "UTC");
