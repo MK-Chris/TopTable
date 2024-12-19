@@ -841,31 +841,15 @@ sub update_score {
   my $home_team = $home_team_season->team;
   my $away_team = $away_team_season->team;
   
+  # Set the tournament match flag so we don't have to check whether $match->tournament_round is defined each time
+  my $tourn_match = defined($match->tournament_round) ? 1 : 0;
+  
   # Stats update objects - for league matches, this is the same as $home_team_season and $away_team_season;
   # for tournaments they're the tournament team objects
   # Arrays to hold stats objects to update - tournament groups will have two for each home and away (tournament team object and tournament group team object),
   # whereas tournament rounds (not in a group) and league matches will just have one - tournament team and team season respectively
-  my ( @home_team_stats, @away_team_stats, $home_round_team, $home_tourn_team, $away_round_team, $away_tourn_team );
-  
-  my $tourn_match = defined($match->tournament_round) ? 1 : 0;
-  if ( $tourn_match ) {
-    # This match is part of a tournament, find the team membership.  No need to check if the tournament round team exists, as the team is not user defined,
-    # it's taken from a match object - we'll never have a match in a tournament round that doesn't contain any of the teams in that round.
-    my %attribs = (
-      join => [qw( tournament_team )],
-    );
-    
-    $home_round_team = $match->tournament_round->find_related("tournament_round_teams", {"tournament_team.team" => $home_team->id}, \%attribs);
-    $home_tourn_team = $home_round_team->tournament_team;
-    $away_round_team = $match->tournament_round->find_related("tournament_round_teams", {"tournament_team.team" => $away_team->id}, \%attribs);
-    $away_tourn_team = $away_round_team->tournament_team;
-    @home_team_stats = ( $home_round_team, $home_tourn_team );
-    @away_team_stats = ( $away_round_team, $away_tourn_team );
-  } else {
-    # League matches will always just have the one object per team in the match, but we put it in the array to save on complicated logic later on
-    @home_team_stats = ( $home_team_season );
-    @away_team_stats = ( $away_team_season );
-  }
+  my @home_team_stats = $match->team_stats("home");
+  my @away_team_stats = $match->team_stats("away");
   
   # Season is used for getting the season rules (unplayed games rules) and for accessing the season ID
   my $season = $match->season;
@@ -894,8 +878,10 @@ sub update_score {
   #$logger->("debug", "Settings: void_unplayed_games_if_both_teams_incomplete: $void_unplayed_games_if_both_teams_incomplete, forefeit_count_averages_if_game_not_started: $forefeit_count_averages_if_game_not_started, missing_player_count_win_in_averages: $missing_player_count_win_in_averages");
   
   # First check the match wasn't cancelled; if it was, we return straight away
-  if ( $match->cancelled ) {
-    push(@{$response->{errors}}, $lang->maketext("matches.update.error.match-cancelled"));
+  my $update_check = $delete ? "delete-score" : "score";
+  my %can = $match->can_update($update_check);
+  if ( !$can{allowed} ) {
+    push(@{$response->{errors}}, $can{reason});
     return $response;
   }
   
@@ -1339,7 +1325,6 @@ sub update_score {
     $points_per_draw = $ranking_template->points_per_draw;
     $points_per_loss = $ranking_template->points_per_loss;
   }
-  
   
   my ( $home_points_adjustment, $away_points_adjustment ) = qw( 0 0 );
   
@@ -2311,7 +2296,7 @@ sub update_score {
       my $home_player1 = $home_player->person_season_person1_season_team->person;
       my $home_player2 = $home_player->person_season_person2_season_team->person;
       
-      my $home_tourn_doubles = $home_tourn_team->find_related("tournaments_doubles", {
+      my $home_tourn_doubles = $home_team_stats[1]->find_related("tournaments_doubles", {
         "me.season_pair" => $home_player->id,
         "tournament_rounds_doubles.tournament_round" => $match->tournament_round->id,
       }, {
@@ -2329,7 +2314,7 @@ sub update_score {
       my $away_player1 = $away_player->person_season_person1_season_team->person;
       my $away_player2 = $away_player->person_season_person2_season_team->person;
       
-      my $away_tourn_doubles = $away_tourn_team->find_related("tournaments_doubles", {
+      my $away_tourn_doubles = $away_team_stats[1]->find_related("tournaments_doubles", {
         "me.season_pair" => $away_player->id,
         "tournament_rounds_doubles.tournament_round" => $match->tournament_round->id,
       }, {
@@ -2344,7 +2329,7 @@ sub update_score {
       my $away_round_player2 = $away_tourn_player2->find_related("tournament_round_people", {"me.tournament_round" => $match->tournament_round->id});
       
       @home_doubles_stats = ( $home_tourn_doubles, $home_round_doubles );
-      @home_doubles_stats = ( $away_tourn_doubles, $away_round_doubles );
+      @away_doubles_stats = ( $away_tourn_doubles, $away_round_doubles );
       @home_doubles_player_stats = ( $home_tourn_player1, $home_tourn_player2, $home_round_player1, $home_round_player2 );
       @away_doubles_player_stats = ( $away_tourn_player1, $away_tourn_player2, $away_round_player1, $away_round_player2 );
     } else {

@@ -777,7 +777,7 @@ msgid "clubs.seasons.season"
 msgstr "Season"
 
 msgid "clubs.seasons.registered-as"
-msgstr "Registered as"
+msgstr "Registered name"
 
 msgid "clubs.none"
 msgstr "There are no clubs to view."
@@ -1108,7 +1108,7 @@ msgid "teams.seasons.count-text"
 msgstr "%1 has been registered in %2 %3."
 
 msgid "teams.seasons.registered-as"
-msgstr "Registered as"
+msgstr "Registered name"
 
 msgid "teams.seasons.club"
 msgstr "Registered for"
@@ -1372,11 +1372,17 @@ msgstr "Membership type"
 msgid "people.field.averages-position"
 msgstr "Averages position"
 
+msgid "people.seasons.registered-as-sort"
+msgstr "Registered name (sortable)"
+
 msgid "people.seasons.registered-as"
-msgstr "Registered as"
+msgstr "Registered name"
 
 msgid "people.summary.registered.active"
 msgstr "Registered team"
+
+msgid "people.seasons.division-sort"
+msgstr "Division (sortable)"
 
 msgid "people.summary.division"
 msgstr "Division"
@@ -1484,7 +1490,10 @@ msgid "people.head-to-head.doubles.error.people-invalid"
 msgstr "Both of the opponent players entered are invalid."
 
 msgid "people.seasons.team"
-msgstr "Registered for"
+msgstr "Registered team"
+
+msgid "people.seasons.division"
+msgstr "Division"
 
 msgid "people.teams.loan"
 msgstr "Played on loan"
@@ -2698,9 +2707,6 @@ msgid "matches.update.games.notice"
 msgstr "Only the first leg fields will be shown to start with; the scores are completed, a valid score will yield the next fields to be filled out.<br />"
 "If the games were played in a different order, you can drag the <span class="ui-icon ui-icon-triangle-2-n-s"></span> icon in the game headings into the correct order."
 
-msgid "matches.update.error.match-cancelled"
-msgstr "This match was cancelled; in order to enter a score, you will need to undo the cancellation first."
-
 msgid "matches.game.header.number"
 msgstr "Game %1"
 
@@ -2763,9 +2769,6 @@ msgstr "Please enter all players before filling out the score for this game."
 
 msgid "matches.game.player-missing-notice"
 msgstr "There are players in this game marked as missing, so you aren&#39;t able to fill out a score for it."
-
-msgid "matches.update.error.season-complete"
-msgstr "You cannot update a match in a season that&#39;s been marked as complete."
 
 msgid "matches.update-playing-order.success"
 msgstr "Game playing order successfully changed."
@@ -2905,6 +2908,9 @@ msgstr "Umpire for game %1 successfully removed."
 msgid "matches.update.error.match-invalid"
 msgstr "The match specified is invalid."
 
+msgid "matches.update.error.match-cancelled"
+msgstr "This match was cancelled; in order to enter a score, you will need to undo the cancellation first."
+
 msgid "matches.update.error.season-complete"
 msgstr "You cannot update a match in a season that&#39;s already been completed."
 
@@ -2913,6 +2919,36 @@ msgstr "The handicap for this match hasn&#39;t been set, so scores cannot be upd
 
 msgid "matches.update.error.handicap-not-set"
 msgstr "Unable to update the score for this handicapped match before the handicap has been set."
+
+msgid "matches.update.error.score-overridden"
+msgstr "The score for this match has been overridden, so the score can't be updated.  Delete the score override before updating."
+
+msgid "matches.update.delete.error.score-overridden"
+msgstr "You cannot delete scores in a match that&#39;s had the score overridden; delete the score override before deleting scores."
+
+msgid "matches.override-score.legend.details"
+msgstr "Override the match score"
+
+msgid "matches.override-score.field.override"
+msgstr "Override the match score"
+
+msgid "matches.override-score.field.scores"
+msgstr "Scores (home / away)"
+
+msgid "matches.override-score.error.cannot-override-score"
+msgstr "The template this match is based on does not allow overriding the score."
+
+msgid "matches.override-score.error.match-not-complete"
+msgstr "The match must be fully completed before the score can be overridden."
+
+msgid "matches.override-score.error.match-cancelled"
+msgstr "You cannot override scores on a cancelled match."
+
+msgid "matches.override-score.info.not-overridden"
+msgstr "The match score was not selected to be overridden, there was nothing to do."
+
+msgid "matches.override-score.error.score-invalid"
+msgstr "The %1 score is invalid; it must be a number greater than 0."
 
 msgid "matches.update-single.error.game-invalid"
 msgstr "The game specified is invalid."
@@ -3012,6 +3048,9 @@ msgstr "This match was cancelled and any match scores showing have been awarded.
 
 msgid "matches.message.info.started-not-complete"
 msgstr "This match scorecard has been started, but is not yet complete."
+
+msgid "matches.message.info.score-overridden"
+msgstr "This match has had the score overridden from the correctly calculated score of %1."
 
 msgid "matches.heading.player-summaries"
 msgstr "Player summaries"
@@ -3208,6 +3247,9 @@ msgstr "Report"
 msgid "matches.cancel.warning.has-score"
 msgstr "This match has already been updated; cancelling the match will remove the existing players and the existing score will be removed from the match and from the tables and averages statistics.  In order to reinstate the score, you will have to undo the cancellation and manually reinput the score."
 
+msgid "matches.cancel.error.started"
+msgstr "This match has already been updated with scores, so can&#39;t be cancelled; delete any scores before cancelling the match."
+
 msgid "matches.cancel.error.season-complete"
 msgstr "You cannot cancel a match in a season that&#39;s been marked as complete."
 
@@ -3248,7 +3290,7 @@ msgid "matches.handicaps.error.not-a-handicapped-match"
 msgstr "This match is not using a template that has a handicap, so handicaps can&#39;t be set."
 
 msgid "matches.handicaps.error.match-started"
-msgstr "The handicaps cannot be updated if the match has some completed scores in."
+msgstr "The handicaps cannot be updated if the match has some completed scores in.  If the handicap needs updating, delete any existing scores first."
 
 msgid "matches.handicaps.error.error.handicap-invalid"
 msgstr "The handicap for %1 is invalid; please enter a number between 0 and 99."
@@ -5023,6 +5065,9 @@ msgstr "Delete %1"
 
 msgid "admin.update-object"
 msgstr "Update %1"
+
+msgid "admin.override-score-object"
+msgstr "Override the score for %1"
 
 msgid "admin.cancel-object"
 msgstr "Cancel %1"
@@ -6855,6 +6900,12 @@ msgstr "Changed the venue for %1%2."
 
 msgid "system-event-log.description.handicap-change"
 msgstr "Changed the handicap for %1%2."
+
+msgid "system-event-log.description.override-score"
+msgstr "Overrode the score for %1%2."
+
+msgid "system-event-log.description.override-score-remove"
+msgstr "Removed the score override for %1%2."
 
 msgid "system-event-log.description.cancel"
 msgstr "Cancelled %1%2."

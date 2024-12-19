@@ -475,9 +475,10 @@ sub update_person {
   my $void_unplayed_games_if_both_teams_incomplete = $season->void_unplayed_games_if_both_teams_incomplete;
   my $missing_player_count_win_in_averages = $season->missing_player_count_win_in_averages;
   
-  # First check the match wasn't cancelled; if it was, we return straight away
-  if ( $match->cancelled ) {
-    push(@{$response->{errors}}, $lang->maketext("matches.update.error.match-cancelled"));
+  # Critieria for updating players is the same as that for updating the score
+  my %can = $match->can_update("score");
+  if ( !$can{allowed} ) {
+    push(@{$response->{errors}}, $can{reason});
     return $response;
   }
   

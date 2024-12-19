@@ -15,13 +15,19 @@ $(document).ready(function() {
     "order": [1, "desc"],
     "columnDefs": [{
       "visible": false,
-      "targets": [0, 2]
+      "targets": [0, 2, 5]
     }, {
-      "orderData": 1,
-      "targets": 0
+      // Season
+      "orderData": 0,
+      "targets": 1
     }, {
+      // Person name
       "orderData": 3,
       "targets": 2
+    }, {
+      // Division
+      "orderData": 5,
+      "targets": 6
     }]
   });
   

@@ -1012,20 +1012,20 @@ sub name {
       $away_team_with_handicap .= sprintf(" (%s)", $lang->maketext("matches.handicap.not-yet-set"));
     }
     
-    if ( $scoreless or (!$self->home_team_match_score and !$self->away_team_match_score) ) {
+    if ( $scoreless or (!$self->team_score("home") and !$self->team_score("away")) ) {
       # Scoreless, or there are no scores yet, return Home Team v Away Team; "v" is from the lang files, so needs to be HTML decoded, as it could technically contain HTML and the controller will encode the whole string
       return sprintf("%s %s %s", $home_team_with_handicap, decode_entities($lang->maketext("matches.versus-abbreviation")), $away_team_with_handicap);
     } else {
       # There's a score and we're not asking for scoreless, return with the score
-      return sprintf("%s %d-%d %s", $home_team_with_handicap, $self->home_team_match_score, $self->away_team_match_score, $away_team_with_handicap);
+      return sprintf("%s %d-%d %s", $home_team_with_handicap, $self->team_score("home"), $self->team_score("away"), $away_team_with_handicap);
     }
   } else {
-    if ( $scoreless or (!$self->home_team_match_score and !$self->away_team_match_score) ) {
+    if ( $scoreless or (!$self->team_score("home") and !$self->team_score("away")) ) {
       # Scoreless, or there are no scores yet, return Home Team v Away Team; "v" is from the lang files, so needs to be HTML decoded, as it could technically contain HTML and the controller will encode the whole string
       return sprintf("%s %s %s", $home_season->full_name, decode_entities($lang->maketext("matches.versus-abbreviation")), $away_season->full_name);
     } else {
       # There's a score and we're not asking for scoreless, return with the score
-      return sprintf("%s %d-%d %s", $home_season->full_name, $self->home_team_match_score, $self->away_team_match_score, $away_season->full_name);
+      return sprintf("%s %d-%d %s", $home_season->full_name, $self->team_score("home"), $self->team_score("away"), $away_season->full_name);
     }
   }
 }
@@ -1090,15 +1090,30 @@ sub competition_sort {
   return $sort;
 }
 
-=head2 handicapped
+=head2 winner_type, singles_players_per_team, handicapped, allow_final_score_override
 
-Return 1 if the match is handicapped, or 0 if not.
+Shortcut to the relevant settings to the team match template settings.
 
 =cut
+
+sub winner_type {
+  my $self = shift;
+  return $self->team_match_template->winner_type->id;
+}
+
+sub singles_players_per_team {
+  my $self = shift;
+  return $self->team_match_template->singles_players_per_team;
+}
 
 sub handicapped {
   my $self = shift;
   return $self->team_match_template->handicapped;
+}
+
+sub allow_final_score_override {
+  my $self = shift;
+  return $self->team_match_template->allow_final_score_override;
 }
 
 =head2 handicap_format
@@ -1118,12 +1133,13 @@ sub handicap_format {
   my $lang = $schema->lang;
   
   # Pick up the right field to format
-  my $hcp_fld = $location eq "home" ? $self->home_team_handicap : $self->away_team_handicap;
+  my ( $hcp_fld, $opp_hcp_fld ) = $location eq "home" ? ( $self->home_team_handicap, $self->away_team_handicap ) : ( $self->away_team_handicap, $self->home_team_handicap );
   my $hcp_text;
   if ( $self->handicapped ) {
     if ( $self->handicap_set ) {
       # Handicap is set, if it's greater than 0, add a +
       $hcp_text = $hcp_fld >= 1 ? sprintf("+%d", $hcp_fld) : $hcp_fld;
+      $hcp_text = $lang->maketext("matches.handicap.scratch") unless $hcp_text or $opp_hcp_fld;
     } else {
       # Handicap not yet set
       $hcp_text = $lang->maketext("matches.handicap.format.not-set");
@@ -1412,6 +1428,54 @@ sub games_reordered {
   return $reordered_games ? 1 : 0;
 }
 
+=head2 score_overridden
+
+Checks to see if the scores in the match have been overridden and returns 1 if so, 0 if not.
+
+=cut
+
+sub score_overridden {
+  my $self = shift;
+  
+  if ( defined($self->home_team_match_score_override) or defined($self->away_team_match_score_override) ) {
+    return 1;
+  } else {
+    return 0;
+  }
+}
+
+=head2 team_stats($location)
+
+Return the team stats objects to update - $location must be "home" or "away".  If this is a league match, we'll just return the team_seasons object, whereas if it's a tournament match, there'll be a tournament and tournament round object to come back.  Return an array regardless.
+
+=cut
+
+sub team_stats {
+  my $self = shift;
+  my ( $location ) = @_;
+  
+  my @stats;
+  my $team_season = $location eq "home" ? $self->team_season_home_team_season : $self->team_season_away_team_season;
+  
+  if ( defined($self->tournament_round) ) {
+    # This match is part of a tournament, find the team membership.  No need to check if the tournament round team exists, as the team is not user defined,
+    # it's taken from a match object - we'll never have a match in a tournament round that doesn't contain any of the teams in that round.
+    my %attribs = (
+      join => [qw( tournament_team )],
+    );
+    
+    my $team = $team_season->team;
+    my $round_team = $self->tournament_round->find_related("tournament_round_teams", {"tournament_team.team" => $team->id}, \%attribs);
+    my $tourn_team = $round_team->tournament_team;
+    @stats = ( $round_team, $tourn_team );
+  } else {
+    # League matches will always just have the one object per team in the match, but we put it in the array to save on complicated logic later on
+    @stats = ( $team_season );
+  }
+  
+  return @stats;
+}
+
 =head2 score
 
 Return the score of this match in the format $home_score-$away_score, or the lang code for "not yet played" if the match isn't played yet.
@@ -1428,7 +1492,33 @@ sub score {
   $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
   my $lang = $schema->lang;
   
-  return $self->started ? sprintf("%d-%d", $self->home_team_match_score, $self->away_team_match_score) : $lang->maketext("matches.versus.not-yet-played");
+  return $self->started ? sprintf("%d-%d", $self->team_score("home"), $self->team_score("away")) : $lang->maketext("matches.versus.not-yet-played");
+}
+
+=head2 team_score($location)
+
+Return the home or away match score, depending on $location, which must be passed as "home" or "away".  This will usually just return home_team_match_score or away_team_match_score, although if the score has been overridden, it'll return that instead.
+
+=cut
+
+sub team_score {
+  my $self = shift;
+  my ( $location ) = @_;
+  
+  if ( $self->score_overridden ) {
+    # Use score override fields
+    if ( $location eq "home" ) {
+      return $self->home_team_match_score_override;
+    } else {
+      return $self->away_team_match_score_override;
+    }
+  } else {
+    if ( $location eq "home" ) {
+      return $self->home_team_match_score;
+    } else {
+      return $self->away_team_match_score;
+    }
+  }
 }
 
 =head2 get_team_seasons
@@ -1737,7 +1827,7 @@ sub calculate_match_score {
   # hold the running score each way through, so if the game hasn't been played this is ignored.
   my ( $home_score, $away_score, $_home_score, $_away_score ) = qw( 0 0 0 0 );
   my ( $home_games_won, $away_games_won, $games_drawn, $_home_games_won, $_away_games_won, $_games_drawn ) = qw( 0 0 0 0 0 0 );
-  my $winner_type = $self->team_match_template->winner_type->id;
+  my $winner_type = $self->winner_type;
   
   # Home and away teams to check the winner against in the even of walkovers
   my $home_team = $self->team_season_home_team_season;
@@ -2086,6 +2176,244 @@ sub update_scorecard {
     }
   }
   
+  return $response;
+}
+
+=head2 override_score
+
+Perform the score override.
+
+=cut
+
+sub override_score {
+  my $self = shift;
+  my ( $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  my $response = {
+    errors => [],
+    warnings => [],
+    info => [],
+    success => [],
+    completed => 0,
+    nothing_to_do => 0,
+    can => 0,
+  };
+  
+  # Check we can override scores for this match, if not return with the error logged
+  my %can = $self->can_update("override");
+  
+  unless ( $can{allowed} ) {
+    push(@{$response->{errors}}, $can{reason});
+    return $response;
+  }
+  
+  # If we get this far, we can
+  $response->{can} = 1;
+  
+  # Check the data passed in
+  my $override_score = $params->{override_score} || 0;
+  my $delete_override = 0; # Default - set if we aren't overridding and there's already a score override in place
+  my %scores = (
+    home => $params->{home_team_match_score_override},
+    away => $params->{away_team_match_score_override},
+  );
+  
+  my %existing_scores = (
+    home => $self->team_score("home"),
+    away => $self->team_score("away"),
+  );
+  
+  # Get the ranking rules
+  my ( $ranking_template, $assign_points, $points_per_win, $points_per_draw, $points_per_loss );
+  
+  if ( defined($self->division_season) ) {
+    # Ranking template comes from the division
+    $ranking_template = $self->division_season->league_table_ranking_template;
+  } elsif ( defined($self->tournament_group) ) {
+    # Although it relates to the group, the rank template is held at round level
+    $ranking_template = $self->tournament_round->rank_template;
+  }
+  
+  if ( defined($ranking_template) ) {
+    # If the ranking template is defined either through division ranking template or tournament group ranking template
+    $assign_points = $ranking_template->assign_points;
+    $points_per_win = $ranking_template->points_per_win;
+    $points_per_draw = $ranking_template->points_per_draw;
+    $points_per_loss = $ranking_template->points_per_loss;
+  }
+  
+  my ( $home_points_adjustment, $away_points_adjustment ) = qw( 0 0 );
+  
+  # Grab the stats objects we may need to update
+  my @home_team_stats = $self->team_stats("home");
+  my @away_team_stats = $self->team_stats("away");
+  
+  my %update_fields = (
+    home => {
+      matches_won => 0,
+      matches_lost => 0,
+      matches_drawn => 0,
+    }, away => {
+      matches_won => 0,
+      matches_lost => 0,
+      matches_drawn => 0,
+    },
+  );
+  
+  if ( $override_score ) {
+    # Overriding the score, make sure we have positive numeric scores
+    # Reverse sort ensures we deal with home first and the errors aren't in an odd order
+    foreach my $location ( reverse sort keys %scores ) {
+      my $score = $scores{$location};
+      push(@{$response->{errors}}, $lang->maketext("matches.override-score.error.score-invalid", $location)) unless $score =~ m/^\d+$/ and $score > 0;
+    }
+  } else {
+    # Not overriding - we might be deleting 
+    if ( $self->score_overridden ) {
+      # Delete overridden score, make sure the scores we'll set are undef so they get stored as null
+      $delete_override = 1;
+      undef($scores{home});
+      undef($scores{away});
+    } else {
+      # Nothing to do
+      $response->{completed} = 1;
+      push(@{$response->{info}}, $lang->maketext("matches.override-score.info.not-overridden"));
+      $response->{nothing_to_do} = 1;
+      return $response;
+    }
+  }
+  
+  if ( scalar @{$response->{errors}} == 0 and ($override_score or $delete_override) ) {
+    # No errors and we are overriding or deleting, do the stuff
+    # First update the DB for this match
+    $self->update({
+      home_team_match_score_override => $scores{home},
+      away_team_match_score_override => $scores{away},
+    });
+    
+    # Work out if matches won / lost / drawn needs to change
+    if ( $delete_override ) {
+      # If we're overriding, the initial check (%existing_scores) will be correct, the 
+      # The %scores (new scores) will need refreshing to the newly set team scores, as
+      # they won't have anything in them at the moment.
+      %scores = (
+        home => $self->team_score("home"),
+        away => $self->team_score("away"),
+      );
+    }
+    
+    if ( $scores{home} > $scores{away} ) {
+      # Home win
+      if ( $existing_scores{home} < $existing_scores{away} ) {
+        # Away team originally won, now a home win
+        $update_fields{home}{matches_won} = 1;
+        $update_fields{home}{matches_lost} = -1;
+        $update_fields{away}{matches_won} = -1;
+        $update_fields{away}{matches_lost} = 1;
+        
+        if ( $assign_points ) {
+          $home_points_adjustment = $points_per_win - $points_per_loss;
+          $away_points_adjustment = $points_per_loss - $points_per_win;
+        }
+      } elsif ( $existing_scores{home} == $existing_scores{away} ) {
+        # Originally a draw, now a home win
+        $update_fields{home}{matches_won} = 1;
+        $update_fields{home}{matches_drawn} = -1;
+        $update_fields{away}{matches_lost} = 1;
+        $update_fields{away}{matches_drawn} = -1;
+        
+        if ( $assign_points ) {
+          $home_points_adjustment = $points_per_win - $points_per_draw;
+          $away_points_adjustment = $points_per_loss - $points_per_draw;
+        }
+      }
+    } elsif ( $scores{home} < $scores{away} ) {
+      # Away win
+      if ( $existing_scores{home} > $existing_scores{away} ) {
+        # Originally a home win, now an away win
+        $update_fields{home}{matches_won} = -1;
+        $update_fields{home}{matches_lost} = 1;
+        $update_fields{away}{matches_won} = 1;
+        $update_fields{away}{matches_lost} = -1;
+        
+        if ( $assign_points ) {
+          $home_points_adjustment = $points_per_loss - $points_per_win;
+          $away_points_adjustment = $points_per_win - $points_per_loss;
+        }
+      } elsif ( $existing_scores{home} == $existing_scores{away} ) {
+        # Originally a draw, now an away win
+        $update_fields{home}{matches_lost} = 1;
+        $update_fields{home}{matches_drawn} = -1;
+        $update_fields{away}{matches_won} = 1;
+        $update_fields{away}{matches_drawn} = -1;
+        
+        if ( $assign_points ) {
+          $home_points_adjustment = $points_per_loss - $points_per_draw;
+          $away_points_adjustment = $points_per_win - $points_per_draw;
+        }
+      }
+    } else {
+      # Draw
+      if ( $existing_scores{home} > $existing_scores{away} ) {
+        # Originally a home win, now a draw
+        $update_fields{home}{matches_won} = -1;
+        $update_fields{home}{matches_drawn} = 1;
+        $update_fields{away}{matches_lost} = -1;
+        $update_fields{away}{matches_drawn} = 1;
+        
+        if ( $assign_points ) {
+          $home_points_adjustment = $points_per_draw - $points_per_win;
+          $away_points_adjustment = $points_per_draw - $points_per_loss;
+        }
+      } elsif ( $existing_scores{home} < $existing_scores{away} ) {
+        # Originally an away win, now a draw
+        $update_fields{home}{matches_lost} = -1;
+        $update_fields{home}{matches_drawn} = 1;
+        $update_fields{away}{matches_won} = -1;
+        $update_fields{away}{matches_drawn} = 1;
+        
+        if ( $assign_points ) {
+          $home_points_adjustment = $points_per_draw - $points_per_loss;
+          $away_points_adjustment = $points_per_draw - $points_per_win;
+        }
+      }
+    }
+    
+    foreach my $team_loc ( keys %update_fields ) {
+      my @team_stats = $team_loc eq "home" ? @home_team_stats : @away_team_stats;
+      
+      # Now loop through each of the fields to update (i.e., matches_played, matches_won, etc)
+      foreach my $field ( keys %{$update_fields{$team_loc}} ) {
+        # For every team stat object to update, update it!
+        # For league matches, this is just the team season object; for tournaments, there will be the tournament team object,
+        # then if it's a group round, it'll be the tournament group team object too.
+        $_->$field($_->$field + $update_fields{$team_loc}{$field}) foreach @team_stats;
+      }
+    }
+    
+    if ( $assign_points ) {
+      # If there are table points to change, do that, then do the update
+      foreach my $stat ( @home_team_stats ) {
+        $stat->table_points($stat->table_points + $home_points_adjustment) if $stat->result_source->has_column("table_points");
+        $stat->update;
+      }
+      
+      foreach my $stat ( @away_team_stats ) {
+        $stat->table_points($stat->table_points + $away_points_adjustment) if $stat->result_source->has_column("table_points");
+        $stat->update;
+      }
+    } else {
+      # If there are no table points, we still need to update.
+      $_->update foreach ( @home_team_stats, @away_team_stats );
+    }
+    
+    $response->{completed} = 1;
+  }
   
   return $response;
 }
@@ -2115,8 +2443,9 @@ sub cancel {
   };
   
   # Can't cancel a match in a completed season
-  if ( $self->season->complete ) {
-    push(@{$response->{errors}}, $lang->maketext("matches.cancel.error.season-complete"));
+  my %can = $self->can_update("cancel");
+  if ( !$can{allowed} ) {
+    push(@{$response->{errors}}, $can{reason});
     $response->{can_complete} = 0;
     return $response;
   }
@@ -2143,12 +2472,19 @@ sub cancel {
   # Fields to update the points values for - depends on whether we assign points for win / loss / draw or
   my $league_table_ranking_template = $self->division_season->league_table_ranking_template;
   
-  my ( $points_field, $points_against_field );
+  my ( $points_field, $points_against_field, $diff_field );
   if ( $league_table_ranking_template->assign_points ) {
     $points_field = "table_points";
   } else {
-    $points_field = "games_won";
-    $points_against_field = "games_lost";
+    if ( $self->winner_type eq "games" ) {
+      $points_field = "games_won";
+      $points_against_field = "games_lost";
+      $diff_field = "games_difference";
+    } else {
+      $points_field = "points_won";
+      $points_against_field = "points_lost";
+      $diff_field = "points_difference";
+    }
   }
   
   # Get and update the team season objects
@@ -2235,6 +2571,8 @@ sub cancel {
   }
   
   # Do the update
+  $home_team->$diff_field($home_team->$points_field - $home_team->$points_against_field);
+  $away_team->$diff_field($away_team->$points_field - $away_team->$points_against_field);
   $home_team->update;
   $away_team->update;
   push(@{$response->{success}}, $lang->maketext("matches.cancel.success"));
@@ -2305,12 +2643,19 @@ sub uncancel {
   my $league_table_ranking_template = $self->division_season->league_table_ranking_template;
   
   # Fields to update the points values for - depends on whether we assign points for win / loss / draw or
-  my ( $points_field, $points_against_field );
+  my ( $points_field, $points_against_field, $diff_field );
   if ( $league_table_ranking_template->assign_points ) {
     $points_field = "table_points";
   } else {
-    $points_field = "games_won";
-    $points_against_field = "games_lost";
+    if ( $self->winner_type eq "games" ) {
+      $points_field = "games_won";
+      $points_against_field = "games_lost";
+      $diff_field = "games_difference";
+    } else {
+      $points_field = "points_won";
+      $points_against_field = "points_lost";
+      $diff_field = "points_difference";
+    }
   }
   
   # Update the awarded points in the relevant field - also points against if required - the points against should be awarded what the opposite team have been awarded
@@ -2344,6 +2689,8 @@ sub uncancel {
   }
   
   # Do the update
+  $home_team->$diff_field($home_team->$points_field - $home_team->$points_against_field);
+  $away_team->$diff_field($away_team->$points_field - $away_team->$points_against_field);
   $home_team->update;
   $away_team->update;
   push(@{$response->{success}}, $lang->maketext("matches.uncancel.success"));
@@ -2375,63 +2722,66 @@ sub result {
   # Check the match status
   if ( $self->started ) {
     # Match has at least been started
-    $return_value{score}  = sprintf("%d-%d", $self->home_team_match_score, $self->away_team_match_score);
+    my ( $home_score, $away_score ) = ( $self->team_score("home"), $self->team_score("away") );
+    $return_value{score}  = sprintf("%d-%d", $self->team_score("home"), $self->team_score("away"));
     
     # Check if we're complete or not
-    if ( $self->complete ) {
-      # Complete - result is win, loss or draw
-      if ( $self->home_team_match_score > $self->away_team_match_score and defined($location) ) {
-        # Home win
-        if ( $location eq "home" ) {
-          # Team specified is home, so this is a win
-          $return_value{result} = $lang->maketext("matches.result.win");
-        } elsif ( $location eq "away" ) {
-          # Team specified is away, so this is a loss
-          $return_value{result} = $lang->maketext("matches.result.loss");
+    if ( defined($location) ) {
+      if ( $self->complete ) {
+        # Complete - result is win, loss or draw
+        if ( $self->team_score("home") > $self->team_score("away") ) {
+          # Home win
+          if ( $location eq "home" ) {
+            # Team specified is home, so this is a win
+            $return_value{result} = $lang->maketext("matches.result.win");
+          } elsif ( $location eq "away" ) {
+            # Team specified is away, so this is a loss
+            $return_value{result} = $lang->maketext("matches.result.loss");
+          }
+        } elsif ( $self->team_score("home") < $self->team_score("away") ) {
+          # Away win
+          if ( $location eq "home" ) {
+            # Team specified is home, so this is a loss
+            $return_value{result} = $lang->maketext("matches.result.loss");
+          } elsif ( $location eq "away" ) {
+            # Team specified is away, so this is a win
+            $return_value{result} = $lang->maketext("matches.result.win");
+          }
+        } elsif ( $self->team_score("home") == $self->team_score("away") ) {
+          # Draw - regardless of which team is specified
+          $return_value{result} = $lang->maketext("matches.result.draw");
         }
-      } elsif ( $self->away_team_match_score > $self->home_team_match_score and defined($location) ) {
-        # Away win
-        if ( $location eq "home" ) {
-          # Team specified is home, so this is a loss
-          $return_value{result} = $lang->maketext("matches.result.loss");
-        } elsif ( $location eq "away" ) {
-          # Team specified is away, so this is a win
-          $return_value{result} = $lang->maketext("matches.result.win");
+      } else {
+        # Not complete - result is winning, losing or drawing
+        # Complete - result is win, loss or draw
+        if ( $self->team_score("home") > $self->team_score("away") ) {
+          # Home winning
+          if ( $location eq "home" ) {
+            # Team specified is home, so they're winning
+            $return_value{result} = $lang->maketext("matches.result.winning");
+          } elsif ( $location eq "away" ) {
+            # Team specified is away, so they're losing
+            $return_value{result} = $lang->maketext("matches.result.losing");
+          }
+        } elsif ( $self->team_score("home") < $self->team_score("away") ) {
+          # Away win
+          if ( $location eq "home" ) {
+            # Team specified is home, so they're losing
+            $return_value{result} = $lang->maketext("matches.result.losing");
+          } elsif ( $location eq "away" ) {
+            # Team specified is away, so they're winning
+            $return_value{result} = $lang->maketext("matches.result.winning");
+          }
+        } elsif ( $self->team_score("home") == $self->team_score("away") ) {
+          # Draw - regardless of which team is specified
+          $return_value{result} = $lang->maketext("matches.result.drawing");
         }
-      } elsif ( $self->home_team_match_score == $self->away_team_match_score ) {
-        # Draw - regardless of which team is specified
-        $return_value{result} = $lang->maketext("matches.result.draw");
-      }
-    } else {
-      # Not complete - result is winning, losing or drawing
-      # Complete - result is win, loss or draw
-      if ( $self->home_team_match_score > $self->away_team_match_score and defined($location) ) {
-        # Home winning
-        if ( $location eq "home" ) {
-          # Team specified is home, so they're winning
-          $return_value{result} = $lang->maketext("matches.result.winning");
-        } elsif ( $location eq "away" ) {
-          # Team specified is away, so they're losing
-          $return_value{result} = $lang->maketext("matches.result.losing");
-        }
-      } elsif ( $self->away_team_match_score > $self->home_team_match_score and defined($location) ) {
-        # Away win
-        if ( $location eq "home" ) {
-          # Team specified is home, so they're losing
-          $return_value{result} = $lang->maketext("matches.result.losing");
-        } elsif ( $location eq "away" ) {
-          # Team specified is away, so they're winning
-          $return_value{result} = $lang->maketext("matches.result.winning");
-        }
-      } elsif ( $self->home_team_match_score == $self->away_team_match_score ) {
-        # Draw - regardless of which team is specified
-        $return_value{result} = $lang->maketext("matches.result.drawing");
       }
     }
   } elsif ( $self->cancelled ) {
     # Match was cancelled
     $return_value{result} = $lang->maketext("matches.result.cancelled");
-    $return_value{score}  = sprintf("%d-%d", $self->home_team_match_score, $self->away_team_match_score);
+    $return_value{score}  = sprintf("%d-%d", $self->team_score("home"), $self->team_score("away"));
   } else {
     # Match hasn't been updated yet
     return undef;
@@ -2559,6 +2909,245 @@ sub get_latest_report {
     order_by => {-desc => "published"},
     rows => 1,
   })->single;
+}
+
+=head2 can_update($type)
+
+1 if we can update the match $type; 0 if not.
+
+In list context, a hash will be returned with keys 'allowed' (1 or 0) and potentially 'reason' (if not allowed, to give the reason we can't update).  The reason can be passed back in the interface as an error message.
+
+No permissions are checked here, this is purely to see if it's possible to update the match based on season / tournament.
+
+$type tells us what we want to update and could be "handicaps", "score", "delete-score", "date", "venue", "handicap" or "override" (score override).  If not passed, we get a hash (or hashref in scalar context) of all types - scalar context just returns 1 or 0 for all of these, list context returns the hashref with allowed and reason keys.  If nothing can be updated for the same reason (i.e., the season is complete), the types will not be returned, and you'll get a 1 or 0 in scalar context, or 'allowed' and 'reason' keys in list context, just as if it had been called with a specific type.
+
+=cut
+
+sub can_update {
+  my $self = shift;
+  my ( $type, $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  
+  # Check we have a valid type, if it's provided (if it's not provided, check all types)
+  return undef if defined($type) and $type ne "handicaps" and $type ne "score" and $type ne "delete-score" and $type ne "cancel" and $type ne "override" and $type ne "date" and $type ne "venue";
+  
+  # Default to allowed.
+  my $allowed = 1;
+  my $reason;
+  my $season = $self->season;
+  
+  # If the season is complete, we can't update anything
+  if ( $season->complete ) {
+    $allowed = 0;
+    $reason = $lang->maketext("matches.update.error.season-complete");
+    return wantarray ? (allowed => $allowed, reason => $reason) : $allowed;
+  }
+  
+  # What we do now depends on type.
+  if ( defined($type) ) {
+    if ( $type eq "handicaps" ) {
+      my %can = $self->_can_update_handicaps;
+      $reason = $can{reason};
+      $allowed = $can{allowed};
+    } elsif ( $type eq "score" ) {
+      my %can = $self->_can_update_score;
+      $reason = $can{reason};
+      $allowed = $can{allowed};
+    } elsif ( $type eq "delete-score" ) {
+      my %can = $self->_can_delete_score;
+      $reason = $can{reason};
+      $allowed = $can{allowed};
+    } elsif ( $type eq "cancel" ) {
+      my %can = $self->_can_cancel_match;
+      $reason = $can{reason};
+      $allowed = $can{allowed};
+    } elsif ( $type eq "override" ) {
+      my %can = $self->_can_update_override;
+      $reason = $can{reason};
+      $allowed = $can{allowed};
+    } # Date and venue - nothing to check, if the season isn't complete, these can be updated
+    
+    # Return the requested results
+    return wantarray ? (allowed => $allowed, reason => $reason) : $allowed;
+  } else {
+    # All types, get the hashes back for each one
+    my %handicaps = $self->_can_update_handicaps;
+    my %score = $self->_can_update_score;
+    my %delete_score = $self->_can_delete_score;
+    my %cancel = $self->_can_cancel_match;
+    my %override = $self->_can_update_override;
+    
+    my %types = wantarray
+      ? (
+          handicaps => {
+            allowed => $handicaps{allowed},
+            reason => $handicaps{reason},
+          }, score => {
+            allowed => $score{allowed},
+            reason => $score{reason},
+          }, "delete-score" => {
+            allowed => $delete_score{allowed},
+            reason => $delete_score{reason},
+          }, cancel => {
+            allowed => $cancel{allowed},
+            reason => $cancel{reason},
+          }, override => {
+            allowed => $override{allowed},
+            reason => $override{reason},
+          }, date => {
+            allowed => 1,
+          }, venue => {
+            allowed => 1,
+          }
+        ) # We want the reasons back if we've asked for an array, the hash will contain 'allowed' and 'reason' keys
+      : (
+        handicaps => $handicaps{allowed},
+        score => $score{allowed},
+        "delete-score" => $delete_score{allowed},
+        cancel => $cancel{allowed},
+        override => $override{allowed},
+        date => 1,
+        venue => 1,
+      );
+    
+    # Return a reference to the hash in scalar context, or the hash itself in list context
+    return wantarray ? %types : \%types;
+  }
+}
+
+=head2 _can_update_handicaps, _can_update_score, _can_delete_score, _can_cancel_match, _can_update_override
+
+Internal methods, do not call directly.  These assume the check for $season->complete has been done, so we only check the other parts.  Called from can_update.
+
+These always return the hashed version with reason, for ease - can_update decides whether or not to use the reason.
+
+=cut
+
+sub _can_update_handicaps {
+  my $self = shift;
+  my ( $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  
+  my $allowed = 1;
+  my $reason;
+  # Handicap can be updated if this is a handicapped match and the match doesn't have any scores (so isn't marked as 'started').
+  if ( !$self->handicapped ) {
+    # Can't set handicap, this match isn't handicapped
+    $allowed = 0;
+    $reason = $lang->maketext("matches.handicaps.error.not-a-handicapped-match");
+  } elsif ( $self->started ) {
+    $allowed = 0;
+    $reason = $lang->maketext("matches.handicaps.error.match-started");
+  }
+  
+  return (allowed => $allowed, reason => $reason);
+}
+
+sub _can_update_score {
+  my $self = shift;
+  my ( $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  
+  # Score can be updated, so long as the match (if handicapped) has the handicap set
+  my $allowed = 1;
+  my $reason;
+  if ( $self->handicapped and !$self->handicap_set ) {
+    # Can't set handicap, this match isn't handicapped
+    $allowed = 0;
+    $reason = $lang->maketext("matches.update.error.handicap-not-set");
+  } elsif ( $self->score_overridden ) {
+    # If the score's been overridden, we can't update
+    $allowed = 0;
+    $reason = $lang->maketext("matches.update.error.score-overridden");
+  }
+  
+  return (allowed => $allowed, reason => $reason);
+}
+
+sub _can_delete_score {
+  my $self = shift;
+  my ( $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  
+  # Score can be overridden, so long as the match is completed, and the team match template specifies you can override
+  my $allowed = 1;
+  my $reason;
+  if ( $self->score_overridden ) {
+    # If the score's been overridden, we can't update
+    $allowed = 0;
+    $reason = $lang->maketext("matches.update.delete.error.score-overridden");
+  }
+  
+  return (allowed => $allowed, reason => $reason);
+}
+
+sub _can_cancel_match {
+  my $self = shift;
+  my ( $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  
+  # Score can be overridden, so long as the match is completed, and the team match template specifies you can override
+  my $allowed = 1;
+  my $reason;
+  if ( $self->started ) {
+    # If the score's been overridden, we can't update
+    $allowed = 0;
+    $reason = $lang->maketext("matches.cancel.error.started");
+  }
+  
+  return (allowed => $allowed, reason => $reason);
+}
+
+sub _can_update_override {
+  my $self = shift;
+  my ( $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  
+  # Score can be updated, so long as the match isn't cancelled and (if handicapped) has the handicap set
+  my $allowed = 1;
+  my $reason;
+  if ( !$self->allow_final_score_override ) {
+    $allowed = 0;
+    $reason = $lang->maketext("matches.override-score.error.cannot-override-score");
+  } elsif ( $self->cancelled ) {
+    $allowed = 0;
+    $reason = $lang->maketext("matches.override-score.error.match-cancelled");
+  } elsif ( !$self->complete ) {
+    $allowed = 0;
+    $reason = $lang->maketext("matches.override-score.error.match-not-complete");
+  }
+  
+  return (allowed => $allowed, reason => $reason);
 }
 
 =head2 can_report

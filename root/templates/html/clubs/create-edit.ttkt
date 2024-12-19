@@ -15,7 +15,6 @@ ELSE;
   SET active_checked = '';
 END;
 -%]
-
 <form method="post" action="[% form_action %]">
 <fieldset>
   <legend>[% c.maketext("clubs.legend.details") %]</legend>
