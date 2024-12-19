@@ -1,9 +1,8 @@
 [%
 USE Math;
-home_team_html = FILTER html_entity; match.team_season_home_team_season.club_season.short_name _ " " _ match.team_season_home_team_season.name; END;
-away_team_html = FILTER html_entity; match.team_season_away_team_season.club_season.short_name _ " " _ match.team_season_away_team_season.name; END;
+home_team_html = match.team_season_home_team_season.full_name | html_entity;
+away_team_html = match.team_season_away_team_season.full_name | html_entity;
 -%]
-
 <form method="post" action="[% form_action %]">
 <fieldset>
   <legend>[% c.maketext("matches.update.form.legend.match-details") %]</legend>

@@ -454,27 +454,6 @@ sub view_seasons :Chained("view") :PathPart("seasons") :Args(0) {
   
   my $seasons = $person->get_seasons;
   
-  # See if we have a count or not
-  my ( $ext_scripts, $ext_styles );
-  if ( $seasons->count ) {
-    $ext_scripts = [
-      $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
-      $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
-      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
-      $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
-      $c->uri_for("/static/script/people/seasons.js"),
-    ];
-    $ext_styles = [
-      $c->uri_for("/static/css/chosen/chosen.min.css"),
-      $c->uri_for("/static/css/datatables/dataTables.dataTables.min.css"),
-      $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
-      $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
-    ];
-  } else {
-    $ext_scripts = [$c->uri_for("/static/script/standard/option-list.js")];
-    $ext_styles = [];
-  }
-  
   # Set up the template to use
   $c->stash({
     template => "html/people/list-seasons-table.ttkt",
@@ -483,8 +462,19 @@ sub view_seasons :Chained("view") :PathPart("seasons") :Args(0) {
     view_online_display => sprintf("Viewing seasons for %s", $person->display_name),
     view_online_link => 1,
     seasons => $seasons,
-    external_scripts => $ext_scripts,
-    external_styles => $ext_styles,
+    external_scripts => [
+      $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
+      $c->uri_for("/static/script/people/seasons.js", {v => 2}),
+    ],
+    external_styles => [
+      $c->uri_for("/static/css/chosen/chosen.min.css"),
+      $c->uri_for("/static/css/datatables/dataTables.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
+    ],
   });
   
   # Push the current URI on to the breadcrumbs

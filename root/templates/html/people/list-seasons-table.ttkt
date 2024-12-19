@@ -1,8 +1,3 @@
-[% # This is a TT comment. -%]
-[% # Note That the '-' at the beginning or end of TT code  -%]
-[% # "chomps" the whitespace/newline at that end of the    -%]
-[% # output (use View Source in browser to see the effect) -%]
-[% # Some basic HTML with a loop to display clubs -%]
 [%
 IF seasons.count;
 -%]
@@ -11,38 +6,45 @@ IF seasons.count;
     <table id="datatable" class="stripe hover order-column row-border">
     <thead>
       <tr>
+        <th>[% c.maketext("seasons.list.season-name-sort") %]</th>
         <th>[% c.maketext("seasons.list.season-name") %]</th>
-        <th>[% c.maketext("seasons.list.season-name") %]</th>
-        <th>[% c.maketext("people.seasons.registered-as") %]</th>
+        <th>[% c.maketext("people.seasons.registered-as-sort") %]</th>
         <th>[% c.maketext("people.seasons.registered-as") %]</th>
         <th>[% c.maketext("people.seasons.team") %]</th>
+        <th>[% c.maketext("people.seasons.division-sort") %]</th>
+        <th>[% c.maketext("people.seasons.division") %]</th>
       </tr>
     </thead>
     <tbody>
 [%
   WHILE (person_season = seasons.next);
     IF person_season.season.complete;
-      SET CURRENT_TEXT = "";
+      SET current_text = "";
     ELSE;
-      SET CURRENT_TEXT = " (" _ c.maketext("seasons.text.current") _ ")";
+      SET current_text = " (" _ c.maketext("seasons.text.current") _ ")";
     END;
     
-    SET NAME_SORT = person_season.surname _ ", " _ person_season.first_name;
-    SET TEAM_NAME = person_season.team_season.club_season.short_name _ " " _ person_season.team_season.name;
-    
-    SET SEASON_START = club_season.season.start_date;
-    SET SEASON_END = club_season.season.end_date;
-    CALL SEASON_START.set_locale( c.locale );
-    CALL SEASON_END.set_locale( c.locale );
-    SET SEASON_SORT = SEASON_START("ymd") _ " " _ SEASON_END("ymd");
+    name_sort = person_season.surname _ ", " _ person_season.first_name;
+    SET season = person_season.season;
+    SET season_start = season.start_date;
+    SET season_end = season.end_date;
+    CALL season_start.set_locale(c.locale);
+    CALL season_end.set_locale(c.locale);
+    SET season_sort = season_start("ymd") _ season_end("ymd");
+    SET team_season = person_season.team_season;
+    SET team = team_season.team;
+    SET division_season = team_season.division_season;
+    SET division = division_season.division;
 -%]
 
       <tr>
-        <td>[% SEASON_SORT %]</td>
-        <td><a href="[% c.uri_for_action("/people/view_specific_season", [person.url_key, person_season.season.url_key]) %]">[% person_season.season.name | html_entity %]</a>[% CURRENT_TEXT %]</td>
-        <td>[% NAME_SORT | html_entity %]</td>
-        <td>[% person_season.display_name | html_entity %]</td>
-        <td><a href="[% c.uri_for_action("/teams/view_specific_season_by_url_key", [person_season.team_season.club_season.club.url_key, person_season.team_season.team.url_key, person_season.season.url_key]) %]">[% TEAM_NAME | html_entity %]</a></td>
+        <td data-label="[% c.maketext("seasons.list.season-name-sort") %]">[% season_sort %]</td>
+        <td data-label="[% c.maketext("seasons.list.season-name") %]"><a href="[% c.uri_for_action("/people/view_specific_season", [person.url_key, season.url_key]) %]">[% person_season.season.name | html_entity %]</a>[% current_text %]</td>
+        <td data-label="[% c.maketext("people.seasons.registered-as-sort") %]">[% name_sort | html_entity %]</td>
+        <td data-label="[% c.maketext("people.seasons.registered-as") %]">[% person_season.display_name | html_entity %]</td>
+        <td data-label="[% c.maketext("people.seasons.team") %]"><a href="[% c.uri_for_action("/teams/view_specific_season_by_url_key", [team.club.url_key, team.url_key, season.url_key]) %]">[% person_season.team_season.full_name | html_entity %]</a></td>
+        <td data-label="[% c.maketext("people.seasons.division-sort") %]">[% division.rank %]</td>
+        <td data-label="[% c.maketext("people.seasons.division") %]"><a href="[% c.uri_for_action("/league-averages/view_specific_season", ["singles", division.url_key, season.url_key]) %]">[% division_season.name | html_entity %]</a></td>
       </tr>
 [%
   END;

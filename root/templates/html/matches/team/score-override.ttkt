@@ -1,0 +1,35 @@
+[%
+IF c.flash.show_flashed;
+  SET home_team_match_score_override = c.flash.home_team_match_score_override;
+  SET away_team_match_score_override = c.flash.away_team_match_score_override;
+  SET override_score = c.flash.override_score;
+ELSE;
+  SET home_team_match_score_override = match.home_team_match_score_override;
+  SET away_team_match_score_override = match.away_team_match_score_override;
+  SET override_score = match.score_overridden;
+END;
+
+IF override_score;
+  SET override_checked = ' checked="checked"';
+ELSE;
+  SET override_checked = '';
+END;
+-%]
+<form method="post" action="[% form_action %]">
+<fieldset>
+  <legend>[% c.maketext("matches.override-score.legend.details") %]</legend>
+  <input type="checkbox" id="override_score" name="override_score" data-label="[% c.maketext("matches.override-score.field.override") %]" value="1"[% override_checked %] />
+  <div class="clear-fix"></div>
+  
+  <div class="label-field-container" id="scores">
+    <label for="home_team_match_score_override">[% c.maketext("matches.override-score.field.scores") %]</label>
+    <div class="field-container">
+      <input type="number" class="wide" id="home_team_match_score_override" name="home_team_match_score_override" value="[% home_team_match_score_override %]" />/
+      <input type="number" class="wide" id="away_team_match_score_override" name="away_team_match_score_override" value="[% away_team_match_score_override %]" />
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+      
+  <input type="submit" id="submit" name="submit" value="[% c.maketext("form.button.save") %]" />
+</fieldset>
+</form>

@@ -1,7 +1,5 @@
 [%
-USE scalar;
-
-club_name_html = FILTER html_entity; club_season.full_name; END;
+club_name_html = club_season.full_name | html_entity;
 
 IF club_season;
 %]

@@ -4,6 +4,7 @@ use namespace::autoclean;
 use JSON;
 use Try::Tiny;
 use HTML::Entities;
+use DDP;
 
 BEGIN { extends 'Catalyst::Controller'; }
 
@@ -124,7 +125,7 @@ sub base :Private {
   my $match = $c->stash->{match};
   my $season = $match->season;
   my ( $home_team, $away_team ) = ( $match->team_season_home_team_season, $match->team_season_away_team_season );
-  my $score = ( $match->home_team_match_score or $match->away_team_match_score ) ? sprintf("%d-%d", $match->home_team_match_score, $match->away_team_match_score) : $c->maketext("matches.versus-abbreviation");
+  my $score = ( $match->team_score("home") or $match->team_score("away") ) ? sprintf("%d-%d", $match->team_score("home"), $match->team_score("away")) : $c->maketext("matches.versus-abbreviation");
   my $encoded_name = encode_entities($match->name);
   my $scoreless_name = encode_entities($match->name({scoreless => 1}));
   
@@ -147,22 +148,16 @@ sub base :Private {
   if ( defined($match->division_season) ) {
     $subtitle2 = $c->maketext("matches.field.competition.value.league");
     $subtitle3 = encode_entities($match->division_season->name);
-    $subtitle4 = $date_str;
   } else {
     $subtitle2 = encode_entities($match->tournament_round->tournament->event_season->name);
     $subtitle3 = $match->tournament_round->name;
-    
-    if ( defined($match->tournament_group) ) {
-      $subtitle4 = $match->tournament_group->name if defined($match->tournament_group);
-      $subtitle5 = $date_str;
-    } else {
-      $subtitle4 = $date_str;
-      
-    }
+    $subtitle3 .= sprintf(" - %s", $match->tournament_group->name) if defined($match->tournament_group);
     
     # Add a warning for matches that don't have a division (attached to an event instead)
     $c->add_event_test_msg;
   }
+  
+  $subtitle4 = $date_str;
   
   # Get and stash the season / team_season / division_season objects so we don't need to look them up later
   $c->stash({
@@ -217,23 +212,32 @@ sub view :Private {
   
   # Check that we are authorised to view matches
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["match_view", $c->maketext("user.auth.view-matches"), 1]);
-  $c->forward("TopTable::Controller::Users", "check_authorisation", [ [ qw( match_update match_cancel ) ], "", 0]);
+  $c->forward("TopTable::Controller::Users", "check_authorisation", [[qw( match_update match_cancel )], "", 0]);
   
   # Set up the title links if we need them
   my @title_links = ();
   
   # Push update / cancel links if we are authorised
-  push(@title_links, {
-    image_uri => $c->uri_for("/static/images/icons/0018-Pencil-icon-32.png"),
-    text => $c->maketext("admin.update-object", $scoreless_name),
-    link_uri => $c->uri_for_action("/matches/team/update_by_url_keys", $match->url_keys),
-  }) if $c->stash->{authorisation}{match_update};
+  my $can_update = $match->can_update;
+  if ( $c->stash->{authorisation}{match_update} ) {
+    push(@title_links, {
+      image_uri => $c->uri_for("/static/images/icons/0018-Pencil-icon-32.png"),
+      text => $c->maketext("admin.update-object", $scoreless_name),
+      link_uri => $c->uri_for_action("/matches/team/update_by_url_keys", $match->url_keys),
+    }) if $can_update->{score} or $can_update->{venue} or $can_update->{date};
+    
+    push(@title_links, {
+      image_uri => $c->uri_for("/static/images/icons/scoreboard-32.png"),
+      text => $c->maketext("admin.override-score-object", $scoreless_name),
+      link_uri => $c->uri_for_action("/matches/team/override_score_by_url_keys", $match->url_keys),
+    }) if $can_update->{override};
+  }
   
   push(@title_links, {
     image_uri => $c->uri_for("/static/images/icons/0006-Cross-icon-32.png"),
     text => $c->maketext("admin.cancel-object", $scoreless_name),
     link_uri => $c->uri_for_action("/matches/team/cancel_by_url_keys", $match->url_keys),
-  }) if $c->stash->{authorisation}{match_cancel};
+  }) if $c->stash->{authorisation}{match_cancel} and $can_update->{cancel};
   
   push(@title_links, {
     image_uri => $c->uri_for("/static/images/icons/0037-Notepad-icon-32.png"),
@@ -279,6 +283,10 @@ sub view :Private {
     $page_description = $c->maketext("description.team-matches.view-completed", $scoreless_name, $score, $c->i18n_datetime_format_date->format_datetime($date));
   }
   
+  # Scorecard overridden
+  $c->add_status_messages({warning => $c->maketext("matches.message.info.score-overridden", sprintf("%d-%d", $match->home_team_match_score, $match->away_team_match_score))}) if $match->score_overridden;
+  
+  # Handicapped match but handicap not set
   $c->add_status_messages({info => $c->maketext("matches.message.info.handicap-not-set")}) if $match->handicapped and !$match->handicap_set;
   
   # Set up the template to use
@@ -351,7 +359,7 @@ sub update :Private {
   $c->add_status_messages({warning => $c->maketext("matches.update.warning.handicap-not-set")}) if $match->handicapped and !$match->handicap_set;
   
   my $players = $match->team_match_players;
-  my $players_count = $match->team_match_template->singles_players_per_team;
+  my $players_count = $match->singles_players_per_team;
   
   # Ensure the season this match belongs to is not complete
   my $season = $match->season;
@@ -936,8 +944,8 @@ sub cancel :Private {
   my $season = $match->season;
   
   if ( $season->complete ) {
-    my ( $scheduled_year, $scheduled_month, $scheduled_day ) = split( "/", $match->scheduled_date->ymd( "/" ) );
-    $c->response->redirect($c->uri_for_action("/matches/team/view_by_url_keys", [ $match->home_team->club->url_key, $match->home_team->url_key, $match->away_team->club->url_key, $match->away_team->url_key, $scheduled_year, $scheduled_month, $scheduled_day ],
+    my ( $scheduled_year, $scheduled_month, $scheduled_day ) = split("/", $match->scheduled_date->ymd("/"));
+    $c->response->redirect($c->uri_for_action("/matches/team/view_by_url_keys", $match->url_keys,
       {mid => $c->set_status_msg( {error => $c->maketext("matches.cancel.error.season-complete")} )}));
     $c->detach;
     return;
@@ -1049,6 +1057,149 @@ sub do_cancel :Private {
     } else {
       $redirect_uri = $c->uri_for_action("/matches/team/view_by_url_keys", $match->url_keys, {mid => $mid});
     }
+  }
+  
+  # Now actually do the redirection
+  $c->response->redirect($redirect_uri);
+  $c->detach;
+  return;
+}
+
+=head2 override_score_by_ids, override_score_by_url_keys
+
+Chained to the base method (relevant base_by_ids or base_by_url_keys), forwards to override_score.
+
+=cut
+
+sub override_score_by_ids :Chained("base_by_ids") :PathPart("override-score") :Args(0) {
+  my ( $self, $c ) = @_;
+  $c->detach("override_score");
+}
+
+sub override_score_by_url_keys :Chained("base_by_url_keys") :PathPart("override-score") :Args(0) {
+  my ( $self, $c ) = @_;
+  $c->detach("override_score");
+}
+
+=head2 override_score
+
+Display a form for overriding the match score.  Errors if the team match template doesn't allow score overrides.
+
+=cut
+
+sub override_score :Private {
+  my ( $self, $c ) = @_;
+  my $match = $c->stash->{match};
+  my $scoreless_name = $c->stash->{scoreless_name};
+  my $score = $c->stash->{score};
+  my $date = $c->stash->{date};
+  
+  # Check that we are authorised to view matches
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["match_update", $c->maketext("user.auth.update-matches"), 1]);
+  
+  # Inform that the scorecard is not yet complete if it's started but not complete
+  # Check we can override; default to true
+  my %can_override = $match->can_update("override");
+  if ( !$can_override{allowed} ) {
+    # Not allowed to override, get the reason and redirect
+    # Redirect with the correct message if we can't override
+    $c->response->redirect($c->uri_for_action("/matches/team/view_by_url_keys", $match->url_keys,
+      {mid => $c->set_status_msg({error => $can_override{reason}})}));
+    $c->detach;
+    return;
+  }
+  
+  # Set up the template to use
+  $c->stash({
+    template => "html/matches/team/score-override.ttkt",
+    external_scripts => [
+      $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
+      $c->uri_for("/static/script/standard/prettycheckable.js"),
+      $c->uri_for("/static/script/matches/team/score-override.js"),
+    ],
+    external_styles => [
+      $c->uri_for("/static/css/prettycheckable/prettyCheckable.css"),
+    ],
+    form_action => $c->uri_for_action("/matches/team/do_override_score_by_url_keys", $match->url_keys),
+    view_online_display => sprintf("Overriding score for match %s", $scoreless_name),
+    view_online_link => 1,
+    reports => $match->get_reports->count,
+    latest_report => $match->get_latest_report,
+    original_report => $match->get_original_report,
+    canonical_uri => $c->uri_for_action("/matches/team/override_score_by_url_keys", $match->url_keys),
+  });
+}
+
+=head2 do_override_score_by_ids, do_override_score_by_url_keys
+
+Chained to the base method (relevant base_by_ids or base_by_url_keys), forwards to do_override_score.
+
+=cut
+
+sub do_override_score_by_ids :Chained("base_by_ids") :PathPart("do-override-score") :Args(0) {
+  my ( $self, $c ) = @_;
+  $c->detach("do_override_score");
+}
+
+sub do_override_score_by_url_keys :Chained("base_by_url_keys") :PathPart("do-override-score") :Args(0) {
+  my ( $self, $c ) = @_;
+  $c->detach("do_override_score");
+}
+
+=head2 do_override_score
+
+Process the form for overriding the match score.  Errors if the team match template doesn't allow score overrides.
+
+=cut
+
+sub do_override_score :Private {
+  my ( $self, $c ) = @_;
+  my $match = $c->stash->{match};
+  my $scoreless_name = $c->stash->{scoreless_name};
+  my $score = $c->stash->{score};
+  my $date = $c->stash->{date};
+  
+  # Check that we are authorised to view matches
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["match_update", $c->maketext("user.auth.update-matches"), 1]);
+  
+  my @field_names = qw( override_score home_team_match_score_override away_team_match_score_override );
+  my $response = $match->override_score({
+    logger => sub{ my $level = shift; $c->log->$level( @_ ); },
+    map {$_ => $c->req->params->{$_}} @field_names, # All the fields from the form
+  });
+  
+  # Set the status messages we need to show back to the user
+  my @errors = @{$response->{errors}};
+  my @warnings = @{$response->{warnings}};
+  my @info = @{$response->{info}};
+  my @success = @{$response->{success}};
+  my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});
+  my $redirect_uri;
+  
+  if ( $response->{completed} ) {
+    # Was completed, display the view page
+    $redirect_uri = $c->uri_for_action("/matches/team/view_by_url_keys", $match->url_keys, {mid => $mid});
+    
+    
+    if ( !$response->{nothing_to_do} ) {
+      # Only log if we had things to do
+      my $override_score = $c->req->params->{override_score} || 0;
+      my $action = $override_score ? "override-score" : "override-remove";
+      
+      my $match_name = $c->maketext("matches.name", $match->team_season_home_team_season->full_name, $match->team_season_away_team_season->full_name);
+      $match_name .= " (" . $match->tournament_round->tournament->event_season->name . ")" if defined($match->tournament_round);
+      $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["team-match", $action, {home_team => $match->team_season_home_team_season->team->id, away_team => $match->team_season_away_team_season->team->id, scheduled_date => $match->scheduled_date->ymd}, $match_name]);
+    }
+    
+    $redirect_uri = $c->uri_for_action("/matches/team/view_by_url_keys", $match->url_keys, {mid => $mid});
+  } else {
+    # Not complete - check if we need to redirect back to the create or view page
+    $redirect_uri = $response->{can}
+      ? $c->uri_for_action("/matches/team/override_score_by_url_keys", $match->url_keys, {mid => $mid})
+      : $c->uri_for_action("/matches/team/view_by_url_keys", $match->url_keys, {mid => $mid});
+    
+    # Flash the entered values we've got so we can set them into the form
+    $c->flash->{$_} = $response->{fields}{$_} foreach @field_names;
   }
   
   # Now actually do the redirection
@@ -1289,16 +1440,10 @@ sub change_handicaps :Private {
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["match_update", $c->maketext("user.auth.update-matches"), 1]);
   
   # First check if this is a handicapped match
-  if ( !$match->handicapped ) {
+  my %can_change = $match->can_update("handicaps");
+  if ( !$can_change{allowed} ) {
     $c->response->redirect($c->uri_for_action("/matches/team/view_by_url_keys", $match->url_keys,
-                                {mid => $c->set_status_msg({error => $c->maketext("matches.handicaps.error.not-a-handicapped-match")})}));
-    $c->detach;
-    return;
-  }
-  
-  if ( $match->started ) {
-    $c->response->redirect($c->uri_for_action("/matches/team/view_by_url_keys", $match->url_keys,
-                                {mid => $c->set_status_msg({error => $c->maketext("matches.handicaps.error.match-started")})}));
+                                {mid => $c->set_status_msg({error => $can_change{reason}})}));
     $c->detach;
     return;
   }
@@ -1352,22 +1497,15 @@ Change the match handicaps.
 sub set_handicaps :Private {
   my ( $self, $c )  = @_;
   my $match = $c->stash->{match};
-  my $match_type = $c->stash->{match_type};
   
   # Check that we are authorised to update scorecards
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["match_update", $c->maketext("user.auth.update-matches"), 1]);
   
-  # First check if this is a handicapped match
-  if ( !$match->handicapped ) {
+  # First check the match can be handicapped
+  my %can_change = $match->can_update("handicaps");
+  if ( !$can_change{allowed} ) {
     $c->response->redirect($c->uri_for_action("/matches/team/view_by_url_keys", $match->url_keys,
-                                {mid => $c->set_status_msg({error => $c->maketext("matches.handicaps.error.not-a-handicapped-match")})}));
-    $c->detach;
-    return;
-  }
-  
-  if ( $match->started ) {
-    $c->response->redirect($c->uri_for_action("/matches/team/view_by_url_keys", $match->url_keys,
-                                {mid => $c->set_status_msg({error => $c->maketext("matches.handicaps.error.match-started")})}));
+                                {mid => $c->set_status_msg({error => $can_change{reason}})}));
     $c->detach;
     return;
   }
