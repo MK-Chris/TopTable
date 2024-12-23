@@ -13,8 +13,8 @@ END;
 [%
 IF scripts;
   FOREACH script IN scripts;
-    SET INCLUDED_SCRIPT = "scripts/" _ script _ ".ttkt";
-    INCLUDE $INCLUDED_SCRIPT;
+    SET included_script = "scripts/" _ script _ ".ttkt";
+    INCLUDE $included_script;
   END;
 END;
 -%]

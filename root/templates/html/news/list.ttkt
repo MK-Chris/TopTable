@@ -11,7 +11,7 @@ IF authorisation.news_create;
 END;
 IF articles.count;
   UNLESS index;
-    PROCESS "html/generic/pagination.ttkt" OBJECT_PLURAL = c.maketext("object.plural.news-articles");
+    PROCESS "html/generic/pagination.ttkt" object_plural = c.maketext("object.plural.news-articles");
     page_links_text;
   END;
 -%]
@@ -21,7 +21,7 @@ IF articles.count;
   WHILE (article = articles.next);
     SET current_details = article.current_details( timezone );
     SET month = zeroes( article.published_month );
-    headline_html = FILTER html_entity; current_details.headline; END;
+    headline_html = current_details.headline | html_entity;
     
     IF article.pinned;
       SET pinned_text = c.maketext("news.pinned") _ ": ";

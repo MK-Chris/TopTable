@@ -1,21 +1,21 @@
 [%
 IF seasons.size;
   # Use PROCESS instead of INCLUDE so that the page_links_text is defined in the current template thereafter
-  PROCESS "html/generic/pagination.ttkt" OBJECT_PLURAL = c.maketext("object.plural.seasons");
+  PROCESS "html/generic/pagination.ttkt" object_plural = c.maketext("object.plural.seasons");
   page_links_text;
 -%]
 <ul class="option-list">
 [%
   WHILE (season = seasons.next);
     IF season.complete;
-      SET CURRENT_TEXT = "";
+      SET current_text = "";
     ELSE;
-      SET CURRENT_TEXT = " (" _ c.maketext("seasons.text.current") _ ")";
+      SET current_text = " (" _ c.maketext("seasons.text.current") _ ")";
     END;
 -%]
 
   <li>
-    <a href="[% c.uri_for_action("/fixtures-grids/view_specific_season", [grid.url_key, season.url_key]) %]">[% season.name | html_entity %]</a>[% CURRENT_TEXT | html_entity %]
+    <a href="[% c.uri_for_action("/fixtures-grids/view_specific_season", [grid.url_key, season.url_key]) %]">[% season.name | html_entity %]</a>[% current_text | html_entity %]
   </li>
 [%
   END;

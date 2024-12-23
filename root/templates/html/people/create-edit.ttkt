@@ -276,11 +276,10 @@ END;
 
 [%
 IF action == "edit" and person_season;
-  first_name_html = FILTER html_entity; person.first_name; END;
-  club_html = FILTER html_entity; person_season.team_season.team.club.short_name; END;
-  team_html = FILTER html_entity; person_season.team_season.team.name; END;
+  first_name_html = person.first_name | html_entity;
+  team_html = person_season.team_season.full_name | html_entity;
 -%]
-<div id="dialog" title="[% c.maketext("people.form.dialog.change-team.title") | html_entity %]">[% c.maketext("people.form.dialog.change-team", first_name_html, club_html, team_html) %]</div>
+<div id="dialog" title="[% c.maketext("people.form.dialog.change-team.title") | html_entity %]">[% c.maketext("people.form.dialog.change-team", first_name_html, team_html) %]</div>
 [%
 END;
 -%]

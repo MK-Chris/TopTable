@@ -1,19 +1,19 @@
 [%
 IF query_params.include_complete;
-  SET COMPLETE_CHECKED = " checked='checked'";
+  SET complete_checked = " checked='checked'";
 END;
 
 IF query_params.include_incomplete;
-  SET INCOMPLETE_CHECKED = " checked='checked'";
+  SET incomplete_checked = " checked='checked'";
 END;
 
 IF query_params.include_cancelled;
-  SET CANCELLED_CHECKED = " checked='checked'";
+  SET cancelled_checked = " checked='checked'";
 END;
 %]
-    <input type="checkbox" id="complete" name="complete" data-label="[% c.maketext("search.form.team-match.include-complete") %]" value="1"[% COMPLETE_CHECKED %] />
+    <input type="checkbox" id="complete" name="complete" data-label="[% c.maketext("search.form.team-match.include-complete") %]" value="1"[% complete_checked %] />
     <div class="clear-fix"></div>
-    <input type="checkbox" id="incomplete" name="incomplete" data-label="[% c.maketext("search.form.team-match.include-incomplete") %]" value="1"[% INCOMPLETE_CHECKED %] />
+    <input type="checkbox" id="incomplete" name="incomplete" data-label="[% c.maketext("search.form.team-match.include-incomplete") %]" value="1"[% incomplete_checked %] />
     <div class="clear-fix"></div>
-    <input type="checkbox" id="cancelled" name="cancelled" data-label="[% c.maketext("search.form.team-match.include-cancelled") %]" value="1"[% CANCELLED_CHECKED %] />
+    <input type="checkbox" id="cancelled" name="cancelled" data-label="[% c.maketext("search.form.team-match.include-cancelled") %]" value="1"[% cancelled_checked %] />
     <div class="clear-fix"></div>

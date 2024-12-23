@@ -73,12 +73,12 @@ WHILE counter <= 23;
   END;
   # Now set selected text if needed;
   IF counter_display == c.flash.start_hour;
-    SET SELECTED = ' selected="selected"';
+    SET selected = ' selected="selected"';
   ELSE;
-    SET SELECTED = '';
+    SET selected = '';
   END;
 -%]
-        <option value="[% counter_display %]"[% SELECTED %]>[% counter_display %]</option>
+        <option value="[% counter_display %]"[% selected %]>[% counter_display %]</option>
 [%
   SET counter = counter + 1;
 END;
@@ -97,12 +97,12 @@ WHILE counter <= 59;
   END;
   # Now set selected text if needed;
   IF counter_display == c.flash.start_minute;
-    SET SELECTED = ' selected="selected"';
+    SET selected = ' selected="selected"';
   ELSE;
-    SET SELECTED = '';
+    SET selected = '';
   END;
 -%]
-        <option value="[% counter_display %]"[% SELECTED %]>[% counter_display %]</option>
+        <option value="[% counter_display %]"[% selected %]>[% counter_display %]</option>
 [%
   SET counter = counter + 1;
 END;

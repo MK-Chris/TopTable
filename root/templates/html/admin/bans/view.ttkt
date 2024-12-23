@@ -38,14 +38,10 @@ ELSE;
 END;
 
 IF ban.banned_by.id;
-  FILTER html_entity;
-    SET banned_by_name = ban.banned_by.username;
-  END;
+  banned_by_name = ban.banned_by.username | html_entity;
   SET banned_by_link = c.uri_for("/users/view", ban.banned_by.url_key);
 ELSE;
-  FILTER html_entity;
-    SET banned_by_name = ban.banned_by_name;
-  END;
+  banned_by_name = ban.banned_by_name | html_entity;
   SET banned_by_link = "";
 END;
 -%]
@@ -65,9 +61,7 @@ IF ban_type.id == "username";
 <a href="[% c.uri_for_action("/users/view", [ban.banned.url_key]) %]">[% ban.banned.username | html_entity %]</a>
 [%-
 ELSE;
-  FILTER html_entity;
-    banned_id;
-  END;
+  banned_id | html_entity;
 END;
 -%]
 </td>

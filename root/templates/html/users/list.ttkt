@@ -1,18 +1,13 @@
-[% # This is a TT comment. -%]
-[% # Note That the '-' at the beginning or end of TT code  -%]
-[% # "chomps" the whitespace/newline at that end of the    -%]
-[% # output (use View Source in browser to see the effect) -%]
-[% # Some basic HTML with a loop to display clubs -%]
 [%
 IF users.count;
   # Use PROCESS instead of INCLUDE so that the page_links_text is defined in the current template thereafter
-  PROCESS "html/generic/pagination.ttkt" OBJECT_PLURAL = c.maketext("object.plural.users");
+  PROCESS "html/generic/pagination.ttkt" object_plural = c.maketext("object.plural.users");
   page_links_text;
 -%]
 <ul class="option-list">
 [%
   WHILE (user = users.next);
-    username_html = FILTER html_entity; user.username; END;
+    username_html = user.username | html_entity;
 -%]
   <li>
     <a href="[% c.uri_for_action("/users/view", [user.url_key]) %]">[% user.display_user_and_name | html_entity %]</a>

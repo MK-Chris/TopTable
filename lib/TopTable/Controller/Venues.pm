@@ -212,7 +212,7 @@ sub view :Chained("base") :PathPart("") :Args(0) {
     directions => 1,
     prepare_error_div => 1,
     marker_title => $venue->name,
-    subtitle1 => $venue->name,
+    subtitle1 => $venue_name,
     view_online_display => sprintf( "Viewing %s", $venue->name ),
     view_online_link => 1,
     map_latitude => $venue->coordinates_latitude,

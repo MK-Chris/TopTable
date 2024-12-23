@@ -257,7 +257,7 @@ sub create_or_edit {
     if ( $action eq "create" ) {
       $venue = $class->create({
         name => $name,
-        url_key => $class->generate_url_key($name),
+        url_key => $class->make_url_key($name),
         address1 => $address1,
         address2 => $address2,
         address3 => $address3,

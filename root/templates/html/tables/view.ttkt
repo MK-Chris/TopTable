@@ -8,8 +8,8 @@ INCLUDE "html/tables/table.ttkt";
 
 <div class="links-list">
 [%
-season_html = FILTER html_entity; season.name; END;
-division_html = FILTER html_entity; division.name; END;
+season_html = season.name | html_entity;
+division_html = division.name | html_entity;
 
 IF specific_season;
   SET header = c.maketext("menu.text.statistics-division-season", division_html, season_html);

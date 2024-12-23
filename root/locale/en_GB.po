@@ -1259,7 +1259,7 @@ msgid "people.form.dialog.change-team.title"
 msgstr "Change team?"
 
 msgid "people.form.dialog.change-team"
-msgstr "Because %1 has already played for their current team, %2 %3, changing the team they play for will create a new association with the new team and mark their association with the new team but not delete their association with the current team - instead, this will be marked as an inactive team membership.  Are you sure you wish to change the team %1 plays for?"
+msgstr "Because %1 has already played for their current team, %2, changing the team they play for will create a new association with the new team and mark their association with the new team but not delete their association with the current team - instead, this will be marked as an inactive team membership.  Are you sure you wish to change the team %1 plays for?"
 
 msgid "people.form.error.season-not-current"
 msgstr "You can only add players for the current season."

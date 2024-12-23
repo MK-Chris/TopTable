@@ -42,39 +42,39 @@ IF officials.count;
         SET uri = c.uri_for_action("/people/view_current_season", [person.url_key]);
       END;
       
-      OFFICIAL_SORT_HTML = person_data.surname _ ", " _ person_data.first_name | html_entity;
-      PERSON_HTML = person_data.display_name | html_entity;
-      POSITION_HTML = official.position_name | html_entity;
+      official_sort_html = person_data.surname _ ", " _ person_data.first_name | html_entity;
+      person_html = person_data.display_name | html_entity;
+      position_html = official.position_name | html_entity;
 -%]
         <tr>
           <td>[% official.position_order %]</td>
           <td>
-            <a href="[% c.uri_for_action("/info/officials/positions/view", [official.url_key]) %]">[% POSITION_HTML %]</a>
+            <a href="[% c.uri_for_action("/info/officials/positions/view", [official.url_key]) %]">[% position_html %]</a>
 [%
       IF authorisation.committee_edit;
 -%]
-            <a class="admin-links" href="[% c.uri_for_action("/info/officials/positions/edit", [official.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", POSITION_HTML) %]" title="[% c.maketext("admin.edit-object", POSITION_HTML) %]" /></a>
+            <a class="admin-links" href="[% c.uri_for_action("/info/officials/positions/edit", [official.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", position_html) %]" title="[% c.maketext("admin.edit-object", position_html) %]" /></a>
 [%
       END;
       IF authorisation.committee_delete AND official.can_delete;
 -%]
-            <a class="admin-links" href="[% c.uri_for_action("/info/officials/positions/delete", [official.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", POSITION_HTML) %]" title="[% c.maketext("admin.delete-object", POSITION_HTML) %]" /></a>
+            <a class="admin-links" href="[% c.uri_for_action("/info/officials/positions/delete", [official.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", position_html) %]" title="[% c.maketext("admin.delete-object", position_html) %]" /></a>
 [%
       END;
 -%]
           </td>
-          <td>[% OFFICIAL_SORT_HTML %]</td>
+          <td>[% official_sort_html %]</td>
           <td>
-            <a href="[% uri %]">[% PERSON_HTML %]</a>
+            <a href="[% uri %]">[% person_html %]</a>
 [%
       IF authorisation.person_edit;
 -%]
-            <a class="admin-links" href="[% c.uri_for_action("/people/edit", [person.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", PERSON_HTML) %]" title="[% c.maketext("admin.edit-object", PERSON_HTML) %]" /></a>
+            <a class="admin-links" href="[% c.uri_for_action("/people/edit", [person.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", person_html) %]" title="[% c.maketext("admin.edit-object", person_html) %]" /></a>
 [%
       END;
       IF authorisation.person_delete AND average.person.can_delete;
 -%]
-            <a class="admin-links" href="[% c.uri_for_action("/people/delete", [person.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", PERSON_HTML) %]" title="[% c.maketext("admin.delete-object", PERSON_HTML) %]" /></a>
+            <a class="admin-links" href="[% c.uri_for_action("/people/delete", [person.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", person_html) %]" title="[% c.maketext("admin.delete-object", person_html) %]" /></a>
 [%
       END;
 -%]
@@ -85,38 +85,38 @@ IF officials.count;
           <td>
 [%
         # Variable that will tell us whether we need a line break before the phone number we're about to print
-        SET PHONE_USED = 0;
+        SET phone_used = 0;
         IF person.home_telephone;
-          PHONE_USED = 1;
+          phone_used = 1;
 -%]
             <strong>[% c.maketext("officials.field.tel-home") %]:</strong> [% person.home_telephone | html_entity %]
 [%
         END;
         IF person.mobile_telephone;
-          IF PHONE_USED;
+          IF phone_used;
 -%]
             <br />
 [%
           ELSE;
-          PHONE_USED = 1;
+          phone_used = 1;
           END;
 -%]
             <strong>[% c.maketext("officials.field.tel-mobile") %]:</strong> [% person.mobile_telephone | html_entity %]
 [%
         END;
         IF person.work_telephone;
-          IF PHONE_USED;
+          IF phone_used;
 -%]
             <br />
 [%
           ELSE;
-            PHONE_USED = 1;
+            phone_used = 1;
           END;
 -%]
             <strong>[% c.maketext("officials.field.tel-work") %]:</strong> [% person.work_telephone | html_entity %]
 [%
         END;
-        IF PHONE_USED == 0;
+        IF phone_used == 0;
 -%]
             &nbsp;
 [%

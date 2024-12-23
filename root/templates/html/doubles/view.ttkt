@@ -3,7 +3,7 @@
 [%-
 # Check there's a season
 IF season;
-  season_html = FILTER html_entity; season.name; END;
+  season_html = season.name | html_entity;
 -%]
     <li><a href="#summary">[% c.maketext("doubles.tabs.summary") %]</a></li>
     <li><a href="#games">[% c.maketext("doubles.tabs.games") %]</a></li>
@@ -33,23 +33,23 @@ IF season;
         SET player2_uri = c.uri_for_action("/people/view_current_season", [season_pair.person_season_person2_season_team.person.url_key]);
       END;
       
-      TEAM_NAME_HTML = team_season.club_season.club.short_name _ " " _ team_season.name | html_entity;
-      DIVISION_NAME_HTML = team_season.division_season.name | html_entity;
+      team_html = team_season.full_name | html_entity;
+      division_html = team_season.division_season.name | html_entity;
 -%]
     <div class="table-wrap">
       <div class="table-layout table-layout-centre">
-        <h4>[% TEAM_NAME_HTML %]</h4>
+        <h4>[% team_html %]</h4>
         <div class="row">
           <div class="column left">
             <h5>[% c.maketext("stats.heading.details") %]</h5>
             <table class="vertical">
               <tr>
                 <th scope="row">[% c.maketext("stats.label.team") %]</th>
-                <td><a href="[% team_uri %]">[% TEAM_NAME_HTML %]</a></td>
+                <td><a href="[% team_uri %]">[% team_html %]</a></td>
               </tr>
               <tr>
                 <th scope="row">[% c.maketext("stats.label.division") %]</th>
-                <td><a href="[% averages_uri %]">[% DIVISION_NAME_HTML %]</a></td>
+                <td><a href="[% averages_uri %]">[% division_html %]</a></td>
               </tr>
               <tr>
                 <th scope="row">[% c.maketext("stats.label.player1") %]</th>

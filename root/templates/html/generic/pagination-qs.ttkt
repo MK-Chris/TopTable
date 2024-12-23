@@ -2,7 +2,7 @@
   # Pagination with query strings
   IF page_info;
     SET i = 1;
-    SET page_links_text = '<div class="pagination">' _ c.maketext("pagination.number-of-objects", c.i18n_numberformat.format_number( page_info.total_entries ), OBJECT_PLURAL) _ ' | ' _ c.maketext("pagination.page-x-of-y", c.i18n_numberformat.format_number( page_info.current_page ), c.i18n_numberformat.format_number( page_info.last_page ));
+    SET page_links_text = '<div class="pagination">' _ c.maketext("pagination.number-of-objects", c.i18n_numberformat.format_number( page_info.total_entries ), object_plural) _ ' | ' _ c.maketext("pagination.page-x-of-y", c.i18n_numberformat.format_number( page_info.current_page ), c.i18n_numberformat.format_number( page_info.last_page ));
     IF page_info.last_page != 1;
       SET page_links_text = page_links_text _ ' | ';
       FOREACH page IN page_links;

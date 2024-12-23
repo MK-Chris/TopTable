@@ -17,27 +17,27 @@ IF seasons.count;
 [%
   WHILE (doubles_season = seasons.next);
     IF doubles_season.season.complete;
-      SET CURRENT_TEXT = "";
+      SET current_text = "";
     ELSE;
-      SET CURRENT_TEXT = " (" _ c.maketext("seasons.text.current") _ ")";
+      SET current_text = " (" _ c.maketext("seasons.text.current") _ ")";
     END;
     
-    SET NAMES_SORT = enc_names.pair_sort_names;
-    SET TEAM_NAME = doubles_season.team_season.club_season.short_name _ " " _ doubles_season.team_season.name;
+    SET names_sort = enc_names.pair_sort_names;
+    SET team_name = doubles_season.team_season.club_season.short_name _ " " _ doubles_season.team_season.name;
     
-    SET SEASON_START = club_season.season.start_date;
-    SET SEASON_END = club_season.season.end_date;
-    CALL SEASON_START.set_locale( c.locale );
-    CALL SEASON_END.set_locale( c.locale );
-    SET SEASON_SORT = SEASON_START("ymd") _ " " _ SEASON_END("ymd");
+    SET season_start = club_season.season.start_date;
+    SET season_end = club_season.season.end_date;
+    CALL season_start.set_locale( c.locale );
+    CALL season_end.set_locale( c.locale );
+    SET season_sort = season_start("ymd") _ " " _ season_end("ymd");
 -%]
 
       <tr>
-        <td>[% SEASON_SORT %]</td>
-        <td><a href="[% c.uri_for_action("/doubles/view_specific_season", [doubles_season.person_season_person1_season_team.person.url_key, doubles_season.person_season_person2_season_team.person.url_key, doubles_season.season.url_key]) %]">[% doubles_season.season.name | html_entity %]</a>[% CURRENT_TEXT %]</td>
+        <td>[% season_sort %]</td>
+        <td><a href="[% c.uri_for_action("/doubles/view_specific_season", [doubles_season.person_season_person1_season_team.person.url_key, doubles_season.person_season_person2_season_team.person.url_key, doubles_season.season.url_key]) %]">[% doubles_season.season.name | html_entity %]</a>[% current_text %]</td>
         <td>[% enc_names.pair_sort_names %]</td>
         <td>[% enc_names.pair_display_names %]</td>
-        <td><a href="[% c.uri_for_action("/teams/view_specific_season_by_url_key", [doubles_season.team_season.club_season.club.url_key, doubles_season.team_season.team.url_key, doubles_season.season.url_key]) %]">[% TEAM_NAME | html_entity %]</a></td>
+        <td><a href="[% c.uri_for_action("/teams/view_specific_season_by_url_key", [doubles_season.team_season.club_season.club.url_key, doubles_season.team_season.team.url_key, doubles_season.season.url_key]) %]">[% team_name | html_entity %]</a></td>
       </tr>
 [%
   END;

@@ -22,12 +22,12 @@ FOREACH tt_session IN opening_hours;
     END;
     # Now set selected text if needed;
     IF counter_display == tt_session.start_hour;
-      SET SELECTED = ' selected="selected"';
+      SET selected = ' selected="selected"';
     ELSE;
-      SET SELECTED = '';
+      SET selected = '';
     END;
 -%]
-      <option value="[% counter_display %]"[% SELECTED %]>[% counter_display %]</option>
+      <option value="[% counter_display %]"[% selected %]>[% counter_display %]</option>
 [%
     SET counter = counter + 1;
   END;
@@ -47,12 +47,12 @@ FOREACH tt_session IN opening_hours;
     END;
     # Now set selected text if needed;
     IF counter_display == tt_session.start_minute;
-      SET SELECTED = ' selected="selected"';
+      SET selected = ' selected="selected"';
     ELSE;
-      SET SELECTED = '';
+      SET selected = '';
     END;
 -%]
-      <option value="[% counter_display %]"[% SELECTED %]>[% counter_display %]</option>
+      <option value="[% counter_display %]"[% selected %]>[% counter_display %]</option>
 [%
     SET counter = counter + 1;
   END;
@@ -78,12 +78,12 @@ FOREACH tt_session IN opening_hours;
     END;
     # Now set selected text if needed;
     IF counter_display == tt_session.end_hour;
-      SET SELECTED = ' selected="selected"';
+      SET selected = ' selected="selected"';
     ELSE;
-      SET SELECTED = '';
+      SET selected = '';
     END;
 -%]
-  <option value="[% counter_display %]"[% SELECTED %]>[% counter_display %]</option>
+  <option value="[% counter_display %]"[% selected %]>[% counter_display %]</option>
 [%
     SET counter = counter + 1;
   END;
@@ -103,12 +103,12 @@ FOREACH tt_session IN opening_hours;
     END;
     # Now set selected text if needed;
     IF counter_display == tt_session.end_minute;
-      SET SELECTED = ' selected="selected"';
+      SET selected = ' selected="selected"';
     ELSE;
-      SET SELECTED = '';
+      SET selected = '';
     END;
 -%]
-      <option value="[% counter_display %]"[% SELECTED %]>[% counter_display %]</option>
+      <option value="[% counter_display %]"[% selected %]>[% counter_display %]</option>
 [%
     SET counter = counter + 1;
   END;

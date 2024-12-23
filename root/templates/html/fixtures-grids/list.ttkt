@@ -1,18 +1,13 @@
-[% # This is a TT comment. -%]
-[% # Note That the '-' at the beginning or end of TT code  -%]
-[% # "chomps" the whitespace/newline at that end of the    -%]
-[% # output (use View Source in browser to see the effect) -%]
-[% # Some basic HTML with a loop to display clubs -%]
 [%
 IF grids.count;
   # Use PROCESS instead of INCLUDE so that the page_links_text is defined in the current template thereafter
-  PROCESS "html/generic/pagination.ttkt" OBJECT_PLURAL = c.maketext("object.plural.fixtures-grids");
+  PROCESS "html/generic/pagination.ttkt" object_plural = c.maketext("object.plural.fixtures-grids");
   page_links_text;
 -%]
 <ul class="option-list">
 [%  
   WHILE (grid = grids.next);
-    grid_name_html = FILTER html_entity; grid.name; END;
+    grid_name_html = grid.name | html_entity;
 -%]
   <li>
     <a href="[% c.uri_for_action("/fixtures-grids/view_current_season", [grid.url_key]) %]">[% grid.name | html_entity %]</a>

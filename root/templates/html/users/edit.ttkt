@@ -132,12 +132,12 @@ FOREACH category IN timezones.keys.sort;
 [%
   FOREACH timezone IN timezones.$category;
     IF category _ "/" _ timezone == check_timezone;
-      SET SELECTED = ' selected="selected"';
+      SET selected = ' selected="selected"';
     ELSE;
-      SET SELECTED = '';
+      SET selected = '';
     END;
 -%]
-            <option value="[% category _ "/" _ timezone %]"[% SELECTED %]>[% timezone.replace("_", " ") %]</option>
+            <option value="[% category _ "/" _ timezone %]"[% selected %]>[% timezone.replace("_", " ") %]</option>
 [%
   END;
   SET i = i + 1;

@@ -6,7 +6,7 @@
 [%
 IF divisions.count;
   # Use PROCESS instead of INCLUDE so that the page_links_text is defined in the current template thereafter
-  PROCESS "html/generic/pagination.ttkt" OBJECT_PLURAL = c.maketext("object.plural.divisions");
+  PROCESS "html/generic/pagination.ttkt" object_plural = c.maketext("object.plural.divisions");
   page_links_text;
 -%]
 

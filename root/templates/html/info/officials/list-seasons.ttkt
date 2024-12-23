@@ -5,13 +5,13 @@
 IF seasons.size;
   WHILE (season = seasons.next);
     IF season.complete;
-      SET CURRENT_TEXT = "";
+      SET current_text = "";
     ELSE;
-      SET CURRENT_TEXT = " (" _ c.maketext("seasons.text.current") _ ")";
+      SET current_text = " (" _ c.maketext("seasons.text.current") _ ")";
     END;
 -%]
       <li>
-        <a href="[% c.uri_for_action("/info/officials/view_specific_season", [season.url_key]) %]">[% season.name | html_entity %]</a>[% CURRENT_TEXT %]
+        <a href="[% c.uri_for_action("/info/officials/view_specific_season", [season.url_key]) %]">[% season.name | html_entity %]</a>[% current_text %]
       </li>
 [%
   END;

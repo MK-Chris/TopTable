@@ -1,16 +1,9 @@
-[% # This is a TT comment. -%]
-
-[% # Note That the '-' at the beginning or end of TT code  -%]
-[% # "chomps" the whitespace/newline at that end of the    -%]
-[% # output (use View Source in browser to see the effect) -%]
-
-[% # Some basic HTML with a loop to display match templates -%]
 [%
 IF roles.count;
 c.maketext("roles.system.notice") %]<br />
 [%
   # Use PROCESS instead of INCLUDE so that the page_links_text is defined in the current template thereafter
-  PROCESS "html/generic/pagination.ttkt" OBJECT_PLURAL = c.maketext("object.plural.roles");
+  PROCESS "html/generic/pagination.ttkt" object_plural = c.maketext("object.plural.roles");
   page_links_text;
 -%]
 <ul class="option-list">
@@ -20,7 +13,7 @@ c.maketext("roles.system.notice") %]<br />
       SET name_html = c.maketext("roles.name." _ role.name);
       SET class     = ' class="system"';
     ELSE;
-      name_html = FILTER html_entity; role.name; END;
+      name_html = role.name | html_entity;
       SET class     = '';
     END;
 -%]

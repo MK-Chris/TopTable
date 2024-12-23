@@ -1,19 +1,13 @@
-[% # This is a TT comment. -%]
-
-[% # Note That the '-' at the beginning or end of TT code  -%]
-[% # "chomps" the whitespace/newline at that end of the    -%]
-[% # output (use View Source in browser to see the effect) -%]
-
 [%
 IF match_templates.count;
   # Use PROCESS instead of INCLUDE so that the page_links_text is defined in the current template thereafter
-  PROCESS "html/generic/pagination.ttkt" OBJECT_PLURAL = c.maketext("object.plural.templates.match-individual");
+  PROCESS "html/generic/pagination.ttkt" object_plural = c.maketext("object.plural.templates.match-individual");
   page_links_text;
 -%]
 <ul class="option-list">
 [%
   WHILE (tt_template = match_templates.next);
-    template_html = FILTER html_entity; tt_template_name; END;
+    template_html = tt_template_name | html_entity;
 -%]
   <li>
     <a href="[% c.uri_for_action("/templates/match/individual/view", [tt_template.url_key]) %]">[% tt_template.name | html_entity %]</a>

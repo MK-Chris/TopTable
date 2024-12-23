@@ -15,20 +15,20 @@ SET official_seasons = position.official_seasons_rs;
 IF official_seasons.count;
   WHILE (official_season = official_seasons.next);
     SET season = official_season.season;
-    SET SEASON_START = season.start_date;
-    SET SEASON_END = season.end_date;
-    CALL SEASON_START.set_locale(c.locale);
-    CALL SEASON_END.set_locale(c.locale);
-    SET SEASON_SORT = SEASON_START("ymd") _ " " _ SEASON_END("ymd");
+    SET season_start = season.start_date;
+    SET season_end = season.end_date;
+    CALL season_start.set_locale(c.locale);
+    CALL season_end.set_locale(c.locale);
+    SET season_sort = season_start("ymd") _ " " _ season_end("ymd");
 -%]
       <tr>
-        <td>[% SEASON_SORT %]</td>
+        <td>[% season_sort %]</td>
         <td>[% season.name | html_entity %]</td>
         <td>
 [%
     SET official_holders = official_season.official_season_people_rs;
     IF official_holders.count;
-      SET NUM = 0;
+      SET num = 0;
       WHILE (official_holder = official_holders.next);
         SET person = official_holder.position_holder;
         SET person_season = person.get_season(season);
@@ -38,7 +38,7 @@ IF official_seasons.count;
         ELSE;
           SET person_data = person;
         END;
-        IF PEOPLE_PRINTED;
+        IF people_printed;
 -%]
 <br />
 [%-
@@ -46,7 +46,7 @@ IF official_seasons.count;
 -%]
           <a href="[% c.uri_for_action("/people/view_specific_season", [person.url_key, season.url_key]) %]">[% person_data.display_name %]</a>
 [%
-        SET PEOPLE_PRINTED = PEOPLE_PRINTED + 1;
+        SET people_printed = people_printed + 1;
       END;
 -%]
         </td>

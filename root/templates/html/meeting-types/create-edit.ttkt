@@ -1,6 +1,6 @@
 [%-
 name = c.flash.name OR meeting_type.name;
-name_html = FILTER html_entity; name; END;
+name_html = name | html_entity;
 %]
 <form method="post" action="[% form_action %]">
 <fieldset>

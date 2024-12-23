@@ -18,25 +18,25 @@ IF seasons.count;
 [%
   WHILE (club_season = seasons.next);
     IF club_season.season.complete;
-      SET CURRENT_TEXT = "";
+      SET current_text = "";
     ELSE;
-      SET CURRENT_TEXT = " (" _ c.maketext("seasons.text.current") _ ")";
+      SET current_text = " (" _ c.maketext("seasons.text.current") _ ")";
     END;
     
-    SET SECRETARY_SORT = club_season.secretary.surname _ ", " _ club_season.secretary.first_name;
+    SET secretary_sort = club_season.secretary.surname _ ", " _ club_season.secretary.first_name;
     
-    SET SEASON_START = club_season.season.start_date;
-    SET SEASON_END = club_season.season.end_date;
-    CALL SEASON_START.set_locale( c.locale );
-    CALL SEASON_END.set_locale( c.locale );
-    SET SEASON_SORT = SEASON_START("ymd") _ " " _ SEASON_END("ymd");
+    SET season_start = club_season.season.start_date;
+    SET season_end = club_season.season.end_date;
+    CALL season_start.set_locale( c.locale );
+    CALL season_end.set_locale( c.locale );
+    SET season_sort = season_start("ymd") _ " " _ season_end("ymd");
 -%]
 
       <tr>
-        <td>[% SEASON_SORT %]</td>
-        <td><a href="[% c.uri_for_action("/clubs/view_specific_season", [club_season.club.url_key, club_season.season.url_key]) %]">[% club_season.season.name | html_entity %]</a>[% CURRENT_TEXT %]</td>
+        <td>[% season_sort %]</td>
+        <td><a href="[% c.uri_for_action("/clubs/view_specific_season", [club_season.club.url_key, club_season.season.url_key]) %]">[% club_season.season.name | html_entity %]</a>[% current_text %]</td>
         <td>[% club_season.full_name | html_entity %]</td>
-        <td>[% SECRETARY_SORT  | html_entity %]</td>
+        <td>[% secretary_sort  | html_entity %]</td>
         <td><a href="[% c.uri_for_action("/people/view_specific_season", [club_season.secretary.url_key, club_season.season.url_key]) %]">[% club_season.secretary.display_name | html_entity %]</a></td>
         <td><a href="[% c.uri_for_action("/venues/view", [club_season.venue.url_key]) %]">[% club_season.venue.name | html_entity %]</a></td>
       </tr>

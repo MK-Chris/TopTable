@@ -17,41 +17,40 @@ END;
     <div class="clear-fix"></div>
   </div>
 [%
-EXPIRY_DATE = c.flash.expires_date.dmy("/") OR c.flash.expires_date OR ban.expiry.dmy("/");
-EXPIRY_DATE = FILTER html_entity; EXPIRY_DATE; END;
+expiry_date = c.flash.expires_date.dmy("/") OR c.flash.expires_date OR ban.expiry.dmy("/");
 -%]
   <div class="label-field-container">
     <label for="expires_date">[% c.maketext("admin.bans.field.expires") %] [% admin.bans.field.expires.desc %]</label>
     <div class="field-container">
-      <input type="text" id="expires_date" name="expires_date" class="date_picker" autocomplete="off" value="[% EXPIRY_DATE %]" />
+      <input type="text" id="expires_date" name="expires_date" class="date_picker" autocomplete="off" value="[% expiry_date %]" />
       
       <select id="expires_hour" class="time" name="expires_hour" data-placeholder="[% c.maketext("admin.bans.field.expires.placeholder-hour") %]">
         <option value=""></option>
 [%
 # Work out if our fields are flashed
 IF c.flash.expires_hour;
-  SET EXPIRES_HOUR = c.flash.expires_hour;
+  SET expires_hour = c.flash.expires_hour;
 ELSE;
-  SET EXPIRES_HOUR = ban.expires.hour;
+  SET expires_hour = ban.expires.hour;
 END;
 
-SET COUNTER = 0;
-WHILE COUNTER <= 23;
-  IF COUNTER < 10;
-    SET COUNTER_DISPLAY = "0" _ COUNTER;
+SET counter = 0;
+WHILE counter <= 23;
+  IF counter < 10;
+    SET counter_display = "0" _ counter;
   ELSE;
-    SET COUNTER_DISPLAY = COUNTER;
+    SET counter_display = counter;
   END;
   # Now set selected text if needed;
-  IF COUNTER_DISPLAY == EXPIRES_HOUR;
-    SET SELECTED = ' selected="selected"';
+  IF counter_display == expires_hour;
+    SET selected = ' selected="selected"';
   ELSE;
-    SET SELECTED = '';
+    SET selected = '';
   END;
 -%]
-        <option value="[% COUNTER_DISPLAY %]"[% SELECTED %]>[% COUNTER_DISPLAY %]</option>
+        <option value="[% counter_display %]"[% selected %]>[% counter_display %]</option>
 [%
-  SET COUNTER = COUNTER + 1;
+  SET counter = counter + 1;
 END;
 -%]
       </select>:
@@ -60,29 +59,29 @@ END;
 [%
 # Work out if our fields are flashed
 IF c.flash.expires_minute;
-  SET EXPIRES_MINUTE = c.flash.expires_minute;
+  SET expires_minute = c.flash.expires_minute;
 ELSE;
-  SET EXPIRES_MINUTE = ban.expires.minute;
+  SET expires_minute = ban.expires.minute;
 END;
 
-SET COUNTER = 0;
-WHILE COUNTER <= 59;
-  IF COUNTER < 10;
+SET counter = 0;
+WHILE counter <= 59;
+  IF counter < 10;
     # Set leading zeroes if needed;
-    SET COUNTER_DISPLAY = "0" _ COUNTER;
+    SET counter_display = "0" _ counter;
   ELSE;
-    SET COUNTER_DISPLAY = COUNTER;
+    SET counter_display = counter;
   END;
   # Now set selected text if needed;
-  IF COUNTER_DISPLAY == EXPIRES_MINUTE;
-    SET SELECTED = ' selected="selected"';
+  IF counter_display == expires_minute;
+    SET selected = ' selected="selected"';
   ELSE;
-    SET SELECTED = '';
+    SET selected = '';
   END;
 -%]
-        <option value="[% COUNTER_DISPLAY %]"[% SELECTED %]>[% COUNTER_DISPLAY %]</option>
+        <option value="[% counter_display %]"[% selected %]>[% counter_display %]</option>
 [%
-  SET COUNTER = COUNTER + 1;
+  SET counter = counter + 1;
 END;
 -%]
       </select>

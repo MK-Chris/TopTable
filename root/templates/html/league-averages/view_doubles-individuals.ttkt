@@ -1,7 +1,3 @@
-[% # Note That the '-' at the beginning or end of TT code  -%]
-[% # "chomps" the whitespace/newline at that end of the    -%]
-[% # output (use View Source in browser to see the effect) -%]
-
 [%
 UNLESS averages_team_page;
 %]
@@ -14,7 +10,7 @@ IF doubles_individual_averages.count;
   SET filter_forms = 1;
   
   UNLESS no_filter;
-    PROCESS "html/league-averages/filter-view-form.ttkt" COMPETITORS = c.maketext("averages.competitor-type.players");
+    PROCESS "html/league-averages/filter-view-form.ttkt" competitors = c.maketext("averages.competitor-type.players");
   END;
 -%]
 
@@ -43,14 +39,14 @@ IF doubles_individual_averages.count;
   WHILE (average = doubles_individual_averages.next);
     i = i + 1;
     IF specific_season;
-      SET team_uri    = c.uri_for_action("/teams/view_specific_season_by_url_key", [average.team_season.club_season.club.url_key, average.team_season.team.url_key, average.season.url_key]);
-      SET person_uri  = c.uri_for_action("/people/view_specific_season", [average.person.url_key, average.season.url_key]);
+      SET team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [average.team_season.club_season.club.url_key, average.team_season.team.url_key, average.season.url_key]);
+      SET person_uri = c.uri_for_action("/people/view_specific_season", [average.person.url_key, average.season.url_key]);
     ELSE;
       SET team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [average.team_season.club_season.club.url_key, average.team_season.team.url_key]);
       SET person_uri  = c.uri_for_action("/people/view_current_season", [average.person.url_key]);
     END;
     
-    SET person_html = average.display_name | html_entity;
+    person_html = average.display_name | html_entity;
     
     IF average.team_membership_type.id == "loan";
       SET player_class = ' class="loan-player"';
@@ -87,7 +83,7 @@ END;
       SET club_season = average.team_season.club_season;
       SET team = team_season.team;
       SET club = club_season.club;
-      team_name = FILTER html_entity; club_season.short_name _ " " _ team_season.name; END;
+      team_name = team_season.full_name | html_entity;
 -%]
           <td data-label="[% c.maketext("stats.table-heading.team") %]"[% player_class %]><a href="[% team_uri %]"[% player_class %]><nobr>[% club_season.short_name | html_entity %]</nobr> [% team_season.name | html_entity %]</a>
 [%-
@@ -123,7 +119,7 @@ END;
 [%
   END;
   UNLESS no_filter;
-    PROCESS "html/league-averages/filter-view-form.ttkt" COMPETITORS = c.maketext("averages.competitor-type.players");
+    PROCESS "html/league-averages/filter-view-form.ttkt" competitors = c.maketext("averages.competitor-type.players");
   END;
   IF loan_players OR inactive;
 -%]
@@ -157,8 +153,8 @@ UNLESS averages_team_page;
 
 <div class="links-list">
 [%
-  season_html   = FILTER html_entity; season.name; END;
-  division_html = FILTER html_entity; division.name; END;
+  season_html = html_entity | html_entity;
+  division_html = division.name | html_entity;
   
   IF specific_season;
     SET header = c.maketext("menu.text.statistics-division-season", division_html, season_html);

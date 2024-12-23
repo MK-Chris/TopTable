@@ -1,25 +1,18 @@
-[% # This is a TT comment. -%]
-
-[% # Note That the '-' at the beginning or end of TT code  -%]
-[% # "chomps" the whitespace/newline at that end of the    -%]
-[% # output (use View Source in browser to see the effect) -%]
-
-[% # Some basic HTML with a loop to display match templates -%]
 [%
 IF filters.count;
   # Use PROCESS instead of INCLUDE so that the page_links_text is defined in the current template thereafter
-  PROCESS "html/generic/pagination.ttkt" OBJECT_PLURAL = c.maketext("object.plural.average-filters");
+  PROCESS "html/generic/pagination.ttkt" object_plural = c.maketext("object.plural.average-filters");
   page_links_text;
 -%]
 <ul class="option-list">
 [%
   WHILE (filter = filters.next);
-    name_html = FILTER html_entity; filter.name; END;
+    name_html = filter.name | html_entity;
 -%]
   <li>
 [%
     IF filter.user.id;
-      user_html = FILTER html_entity; filter.user.display_name; END;
+      user_html = filter.user.display_name | html_entity;
 -%]
     <img src="[% c.uri_for("/static/images/icons/0046-User-icon-16.png") %]" alt="[% c.maketext("average-filter.user-defined", filter.user.display_name) %]" title="[% c.maketext("average-filter.user-defined", user_html) %]" />
 [%

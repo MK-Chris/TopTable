@@ -49,12 +49,12 @@ END;
 [%
 WHILE (reason = reasons.next);
   IF c.flash.reason == reason.id;
-    SET SELECTED = ' selected="selected"';
+    SET selected = ' selected="selected"';
   ELSE;
-    SET SELECTED = '';
+    SET selected = '';
   END;
 -%]
-        <option value="[% reason.id %]"[% SELECTED %]>[% reason.name | html_entity %]</option>
+        <option value="[% reason.id %]"[% selected %]>[% reason.name | html_entity %]</option>
 [%
 END;
 -%]

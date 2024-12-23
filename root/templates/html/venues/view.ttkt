@@ -1,7 +1,3 @@
-[% # Note That the '-' at the beginning or end of TT code  -%]
-[% # "chomps" the whitespace/newline at that end of the    -%]
-[% # output (use View Source in browser to see the effect) -%]
-
 <div id="tabs">
   <ul>
     <li><a href="#location">[% c.maketext("venues.location-contact") %]</a></li>
@@ -12,9 +8,7 @@
     <div id="map-container">
       <div id="venue-address">
         <h4>[% c.maketext("venues.field.address") %]</h4>
-        <address>[% FILTER html_line_break;
-        venue.full_address;
-        END %]</address><br />
+        <address>[% venue.full_address | html_entity | html_line_break %]</address><br />
       </div>
       
       <div id="map-canvas"></div>

@@ -10,7 +10,7 @@ IF teams.count;
 <div id="accordion">
 [%
   WHILE (team = teams.next);
-    team_html = FILTER html_entity; team.name; END;
+    team_html = team.name | html_entity;
     
     SET i = i + 1;
     IF team.club.id != last_club;

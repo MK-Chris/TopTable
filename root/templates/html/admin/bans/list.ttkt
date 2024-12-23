@@ -60,15 +60,10 @@ IF bans.count;
     END;
     
     IF ban.banned_by.id;
-      FILTER html_entity;
-        SET banned_by_name = ban.banned_by.username;
-      END;
-      
+      banned_by_name = ban.banned_by.username | html_entity;
       SET banned_by_link = c.uri_for("/users/view", ban.banned_by.url_key);
     ELSE;
-      FILTER html_entity;
-        SET banned_by_name = ban.banned_by_name;
-      END;
+      banned_by_name = ban.banned_by_name | html_entity;
       SET banned_by_link = "";
     END;
 -%]

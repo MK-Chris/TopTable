@@ -20,32 +20,32 @@ IF seasons.count;
 [%
   WHILE (team_season = seasons.next);
     IF team_season.season.complete;
-      SET CURRENT_TEXT = "";
+      SET current_text = "";
     ELSE;
-      SET CURRENT_TEXT = " (" _ c.maketext("seasons.text.current") _ ")";
+      SET current_text = " (" _ c.maketext("seasons.text.current") _ ")";
     END;
     
-    SET TEAM_NAME = team_season.club_season.short_name _ " " _ team_season.name;
+    SET team_name = team_season.full_name;
     
-    SET SEASON_START = team_season.season.start_date;
-    SET SEASON_END = team_season.season.end_date;
-    CALL SEASON_START.set_locale(c.locale);
-    CALL SEASON_END.set_locale(c.locale);
-    SET SEASON_SORT = SEASON_START("ymd") _ " " _ SEASON_END("ymd");
-    SET CAPTAIN_SEASON = team_season.captain.person_seasons.first;
-    SET CAPTAIN_SORT = CAPTAIN_SEASON.surname _ ", " _ CAPTAIN_SEASON.first_name; 
-    SET CAPTAIN_NAME = CAPTAIN_SEASON.display_name;
+    SET season_start = team_season.season.start_date;
+    SET season_end = team_season.season.end_date;
+    CALL season_start.set_locale(c.locale);
+    CALL season_end.set_locale(c.locale);
+    SET season_sort = season_start("ymd") _ " " _ season_end("ymd");
+    SET captain_season = team_season.captain.person_seasons.first;
+    SET captain_sort = captain_season.surname _ ", " _ captain_season.first_name; 
+    SET captain_name = captain_season.display_name;
 -%]
 
       <tr>
-        <td>[% SEASON_SORT %]</td>
-        <td><a href="[% c.uri_for_action("/teams/view_specific_season_by_url_key", [team.club.url_key, team_season.team.url_key, team_season.season.url_key]) %]">[% team_season.season.name | html_entity %]</a>[% CURRENT_TEXT %]</td>
-        <td>[% TEAM_NAME | html_entity %]</td>
+        <td>[% season_sort %]</td>
+        <td><a href="[% c.uri_for_action("/teams/view_specific_season_by_url_key", [team.club.url_key, team_season.team.url_key, team_season.season.url_key]) %]">[% team_season.season.name | html_entity %]</a>[% current_text %]</td>
+        <td>[% team_name | html_entity %]</td>
         <td><a href="[% c.uri_for_action("/clubs/view_specific_season", [team.club.url_key, team_season.season.url_key]) %]">[% team_season.club_season.full_name | html_entity %]</a></td>
         <td>[% team_season.division_season.division.rank %]</td>
         <td><a href="[% c.uri_for_action("/league-tables/view_specific_season", [team_season.division_season.division.url_key, team_season.season.url_key]) %]">[% team_season.division_season.name | html_entity %]</a></td>
         <td>[% SET_CAPTAIN_SORT | html_entity %]</td>
-        <td><a href="[% c.uri_for_action("/people/view_specific_season", [team_season.captain.url_key, team_season.season.url_key]) %]">[% CAPTAIN_NAME | html_entity %]</a></td>
+        <td><a href="[% c.uri_for_action("/people/view_specific_season", [team_season.captain.url_key, team_season.season.url_key]) %]">[% captain_name | html_entity %]</a></td>
       </tr>
 [%
   END;

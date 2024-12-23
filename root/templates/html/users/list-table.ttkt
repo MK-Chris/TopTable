@@ -29,59 +29,59 @@ END;
     <tbody>
 [%
   WHILE (user = users.next);
-    USERNAME_HTML = FILTER html_entity; user.username; END;
-    USER_EMAIL_HTML = FILTER html_entity; user.email_address; END;
-    USER_LOCATION_HTML = FILTER html_entity; user.location; END;
-    SET USER_REGISTERED = user.registered_date;
-    CALL USER_REGISTERED.set_locale( c.locale );
-    SET USER_REGISTERED_FORMAT = USER_REGISTERED.dmy("/") _ " " _ USER_REGISTERED.hms;
-    SET USER_LAST_ACTIVE = user.last_active_date;
-    CALL USER_LAST_ACTIVE.set_locale( c.locale );
-    SET USER_LAST_ACTIVE_FORMAT = USER_LAST_ACTIVE.dmy("/") _ " " _ USER_LAST_ACTIVE.hms;
+    username_html = user.username | html_entity;
+    user_email_html = user.email_address | html_entity;
+    user_location_html = user.location | html_entity;
+    SET user_registered = user.registered_date;
+    CALL user_registered.set_locale(c.locale);
+    SET user_registered_format = user_registered.dmy("/") _ " " _ user_registered.hms;
+    SET user_last_active = user.last_active_date;
+    CALL user_last_active.set_locale(c.locale);
+    SET user_last_active_format = user_last_active.dmy("/") _ " " _ user_last_active.hms;
     
     IF user.activated;
-      SET ACTIVATED_IMG = c.uri_for("/static/images/icons/0007-Tick-icon-32.png");
-      SET ACTIVATED_TITLE = c.maketext("user.activated");
+      SET activated_img = c.uri_for("/static/images/icons/0007-Tick-icon-32.png");
+      SET activated_title = c.maketext("user.activated");
     ELSE;
-      SET ACTIVATED_IMG = c.uri_for("/static/images/icons/0006-Cross-icon-32.png");
-      SET ACTIVATED_TITLE = c.maketext("user.not-activated");
+      SET activated_img = c.uri_for("/static/images/icons/0006-Cross-icon-32.png");
+      SET activated_title = c.maketext("user.not-activated");
     END;
     
-    ROLES = "";
+    roles = "";
     
-    FOREACH ROLE IN user.roles;
-      IF ROLE.system;
-        ROLE_NAME = c.maketext("roles.name." _ ROLE.name);
+    FOREACH role IN user.roles;
+      IF role.system;
+        role_name = c.maketext("roles.name." _ role.name);
       ELSE;
-        ROLE_NAME = FILTER html_entity; ROLE.name; END;
+        role_name = role.name | html_entity;
       END;
       
-      IF ROLES == "";
-        ROLES = ROLE_NAME;
+      IF roles == "";
+        roles = role_name;
       ELSE;
-        ROLES = ROLES _ ", " _ ROLE_NAME;
+        roles = roles _ ", " _ role_name;
       END;
     END;
     
     IF user.person;
-      USER_PERSON_HTML = FILTER html_entity; user.person.display_name; END;
-      USER_PERSON_SORT_HTML = FILTER html_entity; user.person.surname _ ", " _ user.person.first_name; END;
+      user_person_html = user.person.display_name | html_entity;
+      user_person_sort_html = user.person.surname _ ", " _ user.person.first_name | html_entity;
     ELSE;
-      USER_PERSON_HTML = "";
-      USER_PERSON_SORT_HTML = "";
+      user_person_html = "";
+      user_person_sort_html = "";
     END;
 -%]
     <tr>
-      <td><a href="[% c.uri_for_action("/users/view", [user.url_key]) %]">[% USERNAME_HTML %]</a>
+      <td><a href="[% c.uri_for_action("/users/view", [user.url_key]) %]">[% username_html %]</a>
 [%-
     IF authorisation.user_edit_all OR ( authorisation.user_edit_own AND c.user_exists AND c.user.id == user.id );
 %]
-      <a href="[% c.uri_for_action("/users/edit", [user.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", USERNAME_HTML) %]" title="[% c.maketext("admin.edit-object", USERNAME_HTML) %]" /></a>
+      <a href="[% c.uri_for_action("/users/edit", [user.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", username_html) %]" title="[% c.maketext("admin.edit-object", username_html) %]" /></a>
 [%-
     END;
     IF authorisation.user_delete_all OR ( authorisation.user_delete_own AND c.user_exists AND c.user.id == user.id );
 %]
-      <a href="[% c.uri_for_action("/users/delete", [user.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", USERNAME_HTML) %]" title="[% c.maketext("admin.delete-object", USERNAME_HTML) %]" /></a>
+      <a href="[% c.uri_for_action("/users/delete", [user.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0005-Delete-icon-16.png") %]" alt="[% c.maketext("admin.delete-object", username_html) %]" title="[% c.maketext("admin.delete-object", username_html) %]" /></a>
 [%-
     END;
 -%]
@@ -89,14 +89,14 @@ END;
 [%
 IF authorisation.user_edit_all OR authorisation.user_approve_new;
 -%]
-      <td><a href="mailto:[% USER_EMAIL_HTML %]">[% USER_EMAIL_HTML %]</a></td>
+      <td><a href="mailto:[% user_email_html %]">[% user_email_html %]</a></td>
 [%
 END;
 -%]
       <td>
 [%-
     IF user.person;
-USER_PERSON_SORT_HTML;
+user_person_sort_html;
 -%]
 [%-
     ELSE;
@@ -110,7 +110,7 @@ USER_PERSON_SORT_HTML;
 [%-
     IF user.person;
 -%]
-<a href="[% c.uri_for_action("/people/view_current_season", [user.person.url_key]) %]">[% USER_PERSON_HTML %]</a>
+<a href="[% c.uri_for_action("/people/view_current_season", [user.person.url_key]) %]">[% user_person_html %]</a>
 [%-
     ELSE;
 -%]
@@ -119,15 +119,15 @@ USER_PERSON_SORT_HTML;
     END;
 -%]
 </td>
-      <td>[% USER_LOCATION_HTML OR "&nbsp;" %]</td>
+      <td>[% user_location_html OR "&nbsp;" %]</td>
       <td>[% user.timezone.replace("_", " ") OR "&nbsp;" %]</td>
-      <td>[% USER_REGISTERED %]</td>
-      <td>[% USER_REGISTERED_FORMAT %]</td>
+      <td>[% user_registered %]</td>
+      <td>[% user_registered_format %]</td>
       <td>[% user.activated %]</td>
-      <td><img src="[% ACTIVATED_IMG %]" alt="[% ACTIVATED_TITLE %]" title="[% ACTIVATED_TITLE %]" /></td>
-      <td>[% USER_LAST_ACTIVE %]</td>
-      <td>[% USER_LAST_ACTIVE_FORMAT %]</td>
-      <td>[% ROLES OR "&nbsp;" %]</td>
+      <td><img src="[% activated_img %]" alt="[% activated_title %]" title="[% activated_title %]" /></td>
+      <td>[% user_last_active %]</td>
+      <td>[% user_last_active_format %]</td>
+      <td>[% roles OR "&nbsp;" %]</td>
     </tr>
 [%
   END;

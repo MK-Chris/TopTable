@@ -8,9 +8,9 @@ IF teams_count;
   WHILE (type = types.next);
     IF type.team_membership_type.id == "active";
       # Below first will work because "active" will always come first.
-      SET ACTIVE_TEAM = teams.first;
+      SET active_team = teams.first;
 -%]
-    <li><a href="#active">[% ACTIVE_TEAM.team_season.club_season.club.short_name | html_entity %] [% ACTIVE_TEAM.team_season.name | html_entity %]</a></li>
+    <li><a href="#active">[% active_team.team_season.club_season.club.short_name | html_entity %] [% active_team.team_season.name | html_entity %]</a></li>
 [%
     ELSE;
 -%]
@@ -486,20 +486,20 @@ IF teams_count;
   END;
   
   # Else for the check for a team season
-  SET TEAM_SEASON = ACTIVE_TEAM.team_season;
+  SET team_season = active_team.team_season;
   
   IF specific_season;
-    SET TEAM_URI = c.uri_for_action("/teams/view_specific_season_by_url_key", [TEAM_SEASON.club_season.club.url_key, TEAM_SEASON.team.url_key, season.url_key]);
-    SET AVERAGES_URI  = c.uri_for_action("/league-averages/view_specific_season", ["singles", TEAM_SEASON.division_season.division.url_key, season.url_key]);
+    SET team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [team_season.club_season.club.url_key, team_season.team.url_key, season.url_key]);
+    SET averages_uri  = c.uri_for_action("/league-averages/view_specific_season", ["singles", team_season.division_season.division.url_key, season.url_key]);
   ELSE;
-    SET TEAM_URI = c.uri_for_action("/teams/view_current_season_by_url_key", [TEAM_SEASON.club_season.club.url_key, TEAM_SEASON.team.url_key]);
-    SET AVERAGES_URI = c.uri_for_action("/league-averages/view_current_season", ["singles", TEAM_SEASON.division_season.division.url_key]);
+    SET team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [team_season.club_season.club.url_key, team_season.team.url_key]);
+    SET averages_uri = c.uri_for_action("/league-averages/view_current_season", ["singles", team_season.division_season.division.url_key]);
   END;
   
-  TEAM_NAME = TEAM_SEASON.club_season.short_name _ " " _ TEAM_SEASON.name | html_entity;
-  SET TEAM_DISPLAY = '<a href="' _ TEAM_URI _ '">' _ TEAM_NAME _ '</a>';
+  team_name = team_season.club_season.full_name | html_entity;
+  SET team_display = '<a href="' _ team_uri _ '">' _ team_name _ '</a>';
 ELSE;
-  SET TEAM_DISPLAY = c.maketext("people.message.not-registered");
+  SET team_display = c.maketext("people.message.not-registered");
 END;
 %]
   <div id="summary">
@@ -508,14 +508,14 @@ END;
         <table class="vertical">
           <tr>
             <th scope="row">[% c.maketext("people.summary.registered.active") %]</th>
-            <td>[% TEAM_DISPLAY %]</td>
+            <td>[% team_display %]</td>
           </tr>
 [%
 IF teams_count;
 -%]
           <tr>
             <th scope="row">[% c.maketext("people.summary.division") %]</th>
-            <td><a href="[% AVERAGES_URI %]">[% TEAM_SEASON.division_season.name | html_entity %]</a></td>
+            <td><a href="[% averages_uri %]">[% team_season.division_season.name | html_entity %]</a></td>
           </tr>
 [%
   IF loan_matches.count;
@@ -541,24 +541,24 @@ IF captaincies.count;
             <th scope="row">[% c.maketext("people.summary.captaincies") %]</th>
             <td>
 [%
-  SET CAPTAINCIES_PRINTED = 0;
-  WHILE (CAPTAINCY = captaincies.next);
-    CAPTAINCIES_PRINTED = CAPTAINCIES_PRINTED + 1;
+  SET cpt_printed = 0;
+  WHILE (captaincy = captaincies.next);
+    cpt_printed = cpt_printed + 1;
     
     IF specific_season;
-      SET CAPTAIN_TEAM_URI = c.uri_for_action("/teams/view_specific_season_by_url_key", [CAPTAINCY.club_season.club.url_key, CAPTAINCY.team.url_key, season.url_key]);
+      SET captain_team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [captaincy.club_season.club.url_key, captaincy.team.url_key, season.url_key]);
     ELSE;
-      SET CAPTAIN_TEAM_URI = c.uri_for_action("/teams/view_current_season_by_url_key", [CAPTAINCY.club_season.club.url_key, CAPTAINCY.team.url_key]);
+      SET captain_team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [captaincy.club_season.club.url_key, captaincy.team.url_key]);
     END;
     
-    CAPTAINCY_TEAM_NAME = CAPTAINCY.club_season.short_name _ " " _ CAPTAINCY.name | html_entity;
-    IF CAPTAINCIES_PRINTED > 1;
+    captaincy_team_name = captaincy.club_season.full_name | html_entity;
+    IF cpt_printed > 1;
 -%]
               <br />
 [%
     END;
 -%]
-              <a href="[% CAPTAIN_TEAM_URI %]">[% CAPTAINCY_TEAM_NAME %]</a>
+              <a href="[% captain_team_uri %]">[% captaincy_team_name %]</a>
 [%
   END;
 -%]
@@ -572,22 +572,22 @@ IF secretaryships.count;
             <th scope="row">[% c.maketext("people.summary.secretaryships") %]</th>
             <td>
 [%
-  SET SECRETARYSHIPS_PRINTED = 0;
-  WHILE (SECRETARYSHIP = secretaryships.next);
-    SECRETARYSHIPS_PRINTED = SECRETARYSHIPS_PRINTED + 1;
+  SET sec_printed = 0;
+  WHILE (secretaryship = secretaryships.next);
+    sec_printed = sec_printed + 1;
     
     IF specific_season;
-      SET SECRETARYSHIP_CLUB_URI = c.uri_for_action("/clubs/view_specific_season", [SECRETARYSHIP.club.url_key, season.url_key]);
+      SET sec_club_uri = c.uri_for_action("/clubs/view_specific_season", [secretaryship.club.url_key, season.url_key]);
     ELSE;
-      SET SECRETARYSHIP_CLUB_URI = c.uri_for_action("/clubs/view_current_season", [SECRETARYSHIP.club.url_key]);
+      SET sec_club_uri = c.uri_for_action("/clubs/view_current_season", [secretaryship.club.url_key]);
     END;
-    IF SECRETARYSHIPS_PRINTED > 1;
+    IF sec_printed > 1;
 -%]
               <br />
 [%
     END;
 -%]
-              <a href="[% SECRETARYSHIP_CLUB_URI %]">[% SECRETARYSHIP.club.full_name | html_entity %]</a>
+              <a href="[% sec_club_uri %]">[% secretaryship.club.full_name | html_entity %]</a>
 [%
   END;
 -%]
@@ -601,22 +601,22 @@ IF officialdoms.count;
             <th scope="row">[% c.maketext("people.summary.officialdoms") %]</th>
             <td>
 [%
-  SET OFFICIALDOMS_PRINTED = 0;
-  WHILE (OFFICIALDOM = officialdoms.next);
-    OFFICIALDOMS_PRINTED = OFFICIALDOMS_PRINTED + 1;
+  SET off_printed = 0;
+  WHILE (officialdom = officialdoms.next);
+    off_printed = off_printed + 1;
     
     IF specific_season;
-      SET OFFICIALDOM_URI = c.uri_for_action("/info/officials/view_specific_season", [season.url_key]);
+      SET officialdom_uri = c.uri_for_action("/info/officials/view_specific_season", [season.url_key]);
     ELSE;
-      SET OFFICIALDOM_URI = c.uri_for_action("/info/officials/view_current_season");
+      SET officialdom_uri = c.uri_for_action("/info/officials/view_current_season");
     END;
-    IF OFFICIALDOMS_PRINTED > 1;
+    IF off_printed > 1;
 -%]
               <br />
 [%
     END;
 -%]
-              <a href="[% OFFICIALDOM_URI %]">[% OFFICIALDOM.official_season.position_name | html_entity %]</a>
+              <a href="[% officialdom_uri %]">[% officialdom.official_season.position_name | html_entity %]</a>
 [%
   END;
 -%]

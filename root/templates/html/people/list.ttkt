@@ -1,17 +1,13 @@
-[% # This is a TT comment. -%]
-[% # Note That the '-' at the beginning or end of TT code  -%]
-[% # "chomps" the whitespace/newline at that end of the    -%]
-[% # output (use View Source in browser to see the effect) -%]
 [%
 IF people.count;
   # Use PROCESS instead of INCLUDE so that the page_links_text is defined in the current template thereafter
-  PROCESS "html/generic/pagination.ttkt" OBJECT_PLURAL = c.maketext("object.plural.people");
+  PROCESS "html/generic/pagination.ttkt" object_plural = c.maketext("object.plural.people");
   page_links_text;
 -%]
 <ul class="option-list">
 [%
   WHILE (person = people.next);
-    name_html = FILTER html_entity; person.display_name; END;
+    name_html = html_entity | html_entity;
 -%]
 
   <li>

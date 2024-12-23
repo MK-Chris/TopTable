@@ -1,19 +1,14 @@
-[% # This is a TT comment. -%]
-[% # Note That the '-' at the beginning or end of TT code  -%]
-[% # "chomps" the whitespace/newline at that end of the    -%]
-[% # output (use View Source in browser to see the effect) -%]
-[% # Some basic HTML with a loop to display clubs -%]
 [%
 IF meetings.count;
   # Use PROCESS instead of INCLUDE so that the page_links_text is defined in the current template thereafter
-  PROCESS "html/generic/pagination.ttkt" OBJECT_PLURAL = c.maketext("object.plural.meetings");
+  PROCESS "html/generic/pagination.ttkt" object_plural = c.maketext("object.plural.meetings");
   page_links_text;
 -%]
 <ul class="option-list">
 [%
   USE zeroes = format("%02d");
   WHILE (meeting = meetings.next);
-    name_html = FILTER html_entity; meeting.type.name; END;
+    name_html = meeting.type.name | html_entity;
     SET date = meeting.start_date_time;
     CALL date.set_locale(c.locale);
     

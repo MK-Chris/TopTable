@@ -26,8 +26,8 @@ IF cancel_check;
   SET checked = ' checked="checked"';
 END;
 
-home_team = FILTER html_entity; match.team_season_home_team_season.club_season.short_name _ " " _ match.team_season_home_team_season.name; END;
-away_team = FILTER html_entity; match.team_season_away_team_season.club_season.short_name _ " " _ match.team_season_away_team_season.name; END;
+home_team = match.team_season_home_team_season.full_name | html_entity;
+away_team = match.team_season_away_team_season.full_name | html_entity;
 -%]
   <input type="checkbox" name="cancel" id="cancel" data-label="[% c.maketext("matches.cancel.cancel") %]"[% checked %] />
   

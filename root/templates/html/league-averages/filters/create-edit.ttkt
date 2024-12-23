@@ -1,80 +1,80 @@
 [%
 IF c.flash.form_errored;
-  SET public          = c.flash.public;
-  SET show_active     = c.flash.show_active;
-  SET show_loan       = c.flash.show_loan;
-  SET show_inactive   = c.flash.show_inactive;
-  SET criteria_field  = c.flash.criteria_field;
-  SET operator        = c.flash.operator;
-  SET criteria_type   = c.flash.criteria_type;
+  SET public = c.flash.public;
+  SET show_active = c.flash.show_active;
+  SET show_loan = c.flash.show_loan;
+  SET show_inactive = c.flash.show_inactive;
+  SET criteria_field = c.flash.criteria_field;
+  SET operator = c.flash.operator;
+  SET criteria_type = c.flash.criteria_type;
 ELSE;
   IF filter.user.id;
-    SET public        = 0;
+    SET public = 0;
   ELSE;
-    SET public        = 1;
+    SET public = 1;
   END;
   
-  SET show_active     = filter.show_active;
-  SET show_loan       = filter.show_loan;
-  SET show_inactive   = filter.show_inactive;
-  SET criteria_field  = filter.criteria_field;
-  SET operator        = filter.operator;
-  SET criteria_type   = filter.criteria_type;
+  SET show_active = filter.show_active;
+  SET show_loan = filter.show_loan;
+  SET show_inactive = filter.show_inactive;
+  SET criteria_field = filter.criteria_field;
+  SET operator = filter.operator;
+  SET criteria_type = filter.criteria_type;
 END;
 
 IF public;
-  SET PUBLIC_CHECKED = ' checked="checked"';
+  SET public_checked = ' checked="checked"';
 ELSE;
-  SET PUBLIC_CHECKED = '';
+  SET public_checked = '';
 END;
 
 IF show_active;
-  ACTIVE_SELECTED = ' selected="selected"';
+  active_selected = ' selected="selected"';
 ELSE;
-  ACTIVE_SELECTED = '';
+  active_selected = '';
 END;
 
 IF show_loan;
-  LOAN_SELECTED = ' selected="selected"';
+  loan_selected = ' selected="selected"';
 ELSE;
-  LOAN_SELECTED = '';
+  loan_selected = '';
 END;
 
 IF show_inactive;
-  INACTIVE_SELECTED = ' selected="selected"';
+  inactive_selected = ' selected="selected"';
 ELSE;
-  INACTIVE_SELECTED = '';
+  inactive_selected = '';
 END;
 
 SWITCH criteria_field;
   CASE "played";
-    SET PLAYED_SELECTED = ' selected="selected"';
+    SET played_selected = ' selected="selected"';
   CASE "won";
-    SET WON_SELECTED = ' selected="selected"';
+    SET won_selected = ' selected="selected"';
   CASE "lost";
-    SET LOST_SELECTED = ' selected="selected"';
+    SET lost_selected = ' selected="selected"';
 END;
 
 SWITCH operator;
   CASE ">";
-    SET GT_SELECTED = ' selected="selected"';
+    SET gt_selected = ' selected="selected"';
   CASE ">=";
-    SET GE_SELECTED = ' selected="selected"';
+    SET ge_selected = ' selected="selected"';
   CASE "=";
-    SET EQ_SELECTED = ' selected="selected"';
+    SET eq_selected = ' selected="selected"';
   CASE "<";
-    SET LT_SELECTED = ' selected="selected"';
+    SET lt_selected = ' selected="selected"';
   CASE "<=";
-    SET LE_SELECTED = ' selected="selected"';
+    SET le_selected = ' selected="selected"';
 END;
 
 SWITCH criteria_type;
   CASE "matches";
-    SET MATCHES_SELECTED = ' selected="selected"';
+    SET matches_selected = ' selected="selected"';
   CASE "matches-pc";
-    SET MATCHES_PERCENTAGE_SELECTED = ' selected="selected"';
+    SET matches_pc_selected = ' selected="selected"';
   CASE "games";
-    SET GAMES_SELECTED = ' selected="selected"';
+    SET games_selected = ' selected="selected"';
 END;
 -%]
 
@@ -92,7 +92,7 @@ END;
 [%
 IF authorisation.averagefilter_create_public;
 -%]
-  <input type="checkbox" name="public" id="public" data-label="[% c.maketext("average-filters.public") %]"[% PUBLIC_CHECKED %] />
+  <input type="checkbox" name="public" id="public" data-label="[% c.maketext("average-filters.public") %]"[% public_checked %] />
 [%
 END;
 -%]
@@ -101,9 +101,9 @@ END;
     <div class="field-container">
       <select name="player_type" id="player_type" multiple="multiple" data-placeholder="[% c.maketext("average-filters.player-type") %]">
         <option value=""></option>
-        <option value="active"[% ACTIVE_SELECTED %]>[% c.maketext("team-membership-type.name.active") %]</option>
-        <option value="loan"[% LOAN_SELECTED %]>[% c.maketext("team-membership-type.name.loan") %]</option>
-        <option value="inactive"[% INACTIVE_SELECTED %]>[% c.maketext("team-membership-type.name.inactive") %]</option>
+        <option value="active"[% active_selected %]>[% c.maketext("team-membership-type.name.active") %]</option>
+        <option value="loan"[% loan_selected %]>[% c.maketext("team-membership-type.name.loan") %]</option>
+        <option value="inactive"[% inactive_selected %]>[% c.maketext("team-membership-type.name.inactive") %]</option>
       </select>
     </div>
     <div class="clear-fix"></div>
@@ -114,9 +114,9 @@ END;
     <div class="field-container">
       <select name="criteria_field" id="criteria_field" data-placeholder="[% c.maketext("average-filters.criteria-field") %]">
         <option value=""></option>
-        <option value="played"[% ACTIVE_SELECTED %]>[% c.maketext("average-filters.criteria-field.played") %]</option>
-        <option value="won"[% LOAN_SELECTED %]>[% c.maketext("average-filters.criteria-field.won") %]</option>
-        <option value="lost"[% INACTIVE_SELECTED %]>[% c.maketext("average-filters.criteria-field.lost") %]</option>
+        <option value="played"[% active_selected %]>[% c.maketext("average-filters.criteria-field.played") %]</option>
+        <option value="won"[% loan_selected %]>[% c.maketext("average-filters.criteria-field.won") %]</option>
+        <option value="lost"[% inactive_selected %]>[% c.maketext("average-filters.criteria-field.lost") %]</option>
       </select>
     </div>
     <div class="clear-fix"></div>
@@ -127,11 +127,11 @@ END;
     <div class="field-container">
       <select name="operator" id="operator" data-placeholder="[% c.maketext("average-filters.operator") %]">
         <option value=""></option>
-        <option value=">"[% GT_SELECTED %]>[% c.maketext("average.filters.operator.gt") %]</option>
-        <option value=">="[% GE_SELECTED %]>[% c.maketext("average.filters.operator.ge") %]</option>
-        <option value="="[% EQ_SELECTED %]>[% c.maketext("average.filters.operator.eq") %]</option>
-        <option value="<="[% LE_SELECTED %]>[% c.maketext("average.filters.operator.le") %]</option>
-        <option value="<"[% LT_SELECTED %]>[% c.maketext("average.filters.operator.lt") %]</option>
+        <option value=">"[% gt_selected %]>[% c.maketext("average.filters.operator.gt") %]</option>
+        <option value=">="[% ge_selected %]>[% c.maketext("average.filters.operator.ge") %]</option>
+        <option value="="[% eq_selected %]>[% c.maketext("average.filters.operator.eq") %]</option>
+        <option value="<="[% le_selected %]>[% c.maketext("average.filters.operator.le") %]</option>
+        <option value="<"[% lt_selected %]>[% c.maketext("average.filters.operator.lt") %]</option>
       </select>
     </div>
     <div class="clear-fix"></div>
@@ -150,9 +150,9 @@ END;
     <div class="field-container">
       <select name="criteria_type" id="criteria_type" data-placeholder="[% c.maketext("average-filters.criteria-type") %]">
         <option value=""></option>
-        <option value="matches"[% MATCHES_SELECTED %]>[% c.maketext("average-filters.criteria-type.matches") %]</option>
-        <option value="matches-pc"[% MATCHES_PERCENTAGE_SELECTED %]>[% c.maketext("average-filters.criteria-type.matches-percentage") %]</option>
-        <option value="games"[% GAMES_SELECTED %]>[% c.maketext("average-filters.criteria-type.games") %]</option>
+        <option value="matches"[% matches_selected %]>[% c.maketext("average-filters.criteria-type.matches") %]</option>
+        <option value="matches-pc"[% matches_pc_selected %]>[% c.maketext("average-filters.criteria-type.matches-percentage") %]</option>
+        <option value="games"[% games_selected %]>[% c.maketext("average-filters.criteria-type.games") %]</option>
       </select>
     </div>
     <div class="clear-fix"></div>

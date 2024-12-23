@@ -28,91 +28,91 @@ IF failed_rows.size;
   FOREACH row IN failed_rows;
     # Replace blank values with &nbsp;
     IF row.fields.first_name;
-      SET first_name = row.fields.first_name | html_entity;
+      first_name = row.fields.first_name | html_entity;
     ELSE;
       SET first_name = "&nbsp;";
     END;
     
     IF row.fields.surname;
-      SET surname = row.fields.surname | html_entity;
+      surname = row.fields.surname | html_entity;
     ELSE;
       SET surname = "&nbsp;";
     END;
     
     IF row.fields.club_name;
-      SET club_name = row.fields.club_name | html_entity;
+      club_name = row.fields.club_name | html_entity;
     ELSE;
       SET club_name = "&nbsp;";
     END;
     
     IF row.fields.team_name;
-      SET team_name = row.fields.team_name | html_entity;
+      team_name = row.fields.team_name | html_entity;
     ELSE;
       SET team_name = "&nbsp;";
     END;
     
     IF row.fields.gender_name;
-      SET gender_name = row.fields.gender_name | html_entity;
+      gender_name = row.fields.gender_name | html_entity;
     ELSE;
       SET gender_name = "&nbsp;";
     END;
     
     IF row.fields.address1;
-      SET address1 = row.fields.address1 | html_entity;
+      address1 = row.fields.address1 | html_entity;
     ELSE;
       SET address1 = "&nbsp;";
     END;
     
     IF row.fields.address2;
-      SET address2 = row.fields.address2 | html_entity;
+      address2 = row.fields.address2 | html_entity;
     ELSE;
       SET address2 = "&nbsp;";
     END;
     
     IF row.fields.address3;
-      SET address3 = row.fields.address3 | html_entity;
+      address3 = row.fields.address3 | html_entity;
     ELSE;
       SET address3 = "&nbsp;";
     END;
     
     IF row.fields.address4;
-      SET address4 = row.fields.address4 | html_entity;
+      address4 = row.fields.address4 | html_entity;
     ELSE;
       SET address4 = "&nbsp;";
     END;
     
     IF row.fields.address5;
-      SET address5 = row.fields.address5 | html_entity;
+      address5 = row.fields.address5 | html_entity;
     ELSE;
       SET address5 = "&nbsp;";
     END;
     
     IF row.fields.postcode;
-      SET postcode = row.fields.postcode | html_entity;
+      postcode = row.fields.postcode | html_entity;
     ELSE;
       SET postcode = "&nbsp;";
     END;
     
     IF row.fields.home_telephone;
-      SET home_telephone = row.fields.home_telephone | html_entity;
+      home_telephone = row.fields.home_telephone | html_entity;
     ELSE;
       SET home_telephone = "&nbsp;";
     END;
     
     IF row.fields.work_telephone;
-      SET work_telephone = row.fields.work_telephone | html_entity;
+      work_telephone = row.fields.work_telephone | html_entity;
     ELSE;
       SET work_telephone = "&nbsp;";
     END;
     
     IF row.fields.mobile_telephone;
-      SET mobile_telephone = row.fields.mobile_telephone | html_entity;
+      mobile_telephone = row.fields.mobile_telephone | html_entity;
     ELSE;
       SET mobile_telephone = "&nbsp;";
     END;
     
     IF row.fields.email_address;
-      SET email_address = row.fields.email_address | html_entity;
+      email_address = row.fields.email_address | html_entity;
     ELSE;
       SET email_address = "&nbsp;";
     END;
@@ -205,68 +205,68 @@ IF successful_rows.size;
     END;
     
     IF row.fields.address1;
-      SET address1 = row.fields.address1 | html_entity;
+      address1 = row.fields.address1 | html_entity;
     ELSE;
       SET address1 = "&nbsp;";
     END;
     
     IF row.fields.address2;
-      SET address2 = row.fields.address2 | html_entity;
+      address2 = row.fields.address2 | html_entity;
     ELSE;
       SET address2 = "&nbsp;";
     END;
     
     IF row.fields.address3;
-      SET address3 = row.fields.address3 | html_entity;
+      address3 = row.fields.address3 | html_entity;
     ELSE;
       SET address3 = "&nbsp;";
     END;
     
     IF row.fields.address4;
-      SET address4 = row.fields.address4 | html_entity;
+      address4 = row.fields.address4 | html_entity;
     ELSE;
       SET address4 = "&nbsp;";
     END;
     
     IF row.fields.address5;
-      SET address5 = row.fields.address5 | html_entity;
+      address5 = row.fields.address5 | html_entity;
     ELSE;
       SET address5 = "&nbsp;";
     END;
     
     IF row.fields.postcode;
-      SET postcode = row.fields.postcode | html_entity;
+      postcode = row.fields.postcode | html_entity;
     ELSE;
       SET postcode = "&nbsp;";
     END;
     
     IF row.fields.home_telephone;
-      SET home_telephone = row.fields.home_telephone | html_entity;
+      home_telephone = row.fields.home_telephone | html_entity;
     ELSE;
       SET home_telephone = "&nbsp;";
     END;
     
     IF row.fields.work_telephone;
-      SET work_telephone = row.fields.work_telephone | html_entity;
+      work_telephone = row.fields.work_telephone | html_entity;
     ELSE;
       SET work_telephone = "&nbsp;";
     END;
     
     IF row.fields.mobile_telephone;
-      SET mobile_telephone = row.fields.mobile_telephone | html_entity;
+      mobile_telephone = row.fields.mobile_telephone | html_entity;
     ELSE;
       SET mobile_telephone = "&nbsp;";
     END;
     
     IF row.fields.email_address;
-      SET email_address = row.fields.email_address | html_entity;
+      email_address = row.fields.email_address | html_entity;
     ELSE;
       SET email_address = "&nbsp;";
     END;
 -%]
     <tr>
-      <td><a href="[% c.uri_for_action("/people/view_current_season", [row.person.url_key]) %]">[% row.person.first_name %]</a></td>
-      <td><a href="[% c.uri_for_action("/people/view_current_season", [row.person.url_key]) %]">[% row.person.surname %]</a></td>
+      <td><a href="[% c.uri_for_action("/people/view_current_season", [row.person.url_key]) %]">[% row.person.first_name | html_entity %]</a></td>
+      <td><a href="[% c.uri_for_action("/people/view_current_season", [row.person.url_key]) %]">[% row.person.surname | html_entity %]</a></td>
       <td>[% club %]</td>
       <td>[% team %]</td>
       <td>[% gender %]</td>

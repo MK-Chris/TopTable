@@ -1,6 +1,0 @@
-[%
-SET test_var1 = "Some text with & odd characters '";
-SET test_var2 = test_var1 FILTER html OR "&nbsp;";
-%]
-
-The text is: [% test_var2 %]

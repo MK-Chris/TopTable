@@ -5,8 +5,8 @@
 [%
 IF c.config.Iframely.api_key;
 -%]
-var IFRAME_SRC = "[% c.config.Iframely.iframe_url OR "//cdn.iframe.ly/api/iframe" %]";
-var API_KEY = "[% c.config.Iframely.api_key %]";
+var iframe_src = "[% c.config.Iframely.iframe_url OR "//cdn.iframe.ly/api/iframe" %]";
+var api_key = "[% c.config.Iframely.api_key %]";
 [%
 END;
 
@@ -34,7 +34,7 @@ ClassicEditor
       html: match => {
         const url = match[0];
         
-        var iframeUrl = IFRAME_SRC + '?app=1&api_key=' + API_KEY + '&url=' + encodeURIComponent(url);
+        var iframeUrl = iframe_src + '?app=1&api_key=' + api_key + '&url=' + encodeURIComponent(url);
         // alternatively, use &key= instead of &api_key with the MD5 hash of your api_key
         // more about it: https://iframely.com/docs/allow-origins
 

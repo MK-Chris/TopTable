@@ -15,7 +15,7 @@ IF club_season;
     SET secretary = club.secretary;
   END;
   
-  SET venue_html = venue.name | html_entity;
+  venue_html = venue.name | html_entity;
 %]
     <a href="[% c.uri_for_action("/venues/view", [venue.url_key]) %]">[% venue_html %]</a>
 [%-
@@ -25,7 +25,7 @@ IF club_season;
 [%-
   END;
 -%]<br />
-<address>[% FILTER html_line_break; venue.full_address; END; %]</address><br /><br />
+<address>[% venue.full_address | html_line_break %]</address><br /><br />
 [%
   IF club.email_address;
 -%]
@@ -44,7 +44,7 @@ IF club_season;
 <h4>[% c.maketext("clubs.field.secretary") %]</h4>
 [%
   IF secretary;
-    SET secretary_html = secretary.display_name | html_entity;
+    secretary_html = secretary.display_name | html_entity;
     
     IF specific_season;
       SET person_url = c.uri_for_action("/people/view_specific_season", [secretary.url_key, season.url_key]);
@@ -65,7 +65,7 @@ IF club_season;
 [%-
     END;
 -%]<br />
-<address>[% FILTER html_line_break; secretary.full_address; END; %]</address><br /><br />
+<address>[% secretary.full_address | html_line_break %]</address><br /><br />
 [%
   ELSE;
   c.maketext("clubs.secretary.none");
@@ -108,10 +108,10 @@ IF club_season;
       SET team_season = team.team_seasons.first;
       SET captain = team_season.captain;
       
-      SET team_html = team_season.name | html_entity;
-      SET club_html = club_season.short_name | html_entity;
-      SET captain_html = captain.display_name | html_entity;
-      SET captain_sort_html = captain.surname _ ", " _ captain.first_name | html_entity;
+      team_html = team_season.name | html_entity;
+      club_html = club_season.short_name | html_entity;
+      captain_html = captain.display_name | html_entity;
+      captain_sort_html = captain.surname _ ", " _ captain.first_name | html_entity;
 -%]
     <tr>
       <td><a href="[% team_uri %]">[% team_html %]</a>
@@ -181,8 +181,8 @@ IF club_season;
 [%
 # Else for if club_season
 ELSE;
-  season_html = FILTER html_entity; season.name; END;
-  club_name_html = FILTER html_entity; club.full_name; END;
+  season_html = season.name | html_entity;
+  club_name_html = club.full_name | html_entity;
 -%]
 <div class="no-entry">[% c.maketext("clubs.message.did-not-enter", enc_full_name, season_html) %]</div>
 [%

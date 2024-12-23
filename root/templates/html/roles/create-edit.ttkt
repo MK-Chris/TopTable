@@ -17,9 +17,9 @@ IF role.system;
 ELSE;
   SET name_disabled = '';
   IF c.flash.show_flashed;
-    role_name = FILTER html_entity; c.flash.name; END;
+    role_name = c.flash.name | html_entity;
   ELSE;
-    role_name = FILTER html_entity; role.name; END;
+    role_name = role.name | html_entity;
   END;
   
   show_perms = 1;

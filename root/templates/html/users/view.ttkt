@@ -1,7 +1,3 @@
-[% # Note That the '-' at the beginning or end of TT code  -%]
-[% # "chomps" the whitespace/newline at that end of the    -%]
-[% # output (use View Source in browser to see the effect) -%]
-
 [%
 IF user.avatar;
   # User has an avatar, display it over the background
@@ -15,7 +11,7 @@ ELSE;
   SET image_source = c.uri_for("/static/images/icons/0046-User-icon-48.png");
 END;
 
-username_html = FILTER html_entity; user.username; END;
+username_html = user.username | html_entity;
 -%]
 <div class="table-wrap">
   <div class="table-layout table-layout-centre">
@@ -57,46 +53,46 @@ END;
           <td>
 [%-
 IF user.facebook;
-  SET SOCIALS = 1;
-  SET FACEBOOK_URI = c.config.Users.SocialLinks.facebook.replace("<profile>", user.facebook);
+  SET socials = 1;
+  SET facebook_uri = c.config.Users.SocialLinks.facebook.replace("<profile>", user.facebook);
 -%]
-<a href="[% FACEBOOK_URI %]"><img src="[% c.uri_for("/static/images/social-media-logos/facebook-32.png") %]" class="social-link-icon" alt="Facebook: [% user.facebook %]" title="Facebook: [% user.facebook %]" /></a>
+<a href="[% facebook_uri %]"><img src="[% c.uri_for("/static/images/social-media-logos/facebook-32.png") %]" class="social-link-icon" alt="Facebook: [% user.facebook %]" title="Facebook: [% user.facebook %]" /></a>
 [%-
 END;
 
 IF user.instagram;
-  SET SOCIALS = 1;
-  SET INSTAGRAM_URI = c.config.Users.SocialLinks.instagram.replace("<profile>", user.instagram);
+  SET socials = 1;
+  SET instagram_uri = c.config.Users.SocialLinks.instagram.replace("<profile>", user.instagram);
 -%]
-<a href="[% INSTAGRAM_URI %]"><img src="[% c.uri_for("/static/images/social-media-logos/instagram-32.png") %]" class="social-link-icon" alt="Instagram: [% user.instagram %]" title="Instagram: [% user.instagram %]" /></a>
+<a href="[% instagram_uri %]"><img src="[% c.uri_for("/static/images/social-media-logos/instagram-32.png") %]" class="social-link-icon" alt="Instagram: [% user.instagram %]" title="Instagram: [% user.instagram %]" /></a>
 [%-
 END;
 
 IF user.twitter;
-  SET SOCIALS = 1;
-  SET TWITTER_URI = c.config.Users.SocialLinks.twitter.replace("<profile>", user.twitter);
+  SET socials = 1;
+  SET twitter_uri = c.config.Users.SocialLinks.twitter.replace("<profile>", user.twitter);
 -%]
-<a href="[% TWITTER_URI %]"><img src="[% c.uri_for("/static/images/social-media-logos/twitter-32.png") %]" class="social-link-icon" alt="Twitter: [% user.twitter %]" title="Twitter: @[% user.twitter %]" /></a>
+<a href="[% twitter_uri %]"><img src="[% c.uri_for("/static/images/social-media-logos/twitter-32.png") %]" class="social-link-icon" alt="Twitter: [% user.twitter %]" title="Twitter: @[% user.twitter %]" /></a>
 [%-
 END;
 
 IF user.snapchat;
-  SET SOCIALS = 1;
-  SET SNAPCHAT_URI = c.config.Users.SocialLinks.snapchat.replace("<profile>", user.snapchat);
+  SET socials = 1;
+  SET snapchat_uri = c.config.Users.SocialLinks.snapchat.replace("<profile>", user.snapchat);
 -%]
-<a href="[% SNAPCHAT_URI %]"><img src="[% c.uri_for("/static/images/social-media-logos/snapchat-32.png") %]" class="social-link-icon" alt="Snapchat: [% user.snapchat %]" title="Snapchat: @[% user.snapchat %]" /></a>
+<a href="[% snapchat_uri %]"><img src="[% c.uri_for("/static/images/social-media-logos/snapchat-32.png") %]" class="social-link-icon" alt="Snapchat: [% user.snapchat %]" title="Snapchat: @[% user.snapchat %]" /></a>
 [%-
 END;
 
 IF user.tiktok;
-  SET SOCIALS = 1;
-  SET TIKTOK_URI = c.config.Users.SocialLinks.tiktok.replace("<profile>", user.tiktok);
+  SET socials = 1;
+  SET tiktok_uri = c.config.Users.SocialLinks.tiktok.replace("<profile>", user.tiktok);
 -%]
-<a href="[% TIKTOK_URI %]"><img src="[% c.uri_for("/static/images/social-media-logos/tiktok-32.png") %]" class="social-link-icon" alt="TikTok: [% user.tiktok %]" title="TikTok: @[% user.tiktok %]" /></a>
+<a href="[% tiktok_uri %]"><img src="[% c.uri_for("/static/images/social-media-logos/tiktok-32.png") %]" class="social-link-icon" alt="TikTok: [% user.tiktok %]" title="TikTok: @[% user.tiktok %]" /></a>
 [%-
 END;
 
-IF !SOCIALS;
+IF !socials;
 -%]
 &nbsp;
 [%-
@@ -166,23 +162,23 @@ END;
           <td>
 [%-
 
-SET ROLES = user.roles;
-SET ROLES_TEXT = "";
-FOREACH ROLE IN ROLES;
-  IF ROLE.system;
-    SET ROLE_NAME = c.maketext("roles.name." _ ROLE.name);
+SET roles = user.roles;
+SET roles_text = "";
+FOREACH role IN roles;
+  IF role.system;
+    SET role_name = c.maketext("roles.name." _ role.name);
   ELSE;
-    ROLE_NAME = FILTER html_entity; ROLE.name; END;
+    role_name = role.name | html_entity;
   END;
   
-  IF ROLES_TEXT == "";
-    SET ROLES_TEXT = ROLE_NAME;
+  IF roles_text == "";
+    SET roles_text = role_name;
   ELSE;
-    SET ROLES_TEXT = ROLES_TEXT _ ", " _ ROLE_NAME;
+    SET roles_text = roles_text _ ", " _ role_name;
   END;
 END;
 
-ROLES_TEXT
+roles_text
 -%]</td>
         </tr>
 [%
@@ -193,27 +189,27 @@ IF authorisation.user_approve_new;
           <th>[% c.maketext("user.field.activated") %]</th>
 [%
   IF user.activated;
-    SET ACTIVATED_IMG = c.uri_for("/static/images/icons/0007-Tick-icon-32.png");
-    SET ACTIVATED_TITLE = c.maketext("user.activated");
+    SET activated_img = c.uri_for("/static/images/icons/0007-Tick-icon-32.png");
+    SET activated_title = c.maketext("user.activated");
   ELSE;
-    SET ACTIVATED_IMG = c.uri_for("/static/images/icons/0006-Cross-icon-32.png");
-    SET ACTIVATED_TITLE = c.maketext("user.not-activated");
+    SET activated_img = c.uri_for("/static/images/icons/0006-Cross-icon-32.png");
+    SET activated_title = c.maketext("user.not-activated");
   END;
 -%]
-          <td><img src="[% ACTIVATED_IMG %]" alt="[% ACTIVATED_TITLE %]" title="[% ACTIVATED_TITLE %]" /></td>
+          <td><img src="[% activated_img %]" alt="[% activated_title %]" title="[% activated_title %]" /></td>
         </tr>
         <tr>
           <th>[% c.maketext("user.field.approved") %]</th>
 [%
   IF user.approved;
-    SET APPROVED_IMG = c.uri_for("/static/images/icons/0007-Tick-icon-32.png");
-    SET APPROVED_TITLE = c.maketext("user.approved");
+    SET approved_img = c.uri_for("/static/images/icons/0007-Tick-icon-32.png");
+    SET approved_title = c.maketext("user.approved");
   ELSE;
-    SET APPROVED_IMG = c.uri_for("/static/images/icons/0006-Cross-icon-32.png");
-    SET APPROVED_TITLE = c.maketext("user.not-approved");
+    SET approved_img = c.uri_for("/static/images/icons/0006-Cross-icon-32.png");
+    SET approved_title = c.maketext("user.not-approved");
   END;
 -%]
-          <td><img src="[% APPROVED_IMG %]" alt="[% APPROVED_TITLE %]" title="[% APPROVED_TITLE %]" /></td>
+          <td><img src="[% approved_img %]" alt="[% approved_title %]" title="[% approved_title %]" /></td>
         </tr>
 [%
   IF user.approved;
