@@ -83,7 +83,6 @@ __PACKAGE__->config(
     Request => { params => [ qr/password/ ] },
   },
   compression_format => "gzip",
-  encoding => "UTF-8",
 );
 
 

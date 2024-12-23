@@ -7,9 +7,10 @@ __PACKAGE__->config(
     schema_class => 'TopTable::Schema',
     
     connect_info => {
-        dsn => 'dbi:mysql:toptable',
-        user => '',
-        password => '',
+      dsn => 'dbi:mysql:toptable',
+      user => '',
+      password => '',
+      mysql_enable_utf8 => 1
     }
 );
 
