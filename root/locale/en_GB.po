@@ -331,10 +331,10 @@ msgstr "Contact"
 msgid "menu.text.contactreason"
 msgstr "Contact reasons"
 
-msgid "menu.text.meetings"
+msgid "menu.text.meeting"
 msgstr "Meetings"
 
-msgid "menu.title.meetings"
+msgid "menu.title.meeting"
 msgstr "Meetings"
 
 msgid "menu.text.meeting-types"
@@ -1658,6 +1658,61 @@ msgstr "Cancelled"
 
 msgid "stats.label.average"
 msgstr "Won (%)"
+
+### Tables / points adjustments
+msgid "tables.adjustments.fields.action"
+msgstr "Action"
+
+msgid "tables.adjustments.fields.action.options.award"
+msgstr "Award"
+
+msgid "tables.adjustments.fields.action.options.deduct"
+msgstr "Deduct"
+
+msgid "tables.adjustments.fields.points-adj"
+msgstr "Points adjustment"
+
+msgid "tables.adjustments.fields.reason"
+msgstr "Reason for adjustment"
+
+msgid "tables.adjustments.error.no-current-season"
+msgstr "There is no current season, therefore points cannot be adjusted."
+
+msgid "tables.adjustments.error.season-not-current"
+msgstr "%1 is already complete, you cannot adjust points."
+
+msgid "tables.adjustments.error.team-not-entered-season"
+msgstr "%1 has not entered this season, so has no points to adjust."
+
+msgid "tables.adjustments.error.invalid-action"
+msgstr "Invalid action; select &#39;Award&#39; or &#39;Deduct&#39; from the list."
+
+msgid "tables.adjustments.error.invalid-points-adjustment"
+msgstr "The points adjustment value is invalid; please enter a value greater than 0."
+
+msgid "tables.adjustments.error.blank-reason"
+msgstr "Please enter a reason for the points adjustment."
+
+msgid "tables.adjustments.success"
+msgstr "A points adjustment has been created."
+
+msgid "tables.adjustments.title"
+msgstr "Points adjustments"
+
+msgid "tables.adjustments.team"
+msgstr "Team"
+
+msgid "tables.adjustments.timestamp-sort"
+msgstr "Timestamp (sortable)"
+
+msgid "tables.adjustments.timestamp"
+msgstr "Timestamp"
+
+msgid "tables.adjustments.adjustment"
+msgstr "Adjustment"
+
+msgid "tables.adjustments.reason"
+msgstr "Reason"
 
 ### Venues
 msgid "venues.create"
@@ -5017,6 +5072,9 @@ msgstr "Edit"
 msgid "admin.delete"
 msgstr "Delete"
 
+msgid "admin.points-adjustment"
+msgstr "Points adjustment"
+
 msgid "admin.update"
 msgstr "Update"
 
@@ -5074,6 +5132,9 @@ msgstr "Cancel %1"
 
 msgid "admin.report-object"
 msgstr "Report on %1"
+
+msgid "admin.points-adjust-object"
+msgstr "Adjust the points for %1"
 
 msgid "admin.approve-object"
 msgstr "Approve %1"
@@ -5301,6 +5362,9 @@ msgstr "edit teams"
 
 msgid "user.auth.delete-teams"
 msgstr "delete teams"
+
+msgid "user.auth.points-adjust-teams"
+msgstr "adjust points for teams&#39;s league record."
 
 msgid "user.auth.contact-team-captains"
 msgstr "contact team captains"
@@ -5914,6 +5978,9 @@ msgstr "Upload"
 
 msgid "roles.form.labels.issue_bans"
 msgstr "Issue bans"
+
+msgid "roles.form.labels.points_adjust"
+msgstr "Adjust table points"
 
 msgid "roles.form.error.role-invalid"
 msgstr "The role specified was invalid."
@@ -6930,6 +6997,9 @@ msgstr "Transferred season statistics to %1%2."
 
 msgid "system-event-log.description.update-match-date"
 msgstr "Updated the date for matches where the home team is %1%2."
+
+msgid "system-event-log.description.adjust-points"
+msgstr "Adjusted the league table points for %1%2."
 
 msgid "system-event-log.description.create-games"
 msgstr "Created games for %1%2."

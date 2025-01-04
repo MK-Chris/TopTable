@@ -6,6 +6,35 @@ $(document).ready(function() {
   /*
     DataTables
   */
+  var adjustments = $("#adjustments").DataTable({
+    responsive: true,
+    paging: false,
+    info: false,
+    ordering: true,
+    fixedHeader: true,
+    searching: false,
+    order: [1, "asc"],
+    ordering: true,
+    columnDefs: [{
+      // Timestamp sortable
+      visible: false,
+      targets: 0
+    }, {
+      // Timestamp
+      responsivePriority: 3,
+      orderData: 0,
+      targets: 1
+    }, {
+      // Adjustment
+      responsivePriority: 1,
+      targets: 2
+    }, {
+      // Reason
+      responsivePriority: 2,
+      targets: 3
+    }]
+  });
+  
   var averages_singles = $("#averages-singles").DataTable({
     responsive: true,
     paging: false,
@@ -126,7 +155,10 @@ $(document).ready(function() {
     startCollapsed: false,
     setHash: false,
     activate: function(event, tab) {
-      if (tab.selector == "#players") {
+      if (tab.selector == "#details") {
+        // Redraw the adjustments table
+        adjustments.responsive.recalc();
+      } else if (tab.selector == "#players") {
         // Redraw the averages tables
         averages_singles.responsive.recalc();
         averages_doubles_individuals.responsive.recalc();

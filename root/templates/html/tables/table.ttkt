@@ -103,3 +103,41 @@ END;
           </tbody>
         </table>
         <div class="dataTables_info" id="league-table_info" role="status" aria-live="polite">[% c.maketext("updated.time", c.i18n_datetime_format_datetime.format_datetime(last_updated)) %]</div>
+        
+[%
+IF points_adjustments.count;
+-%]
+        <div class="spacer"></div>
+        <h4>[% c.maketext("tables.adjustments.title") %]</h4>
+        
+        <table id="adjustments" class="stripe hover row-border">
+          <thead>
+            <tr>
+              <th>[% c.maketext("tables.adjustments.team") %]</th>
+              <th>[% c.maketext("tables.adjustments.timestamp-sort") %]</th>
+              <th>[% c.maketext("tables.adjustments.timestamp") %]</th>
+              <th>[% c.maketext("tables.adjustments.adjustment") %]</th>
+              <th>[% c.maketext("tables.adjustments.reason") %]</th>
+            </tr>
+          </thead>
+          <tbody>
+[%
+  WHILE (rec = points_adjustments.next);
+    SET timestamp = rec.timestamp;
+    CALL timestamp.set_locale(c.locale);
+-%]
+            <tr>
+              <td data-label="[% c.maketext("tables.adjustments.team") %]">[% rec.team_season.full_name | html_entity %]</td>
+              <td data-label="[% c.maketext("tables.adjustments.timestamp-sort") %]">[% timestamp.ymd("") %][% timestamp.hms("") %]</td>
+              <td data-label="[% c.maketext("tables.adjustments.timestamp") %]">[% c.i18n_datetime_format_datetime.format_datetime(timestamp) %]</td>
+              <td data-label="[% c.maketext("tables.adjustments.adjustment") %]">[% c.i18n_numberformat.format_number(rec.adjustment) %]</td>
+              <td data-label="[% c.maketext("tables.adjustments.reason") %]">[% rec.reason | html_entity %]</td>
+            </tr>
+[%
+  END;
+-%]
+          </tbody>
+        </table>
+[%
+END;
+-%]

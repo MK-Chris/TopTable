@@ -114,12 +114,12 @@ sub retrieve_paged :Private {
   });
   
   my $page_info = $events->pager;
-  my $page_links = $c->forward( "TopTable::Controller::Root", "generate_pagination_links", [{
+  my $page_links = $c->forward("TopTable::Controller::Root", "generate_pagination_links", [{
     page_info => $page_info,
     page1_action => "/events/list_first_page",
     specific_page_action => "/events/list_specific_page",
     current_page => $page_number,
-  }] );
+  }]);
   
   # Set up the template to use
   $c->stash({

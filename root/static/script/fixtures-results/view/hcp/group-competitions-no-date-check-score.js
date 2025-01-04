@@ -9,8 +9,9 @@ $(document).ready(function() {
     fixedHeader: true,
     searching: false,
     info: false,
+    orderFixed: {pre: [1, "asc"]},
     order: [[2, "asc"]],
-    ordering: false,
+    ordering: true,
     rowGroup: {
       dataSrc: 1
     },
@@ -26,22 +27,27 @@ $(document).ready(function() {
     }, {
       // Home team
       responsivePriority: 1,
+      orderable: false,
       targets: 2
     }, {
       // Home handicap
       responsivePriority: 4,
+      orderable: false,
       targets: 3
     }, {
       // Away team
       responsivePriority: 2,
+      orderable: false,
       targets: 4
     }, {
       // Away handicap
       responsivePriority: 5,
+      orderable: false,
       targets: 5
     }, {
       // Venue / score
       responsivePriority: 3,
+      orderable: false,
       targets: 6
     }]
   });

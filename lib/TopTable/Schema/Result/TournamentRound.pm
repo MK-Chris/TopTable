@@ -89,13 +89,6 @@ __PACKAGE__->table("tournament_rounds");
   default_value: 0
   is_nullable: 0
 
-=head2 rank_template
-
-  data_type: 'integer'
-  extra: {unsigned => 1}
-  is_foreign_key: 1
-  is_nullable: 1
-
 =head2 team_match_template
 
   data_type: 'integer'
@@ -104,6 +97,13 @@ __PACKAGE__->table("tournament_rounds");
   is_nullable: 1
 
 =head2 individual_match_template
+
+  data_type: 'integer'
+  extra: {unsigned => 1}
+  is_foreign_key: 1
+  is_nullable: 1
+
+=head2 rank_template
 
   data_type: 'integer'
   extra: {unsigned => 1}
@@ -164,13 +164,6 @@ __PACKAGE__->add_columns(
   { accessor => "_name", data_type => "varchar", is_nullable => 1, size => 150 },
   "group_round",
   { data_type => "tinyint", default_value => 0, is_nullable => 0 },
-  "rank_template",
-  {
-    data_type => "integer",
-    extra => { unsigned => 1 },
-    is_foreign_key => 1,
-    is_nullable => 1,
-  },
   "team_match_template",
   {
     data_type => "integer",
@@ -179,6 +172,13 @@ __PACKAGE__->add_columns(
     is_nullable => 1,
   },
   "individual_match_template",
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_foreign_key => 1,
+    is_nullable => 1,
+  },
+  "rank_template",
   {
     data_type => "integer",
     extra => { unsigned => 1 },
@@ -282,7 +282,7 @@ Related object: L<TopTable::Schema::Result::SystemEventLogEventRound>
 __PACKAGE__->has_many(
   "system_event_log_event_rounds",
   "TopTable::Schema::Result::SystemEventLogEventRound",
-  { "foreign.object_id" => "self.id" },
+  { "foreign.object_round" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
@@ -417,8 +417,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-11-24 00:42:40
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:W8jkhzTTxSC8Rz+QUt+wFg
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-12-31 16:31:44
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:sSJSuNCYin8HUFVDFqaJYA
 
 use HTML::Entities;
 use List::MoreUtils qw( duplicates );

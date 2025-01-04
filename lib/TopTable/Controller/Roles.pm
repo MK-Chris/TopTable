@@ -554,7 +554,7 @@ sub get_perm_fields :Private {
   
   # Setup the order in which we want to display individual permissions in categories - they only get shown if they exist in that category.  Every individual permission must
   # be added to this list
-  my @perm_types = qw( view contact_view view_all online_view online_view_anonymous view_anonymous view_ip view_user_agent create create_associated create_public pin edit edit_own edit_all edit_public delete delete_own delete_all delete_public update cancel archive approve_new upload issue_bans );
+  my @perm_types = qw( view contact_view view_all online_view online_view_anonymous view_anonymous view_ip view_user_agent create create_associated create_public pin edit edit_own edit_all edit_public delete delete_own delete_all delete_public update cancel archive approve_new upload issue_bans points_adjust );
   
   # Get the permissions field names - grab all columns, then use Set::Object to delete the non-permissions fields
   my $field_names = Set::Object->new($c->model("DB::Role")->result_source->columns);

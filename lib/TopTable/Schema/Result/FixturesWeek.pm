@@ -8,10 +8,6 @@ package TopTable::Schema::Result::FixturesWeek;
 
 TopTable::Schema::Result::FixturesWeek
 
-=head1 DESCRIPTION
-
-Created when a new season is created - the start date is taken as the first week, and the end date as the last week; each week in between will have an entry.
-
 =cut
 
 use strict;
@@ -176,8 +172,8 @@ __PACKAGE__->many_to_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-10-07 15:45:30
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:iCC3mJulAKt9yhFPiOY4uw
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-12-31 16:31:43
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:g3Ko/eu5/liERySgAEpbKw
 
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

@@ -614,6 +614,13 @@ If 1 the person can create match reports involving teams the user is associated 
   extra: {unsigned => 1}
   is_nullable: 0
 
+=head2 team_points_adjust
+
+  data_type: 'tinyint'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 0
+
 =head2 template_view
 
   data_type: 'tinyint'
@@ -1342,6 +1349,13 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_nullable => 0,
   },
+  "team_points_adjust",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
   "template_view",
   {
     data_type => "tinyint",
@@ -1588,8 +1602,8 @@ Composing rels: L</user_roles> -> user
 __PACKAGE__->many_to_many("users", "user_roles", "user");
 
 
-# Created by DBIx::Class::Schema::Loader v0.07049 @ 2022-03-17 03:06:05
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:rQdORDW9FGGzSh6T+RFgGA
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2025-01-01 16:12:41
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:4VUrbL53s9HQC8fgeLKlDw
 
 use HTML::Entities;
 use Set::Object;

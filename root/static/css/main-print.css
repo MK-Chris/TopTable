@@ -1101,6 +1101,7 @@ div.g-recaptcha {
 }
 
 .clear-fix {clear: both;}
+.spacer {margin-bottom: 20px;}
 html[xmlns] .clearfix, html[xmlns] .clear-fix {display: block;}
 * html .clearfix, * html .clear-fix {height: 1%;}
 

@@ -28,7 +28,6 @@ FOREACH cat IN cats;
   IF perm_fields.exists(cat);
     FOREACH perm_type IN perm_types;
       IF perm_fields.$cat.exists(perm_type);
-        SET perm_field = cat _ "_" _ perm_type;
         SET field_num = field_num + 1;
         
         IF perm_fields.$cat.$perm_type;

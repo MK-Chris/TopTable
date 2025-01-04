@@ -102,7 +102,6 @@ __PACKAGE__->table("tournament_round_teams");
 
   data_type: 'smallint'
   default_value: 0
-  extra: {unsigned => 1}
   is_nullable: 0
 
 =head2 games_played
@@ -407,12 +406,7 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
   },
   "table_points",
-  {
-    data_type => "smallint",
-    default_value => 0,
-    extra => { unsigned => 1 },
-    is_nullable => 0,
-  },
+  { data_type => "smallint", default_value => 0, is_nullable => 0 },
   "games_played",
   {
     data_type => "tinyint",
@@ -685,6 +679,21 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
+=head2 tournament_round_team_points_adjustments
+
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::TournamentRoundTeamPointsAdjustment>
+
+=cut
+
+__PACKAGE__->has_many(
+  "tournament_round_team_points_adjustments",
+  "TopTable::Schema::Result::TournamentRoundTeamPointsAdjustment",
+  { "foreign.tournament_round_team" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
 =head2 tournament_rounds_doubles
 
 Type: has_many
@@ -716,8 +725,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-11-24 23:59:16
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:JMcndlyhxvevYZsMavxUUg
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-12-31 16:31:44
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:ReTa21DCDyED2ukXmjv0Wg
 
 __PACKAGE__->add_columns(
     "last_updated",
