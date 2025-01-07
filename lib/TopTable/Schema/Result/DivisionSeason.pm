@@ -281,14 +281,6 @@ Get a list of all points adjustments for this division/season from the team_seas
 sub points_adjustments {
   my $self = shift;
   return $self->search_related("team_seasons")->search_related("team_points_adjustments");
-  # return $self->search_related("team_seasons")->search_related("team_points_adjustments", {}, {
-  #   join => {
-  #     team_seasons => [qw( team ),{
-  #       club_seasons => [qw( club )],
-  #     }],
-  #   },
-  #   order_by => {-asc => [qw( club_seasons.short_name team_seasons.name timestamp )]},
-  # });
 }
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

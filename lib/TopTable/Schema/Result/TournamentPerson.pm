@@ -712,8 +712,8 @@ __PACKAGE__->belongs_to(
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:78PhMuQUtfFVSPJBca+7gA
 
 __PACKAGE__->add_columns(
-    "last_updated",
-    { data_type => "datetime", timezone => "UTC", set_on_create => 1, set_on_update => 1, datetime_undef_if_invalid => 1, is_nullable => 1, },
+  "last_updated",
+  { data_type => "datetime", timezone => "UTC", set_on_create => 1, set_on_update => 1, datetime_undef_if_invalid => 1, is_nullable => 1, },
 );
 
 =head2 object_id
@@ -747,6 +747,36 @@ Get the name of the person from the person season object linked.
 sub object_name {
   my $self = shift;
   return $self->person_season->display_name;
+}
+
+=head2 team_season
+
+Shortcut to the person's team season, to make it act like a person_season.
+
+=cut
+
+sub team_season {
+  my $self = shift;
+  return $self->person_season->team_season;
+}
+
+=head2 available_matches
+
+Return the number of available matches (matches the person's team has played for active memberships; for loan / inactive memberships it's the number of matches played).
+
+=cut
+
+sub available_matches {
+  my ( $self ) = @_;
+  
+  if ( $self->person_season->team_membership_type->id eq "active" ) {
+    # Active - return the number of matches the person's team has played minus the number of cancelled matches
+    # (because a cancelled match still goes on the matches_played).
+    return $self->tournament_team->matches_played - $self->tournament_team->matches_cancelled;
+  } else {
+    # Loan / inactive, return matches played
+    return $self->matches_played;
+  }
 }
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

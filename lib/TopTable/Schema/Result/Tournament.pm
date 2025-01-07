@@ -717,6 +717,66 @@ sub find_round_by_number_or_url_key {
   }
 }
 
+=head2 get_team_by_url_key
+
+Return a team searched for by URL key if they are in the tournament.
+
+=cut
+
+sub get_team_by_url_key {
+  my $self = shift;
+  my ( $club_url_key, $team_url_key ) = @_;
+  return $self->find_related("tournament_teams", {
+    "club.url_key" => $club_url_key,
+    "team.url_key" => $team_url_key,
+  }, {
+    prefetch => {
+      team_season => [qw( division_season team ), {
+        club_season => [qw( club )],
+      }],
+    },
+  });
+}
+
+=head2 get_team_by_id
+
+Return a team searched for by ID if they are in the tournament.
+
+=cut
+
+sub get_team_by_id {
+  my $self = shift;
+  my ( $team_id ) = @_;
+  return $self->find_related("tournament_teams", {"tournament_teams.id" => $team_id}, {
+    prefetch => {
+      team_season => [qw( division_season team ), {
+        club_season => [qw( club )],
+      }],
+    },
+  });
+}
+
+=head2 get_person
+
+Return a person if they are in the tournament.
+
+=cut
+
+sub get_person {
+  my $self = shift;
+  my ( $person_id ) = @_;
+  return $self->find_related("tournament_people", {"person.id" => $person_id}, {
+    prefetch => {
+      tournament_team => {
+        team_season => [qw( division_season team ), {
+          club_season => [qw( club )],
+        }],
+      },
+      person_season => [qw( person )],
+    },
+  });
+}
+
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 __PACKAGE__->meta->make_immutable;
 1;

@@ -492,6 +492,28 @@ sub object_name {
   return "$person1_name & $person2_name";
 }
 
+=head2 object_name1
+
+Player 1 object name.
+
+=cut
+
+sub object_name1 {
+  my $self = shift;
+  return $self->tournament_pair->season_pair->person_season_person1_season_team->display_name;
+}
+
+=head2 object_name2
+
+Player 2 object name.
+
+=cut
+
+sub object_name2 {
+  my $self = shift;
+  return $self->tournament_pair->season_pair->person_season_person2_season_team->display_name;
+}
+
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 __PACKAGE__->meta->make_immutable;
 1;

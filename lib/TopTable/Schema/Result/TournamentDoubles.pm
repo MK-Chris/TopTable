@@ -608,9 +608,42 @@ Get the names of the doubles pairs separated by an ampersand: "Player One & Play
 sub object_name {
   my $self = shift;
   
-  my $person1_name = $self->person_season_person1_season_person1_team->display_name;
-  my $person2_name = $self->person_season_person2_season_person2_team->display_name;
+  my $person1_name = $self->season_pair->person_season_person1_season_team->display_name;
+  my $person2_name = $self->season_pair->person_season_person2_season_team->display_name;
   return "$person1_name & $person2_name";
+}
+
+=head2 object_name1
+
+Player 1 object name.
+
+=cut
+
+sub object_name1 {
+  my $self = shift;
+  return $self->season_pair->person_season_person1_season_team->display_name;
+}
+
+=head2 object_name2
+
+Player 2 object name.
+
+=cut
+
+sub object_name2 {
+  my $self = shift;
+  return $self->season_pair->person_season_person2_season_team->display_name;
+}
+
+=head2
+
+A simple way to get the URL keys for both pairs returned as an array.
+
+=cut
+
+sub url_keys {
+  my ( $self ) = @_;
+  return [$self->season_pair->person_season_person1_season_team->person->url_key, $self->season_pair->person_season_person2_season_team->person->url_key];
 }
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

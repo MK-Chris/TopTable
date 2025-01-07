@@ -1,6 +1,6 @@
 <form method="post" action="[% form_action %]">
 <fieldset>
-  <legend>[% c.maketext("matches.override-score.legend.details") %]</legend>
+  <legend>[% c.maketext("tables.adjustments.fields.points-adj") %]</legend>
   <div class="label-field-container">
     <label for="action">[% c.maketext("tables.adjustments.fields.action") %]</label>
     <div class="field-container">

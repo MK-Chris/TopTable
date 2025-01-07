@@ -1,3 +1,6 @@
+[%
+USE scalar;
+%]
 <div id="tabs">
   <ul>
     <li><a href="#table">[% c.maketext("events.tournaments.rounds.groups.heading.table") %]</a></li>
@@ -7,6 +10,7 @@
     <div class="table-wrap">
       <div class="table-layout table-layout-centre">
 [%
+SET points_adjustments = group.scalar.points_adjustments;
 INCLUDE "html/tables/table.ttkt" tourn_group = 1;
 -%]
       </div>

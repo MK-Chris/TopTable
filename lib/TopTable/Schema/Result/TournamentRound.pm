@@ -454,6 +454,17 @@ sub name {
   return defined($self->_name) ? encode_entities($self->_name) : $lang->maketext("tournament.round.default-name", $self->round_number);
 }
 
+=head2 entry_type
+
+Shortcut to $self->tournament->entry_type->id.
+
+=cut
+
+sub entry_type {
+  my $self = shift;
+  return $self->tournament->entry_type->id;
+}
+
 =head2 match_template
 
 Return either the team match template or the individual match template, depending on the entry type.  Return from the round, if it's specifically set, if not return from the tournament.
@@ -462,7 +473,7 @@ Return either the team match template or the individual match template, dependin
 
 sub match_template {
   my $self = shift;
-  my $entry_type = $self->tournament->entry_type->id;
+  my $entry_type = $self->entry_type;
   
   if ( $entry_type eq "team" ) {
     # Team match template
@@ -573,6 +584,55 @@ sub find_group_by_id_or_url_key {
   }
 }
 
+=head2 complete
+
+Work out if this round is complete, return 1 if so or 0 if not.
+
+=cut
+
+sub complete {
+  my $self = shift;
+  
+  my $round_number = $self->round_number;
+  my $tourn = $self->tournament;
+  my $entry_type = $self->entry_type;
+  
+  if ( $entry_type eq "teams" ) {
+    # Teams - work out if we have matches
+    my $matches = $self->search_related("team_matches");
+    
+    if ( $matches->count == 0 ) {
+      # No matches, not complete
+      return 0;
+    } else {
+      # Check if there's another round after this one
+      my $next_round = $tourn->find_related("tournament_rounds", {round_number => $round_number + 1});
+      
+      if ( defined($next_round) ) {
+        # There's a round after this one, so we're not complete
+        return 0;
+      }
+      
+      # If there's no Check all matches are complete
+      if ( $matches->search({complete => 0})->count == 0 ) {
+        # All matches are complete
+        return 1;
+      } else {
+        # Not all matches are complete, round is not complete
+        return 0;
+      }
+      
+      return 1;
+    }
+  } elsif ( $entry_type eq "singles" ) {
+    # To be completed
+    
+  } elsif ( $entry_type eq "doubles" ) {
+    # To be completed
+    
+  }
+}
+
 =head2 next_group_order
 
 Return the next group_order sequence number to be used.
@@ -647,7 +707,7 @@ sub create_or_edit_group {
   my $tournament = $self->tournament;
   my $event = $tournament->event_season->event;
   my $season = $tournament->event_season->season;
-  my $entry_type = $self->tournament->entry_type->id;
+  my $entry_type = $self->entry_type;
   
   if ( $season->complete ) {
     push(@{$response->{errors}}, $lang->maketext("tournaments.round.group.form.error.season-not-current"));

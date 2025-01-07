@@ -332,9 +332,9 @@ sub get_team_season :Private {
   if ( $specific_season and $entered ) {
     # Get the club_season too
     my $club_season = $team_season->club_season;
-    my $team_season_name = sprintf("%s %s", $club_season->short_name, $team_season->name);
+    my $team_season_name = $team_season->full_name;
     my $enc_team_season_name = encode_entities($team_season_name);
-    my $team_current_name = sprintf("%s %s", $team->club->short_name, $team->name);
+    my $team_current_name = sprintf("%s %s", $team->full_name);
     
     $c->add_status_messages({info => $c->maketext("teams.club.changed-notice", $enc_team_season_name, encode_entities($team->club->full_name), $c->uri_for_action("/clubs/view_current_season", [$team->club->url_key]))}) unless $club_season->club->id == $team->club->id;
     $c->add_status_messages({info => $c->maketext("teams.name.changed-notice", $enc_team_season_name, encode_entities($team_current_name))}) unless $team_season->name eq $team->name;
@@ -410,11 +410,6 @@ sub view_finalise :Private {
     ? $c->uri_for_action("/teams/view_specific_season_by_url_key", [$team->club->url_key, $team->url_key, $season->url_key])
     : $c->uri_for_action("/teams/view_current_season_by_url_key", [$team->club->url_key, $team->url_key]);
   
-  # Don't cache this page.
-  $c->response->header("Cache-Control" => "no-cache, no-store, must-revalidate");
-  $c->response->header("Pragma" => "no-cache");
-  $c->response->header("Expires" => 0);
-  
   # Set up the title links if we need them
   my @title_links = ();
   
@@ -459,7 +454,7 @@ sub view_finalise :Private {
   );
   
   my $points_adjustments = $team_season->points_adjustments;
-  # push(@ext_scripts, $c->uri_for("/static/script/teams/points-adjustment.js")) if $points_adjustments->count;
+  push(@ext_scripts, $c->uri_for("/static/script/teams/points-adjustment.js")) if $points_adjustments->count;
   
   # Set up the template to use
   $c->stash({

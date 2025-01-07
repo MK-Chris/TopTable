@@ -187,7 +187,13 @@ sub base_current_season :Chained("base") :PathPart("") :CaptureArgs(0) {
   my $season = $c->model("DB::Season")->get_current_or_last;
   
   if ( defined($season) ) {
-    $c->stash({season => $season});
+    my $enc_season_name = encode_entities($season->name);
+    
+    $c->stash({
+      season => $season,
+      enc_season_name => $enc_season_name,
+      subtitle2 => $enc_season_name,
+    });
     
     # Get the event's details for the season.
     $c->forward("get_event_season");
@@ -220,6 +226,7 @@ sub base_specific_season :Chained("base") :PathPart("seasons") :CaptureArgs(1) {
       season => $season,
       specific_season => 1,
       enc_season_name => $enc_season_name,
+      subtitle2 => $enc_season_name,
     });
     
     # Get the event's details for the season.
@@ -267,14 +274,14 @@ sub create :Local {
   my ($self, $c) = @_;
   
   # Check that we are authorised to create events
-  $c->forward( "TopTable::Controller::Users", "check_authorisation", ["event_create", $c->maketext("user.auth.create-events"), 1] );
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_create", $c->maketext("user.auth.create-events"), 1]);
   
   my $current_season = $c->model("DB::Season")->get_current;
   
   unless ( defined($current_season) ) {
     # Redirect and show the error
     $c->response->redirect($c->uri_for("/",
-                                {mid => $c->set_status_msg({error => $c->maketext("events.form.error.no-current-season", $c->maketext("admin.message.created"))})}));
+      {mid => $c->set_status_msg({error => $c->maketext("events.form.error.no-current-season", $c->maketext("admin.message.created"))})}));
     $c->detach;
     return;
   }
@@ -669,7 +676,9 @@ sub view_finalise :Private {
         $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
         $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
         $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
+        $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
         $table_view_js,
+        $c->uri_for("/static/script/tables/points-adjustments.js")
       );
       
       push(@external_styles,
@@ -677,6 +686,7 @@ sub view_finalise :Private {
         $c->uri_for("/static/css/datatables/fixedColumns.dataTables.min.css"),
         $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
         $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
+        $c->uri_for("/static/css/datatables/rowGroup.dataTables.min.css"),
       );
       
       my @groups = $rounds[0]->groups;
@@ -699,6 +709,495 @@ sub view_finalise :Private {
     external_scripts => \@external_scripts,
     external_styles => \@external_styles,
   });
+}
+
+=head2 teams_by_url_key_current_season, teams_by_id_current_season, teams_by_url_key_specific_season, teams_by_id_specific_season
+
+Get a team participant of this event for the current season or a specific season.  Forwards to the private teams routine.
+
+=cut
+
+sub teams_by_url_key_current_season :Chained("base_current_season") :PathPart("teams") :CaptureArgs(2) {
+  my ( $self, $c, $club_url_key, $team_url_key ) = @_;
+  
+  # Forward to the routine to get the team
+  $c->forward("teams_by_url_key", [$club_url_key, $team_url_key]);
+}
+
+sub teams_by_url_key_specific_season :Chained("base_specific_season") :PathPart("teams") :CaptureArgs(2) {
+  my ( $self, $c, $club_url_key, $team_url_key ) = @_;
+  
+  # Forward to the routine to get the team
+  $c->forward("teams_by_url_key", [$club_url_key, $team_url_key]);
+}
+
+sub teams_by_id_current_season :Chained("base_current_season") :PathPart("teams") :CaptureArgs(1) {
+  my ( $self, $c, $team_id ) = @_;
+  
+  # Forward to the routine to get the team
+  $c->forward("teams_by_id", [$team_id]);
+}
+
+sub teams_by_id_specific_season :Chained("base_specific_season") :PathPart("teams") :CaptureArgs(1) {
+  my ( $self, $c, $team_id ) = @_;
+  
+  # Forward to the routine to get the team
+  $c->forward("teams_by_id", [$team_id]);
+}
+
+sub teams_by_url_key :Private {
+  my ( $self, $c, $club_url_key, $team_url_key ) = @_;
+  my $tournament = $c->stash->{event_detail};
+  
+  # Get the team from the passed parameters
+  my $tourn_team = $tournament->get_team_by_url_key($club_url_key, $team_url_key);
+  
+  if ( defined($tourn_team) ) {
+    my $team_season = $tourn_team->team_season;
+    my $team = $team_season->team;
+    
+    $c->stash({
+      tourn_team => $tourn_team,
+      team_season => $team_season,
+      team => $team,
+    });
+    
+    $c->forward("teams");
+  } else {
+    # 404 - team doesn't exist or isn't in the tournament
+    $c->detach(qw(TopTable::Controller::Root default));
+    return;
+  }
+}
+
+sub teams_by_id :Private {
+  my ( $self, $c, $team_id ) = @_;
+  my $tournament = $c->stash->{event_detail};
+  
+  # Get the team from the passed parameters
+  my $tourn_team = $tournament->get_team_by_id($team_id);
+  
+  if ( defined($tourn_team) ) {
+    my $team_season = $tourn_team->team_season;
+    my $team = $team_season->team;
+    
+    $c->stash({
+      tourn_team => $tourn_team,
+      team_season => $team_season,
+      team => $team,
+    });
+    
+    $c->forward("teams");
+  } else {
+    # 404 - team doesn't exist or isn't in the tournament
+    $c->detach(qw(TopTable::Controller::Root default));
+    return;
+  }
+}
+
+=head2 teams
+
+Do the common stuff we need to do for teams - this is a private routine that's forwarded to from the teams_by_* routines.
+
+=cut
+
+sub teams :Private {
+  my ( $self, $c ) = @_;
+  my $event = $c->stash->{event};
+  my $tourn_team = $c->stash->{tourn_team};
+  my $team_season = $c->stash->{team_season};
+  my $team = $c->stash->{team};
+  my $enc_name = $c->stash->{enc_name};
+  my $enc_team_name = encode_entities($tourn_team->object_name);
+  my $season = $c->stash->{season};
+  my $specific_season = $c->stash->{specific_season};
+  
+  my $team_link = $specific_season
+    ? $c->uri_for_action("/teams/view_specific_season_by_url_key", [$team_season->club_season->club->url_key, $team->url_key, $season->url_key])
+    : $c->uri_for_action("/teams/view_current_season_by_url_key", [$team_season->club_season->club->url_key, $team->url_key]);
+  
+  $c->stash({
+    subtitle3 => $enc_team_name,
+    subtitle3_uri => {link => $team_link, title => $c->maketext("title.link.text.view-team-league", $enc_team_name)},
+    enc_team_name => $enc_team_name,
+  });
+}
+
+=head2 teams_view_by_url_key_current_season, teams_view_by_id_current_season, teams_view_by_url_key_specific_season, teams_view_by_id_specific_season
+
+Chained to the teams_by_* routines, this forwards to the teams_view routine.
+
+=cut
+
+sub teams_view_by_url_key_current_season :Chained("teams_by_url_key_current_season") :PathPart("") :Args(0) {
+  my ( $self, $c ) = @_;
+  $c->forward("teams_view");
+}
+
+sub teams_view_by_id_current_season :Chained("teams_by_id_current_season") :PathPart("") :Args(0) {
+  my ( $self, $c ) = @_;
+  $c->forward("teams_view");
+}
+
+sub teams_view_by_url_key_specific_season :Chained("teams_by_url_key_specific_season") :PathPart("") :Args(0) {
+  my ( $self, $c ) = @_;
+  $c->forward("teams_view");
+}
+
+sub teams_view_by_id_specific_season :Chained("teams_by_id_specific_season") :PathPart("") :Args(0) {
+  my ( $self, $c ) = @_;
+  $c->forward("teams_view");
+}
+
+=head2 teams_view_by_id
+
+Provide a path to view the team just by tournament team ID.  This is basically so we can more easily link to rounds from the event log with just an ID; it performs an HTTP redirect to the round_view_current_season (or round_view_specific_season) routine.
+
+=cut
+
+sub teams_view_by_id :Path("teams") :Args(1) {
+  my ( $self, $c, $tourn_team_id ) = @_;
+  
+  # Get the round
+  my $tourn_team = $c->model("DB::TournamentTeam")->find_with_tournament_and_season($tourn_team_id);
+  
+  # Check it's valid
+  if ( defined($tourn_team) ) {
+    # Round is valid, check if the season is current or not
+    my $season = $tourn_team->tournament->event_season->season;
+    my $event = $tourn_team->tournament->event_season->event;
+    my $team_season = $tourn_team->team_season;
+    my $team = $team_season->team;
+    my $club = $team_season->club_season->club;
+    my $uri = $season->complete
+      ? $c->uri_for_action("/events/teams_view_by_url_key_specific_season", [$event->url_key, $season->url_key, $club->url_key, $team->url_key])
+      : $c->uri_for_action("/events/teams_view_by_url_key_current_season", [$event->url_key, $club->url_key, $team->url_key]);
+    
+    $c->response->redirect($uri);
+    $c->detach;
+    return;
+  } else {
+    # Team invalid
+    $c->detach(qw(TopTable::Controller::Root default));
+  }
+}
+
+=head2 teams_view
+
+Show the page for viewing a team in the tournament.
+
+=cut
+
+sub teams_view :Private {
+  my ( $self, $c ) = @_;
+  my $event = $c->stash->{event};
+  my $tournament = $c->stash->{event_detail};
+  my $tourn_team = $c->stash->{tourn_team};
+  my $team_season = $c->stash->{team_season};
+  my $team = $c->stash->{team};
+  my $enc_name = $c->stash->{enc_name};
+  my $enc_team_name = $c->stash->{enc_team_name};
+  my $season = $c->stash->{season};
+  
+  my $canonical_uri = ( $season->complete )
+    ? $c->uri_for_action("/events/teams_view_by_url_key_specific_season", [$event->url_key, $season->url_key, $team_season->club_season->club->url_key, $team->url_key])
+    : $c->uri_for_action("/events/teams_view_by_url_key_current_season", [$event->url_key, $team_season->club_season->club->url_key, $team->url_key]);
+  
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", undef, 0]);
+  
+  # Get the matches for the fixtures tab
+  my $matches = $tourn_team->matches_for_team;
+  
+  # Add handicapped flag for template / JS if there are handicapped matches
+  my $handicapped = $matches->handicapped_matches->count ? "/hcp" : "";
+  
+  $c->forward("get_team_stats");
+  
+  # Set up the title links if we need them
+  my @title_links = ();
+  my $can_update = $tourn_team->can_update;
+  
+  if ( $c->stash->{authorisation}{event_edit} ) {
+    push(@title_links, {
+    image_uri => $c->uri_for("/static/images/icons/plus-minus-32.png"),
+    text => $c->maketext("admin.points-adjust-object-tourn", $enc_team_name, $enc_name),
+    link_uri => $c->uri_for_action("/events/teams_points_adjustment_by_url_key", [$event->url_key, $team->club->url_key, $team->url_key]),
+    }) if $can_update->{points};
+  }
+  
+  # Set up the template to use
+  $c->stash({
+    template => "html/events/tournaments/teams/view.ttkt",
+    view_online_display => sprintf("Viewing %s", $enc_name),
+    canonical_uri => $canonical_uri,
+    title_links => \@title_links,
+    external_scripts => [
+      $c->uri_for("/static/script/plugins/responsive-tabs/jquery.responsiveTabs.mod.js"),
+      $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
+      $c->uri_for("/static/script/standard/vertical-table.js"),
+      $c->uri_for("/static/script/teams$handicapped/view.js", {v => 5}),
+    ],
+    external_styles => [
+      $c->uri_for("/static/css/responsive-tabs/responsive-tabs.css"),
+      $c->uri_for("/static/css/responsive-tabs/style-jqueryui.css"),
+      $c->uri_for("/static/css/chosen/chosen.min.css"),
+      $c->uri_for("/static/css/datatables/dataTables.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/fixedColumns.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
+    ],
+    view_online_display => sprintf("Viewing %s", $enc_name),
+    view_online_link => 1,
+    no_filter => 1, # Don't include the averages filter form on a team averages view
+    matches => $matches,
+    handicapped => $handicapped,
+    points_adjustments => scalar $tourn_team->points_adjustments,
+  });
+}
+
+=head2 teams_points_adjustment_by_url_key, teams_points_adjustment_by_id
+
+Chained to the teams_by_* routines, this forwards to the teams_view routine.
+
+=cut
+
+sub teams_points_adjustment_by_url_key :Chained("teams_by_url_key_current_season") :PathPart("points-adjustment") :Args(0) {
+  my ( $self, $c ) = @_;
+  $c->forward("teams_points_adjustment");
+}
+
+sub teams_points_adjustment_by_id :Chained("teams_by_id_current_season") :PathPart("points-adjustment") :Args(0) {
+  my ( $self, $c ) = @_;
+  $c->forward("teams_points_adjustment");
+}
+
+=head2 teams_points_adjustment
+
+Show the form to adjust table points for a team in a group.  The form is submitted to the do_points_adjustment routine.
+
+=cut
+
+sub teams_points_adjustment :Private {
+  my ( $self, $c ) = @_;
+  my $event = $c->stash->{event};
+  my $tournament = $c->stash->{event_detail};
+  my $tourn_team = $c->stash->{tourn_team};
+  my $team_season = $c->stash->{team_season};
+  my $team = $c->stash->{team};
+  my $enc_name = $c->stash->{enc_name};
+  my $season = $c->stash->{season};
+  
+  # Check that we are authorised to adjust points
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.team-points-adjust-tourn"), 1]);
+  
+  # Don't cache this page.
+  $c->response->header("Cache-Control" => "no-cache, no-store, must-revalidate");
+  $c->response->header("Pragma" => "no-cache");
+  $c->response->header("Expires" => 0);
+  
+  # Setup the template and stash the values we need to show the points adjustment form
+  $c->stash({
+    template => "html/teams/points-adjustment.ttkt",
+    external_scripts => [
+      $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
+      $c->uri_for("/static/script/standard/chosen.js"),
+      $c->uri_for("/static/script/teams/points-adjustment.js"),
+    ],
+    external_styles => [
+      $c->uri_for("/static/css/chosen/chosen.min.css"),
+    ],
+    form_action => $c->uri_for_action("/events/teams_do_points_adjustment_by_url_key", [$event->url_key, $team->club->url_key, $team->url_key]),
+    view_online_display => "Adjusting league points for $enc_name",
+    view_online_link => 0,
+    subtitle2 => $c->maketext("admin.points-adjustment"),
+  });
+  
+  # Breadcrumbs
+  push(@{$c->stash->{breadcrumbs}}, {
+    path => $c->uri_for_action("/events/teams_points_adjustment_by_url_key", [$team->club->url_key, $team->url_key]),
+    label => $c->maketext("admin.points-adjustment"),
+  });
+}
+
+=head2 teams_do_points_adjustment_by_url_key, teams_do_points_adjustment_by_id
+
+Chained to the teams_by_* routines, this forwards to the teams_view routine.
+
+=cut
+
+sub teams_do_points_adjustment_by_url_key :Chained("teams_by_url_key_current_season") :PathPart("do-points-adjustment") :Args(0) {
+  my ( $self, $c ) = @_;
+  $c->forward("teams_do_points_adjustment");
+}
+
+sub teams_do_points_adjustment_by_id :Chained("teams_by_id_current_season") :PathPart("do-points-adjustment") :Args(0) {
+  my ( $self, $c ) = @_;
+  $c->forward("teams_do_points_adjustment");
+}
+
+=head2 teams_do_points_adjustment
+
+Show the form to adjust table points for a team in a group.  The form is submitted to the do_points_adjustment routine.
+
+=cut
+
+sub teams_do_points_adjustment :Private {
+  my ( $self, $c ) = @_;
+  
+  # Check that we are authorised to adjust points
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.team-points-adjust-tourn"), 1]);
+  $c->detach("process_form", [qw( team points-adjustment )]);
+}
+
+=head2 get_team_stats
+
+Lookup the team's stats (averages, etc) for this tournament.
+
+=cut
+
+sub get_team_stats :Private {
+  my ( $self, $c ) = @_;
+  my $tournament = $c->stash->{event_detail};
+  my $tourn_team = $c->stash->{tourn_team};
+  my $team_season = $c->stash->{team_season};
+  my $team = $c->stash->{team};
+  my $specific_season = $c->stash->{specific_season};
+  
+  # Get the club_season too
+  my $club_season = $team_season->club_season;
+  my $team_season_name = $team_season->full_name;
+  my $enc_team_season_name = encode_entities($team_season_name);
+  my $team_current_name = $team->full_name;
+  
+  $c->add_status_messages({info => $c->maketext("teams.club.changed-notice", $enc_team_season_name, encode_entities($team->club->full_name), $c->uri_for_action("/clubs/view_current_season", [$team->club->url_key]))}) unless $club_season->club->id == $team->club->id;
+  $c->add_status_messages({info => $c->maketext("teams.name.changed-notice", $enc_team_season_name, encode_entities($team_current_name))}) unless $team_season->name eq $team->name;
+  $c->add_status_messages({info => $c->maketext("clubs.name.changed-notice", encode_entities($club_season->full_name), encode_entities($club_season->short_name), encode_entities($club_season->club->full_name), encode_entities($club_season->club->short_name))}) if $club_season->full_name ne $club_season->club->full_name or $club_season->short_name ne $club_season->club->short_name;
+  
+  # Grab the singles averages and check if anyone is set with the noindex flag
+  my $singles_averages = $tourn_team->singles_averages;
+  $c->stash->{noindex} = 1 if $singles_averages->noindex_set(1)->count;
+  
+  # Stash singles averages (already looked up) and doubles individual / pairs averages
+  $c->stash({
+    singles_averages => $singles_averages,
+    doubles_individual_averages => scalar $tourn_team->doubles_individual_averages({
+      logger => sub{ my $level = shift; $c->log->$level( @_ ); },
+      criteria_field => "played",
+      operator => ">",
+      criteria => 0,
+    }),
+    doubles_pair_averages => scalar $tourn_team->doubles_pairs_averages({
+      logger => sub{ my $level = shift; $c->log->$level( @_ ); },
+    }),
+  });
+}
+
+=head2 people_current_season, people_specific_season
+
+Get a person participant of this event for the current season or a specific season.  Forwards to the private people routine.
+
+=cut
+
+sub people_current_season :Chained("base_current_season") :PathPart("people") :CaptureArgs(1) {
+  my ( $self, $c, $person_url_key ) = @_;
+  
+  # Forward to the routine to get the person
+  $c->forward("get_people", [$person_url_key]);
+}
+
+sub people_specific_season :Chained("base_specific_season") :PathPart("people") :CaptureArgs(1) {
+  my ( $self, $c, $person_url_key ) = @_;
+  
+  # Forward to the routine to get the person
+  $c->forward("get_people", [$person_url_key]);
+}
+
+=head2 get_people
+
+Do the person lookup.
+
+=cut
+
+sub get_people :Private {
+  my ( $self, $c, $person_url_key ) = @_;
+  my $tournament = $c->stash->{event_detail};
+  
+  # Get the team from the passed parameters
+  my $tourn_person = $tournament->get_person($person_url_key);
+  
+  if ( defined($tourn_person) ) {
+    my $person_season = $tourn_person->team_season;
+    my $person = $person_season->person;
+    
+    $c->stash({
+      tourn_person => $tourn_person,
+      person_season => $person_season,
+      person => $person,
+    });
+    
+    $c->forward("people");
+  } else {
+    # 404 - team doesn't exist or isn't in the tournament
+    $c->detach(qw(TopTable::Controller::Root default));
+    return;
+  }
+}
+
+=head2 people
+
+Do the common stuff we need to do for people - this is a private routine that's forwarded to from the people_by_* routines.
+
+=cut
+
+sub people :Private {
+  my ( $self, $c ) = @_;
+  my $event = $c->stash->{event};
+  my $tourn_person = $c->stash->{tourn_person};
+  my $person_season = $c->stash->{person_season};
+  my $person = $c->stash->{person};
+  my $enc_name = $c->stash->{enc_name};
+  my $enc_person_name = encode_entities($tourn_person->object_name);
+  my $season = $c->stash->{season};
+  my $specific_season = $c->stash->{specific_season};
+  
+  my $team_link = $specific_season
+    ? $c->uri_for_action("/people/view_specific_season", [$person->url_key, $season->url_key])
+    : $c->uri_for_action("/people/view_current_season", [$person->url_key]);
+  
+  $c->stash({
+    subtitle3 => $enc_person_name,
+    subtitle3_uri => {link => $team_link, title => $c->maketext("title.link.text.view-person-league", $enc_person_name)},
+  });
+}
+
+=head2 people_view_current_season, people_view_specific_season
+
+Chained to the [ep[;e]]_by_* routines, this forwards to the people_view routine.
+
+=cut
+
+sub people_view_current_season :Chained("people_current_season") :PathPart("") :Args(0) {
+  my ( $self, $c ) = @_;
+  $c->forward("people_view");
+}
+
+sub people_view_specific_season :Chained("people_specific_season") :PathPart("") :Args(0) {
+  my ( $self, $c ) = @_;
+  $c->forward("people_view");
+}
+
+=head2 people_view
+
+Show the page for viewing a person in the tournament.
+
+=cut
+
+sub people_view {
+  my ( $self, $c ) = @_;
 }
 
 =head2 rounds_current_season, rounds_specific_season
@@ -870,7 +1369,9 @@ sub round_view :Private {
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
       $table_view_js,
+      $c->uri_for("/static/script/tables/points-adjustments.js")
     );
     
     @external_styles = (
@@ -878,6 +1379,7 @@ sub round_view :Private {
       $c->uri_for("/static/css/datatables/fixedColumns.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/rowGroup.dataTables.min.css"),
     );
     
     $c->stash({
@@ -1172,6 +1674,31 @@ sub group_view :Private {
   # Add handicapped flag for template / JS if there are handicapped matches
   my $handicapped = $matches->handicapped_matches->count ? "/hcp" : "";
   
+  my @ext_scripts = (
+    $c->uri_for("/static/script/plugins/responsive-tabs/jquery.responsiveTabs.mod.js"),
+    $c->uri_for("/static/script/standard/responsive-tabs.js"),
+    $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
+    $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
+    $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
+    $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
+    $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
+    $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
+    $table_view_js,
+    $c->uri_for("/static/script/fixtures-results/view$handicapped/group-weeks-ordering-no-comp.js"),
+    $c->uri_for("/static/script/tables/points-adjustments.js")
+  );
+  
+  my @ext_styles = (
+    $c->uri_for("/static/css/responsive-tabs/responsive-tabs.css"),
+    $c->uri_for("/static/css/responsive-tabs/style-jqueryui.css"),
+    $c->uri_for("/static/css/chosen/chosen.min.css"),
+    $c->uri_for("/static/css/datatables/dataTables.dataTables.min.css"),
+    $c->uri_for("/static/css/datatables/fixedColumns.dataTables.min.css"),
+    $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
+    $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
+    $c->uri_for("/static/css/datatables/rowGroup.dataTables.min.css"),
+  );
+  
   $c->stash({
     template => "html/events/tournaments/rounds/groups/view.ttkt",
     title_links => \@title_links,
@@ -1183,28 +1710,8 @@ sub group_view :Private {
     match_template => $match_template,
     matches => $matches,
     handicapped => $handicapped,
-    external_scripts => [
-      $c->uri_for("/static/script/plugins/responsive-tabs/jquery.responsiveTabs.mod.js"),
-      $c->uri_for("/static/script/standard/responsive-tabs.js"),
-      $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
-      $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
-      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
-      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
-      $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
-      $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
-      $table_view_js,
-      $c->uri_for("/static/script/fixtures-results/view$handicapped/group-weeks-ordering-no-comp.js"),
-    ],
-    external_styles => [
-      $c->uri_for("/static/css/responsive-tabs/responsive-tabs.css"),
-      $c->uri_for("/static/css/responsive-tabs/style-jqueryui.css"),
-      $c->uri_for("/static/css/chosen/chosen.min.css"),
-      $c->uri_for("/static/css/datatables/dataTables.dataTables.min.css"),
-      $c->uri_for("/static/css/datatables/fixedColumns.dataTables.min.css"),
-      $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
-      $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
-      $c->uri_for("/static/css/datatables/rowGroup.dataTables.min.css"),
-    ],
+    external_scripts => \@ext_scripts,
+    external_styles => \@ext_styles,
   });
 }
 
@@ -1917,6 +2424,7 @@ sub process_form :Private {
   my $tournament = $c->stash->{event_detail};
   my $round = $c->stash->{round};
   my $group = $c->stash->{group};
+  my $tourn_team = $c->stash->{tourn_team};
   my $log_obj;
   my ( @field_names, @processed_field_names ) = ();
   my $response = {}; # Store the response from the form processing
@@ -1982,6 +2490,16 @@ sub process_form :Private {
         logger => sub{ my $level = shift; $c->log->$level( @_ ); }
       });
     }
+  } elsif ( $type eq "team" ) {
+    if ( $action eq "points-adjustment" ) {
+      @field_names = qw( action points_adjustment reason );
+      @processed_field_names = @field_names;
+      
+      $response = $tourn_team->adjust_points({
+        logger => sub{ my $level = shift; $c->log->$level( @_ ); },
+        map {$_ => $c->req->params->{$_}} @field_names, # All the fields from the form - put this last because otherwise the following elements are seen as part of the map
+      });
+    }
   }
   
   # Set the status messages we need to show on redirect
@@ -2012,6 +2530,15 @@ sub process_form :Private {
       $obj_name = sprintf("%s %s", $event->name, $group->name);
       %log_ids = (id => $group->id);
       $redirect_uri = $c->uri_for_action("/events/group_view_current_season", [$event->url_key, $round->url_key, $group->url_key], {mid => $mid});
+    } elsif ( $type eq "team" ) {
+      $obj_type = "tourn-team";
+      $log_obj = $tourn_team;
+      $obj_name = sprintf("%s (%s)", $tourn_team->object_name, $event->name);
+      %log_ids = (id => $tourn_team->id);
+      my $team_season = $tourn_team->team_season;
+      my $team = $team_season->team;
+      my $club = $team->club;
+      $redirect_uri = $c->uri_for_action("/events/teams_view_by_url_key_current_season", [$event->url_key, $club->url_key, $team->url_key], {mid => $mid});
     }
     
     # Completed, so we log an event
@@ -2020,6 +2547,7 @@ sub process_form :Private {
       $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["team-match", "create", $response->{match_ids}, $response->{match_names}]);
     } else {
       # Everything else is related to the event, group or round
+      $c->log->debug("Logging event for $obj_type, $action");
       $c->forward("TopTable::Controller::SystemEventLog", "add_event", [$obj_type, $action, \%log_ids, $obj_name]);
     }
   } else {
@@ -2039,6 +2567,17 @@ sub process_form :Private {
         $redirect_uri = $c->uri_for_action("/events/group_grid_positions", [$event->url_key, $round->url_key, $group->url_key], {mid => $mid});
       } elsif ( $action eq "matches" ) {
         $redirect_uri = $c->uri_for_action("/events/group_create_matches", [$event->url_key, $round->url_key, $group->url_key], {mid => $mid});
+      }
+    } elsif ( $type eq "team" ) {
+      if ( $action eq "points-adjustment" ) {
+        my $team_season = $tourn_team->team_season;
+        my $team = $team_season->team;
+        my $club = $team->club;
+        if ( $response->{can_complete} ) {
+          $redirect_uri = $c->uri_for_action("/events/teams_points_adjustment_by_url_key", [$event->url_key, $club->url_key, $team->url_key], {mid => $mid});
+        } else {
+          $redirect_uri = $c->uri_for_action("/events/teams_view_by_url_key_current_season", [$event->url_key, $club->url_key, $team->url_key], {mid => $mid});
+        }
       }
     }
     

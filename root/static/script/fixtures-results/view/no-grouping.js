@@ -13,7 +13,7 @@ $(document).ready(function() {
     fixedHeader: true,
     searching: true,
     ordering: true,
-    order: [[1, "asc"]],
+    order: [[3, "asc"]],
     columnDefs: [{
       // Day of week sortable, date sortable, competition sortable
       visible: false,

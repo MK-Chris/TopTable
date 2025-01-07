@@ -779,7 +779,7 @@ sub matches_for_team {
   my $schema = $self->result_source->schema;
   
   my ( $params ) = @_;
-  my $team = $params->{team};
+  my $team = $self->tournament_team->team_season->team;
   my $started = $params->{started};
   my $complete = $params->{complete};
   my $cancelled = $params->{cancelled};
@@ -812,6 +812,117 @@ sub matches_for_team {
   return $schema->resultset("TeamMatch")->search(\@where, {
     join => [qw( tournament_round )]
   });
+}
+
+=head2 adjust_points
+
+Perform some error checking and then adjust the team's points.
+
+=cut
+
+sub adjust_points {
+  my $self = shift;
+  my ( $params ) = @_;
+  
+  # Setup schema / logging
+  my $logger = $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  
+  # Get the fields passed in
+  my $action = $params->{action};
+  my $points_adjustment = $params->{points_adjustment} || 0;
+  my $reason = $params->{reason} || undef;
+  
+  my $response = {
+    errors => [],
+    warnings => [],
+    info => [],
+    success => [],
+    completed => 0,
+    can_complete => 0, # Default to 0, we'll recreate that key in the overwritten $response from the team season if we get that far.
+    fields => {
+      # Action and reason don't need sanitising before adding to the fields hash; points adjustment does
+      action => $action,
+      reason => $reason,
+    },
+  };
+  
+  # Check we can override scores for this match, if not return with the error logged
+  my %can = $self->tournament_team->can_update("points");
+  
+  unless ( $can{allowed} ) {
+    push(@{$response->{errors}}, $can{reason});
+    return $response;
+  }
+  
+  # If we get this far, we can complete
+  $response->{can_complete} = 1;
+  
+  # Check our fields
+  push(@{$response->{errors}}, $lang->maketext("tournament.team.update.points.error.invalid-action")) unless defined($action) and ($action eq "award" or $action eq "deduct");
+  
+  if ( $points_adjustment =~ m/^[1-9]+$/ ) {
+    # Points adjustment is fine, set it into the fields to be passed back
+    $response->{fields}{points_adjustment} = $points_adjustment;
+  } else {
+    # Points adjustment is invalid
+    push(@{$response->{errors}}, $lang->maketext("tournament.team.update.error.invalid-points-adjustment"));
+  }
+  
+  push(@{$response->{errors}}, $lang->maketext("tournament.team.update.error.blank-reason")) unless defined($reason) and length($reason) > 0;
+  
+  if ( scalar @{$response->{errors}} == 0 ) {
+    # No errors, do the update
+    # First get the ranking template in use
+    my $group = $self->tournament_group;
+    my $round = $self->tournament_round;
+    my $rank_template = $round->rank_template;
+    my $match_template = $round->match_template;
+    
+    # Now get the fields we're going to update, based on the ranking template
+    my ( $points_field, $points_against_field, $diff_field );
+    if ( $rank_template->assign_points ) {
+      $points_field = "table_points";
+    } else {
+      if ( $match_template->winner_type->id eq "games" ) {
+        $points_field = "games_won";
+        $points_against_field = "games_lost";
+        $diff_field = "games_difference";
+      } else {
+        $points_field = "points_won";
+        $points_against_field = "points_lost";
+        $diff_field = "points_difference";
+      }
+    }
+    
+    # Convert points adjustment to a minus if the action is deduct
+    $points_adjustment *= -1 if $action eq "deduct";
+    
+    # Transaction so if we fail, nothing is updated
+    my $transaction = $schema->txn_scope_guard;
+    
+    # Create a new points adjustment record
+    my $rec = $self->create_related("tournament_round_team_points_adjustments", {
+      adjustment => $points_adjustment,
+      reason => $reason,
+    });
+    
+    # Update the team season
+    $self->$points_field($self->$points_field + $points_adjustment);
+    $self->$diff_field($self->$points_field - $self->$points_against_field) if defined($diff_field);
+    $self->update;
+    
+    # Commit the transaction
+    $transaction->commit;
+    
+    $response->{completed} = 1;
+    push(@{$response->{success}}, $lang->maketext("tournament.team.update.success"));
+  }
+  
+  return $response;
 }
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

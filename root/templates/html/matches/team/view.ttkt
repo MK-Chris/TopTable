@@ -29,9 +29,21 @@ SET away_team = match.team_season_away_team_season;
 -%]
 <div id="tabs">
   <ul>
+[%
+IF !match.cancelled;
+-%]
     <li><a href="#games">[% c.maketext("matches.heading.games") %]</a></li>
+[%
+END;
+-%]
     <li><a href="#teams">[% c.maketext("matches.heading.team-summaries") %]</a></li>
+[%
+IF !match.cancelled;
+-%]
     <li><a href="#players">[% c.maketext("matches.heading.player-summaries") %]</a></li>
+[%
+END;
+-%]
     <li><a href="#match-details">[% c.maketext("matches.heading.details") %]</a></li>
 [%
 IF reports;
@@ -41,17 +53,10 @@ IF reports;
 END;
 -%]
   </ul>
-  
+[%
+IF !match.cancelled;
+-%]
   <div id="games">
-[%
-IF match.cancelled;
--%]
-    <div class="list-item">
-      [% c.maketext("matches.message.info.cancelled") %]
-    </div>
-[%
-ELSE;
--%]
     <div class="table-wrap">
       <div class="table-layout table-layout-centre">
         <table id="games-table" class="stripe hover order-column row-border" style="width: 100%;">
@@ -319,26 +324,54 @@ ELSE;
 [%
   END;
 -%]
-      </div>
-    </div>
+      </div><!-- .table-layout -->
+    </div><!-- .table-wrap -->
+  </div><!-- #games -->
 [%
-END; # END for IF match.cancelled
+# END for IF !match.cancelled
+END;
 -%]
-  </div>
   <div id="teams">
 [%
-IF season.complete;
-  # Specific season player links
-  SET home_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [home_team.team.club.url_key, home_team.team.url_key, season.url_key]);
-  SET away_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [away_team.team.club.url_key, away_team.team.url_key, season.url_key]);
-ELSE;
-  # Current season player links
-  SET home_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [home_team.club_season.club.url_key, home_team.team.url_key]);
-  SET away_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [away_team.club_season.club.url_key, away_team.team.url_key]);
-END;
-
+# Encode the team names for HTML
 home_team_html = team_seasons.home.full_name | html_entity;
 away_team_html = team_seasons.away.full_name | html_entity;
+
+IF match.tournament_round;
+  SET tourn_round = match.tournament_round;
+  SET tourn = tourn_round.tournament;
+  SET event = tourn.event_season.event;
+  event_html = event.name | html_entity;
+  SET home_uri_title = c.maketext("matches.link-title.team-tournament", home_team_html, event_html);
+  SET away_uri_title = c.maketext("matches.link-title.team-tournament", away_team_html, event_html);
+  
+  IF season.complete;
+    # Specific season team links
+    # Tournament match, link to the team's tournament page
+    SET home_uri = c.uri_for_action("/events/teams_view_by_url_key_specific_season", [event.url_key, season.url_key, home_team.team.club.url_key, home_team.team.url_key]);
+    SET away_uri = c.uri_for_action("/events/teams_view_by_url_key_specific_season", [event.url_key, season.url_key, away_team.team.club.url_key, away_team.team.url_key]);
+  ELSE;
+    # League match, link to the team's main page
+    SET home_uri = c.uri_for_action("/events/teams_view_by_url_key_current_season", [event.url_key, home_team.team.club.url_key, home_team.team.url_key]);
+    SET away_uri = c.uri_for_action("/events/teams_view_by_url_key_current_season", [event.url_key, away_team.team.club.url_key, away_team.team.url_key]);
+  END;
+ELSE;
+  # Current season team links
+  SET home_uri_title = c.maketext("matches.link-title.team-league", home_team_html);
+  SET away_uri_title = c.maketext("matches.link-title.team-league", away_team_html);
+  
+  IF season.complete;
+    # Specific season team links
+    # Tournament match, link to the team's tournament page
+    SET home_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [home_team.team.club.url_key, home_team.team.url_key, season.url_key]);
+    SET away_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [away_team.team.club.url_key, away_team.team.url_key, season.url_key]);
+  ELSE;
+    # League match, link to the team's main page
+    SET home_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [home_team.team.club.url_key, home_team.team.url_key]);
+    SET away_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [away_team.team.club.url_key, away_team.team.url_key]);
+  END;
+END;
+
 -%]
     <div class="table-wrap">
       <div class="table-layout table-layout-centre">
@@ -354,14 +387,14 @@ away_team_html = team_seasons.away.full_name | html_entity;
           </thead>
           <tbody>
             <tr>
-              <td data-label="[% c.maketext("matches.summaries.heading.team") %]"><a href="[% home_uri %]">[% home_team_html %]</a></td>
+              <td data-label="[% c.maketext("matches.summaries.heading.team") %]"><a title="[% home_uri_title %]" href="[% home_uri %]">[% home_team_html %]</a></td>
               <td class="numeric">[% match.home_team_legs_won %]</td>
               <td class="numeric">[% match.home_team_average_leg_wins | format('%.2f') %]</td>
               <td class="numeric">[% match.home_team_points_won %]</td>
               <td class="numeric">[% match.home_team_average_point_wins | format('%.2f') %]</td>
             </tr>
             <tr>
-              <td data-label="[% c.maketext("matches.summaries.heading.team") %]"><a href="[% away_uri %]">[% away_team_html %]</a></td>
+              <td data-label="[% c.maketext("matches.summaries.heading.team") %]"><a title="[% away_uri_title %]" href="[% away_uri %]">[% away_team_html %]</a></td>
               <td class="numeric">[% match.away_team_legs_won %]</td>
               <td class="numeric">[% match.away_team_average_leg_wins | format('%.2f') %]</td>
               <td class="numeric">[% match.away_team_points_won %]</td>
@@ -372,7 +405,9 @@ away_team_html = team_seasons.away.full_name | html_entity;
       </div>
     </div>
   </div>
-  
+[%
+IF !match.cancelled;
+-%]
   <div id="players">
     <div class="table-wrap">
       <div class="table-layout table-layout-centre">
@@ -393,43 +428,43 @@ away_team_html = team_seasons.away.full_name | html_entity;
           </thead>
           <tbody>
 [%
-SET loan_players_notices = [];
-WHILE (player = home_players.next);
-  SET person_season = player.player.person_seasons.first;
-  display_name_html = person_season.display_name | html_entity;
-  
-  # We need the below if so we don't get blank rows when a player is missing
-  IF player.player.id;
-    IF season.complete;
-      SET person_uri = c.uri_for_action("/people/view_specific_season", [player.player.url_key, season.url_key]);
-    ELSE;
-      SET person_uri = c.uri_for_action("/people/view_current_season", [player.player.url_key]);
-    END;
+  SET loan_players_notices = [];
+  WHILE (player = home_players.next);
+    SET person_season = player.player.person_seasons.first;
+    display_name_html = person_season.display_name | html_entity;
     
-    IF player.loan_team.id;
-      SET loaning_team = player.loan_team_season;
-      SET loaning_division = loaning_team.division_season.division;
-      SET player_class = ' class="loan-player"';
-      SET numeric_class = ' class="loan-player numeric"';
-      
+    # We need the below if so we don't get blank rows when a player is missing
+    IF player.player.id;
       IF season.complete;
-        SET loaning_team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [loaning_team.club_season.club.url_key, player.loan_team.url_key, season.url_key]);
-        SET loaning_division_uri = c.uri_for_action("/league-tables/view_specific_season", [loaning_division.url_key, season.url_key]);
+        SET person_uri = c.uri_for_action("/people/view_specific_season", [player.player.url_key, season.url_key]);
       ELSE;
-        SET loaning_team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [loaning_team.club_season.club.url_key, player.loan_team.url_key]);
-        SET loaning_division_uri = c.uri_for_action("/league-tables/view_current_season", [loaning_division.url_key]);
+        SET person_uri = c.uri_for_action("/people/view_current_season", [player.player.url_key]);
       END;
-        loaning_team_html = loaning_team.full_name | html_entity;
-        loaning_division_html = loaning_division.name | html_entity;
       
-      loan_players_notices.push(c.maketext("matches.text.loan-player-team", display_name_html, loaning_team_html, loaning_division_html, loaning_team_uri, loaning_division_uri));
-    ELSIF person_season.team_membership_type.id == "inactive";
-      SET player_class = ' class="inactive-player"';
-      SET numeric_class = ' class="inactive-player numeric"';
-    ELSE;
-      SET player_class = '';
-      SET numeric_class = ' class="numeric"';
-    END;
+      IF player.loan_team.id;
+        SET loaning_team = player.loan_team_season;
+        SET loaning_division = loaning_team.division_season.division;
+        SET player_class = ' class="loan-player"';
+        SET numeric_class = ' class="loan-player numeric"';
+        
+        IF season.complete;
+          SET loaning_team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [loaning_team.club_season.club.url_key, player.loan_team.url_key, season.url_key]);
+          SET loaning_division_uri = c.uri_for_action("/league-tables/view_specific_season", [loaning_division.url_key, season.url_key]);
+        ELSE;
+          SET loaning_team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [loaning_team.club_season.club.url_key, player.loan_team.url_key]);
+          SET loaning_division_uri = c.uri_for_action("/league-tables/view_current_season", [loaning_division.url_key]);
+        END;
+          loaning_team_html = loaning_team.full_name | html_entity;
+          loaning_division_html = loaning_division.name | html_entity;
+        
+        loan_players_notices.push(c.maketext("matches.text.loan-player-team", display_name_html, loaning_team_html, loaning_division_html, loaning_team_uri, loaning_division_uri));
+      ELSIF person_season.team_membership_type.id == "inactive";
+        SET player_class = ' class="inactive-player"';
+        SET numeric_class = ' class="inactive-player numeric"';
+      ELSE;
+        SET player_class = '';
+        SET numeric_class = ' class="numeric"';
+      END;
 -%]
             <tr>
               <td><a href="[% home_uri %]">[% home_team_html %]</a>
@@ -444,45 +479,45 @@ WHILE (player = home_players.next);
               <td[% numeric_class %]>[% player.average_point_wins | format('%.2f') %]</td>
             </tr>
 [%
-  END;
-END;
-WHILE (player = away_players.next);
-  SET person_season = player.player.person_seasons.first;
-  display_name_html = person_season.display_name | html_entity;
-  
-  # We need the below if so we don't get blank rows when a player is missing
-  IF player.player.id;
-    IF season.complete;
-      SET person_uri = c.uri_for_action("/people/view_specific_season", [player.player.url_key, season.url_key]);
-    ELSE;
-      SET person_uri = c.uri_for_action("/people/view_current_season", [player.player.url_key]);
     END;
+  END;
+  WHILE (player = away_players.next);
+    SET person_season = player.player.person_seasons.first;
+    display_name_html = person_season.display_name | html_entity;
     
-    IF player.loan_team.id;
-      SET loaning_team = player.loan_team_season;
-      SET loaning_division = loaning_team.division_season.division;
-      SET player_class = ' class="loan-player"';
-      SET numeric_class = ' class="loan-player numeric"';
-      
+    # We need the below if so we don't get blank rows when a player is missing
+    IF player.player.id;
       IF season.complete;
-        SET loaning_team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [loaning_team.club_season.club.url_key, player.loan_team.url_key, season.url_key]);
-        SET loaning_division_uri = c.uri_for_action("/league-tables/view_specific_season", [loaning_division.url_key, season.url_key]);
+        SET person_uri = c.uri_for_action("/people/view_specific_season", [player.player.url_key, season.url_key]);
       ELSE;
-        SET loaning_team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [loaning_team.club_season.club.url_key, player.loan_team.url_key]);
-        SET loaning_division_uri = c.uri_for_action("/league-tables/view_current_season", [loaning_division.url_key]);
+        SET person_uri = c.uri_for_action("/people/view_current_season", [player.player.url_key]);
       END;
       
-      loaning_team_html = loaning_team.full_name | html_entity;
-      loaning_division_html = loaning_division.name | html_entity;
-      
-      loan_players_notices.push(c.maketext("matches.text.loan-player-team", display_name_html, loaning_team_html, loaning_division_html, loaning_team_uri, loaning_division_uri));
-    ELSIF person_season.team_membership_type.id == "inactive";
-      SET player_class = ' class="inactive-player"';
-      SET numeric_class = ' class="inactive-player numeric"';
-    ELSE;
-      SET player_class = '';
-      SET numeric_class = ' class="numeric"';
-    END;
+      IF player.loan_team.id;
+        SET loaning_team = player.loan_team_season;
+        SET loaning_division = loaning_team.division_season.division;
+        SET player_class = ' class="loan-player"';
+        SET numeric_class = ' class="loan-player numeric"';
+        
+        IF season.complete;
+          SET loaning_team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [loaning_team.club_season.club.url_key, player.loan_team.url_key, season.url_key]);
+          SET loaning_division_uri = c.uri_for_action("/league-tables/view_specific_season", [loaning_division.url_key, season.url_key]);
+        ELSE;
+          SET loaning_team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [loaning_team.club_season.club.url_key, player.loan_team.url_key]);
+          SET loaning_division_uri = c.uri_for_action("/league-tables/view_current_season", [loaning_division.url_key]);
+        END;
+        
+        loaning_team_html = loaning_team.full_name | html_entity;
+        loaning_division_html = loaning_division.name | html_entity;
+        
+        loan_players_notices.push(c.maketext("matches.text.loan-player-team", display_name_html, loaning_team_html, loaning_division_html, loaning_team_uri, loaning_division_uri));
+      ELSIF person_season.team_membership_type.id == "inactive";
+        SET player_class = ' class="inactive-player"';
+        SET numeric_class = ' class="inactive-player numeric"';
+      ELSE;
+        SET player_class = '';
+        SET numeric_class = ' class="numeric"';
+      END;
 -%]
 
             <tr>
@@ -498,42 +533,45 @@ WHILE (player = away_players.next);
               <td[% numeric_class %]>[% player.average_point_wins | format('%.2f') %]</td>
             </tr>
 [%
+    END;
   END;
-END;
 -%]
           </tbody>
         </table>
 [%
-IF loan_players OR inactive;
+  IF loan_players OR inactive;
 -%]
         <div id="players-key">
 [%
-  IF loan_players;
+    IF loan_players;
 -%]
           <div class="loan-player-key">&nbsp;</div> [% c.maketext("team-membership-type.desc.loan") %]<br />
 [%
-  END;
-  IF inactive;
+    END;
+    IF inactive;
 -%]
           <div class="inactive-player-key">&nbsp;</div> [% c.maketext("team-membership-type.desc.inactive") %]<br />
 [%
-  END;
+    END;
 -%]
-        </div>
+        </div><!-- #players-key -->
 [%
-END;
-IF loan_players_notices.size;
-  FOREACH notice IN loan_players_notices;
+  END;
+  IF loan_players_notices.size;
+    FOREACH notice IN loan_players_notices;
 -%]
         <div class="match-player-notice">[% notice %]</div>
 [%
+    END;
   END;
+-%]
+      </div><!-- .table-layout -->
+    </div><!-- .table-wrap -->
+  </div><!-- #players -->
+[%
+# END for IF !match.cancelled
 END;
 -%]
-      </div>
-    </div>
-  </div>
-  
   <div id="match-details">
     <div class="table-wrap">
       <div class="table-layout table-layout-centre">
@@ -615,11 +653,11 @@ END;
           </tr>
           <tr>
             <th scope="row">[% c.maketext("matches.summaries.heading.legs-played") %]</th>
-            <td>[% ( match.home_team_legs_won + match.away_team_legs_won ) %]</td>
+            <td>[% match.legs_played %]</td>
           </tr>
           <tr>
             <th scope="row">[% c.maketext("matches.summaries.heading.points-played") %]</th>
-            <td>[% ( match.home_team_points_won + match.away_team_points_won ) %]</td>
+            <td>[% match.points_played %]</td>
           </tr>
         </table>
       </div>

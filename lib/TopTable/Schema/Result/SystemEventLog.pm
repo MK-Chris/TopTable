@@ -536,6 +536,21 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
+=head2 system_event_log_tourn_teams
+
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::SystemEventLogTournTeam>
+
+=cut
+
+__PACKAGE__->has_many(
+  "system_event_log_tourn_teams",
+  "TopTable::Schema::Result::SystemEventLogTournTeam",
+  { "foreign.system_event_log_id" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
 =head2 system_event_log_type
 
 Type: belongs_to
@@ -602,8 +617,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-11-23 09:33:07
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:5pJ+dMuJILlaedf3tx5JgA
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2025-01-07 10:38:30
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:3ktVkC068r5TPY0MF/5plw
 
 # Enable automatic date handling
 __PACKAGE__->add_columns(

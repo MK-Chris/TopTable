@@ -284,7 +284,7 @@ __PACKAGE__->add_columns(
 
 =head2 ends_on_different_day
 
-Determine whether to show the end date or time - if the end date is the same as the start date, don't show
+Work out whether the end date of the event is on a different day to the start date.
 
 =cut
 

@@ -2155,7 +2155,7 @@ sub update_score {
     if ( $match->handicapped ) {
       # Grab a list of handicapped matches whose handicaps we need to take into account
       # Regardless of tournament or round, this function exists
-      my $matches = $home_team_stat->matches_for_team({team => $home_team, started => 1});
+      my $matches = $home_team_stat->matches_for_team({started => 1});
       
       if ( $matches->count ) {
         while ( my $other_match = $matches->next ) {
@@ -2207,7 +2207,7 @@ sub update_score {
     my $points_difference = $away_team_stat->points_won - $away_team_stat->points_lost;
     
     if ( $match->handicapped ) {
-      my $matches = $away_team_stat->matches_for_team({team => $away_team, started => 1});
+      my $matches = $away_team_stat->matches_for_team({started => 1});
       
       if ( $matches->count ) {
         while ( my $other_match = $matches->next ) {

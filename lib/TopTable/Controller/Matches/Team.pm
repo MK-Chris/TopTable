@@ -256,7 +256,10 @@ sub view :Private {
     $c->uri_for("/static/script/standard/vertical-table.js"),
   );
   
-  if ( $match->started ) {
+  if ( $match->cancelled ) {
+    # The match has been cancelled, we don't specify a tab and it will default to the first one (games)
+    push(@external_scripts, $c->uri_for("/static/script/matches/team/view-cancelled.js"));
+  } elsif ( $match->started ) {
     # The match has started, we don't specify a tab and it will default to the first one (games)
     push(@external_scripts, $c->uri_for("/static/script/matches/team/view.js", {v => 3}));
   } else {

@@ -320,6 +320,17 @@ sub name {
   return defined($self->_name) ? encode_entities($self->_name) : $lang->maketext("tournament.round.group.default-name", $self->group_order);
 }
 
+=head2 entry_type
+
+Shortcut to the tournament's entry type (team, singles, doubles).
+
+=cut
+
+sub entry_type {
+  my $self = shift;
+  return $self->tournament_round->tournament->entry_type->id;
+}
+
 =head2 members
 
 Return the entrants, depending on the entry type - no ordering is performed on this, however there's a prefetch to get the season and the object (so those IDs can be accessed).
@@ -329,7 +340,7 @@ Return the entrants, depending on the entry type - no ordering is performed on t
 sub members {
   my $self = shift;
   my $member_rel;
-  my $entry_type = $self->tournament_round->tournament->entry_type->id;
+  my $entry_type = $self->entry_type;
   my %attrib = ();
   
   if ( $entry_type eq "team" ) {
@@ -525,7 +536,7 @@ sub check_and_delete {
   # Delete teams in the group, and then the group
   # Tournament teams will cascade deletion from tournament round teams
   my ( $round_member_rel, $tourn_member_rs );
-  my $entry_type = $self->tournament_round->tournament->entry_type->id;
+  my $entry_type = $self->entry_type;
   
   if ( $entry_type eq "team" ) {
     $round_member_rel = "tournament_round_teams";
@@ -638,7 +649,7 @@ Retrieve entrants, in alphabetical order.
 sub get_entrants {
   my $self = shift;
   my ( $member_rel, %attrib );
-  my $entry_type = $self->tournament_round->tournament->entry_type->id;
+  my $entry_type = $self->entry_type;
   
   if ( $entry_type eq "team" ) {
     $member_rel = "tournament_round_teams";
@@ -671,7 +682,7 @@ sub get_entrants_in_table_order {
   my $self = shift;
   my $member_rel;
   my $tourn_round = $self->tournament_round;
-  my $entry_type = $tourn_round->tournament->entry_type->id;
+  my $entry_type = $self->entry_type;
   my $rank_template = $tourn_round->rank_template;
   my $match_template = $tourn_round->match_template;
   
@@ -755,7 +766,7 @@ Return the group entrants in order of grid position.
 sub get_entrants_in_grid_position_order {
   my $self = shift;
   my $member_rel;
-  my $entry_type = $self->tournament_round->tournament->entry_type->id;
+  my $entry_type = $self->entry_type;
   
   # Setup the initial sort attribs
   my %attrib = (
@@ -792,7 +803,7 @@ Return true if the group has the given entrant (passed as a DB object - team, pe
 sub has_entrant {
   my $self = shift;
   my $member_rel;
-  my $entry_type = $self->tournament_round->tournament->entry_type->id;
+  my $entry_type = $self->entry_type;
   
   # Take two parameters, as we'll need the second one if we search for a doubles pairing
   my ( $potential1, $potential2 ) = @_;
@@ -825,7 +836,7 @@ Return the last updated date / time.
 sub get_tables_last_updated_timestamp {
   my $self = shift;
   my $member_rel;
-  my $entry_type = $self->tournament_round->tournament->entry_type->id;
+  my $entry_type = $self->entry_type;
   
   if ( $entry_type eq "team" ) {
     $member_rel = "tournament_round_teams";
@@ -930,7 +941,7 @@ sub set_grid_positions {
   $grid_positions = [$grid_positions] unless ref($grid_positions) eq "ARRAY";
   
   # Grab the entry type
-  my $entry_type = $self->tournament_round->tournament->entry_type->id;
+  my $entry_type = $self->entry_type;
   
   # Loop through the team IDs; make sure each team belongs to this division and is only itemised once and that no teams are missing.
   my $position = 1;
@@ -1073,7 +1084,7 @@ sub create_matches {
   my $grid = $self->fixtures_grid;
   my $tourn_round = $self->tournament_round;
   my $tournament = $tourn_round->tournament;
-  my $entry_type = $tourn_round->tournament->entry_type->id;
+  my $entry_type = $self->entry_type;
   my $match_template = $tourn_round->match_template;
   my $handicapped = $match_template->handicapped;
   my $response = {
@@ -1584,7 +1595,7 @@ sub matches {
   my ( $params ) = @_;
   my $no_prefetch = $params->{no_prefetch};
   my ( $member_rel, %attrib );
-  my $entry_type = $self->tournament_round->tournament->entry_type->id;
+  my $entry_type = $self->entry_type;
   
   if ( $entry_type eq "team" ) {
     $member_rel = "team_matches";
@@ -1605,6 +1616,25 @@ sub matches {
   }
   
   return $self->search_related($member_rel, {}, \%attrib);
+}
+
+=head2 points_adjustments
+
+Get a list of all points adjustments for this division/season from the team_seasons relation.
+
+=cut
+
+sub points_adjustments {
+  my $self = shift;
+  my $entry_type = $self->entry_type;
+  
+  if ( $entry_type eq "team" ) {
+    return $self->search_related("tournament_round_teams")->search_related("tournament_round_team_points_adjustments");
+  } elsif ( $entry_type eq "singles" ) {
+    return $self->search_related("tournament_round_people")->search_related("tournament_round_people_points_adjustments");
+  } elsif (  $entry_type eq "doubles" ) {
+    return $self->search_related("tournament_rounds_doubles")->search_related("tournament_round_doubles_points_adjustments");
+  }
 }
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

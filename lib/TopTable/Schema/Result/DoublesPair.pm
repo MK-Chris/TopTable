@@ -478,6 +478,28 @@ sub url_keys {
   return [$self->person_season_person1_season_team->person->url_key, $self->person_season_person2_season_team->person->url_key];
 }
 
+=head2 object_name1
+
+Player 1 object name.
+
+=cut
+
+sub object_name1 {
+  my $self = shift;
+  return $self->person_season_person1_season_team->display_name;
+}
+
+=head2 object_name2
+
+Player 2 object name.
+
+=cut
+
+sub object_name2 {
+  my $self = shift;
+  return $self->person_season_person2_season_team->display_name;
+}
+
 =head2 head_to_heads
 
 Return a list of head-to-heads with this pair and the other people specified in the function call.  Pass in an ID / URL key or a person object.
