@@ -284,6 +284,31 @@ sub view_finalise :Private {
   $table_view_js .= "-hcp" if $match_template->handicapped;
   $table_view_js = $c->uri_for("/static/script/tables/$table_view_js.js", {v => 3});
   
+  my @ext_scripts = (
+    $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
+    $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
+    $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
+    $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
+    $table_view_js,
+  );
+  
+  my @ext_styles = (
+    $c->uri_for("/static/css/datatables/dataTables.dataTables.min.css"),
+    $c->uri_for("/static/css/datatables/fixedColumns.dataTables.min.css"),
+    $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
+    $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
+  );
+  
+  my $points_adjustments = $division_season->points_adjustments;
+  
+  if ( $points_adjustments->count ) {
+    push(@ext_scripts,
+      $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
+      $c->uri_for("/static/script/tables/points-adjustments.js")
+    );
+    
+    push(@ext_styles, $c->uri_for("/static/css/datatables/rowGroup.dataTables.min.css"));
+  }
   # Stash the common details
   $c->stash({
     template => "html/tables/view.ttkt",
@@ -300,22 +325,12 @@ sub view_finalise :Private {
       season => $season,
       division => $division,
     }),
+    points_adjustments => $points_adjustments,
     ranking_template => $ranking_template,
     match_template => $match_template,
     canonical_uri => $canonical_uri,
-    external_scripts => [
-      $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
-      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
-      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
-      $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
-      $table_view_js,
-    ],
-    external_styles => [
-      $c->uri_for("/static/css/datatables/dataTables.dataTables.min.css"),
-      $c->uri_for("/static/css/datatables/fixedColumns.dataTables.min.css"),
-      $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
-      $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
-    ],
+    external_scripts => \@ext_scripts,
+    external_styles => \@ext_styles,
   });
 }
 

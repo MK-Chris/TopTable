@@ -1,0 +1,3 @@
+[%
+INCLUDE "html/teams/view.ttkt" tourn_view = 1, tourn_team_view = 1;
+-%]

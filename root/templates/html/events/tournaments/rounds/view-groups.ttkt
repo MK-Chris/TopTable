@@ -1,4 +1,6 @@
 [%
+USE scalar;
+
 IF authorisation.event_edit;
   IF tourn_view;
     SET create_uri = c.uri_for_action("/events/group_create", [event.url_key, group_round.url_key]);
@@ -44,7 +46,8 @@ IF groups.size;
 -%]
         <h4><a href="[% group_uri %]">[% group.name %]</a></h4>
 [%
-    INCLUDE "html/tables/table.ttkt" tourn_group = 1, last_updated = group.get_tables_last_updated_timestamp;
+    SET points_adjustments = group.scalar.points_adjustments;
+    INCLUDE "html/tables/table.ttkt" tourn_group = 1, last_updated = group.get_tables_last_updated_timestamp, multi_groups = 1;
     IF counter == 1;
       # This was a left column, set to 2 so we know the next column is right, just end the one column div
       SET counter = 2;

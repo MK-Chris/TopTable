@@ -232,7 +232,7 @@ sub index :Path :Args(0) {
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
       $c->uri_for("/static/script/event-viewer/view-home.js", {v => 2}),
-      $c->uri_for("/static/script/fixtures-results/view$handicapped/group-competitions-no-date-check-score.js"),
+      $c->uri_for("/static/script/fixtures-results/view$handicapped/group-competitions-no-date-check-score.js", {v => 2}),
       $c->uri_for("/static/script/standard/option-list.js"),
     ],
     external_styles => [

@@ -109,7 +109,6 @@ __PACKAGE__->table("tournament_round_people");
 
   data_type: 'smallint'
   default_value: 0
-  extra: {unsigned => 1}
   is_nullable: 0
 
 =head2 games_played
@@ -415,12 +414,7 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
   },
   "table_points",
-  {
-    data_type => "smallint",
-    default_value => 0,
-    extra => { unsigned => 1 },
-    is_nullable => 0,
-  },
+  { data_type => "smallint", default_value => 0, is_nullable => 0 },
   "games_played",
   {
     data_type => "tinyint",
@@ -691,6 +685,21 @@ __PACKAGE__->belongs_to(
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
 );
 
+=head2 tournament_round_people_points_adjustments
+
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::TournamentRoundPeoplePointsAdjustment>
+
+=cut
+
+__PACKAGE__->has_many(
+  "tournament_round_people_points_adjustments",
+  "TopTable::Schema::Result::TournamentRoundPeoplePointsAdjustment",
+  { "foreign.tournament_round_person" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
 =head2 tournament_round_team
 
 Type: belongs_to
@@ -712,8 +721,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-11-24 23:59:16
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:4kpHZ1eO7Yxr6hLNutebUQ
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-12-31 16:31:44
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:B7V5u0/FDjLqnlBfo0pa9A
 
 __PACKAGE__->add_columns(
     "last_updated",

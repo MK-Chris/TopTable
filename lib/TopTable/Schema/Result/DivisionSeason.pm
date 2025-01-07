@@ -272,6 +272,16 @@ __PACKAGE__->has_many(
 # Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-02-03 10:04:05
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:XP6XPWCZnyfGiG3Hu+HsmA
 
+=head2 points_adjustments
+
+Get a list of all points adjustments for this division/season from the team_seasons relation.
+
+=cut
+
+sub points_adjustments {
+  my $self = shift;
+  return $self->search_related("team_seasons")->search_related("team_points_adjustments");
+}
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 __PACKAGE__->meta->make_immutable;

@@ -56,7 +56,14 @@ __PACKAGE__->table("system_event_log_event_round");
   is_foreign_key: 1
   is_nullable: 0
 
-=head2 object_id
+=head2 object_event
+
+  data_type: 'integer'
+  extra: {unsigned => 1}
+  is_foreign_key: 1
+  is_nullable: 1
+
+=head2 object_round
 
   data_type: 'integer'
   extra: {unsigned => 1}
@@ -98,7 +105,14 @@ __PACKAGE__->add_columns(
     is_foreign_key => 1,
     is_nullable => 0,
   },
-  "object_id",
+  "object_event",
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_foreign_key => 1,
+    is_nullable => 1,
+  },
+  "object_round",
   {
     data_type => "integer",
     extra => { unsigned => 1 },
@@ -131,7 +145,27 @@ __PACKAGE__->set_primary_key("id");
 
 =head1 RELATIONS
 
-=head2 object
+=head2 object_event
+
+Type: belongs_to
+
+Related object: L<TopTable::Schema::Result::Event>
+
+=cut
+
+__PACKAGE__->belongs_to(
+  "object_event",
+  "TopTable::Schema::Result::Event",
+  { id => "object_event" },
+  {
+    is_deferrable => 1,
+    join_type     => "LEFT",
+    on_delete     => "SET NULL",
+    on_update     => "CASCADE",
+  },
+);
+
+=head2 object_round
 
 Type: belongs_to
 
@@ -140,9 +174,9 @@ Related object: L<TopTable::Schema::Result::TournamentRound>
 =cut
 
 __PACKAGE__->belongs_to(
-  "object",
+  "object_round",
   "TopTable::Schema::Result::TournamentRound",
-  { id => "object_id" },
+  { id => "object_round" },
   {
     is_deferrable => 1,
     join_type     => "LEFT",
@@ -167,8 +201,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-11-24 00:42:40
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:K2YmRfbtye4IpeNxcsS5HA
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-12-31 16:31:44
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:5HnyStHBqXWYgX1ZOR7Uzg
 
 # Enable automatic date handling
 __PACKAGE__->add_columns(

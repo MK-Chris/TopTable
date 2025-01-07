@@ -1,0 +1,47 @@
+<form method="post" action="[% form_action %]">
+<fieldset>
+  <legend>[% c.maketext("tables.adjustments.fields.points-adj") %]</legend>
+  <div class="label-field-container">
+    <label for="action">[% c.maketext("tables.adjustments.fields.action") %]</label>
+    <div class="field-container">
+[%
+SWITCH c.flash.action;
+  CASE "award";
+    award_selected = ' selected="selected"';
+    deduct_selected = "";
+  CASE "deduct";
+    award_selected = "";
+    deduct_selected = ' selected="selected"';
+  CASE;
+    award_selected = "";
+    deduct_selected = "";
+END;
+%]
+      <select id="action" name="action" data-placeholder="[% c.maketext("tables.adjustments.fields.action") %]">
+        <option value=""></option>
+        <option value="award"[% award_selected %]>[% c.maketext("tables.adjustments.fields.action.options.award") %]</option>
+        <option value="deduct"[% deduct_selected %]>[% c.maketext("tables.adjustments.fields.action.options.deduct") %]</option>
+      </select>
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+  
+  <div class="label-field-container">
+    <label for="points_adjustment">[% c.maketext("tables.adjustments.fields.points-adj") %]</label>
+    <div class="field-container">
+      <input type="number" class="wide" id="points_adjustment" name="points_adjustment" value="[% c.flash.points_adjustment OR "0" %]" />
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+  
+  <div class="label-field-container">
+    <label for="reason">[% c.maketext("tables.adjustments.fields.reason") %]</label>
+    <div class="field-container">
+      <input type="text" id="reason" name="reason" value="[% c.flash.reason %]" />
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+      
+  <input type="submit" id="submit" name="submit" value="[% c.maketext("form.button.save") %]" />
+</fieldset>
+</form>

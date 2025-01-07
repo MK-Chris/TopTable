@@ -151,6 +151,21 @@ __PACKAGE__->belongs_to(
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "CASCADE" },
 );
 
+=head2 system_event_log_event_rounds
+
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::SystemEventLogEventRound>
+
+=cut
+
+__PACKAGE__->has_many(
+  "system_event_log_event_rounds",
+  "TopTable::Schema::Result::SystemEventLogEventRound",
+  { "foreign.object_event" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
 =head2 system_event_log_events
 
 Type: has_many
@@ -167,8 +182,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-11-24 00:42:39
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:6dZLzqyVFZmgW0XSuKhGyg
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-12-31 16:31:43
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:tMIGaHNF2jGlckVsZZCJ1A
 
 =head2 single_season
 

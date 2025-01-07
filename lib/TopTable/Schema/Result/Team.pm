@@ -339,6 +339,27 @@ sub get_seasons {
   return $self->search_related("team_seasons", undef, $attrib);
 }
 
+=head2 get_season
+
+Retrieve details for the specified season for this team.
+
+=cut
+
+sub get_season {
+  my $self = shift;
+  my ( $season ) = @_;
+  
+  return $self->search_related("team_seasons", {
+    "me.season" => $season->id,
+  }, {
+    prefetch => [qw( captain home_night ), {
+      division_season => "division",
+      club_season => "club"
+    }],
+    rows => 1,
+  })->single;
+}
+
 =head2 get_players
 
 Retrieve an arrayref of players registered for this team for the given season.
@@ -413,9 +434,6 @@ sub loan_players {
     $where[1]{"team_match.season"} = $season->id;
   }
   
-  if ( defined($season) ) {
-  }
-  
   return $self->result_source->schema->resultset("TeamMatchPlayer")->search(\@where, \%attrib);
 }
 
@@ -436,27 +454,6 @@ sub get_captain {
     prefetch => "captain",
     rows => 1, 
   })->single->captain;
-}
-
-=head2 get_season
-
-Retrieve details for the specified season for this team.
-
-=cut
-
-sub get_season {
-  my $self = shift;
-  my ( $season ) = @_;
-  
-  return $self->search_related("team_seasons", {
-    "me.season" => $season->id,
-  }, {
-    prefetch => [qw( captain home_night ), {
-      division_season => "division",
-      club_season => "club"
-    }],
-    rows => 1,
-  })->single;
 }
 
 =head2 last_competed_season
@@ -497,20 +494,6 @@ sub last_season_entered {
     order_by => {-desc => [qw( me.start_date me.end_date )]},
     rows => 1,
   })->single;
-}
-
-=head2 seasons
-
-Retrieve all seasons associated with the team.
-
-=cut
-
-sub seasons {
-  my $self = shift;
-  
-  return $self->search_related("team_seasons", undef, {
-    prefetch  => [qw( captain division club )],
-  });
 }
 
 =head2 can_delete
@@ -618,6 +601,48 @@ sub check_and_delete {
   }
   
   return $response;
+}
+
+=head2 adjust_points
+
+Shortcut to adjust the points for a team in the current season; gets the current season and returns with an error if there is no current season, or the team hasn't entered that season.
+
+=cut
+
+sub adjust_points {
+  my $self = shift;
+  my ( $params ) = @_;
+  
+  # Setup schema / logging
+  my $logger = $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  
+  my $response = {
+    errors => [],
+    warnings => [],
+    info => [],
+    success => [],
+    completed => 0,
+    can_complete => 0, # Default to 0, we'll recreate that key in the overwritten $response from the team season if we get that far.
+  };
+  
+  # Get the current season
+  my $season = $schema->resultset("Season")->get_current;
+  
+  if ( defined($season) ) {
+    my $team_season = $self->get_season($season);
+    
+    if ( defined($team_season) ) {
+      $response = $team_season->adjust_points($params);
+    } else {
+      push(@{$response->{errors}}, $lang->maketext("tables.adjustments.error.team-not-entered-season", encode_entities($self->full_name)));
+    }
+  } else {
+    push(@{$response->{errors}}, $lang->maketext("tables.adjustments.error.no-current-season"));
+  }
 }
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

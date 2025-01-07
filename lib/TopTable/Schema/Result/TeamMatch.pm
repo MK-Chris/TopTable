@@ -1495,6 +1495,28 @@ sub score {
   return $self->started ? sprintf("%d-%d", $self->team_score("home"), $self->team_score("away")) : $lang->maketext("matches.versus.not-yet-played");
 }
 
+=head2 legs_played
+
+Shortcut to the number of legs played in the match (essentially just the number of legs won by the home team plus the number of legs won by the away team).
+
+=cut
+
+sub legs_played {
+  my $self = shift;
+  return $self->home_team_legs_won + $self->away_team_legs_won;
+}
+
+=head2 points_played
+
+Shortcut to the number of points played in the match (essentially just the number of points won by the home team plus the number of points won by the away team).
+
+=cut
+
+sub points_played {
+  my $self = shift;
+  return $self->home_team_points_won + $self->away_team_points_won;
+}
+
 =head2 team_score($location)
 
 Return the home or away match score, depending on $location, which must be passed as "home" or "away".  This will usually just return home_team_match_score or away_team_match_score, although if the score has been overridden, it'll return that instead.

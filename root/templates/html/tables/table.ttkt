@@ -37,15 +37,24 @@ FOREACH entrant = entrants;
   i = i + 1;
   IF tourn_group;
     SET team_season = entrant.tournament_team.team_season;
+    
+    # Links to team tournament page
+    IF specific_season;
+      SET team_uri = c.uri_for_action("/events/teams_view_by_url_key_specific_season", [event.url_key, season.url_key, team_season.team.club.url_key, team_season.team.url_key, season.url_key]);
+    ELSE;
+      SET team_uri = c.uri_for_action("/events/teams_view_by_url_key_current_season", [event.url_key, team_season.team.club.url_key, team_season.team.url_key]);
+    END;
   ELSE;
     SET team_season = entrant;
+    
+    # Links to main team page
+    IF specific_season;
+      SET team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [team_season.team.club.url_key, team_season.team.url_key, season.url_key]);
+    ELSE;
+      SET team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [team_season.team.club.url_key, team_season.team.url_key]);
+    END;
   END;
   
-  IF specific_season;
-    SET team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [team_season.team.club.url_key, team_season.team.url_key, season.url_key]);
-  ELSE;
-    SET team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [team_season.team.club.url_key, team_season.team.url_key]);
-  END;
   
   team_name = team_season.club_season.short_name _ " " _ team_season.name | html_entity;
   
@@ -103,3 +112,54 @@ END;
           </tbody>
         </table>
         <div class="dataTables_info" id="league-table_info" role="status" aria-live="polite">[% c.maketext("updated.time", c.i18n_datetime_format_datetime.format_datetime(last_updated)) %]</div>
+        
+[%
+IF points_adjustments.count;
+  IF multi_groups;
+    SET heading_tag = "h6";
+    SET heading = c.maketext("tables.adjustments.title-group", group.name);
+  ELSE;
+    SET heading_tag = "h6";
+    SET heading = c.maketext("tables.adjustments.title");
+  END;
+-%]
+        <div class="spacer"></div>
+        <[% heading_tag %]>[% heading %]</[% heading_tag %]>
+        
+        <table id="adjustments" class="stripe hover row-border">
+          <thead>
+            <tr>
+              <th>[% c.maketext("tables.adjustments.team") %]</th>
+              <th>[% c.maketext("tables.adjustments.timestamp-sort") %]</th>
+              <th>[% c.maketext("tables.adjustments.timestamp") %]</th>
+              <th>[% c.maketext("tables.adjustments.adjustment") %]</th>
+              <th>[% c.maketext("tables.adjustments.reason") %]</th>
+            </tr>
+          </thead>
+          <tbody>
+[%
+  WHILE (rec = points_adjustments.next);
+    SET timestamp = rec.timestamp;
+    CALL timestamp.set_locale(c.locale);
+    
+    IF tourn_group;
+      SET team_season = rec.tournament_round_team.tournament_team.team_season;
+    ELSE;
+      SET team_season = rec.team_season;
+    END;
+-%]
+            <tr>
+              <td data-label="[% c.maketext("tables.adjustments.team") %]">[% team_season.full_name | html_entity %]</td>
+              <td data-label="[% c.maketext("tables.adjustments.timestamp-sort") %]">[% timestamp.ymd("") %][% timestamp.hms("") %]</td>
+              <td data-label="[% c.maketext("tables.adjustments.timestamp") %]">[% c.i18n_datetime_format_datetime.format_datetime(timestamp) %]</td>
+              <td data-label="[% c.maketext("tables.adjustments.adjustment") %]">[% c.i18n_numberformat.format_number(rec.adjustment) %]</td>
+              <td data-label="[% c.maketext("tables.adjustments.reason") %]">[% rec.reason | html_entity %]</td>
+            </tr>
+[%
+  END;
+-%]
+          </tbody>
+        </table>
+[%
+END;
+-%]

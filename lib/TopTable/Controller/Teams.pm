@@ -332,9 +332,9 @@ sub get_team_season :Private {
   if ( $specific_season and $entered ) {
     # Get the club_season too
     my $club_season = $team_season->club_season;
-    my $team_season_name = sprintf("%s %s", $club_season->short_name, $team_season->name);
+    my $team_season_name = $team_season->full_name;
     my $enc_team_season_name = encode_entities($team_season_name);
-    my $team_current_name = sprintf("%s %s", $team->club->short_name, $team->name);
+    my $team_current_name = sprintf("%s %s", $team->full_name);
     
     $c->add_status_messages({info => $c->maketext("teams.club.changed-notice", $enc_team_season_name, encode_entities($team->club->full_name), $c->uri_for_action("/clubs/view_current_season", [$team->club->url_key]))}) unless $club_season->club->id == $team->club->id;
     $c->add_status_messages({info => $c->maketext("teams.name.changed-notice", $enc_team_season_name, encode_entities($team_current_name))}) unless $team_season->name eq $team->name;
@@ -404,16 +404,11 @@ sub view_finalise :Private {
   my $enc_name = $c->stash->{enc_name};
   
   # Check authorisation for editing and deleting people, so we can display those links if necessary
-  $c->forward("TopTable::Controller::Users", "check_authorisation", [[ qw( person_edit person_delete ) ], "", 0]) unless $season->complete;
+  $c->forward("TopTable::Controller::Users", "check_authorisation", [[ qw( person_edit person_delete team_points_adjust ) ], "", 0]) unless $season->complete;
   
   my $canonical_uri = ( $season->complete )
     ? $c->uri_for_action("/teams/view_specific_season_by_url_key", [$team->club->url_key, $team->url_key, $season->url_key])
     : $c->uri_for_action("/teams/view_current_season_by_url_key", [$team->club->url_key, $team->url_key]);
-  
-  # Don't cache this page.
-  $c->response->header("Cache-Control" => "no-cache, no-store, must-revalidate");
-  $c->response->header("Pragma" => "no-cache");
-  $c->response->header("Expires" => 0);
   
   # Set up the title links if we need them
   my @title_links = ();
@@ -432,6 +427,12 @@ sub view_finalise :Private {
     link_uri => $c->uri_for_action("/teams/delete_by_url_key", [$team->club->url_key, $team->url_key]),
   }) if $c->stash->{authorisation}{team_delete} and $team->can_delete;
   
+  push(@title_links, {
+    image_uri => $c->uri_for("/static/images/icons/plus-minus-32.png"),
+    text => $c->maketext("admin.points-adjust-object", $enc_name),
+    link_uri => $c->uri_for_action("/teams/points_adjustment_by_url_key", [$team->club->url_key, $team->url_key]),
+  }) if $c->stash->{authorisation}{team_points_adjust} and !$season->complete;
+  
   # Get the matches for the fixtures tab
   my $matches = $c->model("DB::TeamMatch")->matches_for_team({
     team => $team,
@@ -441,22 +442,27 @@ sub view_finalise :Private {
   # Add handicapped flag for template / JS if there are handicapped matches
   my $handicapped = $matches->handicapped_matches->count ? "/hcp" : "";
   
+  my @ext_scripts = (
+    $c->uri_for("/static/script/plugins/responsive-tabs/jquery.responsiveTabs.mod.js"),
+    $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
+    $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
+    $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
+    $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
+    $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
+    $c->uri_for("/static/script/standard/vertical-table.js"),
+    $c->uri_for("/static/script/teams$handicapped/view.js", {v => 4}),
+  );
+  
+  my $points_adjustments = $team_season->points_adjustments;
+  push(@ext_scripts, $c->uri_for("/static/script/teams/points-adjustment.js")) if $points_adjustments->count;
+  
   # Set up the template to use
   $c->stash({
     template => "html/teams/view.ttkt",
     title_links => \@title_links,
     subtitle2 => $enc_season_name,
     canonical_uri => $canonical_uri,
-    external_scripts => [
-      $c->uri_for("/static/script/plugins/responsive-tabs/jquery.responsiveTabs.mod.js"),
-      $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
-      $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
-      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
-      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
-      $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
-      $c->uri_for("/static/script/standard/vertical-table.js"),
-      $c->uri_for("/static/script/teams$handicapped/view.js", {v => 3}),
-    ],
+    external_scripts => \@ext_scripts,
     external_styles => [
       $c->uri_for("/static/css/responsive-tabs/responsive-tabs.css"),
       $c->uri_for("/static/css/responsive-tabs/style-jqueryui.css"),
@@ -471,6 +477,7 @@ sub view_finalise :Private {
     no_filter => 1, # Don't include the averages filter form on a team averages view
     matches => $matches,
     handicapped => $handicapped,
+    points_adjustments => $points_adjustments,
     seasons => $team->team_seasons->count,
   });
 }
@@ -1085,7 +1092,7 @@ Display a form to with the existing information for editing a club
 
 sub edit :Private {
   my ( $self, $c ) = @_;
-  my ( $current_season, $team_season, $divisions, $last_team_season_changes );
+  my ( $team_season, $divisions, $last_team_season_changes );
   my $team = $c->stash->{team};
   my $enc_name = $c->stash->{enc_name};
   
@@ -1098,11 +1105,11 @@ sub edit :Private {
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["team_edit", $c->maketext("user.auth.edit-teams"), 1]);
   
   # Get the current season
-  $current_season = $c->model("DB::Season")->get_current;
+  my $current_season = $c->model("DB::Season")->get_current;
   
   if ( !defined($current_season) ) {
     # Redirect and show the error
-    $c->response->redirect($c->uri_for("/seasons/create",
+    $c->response->redirect($c->uri_for("/teams/view_current_season", [$team->club->url_key, $team->url_key],
                                 {mid => $c->set_status_msg({error => $c->maketext("teams.form.error.no-current-season", $c->maketext("admin.message.edited"))})}));
     $c->detach;
     return;
@@ -1192,7 +1199,7 @@ sub edit :Private {
     $c->stash({tokeninput_confs => $tokeninput_confs});
   }
   
-  # Get venues to list
+  # Setup the template and stash the values we need to show the edit form
   $c->stash({
     template => "html/teams/create-edit.ttkt",
     scripts => [
@@ -1292,6 +1299,81 @@ sub delete :Private {
   });
 }
 
+=head2 points_adjustment_by_id
+
+Detaches to points_adjustment to handle the ID-based URL.
+
+=cut
+
+sub points_adjustment_by_id :Chained("base_by_id") :PathPart("points-adjustment") :Args(0) {
+  my ( $self, $c ) = @_;
+  $c->detach("points_adjustment");
+}
+
+=head2 points_adjustment_by_url_key
+
+Detaches to points_adjustment to handle the URL key-based URL.
+
+=cut
+
+sub points_adjustment_by_url_key :Chained("base_by_url_key") :PathPart("points-adjustment") :Args(0) {
+  my ( $self, $c ) = @_;
+  $c->detach("points_adjustment");
+}
+
+=head2 points_adjustment
+
+Show a form to adjust the points for a team.
+
+=cut
+
+sub points_adjustment :Private {
+  my ( $self, $c ) = @_;
+  my $team = $c->stash->{team};
+  my $enc_name = $c->stash->{enc_name};
+  
+  # Don't cache this page.
+  $c->response->header("Cache-Control" => "no-cache, no-store, must-revalidate");
+  $c->response->header("Pragma" => "no-cache");
+  $c->response->header("Expires" => 0);
+  
+  # Check that we are authorised to adjust points
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["team_points_adjust", $c->maketext("user.auth.team-points-adjust"), 1]);
+  
+  # Get the current season
+  my $current_season = $c->model("DB::Season")->get_current;
+  
+  if ( !defined($current_season) ) {
+    # Redirect and show the error
+    $c->response->redirect($c->uri_for("/teams/view_current_season", [$team->club->url_key, $team->url_key],
+      {mid => $c->set_status_msg({error => $c->maketext("teams.form.error.no-current-season", $c->maketext("admin.message.edited"))})}));
+    $c->detach;
+    return;
+  }
+  
+  # Setup the template and stash the values we need to show the points adjustment form
+  $c->stash({
+    template => "html/teams/points-adjustment.ttkt",
+    external_scripts => [
+      $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
+      $c->uri_for("/static/script/standard/chosen.js"),
+      $c->uri_for("/static/script/teams/points-adjustment.js"),
+    ],
+    external_styles => [
+      $c->uri_for("/static/css/chosen/chosen.min.css"),
+    ],
+    form_action => $c->uri_for_action("/teams/do_points_adjustment_by_url_key", [$team->club->url_key, $team->url_key]),
+    view_online_display => "Adjusting league points for $enc_name",
+    view_online_link => 0,
+    subtitle2 => $c->maketext("admin.points-adjustment"),
+  });
+  
+  # Breadcrumbs
+  push(@{$c->stash->{breadcrumbs}}, {
+    path => $c->uri_for_action("/teams/points_adjustment_by_url_key", [$team->club->url_key, $team->url_key]),
+    label => $c->maketext("admin.points-adjustment"),
+  });
+}
 
 =head2 do_create
 
@@ -1306,7 +1388,7 @@ sub do_create :Path("do-create") {
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["team_create", $c->maketext("user.auth.create-teams"), 1]);
   
   # Forward to the setup routine
-  $c->detach("process_form", ["create"]);
+  $c->detach("process_form", [qw( create )]);
 }
 
 =head2 do_edit_by_id
@@ -1342,7 +1424,7 @@ sub do_edit :Private {
   
   # Check that we are authorised to create clubs
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["team_edit", $c->maketext("user.auth.edit-teams"), 1]);
-  $c->detach("process_form", ["edit"]);
+  $c->detach("process_form", [qw( edit )]);
 }
 
 =head2 do_delete_by_id
@@ -1410,6 +1492,42 @@ sub do_delete :Private {
   return;
 }
 
+=head2 do_points_adjustment_by_id
+
+Detaches to do_points_adjustment to handle the ID-based URL.
+
+=cut
+
+sub do_points_adjustment_by_id :Chained("base_by_id") :PathPart("do-points-adjustment") :Args(0) {
+  my ( $self, $c ) = @_;
+  $c->detach("do_points_adjustment");
+}
+
+=head2 do_points_adjustment_by_url_key
+
+Detaches to do_points_adjustment to handle the URL key-based URL.
+
+=cut
+
+sub do_points_adjustment_by_url_key :Chained("base_by_url_key") :PathPart("do-points-adjustment") :Args(0) {
+  my ( $self, $c ) = @_;
+  $c->detach("do_points_adjustment");
+}
+
+=head2 do_points_adjustment
+
+Process the form for adjusting the points for a team.
+
+=cut
+
+sub do_points_adjustment :Private {
+  my ( $self, $c ) = @_;
+  
+  # Check that we are authorised to adjust points
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["team_points_adjust", $c->maketext("user.auth.team-points-adjust"), 1]);
+  $c->detach("process_form", [qw( points-adjustment )]);
+}
+
 =head2 process_form
 
 A private routine forwarded from the docreate and doedit routines to set up the team.
@@ -1420,17 +1538,32 @@ sub process_form :Private {
   my ( $self, $c, $action ) = @_;
   my $team = $c->stash->{team};
   my $enc_name = $c->stash->{enc_name};
-  my @field_names = qw( name club division start_hour start_minute captain home_night );
-  my @processed_field_names = qw( name club division start_hour start_minute captain home_night players );
+  my ( @field_names, @processed_field_names, $response );
   
-  # Forward to the model to do the rest of the error checking.  The map MUST come last in this
-  my $response = $c->model("DB::Team")->create_or_edit($action, {
-    logger => sub{ my $level = shift; $c->log->$level( @_ ); },
-    reassign_active_players => $c->config->{Players}{reassign_active_on_team_season_create},
-    team => $team,
-    players => defined($c->req->params->{players}) ? [split(",", $c->req->params->{players})] : undef,
-    map {$_ => $c->req->params->{$_}} @field_names, # All the fields from the form - put this last because otherwise the following elements are seen as part of the map
-  });
+  if ( $action eq "points-adjustment" ) {
+    @field_names = qw( action points_adjustment reason );
+    @processed_field_names = @field_names;
+    
+    $response = $team->adjust_points({
+      logger => sub{ my $level = shift; $c->log->$level( @_ ); },
+      map {$_ => $c->req->params->{$_}} @field_names, # All the fields from the form - put this last because otherwise the following elements are seen as part of the map
+    });
+  } else {
+    # Create or edit
+    @field_names = qw( name club division start_hour start_minute captain home_night );
+    @processed_field_names = ( @field_names, qw( players ) );
+    
+    # Forward to the model to do the rest of the error checking.  The map MUST come last in this
+    $response = $c->model("DB::Team")->create_or_edit($action, {
+      logger => sub{ my $level = shift; $c->log->$level( @_ ); },
+      reassign_active_players => $c->config->{Players}{reassign_active_on_team_season_create},
+      team => $team,
+      players => defined($c->req->params->{players}) ? [split(",", $c->req->params->{players})] : undef,
+      map {$_ => $c->req->params->{$_}} @field_names, # All the fields from the form - put this last because otherwise the following elements are seen as part of the map
+    });
+  }
+  
+  
   
   # Set the status messages we need to show on redirect
   my @errors = @{$response->{errors}};
@@ -1442,22 +1575,31 @@ sub process_form :Private {
   
   if ( $response->{completed} ) {
     # Was completed, display the view page
-    $team = $response->{team};
+    $team = $response->{team} if $action eq "create";
+    
+    # Completed actions all redirect back to the team view page
     $redirect_uri = $c->uri_for_action("/teams/view_current_season_by_url_key", [$team->club->url_key, $team->url_key], {mid => $mid});
     my $team_name = sprintf("%s %s", $team->club->short_name, $team->name);
     
     # Completed, so we log an event
     $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["team", $action, {id => $team->id}, $team_name]);
     
-    # Log the home night's changed if necessary
-    $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["team", "update-home-night", {id => $team->id}, $team_name]) if $response->{home_night_changed};
-    $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["team", "captain-change", {id => $team->id}, $team_name]) if $response->{captain_changed};
+    if ( $action eq "create" or $action eq "edit" ) {
+      # Log the home night's changed if necessary
+      $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["team", "update-home-night", {id => $team->id}, $team_name]) if $response->{home_night_changed};
+      $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["team", "captain-change", {id => $team->id}, $team_name]) if $response->{captain_changed};
+    }
   } else {
     # Not complete - check if we need to redirect back to the create or view page
     if ( $action eq "create" ) {
+      # Create - redirect back to the create page
       $redirect_uri = $c->uri_for_action("/teams/create_no_club", {mid => $mid});
-    } else {
+    } elsif ( $action eq "edit" ) {
+      # Edit - redirect back to the edit page
       $redirect_uri = $c->uri_for_action("/teams/edit_by_url_key", [$team->club->url_key, $team->url_key], {mid => $mid});
+    } else {
+      # Points adjustment - redirect back to the points adjustment page
+      $redirect_uri = $c->uri_for_action("/teams/points_adjustment_by_url_key", [$team->club->url_key, $team->url_key], {mid => $mid});
     }
     
     # Flash the entered values we've got so we can set them into the form
