@@ -608,13 +608,11 @@ sub complete {
       # Check if there's another round after this one
       my $next_round = $tourn->find_related("tournament_rounds", {round_number => $round_number + 1});
       
-      if ( defined($next_round) ) {
-        # There's a round after this one, so we're not complete
-        return 0;
-      }
+      # If there's a round after this one, it's complete
+      return 1 if defined($next_round);
       
       # If there's no Check all matches are complete
-      if ( $matches->search({complete => 0})->count == 0 ) {
+      if ( $matches->incomplete_and_not_cancelled->count == 0 ) {
         # All matches are complete
         return 1;
       } else {
