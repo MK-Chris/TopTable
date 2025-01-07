@@ -40,17 +40,21 @@ IF matches_to_show;
     day_name = next_match_date.day_name | ucfirst | html_entity;
     month_name = next_match_date.month_name | ucfirst | html_entity;
     
-    IF next_match_date.year == c.datetime.year;
-      SET matches_title = c.maketext("home-page.next-matches", day_name, next_match_date.day, month_name);
+    IF tomorrow;
+      SET matches_title = c.maketext("home-page.next-matches-tomorrow", matches_to_show);
     ELSE;
-      SET matches_title = c.maketext("home-page.next-matches-year", day_name, next_match_date.day, month_name, next_match_date.year);
+      IF next_match_date.year == c.datetime.year;
+        SET matches_title = c.maketext("home-page.next-matches", matches_to_show, day_name, next_match_date.day, month_name);
+      ELSE;
+        SET matches_title = c.maketext("home-page.next-matches-year", matches_to_show, day_name, next_match_date.day, month_name, next_match_date.year);
+      END;
     END;
   ELSE;
     # Show today's matches
-    SET matches_title = c.maketext("home-page.todays-matches");
+    SET matches_title = c.maketext("home-page.todays-matches", matches_to_show);
   END;
 %]
-  <h4>[% matches_title %] ([% matches_to_show %])</h4>
+  <h4>[% matches_title %]</h4>
 [%
 # Today's matches
 INCLUDE "html/fixtures-results/view$handicapped/group-competitions-no-date-check-score.ttkt";

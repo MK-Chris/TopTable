@@ -174,11 +174,12 @@ sub index :Path :Args(0) {
   my $online_user_count = $c->model("DB::Session")->get_online_users({datetime_limit => $online_users_last_active_limit})->count;
   
   my ( $matches, $matches_to_show, $matches_started, $next_match_date, $handicapped );
-  
+  my $tomorrow = 0; # Denote if the next match date is tomorrow, we have a special language code for this
+  my $today = $c->datetime_tz({time_zone => $c->stash->{timezone}});
   if ( defined($current_season) ) {
     $matches = $c->model("DB::TeamMatch")->matches_on_date({
       season => $current_season,
-      date => $c->datetime_tz({time_zone => $c->stash->{timezone}}),
+      date => $today,
     });
     
     $matches_started = $matches->matches_started->count;
@@ -187,6 +188,7 @@ sub index :Path :Args(0) {
     if ( !$matches_to_show ) {
       # No matches today, find the next match date
       $next_match_date = $c->model("DB::TeamMatch")->next_match_date;
+      $tomorrow = 1 if $next_match_date->clone->subtract(days => 1)->ymd eq $today->ymd;
       
       if ( defined($next_match_date) ) {
         $matches = $c->model("DB::TeamMatch")->matches_on_date({
@@ -255,6 +257,7 @@ sub index :Path :Args(0) {
     matches_to_show => $matches_to_show,
     matches_started => $matches_started,
     next_match_date => $next_match_date,
+    tomorrow => $tomorrow,
     articles => $articles,
     online_user_count => $online_user_count,
     index_text => $c->model("DB::PageText")->get_text("index"),

@@ -497,19 +497,22 @@ msgid "home-page.users-online.are"
 msgstr "are"
 
 msgid "home-page.todays-matches"
-msgstr "Today&#39;s matches"
+msgstr "%1 matches playing today"
+
+msgid "home-page.next-matches-tomorrow"
+msgstr "Next matches: %1 tomorrow"
 
 msgid "home-page.next-matches"
-msgstr "Next matches scheduled: %1 %2 %3"
+msgstr "Next matches: %1 on %2 %3 %4"
 
 msgid "home-page.next-matches-year"
-msgstr "Next matches scheduled: %1 %2 %3 %4"
+msgstr "Next matches: %1 on %2 %3 %4 %5"
 
 msgid "home-page.next-match"
-msgstr "Next match scheduled: %1 %2 %3"
+msgstr "Next match: %1 %2 %3"
 
 msgid "home-page.next-match-year"
-msgstr "Next match scheduled: %1 %2 %3 %4"
+msgstr "Next match: %1 %2 %3 %4"
 
 ## Doubles
 msgid "menu.text.doubles"
