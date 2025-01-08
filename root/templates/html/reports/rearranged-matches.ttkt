@@ -55,13 +55,6 @@ IF report_data.count;
       SET away_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [away_club, away_team]);
       SET table_uri = c.uri_for_action("/league-tables/view_current_season", [match.division_season.division.url_key]);
     END;
-    
-    # Display the score or 'Not yet played'?
-    IF match.home_team_match_score OR match.away_team_match_score;
-      SET score = match.home_team_match_score _ "-" _ match.away_team_match_score;
-    ELSE;
-      SET score = c.maketext("matches.versus.not-yet-played");
-    END;
 -%]
     <tr>
       <td data-label="[% c.maketext("reports.columns.rearranged-matches.scheduled-date") %]">[% match.scheduled_date.ymd("") %]</td>
@@ -72,7 +65,7 @@ IF report_data.count;
       <td data-label="[% c.maketext("reports.columns.rearranged-matches.division") %]"><a href="[% table_uri %]">[% match.division_season.name | html %]</a></td>
       <td data-label="[% c.maketext("reports.columns.rearranged-matches.home-team") %]"><a href="[% home_uri %]">[% home_name | html_entity %]</a></td>
       <td data-label="[% c.maketext("reports.columns.rearranged-matches.away-team") %]"><a href="[% away_uri %]">[% away_name | html_entity %]</a></td>
-      <td data-label="[% c.maketext("reports.columns.rearranged-matches.score-versus") %]"><a href="[% c.uri_for_action("/matches/team/view_by_url_keys", match.url_keys) %]">[% score %]</a></td>
+      <td data-label="[% c.maketext("reports.columns.rearranged-matches.score-versus") %]"><a href="[% c.uri_for_action("/matches/team/view_by_url_keys", match.url_keys) %]">[% match.score %]</a></td>
       <td data-label="[% c.maketext("reports.columns.rearranged-matches.venue") %]"><a href="[% c.uri_for_action("/venues/view", [match.venue.url_key]) %]">[% match.venue.name | html_entity %]</a></td>
     </tr>
 [%

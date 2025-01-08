@@ -2713,8 +2713,11 @@ msgstr "%1 v %2"
 msgid "matches.versus.not-yet-played"
 msgstr "Not yet played"
 
+msgid "matches.versus.not-yet-received"
+msgstr "Not received"
+
 msgid "matches.handicap.not-yet-set"
-msgstr "Handicap not yet set"
+msgstr "Handicap not set"
 
 msgid "matches.handicap.scratch-hcp"
 msgstr "Scratch handicap"
@@ -2726,7 +2729,7 @@ msgid "matches.handicap.format.not-handicapped"
 msgstr "N/A"
 
 msgid "matches.handicap.format.not-set"
-msgstr "Not yet set"
+msgstr "Not set"
 
 msgid "matches.update-score"
 msgstr "Update match date, venue, players and score"

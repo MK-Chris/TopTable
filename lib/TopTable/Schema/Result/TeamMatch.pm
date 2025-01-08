@@ -1492,7 +1492,16 @@ sub score {
   $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
   my $lang = $schema->lang;
   
-  return $self->started ? sprintf("%d-%d", $self->team_score("home"), $self->team_score("away")) : $lang->maketext("matches.versus.not-yet-played");
+  if ( $self->started ) {
+    # If the match is started, return the score regardless
+    return sprintf("%d-%d", $self->team_score("home"), $self->team_score("away"));
+  } else {
+    # If the score hasn't come in yet, we will display either 'not yet played' or 'score not yet received' depending on the date
+    my $today = DateTime->today(time_zone => "UTC");
+    my $cmp = DateTime->compare($self->played_date->truncate(to => "day"), $today->truncate(to => "day"));
+    
+    return $cmp == 1 ? $lang->maketext("matches.versus.not-yet-played") : $lang->maketext("matches.versus.not-yet-received");
+  }
 }
 
 =head2 legs_played
