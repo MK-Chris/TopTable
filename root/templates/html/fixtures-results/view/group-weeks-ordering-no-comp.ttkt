@@ -74,13 +74,6 @@
       SET fixtures_day_uri = c.uri_for_action("/fixtures-results/view_day_current_season_end", [date.year, month, day]);
       SET fixtures_week_uri = c.uri_for_action("/fixtures-results/view_week_current_season_end", [week_year, week_month, week_day]);
     END;
-    
-    # Display the score or 'Not yet played'?
-    IF match.home_team_match_score OR match.away_team_match_score;
-      SET score = match.home_team_match_score _ "-" _ match.away_team_match_score;
-    ELSE;
-      SET score = c.maketext("matches.versus.not-yet-played");
-    END;
 -%]
   <tr>
     <td data-label="[% c.maketext("fixtures-results.heading.week-beginning-sort") %]">[% week.ymd %]</td>
@@ -91,7 +84,7 @@
     <td data-label="[% c.maketext("fixtures-results.heading.date") %]"><a href="[% fixtures_day_uri %]">[% c.i18n_datetime_format_date.format_datetime(date) %]</a></td>
     <td data-label="[% c.maketext("fixtures-results.heading.home-team") %]"><a title="[% home_uri_title %]" href="[% home_team_uri %]">[% home_team_html %]</a></td>
     <td data-label="[% c.maketext("fixtures-results.heading.away-team") %]"><a title="[% away_uri_title %]" href="[% away_team_uri %]">[% away_team_html %]</a></td>
-    <td data-label="[% c.maketext("fixtures-results.heading.score-versus") %]"><a href="[% c.uri_for_action('/matches/team/view_by_url_keys', match.url_keys) %]" title="[% c.maketext("fixtures-results.view-scorecard") %]">[% score %]</a></td>
+    <td data-label="[% c.maketext("fixtures-results.heading.score-versus") %]"><a href="[% c.uri_for_action('/matches/team/view_by_url_keys', match.url_keys) %]" title="[% c.maketext("fixtures-results.view-scorecard") %]">[% match.score %]</a></td>
     <td data-label="[% c.maketext("fixtures-results.heading.venue") %]"><a href="[% c.uri_for_action("/venues/view", [match.venue.url_key]) %]">[% match.venue.name | html_entity %]</a></td>
 [%
     IF authorisation.match_update OR authorisation.match_cancel;

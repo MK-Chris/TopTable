@@ -83,13 +83,6 @@
         SET comp_uri = c.uri_for_action("/league-tables/view_current_season", [match.division_season.division.url_key]);
       END;
     END;
-    
-    # Display the score or 'Not yet played'?
-    IF match.home_team_match_score OR match.away_team_match_score;
-      SET score = match.home_team_match_score _ "-" _ match.away_team_match_score;
-    ELSE;
-      SET score = c.maketext("matches.versus.not-yet-played");
-    END;
 -%]
     <tr>
       <td data-label="[% c.maketext("fixtures-results.heading.competition-sort") %]">[% match.competition_sort %]</td>
@@ -101,7 +94,7 @@
       # If some of the matches have been updated already, show the scores but no venue (this is a space saver, if matches have already)
       # been started we don't really need the venues to show)
 -%]
-      <td><a href="[% c.uri_for_action('/matches/team/view_by_url_keys', match.url_keys) %]" title="[% c.maketext("fixtures-results.view-scorecard") %]">[% score %]</a></td>
+      <td><a href="[% c.uri_for_action('/matches/team/view_by_url_keys', match.url_keys) %]" title="[% c.maketext("fixtures-results.view-scorecard") %]">[% match.score %]</a></td>
 [%
     ELSE;
       # If none of the matches have been updated yet, show the venue but no scores

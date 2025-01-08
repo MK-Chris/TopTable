@@ -256,7 +256,7 @@ IF teams_count;
           SET result = c.maketext("matches.result.draw");
         END;
       ELSE;
-        SET result = c.maketext("matches.versus.not-yet-played");
+        SET result = c.maketext("matches.versus.not-yet-received");
       END;
 -%]
         <tr[% game_class %]>
