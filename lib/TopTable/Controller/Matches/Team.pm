@@ -4,7 +4,6 @@ use namespace::autoclean;
 use JSON;
 use Try::Tiny;
 use HTML::Entities;
-use DDP;
 
 BEGIN { extends 'Catalyst::Controller'; }
 
@@ -660,7 +659,6 @@ sub set_postponed :Private {
     $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["team-match", $action, {home_team => $match->team_season_home_team_season->team->id, away_team => $match->team_season_away_team_season->team->id, scheduled_date => $match->scheduled_date->ymd}, $match_name]);
   } else {
     # Wasn't completed, return with an error code
-    $c->log->debug(np($response));
     $c->res->status(400);
   }
   

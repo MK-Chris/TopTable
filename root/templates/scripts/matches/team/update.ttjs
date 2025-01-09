@@ -309,16 +309,28 @@ END;
    */
    var disable_postpone_call = false;
   $("#postpone").on("change", function() {
+    var $this = $(this);
     if ( disable_postpone_call === false ) {
       $.ajax({
         url: "[% c.uri_for_action("/matches/team/set_postponed_by_ids", [match.team_season_home_team_season.team.id, match.team_season_away_team_season.team.id, match.scheduled_date.year, match_month, match_day]) %]",
         type: "POST",
         dataType: "json",
-        data: {postponed: $(this).prop("checked") ? 1 : 0},
+        data: {postponed: $this.prop("checked") ? 1 : 0},
         success: function(response) {
           show_messages(response);
         },
-        error: function(xhr, ajax_options, thrown_error) { 
+        error: function(xhr, ajax_options, thrown_error) {
+          disable_postpone_call = true;
+          
+          if ( $this.prop("checked") ) {
+            // We tried to check it and it failed, so uncheck it again
+            $this.prettyCheckable("uncheck");
+          } else {
+            // We tried to uncheck it and it failed, so check it again
+            $this.prettyCheckable("check");
+          }
+          
+          disable_postpone_call = true;
           if ( typeof xhr.responseJSON === "undefined" ) {
             $().toastmessage("showToast", {
               text: "<br />" + thrown_error + ": [% c.maketext("ajax.error.refresh-advice") %]",
