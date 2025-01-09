@@ -2631,11 +2631,12 @@ sub cancel {
     $player->update_person({action => "remove"});
   }
   
-  # Update the match score and cancelled flag
+  # Update the match score and cancelled flag, remove any postponed flag
   $self->update({
     home_team_match_score => $home_points_awarded,
     away_team_match_score => $away_points_awarded,
     cancelled => 1,
+    postponed => 0,
   });
   
   # Update the awarded points in the relevant field - also points against if required - the points against should be awarded what the opposite team have been awarded
