@@ -576,8 +576,8 @@ sub do_delete :Chained("base") :PathPart("do-delete") :Args(0) {
   my $response = $grid->check_and_delete;
   
   # Set the status messages we need to show on redirect
-  my @errors = @{$response->{errors}};
-  my @warnings = @{$response->{warnings}};
+  my @errors = @{$response->{error}};
+  my @warnings = @{$response->{warning}};
   my @info = @{$response->{info}};
   my @success = @{$response->{success}};
   my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});
@@ -618,8 +618,8 @@ sub process_form :Private {
     map {$_ => $c->req->params->{$_}} @field_names, # All the fields from the form
   });
   
-  my @errors = @{$response->{errors}};
-  my @warnings = @{$response->{warnings}};
+  my @errors = @{$response->{error}};
+  my @warnings = @{$response->{warning}};
   my @info = @{$response->{info}};
   my @success = @{$response->{success}};
   my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});
@@ -739,8 +739,8 @@ sub set_matches :Chained("base") :PathPart("set-matches") :Args(0) {
   });
   
   # Set the status messages we need to show on redirect
-  my @errors = @{$response->{errors}};
-  my @warnings = @{$response->{warnings}};
+  my @errors = @{$response->{error}};
+  my @warnings = @{$response->{warning}};
   my @info = @{$response->{info}};
   my @success = @{$response->{success}};
   my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});
@@ -897,8 +897,8 @@ sub set_teams :Chained("base") :PathPart("set-teams") :Args(0) {
   my $response = $grid->set_teams({divisions => \%divisions});
   
   # Set the status messages we need to show on redirect
-  my @errors = @{$response->{errors}};
-  my @warnings = @{$response->{warnings}};
+  my @errors = @{$response->{error}};
+  my @warnings = @{$response->{warning}};
   my @info = @{$response->{info}};
   my @success = @{$response->{success}};
   my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});
@@ -1065,8 +1065,8 @@ sub do_create_fixtures :Chained("base") :PathPart("do-create-fixtures") :Args(0)
   });
   
   # Set the status messages we need to show on redirect
-  my @errors = @{$response->{errors}};
-  my @warnings = @{$response->{warnings}};
+  my @errors = @{$response->{error}};
+  my @warnings = @{$response->{warning}};
   my @info = @{$response->{info}};
   my @success = @{$response->{success}};
   my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});
@@ -1156,8 +1156,8 @@ sub do_delete_fixtures :Chained("base") :PathPart("do-delete-fixtures") :Args(0)
   my $response = $grid->delete_matches;
   
   # Set the status messages we need to show on redirect
-  my @errors = @{$response->{errors}};
-  my @warnings = @{$response->{warnings}};
+  my @errors = @{$response->{error}};
+  my @warnings = @{$response->{warning}};
   my @info = @{$response->{info}};
   my @success = @{$response->{success}};
   my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});

@@ -189,8 +189,8 @@ sub create_or_edit {
   my $maximum_teams = $params->{maximum_teams};
   my $fixtures_repeated = $params->{fixtures_repeated};
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     fields => {
@@ -203,13 +203,13 @@ sub create_or_edit {
   
   if ($action ne "create" and $action ne "edit") {
     # Invalid action passed
-    push(@{$response->{errors}}, $lang->maketext("admin.form.invalid-action", $action));
+    push(@{$response->{error}}, $lang->maketext("admin.form.invalid-action", $action));
     
     return $response;
   } elsif ($action eq "edit") {
     unless ( defined($grid) and ref($grid) eq "TopTable::Model::DB::FixturesGrid" ) {
       # Editing a fixtures grid that doesn't exist.
-      push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.error.grid-invalid"));
+      push(@{$response->{error}}, $lang->maketext("fixtures-grids.form.error.grid-invalid"));
       return $response;
     }
   }
@@ -221,22 +221,22 @@ sub create_or_edit {
   # Error checking
   # Check the names were entered and don't exist already.
   if ( defined($name) ) {
-    push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.error.grid-exists", encode_entities($name))) if defined($class->search_single_field({field => "name", value => $name, exclusion_obj => $grid}));
+    push(@{$response->{error}}, $lang->maketext("fixtures-grids.form.error.grid-exists", encode_entities($name))) if defined($class->search_single_field({field => "name", value => $name, exclusion_obj => $grid}));
   } else {
     # Name omitted.
-    push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.error.name-blank"));
+    push(@{$response->{error}}, $lang->maketext("fixtures-grids.form.error.name-blank"));
   }
   
   if ( $setup_rounds ) {
     # Check the maximum teams is a valid numeric value (2-98).
-    push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.error.maximum-teams-invalid")) if !$maximum_teams or $maximum_teams !~ m/^\d{1,2}$/ or $maximum_teams < 2 or $maximum_teams > 98 or $maximum_teams % 2 == 1;
+    push(@{$response->{error}}, $lang->maketext("fixtures-grids.form.error.maximum-teams-invalid")) if !$maximum_teams or $maximum_teams !~ m/^\d{1,2}$/ or $maximum_teams < 2 or $maximum_teams > 98 or $maximum_teams % 2 == 1;
     
     # Check the number of weeks is valid; this needs to be a valid numeric figure and
     # less than 52, as a season will definitely not last a year.
-    push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.error.repeat-fixtures-invalid")) if !$fixtures_repeated or $fixtures_repeated !~ m/^\d$/ or $fixtures_repeated < 1;
+    push(@{$response->{error}}, $lang->maketext("fixtures-grids.form.error.repeat-fixtures-invalid")) if !$fixtures_repeated or $fixtures_repeated !~ m/^\d$/ or $fixtures_repeated < 1;
   }
   
-  if ( scalar( @{$response->{errors}} ) == 0 ) {
+  if ( scalar( @{$response->{error}} ) == 0 ) {
     # Generate a URL key
     my $url_key;
     if ( $action eq "edit" ) {

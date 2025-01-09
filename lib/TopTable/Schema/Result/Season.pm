@@ -723,8 +723,8 @@ sub check_and_complete {
   # Encode the name for messaging
   my $enc_name = encode_entities($self->name);
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     completed => 0,
@@ -732,24 +732,24 @@ sub check_and_complete {
   
   # Check we can complete
   if ( $self->complete ) {
-    push(@{$response->{errors}}, $lang->maketext("seasons.complete.error.season-complete", $enc_name));
+    push(@{$response->{error}}, $lang->maketext("seasons.complete.error.season-complete", $enc_name));
     return $response;
   }
   
   if ( $schema->resultset("TeamMatch")->incomplete_and_not_cancelled({season => $self})->count > 0 ) {
-    push(@{$response->{errors}}, $lang->maketext("seasons.complete.error.matches-incomplete", $enc_name));
+    push(@{$response->{error}}, $lang->maketext("seasons.complete.error.matches-incomplete", $enc_name));
     return $response;
   }
   
   # Delete
-  my $ok = $self->update({complete => 1}) if scalar @{$response->{errors}} == 0;
+  my $ok = $self->update({complete => 1}) if scalar @{$response->{error}} == 0;
   
   # Error if the delete was unsuccessful
   if ( $ok ) {
     $response->{completed} = 1;
     push(@{$response->{success}}, $lang->maketext("seasons.complete.success", $enc_name));
   } else {
-    push(@{$response->{errors}}, $lang->maketext("seasons.complete.error.database", $enc_name));
+    push(@{$response->{error}}, $lang->maketext("seasons.complete.error.database", $enc_name));
   }
   
   return $response;
@@ -804,15 +804,15 @@ sub check_and_delete {
   # Encode the name for messaging
   my $enc_name = encode_entities($self->name);
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     completed => 0,
   };
   
   # Check we can delete
-  push(@{$response->{errors}}, $lang->maketext("seasons.delete.error.matches-exist", $enc_name)) unless $self->can_delete;
+  push(@{$response->{error}}, $lang->maketext("seasons.delete.error.matches-exist", $enc_name)) unless $self->can_delete;
   
   # Order of the first three is important; person seasons must come before team seasons, which must come before club seasons
   my @relations = qw( person_seasons team_seasons club_seasons division_seasons doubles_pairs event_seasons fixtures_weeks );
@@ -824,7 +824,7 @@ sub check_and_delete {
     $ok = $self->delete_related($relation);
     
     # Error if the delete was unsuccessful
-    push(@{$response->{errors}}, $lang->maketext("admin.delete.error.database", $enc_name, ref($relation))) unless $ok;
+    push(@{$response->{error}}, $lang->maketext("admin.delete.error.database", $enc_name, ref($relation))) unless $ok;
   }
   
   # Delete
@@ -835,7 +835,7 @@ sub check_and_delete {
     $response->{completed} = 1;
     push(@{$response->{success}}, $lang->maketext("admin.forms.success", $enc_name, $lang->maketext("admin.message.deleted")));
   } else {
-    push(@{$response->{errors}}, $lang->maketext("admin.delete.error.database", $enc_name, ref($self)));
+    push(@{$response->{error}}, $lang->maketext("admin.delete.error.database", $enc_name, ref($self)));
   }
   
   $transaction->commit;

@@ -237,8 +237,8 @@ sub create_or_edit {
   my $venue = $params->{venue} || undef;
   my $secretary = $params->{secretary} || undef;
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     fields => {
@@ -255,7 +255,7 @@ sub create_or_edit {
   
   if ($action ne "create" and $action ne "edit") {
     # Invalid action passed
-    push(@{$response->{errors}}, $lang->maketext("admin.form.invalid-action", $action));
+    push(@{$response->{error}}, $lang->maketext("admin.form.invalid-action", $action));
     
     # This error is fatal, so we return straight away
     return $response;
@@ -267,13 +267,13 @@ sub create_or_edit {
         $club = $class->find_id_or_url_key($club);
         
         # Definitely error if we're now undef
-        push(@{$response->{errors}}, $lang->maketext("clubs.form.error.club-invalid")) unless defined($club);
+        push(@{$response->{error}}, $lang->maketext("clubs.form.error.club-invalid")) unless defined($club);
         
         # Another fatal error
         return $response;
       }
     } else {
-      push(@{$response->{errors}}, $lang->maketext("clubs.form.error.club-not-specified"));
+      push(@{$response->{error}}, $lang->maketext("clubs.form.error.club-not-specified"));
     }
   }
   
@@ -281,33 +281,33 @@ sub create_or_edit {
   # Check the names were entered and don't exist already.
   if ( defined($full_name) ) {
     # Full name entered, check it.
-    push(@{$response->{errors}}, $lang->maketext("clubs.form.error.full-name-exists", encode_entities($full_name))) if defined($class->search_single_field({field => "full_name", value => $full_name, exclusion_obj => $club}));
+    push(@{$response->{error}}, $lang->maketext("clubs.form.error.full-name-exists", encode_entities($full_name))) if defined($class->search_single_field({field => "full_name", value => $full_name, exclusion_obj => $club}));
   } else {
     # Full name omitted.
-    push(@{$response->{errors}}, $lang->maketext("clubs.form.error.full-name-blank"));
+    push(@{$response->{error}}, $lang->maketext("clubs.form.error.full-name-blank"));
   }
   
   if ( defined($short_name) ) {
     # Full name entered, check it.
-    push(@{$response->{errors}}, $lang->maketext("clubs.form.error.short-name-exists", encode_entities($short_name))) if defined($class->search_single_field({field => "short_name", value => $short_name, exclusion_obj => $club}));
+    push(@{$response->{error}}, $lang->maketext("clubs.form.error.short-name-exists", encode_entities($short_name))) if defined($class->search_single_field({field => "short_name", value => $short_name, exclusion_obj => $club}));
   } else {
     # Full name omitted.
-    push(@{$response->{errors}}, $lang->maketext("clubs.form.error.short-name-blank"));
+    push(@{$response->{error}}, $lang->maketext("clubs.form.error.short-name-blank"));
   }
   
   if ( defined($abbreviated_name) ) {
     # Full name entered, check it.
-    push(@{$response->{errors}}, $lang->maketext("clubs.form.error.abbreviated-name-exists", encode_entities($abbreviated_name))) if defined($class->search_single_field({field => "abbreviated_name", value => $abbreviated_name, exclusion_obj => $club}));
+    push(@{$response->{error}}, $lang->maketext("clubs.form.error.abbreviated-name-exists", encode_entities($abbreviated_name))) if defined($class->search_single_field({field => "abbreviated_name", value => $abbreviated_name, exclusion_obj => $club}));
   } else {
     # Full name omitted.
-    push(@{$response->{errors}}, $lang->maketext("clubs.form.error.abbreviated-name-blank"));
+    push(@{$response->{error}}, $lang->maketext("clubs.form.error.abbreviated-name-blank"));
   }
   
   # Email address entered but invalid
-  push(@{$response->{errors}}, $lang->maketext("clubs.form.error.email-invalid")) if $email_address and $email_address !~ m/^[-!#$%&\'*+\\.\/0-9=?A-Z^_`{|}~]+@([-0-9A-Z]+\.)+([0-9A-Z]){2,4}$/i;
+  push(@{$response->{error}}, $lang->maketext("clubs.form.error.email-invalid")) if $email_address and $email_address !~ m/^[-!#$%&\'*+\\.\/0-9=?A-Z^_`{|}~]+@([-0-9A-Z]+\.)+([0-9A-Z]){2,4}$/i;
   
   # Website
-  push(@{$response->{errors}}, $lang->maketext("clubs.form.error.website-invalid")) if $website and !$RE{URI}{HTTP}->matches($website);
+  push(@{$response->{error}}, $lang->maketext("clubs.form.error.website-invalid")) if $website and !$RE{URI}{HTTP}->matches($website);
   
   # The venue / secretary should be checked to ensure they're a valid venue / person object or a valid ID / URL key for a venue or person
   if ( defined($venue) ) {
@@ -319,15 +319,15 @@ sub create_or_edit {
       if  ( defined($venue) ) {
         $response->{fields}{venue} = $venue;
       } else {
-        push(@{$response->{errors}}, $lang->maketext("clubs.form.error.venue-invalid"));
+        push(@{$response->{error}}, $lang->maketext("clubs.form.error.venue-invalid"));
       }
     }
   } else {
-    push(@{$response->{errors}}, $lang->maketext("clubs.form.error.venue-blank"));
+    push(@{$response->{error}}, $lang->maketext("clubs.form.error.venue-blank"));
   }
   
   # Check the venue is valid
-  push(@{$response->{errors}}, $lang->maketext("clubs.form.error.venue-inactive", encode_entities($venue->name))) if defined($venue) and !$venue->active;
+  push(@{$response->{error}}, $lang->maketext("clubs.form.error.venue-inactive", encode_entities($venue->name))) if defined($venue) and !$venue->active;
   
   if ( defined($secretary) ) {
     if ( ref($secretary) ne "TopTable::Model::DB::Person" ) {
@@ -338,19 +338,19 @@ sub create_or_edit {
       if ( defined($secretary) ) {
         $response->{fields}{secretary} = $secretary;
       } else {
-        push(@{$response->{errors}}, $lang->maketext("clubs.form.error.secretary-invalid"));
+        push(@{$response->{error}}, $lang->maketext("clubs.form.error.secretary-invalid"));
       }
     }
   }
   
   # Check valid start time; if blank, we won't error; they'll just use the season default start time.
-  push(@{$response->{errors}}, $lang->maketext("clubs.form.error.start-hour-invalid")) if defined($start_hour) and $start_hour !~ m/^(?:0[0-9]|1[0-9]|2[0-3])$/;
-  push(@{$response->{errors}}, $lang->maketext("clubs.form.error.start-minute-invalid")) if defined($start_minute) and $start_minute !~ m/^(?:[0-5][0-9])$/;
+  push(@{$response->{error}}, $lang->maketext("clubs.form.error.start-hour-invalid")) if defined($start_hour) and $start_hour !~ m/^(?:0[0-9]|1[0-9]|2[0-3])$/;
+  push(@{$response->{error}}, $lang->maketext("clubs.form.error.start-minute-invalid")) if defined($start_minute) and $start_minute !~ m/^(?:[0-5][0-9])$/;
   
   # Check we don't have one and not the other
-  push(@{ $response->{errors} }, $lang->maketext("clubs.form.error.start-time-not-complete")) if ( defined($start_hour) and !defined($start_minute) ) or ( !defined($start_hour) and defined($start_minute) );
+  push(@{ $response->{error} }, $lang->maketext("clubs.form.error.start-time-not-complete")) if ( defined($start_hour) and !defined($start_minute) ) or ( !defined($start_hour) and defined($start_minute) );
    
-  if ( scalar(@{$response->{errors}}) == 0 ) {
+  if ( scalar(@{$response->{error}}) == 0 ) {
     # Grab the submitted values
     # Build the time string
     my $default_match_start = sprintf("%s:%s", $start_hour, $start_minute) if $start_hour and $start_minute;

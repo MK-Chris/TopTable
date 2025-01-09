@@ -239,8 +239,8 @@ sub check_and_create {
   my $submitted_divisions = $params->{divisions} || [];
   $submitted_divisions = [$submitted_divisions] unless ref($submitted_divisions) eq "ARRAY";
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     fields => [], # Array ref because we could be doing multiple divisions
@@ -252,11 +252,11 @@ sub check_and_create {
   
   if ( defined($season) ) {
     # There is a current season, but we have to check we aren't restricted from editing the divisions
-    push(@{$response->{errors}}, $lang->maketext("divisions.form.error.matches-created-cant-create-or-edit")) if $season->search_related("team_matches")->count;
+    push(@{$response->{error}}, $lang->maketext("divisions.form.error.matches-created-cant-create-or-edit")) if $season->search_related("team_matches")->count;
     $season_weeks = $season->number_of_weeks;
   } else {
     # No current season
-    push(@{$response->{errors}}, $lang->maketext("divisions.form.error.no-current-season"));
+    push(@{$response->{error}}, $lang->maketext("divisions.form.error.no-current-season"));
     return $response;
   }
   
@@ -302,7 +302,7 @@ sub check_and_create {
         });
       }
       
-      push(@{$response->{errors}}, $lang->maketext("divisions.form.error.division-exists", encode_entities($db_obj->{name}))) if defined($division_name_check);
+      push(@{$response->{error}}, $lang->maketext("divisions.form.error.division-exists", encode_entities($db_obj->{name}))) if defined($division_name_check);
       
       # This hash will check against the other submitted names to ensure we don't get duplicates there either.
       if ( exists($seen_names{$name}) ) {
@@ -314,12 +314,12 @@ sub check_and_create {
       }
     } else {
       # Full name omitted.
-      push(@{$response->{errors}}, $lang->maketext("divisions.form.error.name-blank", $rank));
+      push(@{$response->{error}}, $lang->maketext("divisions.form.error.name-blank", $rank));
     }
     
     # Check the 'seen_names' hash for values more than one
     foreach my $name ( keys %seen_names ) {
-      push(@{$response->{errors}}, $lang->maketext("divisions.form.error.duplicate-names", $name, $seen_names{$name})) if $seen_names{$name} > 1;
+      push(@{$response->{error}}, $lang->maketext("divisions.form.error.duplicate-names", $name, $seen_names{$name})) if $seen_names{$name} > 1;
     }
     
     # Foreign key checks
@@ -332,15 +332,15 @@ sub check_and_create {
         if ( defined($fixtures_grid) ) {
           # Now check the fixtures grid is eligible to be used this year
           my $grid_weeks = $fixtures_grid->fixtures_grid_weeks->count;
-          push(@{$response->{errors}}, $lang->maketext("divisions.form.error.selected-grid-too-many-weeks-for-season", $season_weeks, $rank, $grid_weeks)) if defined($season_weeks) and $grid_weeks > $season_weeks;
+          push(@{$response->{error}}, $lang->maketext("divisions.form.error.selected-grid-too-many-weeks-for-season", $season_weeks, $rank, $grid_weeks)) if defined($season_weeks) and $grid_weeks > $season_weeks;
         } else {
           # Invalid grid
-          push(@{$response->{errors}}, $lang->maketext("divisions.form.error.grid-invalid", $rank));
+          push(@{$response->{error}}, $lang->maketext("divisions.form.error.grid-invalid", $rank));
         }
       }
     } else {
       # Fixtures grid not selected
-      push(@{$response->{errors}}, $lang->maketext("divisions.form.error.grid-blank", $rank));
+      push(@{$response->{error}}, $lang->maketext("divisions.form.error.grid-blank", $rank));
     }
     
     # Check the league match template
@@ -348,11 +348,11 @@ sub check_and_create {
       if ( ref($league_match_template) ne "TopTable::Model::DB::TemplateMatchTeam" ) {
         # Look it up if we need to
         $league_match_template = $schema->resultset("TemplateMatchTeam")->find_id_or_url_key($league_match_template);
-        push(@{$response->{errors}}, $lang->maketext("divisions.form.error.league-match-template-invalid", $rank)) unless defined($league_match_template);
+        push(@{$response->{error}}, $lang->maketext("divisions.form.error.league-match-template-invalid", $rank)) unless defined($league_match_template);
       }
     } else {
       # Fixtures grid not selected
-      push(@{$response->{errors}}, $lang->maketext("divisions.form.error.league-match-template-blank", $rank));
+      push(@{$response->{error}}, $lang->maketext("divisions.form.error.league-match-template-blank", $rank));
     }
     
     # Check the ranking template
@@ -360,11 +360,11 @@ sub check_and_create {
       if ( ref($league_table_ranking_template) ne "TopTable::Model::DB::TemplateLeagueTableRanking" ) {
         # Look it up if we need to
         $league_table_ranking_template = $schema->resultset("TemplateLeagueTableRanking")->find_id_or_url_key($league_table_ranking_template);
-        push(@{$response->{errors}}, $lang->maketext("divisions.form.error.league-ranking-template-invalid", $rank)) unless defined($league_table_ranking_template);
+        push(@{$response->{error}}, $lang->maketext("divisions.form.error.league-ranking-template-invalid", $rank)) unless defined($league_table_ranking_template);
       }
     } else {
       # Fixtures grid not selected
-      push(@{$response->{errors}}, $lang->maketext("divisions.form.error.league-ranking-template-blank", $rank));
+      push(@{$response->{error}}, $lang->maketext("divisions.form.error.league-ranking-template-blank", $rank));
     }
     
     # Push our fields back into the response
@@ -381,7 +381,7 @@ sub check_and_create {
   }
   
   # Now we've looped through and done our error checking, we need to loop through again and do the creation if we didn't get any errors
-  if ( scalar @{$response->{errors}} == 0 ) {
+  if ( scalar @{$response->{error}} == 0 ) {
     for my $division_data ( @{$submitted_divisions} ) {
       # Store the DB object for easy access
       my $name = $division_data->{name} || undef;

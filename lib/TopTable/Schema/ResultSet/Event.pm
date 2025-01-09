@@ -169,8 +169,8 @@ sub create_or_edit {
   
   my $season = $schema->resultset("Season")->get_current;
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     fields => {
@@ -182,14 +182,14 @@ sub create_or_edit {
   
   if ( $action ne "create" and $action ne "edit" ) {
     # Invalid action passed
-    push(@{$response->{errors}}, $lang->maketext("admin.form.invalid-action", $action));
+    push(@{$response->{error}}, $lang->maketext("admin.form.invalid-action", $action));
     
     # This error is fatal, so we return straight away
     return $response;
   } elsif ( $action eq "edit" ) {
     # Check the event passed is valid
     unless ( defined($event) and $event->isa("TopTable::Schema::Result::Event") ) {
-      push(@{$response->{errors}}, $lang->maketext("event.form.error.event-invalid"));
+      push(@{$response->{error}}, $lang->maketext("event.form.error.event-invalid"));
       
       # Another fatal error
       return $response;
@@ -198,7 +198,7 @@ sub create_or_edit {
   
   unless ( defined($season) ) {
     my $action_desc = $action eq "create" ? $lang->maketext("admin.message.created") : $lang->maketext("admin.message.edited");
-    push(@{$response->{errors}}, $lang->maketext("events.form.error.no-current-season", $action_desc));
+    push(@{$response->{error}}, $lang->maketext("events.form.error.no-current-season", $action_desc));
   }
   
   # Required fields - certain keys get deleted depending on the values of other fields
@@ -210,10 +210,10 @@ sub create_or_edit {
   # Check the names were entered and don't exist already.
   if ( defined($name) ) {
     # Name entered, check it.
-    push(@{$response->{errors}}, $lang->maketext("events.form.error.name-exists", encode_entities($name))) if defined($class->search_single_field({field => "name", value => $name, exclusion_obj => $event}));
+    push(@{$response->{error}}, $lang->maketext("events.form.error.name-exists", encode_entities($name))) if defined($class->search_single_field({field => "name", value => $name, exclusion_obj => $event}));
   } else {
     # Name omitted.
-    push(@{$response->{errors}}, $lang->maketext("events.form.error.name-blank"));
+    push(@{$response->{error}}, $lang->maketext("events.form.error.name-blank"));
   }
   
   if ( $action eq "create" or $event->can_edit_event_type ) {
@@ -247,11 +247,11 @@ sub create_or_edit {
               }
             } else {
               # Invalid tournament type
-              push(@{$response->{errors}}, $lang->maketext("events.form.error.tournament-type-invalid"));
+              push(@{$response->{error}}, $lang->maketext("events.form.error.tournament-type-invalid"));
             }
           } else {
             # Tournament type not given
-            push(@{$response->{errors}}, $lang->maketext("events.form.error.tournament-type-blank"));
+            push(@{$response->{error}}, $lang->maketext("events.form.error.tournament-type-blank"));
           }
         } else {
           # Not a tournament, so we don't need a tournament type
@@ -259,11 +259,11 @@ sub create_or_edit {
         }
       } else {
         # Event type invalid
-        push(@{$response->{errors}}, $lang->maketext("events.form.error.event-type-invalid"));
+        push(@{$response->{error}}, $lang->maketext("events.form.error.event-type-invalid"));
       }
     } else {
       # Event type blank
-      push(@{$response->{errors}}, $lang->maketext("events.form.error.event-type-blank"));
+      push(@{$response->{error}}, $lang->maketext("events.form.error.event-type-blank"));
     }
   }
   
@@ -276,9 +276,9 @@ sub create_or_edit {
       # Templates have to be team
       if ( defined($default_team_match_template) ) {
         $default_team_match_template = $schema->resultset("TemplateMatchTeam")->find_id_or_url_key($default_team_match_template) unless $default_team_match_template->isa("TopTable::Schema::Result::TemplateMatchTeam");
-        push(@{$response->{errors}}, $lang->maketext("events.form.error.def-match-template-invalid")) unless $default_team_match_template->isa("TopTable::Schema::Result::TemplateMatchTeam");
+        push(@{$response->{error}}, $lang->maketext("events.form.error.def-match-template-invalid")) unless $default_team_match_template->isa("TopTable::Schema::Result::TemplateMatchTeam");
       } else {
-        push(@{$response->{errors}}, $lang->maketext("events.form.error.def-match-template-blank"));
+        push(@{$response->{error}}, $lang->maketext("events.form.error.def-match-template-blank"));
       }
       
       # We don't want an individual match template for team entry events
@@ -297,10 +297,10 @@ sub create_or_edit {
         $allow_loan_players_multiple_teams = $allow_loan_players_multiple_teams ? 1 : 0;
         
         # Check the limits are numeric and not negative
-        push(@{$response->{errors}}, $lang->maketext("events.form.error.loan-playerss-limit-per-player-invalid")) unless $loan_players_limit_per_player =~ m/^\d{1,2}$/;
-        push(@{$response->{errors}}, $lang->maketext("events.form.error.loan-players-limit-per-player-per-team-invalid")) unless $loan_players_limit_per_player_per_team =~ m/^\d{1,2}$/;
-        push(@{$response->{errors}}, $lang->maketext("events.form.error.loan-players-limit-per-player-per-opposition-invalid")) unless $loan_players_limit_per_player_per_opposition =~ m/^\d{1,2}$/;
-        push(@{$response->{errors}}, $lang->maketext("events.form.error.loan-players-limit-per-team-invalid")) unless $loan_players_limit_per_team =~ m/^\d{1,2}$/;
+        push(@{$response->{error}}, $lang->maketext("events.form.error.loan-playerss-limit-per-player-invalid")) unless $loan_players_limit_per_player =~ m/^\d{1,2}$/;
+        push(@{$response->{error}}, $lang->maketext("events.form.error.loan-players-limit-per-player-per-team-invalid")) unless $loan_players_limit_per_player_per_team =~ m/^\d{1,2}$/;
+        push(@{$response->{error}}, $lang->maketext("events.form.error.loan-players-limit-per-player-per-opposition-invalid")) unless $loan_players_limit_per_player_per_opposition =~ m/^\d{1,2}$/;
+        push(@{$response->{error}}, $lang->maketext("events.form.error.loan-players-limit-per-team-invalid")) unless $loan_players_limit_per_team =~ m/^\d{1,2}$/;
       } else {
         # No loan players, zero all other options
         $allow_loan_players_above = 0;
@@ -334,9 +334,9 @@ sub create_or_edit {
       # Templates have to be individual for any tournament entry type other than team (singles or doubles)
       if ( defined($default_individual_match_template) ) {
         $default_individual_match_template = $schema->resultset("TemplateMatchIndividual")->find_id_or_url_key($default_individual_match_template) unless $default_individual_match_template->isa("TopTable::Schema::Result::TemplateMatchIndividual");
-        push(@{$response->{errors}}, $lang->maketext("events.form.error.def-match-template-invalid")) unless $default_individual_match_template->isa("TopTable::Schema::Result::TemplateMatchIndividual");
+        push(@{$response->{error}}, $lang->maketext("events.form.error.def-match-template-invalid")) unless $default_individual_match_template->isa("TopTable::Schema::Result::TemplateMatchIndividual");
       } else {
-        push(@{$response->{errors}}, $lang->maketext("events.form.error.def-match-template-blank"));
+        push(@{$response->{error}}, $lang->maketext("events.form.error.def-match-template-blank"));
       }
       
       # We don't want a team match template for singles or doubles entry events
@@ -353,14 +353,14 @@ sub create_or_edit {
     if ( !$venue->isa("TopTable::Schema::Result::Venue") ) {
       # Venue hasn't been passed in as an object, try and lookup as an ID / URL key
       $venue = $schema->resultset("Venue")->find_id_or_url_key($venue);
-      push(@{$response->{errors}}, $lang->maketext("events.form.error.venue-invalid")) unless defined($venue);
+      push(@{$response->{error}}, $lang->maketext("events.form.error.venue-invalid")) unless defined($venue);
     }
     
     # Now check the venue is active if we have one
-    push(@{$response->{errors}}, $lang->maketext("events.form.error.venue-inactive", encode_entities($venue->name))) if defined($venue) and !$venue->active;
+    push(@{$response->{error}}, $lang->maketext("events.form.error.venue-inactive", encode_entities($venue->name))) if defined($venue) and !$venue->active;
   } else {
     # Venue is blank - only error if we've determined it's required
-    push(@{$response->{errors}}, $lang->maketext("events.form.error.venue-blank")) if $venue_required;
+    push(@{$response->{error}}, $lang->maketext("events.form.error.venue-blank")) if $venue_required;
   }
   
   # Push the sanitised field back
@@ -371,7 +371,7 @@ sub create_or_edit {
     if ( !$organiser->isa("TopTable::Schema::Result::Person") ) {
       # Not passed in as an object, check if it's a valid ID / URL key
       $organiser = $schema->resultset("Person")->find_id_or_url_key($organiser);
-      push(@{$response->{errors}}, $lang->maketext("events.form.error.organiser-invalid")) unless defined($organiser);
+      push(@{$response->{error}}, $lang->maketext("events.form.error.organiser-invalid")) unless defined($organiser);
     }
   }
   
@@ -468,26 +468,26 @@ sub create_or_edit {
   $response->{fields}{round_date} = $round_date;
   
   # Push any start date error we found here
-  push(@{$response->{errors}}, $date_errors{start_date}) if $date_errors{start_date};
+  push(@{$response->{error}}, $date_errors{start_date}) if $date_errors{start_date};
   
   # Check the start time is valid if we need it
   if ( defined($start_hour) ) {
     # Passed in, check it's valid
-    push(@{$response->{errors}}, $lang->maketext("events.form.error.start-hour-invalid")) unless $start_hour =~ m/^(?:0[0-9]|1[0-9]|2[0-3])$/;
+    push(@{$response->{error}}, $lang->maketext("events.form.error.start-hour-invalid")) unless $start_hour =~ m/^(?:0[0-9]|1[0-9]|2[0-3])$/;
   } else {
     # Blank, error if it's required
-    push(@{$response->{errors}}, $lang->maketext("events.form.error.start-hour-blank")) if $start_time_required;
+    push(@{$response->{error}}, $lang->maketext("events.form.error.start-hour-blank")) if $start_time_required;
   }
   
   if ( defined($start_minute) ) {
     # Passed in, check it's valid
-    push(@{$response->{errors}}, $lang->maketext("events.form.error.start-minute-invalid")) unless $start_minute =~ m/^(?:[0-5][0-9])$/;
+    push(@{$response->{error}}, $lang->maketext("events.form.error.start-minute-invalid")) unless $start_minute =~ m/^(?:[0-5][0-9])$/;
   } else {
     # Blank, error if it's required
-    push(@{$response->{errors}}, $lang->maketext("events.form.error.start-minute-blank")) if $start_time_required;
+    push(@{$response->{error}}, $lang->maketext("events.form.error.start-minute-blank")) if $start_time_required;
   }
   
-  push(@{$response->{errors}}, $lang->maketext("events.form.error.start-time-partially-blank")) if (!$start_time_required and (defined($start_hour) and !defined($start_minute)) or (!defined($start_hour) and defined($start_minute)));
+  push(@{$response->{error}}, $lang->maketext("events.form.error.start-time-partially-blank")) if (!$start_time_required and (defined($start_hour) and !defined($start_minute)) or (!defined($start_hour) and defined($start_minute)));
   
   if ( $all_day ) {
     # All day events don't have a finish time
@@ -496,20 +496,20 @@ sub create_or_edit {
     undef($end_minute);
   } else {
     # Push any start date error we found here
-    push(@{$response->{errors}}, $date_errors{end_date}) if $date_errors{end_date};
+    push(@{$response->{error}}, $date_errors{end_date}) if $date_errors{end_date};
     
     # Check the finish time, if it's provided
     if ( defined($end_hour) ) {
       # Passed in, check it's valid
-      push(@{$response->{errors}}, $lang->maketext("events.form.error.finish-hour-invalid")) unless $end_hour =~ m/^(?:0[0-9]|1[0-9]|2[0-3])$/;
+      push(@{$response->{error}}, $lang->maketext("events.form.error.finish-hour-invalid")) unless $end_hour =~ m/^(?:0[0-9]|1[0-9]|2[0-3])$/;
     }
     
     if ( defined($end_minute) ) {
       # Passed in, check it's valid
-      push(@{$response->{errors}}, $lang->maketext("events.form.error.finish-minute-invalid")) unless $end_minute =~ m/^(?:[0-5][0-9])$/;
+      push(@{$response->{error}}, $lang->maketext("events.form.error.finish-minute-invalid")) unless $end_minute =~ m/^(?:[0-5][0-9])$/;
     }
     
-    push(@{$response->{errors}}, $lang->maketext("events.form.error.end-time-partially-blank")) if (defined($end_hour) and !defined($end_minute)) or (!defined($end_hour) and defined($end_minute));
+    push(@{$response->{error}}, $lang->maketext("events.form.error.end-time-partially-blank")) if (defined($end_hour) and !defined($end_minute)) or (!defined($end_hour) and defined($end_minute));
   }
   
   # Add the start time to the date if it's provided
@@ -530,7 +530,7 @@ sub create_or_edit {
   if ( defined($start_date) and defined($end_date) ) {
     if ( DateTime->compare($start_date, $end_date) == 1 ) {
       # Start date is before end date
-      push(@{$response->{errors}}, $lang->maketext("events.form.error.start-date-must-be-before-end-date"));
+      push(@{$response->{error}}, $lang->maketext("events.form.error.start-date-must-be-before-end-date"));
     }
   }
   
@@ -547,10 +547,10 @@ sub create_or_edit {
       if ( defined($round_group_rank_template) ) {
         # Check we have a valid table rank template
         $round_group_rank_template = $schema->resultset("TemplateLeagueTableRanking")->find($round_group_rank_template) unless $round_group_rank_template->isa("TopTable::Schema::Result::TemplateLeagueTableRanking");
-        push(@{$response->{errors}}, $lang->maketext("events.tournaments.rounds.form.error.table-ranking-template-invalid")) unless defined($round_group_rank_template);
+        push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.form.error.table-ranking-template-invalid")) unless defined($round_group_rank_template);
       } else {
         # Error, we need a table rank template in a group round
-        push(@{$response->{errors}}, $lang->maketext("events.tournaments.rounds.form.error.table-ranking-template-blank"));
+        push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.form.error.table-ranking-template-blank"));
       }
     } else {
       # Not a group round, ensure the ranking template is undef
@@ -565,7 +565,7 @@ sub create_or_edit {
       if ( defined($round_team_match_template) ) {
         # Lookup the first round team match template if it's provided (and not already a template object)
         $round_team_match_template = $schema->resultset("TemplateMatchTeam")->find($round_team_match_template) unless $round_team_match_template->isa("TopTable::Schema::Result::TemplateMatchTeam");
-        push(@{$response->{errors}}, $lang->maketext("events.tournaments.rounds.form.error.match-template-invalid")) unless defined($round_team_match_template);
+        push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.form.error.match-template-invalid")) unless defined($round_team_match_template);
         
         # Ensure the individual match template is undef
         undef($round_individual_match_template);
@@ -575,7 +575,7 @@ sub create_or_edit {
       if ( defined($round_individual_match_template) ) {
         # Lookup the first round team match template if it's provided (and not already a template object)
         $round_individual_match_template = $schema->resultset("TemplateMatchIndividual")->find($round_individual_match_template) unless $round_individual_match_template->isa("TopTable::Schema::Result::TemplateMatchIndividual");
-        push(@{$response->{errors}}, $lang->maketext("events.tournaments.rounds.form.error.match-template-invalid")) unless defined($round_individual_match_template);
+        push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.form.error.match-template-invalid")) unless defined($round_individual_match_template);
         
         # Ensure the individual match template is undef
         undef($round_team_match_template);
@@ -583,7 +583,7 @@ sub create_or_edit {
     }
     
     # The date is already checked in the dates loop above, put hte error here if we have one
-    push(@{$response->{errors}}, $date_errors{round_date}) if $date_errors{round_date};
+    push(@{$response->{error}}, $date_errors{round_date}) if $date_errors{round_date};
     
     # Check the round venue if supplied
     if ( defined($round_venue) ) {
@@ -591,17 +591,17 @@ sub create_or_edit {
       
       if ( defined($round_venue) ) {
         # Venue is valid, but need to check it's active
-        push(@{$response->{errors}}, $lang->maketext("events.tournaments.rounds.form.error.venue-inactive", encode_entities($venue->name))) unless $round_venue->active;
+        push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.form.error.venue-inactive", encode_entities($venue->name))) unless $round_venue->active;
       } else {
         # Invalid venue
-        push(@{$response->{errors}}, $lang->maketext("events.tournaments.rounds.form.error.venue-invalid"));
+        push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.form.error.venue-invalid"));
       }
     }
     
     $response->{fields}{round_venue} = $round_venue;
   }
   
-  if ( scalar(@{$response->{errors}}) == 0 ) {
+  if ( scalar(@{$response->{error}}) == 0 ) {
     # Success, we need to create / edit the event
     # Build the key from the name
     my $url_key;
@@ -669,8 +669,8 @@ sub create_or_edit {
           });
           
           # Push any responses we get back to the calling routine
-          push(@{$response->{errors}}, @{$round_response->{errors}});
-          push(@{$response->{warnings}}, @{$round_response->{warnings}});
+          push(@{$response->{error}}, @{$round_response->{error}});
+          push(@{$response->{warning}}, @{$round_response->{warning}});
           push(@{$response->{info}}, @{$round_response->{info}});
           push(@{$response->{success}}, @{$round_response->{success}});
           $response->{round_completed} = $round_response->{completed};

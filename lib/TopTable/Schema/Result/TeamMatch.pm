@@ -297,6 +297,13 @@ If populated, this will be the away team score, overridden from the one calculat
 
 References the fixtures grid that created this match, so we can determine if the matches for this grid have been created already.
 
+=head2 postponed
+
+  data_type: 'tinyint'
+  default_value: 0
+  extra: {unsigned => 1}
+  is_nullable: 0
+
 =head2 complete
 
   data_type: 'tinyint'
@@ -550,6 +557,13 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_foreign_key => 1,
     is_nullable => 1,
+  },
+  "postponed",
+  {
+    data_type => "tinyint",
+    default_value => 0,
+    extra => { unsigned => 1 },
+    is_nullable => 0,
   },
   "complete",
   {
@@ -928,8 +942,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-12-08 23:13:50
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:zWj57DUyQ32OUHOEjaaRBQ
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2025-01-08 16:21:52
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:OZ48GwnJBBobx4JMFFUXEw
 
 use Try::Tiny;
 use DateTime::Duration;
@@ -1496,6 +1510,9 @@ sub score {
     # If the match is started, return the score regardless
     return sprintf("%d-%d", $self->team_score("home"), $self->team_score("away"));
   } else {
+    # If the match is postponed, display that
+    return $lang->maketext("matches.versus.postponed") if $self->postponed;
+    
     # If the score hasn't come in yet, we will display either 'not yet played' or 'score not yet received' depending on the date
     my $today = DateTime->today(time_zone => "UTC");
     my $cmp = DateTime->compare($self->played_date->truncate(to => "day"), $today->truncate(to => "day"));
@@ -1569,6 +1586,51 @@ sub get_team_seasons {
   return $team_seasons;
 }
 
+=head2 set_postponed
+
+Set or unset the postponed flag on a match.  There are two other ways to automatically unset this: update the played date of the match, or to update the scores.
+
+=cut
+
+sub set_postponed {
+  my $self = shift;
+  my ( $postponed, $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  my $response = {
+    error => [],
+    warning => [],
+    info => [],
+    success => [],
+    completed => 0,
+  };
+  
+  my %can = $self->can_update("postponed");
+  if ( $can{allowed} ) {
+    # Postpone the match
+    # Santify check, make sure it's 1 or 0
+    $postponed = $postponed ? 1 : 0;
+    
+    $self->update({postponed => $postponed});
+    
+    if ( $postponed ) {
+      push(@{$response->{success}}, $lang->maketext("matches.set-postponed.success"));
+    } else {
+      push(@{$response->{success}}, $lang->maketext("matches.set-postponed.success-unset"));
+    }
+    
+    $response->{completed} = 1;
+  } else {
+    push(@{$response->{$can{level}}}, $can{reason});
+  }
+  
+  return $response;
+}
+
 =head2 update_played_date
 
 Validate and update the played date.
@@ -1585,8 +1647,8 @@ sub update_played_date {
   $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
   my $lang = $schema->lang;
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     completed => 0,
@@ -1609,25 +1671,26 @@ sub update_played_date {
           day => $day,
         );
       } catch {
-        push(@{$response->{errors}}, $lang->maketext("matches.update-match-date.error.date-invalid"));
+        push(@{$response->{error}}, $lang->maketext("matches.update-match-date.error.date-invalid"));
       };
     } elsif ( ref($played_date) ne "DateTime" ) {
-      push(@{$response->{errors}}, $lang->maketext("matches.update-match-date.error.date-invalid"));
+      push(@{$response->{error}}, $lang->maketext("matches.update-match-date.error.date-invalid"));
     }
   } else {
-    push(@{$response->{errors}}, $lang->maketext("matches.update-match-date.error.date-invalid"));
+    push(@{$response->{error}}, $lang->maketext("matches.update-match-date.error.date-invalid"));
   }
   
-  if ( scalar @{$response->{errors}} == 0 ) {
+  if ( scalar @{$response->{error}} == 0 ) {
     #$logger->("debug", sprintf("update played date to %s", $played_date));
-    my $ok = $self->update({played_date => $played_date->ymd});
+    # Update the played date, and also take off the postponed flag, since we now know the new date of the match
+    my $ok = $self->update({played_date => $played_date->ymd, postponed => 0});
     #$logger->("debug", sprintf("played date is now %s", $self->played_date->ymd));
     
     if ( $ok ) {
       push(@{$response->{success}}, $lang->maketext("matches.update-match-date.success"));
       $response->{completed} = 1;
     } else {
-      push(@{$response->{errors}}, $lang->maketext("matches.update-match-date.error.database-update-failed"));
+      push(@{$response->{error}}, $lang->maketext("matches.update-match-date.error.database-update-failed"));
     }
   }
   
@@ -1664,8 +1727,8 @@ sub update_venue {
   $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
   my $lang = $schema->lang;
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     completed => 0,
@@ -1676,26 +1739,26 @@ sub update_venue {
     $venue = $schema->resultset("Venue")->find_id_or_url_key($venue) unless ref($venue) eq "TopTable::Model::DB::Venue";
     
     if ( defined($venue) ) {
-      push(@{$response->{errors}}, $lang->maketext("matches.update-venue.error.venue-inactive")) unless $venue->active;
+      push(@{$response->{error}}, $lang->maketext("matches.update-venue.error.venue-inactive")) unless $venue->active;
       
-      if ( scalar @{$response->{errors}} == 0 ) {
+      if ( scalar @{$response->{error}} == 0 ) {
         my $ok = $self->update({venue => $venue->id});
         
         if ( $ok ) {
           push(@{$response->{success}}, $lang->maketext("matches.update-venue.success"));
           $response->{completed} = 1;
         } else {
-          push(@{$response->{errors}}, $lang->maketext("matches.update-match-venue.error.database-update-failed"));
+          push(@{$response->{error}}, $lang->maketext("matches.update-match-venue.error.database-update-failed"));
         }
       }
     } else {
       # Error, invalid
-      push(@{$response->{errors}}, $lang->maketext("matches.update-venue.error.venue-invalid"));
+      push(@{$response->{error}}, $lang->maketext("matches.update-venue.error.venue-invalid"));
     }
     
   } else {
     # Error, invalid venue
-    push(@{$response->{errors}}, $lang->maketext("matches.update-venue.error.venue-blank"));
+    push(@{$response->{error}}, $lang->maketext("matches.update-venue.error.venue-blank"));
   }
   
   return $response;
@@ -1721,8 +1784,8 @@ sub update_handicaps {
   my $away_team_handicap = $params->{away_team_handicap} || 0;
   
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     completed => 0,
@@ -1731,12 +1794,12 @@ sub update_handicaps {
   
   # First check if this is a handicapped match
   if ( !$self->handicapped ) {
-    push(@{$response->{errors}}, $lang->maketext("matches.handicaps.error.not-a-handicapped-match"));
+    push(@{$response->{error}}, $lang->maketext("matches.handicaps.error.not-a-handicapped-match"));
     return $response;
   }
   
   if ( $self->started ) {
-    push(@{$response->{errors}}, $lang->maketext("matches.handicaps.error.match-started"));
+    push(@{$response->{error}}, $lang->maketext("matches.handicaps.error.match-started"));
     return $response;
   }
   
@@ -1749,7 +1812,7 @@ sub update_handicaps {
   foreach my $location ( reverse sort keys %handicaps ) {
     if ( $handicaps{$location} ) {
       my $team = $location eq "home" ? $self->team_season_home_team_season->full_name : $self->team_season_away_team_season->full_name;
-      push(@{$response->{errors}}, $lang->maketext("matches.handicaps.error.error.handicap-invalid", encode_entities($team))) unless $handicaps{$location} =~ /^-?[1-9]\d{0,2}$/;
+      push(@{$response->{error}}, $lang->maketext("matches.handicaps.error.error.handicap-invalid", encode_entities($team))) unless $handicaps{$location} =~ /^-?[1-9]\d{0,2}$/;
     } else {
       # Sanity check - false must be 0
       $handicaps{$location} = 0;
@@ -1761,14 +1824,14 @@ sub update_handicaps {
   $response->{fields}{home_team_handicap} = $home_team_handicap;
   $response->{fields}{away_team_handicap} = $away_team_handicap;
   
-  if ( scalar @{$response->{errors}} == 0 ) {
+  if ( scalar @{$response->{error}} == 0 ) {
     my $ok = $self->update({home_team_handicap => $home_team_handicap, away_team_handicap => $away_team_handicap});
     
     if ( $ok ) {
       push(@{$response->{success}}, $lang->maketext("matches.handicapes.update.success"));
       $response->{completed} = 1;
     } else {
-      push(@{$response->{errors}}, $lang->maketext("matches.handicaps.error.database-update-failed"));
+      push(@{$response->{error}}, $lang->maketext("matches.handicaps.error.database-update-failed"));
     }
   }
   
@@ -1791,8 +1854,8 @@ sub update_playing_order {
   $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
   my $lang = $schema->lang;
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     completed => 0,
@@ -1814,16 +1877,16 @@ sub update_playing_order {
     
     if ( $actual_game_number =~ m/^\d{1,2}$/ and $actual_game_number > $total_games ) {
       # Number invalid
-      push(@{$response->{errors}}, $lang->maketext("matches.update-playing-order.error.game-number-invalid", $actual_game_number, $game->scheduled_game_number, $total_games));
+      push(@{$response->{error}}, $lang->maketext("matches.update-playing-order.error.game-number-invalid", $actual_game_number, $game->scheduled_game_number, $total_games));
     } elsif ( exists($game_numbers{$actual_game_number}) ) {
       # Number already specified
-      push(@{$response->{errors}}, $lang->maketext("matches.update-playing-order.error.game-specified-multiple", $actual_game_number, $game->scheduled_game_number, $game_numbers{$actual_game_number}));
+      push(@{$response->{error}}, $lang->maketext("matches.update-playing-order.error.game-specified-multiple", $actual_game_number, $game->scheduled_game_number, $game_numbers{$actual_game_number}));
     } else {
       $game_numbers{$actual_game_number} = $game->scheduled_game_number;
     }
   }
   
-  if ( scalar @{$response->{errors}} == 0 ) {
+  if ( scalar @{$response->{error}} == 0 ) {
     # If we get no errors, loop through again and this time update it
     foreach my $game ( @games ) {
       # Get the new game number
@@ -2142,8 +2205,8 @@ sub update_scorecard {
   $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
   my $lang = $schema->lang;
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     completed => 0,
@@ -2157,13 +2220,13 @@ sub update_scorecard {
   
   # Initial error check that the match is in the current season
   if ( $self->season->complete ) {
-    push(@{$response->{errors}}, $lang->maketext("matches.update.error.season-complete"));
+    push(@{$response->{error}}, $lang->maketext("matches.update.error.season-complete"));
     return $response;
   }
   
   
   if ( $self->handicapped and !$self->handicap_set ) {
-    push(@{$response->{errors}}, $lang->maketext("matches.update.error.handicap-not-set"));
+    push(@{$response->{error}}, $lang->maketext("matches.update.error.handicap-not-set"));
     return $response;
   }
   
@@ -2191,12 +2254,12 @@ sub update_scorecard {
       $response->{match_originally_complete} = $game_response->{match_originally_complete};
       $response->{match_complete} = $game_response->{match_complete};
       $response->{match_scores} = $game_response->{match_scores};
-      push(@{$response->{errors}}, @{$game_response->{errors}});
-      push(@{$response->{warnings}}, @{$game_response->{warnings}});
+      push(@{$response->{error}}, @{$game_response->{error}});
+      push(@{$response->{warning}}, @{$game_response->{warning}});
       push(@{$response->{info}}, @{$game_response->{info}});
       push(@{$response->{success}}, @{$game_response->{success}});
     } else {
-      push(@{$response->{errors}}, $lang->maketext("matches.update-single.error.game-invalid"));
+      push(@{$response->{error}}, $lang->maketext("matches.update-single.error.game-invalid"));
     }
   } else {
     my $games = $self->team_match_games;
@@ -2226,8 +2289,8 @@ sub override_score {
   $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
   my $lang = $schema->lang;
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     completed => 0,
@@ -2238,8 +2301,11 @@ sub override_score {
   # Check we can override scores for this match, if not return with the error logged
   my %can = $self->can_update("override");
   
+  # Annoyingly, I've set the response keys to plurals, so need to change here
+  my $level = $can{level} eq "info" ? $can{level} : sprintf("%ss", $can{level});
+  
   unless ( $can{allowed} ) {
-    push(@{$response->{errors}}, $can{reason});
+    push(@{$response->{$level}}, $can{reason});
     return $response;
   }
   
@@ -2301,7 +2367,7 @@ sub override_score {
     # Reverse sort ensures we deal with home first and the errors aren't in an odd order
     foreach my $location ( reverse sort keys %scores ) {
       my $score = $scores{$location};
-      push(@{$response->{errors}}, $lang->maketext("matches.override-score.error.score-invalid", $location)) unless $score =~ m/^\d+$/ and $score > 0;
+      push(@{$response->{error}}, $lang->maketext("matches.override-score.error.score-invalid", $location)) unless $score =~ m/^\d+$/ and $score > 0;
     }
   } else {
     # Not overriding - we might be deleting 
@@ -2319,7 +2385,7 @@ sub override_score {
     }
   }
   
-  if ( scalar @{$response->{errors}} == 0 and ($override_score or $delete_override) ) {
+  if ( scalar @{$response->{error}} == 0 and ($override_score or $delete_override) ) {
     # No errors and we are overriding or deleting, do the stuff
     # First update the DB for this match
     $self->update({
@@ -2465,8 +2531,8 @@ sub cancel {
   $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
   my $lang = $schema->lang;
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     completed => 0,
@@ -2476,7 +2542,7 @@ sub cancel {
   # Can't cancel a match in a completed season
   my %can = $self->can_update("cancel");
   if ( !$can{allowed} ) {
-    push(@{$response->{errors}}, $can{reason});
+    push(@{$response->{error}}, $can{reason});
     $response->{can_complete} = 0;
     return $response;
   }
@@ -2485,11 +2551,11 @@ sub cancel {
   my $home_points_awarded = $params->{home_points_awarded} || 0;
   my $away_points_awarded = $params->{away_points_awarded} || 0;
   
-  push(@{$response->{errors}}, $lang->maketext("matches.cancel.error.home-points-not-numeric")) if $home_points_awarded !~  /^-?\d+$/;
-  push(@{$response->{errors}}, $lang->maketext("matches.cancel.error.away-points-not-numeric")) if $away_points_awarded !~  /^-?\d+$/;
+  push(@{$response->{error}}, $lang->maketext("matches.cancel.error.home-points-not-numeric")) if $home_points_awarded !~  /^-?\d+$/;
+  push(@{$response->{error}}, $lang->maketext("matches.cancel.error.away-points-not-numeric")) if $away_points_awarded !~  /^-?\d+$/;
   
   # Return with errors if we have them
-  return $response if scalar @{$response->{errors}};
+  return $response if scalar @{$response->{error}};
   
   # Transaction so if we fail, nothing is updated
   my $transaction = $self->result_source->schema->txn_scope_guard;
@@ -2631,8 +2697,8 @@ sub uncancel {
   $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
   my $lang = $schema->lang;
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     completed => 0,
@@ -2641,14 +2707,14 @@ sub uncancel {
   
   # Can't uncancel a match match in a completed season
   if ( $self->season->complete ) {
-    push(@{$response->{errors}}, $lang->maketext("matches.uncancel.error.season-complete"));
+    push(@{$response->{error}}, $lang->maketext("matches.uncancel.error.season-complete"));
     $response->{can_complete} = 0;
     return $response;
   }
   
   # Can't uncancel a match that isn't cancelled
   unless ( $self->cancelled ) {
-    push(@{$response->{errors}}, $lang->maketext("matches.uncancel.error.not-cancelled"));
+    push(@{$response->{error}}, $lang->maketext("matches.uncancel.error.not-cancelled"));
     $response->{can_complete} = 0;
     return $response;
   }
@@ -2965,46 +3031,100 @@ sub can_update {
   my $lang = $schema->lang;
   
   # Check we have a valid type, if it's provided (if it's not provided, check all types)
-  return undef if defined($type) and $type ne "handicaps" and $type ne "score" and $type ne "delete-score" and $type ne "cancel" and $type ne "override" and $type ne "date" and $type ne "venue";
+  return undef if defined($type) and $type ne "handicaps" and $type ne "score" and $type ne "delete-score" and $type ne "cancel" and $type ne "override" and $type ne "date" and $type ne "venue" and $type ne "postponed";
   
   # Default to allowed.
   my $allowed = 1;
-  my $reason;
+  my ( $reason, $level );
   my $season = $self->season;
   
   # If the season is complete, we can't update anything
   if ( $season->complete ) {
     $allowed = 0;
     $reason = $lang->maketext("matches.update.error.season-complete");
-    return wantarray ? (allowed => $allowed, reason => $reason) : $allowed;
+    
+    if ( defined($type) ) {
+      # We have a type, so not expecting multiple keys
+      return wantarray ? (allowed => $allowed, reason => $reason) : $allowed;
+    } else {
+      # No type, so the caller will expect all the keys back
+    
+      my %types = wantarray
+        ? (
+            handicaps => {
+              allowed => 0,
+              reason => $reason,
+              level => "error",
+            }, score => {
+              allowed => 0,
+              reason => $reason,
+              level => "error",
+            }, "delete-score" => {
+              allowed => 0,
+              reason => $reason,
+              level => "error",
+            }, cancel => {
+              allowed => 0,
+              reason => $reason,
+              level => "error",
+            }, override => {
+              allowed => 0,
+              reason => $reason,
+              level => "error",
+            }, date => {
+              allowed => 0,
+              reason => $reason,
+              level => "error",
+            }, venue => {
+              allowed => 0,
+              reason => $reason,
+              level => "error",
+            }, postponed => {
+              allowed => 0,
+              reason => $reason,
+              level => "error",
+            },
+          ) # We want the reasons back if we've asked for an array, the hash will contain 'allowed' and 'reason' keys
+        : (
+          handicaps => 0,
+          score => 0,
+          "delete-score" => 0,
+          cancel => 0,
+          override => 0,
+          postponed => 0,
+          date => 0,
+          venue => 0,
+        );
+        
+      # Return a reference to the hash in scalar context, or the hash itself in list context
+      return wantarray ? %types : \%types;
+    }
   }
   
   # What we do now depends on type.
   if ( defined($type) ) {
+    my %can;
     if ( $type eq "handicaps" ) {
-      my %can = $self->_can_update_handicaps;
-      $reason = $can{reason};
-      $allowed = $can{allowed};
+      %can = $self->_can_update_handicaps;
     } elsif ( $type eq "score" ) {
-      my %can = $self->_can_update_score;
-      $reason = $can{reason};
-      $allowed = $can{allowed};
+      %can = $self->_can_update_score;
     } elsif ( $type eq "delete-score" ) {
-      my %can = $self->_can_delete_score;
-      $reason = $can{reason};
-      $allowed = $can{allowed};
+      %can = $self->_can_delete_score;
     } elsif ( $type eq "cancel" ) {
-      my %can = $self->_can_cancel_match;
-      $reason = $can{reason};
-      $allowed = $can{allowed};
+      %can = $self->_can_cancel_match;
     } elsif ( $type eq "override" ) {
-      my %can = $self->_can_update_override;
-      $reason = $can{reason};
-      $allowed = $can{allowed};
+      %can = $self->_can_update_override;
+    } elsif ( $type eq "postponed") {
+      %can = $self->_can_postpone_match;
     } # Date and venue - nothing to check, if the season isn't complete, these can be updated
     
+    # Grab the reason and allowed flag
+    $reason = $can{reason};
+    $allowed = $can{allowed};
+    $level = $can{level};
+    
     # Return the requested results
-    return wantarray ? (allowed => $allowed, reason => $reason) : $allowed;
+    return wantarray ? (allowed => $allowed, reason => $reason, level => $level) : $allowed;
   } else {
     # All types, get the hashes back for each one
     my %handicaps = $self->_can_update_handicaps;
@@ -3012,29 +3132,39 @@ sub can_update {
     my %delete_score = $self->_can_delete_score;
     my %cancel = $self->_can_cancel_match;
     my %override = $self->_can_update_override;
+    my %postponed = $self->_can_postpone_match;
     
     my %types = wantarray
       ? (
           handicaps => {
             allowed => $handicaps{allowed},
             reason => $handicaps{reason},
+            level => $handicaps{level},
           }, score => {
             allowed => $score{allowed},
             reason => $score{reason},
+            level => $handicaps{level},
           }, "delete-score" => {
             allowed => $delete_score{allowed},
             reason => $delete_score{reason},
+            level => $delete_score{level},
           }, cancel => {
             allowed => $cancel{allowed},
             reason => $cancel{reason},
+            level => $cancel{level},
           }, override => {
             allowed => $override{allowed},
             reason => $override{reason},
+            level => $override{level},
           }, date => {
             allowed => 1,
           }, venue => {
             allowed => 1,
-          }
+          }, postponed => {
+            allowed => $postponed{allowed},
+            reason => $postponed{reason},
+            level => $postponed{level},
+          },
         ) # We want the reasons back if we've asked for an array, the hash will contain 'allowed' and 'reason' keys
       : (
         handicaps => $handicaps{allowed},
@@ -3042,6 +3172,7 @@ sub can_update {
         "delete-score" => $delete_score{allowed},
         cancel => $cancel{allowed},
         override => $override{allowed},
+        postponed => $postponed{allowed},
         date => 1,
         venue => 1,
       );
@@ -3051,7 +3182,7 @@ sub can_update {
   }
 }
 
-=head2 _can_update_handicaps, _can_update_score, _can_delete_score, _can_cancel_match, _can_update_override
+=head2 _can_update_handicaps, _can_update_score, _can_delete_score, _can_cancel_match, _can_update_override, _can_postpone_match
 
 Internal methods, do not call directly.  These assume the check for $season->complete has been done, so we only check the other parts.  Called from can_update.
 
@@ -3070,18 +3201,20 @@ sub _can_update_handicaps {
   my $lang = $schema->lang;
   
   my $allowed = 1;
-  my $reason;
+  my ( $reason, $level );
   # Handicap can be updated if this is a handicapped match and the match doesn't have any scores (so isn't marked as 'started').
   if ( !$self->handicapped ) {
     # Can't set handicap, this match isn't handicapped
     $allowed = 0;
     $reason = $lang->maketext("matches.handicaps.error.not-a-handicapped-match");
+    $level = "error";
   } elsif ( $self->started ) {
     $allowed = 0;
     $reason = $lang->maketext("matches.handicaps.error.match-started");
+    $level = "error";
   }
   
-  return (allowed => $allowed, reason => $reason);
+  return (allowed => $allowed, reason => $reason, level => $level);
 }
 
 sub _can_update_score {
@@ -3096,18 +3229,20 @@ sub _can_update_score {
   
   # Score can be updated, so long as the match (if handicapped) has the handicap set
   my $allowed = 1;
-  my $reason;
+  my ( $reason, $level );
   if ( $self->handicapped and !$self->handicap_set ) {
     # Can't set handicap, this match isn't handicapped
     $allowed = 0;
     $reason = $lang->maketext("matches.update.error.handicap-not-set");
+    $level = "error";
   } elsif ( $self->score_overridden ) {
     # If the score's been overridden, we can't update
     $allowed = 0;
     $reason = $lang->maketext("matches.update.error.score-overridden");
+    $level = "error";
   }
   
-  return (allowed => $allowed, reason => $reason);
+  return (allowed => $allowed, reason => $reason, level => $level);
 }
 
 sub _can_delete_score {
@@ -3122,14 +3257,15 @@ sub _can_delete_score {
   
   # Score can be overridden, so long as the match is completed, and the team match template specifies you can override
   my $allowed = 1;
-  my $reason;
+  my ( $reason, $level );
   if ( $self->score_overridden ) {
     # If the score's been overridden, we can't update
     $allowed = 0;
     $reason = $lang->maketext("matches.update.delete.error.score-overridden");
+    $level = "error";
   }
   
-  return (allowed => $allowed, reason => $reason);
+  return (allowed => $allowed, reason => $reason, level => $level);
 }
 
 sub _can_cancel_match {
@@ -3144,14 +3280,15 @@ sub _can_cancel_match {
   
   # Score can be overridden, so long as the match is completed, and the team match template specifies you can override
   my $allowed = 1;
-  my $reason;
+  my ( $reason, $level );
   if ( $self->started ) {
     # If the score's been overridden, we can't update
     $allowed = 0;
     $reason = $lang->maketext("matches.cancel.error.started");
+    $level = "error";
   }
   
-  return (allowed => $allowed, reason => $reason);
+  return (allowed => $allowed, reason => $reason, level => $level);
 }
 
 sub _can_update_override {
@@ -3166,19 +3303,48 @@ sub _can_update_override {
   
   # Score can be updated, so long as the match isn't cancelled and (if handicapped) has the handicap set
   my $allowed = 1;
-  my $reason;
+  my ( $reason, $level );
   if ( !$self->allow_final_score_override ) {
     $allowed = 0;
     $reason = $lang->maketext("matches.override-score.error.cannot-override-score");
+    $level = "error";
   } elsif ( $self->cancelled ) {
     $allowed = 0;
     $reason = $lang->maketext("matches.override-score.error.match-cancelled");
+    $level = "error";
   } elsif ( !$self->complete ) {
     $allowed = 0;
     $reason = $lang->maketext("matches.override-score.error.match-not-complete");
+    $level = "error";
   }
   
-  return (allowed => $allowed, reason => $reason);
+  return (allowed => $allowed, reason => $reason, level => $level);
+}
+
+sub _can_postpone_match {
+  my $self = shift;
+  my ( $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  
+  # Score can be updated, so long as the match isn't cancelled and (if handicapped) has the handicap set
+  my $allowed = 1;
+  my ( $reason, $level );
+  if ( $self->started ) {
+    $allowed = 0;
+    $reason = $lang->maketext("matches.postpone-match.error.match-started");
+    $level = "error";
+  } elsif ( $self->cancelled ) {
+    $allowed = 0;
+    $reason = $lang->maketext("matches.postpone-match.error.match-cancelled");
+    $level = "error";
+  }
+  
+  return (allowed => $allowed, reason => $reason, level => $level);
 }
 
 =head2 can_report
@@ -3268,8 +3434,8 @@ sub add_report {
   my $report = $params->{report};
   my $user = $params->{user};
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     completed => 0,
@@ -3279,11 +3445,11 @@ sub add_report {
   my $raw_report = TopTable->model("FilterHTML")->filter($report);
   $raw_report =~ s/^\s+|\s+$//g;
   
-  push(@{$response->{errors}}, $lang->maketext("matches.report.error.not-authorised", $user->username)) unless $self->can_report($user);
-  push(@{$response->{errors}}, $lang->maketext("matches.report.error.report-blank")) unless $raw_report;
+  push(@{$response->{error}}, $lang->maketext("matches.report.error.not-authorised", $user->username)) unless $self->can_report($user);
+  push(@{$response->{error}}, $lang->maketext("matches.report.error.report-blank")) unless $raw_report;
   
   # No errors so far, try and add a report
-  unless ( scalar @{$response->{errors}} ) {
+  unless ( scalar @{$response->{error}} ) {
     # Determine whether we're creating or editing
     my $original_report = $self->get_original_report;
     

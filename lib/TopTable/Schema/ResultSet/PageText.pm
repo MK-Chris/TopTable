@@ -38,8 +38,8 @@ sub edit {
   my $page_key = $params->{page_key};
   my $page_text = $params->{page_text};
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     fields => {},
@@ -60,7 +60,7 @@ sub edit {
     $response->{completed} = 1;
     push(@{$response->{success}}, $lang->maketext("admin.forms.success", $lang->maketext("menu.text.$page_key"), $lang->maketext("admin.message.edited")));
   } else {
-    push(@{$response->{errors}}, $lang->maketext("page_text.form.error.page-key-missing"));
+    push(@{$response->{error}}, $lang->maketext("page_text.form.error.page-key-missing"));
   }
   
   return $response;

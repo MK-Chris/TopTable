@@ -268,8 +268,8 @@ sub check_and_delete {
   $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
   my $lang = $schema->lang;
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     completed => 0,
@@ -280,7 +280,7 @@ sub check_and_delete {
   
   # Check we can delete
   unless ( $self->can_delete ) {
-    push(@{$response->{errors}}, $lang->maketext("fixtures-grids.delete.error.cant-delete", $name));
+    push(@{$response->{error}}, $lang->maketext("fixtures-grids.delete.error.cant-delete", $name));
     return $response;
   }
   
@@ -292,7 +292,7 @@ sub check_and_delete {
     $response->{completed} = 1;
     push(@{$response->{success}}, $lang->maketext("admin.forms.success", $name, $lang->maketext("admin.message.deleted")));
   } else {
-    push(@{$response->{errors}}, $lang->maketext("admin.delete.error.database", $name));
+    push(@{$response->{error}}, $lang->maketext("admin.delete.error.database", $name));
   }
   
   return $response;
@@ -509,8 +509,8 @@ sub set_matches {
   my $repeat_fixtures = $params->{repeat_fixtures};
   my %match_teams = %{$params->{match_teams}};
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     fields => {repeat_fixtures => $repeat_fixtures},
@@ -518,7 +518,7 @@ sub set_matches {
   };
   
   # Check the matches for this grid can be set
-  push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.matches.cannot-edit")) unless $self->can_edit_matches;
+  push(@{$response->{error}}, $lang->maketext("fixtures-grids.form.matches.cannot-edit")) unless $self->can_edit_matches;
   
   # Get the grid settings
   my $max_teams = $self->maximum_teams;
@@ -546,11 +546,11 @@ sub set_matches {
       
       # ...but we need to do some checking on home / away values (and parse it)
       if ( !defined($match_teams{$week->week}{$match->match_number}{home}) ) {
-        push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.matches.home-team-blank", $week->{week}, $match->{match_number}));
+        push(@{$response->{error}}, $lang->maketext("fixtures-grids.form.matches.home-team-blank", $week->{week}, $match->{match_number}));
       }
       
       if ( !defined($match_teams{$week->week}{$match->match_number}{away}) ) {
-        push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.matches.away-team-blank", $week->{week}, $match->{match_number}));
+        push(@{$response->{error}}, $lang->maketext("fixtures-grids.form.matches.away-team-blank", $week->{week}, $match->{match_number}));
       }
       
       my ( $home_type, $home_team ) = ( $match_teams{$week->week}{$match->match_number}{home} =~ /^([a-z0-9-]+)_(\d{1,3})$/ );
@@ -573,7 +573,7 @@ sub set_matches {
           # Match 1, so these will set the week type
           if ( $home_type->type eq "static" xor $away_type->type eq "static" ) {
             # One is static, one is not - error
-            push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.matches.type-mismatch-in-match", $week->week, $match->match_number));
+            push(@{$response->{error}}, $lang->maketext("fixtures-grids.form.matches.type-mismatch-in-match", $week->week, $match->match_number));
           } else {
             # We dont' have one static / one not, so at least either both are static OR both are dynamic - we can do more complicated checks here now
             # Set the week type to the home team type (the away team type will be the same, as this has already been checked)
@@ -591,22 +591,22 @@ sub set_matches {
           if ( $week_type eq "static" ) {
             if ( $home_type->type eq "dynamic" or $away_type->type eq "dynamic" ) {
               # Error, as we have a dynamic type in a week that's already set as static
-              push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.matches.error.type-mismatch-in-week", $week->week));
+              push(@{$response->{error}}, $lang->maketext("fixtures-grids.form.matches.error.type-mismatch-in-week", $week->week));
             }
           } else {
             # Dynamic round type
             if ( $week->week == 1 ) {
               # Can't have a dynamic round 1
-              push(@{$response->{errors},}, $lang->maketext("fixtures-grids.form.matches.error-round1-dynamic"));
+              push(@{$response->{error},}, $lang->maketext("fixtures-grids.form.matches.error-round1-dynamic"));
             } elsif ( $home_type->type eq "static" or $away_type->type eq "static" ) {
               # Error, as we have a static type in a week that's already set as dynamic
-              push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.matches.error.type-mismatch-in-week", $week->week));
+              push(@{$response->{error}}, $lang->maketext("fixtures-grids.form.matches.error.type-mismatch-in-week", $week->week));
             }
           }
         }
       } else {
         # One or both types are invalid
-        push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.matches.error.invalid-competitor", $week->week, $match->match_number));
+        push(@{$response->{error}}, $lang->maketext("fixtures-grids.form.matches.error.invalid-competitor", $week->week, $match->match_number));
       }
       
       push(@{$fixtures_grid_weeks[$#fixtures_grid_weeks]{matches}}, \%match_details);
@@ -627,7 +627,7 @@ sub set_matches {
   
   # Now loop through the data structure we've created and make sure everything is valid.
   # Each week / round must entirely consist of either dynamic or static types, they cannot be mixed
-  if ( scalar @{$response->{errors}} == 0 ) {
+  if ( scalar @{$response->{error}} == 0 ) {
     foreach my $week ( @fixtures_grid_weeks ) {
       foreach my $match ( @{$week->{matches}} ) {
         # Type checks first of all
@@ -658,9 +658,9 @@ sub set_matches {
           }
           
           if ( !$team ) {
-            push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.matches.$location-team-blank", $week->{week}, $match->{match_number}));
+            push(@{$response->{error}}, $lang->maketext("fixtures-grids.form.matches.$location-team-blank", $week->{week}, $match->{match_number}));
           } elsif ( $team !~ m/^[1-$max_check]$/ ) {
-            push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.matches.$location-number-invalid", $week->{week}, $match->{match_number}, $max_teams));
+            push(@{$response->{error}}, $lang->maketext("fixtures-grids.form.matches.$location-number-invalid", $week->{week}, $match->{match_number}, $max_teams));
           } else {
             if ( $type->id eq "static" ) {
               # Static checks to make sure we only see each team once
@@ -707,17 +707,17 @@ sub set_matches {
       foreach my $team ( keys %{$used_teams{$week}} ) {
         if ( $used_teams{$week}{$team}{type} eq "static" ) {
           # If there's more than one match listed for this team, error
-          push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.matches.error.team-overused", $week, $team, join(", ", @{$used_teams{$week}{$team}{detail}}))) if scalar(@{$used_teams{$week}{$team}{detail}}) > 1;
+          push(@{$response->{error}}, $lang->maketext("fixtures-grids.form.matches.error.team-overused", $week, $team, join(", ", @{$used_teams{$week}{$team}{detail}}))) if scalar(@{$used_teams{$week}{$team}{detail}}) > 1;
         } else {
-          push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.matches.error.dynamic-winner-team-overused", $week, $team, join(", ", @{$used_teams{$week}{$team}{winner}{detail}}))) if scalar(@{$used_teams{$week}{$team}{winner}{detail}}) > 1;
-          push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.matches.error.dynamic-loser-team-overused", $week, $team, join(", ", @{$used_teams{$week}{$team}{loser}{detail}}))) if scalar(@{$used_teams{$week}{$team}{loser}{detail}}) > 1;
+          push(@{$response->{error}}, $lang->maketext("fixtures-grids.form.matches.error.dynamic-winner-team-overused", $week, $team, join(", ", @{$used_teams{$week}{$team}{winner}{detail}}))) if scalar(@{$used_teams{$week}{$team}{winner}{detail}}) > 1;
+          push(@{$response->{error}}, $lang->maketext("fixtures-grids.form.matches.error.dynamic-loser-team-overused", $week, $team, join(", ", @{$used_teams{$week}{$team}{loser}{detail}}))) if scalar(@{$used_teams{$week}{$team}{loser}{detail}}) > 1;
         }
       }
     }
   }
   
   # If we've errored, we need to return all the values so - for example - a web application can set them back into the form - we didn't do this originally, as we didn't know if there was an error or not.
-  if ( scalar @{$response->{errors}} == 0 ) {
+  if ( scalar @{$response->{error}} == 0 ) {
     # Finally we need to loop through again updating the home / away teams for each match
     # If we're repeating, we need to do multiple loops through; if not, the loop just goes from 1 to 1
     my $loop_end = $repeat_fixtures ? $fixtures_repeated_count : 1;
@@ -795,8 +795,8 @@ sub set_teams {
   # Grab the fields
   my $divisions = $params->{divisions};
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     fields => {},
@@ -809,14 +809,14 @@ sub set_teams {
   
   unless ( defined( $season ) ) {
     # No current season, fatal error
-    push( @{$response->{errors}}, $lang->maketext("fixtures-grids.teams.error.no-current-season") );
+    push( @{$response->{error}}, $lang->maketext("fixtures-grids.teams.error.no-current-season") );
     $response->{can_complete} = 0;
     return $response;
   }
     
   # If we have a grid and a season, we need to see if matches have already been set for that grid
   if ( $self->search_related("team_matches", {season => $season->id})->count > 0 ) {
-    push(@{$response->{errors}}, $lang->maketext("fixtures-grids.teams.error.matches-set") );
+    push(@{$response->{error}}, $lang->maketext("fixtures-grids.teams.error.matches-set") );
     $response->{can_complete} = 0;
     return $response;
   }
@@ -883,7 +883,7 @@ sub set_teams {
             $used_values{$division_season->name}{$position} = [sprintf( "%s %s", $team_season->club_season->short_name, $team_season->name )];
           }
         } else {
-          push(@{$response->{errors}}, $lang->maketext("fixtures-grids.teams.error.wrong-team-id", $id));
+          push(@{$response->{error}}, $lang->maketext("fixtures-grids.teams.error.wrong-team-id", $id));
         }
       } else {
         # No ID, push undefined values for the bye
@@ -899,21 +899,21 @@ sub set_teams {
     # After we loop through the IDs, make sure we have each team in there
     my $team_seasons = $division_season->team_seasons;
     while ( my $team_season = $team_seasons->next ) {
-      push(@{$response->{errors}}, $lang->maketext("fixtures-grids.teams.error.no-position-for-team", $team_season->club_season->short_name, $team_season->name, $submitted_data{ $division_season->division->url_key }{name}) )  if !exists( $submitted_data{ $division_season->division->url_key }{teams}{ $team_season->team->id } );
+      push(@{$response->{error}}, $lang->maketext("fixtures-grids.teams.error.no-position-for-team", $team_season->club_season->short_name, $team_season->name, $submitted_data{ $division_season->division->url_key }{name}) )  if !exists( $submitted_data{ $division_season->division->url_key }{teams}{ $team_season->team->id } );
     }
   }
   
   # Now loop through our %used_values hash and make sure we haven't used any position more than once for each division.
   foreach my $division ( keys(%used_values) ) {
     foreach my $position ( keys( %{$used_values{$division}} ) ) {
-      push(@{$response->{errors}}, $lang->maketext("fixtures-grids.teams.error.position-used-more-than-once", $division, $position, join(", ", @{ $used_values{$division}{$position} } ) )) if scalar(@{ $used_values{$division}{$position} }) > 1;
+      push(@{$response->{error}}, $lang->maketext("fixtures-grids.teams.error.position-used-more-than-once", $division, $position, join(", ", @{ $used_values{$division}{$position} } ) )) if scalar(@{ $used_values{$division}{$position} }) > 1;
     }
   }
   
   $response->{fields} = \%submitted_data;
   
   # Check for errors
-  if ( scalar @{$response->{errors}} == 0 ) {
+  if ( scalar @{$response->{error}} == 0 ) {
     # Finally we need to loop through again updating the home / away teams for each match
     foreach my $division_key ( keys %submitted_data ) {
       # Get the division DB object, then the team seasons object
@@ -957,8 +957,8 @@ sub create_matches {
   # Grab the fields
   my $rounds = $params->{rounds};
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     fields => {},
@@ -971,7 +971,7 @@ sub create_matches {
   
   # If there's no current season, we can't create matches - that's true whether we're creating league or tournament group matches
   unless ( defined($season) ) {
-    push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.create-fixtures.error.no-current-season"));
+    push(@{$response->{error}}, $lang->maketext("fixtures-grids.form.create-fixtures.error.no-current-season"));
     $response->{can_complete} = 0;
   }
   
@@ -981,22 +981,22 @@ sub create_matches {
       # It is a group - need to check that A) there's a fixtures grid and B) it's this grid
       if ( defined($tourn_group->fixtures_grid) ) {
         # There's a fixtures grid, need to check it's this one
-        push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.create-fixtures.error.group-wrong-grid", $tourn_group->name, encode_entities($self->name))) unless $tourn_group->fixtures_grid->id == $self->id;
+        push(@{$response->{error}}, $lang->maketext("fixtures-grids.form.create-fixtures.error.group-wrong-grid", $tourn_group->name, encode_entities($self->name))) unless $tourn_group->fixtures_grid->id == $self->id;
         $response->{can_complete} = 0;
       } else {
         # No fixtures grid
-        push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.create-fixtures.error.group-no-grid"));
+        push(@{$response->{error}}, $lang->maketext("fixtures-grids.form.create-fixtures.error.group-no-grid"));
         $response->{can_complete} = 0;
       }
     } else {
       # Not a tournament group
-      push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.create-fixtures.error.grid-invalid"));
+      push(@{$response->{error}}, $lang->maketext("fixtures-grids.form.create-fixtures.error.grid-invalid"));
       $response->{can_complete} = 0;
     }
   }
   
   # If we have errors at the moment, just return straight away
-  return $response if scalar @{$response->{errors}};
+  return $response if scalar @{$response->{error}};
   
   my ( $is_tournament, $entry_type, $team_entry, $comp_name );
   
@@ -1016,7 +1016,7 @@ sub create_matches {
     : $schema->resultset("TeamMatch")->season_matches($season, {grid => $self})->count;
   
   if ( $existing_matches > 0 ) {
-    push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.create-fixtures.error.matches-exist"));
+    push(@{$response->{error}}, $lang->maketext("fixtures-grids.form.create-fixtures.error.matches-exist"));
     $response->{can_complete} = 0;
   }
   
@@ -1153,12 +1153,12 @@ sub create_matches {
   
   # Check if we have any incomplete grid positions
   if ( $incomplete_grid_positions ) {
-    push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.create-fixtures.error.teams-incomplete"));
+    push(@{$response->{error}}, $lang->maketext("fixtures-grids.form.create-fixtures.error.teams-incomplete"));
     $response->{can_complete} = 1;
   }
   
   # Return at this point if we have any errors so far
-  return $response if scalar @{$response->{errors}};
+  return $response if scalar @{$response->{error}};
   
   # Now we've done our fatal error checks, we need to loop through the values we've been given and check them for errors
   # We store the last season week's date that we processed, so we can ensure this one does not occur before the last one. 
@@ -1183,22 +1183,22 @@ sub create_matches {
         $week_allocations{"week_" . $week->week}{week_beginning_date} = $season_week->week_beginning_date;
         
         # The week is valid; ensure it doesn't occur prior to the last one.
-        push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.create-fixtures.error.date-occurs-before-previous-date", $week->week))
+        push(@{$response->{error}}, $lang->maketext("fixtures-grids.form.create-fixtures.error.date-occurs-before-previous-date", $week->week))
             if defined($last_season_week) and $season_week->week_beginning_date->ymd("") <= $last_season_week->week_beginning_date->ymd("");
         
         # Set the last season week so that we can check the next one occurs at a later date on the next iteration.
         $last_season_week = $season_week;
       } else {
         # Error, season week not found
-        push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.create-fixtures.error.week-invalid", $week->week));
+        push(@{$response->{error}}, $lang->maketext("fixtures-grids.form.create-fixtures.error.week-invalid", $week->week));
       }
     } else {
       # Error, season week not specified.
-      push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.create-fixtures.error.week-blank", $week->week));
+      push(@{$response->{error}}, $lang->maketext("fixtures-grids.form.create-fixtures.error.week-blank", $week->week));
     }
   }
   
-  if ( scalar @{$response->{errors}} == 0 ) {
+  if ( scalar @{$response->{error}} == 0 ) {
     $response->{week_allocations} = \%week_allocations;
     
     ############## CREATE MATCHES #############
@@ -1381,8 +1381,8 @@ sub delete_matches {
   
   # Grab the fields
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     fields => {},
@@ -1426,13 +1426,13 @@ sub delete_matches {
         push(@{$response->{success}}, $lang->maketext("fixture-grids.form.delete-fixtures.success", $ok, encode_entities($self->name)));
       } else {
         # Not okay, log an error
-        push(@{$response->{errors}}, $lang->maktext("fixtures-grids.form.delete-fixtures.error.delete-failed"));
+        push(@{$response->{error}}, $lang->maktext("fixtures-grids.form.delete-fixtures.error.delete-failed"));
       }
     } else {
       $response->{rows} = 0;
     }
   } else {
-    push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.delete-fixtures.error.cant-delete", encode_entities($self->name)));
+    push(@{$response->{error}}, $lang->maketext("fixtures-grids.form.delete-fixtures.error.cant-delete", encode_entities($self->name)));
   }
   
   return $response;

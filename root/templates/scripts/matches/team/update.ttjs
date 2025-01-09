@@ -304,6 +304,37 @@ END;
   }); // End of accordion / sortable init
   
   /**
+   *  Change event for setting the posponed flag
+   *
+   */
+   var disable_postpone_call = false;
+  $("#postpone").on("change", function() {
+    if ( disable_postpone_call === false ) {
+      $.ajax({
+        url: "[% c.uri_for_action("/matches/team/set_postponed_by_ids", [match.team_season_home_team_season.team.id, match.team_season_away_team_season.team.id, match.scheduled_date.year, match_month, match_day]) %]",
+        type: "POST",
+        dataType: "json",
+        data: {postponed: $(this).prop("checked") ? 1 : 0},
+        success: function(response) {
+          show_messages(response);
+        },
+        error: function(xhr, ajax_options, thrown_error) { 
+          if ( typeof xhr.responseJSON === "undefined" ) {
+            $().toastmessage("showToast", {
+              text: "<br />" + thrown_error + ": [% c.maketext("ajax.error.refresh-advice") %]",
+              sticky: true,
+              position: "top-center",
+              type: "error"
+            });
+          } else {
+            show_messages(xhr.responseJSON);
+          }
+        }
+      });
+    }
+  }); // End of postponed checkbox handler
+  
+  /**
    *  Change event for changing the date
    *
    */
@@ -315,6 +346,9 @@ END;
       data: {date: $(this).val()},
       success: function(response) {
         show_messages(response);
+        disable_postpone_call = true;
+        $("#postpone").prettyCheckable("uncheck");
+        disable_postpone_call = false;
       },
       error: function(xhr, ajax_options, thrown_error) { 
         if ( typeof xhr.responseJSON === "undefined" ) {
@@ -635,6 +669,9 @@ END;
                     window.location.href = response.redirect_uri;
                   } else {
                     show_messages(response);
+                    disable_postpone_call = true;
+                    $("#postpone").prettyCheckable("uncheck");
+                    disable_postpone_call = false;
                     
                     // Move on to the next one (if there is one)
                     if ( active_game_number < total_games && t.data("player-location") == "away" ) {

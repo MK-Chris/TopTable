@@ -1643,8 +1643,8 @@ sub set_members {
   
   # Setup the response
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     completed => 0,
@@ -1655,7 +1655,7 @@ sub set_members {
   
   # Check we're not modifying the memberlist of the 'registered users' group, as every user is automatically a member of this and can't be removed
   if ( $self->apply_on_registration ) {
-    push(@{$response->{errors}}, $lang->maketext("roles.form.notice.cant-modify-registered-users-members"));
+    push(@{$response->{error}}, $lang->maketext("roles.form.notice.cant-modify-registered-users-members"));
     return $response;
   }
   
@@ -1687,7 +1687,7 @@ sub set_members {
   }
   
   # Warn if we had invalid users
-  push(@{$response->{warnings}}, $lang->maketext("roles.form.warning.users-invalid", $invalid_members)) if $invalid_members;
+  push(@{$response->{warning}}, $lang->maketext("roles.form.warning.users-invalid", $invalid_members)) if $invalid_members;
   
   # Now get a list of the current members and map them so they're just IDs
   my @current_members = $self->members;
@@ -1717,7 +1717,7 @@ sub set_members {
     # The final list of members will be a combination of new and existing members
     my @new_full_member_list = ( @new_members, @existing_members );
     if ( scalar @new_full_member_list == 0 ) {
-      push(@{$response->{errors}}, $lang->maketext("roles.form.error.cant-remove-all-sysadmins"));
+      push(@{$response->{error}}, $lang->maketext("roles.form.error.cant-remove-all-sysadmins"));
       return $response;
     }
   }
@@ -1744,7 +1744,7 @@ sub set_members {
     push(@{$response->{success}}, $lang->maketext("admin.forms.roles.set-members.success"));
   } else {
     # Not updated, error
-    push(@{$response->{errors}}, $lang->maketext("admin.update.errror.database.roles-set"));
+    push(@{$response->{error}}, $lang->maketext("admin.update.errror.database.roles-set"));
   }
   
   return $response;
@@ -1776,8 +1776,8 @@ sub check_and_delete {
   $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
   my $lang = $schema->lang;
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     completed => 0,
@@ -1788,7 +1788,7 @@ sub check_and_delete {
   
   # Check we can delete
   unless ( $self->can_delete ) {
-    push(@{$response->{errors}}, $lang->maketext("roles.delete.error.cannot-delete"));
+    push(@{$response->{error}}, $lang->maketext("roles.delete.error.cannot-delete"));
     return $response;
   }
   
@@ -1800,7 +1800,7 @@ sub check_and_delete {
     $response->{completed} = 1;
     push(@{$response->{success}}, $lang->maketext("admin.forms.success", $name, $lang->maketext("admin.message.deleted")));
   } else {
-    push(@{$response->{errors}}, $lang->maketext("admin.delete.error.database", $name));
+    push(@{$response->{error}}, $lang->maketext("admin.delete.error.database", $name));
   }
   
   return $response;

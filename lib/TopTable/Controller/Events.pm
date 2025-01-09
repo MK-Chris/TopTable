@@ -512,8 +512,8 @@ sub do_delete :Chained("base") :PathPart("do-delete") :Args(0) {
   my $response = $event->check_and_delete;
   
   # Set the status messages we need to show on redirect
-  my @errors = @{$response->{errors}};
-  my @warnings = @{$response->{warnings}};
+  my @errors = @{$response->{error}};
+  my @warnings = @{$response->{warning}};
   my @info = @{$response->{info}};
   my @success = @{$response->{success}};
   my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});
@@ -1998,8 +1998,8 @@ sub group_do_delete :Chained("groups_current_season") :PathPart("do-delete") :Ar
   my $response = $group->check_and_delete;
   
   # Set the status messages we need to show on redirect
-  my @errors = @{$response->{errors}};
-  my @warnings = @{$response->{warnings}};
+  my @errors = @{$response->{error}};
+  my @warnings = @{$response->{warning}};
   my @info = @{$response->{info}};
   my @success = @{$response->{success}};
   my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});
@@ -2293,8 +2293,8 @@ sub group_do_delete_matches :Chained("groups_current_season") :PathPart("do-dele
   my $response = $group->delete_matches;
   
   # Set the status messages we need to show on redirect
-  my @errors = @{$response->{errors}};
-  my @warnings = @{$response->{warnings}};
+  my @errors = @{$response->{error}};
+  my @warnings = @{$response->{warning}};
   my @info = @{$response->{info}};
   my @success = @{$response->{success}};
   my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});
@@ -2503,8 +2503,8 @@ sub process_form :Private {
   }
   
   # Set the status messages we need to show on redirect
-  my @errors = @{$response->{errors}};
-  my @warnings = @{$response->{warnings}};
+  my @errors = @{$response->{error}};
+  my @warnings = @{$response->{warning}};
   my @info = @{$response->{info}};
   my @success = @{$response->{success}};
   my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});
@@ -2795,8 +2795,8 @@ sub do_edit_details :Chained("base") :PathPart("do-edit-details") :Args(0) {
   my $response = $c->forward(sprintf("do_edit_%s", $event->event_type->id));
   
   # Set the status messages we need to show on redirect
-  my @errors = @{$response->{errors}};
-  my @warnings = @{$response->{warnings}};
+  my @errors = @{$response->{error}};
+  my @warnings = @{$response->{warning}};
   my @info = @{$response->{info}};
   my @success = @{$response->{success}};
   my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});

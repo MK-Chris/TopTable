@@ -121,8 +121,8 @@ sub begin :Private {
   });
   
   # Log our responses
-  $c->log->error($_) foreach @{$banned->{errors}};
-  $c->log->warning($_) foreach @{$banned->{warnings}};
+  $c->log->error($_) foreach @{$banned->{error}};
+  $c->log->warning($_) foreach @{$banned->{warning}};
   $c->log->info($_) foreach @{$banned->{info}};
   
   if ( $banned->{is_banned} ) {
@@ -306,8 +306,8 @@ sub do_index_edit :Path("do-index-edit") :Args(0) {
   });
   
   # Set the status messages we need to show on redirect
-  my @errors = @{$response->{errors}};
-  my @warnings = @{$response->{warnings}};
+  my @errors = @{$response->{error}};
+  my @warnings = @{$response->{warning}};
   my @info = @{$response->{info}};
   my @success = @{$response->{success}};
   my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});

@@ -905,8 +905,8 @@ sub check_and_delete {
   $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
   my $lang = $schema->lang;
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     completed => 0,
@@ -917,7 +917,7 @@ sub check_and_delete {
   
   # Check we can delete
   unless ( $self->can_delete ) {
-    push(@{$response->{errors}}, $lang->maketext("user.delete.error.cannot-delete", $name));
+    push(@{$response->{error}}, $lang->maketext("user.delete.error.cannot-delete", $name));
     return $response;
   }
   
@@ -929,7 +929,7 @@ sub check_and_delete {
     $response->{completed} = 1;
     push(@{$response->{success}}, $lang->maketext("admin.forms.success", $name, $lang->maketext("admin.message.deleted")));
   } else {
-    push(@{$response->{errors}}, $lang->maketext("admin.delete.error.database", $name));
+    push(@{$response->{error}}, $lang->maketext("admin.delete.error.database", $name));
   }
   
   return $response;
@@ -952,8 +952,8 @@ sub approve {
   my $lang = $schema->lang;
   my $approver = $params->{approver};
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     completed => 0,
@@ -977,11 +977,11 @@ sub approve {
       $response->{completed} = 1;
       push(@{$response->{success}}, $lang->maketext("users.approve.user-approved", encode_entities($self->username)));
     } else {
-      push(@{$response->{errors}}, $lang->maketext("admin.update.error.database"));
+      push(@{$response->{error}}, $lang->maketext("admin.update.error.database"));
     }
   } else {
     # No user passed in
-    push(@{$response->{errors}}, $lang->maketext("admin.performing-user-invalid"));
+    push(@{$response->{error}}, $lang->maketext("admin.performing-user-invalid"));
   }
   
   return $response;
@@ -1004,8 +1004,8 @@ sub reject {
   my $lang = $schema->lang;
   my $approver = $params->{approver};
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     completed => 0,
@@ -1020,7 +1020,7 @@ sub reject {
     $response->{completed} = 1;
     push(@{$response->{success}}, $lang->maketext("users.approve.user-rejected", encode_entities($self->username)));
   } else {
-    push(@{$response->{errors}}, $lang->maketext("admin.delete.error.database"));
+    push(@{$response->{error}}, $lang->maketext("admin.delete.error.database"));
   }
   
   return $response;
@@ -1079,8 +1079,8 @@ sub activate {
   my $lang = $schema->lang;
   my $activation_key = $params->{activation_key};
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     completed => 0,
@@ -1116,11 +1116,11 @@ sub activate {
         
         $response->{completed} = 1;
       } else {
-        push(@{$response->{errors}}, $lang->maketext("user.activation.error.failed"));
+        push(@{$response->{error}}, $lang->maketext("user.activation.error.failed"));
       }
     } else {
       # Activation key not recognised, error
-      push(@{$response->{errors}}, $lang->maketext("user.activation.error.key-incorrect"));
+      push(@{$response->{error}}, $lang->maketext("user.activation.error.key-incorrect"));
     }
   }
   
@@ -1144,8 +1144,8 @@ sub set_password_reset_key {
   my $lang = $schema->lang;
   my $person = $params->{person};
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     completed => 0,
@@ -1165,7 +1165,7 @@ sub set_password_reset_key {
     $response->{completed} = 1;
     $response->{password_reset_key} = $reset_key;
   } else {
-    push(@{$response->{errors}}, $lang->maketext("user.forgot-password.error.failed-to-set-key"));
+    push(@{$response->{error}}, $lang->maketext("user.forgot-password.error.failed-to-set-key"));
   }
   
   return $response;
@@ -1189,8 +1189,8 @@ sub regenerate_activation_key {
   my $lang = $schema->lang;
   my $person = $params->{person};
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     completed => 0,
@@ -1201,14 +1201,14 @@ sub regenerate_activation_key {
     # Already activated - this is an error, but which error gets shown depends on the approval status
     if ( $self->approved ) {
       # Already activated, but not approved
-      push(@{$response->{errors}}, $lang->maketext("user.activation.error-already-activated-needs-approval"));
+      push(@{$response->{error}}, $lang->maketext("user.activation.error-already-activated-needs-approval"));
     } else {
       # Already activated and can login
-      push(@{$response->{errors}}, $lang->maketext("user.activation.error-already-activated"));
+      push(@{$response->{error}}, $lang->maketext("user.activation.error-already-activated"));
     }
   }
   
-  if ( @{$response->{errors}} == 0 ) {
+  if ( @{$response->{error}} == 0 ) {
     my $activation_key = random_bytes_hex(32);
     my $activation_expires = DateTime->now(time_zone  => "UTC")->add(hours => $activation_expiry_limit);
     
@@ -1240,8 +1240,8 @@ sub reset_password {
   $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
   my $lang = $schema->lang;
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     completed => 0,
@@ -1262,42 +1262,42 @@ sub reset_password {
       if ( $self->check_key({type => "password_reset_key", val => $password_reset_key}) ) {
       } else {
         # Key incorrect
-        push(@{$response->{errors}}, $lang->maketext("user.reset-password.error.key-expired-invalid"));
+        push(@{$response->{error}}, $lang->maketext("user.reset-password.error.key-expired-invalid"));
       }
     } else {
       # Password reset key expired
-      push(@{$response->{errors}}, $lang->maketext("user.reset-password.error.key-expired-invalid"));
+      push(@{$response->{error}}, $lang->maketext("user.reset-password.error.key-expired-invalid"));
     }
   } else {
     # No password reset key, just say it's invalid (don't say this user doesn't have one, that's too much information)
-    push(@{$response->{errors}}, $lang->maketext("user.reset-password.error.key-expired-invalid"));
+    push(@{$response->{error}}, $lang->maketext("user.reset-password.error.key-expired-invalid"));
   }
   
   # No password checking if the reset key is invalid in some way, just return
-  return $response if scalar(@{$response->{errors}});
+  return $response if scalar(@{$response->{error}});
   
   if ( defined($password) ) {
     # Check the passwords match
     if ( $password ne $confirm_password ) {
       # Non-matching passwords
-      push(@{$response->{errors}}, $lang->maketext("user.form.error.password-confirm-mismatch"));
+      push(@{$response->{error}}, $lang->maketext("user.form.error.password-confirm-mismatch"));
     } else {
       # Check password strength
       if ( length($password) < 8 ) {
         # Password too short
-        push(@{$response->{errors}}, $lang->maketext("user.form.error.password-too-short", 8));
+        push(@{$response->{error}}, $lang->maketext("user.form.error.password-too-short", 8));
       } else {
         # Check password complexity
-        push(@{$response->{errors}}, $lang->maketext("user.form.error.password-complexity")) unless $password =~ /[A-Z]/ and $password =~ /[a-z]/ and $password =~ /\d/;
+        push(@{$response->{error}}, $lang->maketext("user.form.error.password-complexity")) unless $password =~ /[A-Z]/ and $password =~ /[a-z]/ and $password =~ /\d/;
       }
     }
   } else {
     # Password is blank
-    push(@{$response->{errors}}, $lang->maketext("user.form.error.password-blank"));
+    push(@{$response->{error}}, $lang->maketext("user.form.error.password-blank"));
   }
   
   # Update if there are no errors.  Ensure the password reset key is removed.
-  if ( scalar( @{$response->{errors}} ) == 0 ) {
+  if ( scalar( @{$response->{error}} ) == 0 ) {
     my $ok = $self->update({
       password => $password,
       password_reset_key => undef,
@@ -1307,7 +1307,7 @@ sub reset_password {
     if ( $ok ) {
       $response->{completed} = 1;
     } else {
-      push(@{$response->{errors}}, $lang->maketext("user.reset-password.error.failed-to-reset"));
+      push(@{$response->{error}}, $lang->maketext("user.reset-password.error.failed-to-reset"));
     }
   }
   

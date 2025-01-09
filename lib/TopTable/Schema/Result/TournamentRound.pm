@@ -685,8 +685,8 @@ sub create_or_edit_group {
   my @members = @$group_members;
   my $automatic_qualifiers = $params->{automatic_qualifiers} || undef;
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     fields => {
@@ -708,12 +708,12 @@ sub create_or_edit_group {
   my $entry_type = $self->entry_type;
   
   if ( $season->complete ) {
-    push(@{$response->{errors}}, $lang->maketext("tournaments.round.group.form.error.season-not-current"));
+    push(@{$response->{error}}, $lang->maketext("tournaments.round.group.form.error.season-not-current"));
     return $response;
   }
   
   if ( !$self->group_round ) {
-    push(@{$response->{errors}}, $lang->maketext("tournaments.round.group.form.error.not-group-round"));
+    push(@{$response->{error}}, $lang->maketext("tournaments.round.group.form.error.not-group-round"));
     return $response;
   }
   
@@ -731,7 +731,7 @@ sub create_or_edit_group {
       # Group order is the same as it was if we're editing
       $write_data{group_order} = $group->group_order;
     } else {
-      push(@{$response->{errors}}, $lang->maketext("tournaments.round.group.form.error.group-invalid"));
+      push(@{$response->{error}}, $lang->maketext("tournaments.round.group.form.error.group-invalid"));
       
       # Another fatal error
       return $response;
@@ -748,17 +748,17 @@ sub create_or_edit_group {
     # Check the names were entered and don't exist already.
     if ( defined($name) ) {
       # Name entered, check it.
-      push(@{$response->{errors}}, $lang->maketext("tournaments.round.group.form.error.name-exists", encode_entities($name))) if defined($schema->resultset("TournamentRoundGroup")->search_single_field($self, {field => "name", value => $name, exclusion_obj => $group}));
+      push(@{$response->{error}}, $lang->maketext("tournaments.round.group.form.error.name-exists", encode_entities($name))) if defined($schema->resultset("TournamentRoundGroup")->search_single_field($self, {field => "name", value => $name, exclusion_obj => $group}));
       $write_data{url_key} = $schema->resultset("TournamentRoundGroup")->make_url_key($self, $name, $group);
     } else {
       # Name omitted.
-      push(@{$response->{errors}}, $lang->maketext("tournaments.round.group.form.error.name-blank-but-shouldnt-be")) if $self->groups_must_be_named;
+      push(@{$response->{error}}, $lang->maketext("tournaments.round.group.form.error.name-blank-but-shouldnt-be")) if $self->groups_must_be_named;
     }
     
     $write_data{name} = $name;
   } else {
     # Groups can't be named, so if we have a name specified, that's an error
-    push(@{$response->{errors}}, $lang->maketext("tournaments.round.group.form.error.name-not-blank-but-should-be")) if defined($name);
+    push(@{$response->{error}}, $lang->maketext("tournaments.round.group.form.error.name-not-blank-but-should-be")) if defined($name);
   }
   
   if ( $can_edit{fixtures} ) {
@@ -772,14 +772,14 @@ sub create_or_edit_group {
       
       if ( $manual_fixtures ) {
         # Error, as manual fixtures and a fixtures grid have been specified
-        push(@{$response->{errors}}, $lang->maketext("tournaments.round.group.form.error.manual-fixtures-and-fixtures-grid"));
+        push(@{$response->{error}}, $lang->maketext("tournaments.round.group.form.error.manual-fixtures-and-fixtures-grid"));
       } else {
         # Check the fixtures grid is valid
-        push(@{$response->{errors}}, $lang->maketext("tournaments.rounds.group.field.form.error.grid-invalid")) unless defined($fixtures_grid);
+        push(@{$response->{error}}, $lang->maketext("tournaments.rounds.group.field.form.error.grid-invalid")) unless defined($fixtures_grid);
       }
     } else {
       # Fixtures grid not selected - okay if manual fixtures is false, otherwise error
-      push(@{$response->{errors}}, $lang->maketext("tournaments.round.group.form.error.no-fixtures-grid-or-manual-fixtures")) unless $manual_fixtures;
+      push(@{$response->{error}}, $lang->maketext("tournaments.round.group.form.error.no-fixtures-grid-or-manual-fixtures")) unless $manual_fixtures;
     }
     
     $write_data{fixtures_grid} = defined($fixtures_grid) ? $fixtures_grid->id : undef;
@@ -819,10 +819,10 @@ sub create_or_edit_group {
         if ( ref($members) eq "ARRAY" ) {
           # Array, must be exactly two entries
           my $elms = scalar @{$members};
-          push(@{$response->{errors}}, $lang->maketext("tournaments.round.group.form.error.doubles-members-needs-two-entries", ($idx + 1), $elms)) unless $elms == 2;
+          push(@{$response->{error}}, $lang->maketext("tournaments.round.group.form.error.doubles-members-needs-two-entries", ($idx + 1), $elms)) unless $elms == 2;
         } else {
           # Not an array, error
-          push(@{$response->{errors}}, $lang->maketext("tournaments.round.group.form.error.doubles-members-not-array", ($idx + 1)));
+          push(@{$response->{error}}, $lang->maketext("tournaments.round.group.form.error.doubles-members-not-array", ($idx + 1)));
         }
       }
       
@@ -885,10 +885,10 @@ sub create_or_edit_group {
                 });
               }
               
-              push(@{$response->{errors}}, $lang->maketext("tournaments.round.group.form.error.member-already-entered", encode_entities($name))) if $conflicting_groups->count;
+              push(@{$response->{error}}, $lang->maketext("tournaments.round.group.form.error.member-already-entered", encode_entities($name))) if $conflicting_groups->count;
             } else {
               # Not entered this season, error
-              push(@{$response->{errors}}, $lang->maketext("tournaments.round.group.form.error.not-entered-season", encode_entities($name), encode_entities($season->name)));
+              push(@{$response->{error}}, $lang->maketext("tournaments.round.group.form.error.not-entered-season", encode_entities($name), encode_entities($season->name)));
             }
             
             if ( $entry_type eq "doubles" ) {
@@ -916,7 +916,7 @@ sub create_or_edit_group {
     
     if ( $invalid_members ) {
       my $plural = $invalid_members > 1 ? "plural" : "singular";
-      push(@{$response->{errors}}, $lang->maketext("tournaments.round.group.form.error.invalid-members-$plural", $invalid_members)) if $invalid_members;
+      push(@{$response->{error}}, $lang->maketext("tournaments.round.group.form.error.invalid-members-$plural", $invalid_members)) if $invalid_members;
     }
     
     # We now need to compare the submitted values to ensure there are no duplicates
@@ -929,7 +929,7 @@ sub create_or_edit_group {
       # Get the last element from the list, as we don't want this to have commas before it
       my $last = pop(@names);
       my $duplicate_names = sprintf("%s %s %s", join(", ", @names), $lang->maketext("msg.and"), $last);
-      push(@{$response->{errors}}, $lang->maketext("tournaments.round.group.form.error.member-duplicates", $duplicate_names));
+      push(@{$response->{error}}, $lang->maketext("tournaments.round.group.form.error.member-duplicates", $duplicate_names));
     }
     
     # grep the undefined members
@@ -949,9 +949,9 @@ sub create_or_edit_group {
     my $member_count = scalar @members;
     
     if ( !$manual_fixtures and defined($fixtures_grid) and $member_count > $fixtures_grid->maximum_teams ) {
-      push(@{$response->{errors}}, $lang->maketext("tournaments.round.group.form.error.members-exceed-grid-maximum", $member_count, encode_entities($fixtures_grid->name), $fixtures_grid->maximum_teams));
+      push(@{$response->{error}}, $lang->maketext("tournaments.round.group.form.error.members-exceed-grid-maximum", $member_count, encode_entities($fixtures_grid->name), $fixtures_grid->maximum_teams));
     } elsif ( $member_count < 2 ) {
-      push(@{$response->{errors}}, $lang->maketext("tournaments.round.group.form.error.members-must-have-at-least-two"));
+      push(@{$response->{error}}, $lang->maketext("tournaments.round.group.form.error.members-must-have-at-least-two"));
     }
   }
   
@@ -962,16 +962,16 @@ sub create_or_edit_group {
   if ( $can_edit{qualifiers} ) {
     if ( defined($automatic_qualifiers) ) {
       # We have a value, ensure it's positive and numeric, and not more than the number of competitors in the group.
-      push(@{$response->{errors}}, $lang->maketext("tournaments.round.group.form.error.qualifiers-invalid")) unless $automatic_qualifiers =~ m/^\d+$/ or $automatic_qualifiers > scalar @members;
+      push(@{$response->{error}}, $lang->maketext("tournaments.round.group.form.error.qualifiers-invalid")) unless $automatic_qualifiers =~ m/^\d+$/ or $automatic_qualifiers > scalar @members;
     } else {
       # Error, we need this specified
-      push(@{$response->{errors}}, $lang->maketext("tournaments.round.group.form.error.qualifiers-blank"));
+      push(@{$response->{error}}, $lang->maketext("tournaments.round.group.form.error.qualifiers-blank"));
     }
     
     $write_data{automatic_qualifiers} = $automatic_qualifiers;
   }
   
-  if ( scalar @{$response->{errors}} == 0 ) {
+  if ( scalar @{$response->{error}} == 0 ) {
     # Create a transaction to safeguard - if either operation fails, nothing is written / updated
     my $transaction = $self->result_source->schema->txn_scope_guard;
     

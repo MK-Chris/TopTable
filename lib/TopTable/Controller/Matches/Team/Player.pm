@@ -159,8 +159,8 @@ sub update :Private {
   });
   
   # Set the status messages we need to show back to the user
-  my @errors = @{$response->{errors}};
-  my @warnings = @{$response->{warnings}};
+  my @errors = @{$response->{error}};
+  my @warnings = @{$response->{warning}};
   my @info = @{$response->{info}};
   my @success = @{$response->{success}};
   my @match_scores = @{$response->{match_scores}};

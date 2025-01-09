@@ -84,8 +84,8 @@ sub create_or_edit {
   my $members = $params->{members} || [];
   
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     fields => {name => $name},
@@ -104,7 +104,7 @@ sub create_or_edit {
   
   if ( $action ne "create" and $action ne "edit" ) {
     # Invalid action passed
-    push(@{$response->{errors}}, $lang->maketext("admin.form.invalid-action", $action));
+    push(@{$response->{error}}, $lang->maketext("admin.form.invalid-action", $action));
     
     # This error is fatal, so we return straight away
     return $response;
@@ -119,7 +119,7 @@ sub create_or_edit {
           $can_set_permissions = 0 if $role->sysadmin;
           $can_edit_members = 0 if $role->anonymous or $role->apply_on_registration;
         } else {
-          push(@{$response->{errors}}, $lang->maketext("roles.form.error.role-invalid")) unless defined($role);
+          push(@{$response->{error}}, $lang->maketext("roles.form.error.role-invalid")) unless defined($role);
           
           # Another fatal error
           return $response;
@@ -127,7 +127,7 @@ sub create_or_edit {
         
       }
     } else {
-      push(@{$response->{errors}}, $lang->maketext("roles.form.error.role-not-specified"));
+      push(@{$response->{error}}, $lang->maketext("roles.form.error.role-not-specified"));
     }
   } else {
     # Create - not a sytem role, we can definitely accept permissions
@@ -137,10 +137,10 @@ sub create_or_edit {
   # Check the names were entered and don't exist already - if it's a system role, it can't be renamed, so we don't do this check.
   if ( $action eq "create" or ( $action eq "edit" and !$role->system ) ) {
     if ( defined($name) ) {
-      push(@{$response->{errors}}, $lang->maketext("roles.form.error.name-exists", encode_entities($name))) if defined($class->search_single_field({field => "name", value => $name, exclusion_obj => $role}));
+      push(@{$response->{error}}, $lang->maketext("roles.form.error.name-exists", encode_entities($name))) if defined($class->search_single_field({field => "name", value => $name, exclusion_obj => $role}));
     } else {
       # Name omitted.
-      push(@{$response->{errors}}, $lang->maketext("roles.form.error.name-blank"));
+      push(@{$response->{error}}, $lang->maketext("roles.form.error.name-blank"));
     }
   }
   
@@ -167,7 +167,7 @@ sub create_or_edit {
   }
   
   if ( $action eq "edit" and $role->sysadmin and scalar @validated_members == 0 ) {
-    push(@{$response->{errors}}, $lang->maketext("roles.form.error.cant-remove-all-sysadmins"));
+    push(@{$response->{error}}, $lang->maketext("roles.form.error.cant-remove-all-sysadmins"));
     return $response;
   }
   
@@ -176,7 +176,7 @@ sub create_or_edit {
   $response->{fields}{members} = $members;
   
   # Warn if we had invalid users
-  push(@{$response->{warnings}}, $lang->maketext("roles.form.warning.users-invalid", $invalid_members)) if $invalid_members;
+  push(@{$response->{warning}}, $lang->maketext("roles.form.warning.users-invalid", $invalid_members)) if $invalid_members;
   
   # Check permissions - first get the list of possible fields from result_source
   my $columns = Set::Object->new($class->result_source->columns);
@@ -191,7 +191,7 @@ sub create_or_edit {
   # Loop through and check that all the permissions are 1 or 0
   $response->{fields}{$_} = $fields{$_} ? 1 : 0 foreach keys %fields;
   
-  if ( scalar @{$response->{errors}} == 0 ) {
+  if ( scalar @{$response->{error}} == 0 ) {
     # Generate a new URL key
     my $url_key;
     if ( $action eq "edit" and !$role->system ) {
@@ -235,8 +235,8 @@ sub create_or_edit {
       my $members_response = $role->set_members($members);
       
       # Push all messages from the setting of the member list into the response we send back
-      push(@{$response->{errors}}, @{$members_response->{errors}});
-      push(@{$response->{warnings}}, @{$members_response->{warnings}});
+      push(@{$response->{error}}, @{$members_response->{error}});
+      push(@{$response->{warning}}, @{$members_response->{warning}});
       push(@{$response->{info}}, @{$members_response->{info}});
       push(@{$response->{success}}, @{$members_response->{success}});
     }

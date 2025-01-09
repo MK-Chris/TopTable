@@ -80,8 +80,8 @@ sub create_or_edit {
   my $recipients = $params->{recipients};
   my $recipient_ids = $params->{recipient_ids};
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     fields => {
@@ -92,14 +92,14 @@ sub create_or_edit {
   
   if ( $action ne "create" and $action ne "edit" ) {
     # Invalid action passed
-    push(@{ $response->{errors} }, $lang->maketext("admin.form.invalid-action", $action));
+    push(@{ $response->{error} }, $lang->maketext("admin.form.invalid-action", $action));
     
     # This error is fatal, so we return straight away
     return $response;
   } elsif ( $action eq "edit" ) {
     unless ( defined( $reason ) and ref( $reason ) eq "TopTable::Model::DB::MeetingType" ) {
       # Editing a meeting type that doesn't exist.
-      push(@{ $response->{errors} }, $lang->maketext("meeting-types.form.error.meeting-type-invalid"));
+      push(@{ $response->{error} }, $lang->maketext("meeting-types.form.error.meeting-type-invalid"));
       
       # Another fatal error
       return $response;
@@ -110,10 +110,10 @@ sub create_or_edit {
   # Check the names were entered and don't exist already.
   if ( defined($name) ) {
     # Full name entered, check it.
-    push(@{$response->{errors}}, $lang->maketext("contact-reasons.form.error.name-exists", encode_entities($name))) if defined($class->search_single_field({field => "name", value => $name, exclusion_obj => $reason}));
+    push(@{$response->{error}}, $lang->maketext("contact-reasons.form.error.name-exists", encode_entities($name))) if defined($class->search_single_field({field => "name", value => $name, exclusion_obj => $reason}));
   } else {
     # Full name omitted.
-    push(@{$response->{errors}}, $lang->maketext("ontact-reasons.form.error.name-blank"));
+    push(@{$response->{error}}, $lang->maketext("ontact-reasons.form.error.name-blank"));
   }
   
   # Check recipients - first set to an arrayref if it's not already, so we know we can loop
@@ -151,7 +151,7 @@ sub create_or_edit {
             $recipient_ids{$recipient->id} = 1;
           } else {
             # No email address, error
-            push(@{ $response->{errors} }, $lang->maketext("contact-reasons.form.error.no-email-for-person", $recipient->display_name));
+            push(@{ $response->{error} }, $lang->maketext("contact-reasons.form.error.no-email-for-person", $recipient->display_name));
           }
           
           # Push on to the fields
@@ -168,14 +168,14 @@ sub create_or_edit {
     
     if ( $invalid_recipients ) {
       my $message_id = ( $invalid_recipients == 1 ) ? "contact-reasons.form.error.invalid-recipients-single" : "contact-reasons.form.error.invalid-recipients-multiple";
-      push(@{ $response->{errors} }, $lang->maketext($message_id, $invalid_recipients));
+      push(@{ $response->{error} }, $lang->maketext($message_id, $invalid_recipients));
     }
   } else {
     # No recipients, error
-    push(@{ $response->{errors} }, $lang->maketext("contact-reasons.form.error.no-recipients"));
+    push(@{ $response->{error} }, $lang->maketext("contact-reasons.form.error.no-recipients"));
   }
   
-  if ( scalar( @{ $response->{errors} } ) == 0 ) {
+  if ( scalar( @{ $response->{error} } ) == 0 ) {
     # Generate a new URL key
     my $url_key;
     if ( $action eq "edit" ) {

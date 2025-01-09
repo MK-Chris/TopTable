@@ -90,8 +90,8 @@ sub create_or_edit {
   my $ban_contact = $params->{ban_contact} || 0;
   my $banning_user = $params->{banning_user};
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     fields => {
@@ -104,7 +104,7 @@ sub create_or_edit {
   };
   
   # Check the passed in user
-  push(@{$response->{errors}}, $lang->maketext("admin.performing-user-invalid")) unless defined($banning_user) and ref($banning_user) eq "Catalyst::Authentication::Store::DBIx::Class::User";
+  push(@{$response->{error}}, $lang->maketext("admin.performing-user-invalid")) unless defined($banning_user) and ref($banning_user) eq "Catalyst::Authentication::Store::DBIx::Class::User";
   
   # Check we have a valid ban type
   if ( defined($ban_type) ) {
@@ -115,18 +115,18 @@ sub create_or_edit {
       
       unless ( defined($ban_type) ) {
         # Invalid ban type passed
-        push(@{$response->{errors}}, $lang->maketext("admin.bans.form.error.ban-type-invalid"));
+        push(@{$response->{error}}, $lang->maketext("admin.bans.form.error.ban-type-invalid"));
         return $response;
       }
     }
   } else {
     # No ban type specified
-    push(@{$response->{errors}}, $lang->maketext("admin.bans.form.error.ban-type-blank"));
+    push(@{$response->{error}}, $lang->maketext("admin.bans.form.error.ban-type-blank"));
     return $response;
   }
   
   if ( $action ne "create" and $action ne "edit" ) {
-    push(@{$response->{errors}}, $lang->maketext("admin.form.invalid-action", $action));
+    push(@{$response->{error}}, $lang->maketext("admin.form.invalid-action", $action));
     
     # This error is fatal, so we return straight away
     return $response;
@@ -138,13 +138,13 @@ sub create_or_edit {
         $ban = $ban_type->id eq "username" ? $schema->resultset("BannedUser")->find($ban) : $class->find($ban);
         
         unless ( defined($ban) ) {
-          push(@{$response->{errors}}, $lang->maketext("admin.bans.form.error.ban-invalid"));
+          push(@{$response->{error}}, $lang->maketext("admin.bans.form.error.ban-invalid"));
           return $response;
         }
       }
     } else {
       # No ban specified
-      push(@{$response->{errors}}, $lang->maketext("admin.bans.form.error.ban-blank"));
+      push(@{$response->{error}}, $lang->maketext("admin.bans.form.error.ban-blank"));
     }
   }
   
@@ -181,10 +181,10 @@ sub create_or_edit {
     }
     
     # Now we've done the checks for a valid name, raise an error if the valid flag isn't set
-    push(@{$response->{errors}}, $lang->maketext(sprintf("admin.bans.form.error.invalid-%s", $ban_type->id))) unless $banned_id_valid;
+    push(@{$response->{error}}, $lang->maketext(sprintf("admin.bans.form.error.invalid-%s", $ban_type->id))) unless $banned_id_valid;
   } else {
     # Blank banned ID
-    push(@{$response->{errors}}, $lang->maketext(sprintf("admin.bans.form.error.blank-%s", $ban_type->id)));
+    push(@{$response->{error}}, $lang->maketext(sprintf("admin.bans.form.error.blank-%s", $ban_type->id)));
   }
   
   if ( defined($expires_date) ) {
@@ -216,7 +216,7 @@ sub create_or_edit {
           time_zone => $expires_timezone,
         );
       } catch {
-        push(@{$response->{errors}}, $lang->maketext("admin.bans.form.error.expiry-date-invalid"));
+        push(@{$response->{error}}, $lang->maketext("admin.bans.form.error.expiry-date-invalid"));
         undef($expires_date);
       } finally {
         $date_valid = 1 if defined($expires_date);
@@ -229,23 +229,23 @@ sub create_or_edit {
     if ( defined($expires_hour) or defined($expires_minute) ) {
       if ( !defined( $expires_hour ) or $expires_hour !~ m/^(?:0[0-9]|1[0-9]|2[0-3])$/ ) {
         # Error, invalid hour passed
-        push(@{$response->{errors}}, $lang->maketext("admin.bans.form.error.expires-hour-invalid"));
+        push(@{$response->{error}}, $lang->maketext("admin.bans.form.error.expires-hour-invalid"));
         $time_valid = 0;
       }
       
       if ( !defined($expires_minute) or $expires_minute !~ m/^(?:[0-5][0-9])$/ ) {
         # Error, invalid minute passed
-        push(@{$response->{errors}}, $lang->maketext("admin.bans.form.error.expires-minute-invalid"));
+        push(@{$response->{error}}, $lang->maketext("admin.bans.form.error.expires-minute-invalid"));
         $time_valid = 0;
       }
       
       $expires_date->set(hour => $expires_hour, minute => $expires_minute) if $time_valid;
     }
     
-    push(@{$response->{errors}}, $lang->maketext("admin.bans.form.error.expires-date-in-past")) if $date_valid and $expires_date->subtract_datetime(DateTime->now(time_zone => $expires_timezone))->is_negative;
+    push(@{$response->{error}}, $lang->maketext("admin.bans.form.error.expires-date-in-past")) if $date_valid and $expires_date->subtract_datetime(DateTime->now(time_zone => $expires_timezone))->is_negative;
   } else {
     # Check we don't have a time without a date
-    push(@{$response->{errors}}, $lang->maketext("admin.bans.form.error.expires-time-passed-without-date")) if defined($expires_hour) or defined($expires_minute); 
+    push(@{$response->{error}}, $lang->maketext("admin.bans.form.error.expires-time-passed-without-date")) if defined($expires_hour) or defined($expires_minute); 
   }
   
   # Sanitise the ban levels to 1 (1 if defined and returning a true value, or 0 for anything else).  Ban levels that are invalid for the current ban type have already been set to 0 by now, so no need to do that here
@@ -259,10 +259,10 @@ sub create_or_edit {
   $response->{fields}{ban_contact} = $ban_contact;
   
   # Make sure we have at least one ban level
-  push(@{$response->{errors}}, $lang->maketext("admin.bans.form.error.no-levels-selected")) unless $ban_access or $ban_registration or $ban_login or $ban_contact;
+  push(@{$response->{error}}, $lang->maketext("admin.bans.form.error.no-levels-selected")) unless $ban_access or $ban_registration or $ban_login or $ban_contact;
   
   # Error checking done, create the ban if we don't have any errors
-  if ( scalar(@{$response->{errors}}) == 0 ) {
+  if ( scalar(@{$response->{error}}) == 0 ) {
     if ( $action eq "create" ) {
       # Setup the inital ban data
       my $ban_data = {
@@ -359,8 +359,8 @@ sub is_banned {
   my $is_banned = 0; # Default to not banned
   my $now = DateTime->now( time_zone => "UTC" ); # Check we're not returning expired bans
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     fields => {level => $level},
@@ -371,13 +371,13 @@ sub is_banned {
     # We have a level, check it's valid
     if ( $level ne "access" and $level ne "registration" and $level ne "login" and $level ne "contact" ) {
       $response->{is_banned} = $is_banned;
-      push(@{$response->{errors}}, $lang->maketext("admin.bans.lookup.invalid-level", $level));
+      push(@{$response->{error}}, $lang->maketext("admin.bans.lookup.invalid-level", $level));
       return $response;
     }
   } else {
     # Level not passed in
     $response->{is_banned} = $is_banned;
-    push(@{$response->{errors}}, $lang->maketext("admin.bans.lookup.level-not-given"));
+    push(@{$response->{error}}, $lang->maketext("admin.bans.lookup.level-not-given"));
     return $response;
   }
   
@@ -455,7 +455,7 @@ sub is_banned {
       }
     } else {
       # Invalid user passed
-      push(@{$response->{warnings}}, $lang->("admin.bans.lookup-allowed.username", $user->username)) if $log_allowed;
+      push(@{$response->{warning}}, $lang->("admin.bans.lookup-allowed.username", $user->username)) if $log_allowed;
     }
   }
   

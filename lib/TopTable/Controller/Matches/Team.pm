@@ -177,7 +177,9 @@ sub base :Private {
   });
 }
 
-=head2 view_by_ids
+=head2 view_by_ids, view_by_url_keys
+
+View a team match using the information given in base_by_ids / base_by_url_keys.  Forwards to view.
 
 =cut
 
@@ -185,10 +187,6 @@ sub view_by_ids :Chained("base_by_ids") :PathPart("") :Args(0) {
   my ( $self, $c ) = @_;
   $c->detach("view");
 }
-
-=head2 view_by_url_keys
-
-=cut
 
 sub view_by_url_keys :Chained("base_by_url_keys") :PathPart("") :Args(0) {
   my ( $self, $c ) = @_;
@@ -317,9 +315,9 @@ sub view :Private {
   });
 }
 
-=head2 update_by_ids
+=head2 update_by_ids, update_by_url_keys
 
-Update a team using the information given in base_by_ids
+Update a team using the information given in base_by_ids / base_by_url_keys.  Forwards to update.
 
 =cut
 
@@ -327,12 +325,6 @@ sub update_by_ids :Chained("base_by_ids") :PathPart("update") :Args(0) {
   my ( $self, $c ) = @_;
   $c->detach("update");
 }
-
-=head2 update_by_url_keys
-
-Update a team using the information given in base_by_ids
-
-=cut
 
 sub update_by_url_keys :Chained("base_by_url_keys") :PathPart("update") :Args(0) {
   my ( $self, $c ) = @_;
@@ -424,9 +416,9 @@ sub update :Private {
   });
 }
 
-=head2 do_update_by_ids
+=head2 do_update_by_ids, do_update_by_url_keys
 
-Chained to base_by_ids and provides the path for updating a match.
+Chained to base_by_ids / base_by_url_keys and provides the path for updating a match.  Forwards to do_update.
 
 =cut
 
@@ -434,12 +426,6 @@ sub do_update_by_ids :Chained("base_by_ids") :PathPart("do-update") {
   my ( $self, $c ) = @_;
   $c->detach("do_update");
 }
-
-=head2 do_update_by_url_keys
-
-Chained to base_by_url_keys and provides the path for updating a match.
-
-=cut
 
 sub do_update_by_url_keys :Chained("base_by_url_keys") :PathPart("do-update") {
   my ( $self, $c ) = @_;
@@ -463,7 +449,7 @@ sub do_update :Private {
   
   my $update_result = $match->update_scorecard($params);
   
-  if ( scalar @{$update_result->{errors}} ) {
+  if ( scalar @{$update_result->{error}} ) {
     
   } else {
     # Log an update
@@ -473,9 +459,9 @@ sub do_update :Private {
   }
 }
 
-=head2 update_game_score_by_ids
+=head2 update_game_score_by_ids, update_game_score_by_url_keys
 
-Provides the URL for update_game_score by chaining to base_by_ids; forwards to the real routine.
+Provides the URL for update_game_score by chaining to base_by_ids / base_by_url_keys respectively; forwards to update_game_score.
 
 =cut
 
@@ -483,12 +469,6 @@ sub update_game_score_by_ids :Chained("base_by_ids") :PathPart("game-score") Arg
   my ( $self, $c ) = @_;
   $c->detach("update_game_score");
 }
-
-=head2 update_game_score_by_url_keys
-
-Provides the URL for update_game_score by chaining to base_by_ids; forwards to the real routine.
-
-=cut
 
 sub update_game_score_by_url_keys :Chained("base_by_url_keys") :PathPart("game-score") Args(0) {
   my ( $self, $c ) = @_;
@@ -513,8 +493,8 @@ sub update_game_score :Private {
   my $response = $match->update_scorecard($params);
   
   # Set the status messages we need to show back to the user
-  my @errors = @{$response->{errors}};
-  my @warnings = @{$response->{warnings}};
+  my @errors = @{$response->{error}};
+  my @warnings = @{$response->{warning}};
   my @info = @{$response->{info}};
   my @success = @{$response->{success}};
   my @match_scores = @{$response->{match_scores}};
@@ -526,6 +506,7 @@ sub update_game_score :Private {
       match_originally_complete => $response->{match_originally_complete},
       match_complete => $response->{match_complete},
       match_scores => \@match_scores,
+      postponed => $match->postponed,
     }
   });
   
@@ -553,9 +534,9 @@ sub update_game_score :Private {
   return;
 }
 
-=head2 update_js_by_ids
+=head2 update_js_by_ids, update_js_by_url_keys
 
-Generate the javascript for updating a scorecard based on the information given in base_by_ids
+Generate the javascript for updating a scorecard based on the information given in base_by_ids / base_by_url_keys.  Forwards to update_js.
 
 =cut
 
@@ -563,12 +544,6 @@ sub update_js_by_ids :Chained("base_by_ids") :PathPart("update.js") :Args(0) {
   my ( $self, $c ) = @_;
   $c->detach("update_js");
 }
-
-=head2 update_js_by_url_keys
-
-Update a team using the information given in base_by_ids
-
-=cut
 
 sub update_js_by_url_keys :Chained("base_by_url_keys") :PathPart("update.js") :Args(0) {
   my ( $self, $c ) = @_;
@@ -600,9 +575,9 @@ sub update_js :Private {
   $c->detach($c->view("HTML"));
 }
 
-=head2 calculate_running_scores_by_ids
+=head2 calculate_running_scores_by_ids, calculate_running_scores_by_url_keys
 
-Return the running scores for each game based on the information given in base_by_ids.
+Return the running scores for each game based on the information given in base_by_ids / base_by_url_keys.  Forwards to calculate_running_scores.
 
 =cut
 
@@ -610,12 +585,6 @@ sub calculate_running_scores_by_ids :Chained("base_by_ids") :PathPart("calculate
   my ( $self, $c ) = @_;
   $c->detach("calculate_running_scores");
 }
-
-=head2 calculate_running_scores_by_url_keys
-
-Return the running scores for each game based on the information given in base_by_ids.
-
-=cut
 
 sub calculate_running_scores_by_url_keys :Chained("base_by_url_keys") :PathPart("calculate-running-scores") :Args(0) {
   my ( $self, $c ) = @_;
@@ -642,9 +611,67 @@ sub calculate_running_scores :Private {
   return;
 }
 
-=head2 change_played_date_by_ids
+=head2 set_postponed_by_ids, set_postponed_by_url_keys
 
-Provides a URL for change_played_date by chaining to base_by_ids; forwards to the real routine.
+Receive the postponed flag for a match based on the information given in base_by_ids / base_by_url_keys.  Forwards to set_postponed.
+
+=cut
+
+sub set_postponed_by_ids :Chained("base_by_ids") :PathPart("set-postponed") :Args(0) {
+  my ( $self, $c ) = @_;
+  $c->detach("set_postponed");
+}
+
+sub set_postponed_by_url_keys :Chained("base_by_url_keys") :PathPart("set-postponed") :Args(0) {
+  my ( $self, $c ) = @_;
+  $c->detach("set_postponed");
+}
+
+=head2 set_postponed
+
+Receive and set the postponed flag for a match.
+
+=cut
+
+sub set_postponed :Private {
+  my ( $self, $c ) = @_;
+  my $match = $c->stash->{match};
+  my $postponed = $c->req->params->{postponed};
+  
+  # Check that we are authorised to update scorecards
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["match_update", $c->maketext("user.auth.update-matches"), 1]);
+  my $response = $match->set_postponed($postponed, {logger => sub{ my $level = shift; $c->log->$level( @_ ); },});
+  
+  # Set the status messages we need to show back to the user
+  my @errors = @{$response->{error}};
+  my @warnings = @{$response->{warning}};
+  my @info = @{$response->{info}};
+  my @success = @{$response->{success}};
+  
+  # Stash the messages
+  $c->stash({json_data => {messages => {error => \@errors, warning => \@warnings, info => \@info, success => \@success}}});
+  
+  if ( $response->{completed} ) {
+    # Completed, log that we updated the match
+    my $match_name = $c->maketext("matches.name", $match->team_season_home_team_season->full_name, $match->team_season_away_team_season->full_name);
+    $match_name .= " (" . $match->tournament_round->tournament->event_season->name . ")" if defined($match->tournament_round);
+    
+    my $action = $postponed ? "postpone" : "postpone-unset";
+    $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["team-match", $action, {home_team => $match->team_season_home_team_season->team->id, away_team => $match->team_season_away_team_season->team->id, scheduled_date => $match->scheduled_date->ymd}, $match_name]);
+  } else {
+    # Wasn't completed, return with an error code
+    $c->log->debug(np($response));
+    $c->res->status(400);
+  }
+  
+  # Detach to the JSON view
+  $c->detach($c->view("JSON"));
+  return;
+}
+
+=head2 change_played_date_by_ids, change_played_date_by_url_keys
+
+Provides URLs for change_played_date by chaining to base_by_ids aznd base_by_url_keys respectively; forwards to the change_played_date.
 
 =cut
 
@@ -652,12 +679,6 @@ sub change_played_date_by_ids  :Chained("base_by_ids") :PathPart("change-date") 
   my ( $self, $c ) = @_;
   $c->detach("change_played_date");
 }
-
-=head2 change_played_date_by_url_keys
-
-Provides a URL for change_played_date by chaining to base_by_ids; forwards to the real routine.
-
-=cut
 
 sub change_played_date_by_url_keys  :Chained("base_by_url_keys") :PathPart("change-date") Args(0) {
   my ( $self, $c ) = @_;
@@ -685,13 +706,13 @@ sub change_played_date :Private {
   my $response = $match->update_played_date($cldr->parse_datetime($c->req->params->{date}));
   
   # Set the status messages we need to show back to the user
-  my @errors = @{$response->{errors}};
-  my @warnings = @{$response->{warnings}};
+  my @errors = @{$response->{error}};
+  my @warnings = @{$response->{warning}};
   my @info = @{$response->{info}};
   my @success = @{$response->{success}};
   
   # Stash the messages
-  $c->stash({json_data => {messages => {error => \@errors, warning => \@warnings, info => \@info, success => \@success}}});
+  $c->stash({json_data => {messages => {error => \@errors, warning => \@warnings, info => \@info, success => \@success}, postponed => $match->postponed}});
   
   if ( $response->{completed} ) {
     # Completed, log that we updated the match
@@ -708,9 +729,9 @@ sub change_played_date :Private {
   return;
 }
 
-=head2 change_venue_by_ids
+=head2 change_venue_by_ids, change_venue_by_url_keys
 
-Provides the change_venue URL chaining to base_by_ids, then forwards to the real routine
+Provides the change_venue URL chaining to base_by_ids / base_by_url_keys respectively; forwards to change_venue.
 
 =cut
 
@@ -718,12 +739,6 @@ sub change_venue_by_ids :Chained("base_by_ids") :PathPart("change-venue") Args(0
   my ( $self, $c )  = @_;
   $c->detach("change_venue");
 }
-
-=head2 change_venue_by_url_keys
-
-Provides the change_venue URL chaining to base_by_ids, then forwards to the real routine
-
-=cut
 
 sub change_venue_by_url_keys :Chained("base_by_url_keys") :PathPart("change-venue") Args(0) {
   my ( $self, $c )  = @_;
@@ -747,8 +762,8 @@ sub change_venue :Private {
   my $response = $match->update_venue($c->req->params->{venue});
   
   # Set the status messages we need to show back to the user
-  my @errors = @{$response->{errors}};
-  my @warnings = @{$response->{warnings}};
+  my @errors = @{$response->{error}};
+  my @warnings = @{$response->{warning}};
   my @info = @{$response->{info}};
   my @success = @{$response->{success}};
   
@@ -770,9 +785,9 @@ sub change_venue :Private {
   return;
 }
 
-=head2 get_player_lists_by_ids
+=head2 get_player_lists_by_ids, get_player_lists_by_url_keys
 
-Provides the URL for get_playerlists by chaining to base_by_ids.  Forwards to the real routine.
+Provides the URL for get_playerlists by chaining to base_by_ids / base_by_url_keys respectively; forwards to get_player_lists.
 
 =cut
 
@@ -780,12 +795,6 @@ sub get_player_lists_by_ids :Chained("base_by_ids") :PathPart("player-lists") Ar
   my ( $self, $c ) = @_;
   $c->detach("get_player_lists");
 }
-
-=head2 get_player_lists_by_url_keys
-
-Provides the URL for get_playerlists by chaining to base_by_ids.  Forwards to the real routine.
-
-=cut
 
 sub get_player_lists_by_url_keys :Chained("base_by_url_keys") :PathPart("player-lists") Args(0) {
   my ( $self, $c ) = @_;
@@ -849,9 +858,9 @@ sub get_player_lists :Private {
   return;
 }
 
-=head2 update_playing_order_by_ids
+=head2 update_playing_order_by_ids, update_playing_order_by_url_keys
 
-Provides the URL for update_playing_order chaining to base_by_ids; forwards to the real routine.
+Provides the URL for update_playing_order chaining to base_by_ids / base_by_url_keys respectively; forwards to update_playing_order.
 
 =cut
 
@@ -859,12 +868,6 @@ sub update_playing_order_by_ids :Chained("base_by_ids") :PathPart("playing-order
   my ( $self, $c ) = @_;
   $c->detach("update_playing_order");
 }
-
-=head2 update_playing_order_by_url_keys
-
-Provides the URL for update_playing_order chaining to base_by_ids; forwards to the real routine.
-
-=cut
 
 sub update_playing_order_by_url_keys :Chained("base_by_url_keys") :PathPart("playing-order") Args(0) {
   my ( $self, $c ) = @_;
@@ -881,8 +884,8 @@ sub update_playing_order :Private {
   my $response = $match->update_playing_order($c->req->params);
   
   # Set the status messages we need to show back to the user
-  my @errors = @{$response->{errors}};
-  my @warnings = @{$response->{warnings}};
+  my @errors = @{$response->{error}};
+  my @warnings = @{$response->{warning}};
   my @info = @{$response->{info}};
   my @success = @{$response->{success}};
   my @match_scores = @{$response->{match_scores}};
@@ -903,9 +906,9 @@ sub update_playing_order :Private {
   return;
 }
 
-=head2 cancel_by_ids
+=head2 cancel_by_ids, cancel_by_url_keys
 
-Provides the URL for cancel chaining to base_by_ids; forwards to the real routine.
+Provides the URL for cancel chaining to base_by_ids / base_by_url_keys respectively; forwards to cancel.
 
 =cut
 
@@ -913,12 +916,6 @@ sub cancel_by_ids :Chained("base_by_ids") :PathPart("cancel") Args(0) {
   my ( $self, $c ) = @_;
   $c->detach("cancel");
 }
-
-=head2 cancel_by_url_keys
-
-Provides the URL for cancel chaining to base_by_ids; forwards to the real routine.
-
-=cut
 
 sub cancel_by_url_keys :Chained("base_by_url_keys") :PathPart("cancel") Args(0) {
   my ( $self, $c ) = @_;
@@ -985,9 +982,9 @@ sub cancel :Private {
   });
 }
 
-=head2 do_cancel_by_ids
+=head2 do_cancel_by_ids, do_cancel_by_url_keys
 
-Provides the URL for do_cancel chaining to base_by_ids; forwards to the real routine.
+Provides the URL for do_cancel chaining to base_by_ids / base_by_url_keys respectively; forwards to do_cancel.
 
 =cut
 
@@ -995,12 +992,6 @@ sub do_cancel_by_ids :Chained("base_by_ids") :PathPart("do-cancel") Args(0) {
   my ( $self, $c ) = @_;
   $c->detach("do_cancel");
 }
-
-=head2 do_cancel_by_url_keys
-
-Provides the URL for cancel chaining to base_by_ids; forwards to the real routine.
-
-=cut
 
 sub do_cancel_by_url_keys :Chained("base_by_url_keys") :PathPart("do-cancel") Args(0) {
   my ( $self, $c ) = @_;
@@ -1030,8 +1021,8 @@ sub do_cancel :Private {
     : $match->uncancel;
   
   # Set the status messages we need to show on redirect
-  my @errors = @{$response->{errors}};
-  my @warnings = @{$response->{warnings}};
+  my @errors = @{$response->{error}};
+  my @warnings = @{$response->{warning}};
   my @info = @{$response->{info}};
   my @success = @{$response->{success}};
   my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});
@@ -1107,7 +1098,7 @@ sub override_score :Private {
     # Not allowed to override, get the reason and redirect
     # Redirect with the correct message if we can't override
     $c->response->redirect($c->uri_for_action("/matches/team/view_by_url_keys", $match->url_keys,
-      {mid => $c->set_status_msg({error => $can_override{reason}})}));
+      {mid => $c->set_status_msg({$can_override{level} => $can_override{reason}})}));
     $c->detach;
     return;
   }
@@ -1172,8 +1163,8 @@ sub do_override_score :Private {
   });
   
   # Set the status messages we need to show back to the user
-  my @errors = @{$response->{errors}};
-  my @warnings = @{$response->{warnings}};
+  my @errors = @{$response->{error}};
+  my @warnings = @{$response->{warning}};
   my @info = @{$response->{info}};
   my @success = @{$response->{success}};
   my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});
@@ -1211,9 +1202,9 @@ sub do_override_score :Private {
   return;
 }
 
-=head2 report_by_ids
+=head2 report_by_ids, report_by_url_keys
 
-Report on a match using the information given in base_by_ids
+Report on a match using the information given in base_by_ids / base_by_url_keys.  Forwards to report.
 
 =cut
 
@@ -1221,12 +1212,6 @@ sub report_by_ids :Chained("base_by_ids") :PathPart("report") :Args(0) {
   my ( $self, $c ) = @_;
   $c->detach("report");
 }
-
-=head2 report_by_url_keys
-
-Report on a match using the information given in base_by_ids
-
-=cut
 
 sub report_by_url_keys :Chained("base_by_url_keys") :PathPart("report") :Args(0) {
   my ( $self, $c ) = @_;
@@ -1267,9 +1252,9 @@ sub report :Private {
   });
 }
 
-=head2 publish_report_by_ids
+=head2 publish_report_by_ids, publish_report_by_url_keys
 
-Report on a match using the information given in base_by_ids
+Publish a submitted report on a match using the information given in base_by_ids / base_by_url_keys.  Forwards to publish_report.
 
 =cut
 
@@ -1277,12 +1262,6 @@ sub publish_report_by_ids :Chained("base_by_ids") :PathPart("publish-report") :A
   my ( $self, $c ) = @_;
   $c->detach("publish_report");
 }
-
-=head2 publish_report_by_url_keys
-
-Report on a match using the information given in base_by_ids
-
-=cut
 
 sub publish_report_by_url_keys :Chained("base_by_url_keys") :PathPart("publish-report") :Args(0) {
   my ( $self, $c ) = @_;
@@ -1310,8 +1289,8 @@ sub publish_report :Private {
   });
   
   # Set the status messages we need to show on redirect
-  my @errors = @{$response->{errors}};
-  my @warnings = @{$response->{warnings}};
+  my @errors = @{$response->{error}};
+  my @warnings = @{$response->{warning}};
   my @info = @{$response->{info}};
   my @success = @{$response->{success}};
   my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});
@@ -1406,9 +1385,9 @@ sub check_report_create_edit_authorisation :Private {
   });
 }
 
-=head2 change_handicaps_by_ids
+=head2 change_handicaps_by_ids, change_handicap_by_url_keys
 
-Provides the change_handicap URL chaining to base_by_ids, then forwards to the real routine
+Provides the change_handicap URL chaining to base_by_ids / base_by_url_keys respectively, then forwards to the real routine.
 
 =cut
 
@@ -1416,12 +1395,6 @@ sub change_handicaps_by_ids :Chained("base_by_ids") :PathPart("handicaps") Args(
   my ( $self, $c )  = @_;
   $c->detach("change_handicaps");
 }
-
-=head2 change_handicap_by_url_keys
-
-Provides the change_venue URL chaining to base_by_ids, then forwards to the real routine
-
-=cut
 
 sub change_handicaps_by_url_keys :Chained("base_by_url_keys") :PathPart("handicaps") Args(0) {
   my ( $self, $c )  = @_;
@@ -1446,7 +1419,7 @@ sub change_handicaps :Private {
   my %can_change = $match->can_update("handicaps");
   if ( !$can_change{allowed} ) {
     $c->response->redirect($c->uri_for_action("/matches/team/view_by_url_keys", $match->url_keys,
-                                {mid => $c->set_status_msg({error => $can_change{reason}})}));
+                                {mid => $c->set_status_msg({$can_change{level} => $can_change{reason}})}));
     $c->detach;
     return;
   }
@@ -1469,9 +1442,9 @@ sub change_handicaps :Private {
   });
 }
 
-=head2 set_handicaps_by_ids
+=head2 set_handicaps_by_ids, set_handicap_by_url_keys
 
-Provides the set_handicap URL chaining to base_by_ids, then forwards to the real routine
+Provides the set_handicap URL chaining to base_by_ids / base_by_url_keys.  Forwards to set_handicaps.
 
 =cut
 
@@ -1479,12 +1452,6 @@ sub set_handicaps_by_ids :Chained("base_by_ids") :PathPart("set-handicaps") Args
   my ( $self, $c )  = @_;
   $c->detach("set_handicaps");
 }
-
-=head2 set_handicap_by_url_keys
-
-Provides the change_venue URL chaining to base_by_ids, then forwards to the real routine
-
-=cut
 
 sub set_handicaps_by_url_keys :Chained("base_by_url_keys") :PathPart("set-handicaps") Args(0) {
   my ( $self, $c )  = @_;
@@ -1508,7 +1475,7 @@ sub set_handicaps :Private {
   my %can_change = $match->can_update("handicaps");
   if ( !$can_change{allowed} ) {
     $c->response->redirect($c->uri_for_action("/matches/team/view_by_url_keys", $match->url_keys,
-                                {mid => $c->set_status_msg({error => $can_change{reason}})}));
+                                {mid => $c->set_status_msg({$can_change{level} => $can_change{reason}})}));
     $c->detach;
     return;
   }
@@ -1520,8 +1487,8 @@ sub set_handicaps :Private {
   });
   
   # Set the status messages we need to show back to the user
-  my @errors = @{$response->{errors}};
-  my @warnings = @{$response->{warnings}};
+  my @errors = @{$response->{error}};
+  my @warnings = @{$response->{warning}};
   my @info = @{$response->{info}};
   my @success = @{$response->{success}};
   my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});

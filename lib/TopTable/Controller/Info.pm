@@ -77,8 +77,8 @@ sub contact :Local {
   });
   
   # Log our responses
-  $c->log->error($_) foreach @{$banned->{errors}};
-  $c->log->warning($_) foreach @{$banned->{warnings}};
+  $c->log->error($_) foreach @{$banned->{error}};
+  $c->log->warning($_) foreach @{$banned->{warning}};
   $c->log->info($_) foreach @{$banned->{info}};
   
   if ( $banned->{is_banned} ) {
@@ -196,8 +196,8 @@ sub do_contact :Path("send-email") {
   });
   
   # Log our responses
-  $c->log->error($_) foreach @{$banned->{errors}};
-  $c->log->warning($_) foreach @{$banned->{warnings}};
+  $c->log->error($_) foreach @{$banned->{error}};
+  $c->log->warning($_) foreach @{$banned->{warning}};
   $c->log->info($_) foreach @{$banned->{info}};
   
   if ( $banned->{is_banned} ) {
