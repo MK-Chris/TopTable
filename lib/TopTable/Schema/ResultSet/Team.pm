@@ -503,8 +503,8 @@ sub create_or_edit {
   my $players = $params->{players} || [];
   my $reassign_active = $params->{reassign_active_players};
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     fields => {
@@ -525,7 +525,7 @@ sub create_or_edit {
   
   unless ( defined($season) ) {
     # No current season, which is a fatal error, return
-    push(@{$response->{errors}}, $lang->maketext("teams.form.error.no-current-season"));
+    push(@{$response->{error}}, $lang->maketext("teams.form.error.no-current-season"));
     return $response;
   }
   
@@ -534,7 +534,7 @@ sub create_or_edit {
   
   if ( $action ne "create" and $action ne "edit" ) {
     # Invalid action passed
-    push(@{$response->{errors}}, $lang->maketext("admin.form.invalid-action", $action));
+    push(@{$response->{error}}, $lang->maketext("admin.form.invalid-action", $action));
     
     # This error is fatal, so we return straight away
     return $response;
@@ -542,7 +542,7 @@ sub create_or_edit {
     # Creating fatal checks
     # We can't create teams mid-season.
     if ( $mid_season ) {
-      push(@{$response->{errors}}, $lang->maketext("teams.form.error.create-not-allowed"));
+      push(@{$response->{error}}, $lang->maketext("teams.form.error.create-not-allowed"));
       return $response;
     }
   } else {
@@ -552,14 +552,14 @@ sub create_or_edit {
       $team = $class->find($team) unless ref($team) eq "TopTable::Model::DB::Team";
       
       unless ( defined($team) ) {
-        push(@{$response->{errors}}, $lang->maketext("teams.form.error.team-invalid"));
+        push(@{$response->{error}}, $lang->maketext("teams.form.error.team-invalid"));
         
         # Another fatal error
         return $response;
       }
     } else {
       # No team submitted
-      push(@{$response->{errors}}, $lang->maketext("teams.form.error.team-blank"));
+      push(@{$response->{error}}, $lang->maketext("teams.form.error.team-blank"));
       return $response;
     }
   }
@@ -602,7 +602,7 @@ sub create_or_edit {
     
     if ( !defined($team_season) and $mid_season ) {
       # If this team hasn't entered this season yet and the matches have already been created, we can't edit them now
-      push(@{$response->{errors}}, $lang->maketext("teams.form.error.matches-exist-team-not-entered", $team->club->short_name, $team->name));
+      push(@{$response->{error}}, $lang->maketext("teams.form.error.matches-exist-team-not-entered", $team->club->short_name, $team->name));
     } elsif ( defined($team_season) ) {
       # We have a team season, which means there must be a division
       $old_division = $team_season->division_season->division;
@@ -700,21 +700,21 @@ sub create_or_edit {
         });
       }
       
-      push(@{$response->{errors}}, $lang->maketext("teams.form.error.name-exists", $name, $club->full_name)) if defined($team_name_check);
+      push(@{$response->{error}}, $lang->maketext("teams.form.error.name-exists", $name, $club->full_name)) if defined($team_name_check);
     }
   } else {
     # Name omitted.
-    push(@{$response->{errors}}, $lang->maketext("teams.form.error.name-blank"));
+    push(@{$response->{error}}, $lang->maketext("teams.form.error.name-blank"));
   }
   
   # Now we've done our name checks, push the club / division errors on to the error stack if we have them
-  push(@{$response->{errors}}, $club_error) if defined($club_error);
-  push(@{$response->{errors}}, $division_error) if defined($division_error);
+  push(@{$response->{error}}, $club_error) if defined($club_error);
+  push(@{$response->{error}}, $division_error) if defined($division_error);
   
   # Lookup the captain and check it if an ID was specified
   if ( defined($captain) ) {
     $captain = $schema->resultset("Person")->find_id_or_url_key($captain) unless ref($captain) eq "TopTable::Model::DB::Person";
-    push(@{$response->{errors}}, $lang->maketext("teams.form.error.captain-invalid")) unless defined($captain);
+    push(@{$response->{error}}, $lang->maketext("teams.form.error.captain-invalid")) unless defined($captain);
   }
   
   $response->{fields}{captain} = $captain;
@@ -733,23 +733,23 @@ sub create_or_edit {
   # If blank, we won't error; they'll just use the club's default match start time - and if
   # that's blank, we'll use the club's default start time, followed by the season's if that's blank.
   if ( defined($start_hour) and $start_hour !~ m/^(?:0[0-9]|1[0-9]|2[0-3])$/ ) {
-    push(@{$response->{errors}}, $lang->maketext("teams.form.error.start-hour-invalid"));
+    push(@{$response->{error}}, $lang->maketext("teams.form.error.start-hour-invalid"));
   }
   
   if ( defined($start_minute) and $start_minute !~ m/^(?:[0-5][0-9])$/ ) {
-    push(@{ $response->{errors} }, $lang->maketext("teams.form.error.start-minute-invalid"));
+    push(@{ $response->{error} }, $lang->maketext("teams.form.error.start-minute-invalid"));
   }
   
   # Check we don't have one and not the other
-  push(@{$response->{errors}}, $lang->maketext("teams.form.error.start-time-not-complete")) if ( defined($start_hour) and !defined($start_minute) ) or ( !defined($start_hour) and defined($start_minute) );
+  push(@{$response->{error}}, $lang->maketext("teams.form.error.start-time-not-complete")) if ( defined($start_hour) and !defined($start_minute) ) or ( !defined($start_hour) and defined($start_minute) );
   
   # Check home night
   if ( defined($home_night) ) {
     $home_night = $schema->resultset("LookupWeekday")->find($home_night) unless ref($home_night) eq "TopTable::Model::DB::LookupWeekday";
-    push(@{$response->{errors}}, $lang->maketext("teams.form.error.home-night-invalid")) unless defined($home_night);
+    push(@{$response->{error}}, $lang->maketext("teams.form.error.home-night-invalid")) unless defined($home_night);
   } else {
     # Home night not specified
-    push(@{$response->{errors}}, $lang->maketext("teams.form.error.home-night-blank"));
+    push(@{$response->{error}}, $lang->maketext("teams.form.error.home-night-blank"));
   }
   
   # Add home night to the fields to pass back
@@ -816,7 +816,7 @@ sub create_or_edit {
           } else {
             # Do not reassign, just warn and splice the value from the array.
             splice(@{$players}, $i, 1);
-            push(@{$response->{warnings}}, $lang->maketext("teams.form.warning.player-not-reassigned", encode_entities($player->display_name), encode_entities($active_team_name), encode_entities($season->name), encode_entities($player->first_name)));
+            push(@{$response->{warning}}, $lang->maketext("teams.form.warning.player-not-reassigned", encode_entities($player->display_name), encode_entities($active_team_name), encode_entities($season->name), encode_entities($player->first_name)));
           }
         }
       }
@@ -833,12 +833,12 @@ sub create_or_edit {
   
   my ( $players_text, $past_tense_indicative );
   if ( $invalid_players == 1 ) {
-    push(@{$response->{warnings}}, $lang->maketext("teams.form.warning.player-invalid-singular"));
+    push(@{$response->{warning}}, $lang->maketext("teams.form.warning.player-invalid-singular"));
   } elsif ( $invalid_players > 1 ) {
-    push(@{$response->{warnings}}, $lang->maketext("teams.form.warning.players-invalid-multiple"));
+    push(@{$response->{warning}}, $lang->maketext("teams.form.warning.players-invalid-multiple"));
   }
   
-  if ( scalar @{ $response->{errors}} == 0 ) {
+  if ( scalar @{ $response->{error}} == 0 ) {
     # Set the time to null if it's not been set
     my $default_match_start = sprintf("%s:%s", $start_hour, $start_minute) if defined($start_hour) and defined($start_minute);
     

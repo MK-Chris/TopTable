@@ -170,8 +170,8 @@ sub create_or_edit {
   
   my $is_event = 0;
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     fields => {},
@@ -249,7 +249,7 @@ sub create_or_edit {
   
   if ( $action ne "create" and $action ne "edit" ) {
     # Invalid action passed
-    push(@{$response->{errors}}, $lang->maketext("admin.form.invalid-action", $action));
+    push(@{$response->{error}}, $lang->maketext("admin.form.invalid-action", $action));
     
     # This error is fatal, so we return straight away
     return $response;
@@ -260,7 +260,7 @@ sub create_or_edit {
       $is_event = 1 if defined($meeting->event);
     } else {
       # Meeting is invalid
-      push(@{$response->{errors}}, {id => "meetings.form.error.meeting-invalid"});
+      push(@{$response->{error}}, {id => "meetings.form.error.meeting-invalid"});
     }
   }
   
@@ -280,7 +280,7 @@ sub create_or_edit {
         if  ( defined($type) ) {
           $response->{fields}{type} = $type;
         } else {
-          push(@{$response->{errors}}, $lang->maketext("meetings.form.error.meeting-type-invalid"));
+          push(@{$response->{error}}, $lang->maketext("meetings.form.error.meeting-type-invalid"));
         }
         
         # Check the type / date combination isn't a duplicate (only if we haven't already errored on date validation above)
@@ -302,11 +302,11 @@ sub create_or_edit {
           }
         }
         
-        push(@{$response->{errors}}, $lang->maketext("meetings.form.error.meeting-type-and-date-exists", $type->name)) if defined($meeting_check);
+        push(@{$response->{error}}, $lang->maketext("meetings.form.error.meeting-type-and-date-exists", $type->name)) if defined($meeting_check);
       }
     } else {
       # Blank type
-      push(@{$response->{errors}}, $lang->maketext("meetings.form.error.meeting-type-blank"));
+      push(@{$response->{error}}, $lang->maketext("meetings.form.error.meeting-type-blank"));
     }
   }
   
@@ -317,14 +317,14 @@ sub create_or_edit {
     if ( defined($venue) ) {
       # Venue found, push back into the fields, error if inactive
       $response->{fields}{venue} = $venue;
-      push(@{$response->{errors}}, $lang->maketext("meetings.form.error.venue-inactive", encode_entities($venue->name))) unless $venue->active;
+      push(@{$response->{error}}, $lang->maketext("meetings.form.error.venue-inactive", encode_entities($venue->name))) unless $venue->active;
     } else {
       # Venue error
-      push(@{$response->{errors}}, $lang->maketext("meetings.form.error.venue-invalid")); # Venue will now be undef if we haven't managed to find it with the ID and it wasn't a Venue in the first place
+      push(@{$response->{error}}, $lang->maketext("meetings.form.error.venue-invalid")); # Venue will now be undef if we haven't managed to find it with the ID and it wasn't a Venue in the first place
     }
   } else {
     # Blank venue
-    push(@{$response->{errors}}, $lang->maketext("meetings.form.error.venue-blank"));
+    push(@{$response->{error}}, $lang->maketext("meetings.form.error.venue-blank"));
   }
   
   # Check the organiser (not required, so if it's undefined or blank that's fine)
@@ -336,12 +336,12 @@ sub create_or_edit {
       $response->{fields}{organiser} = $organiser;
     } else {
       # Organiser invalid
-      push(@{$response->{errors}}, {id => "meetings.form.error.organiser-invalid"}) unless defined($venue); # Organiser will now be undef if we haven't managed to find it with the ID and it wasn't a Person in the first place
+      push(@{$response->{error}}, {id => "meetings.form.error.organiser-invalid"}) unless defined($venue); # Organiser will now be undef if we haven't managed to find it with the ID and it wasn't a Person in the first place
     }
   }
   
   # Push any start date error we found here
-  push(@{$response->{errors}}, $date_errors{start_date}) if $date_errors{start_date};
+  push(@{$response->{error}}, $date_errors{start_date}) if $date_errors{start_date};
   
   # Check the start time is valid
   if ( defined($start_hour) ) {
@@ -351,11 +351,11 @@ sub create_or_edit {
       $response->{fields}{start_hour} = $start_hour;
     } else {
       # Invalid start hour
-      push(@{$response->{errors}}, $lang->maketext("meetings.form.error.start-hour-invalid"));
+      push(@{$response->{error}}, $lang->maketext("meetings.form.error.start-hour-invalid"));
     }
   } else {
    # Blank start hour
-   push(@{$response->{errors}}, $lang->maketext("meetings.form.error.start-hour-blank"));
+   push(@{$response->{error}}, $lang->maketext("meetings.form.error.start-hour-blank"));
   }
   
   if ( defined($start_minute) ){
@@ -365,11 +365,11 @@ sub create_or_edit {
       $response->{fields}{start_minute} = $start_minute;
     } else {
       # Invalid start minute
-      push(@{$response->{errors}}, $lang->maketext("meetings.form.error.start-minute-invalid"));
+      push(@{$response->{error}}, $lang->maketext("meetings.form.error.start-minute-invalid"));
     }
   } else {
     # Blank start minute
-    push(@{$response->{errors}}, $lang->maketext("meetings.form.error.start-hour-blank"));
+    push(@{$response->{error}}, $lang->maketext("meetings.form.error.start-hour-blank"));
   }
   
   if ( $all_day ) {
@@ -379,20 +379,20 @@ sub create_or_edit {
     undef($end_minute);
   } else {
     # Push any start date error we found here
-    push(@{$response->{errors}}, $date_errors{start_date}) if $date_errors{start_date};
+    push(@{$response->{error}}, $date_errors{start_date}) if $date_errors{start_date};
     
     # Check the finish time, if it's provided
     if ( defined($end_hour) ) {
       # Passed in, check it's valid
-      push(@{$response->{errors}}, $lang->maketext("events.form.error.finish-hour-invalid")) unless $end_hour =~ m/^(?:0[0-9]|1[0-9]|2[0-3])$/;
+      push(@{$response->{error}}, $lang->maketext("events.form.error.finish-hour-invalid")) unless $end_hour =~ m/^(?:0[0-9]|1[0-9]|2[0-3])$/;
     }
     
     if ( defined($end_minute) ) {
       # Passed in, check it's valid
-      push(@{$response->{errors}}, $lang->maketext("events.form.error.finish-minute-invalid")) unless $end_minute =~ m/^(?:[0-5][0-9])$/;
+      push(@{$response->{error}}, $lang->maketext("events.form.error.finish-minute-invalid")) unless $end_minute =~ m/^(?:[0-5][0-9])$/;
     }
     
-    push(@{$response->{errors}}, $lang->maketext("events.form.error.end-time-partially-blank")) if (defined($end_hour) and !defined($end_minute)) or (!defined($end_hour) and defined($end_minute));
+    push(@{$response->{error}}, $lang->maketext("events.form.error.end-time-partially-blank")) if (defined($end_hour) and !defined($end_minute)) or (!defined($end_hour) and defined($end_minute));
   }
   
   # Add the start time to the date if it's provided
@@ -413,7 +413,7 @@ sub create_or_edit {
   if ( defined($start_date) and defined($end_date) ) {
     if ( DateTime->compare($start_date, $end_date) == 1 ) {
       # Start date is before end date
-      push(@{$response->{errors}}, $lang->maketext("events.form.error.start-date-must-be-before-end-date"));
+      push(@{$response->{error}}, $lang->maketext("events.form.error.start-date-must-be-before-end-date"));
     }
   }
   
@@ -435,7 +435,7 @@ sub create_or_edit {
   # Now check if we have anyone who appears on both lists
   if ( scalar(@{$people->{conflict}}) == 1 ) {
     # One person on both lists elicits a different message to multiple people
-    push(@{$response->{errors}}, $lang->maketext("meetings.form.error.attendee-on-both-lists", encode_entities($people->{conflict}[0]->display_name)));
+    push(@{$response->{error}}, $lang->maketext("meetings.form.error.attendee-on-both-lists", encode_entities($people->{conflict}[0]->display_name)));
   } elsif ( scalar(@{$people->{conflict}}) > 1 ) {
     # Multiple people on both lists, get their names and encode them for the error message
     # Save the number of conflicts, as we'll be popping the last one off here to build the message, so we need to get the total number early on
@@ -449,17 +449,17 @@ sub create_or_edit {
     
     my $conflict_people = sprintf("%s %s %s", join(", ", @people_names), $lang->maketext("msg.and"), $last);
     
-    push(@{$response->{errors}}, $lang->maketext("meetings.form.error.attendees-on-both-lists", $conflicts, $conflict_people));
+    push(@{$response->{error}}, $lang->maketext("meetings.form.error.attendees-on-both-lists", $conflicts, $conflict_people));
   }
   
   # Check for invalid attendees / apologies
-  push(@{$response->{errors}}, $lang->maketext("meetings.form.error.attendees-invalid", $people->{attendees}{invalid})) if $people->{attendees}{invalid};
-  push(@{$response->{errors}}, $lang->maketext("meetings.form.error.apologies-invalid", $people->{apologies}{invalid})) if $people->{apologies}{invalid};
+  push(@{$response->{error}}, $lang->maketext("meetings.form.error.attendees-invalid", $people->{attendees}{invalid})) if $people->{attendees}{invalid};
+  push(@{$response->{error}}, $lang->maketext("meetings.form.error.apologies-invalid", $people->{apologies}{invalid})) if $people->{apologies}{invalid};
   
   # Sanity check for the all day flag
   $all_day = $all_day ? 1 : 0;
   
-  if ( scalar(@{$response->{errors}}) == 0 ) {
+  if ( scalar(@{$response->{error}}) == 0 ) {
     # Success, we need to create / edit the meeting
     # We need to build the start time string - the start time is part of the date as well, so we just use DateTime to set the time.
     $start_date->set_hour($start_hour);

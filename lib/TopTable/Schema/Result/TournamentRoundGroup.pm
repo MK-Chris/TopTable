@@ -517,8 +517,8 @@ sub check_and_delete {
   $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
   my $lang = $schema->lang;
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     completed => 0,
@@ -529,7 +529,7 @@ sub check_and_delete {
   
   # Check we can delete
   unless ( $self->can_delete ) {
-    push(@{$response->{errors}}, $lang->maketext("events.tournaments.rounds.groups.delete.error.cannot-delete", $name));
+    push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.groups.delete.error.cannot-delete", $name));
     return $response;
   }
   
@@ -567,7 +567,7 @@ sub check_and_delete {
     $response->{completed} = 1;
     push(@{$response->{success}}, $lang->maketext("admin.forms.success", $name, $lang->maketext("admin.message.deleted")));
   } else {
-    push(@{$response->{errors}}, $lang->maketext("admin.delete.error.database", $name));
+    push(@{$response->{error}}, $lang->maketext("admin.delete.error.database", $name));
   }
   
   return $response;
@@ -900,8 +900,8 @@ sub set_grid_positions {
   # Grab the fields
   my $grid_positions = $params->{grid_positions};
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     fields => {},
@@ -914,13 +914,13 @@ sub set_grid_positions {
   
   unless ( defined($season) ) {
     # No current season, fatal error
-    push(@{$response->{errors}}, $lang->maketext("events.edit.error.no-current-season"));
+    push(@{$response->{error}}, $lang->maketext("events.edit.error.no-current-season"));
     $response->{can_complete} = 0;
     return $response;
   }
   
   # Error if matches set already
-  push(@{$response->{errors}}, $lang->maketext("events.tournaments.rounds.groups.teams.error.matches-already-set")) if $self->matches->count;
+  push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.groups.teams.error.matches-already-set")) if $self->matches->count;
   
   # This hash will hold divisions and their teams and their positions as well as
   # some other name data so that we can use it in error messages.
@@ -999,7 +999,7 @@ sub set_grid_positions {
           $used_values{$position} = [$name];
         }
       } else {
-        push(@{$response->{errors}}, $lang->maketext("events.tournaments.rounds.groups.fixtures-grids.teams.error.wrong-team-id", $id));
+        push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.groups.fixtures-grids.teams.error.wrong-team-id", $id));
       }
     } else {
       # No ID, push undefined values for the bye
@@ -1016,18 +1016,18 @@ sub set_grid_positions {
   # After we loop through the IDs, make sure we have each team in there
   my $entrants_required = $self->members;
   while ( my $entrant_required = $entrants_required->next ) {
-    push(@{$response->{errors}}, $lang->maketext("events.tournaments.rounds.groups.fixtures-grids.error.no-position-for-entrant", encode_entities($entrant_required->object_name))) unless exists($submitted_entrants{$entrant_required->object_id});
+    push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.groups.fixtures-grids.error.no-position-for-entrant", encode_entities($entrant_required->object_name))) unless exists($submitted_entrants{$entrant_required->object_id});
   }
   
   # Now loop through our %used_values hash and make sure we haven't used any position more than once for each division.
   foreach my $position ( keys(%used_values) ) {
-    push(@{$response->{errors}}, $lang->maketext("events.tournaments.rounds.groups.fixtures-grids.teams.error.position-used-more-than-once", $position, join(", ", @{$used_values{$position}}))) if scalar(@{$used_values{$position}}) > 1;
+    push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.groups.fixtures-grids.teams.error.position-used-more-than-once", $position, join(", ", @{$used_values{$position}}))) if scalar(@{$used_values{$position}}) > 1;
   }
   
   $response->{fields} = \%submitted_entrants;
   
   # Check for errors
-  if ( scalar @{$response->{errors}} == 0 ) {
+  if ( scalar @{$response->{error}} == 0 ) {
     # Finally we need to loop through again updating the home / away teams for each match
     foreach my $id ( keys %submitted_entrants ) {
       # Get the member DB object, then the team seasons object
@@ -1088,8 +1088,8 @@ sub create_matches {
   my $match_template = $tourn_round->match_template;
   my $handicapped = $match_template->handicapped;
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     fields => {},
@@ -1110,7 +1110,7 @@ sub create_matches {
       
     }
     
-    push(@{$response->{errors}}, $msg);
+    push(@{$response->{error}}, $msg);
     return $response;
   }
   
@@ -1163,20 +1163,20 @@ sub create_matches {
             $rounds{$round}{round_date}{week_beginning_date} = $week->week_beginning_date;
             
             # The week is valid; ensure it doesn't occur prior to the last one.
-            push(@{$response->{errors}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.date-occurs-before-previous-date", $round))
+            push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.date-occurs-before-previous-date", $round))
                 if defined($last_week) and $week->week_beginning_date->ymd("") <= $last_week->week_beginning_date->ymd("");
             
             # Set the last season week so that we can check the next one occurs at a later date on the next iteration.
             $last_week = $week;
           } else {
             # Error, season week not found
-            push(@{$response->{errors}}, $lang->maketext("fixtures-grids.form.create-fixtures.error.week-invalid", $round));
+            push(@{$response->{error}}, $lang->maketext("fixtures-grids.form.create-fixtures.error.week-invalid", $round));
           }
           
           $rounds{$round}{week} = $week;
         } else {
           # Error, season week not specified.
-          push(@{$response->{errors}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.round-blank", $round));
+          push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.round-blank", $round));
         }
       }
       
@@ -1239,15 +1239,15 @@ sub create_matches {
                   #$object_name = 
                 }
                 
-                push(@{$response->{errors}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.comp-not-in-group", encode_entities($object_name), $lang->maketext("events.tournaments.rounds.groups.create-fixtures.$home_away"), $round, $match));
+                push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.comp-not-in-group", encode_entities($object_name), $lang->maketext("events.tournaments.rounds.groups.create-fixtures.$home_away"), $round, $match));
               }
             } else {
               # Home team is invalid
-              push(@{$response->{errors}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.comp-invalid", $lang->maketext("events.tournaments.rounds.groups.create-fixtures.$home_away"), $round, $match));
+              push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.comp-invalid", $lang->maketext("events.tournaments.rounds.groups.create-fixtures.$home_away"), $round, $match));
             }
           } else {
             # Error, home team not passed in
-            push(@{$response->{errors}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.comp-blank", $lang->maketext("events.tournaments.rounds.groups.create-fixtures.$home_away"), $round, $match));
+            push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.comp-blank", $lang->maketext("events.tournaments.rounds.groups.create-fixtures.$home_away"), $round, $match));
           }
           
           # Set the value we looked up (even if undef) back into the hash
@@ -1268,11 +1268,11 @@ sub create_matches {
             if ( $venue->active ) {
               $rounds{$round}{matches}{$match}{venue} = $venue;
             } else {
-              push(@{$response->{errors}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.venue-inactive", encode_entities($venue->name), $round, $match));
+              push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.venue-inactive", encode_entities($venue->name), $round, $match));
             }
           } else {
             # Venue is now not defined after lookup, so can't have been valid
-            push(@{$response->{errors}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.venue-invalid", $round, $match));
+            push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.venue-invalid", $round, $match));
           }
         } else {
           # Venue not passed in - get it from the round settings if there's one there, or the team's home venue if not
@@ -1295,7 +1295,7 @@ sub create_matches {
             $scheduled_date = TopTable::Controller::Root::get_day_in_same_week($week_date, $day->weekday_number);
             $rounds{$round}{matches}{$match}{day} = $day;
           } else {
-            push(@{$response->{errors}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.day-invalid", $round, $match));
+            push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.day-invalid", $round, $match));
           }
         } else {
           # Otherwise use the home team's night
@@ -1311,16 +1311,16 @@ sub create_matches {
             if ( $handicap_awarded_to eq "home" or $handicap_awarded_to eq "away" ) {
               if ( defined($handicap_start) ) {
                 # Check there's a positive numeric value (not 0) in the handicap
-                push(@{$response->{errors}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.handicap-invalid", $round, $match)) unless $handicap_start =~ /^[1-9]\d{0,2}$/;
+                push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.handicap-invalid", $round, $match)) unless $handicap_start =~ /^[1-9]\d{0,2}$/;
               } else {
                 # Error, no handicap set
-                push(@{$response->{errors}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.handicap-not-set", $round, $match));
+                push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.handicap-not-set", $round, $match));
               }
             } elsif ( $handicap_awarded_to eq "set_later" or $handicap_awarded_to eq "scratch" ) {
               # Nothing to do here
             } else {
               # Error, invalid handicap option
-              push(@{$response->{errors}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.invalid-handicap-option", $round, $match));
+              push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.invalid-handicap-option", $round, $match));
             }
           } else {
             # Handicap passed in, but the event isn't handicapped - this is just info, we can just not set the handicaps
@@ -1328,28 +1328,28 @@ sub create_matches {
           }
         } else {
           # Handicap not defined - error 
-          push(@{$response->{errors}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.handicap-option-blank", $round, $match)) if $handicapped;
+          push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.handicap-option-blank", $round, $match)) if $handicapped;
         }
       }
       
       # Check nothing has been used more than once, and nothing has been left unused
       foreach my $entrant_used ( keys %used_entrants ) {
-        push(@{$response->{errors}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.entrant-used-too-many-times", $round, $used_entrants{$entrant_used}{name}, $used_entrants{$entrant_used}{count})) if $used_entrants{$entrant_used}{count} > 1;
+        push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.entrant-used-too-many-times", $round, $used_entrants{$entrant_used}{name}, $used_entrants{$entrant_used}{count})) if $used_entrants{$entrant_used}{count} > 1;
       }
       
       # Check nothing is left behind - slightly complicated by the fact we can have a bye round if there's an odd number ( % 2 gives a true value, because there is a remainder)
       my $bye_allowed = scalar @entrants_master % 2 ? 1 : 0;
       my $unused_count = scalar keys %entrants_to_use;
       if ( $bye_allowed ) {
-        push(@{$response->{errors}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.entrants-unused-with-bye", $round)) if $unused_count > 1;
+        push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.entrants-unused-with-bye", $round)) if $unused_count > 1;
       } else {
-        push(@{$response->{errors}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.entrants-unused", $round)) if $unused_count;
+        push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.entrants-unused", $round)) if $unused_count;
       }
     }
     
     $response->{fields}{rounds} = \%rounds;
     
-    if ( @{$response->{errors}} == 0 ) {
+    if ( @{$response->{error}} == 0 ) {
       # No errors, build the match data
       my ( @match_games, @match_legs, @template_games );
       if ( $entry_type eq "team" ) {
@@ -1535,8 +1535,8 @@ sub delete_matches {
   
   # Grab the fields
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     fields => {},
@@ -1572,13 +1572,13 @@ sub delete_matches {
         push(@{$response->{success}}, $lang->maketext("events.tournaments.rounds.groups.delete-fixtures.success", $ok, $self->name));
       } else {
         # Not okay, log an error
-        push(@{$response->{errors}}, $lang->maktext("events.tournaments.rounds.groups.error.delete-failed"));
+        push(@{$response->{error}}, $lang->maktext("events.tournaments.rounds.groups.error.delete-failed"));
       }
     } else {
       $response->{rows} = 0;
     }
   } else {
-    push(@{$response->{errors}}, $lang->maketext("events.tournaments.rounds.groups.delete-fixtures.error.cant-delete", $self->name));
+    push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.groups.delete-fixtures.error.cant-delete", $self->name));
   }
   
   return $response;

@@ -128,8 +128,8 @@ sub create_or_edit {
   my $serves_deuce = $params->{serves_deuce} || undef;
   my $handicapped = $params->{handicapped} || 0;
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     fields => {
@@ -143,7 +143,7 @@ sub create_or_edit {
   
   if ( $action ne "create" and $action ne "edit" ) {
     # Invalid action passed
-    push(@{$response->{errors}}, $lang->maketext("admin.form.invalid-action", $action));
+    push(@{$response->{error}}, $lang->maketext("admin.form.invalid-action", $action));
   } elsif ( $action eq "edit" ) {
     if ( defined($tt_template) ) {
       if ( ref($tt_template) ne "TopTable::Model::DB::TemplateMatchIndividual" ) {
@@ -151,29 +151,29 @@ sub create_or_edit {
         $tt_template = $class->find_id_or_url_key($tt_template);
         
         # Definitely error if we're now undef
-        push(@{$response->{errors}}, $lang->maketext("templates.individual-match.form.error.template-invalid")) unless defined($tt_template);
+        push(@{$response->{error}}, $lang->maketext("templates.individual-match.form.error.template-invalid")) unless defined($tt_template);
       }
       
       # Template is valid, check we can edit it.
       unless ( $tt_template->can_edit_or_delete ) {
-        push(@{$response->{errors}}, $lang->maketext("templates.edit.error.not-allowed", encode_entities($tt_template->name)));
+        push(@{$response->{error}}, $lang->maketext("templates.edit.error.not-allowed", encode_entities($tt_template->name)));
       }
     } else {
       # Editing a template that doesn't exist.
-      push(@{$response->{errors}}, $lang-maketext("templates.individual-match.form.error.template-not-specified"));
+      push(@{$response->{error}}, $lang-maketext("templates.individual-match.form.error.template-not-specified"));
     }
   }
   
   # Any error at this point is fatal, so we return early
-  return $response if scalar(@{$response->{errors}});
+  return $response if scalar(@{$response->{error}});
   
   # Error checking
   # Check the names were entered and don't exist already.
   if ( defined($name) ) {
-    push(@{$response->{errors}}, $lang->maketext("templates.form.error.name-exists", encode_entities($name))) if defined($class->search_single_field({field => "name", value => $name, exclusion_obj => $tt_template}));
+    push(@{$response->{error}}, $lang->maketext("templates.form.error.name-exists", encode_entities($name))) if defined($class->search_single_field({field => "name", value => $name, exclusion_obj => $tt_template}));
   } else {
     # Name omitted.
-    push(@{$response->{errors}}, $lang->maketext("templates.form.error.name-blank"));
+    push(@{$response->{error}}, $lang->maketext("templates.form.error.name-blank"));
   }
   
   # Check the game type has been selected and is valid
@@ -186,10 +186,10 @@ sub create_or_edit {
     }
     
     # Definitely an error if we don't have a value now now
-    push(@{$response->{errors}}, $lang->maketext("templates.individual-match.form.error.game-type-invalid")) unless defined($game_type);
+    push(@{$response->{error}}, $lang->maketext("templates.individual-match.form.error.game-type-invalid")) unless defined($game_type);
   } else {
     # Error, blank game type
-    push(@{$response->{errors}}, $lang->maketext("templates.individual-match.form.error.game-type-blank"));
+    push(@{$response->{error}}, $lang->maketext("templates.individual-match.form.error.game-type-blank"));
   }
   
   # Return the object back to the caller
@@ -198,26 +198,26 @@ sub create_or_edit {
   # Check the legs per game / minimum points for a win / clear points for a win
   if ( defined($legs_per_game) ) {
     # Value is submitted, ensure it's valid
-    push(@{$response->{errors}}, $lang->maketext("templates.individual-match.form.error.legs-per-game-invalid")) if $legs_per_game !~ m/\d{1,2}/ or $legs_per_game < 1;
+    push(@{$response->{error}}, $lang->maketext("templates.individual-match.form.error.legs-per-game-invalid")) if $legs_per_game !~ m/\d{1,2}/ or $legs_per_game < 1;
   } else {
     # Not submitted
-    push(@{$response->{errors}}, $lang->maketext("templates.individual-match.form.error.legs-per-game-blank"));
+    push(@{$response->{error}}, $lang->maketext("templates.individual-match.form.error.legs-per-game-blank"));
   }
   
   if ( defined($minimum_points_win) ) {
     # Value is submitted, ensure it's valid
-    push(@{$response->{errors}}, $lang->maketext("templates.individual-match.form.error.minimum-points-win-invalid")) if $minimum_points_win !~ m/\d{1,2}/ or $minimum_points_win < 1;
+    push(@{$response->{error}}, $lang->maketext("templates.individual-match.form.error.minimum-points-win-invalid")) if $minimum_points_win !~ m/\d{1,2}/ or $minimum_points_win < 1;
   } else {
     # Not submitted
-    push(@{$response->{errors}}, $lang->maketext("templates.individual-match.form.error.minimum-points-win-blank"));
+    push(@{$response->{error}}, $lang->maketext("templates.individual-match.form.error.minimum-points-win-blank"));
   }
   
   if ( defined($clear_points_win) ) {
     # Value is submitted, ensure it's valid
-    push(@{$response->{errors}}, $lang->maketext("templates.individual-match.form.error.clear-points-win-invalid")) if $clear_points_win !~ m/\d{1,2}/ or $clear_points_win < 1;
+    push(@{$response->{error}}, $lang->maketext("templates.individual-match.form.error.clear-points-win-invalid")) if $clear_points_win !~ m/\d{1,2}/ or $clear_points_win < 1;
   } else {
     # Not submitted
-    push(@{$response->{errors}}, $lang->maketext("templates.individual-match.form.error.clear-points-win-blank"));
+    push(@{$response->{error}}, $lang->maketext("templates.individual-match.form.error.clear-points-win-blank"));
   }
   
   # Check the serve type is submitted and valid
@@ -227,11 +227,11 @@ sub create_or_edit {
       $serve_type = $schema->resultset("LookupServeType")->find($serve_type);
       
       # Definitely an error if we don't have a value now now
-      push(@{$response->{errors}}, $lang->maketext("templates.individual-match.form.error.serve-type-invalid")) unless defined($game_type);
+      push(@{$response->{error}}, $lang->maketext("templates.individual-match.form.error.serve-type-invalid")) unless defined($game_type);
     }
   } else {
     # Nothing submitted
-    push(@{$response->{errors}}, $lang->maketext("templates.individual-match.form.error.serve-type-blank"));
+    push(@{$response->{error}}, $lang->maketext("templates.individual-match.form.error.serve-type-blank"));
   }
   
   # Return the object back to the caller
@@ -245,18 +245,18 @@ sub create_or_edit {
     # Static number of serves, check that we have a number of serves in normal play / serves in deuce
     if ( defined($serves) ) {
       # We have a number of serves; check it's valid
-      push(@{$response->{errors}}, $lang->maketext("templates.individual-match.form.error.serves-invalid")) if $serves !~ m/\d{1,2}/ or $serves < 1;
+      push(@{$response->{error}}, $lang->maketext("templates.individual-match.form.error.serves-invalid")) if $serves !~ m/\d{1,2}/ or $serves < 1;
     } else {
       # Nothing submitted
-      push(@{$response->{errors}}, $lang->maketext("templates.individual-match.form.error.serves-blank"));
+      push(@{$response->{error}}, $lang->maketext("templates.individual-match.form.error.serves-blank"));
     }
     
     if ( defined($serves_deuce) ) {
       # We have a number of serves; check it's valid
-      push(@{$response->{errors}}, $lang->maketext("templates.individual-match.form.error.serves-deuce-invalid")) if $serves_deuce !~ m/\d{1,2}/ or $serves_deuce < 1;
+      push(@{$response->{error}}, $lang->maketext("templates.individual-match.form.error.serves-deuce-invalid")) if $serves_deuce !~ m/\d{1,2}/ or $serves_deuce < 1;
     } else {
       # Nothing submitted
-      push(@{$response->{errors}}, $lang->maketext("templates.individual-match.form.error.serves-deuce-blank"));
+      push(@{$response->{error}}, $lang->maketext("templates.individual-match.form.error.serves-deuce-blank"));
     }
   } else {
     # There is not a static number of serves, so blank out those fields.
@@ -272,7 +272,7 @@ sub create_or_edit {
   $handicapped = $handicapped ? 1 : 0;
   $response->{fields}{handicapped} = $handicapped;
   
-  if ( scalar(@{$response->{errors}}) == 0 ) {
+  if ( scalar(@{$response->{error}}) == 0 ) {
     # No errors, build the key from the name
     my $url_key;
     if ( $action eq "edit" ) {

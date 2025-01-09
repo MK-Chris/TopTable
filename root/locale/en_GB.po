@@ -2716,6 +2716,9 @@ msgstr "Not yet played"
 msgid "matches.versus.not-yet-received"
 msgstr "Not received"
 
+msgid "matches.versus.postponed"
+msgstr "Postponed, awaiting new date"
+
 msgid "matches.handicap.not-yet-set"
 msgstr "Handicap not set"
 
@@ -2745,6 +2748,9 @@ msgstr "Write a match report"
 
 msgid "matches.update.form.legend.match-details"
 msgstr "Match details"
+
+msgid "matches.field.postpone"
+msgstr "Mark postponed"
 
 msgid "matches.field.date"
 msgstr "Match date"
@@ -2866,6 +2872,21 @@ msgstr "The actual game number specified (%1) for scheduled game %2 is invalid; 
 
 msgid "matches.update-playing-order.error.game-specified-multiple"
 msgstr "The number %1 has been specified more than once (for game number %2 and %3)."
+
+msgid "matches.postpone-match.error.match-started"
+msgstr "The match cannot be postponed because there are scores entered for it already."
+
+msgid "matches.postpone-match.error.match-cancelled"
+msgstr "The match cannot be postponed because it has already been cancelled."
+
+msgid "matches.postpone-match.info.match-already-postponed"
+msgstr "The match has already been marked as postponed."
+
+msgid "matches.set-postponed.success"
+msgstr "The match was marked as postponed."
+
+msgid "matches.set-postponed.success-unset"
+msgstr "The postponed flag was removed from the match."
 
 msgid "matches.update-match-date.success"
 msgstr "Successfully changed match date."
@@ -7036,6 +7057,12 @@ msgstr "Changed the match date for %1%2."
 
 msgid "system-event-log.description.venue-change"
 msgstr "Changed the venue for %1%2."
+
+msgid "system-event-log.description.postpone"
+msgstr "Postponed %1%2."
+
+msgid "system-event-log.description.postpone-unset"
+msgstr "Cancelled the postponement for %1%2."
 
 msgid "system-event-log.description.handicap-change"
 msgstr "Changed the handicap for %1%2."

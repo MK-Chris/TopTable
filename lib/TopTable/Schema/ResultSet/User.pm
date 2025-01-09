@@ -230,8 +230,8 @@ sub create_or_edit {
   my $installed_languages = $params->{installed_languages};
   my $set_locale;
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     fields => {
@@ -260,7 +260,7 @@ sub create_or_edit {
   
   # Check the username is valid
   if ( $action ne "register" and $action ne "edit" ) {
-    push(@{$response->{errors}}, $lang->maketext("admin.form.invalid-action", $action));
+    push(@{$response->{error}}, $lang->maketext("admin.form.invalid-action", $action));
     
     # This error is fatal, so we return straight away
     return $response;
@@ -268,11 +268,11 @@ sub create_or_edit {
     # Check the user passed is valid
     if ( defined($user) ) {
       if ( ref($user) ne "TopTable::Model::DB::User" ) {
-        push(@{$response->{errors}}, $lang->maketext("user.form.error.user-invalid"));
+        push(@{$response->{error}}, $lang->maketext("user.form.error.user-invalid"));
         return $response;
       }
     } else {
-      push(@{$response->{errors}}, $lang->maketext("user.form.error.user-not-specified"));
+      push(@{$response->{error}}, $lang->maketext("user.form.error.user-not-specified"));
       return $response;
     }
   }
@@ -291,12 +291,12 @@ sub create_or_edit {
     });
     
     # Log our responses
-    $logger->("error", $_) foreach @{$banned->{errors}};
-    $logger->("warning", $_) foreach @{$banned->{warnings}};
+    $logger->("error", $_) foreach @{$banned->{error}};
+    $logger->("warning", $_) foreach @{$banned->{warning}};
     $logger->("info", $_) foreach @{$banned->{info}};
     
     if ( $banned->{is_banned} ) {
-      push(@{$response->{errors}}, $lang->maketext("user.form.error.registration-banned"));
+      push(@{$response->{error}}, $lang->maketext("user.form.error.registration-banned"));
       return $response;
     }
   } elsif ( $action eq "edit" ) {
@@ -322,14 +322,14 @@ sub create_or_edit {
             },
           });
         }
-        push(@{$response->{errors}}, $lang->maketext("user.form.error.username-registered")) if defined($check_username);
+        push(@{$response->{error}}, $lang->maketext("user.form.error.username-registered")) if defined($check_username);
       } else {
         # Invalid username
-        push(@{$response->{errors}}, $lang->maketext("user.form.error.username-invalid"));
+        push(@{$response->{error}}, $lang->maketext("user.form.error.username-invalid"));
       }
     } else {
       # Blank username
-      push(@{$response->{errors}}, $lang->maketext("user.form.error.username-blank"));
+      push(@{$response->{error}}, $lang->maketext("user.form.error.username-blank"));
     }
   }
   
@@ -355,18 +355,18 @@ sub create_or_edit {
             });
           }
           
-          push(@{$response->{errors}}, $lang->maketext("user.form.error.email-registered")) if defined($check_email);
+          push(@{$response->{error}}, $lang->maketext("user.form.error.email-registered")) if defined($check_email);
         } else {
           # Invalid email address.
-          push(@{$response->{errors}}, $lang->maketext("user.form.error.email-invalid"));
+          push(@{$response->{error}}, $lang->maketext("user.form.error.email-invalid"));
         }
       } else {
         # Non-matching email addresses
-        push(@{$response->{errors}}, $lang->maketext("user.form.error.email-confirm-mismatch"));
+        push(@{$response->{error}}, $lang->maketext("user.form.error.email-confirm-mismatch"));
       }
     } else {
       # Email address not entered
-      push(@{$response->{errors}}, $lang->maketext("user.form.error.email-blank"));
+      push(@{$response->{error}}, $lang->maketext("user.form.error.email-blank"));
     }
   }
   
@@ -376,20 +376,20 @@ sub create_or_edit {
       # Check the passwords match
       if ( $password ne $confirm_password ) {
         # Non-matching passwords
-        push(@{$response->{errors}}, $lang->maketext("user.form.error.password-confirm-mismatch"));
+        push(@{$response->{error}}, $lang->maketext("user.form.error.password-confirm-mismatch"));
       } else {
         # Check password strength
         if ( length($password) < 8 ) {
           # Password too short
-          push(@{$response->{errors}}, $lang->maketext("user.form.error.password-too-short", 8));
+          push(@{$response->{error}}, $lang->maketext("user.form.error.password-too-short", 8));
         } else {
           # Check password complexity
-          push(@{$response->{errors}}, $lang->maketext("user.form.error.password-complexity")) unless $password =~ /[A-Z]/ and $password =~ /[a-z]/ and $password =~ /\d/;
+          push(@{$response->{error}}, $lang->maketext("user.form.error.password-complexity")) unless $password =~ /[A-Z]/ and $password =~ /[a-z]/ and $password =~ /\d/;
         }
       }
     } else {
       # Password is blank
-      push(@{$response->{errors}}, $lang->maketext("user.form.error.password-blank"));
+      push(@{$response->{error}}, $lang->maketext("user.form.error.password-blank"));
     }
   }
   
@@ -397,36 +397,36 @@ sub create_or_edit {
     # The username, email or password has changed, so we need to authenticate the current password
     if ( defined($current_password) ) {
       # Check the current password entered is correct
-      push(@{$response->{errors}}, $lang->maketext("user.form.error.curent-password-incorrect")) unless $editing_user->check_password($current_password);
+      push(@{$response->{error}}, $lang->maketext("user.form.error.curent-password-incorrect")) unless $editing_user->check_password($current_password);
     } else {
       # Current password field is blank
-      push(@{$response->{errors}}, $lang->maketext("user.form.error.curent-password-blank"));
+      push(@{$response->{error}}, $lang->maketext("user.form.error.curent-password-blank"));
     }
   }
   
   # Social / website checks
-  push(@{$response->{errors}}, $lang->maketext("user.form.error.facebook-invalid")) if defined($facebook) and $facebook !~ m/^[a-z0-9_.]+$/i;
-  push(@{$response->{errors}}, $lang->maketext("user.form.error.twitter-invalid")) if defined($twitter) and $twitter !~ m/^[a-z0-9_.]{1,15}$/i;
-  push(@{$response->{errors}}, $lang->maketext("user.form.error.instagram-invalid")) if defined($instagram) and $instagram !~ m/^[a-z0-9_.]{1,30}$/i;
-  push(@{$response->{errors}}, $lang->maketext("user.form.error.snapchat-invalid")) if defined($snapchat) and $snapchat !~ m/^[a-z][a-z0-9_.-]{1,13}[a-z0-9]$/i;
-  push(@{$response->{errors}}, $lang->maketext("user.form.error.tiktok-invalid")) if defined($tiktok) and ( length($tiktok) < 2 or length($tiktok) > 24 );
-  push(@{$response->{errors}}, $lang->maketext("user.form.error.website-invalid")) if defined($website) and $website !~ m/$RE{URI}{HTTP}{-scheme => qr<https?>}/;
+  push(@{$response->{error}}, $lang->maketext("user.form.error.facebook-invalid")) if defined($facebook) and $facebook !~ m/^[a-z0-9_.]+$/i;
+  push(@{$response->{error}}, $lang->maketext("user.form.error.twitter-invalid")) if defined($twitter) and $twitter !~ m/^[a-z0-9_.]{1,15}$/i;
+  push(@{$response->{error}}, $lang->maketext("user.form.error.instagram-invalid")) if defined($instagram) and $instagram !~ m/^[a-z0-9_.]{1,30}$/i;
+  push(@{$response->{error}}, $lang->maketext("user.form.error.snapchat-invalid")) if defined($snapchat) and $snapchat !~ m/^[a-z][a-z0-9_.-]{1,13}[a-z0-9]$/i;
+  push(@{$response->{error}}, $lang->maketext("user.form.error.tiktok-invalid")) if defined($tiktok) and ( length($tiktok) < 2 or length($tiktok) > 24 );
+  push(@{$response->{error}}, $lang->maketext("user.form.error.website-invalid")) if defined($website) and $website !~ m/$RE{URI}{HTTP}{-scheme => qr<https?>}/;
   
   if ( $language ) {
     # Language selected, check it's installed
-    push(@{$response->{errors}}, $lang->maketext("user.form.error.language-invalid")) unless exists($installed_languages->{$language});
+    push(@{$response->{error}}, $lang->maketext("user.form.error.language-invalid")) unless exists($installed_languages->{$language});
   } else {
     # Error, language is not selected
-    push(@{$response->{errors}}, $lang->maketext("user.form.error.language-blank"));
+    push(@{$response->{error}}, $lang->maketext("user.form.error.language-blank"));
   }
   
   if ( $timezone ) {
-    push(@{$response->{errors}}, $lang->maketext("user.form.error.timezone-invalid")) unless DateTime::TimeZone->is_valid_name($timezone);
+    push(@{$response->{error}}, $lang->maketext("user.form.error.timezone-invalid")) unless DateTime::TimeZone->is_valid_name($timezone);
   } else {
-    push(@{$response->{errors}}, $lang->maketext("user.form.error.timezone-blank"));
+    push(@{$response->{error}}, $lang->maketext("user.form.error.timezone-blank"));
   }
   
-  push(@{$response->{errors}}, $lang->maketext("user.form.error.reason-blank")) if $action eq "register" and $manual_approval and $require_reason and ( !defined($registration_reason) or !$registration_reason );
+  push(@{$response->{error}}, $lang->maketext("user.form.error.reason-blank")) if $action eq "register" and $manual_approval and $require_reason and ( !defined($registration_reason) or !$registration_reason );
   
   # Boolean sanity check - true = 1, false = 0
   $html_emails = $html_emails ? 1 : 0;
@@ -469,7 +469,7 @@ sub create_or_edit {
         if ( defined($role) ) {
           if ( $role->anonymous ) {
             # Don't push and warn that we can't add to anonymous
-            push(@{$response->{warnings}}, $lang->maketext("user.form.warning.cant-add-to-anonymous"));
+            push(@{$response->{warning}}, $lang->maketext("user.form.warning.cant-add-to-anonymous"));
           } else {
             push(@roles, $role->id);
           }
@@ -479,7 +479,7 @@ sub create_or_edit {
       }
       
       # Warn if any of the roles were invalid
-      push(@{$response->{warnings}}, $lang->maketext("user.form.warning.one-or-more-roles-invalid", $invalid_roles)) if $invalid_roles;
+      push(@{$response->{warning}}, $lang->maketext("user.form.warning.one-or-more-roles-invalid", $invalid_roles)) if $invalid_roles;
       
       my @default_roles = $class->result_source->schema->resultset("Role")->search({apply_on_registration => 1});
       @default_roles = map($_->id , @default_roles);
@@ -491,7 +491,7 @@ sub create_or_edit {
       if ( $default_roles_not_selected->size ) {
         $selected_roles->insert(@$default_roles_not_selected);
         
-        push(@{$response->{warnings}}, $lang->maketext("user.form.warning.default-roles-added", $invalid_roles));
+        push(@{$response->{warning}}, $lang->maketext("user.form.warning.default-roles-added", $invalid_roles));
       }
       
       @roles = $selected_roles->members;
@@ -499,7 +499,7 @@ sub create_or_edit {
     }
   }
   
-  if ( scalar @{$response->{errors}} == 0 ) {
+  if ( scalar @{$response->{error}} == 0 ) {
     # This is a random verification key that we can then put into an email.
     my $activation_key = random_bytes_hex(32) if $action eq "register";
     

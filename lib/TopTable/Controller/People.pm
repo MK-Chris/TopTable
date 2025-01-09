@@ -1167,8 +1167,8 @@ sub do_delete :Chained("base") :Path("do-delete") :Args(0) {
   my $response = $person->check_and_delete;
   
   # Set the status messages we need to show on redirect
-  my @errors = @{$response->{errors}};
-  my @warnings = @{$response->{warnings}};
+  my @errors = @{$response->{error}};
+  my @warnings = @{$response->{warning}};
   my @info = @{$response->{info}};
   my @success = @{$response->{success}};
   my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});
@@ -1226,8 +1226,8 @@ sub process_form :Private {
   });
   
   # Set the status messages we need to show on redirect
-  my @errors = @{$response->{errors}};
-  my @warnings = @{$response->{warnings}};
+  my @errors = @{$response->{error}};
+  my @warnings = @{$response->{warning}};
   my @info = @{$response->{info}};
   my @success = @{$response->{success}};
   my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});
@@ -1357,8 +1357,8 @@ sub import_results :Path("import-results") {
         date_format => $c->i18n_datetime_format_date->pattern,
       });
       
-      my @errors = @{$response->{errors}};
-      my @warnings = @{$response->{warnings}};
+      my @errors = @{$response->{error}};
+      my @warnings = @{$response->{warning}};
       my @info = @{$response->{info}};
       my @success = @{$response->{success}};
       my @successful_rows = @{$response->{successful_rows}};
@@ -1442,8 +1442,8 @@ sub transfer :Chained("base") :PathPart("transfer") :Args(0) {
   my $season = $response->{fields}{season};
   my $to_person = $response->{fields}{to_person};
   
-  my @errors = @{$response->{errors}};
-  my @warnings = @{$response->{warnings}};
+  my @errors = @{$response->{error}};
+  my @warnings = @{$response->{warning}};
   my @info = @{$response->{info}};
   my @success = @{$response->{success}};
   my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});

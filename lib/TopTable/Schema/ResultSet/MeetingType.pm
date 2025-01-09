@@ -64,8 +64,8 @@ sub create_or_edit {
   my $meeting_type = $params->{meeting_type};
   my $name = $params->{name} || undef;
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     fields => {name => $name},
@@ -74,7 +74,7 @@ sub create_or_edit {
   
   if ( $action ne "create" and $action ne "edit" ) {
     # Invalid action passed
-    push(@{$response->{errors}}, $lang->maketext("admin.form.invalid-action", $action));
+    push(@{$response->{error}}, $lang->maketext("admin.form.invalid-action", $action));
     
     # This error is fatal, so we return straight away
     return $response;
@@ -84,7 +84,7 @@ sub create_or_edit {
       $meeting_type = $class->find_id_or_url_key($meeting_type);
       
       # Definitely error if we're now undef
-      push(@{$response->{errors}}, $lang->maketext("meeting-types.form.error.meeting-type-invalid")) unless defined($meeting_type);
+      push(@{$response->{error}}, $lang->maketext("meeting-types.form.error.meeting-type-invalid")) unless defined($meeting_type);
       
       # Another fatal error
       return $response;
@@ -94,13 +94,13 @@ sub create_or_edit {
   # Error checking
   # Check the names were entered and don't exist already.
   if ( defined($name) ) {
-    push(@{$response->{errors}}, $lang->maketext("meeting-types.form.error.name-exists", encode_entities($name))) if defined($class->search_single_field({field => "name", value => $name, exclusion_obj => $meeting_type}));
+    push(@{$response->{error}}, $lang->maketext("meeting-types.form.error.name-exists", encode_entities($name))) if defined($class->search_single_field({field => "name", value => $name, exclusion_obj => $meeting_type}));
   } else {
     # Name omitted.
-    push(@{$response->{errors}}, $lang->maketext("meeting-types.form.error.name-blank"));
+    push(@{$response->{error}}, $lang->maketext("meeting-types.form.error.name-blank"));
   }
   
-  if ( scalar @{$response->{errors}} == 0 ) {
+  if ( scalar @{$response->{error}} == 0 ) {
     # Generate a new URL key
     my $url_key;
     if ( $action eq "edit" ) {

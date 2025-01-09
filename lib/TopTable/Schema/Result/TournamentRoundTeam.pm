@@ -837,8 +837,8 @@ sub adjust_points {
   my $reason = $params->{reason} || undef;
   
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     completed => 0,
@@ -854,7 +854,7 @@ sub adjust_points {
   my %can = $self->tournament_team->can_update("points");
   
   unless ( $can{allowed} ) {
-    push(@{$response->{errors}}, $can{reason});
+    push(@{$response->{error}}, $can{reason});
     return $response;
   }
   
@@ -862,19 +862,19 @@ sub adjust_points {
   $response->{can_complete} = 1;
   
   # Check our fields
-  push(@{$response->{errors}}, $lang->maketext("tournament.team.update.points.error.invalid-action")) unless defined($action) and ($action eq "award" or $action eq "deduct");
+  push(@{$response->{error}}, $lang->maketext("tournament.team.update.points.error.invalid-action")) unless defined($action) and ($action eq "award" or $action eq "deduct");
   
   if ( $points_adjustment =~ m/^[1-9]+$/ ) {
     # Points adjustment is fine, set it into the fields to be passed back
     $response->{fields}{points_adjustment} = $points_adjustment;
   } else {
     # Points adjustment is invalid
-    push(@{$response->{errors}}, $lang->maketext("tournament.team.update.error.invalid-points-adjustment"));
+    push(@{$response->{error}}, $lang->maketext("tournament.team.update.error.invalid-points-adjustment"));
   }
   
-  push(@{$response->{errors}}, $lang->maketext("tournament.team.update.error.blank-reason")) unless defined($reason) and length($reason) > 0;
+  push(@{$response->{error}}, $lang->maketext("tournament.team.update.error.blank-reason")) unless defined($reason) and length($reason) > 0;
   
-  if ( scalar @{$response->{errors}} == 0 ) {
+  if ( scalar @{$response->{error}} == 0 ) {
     # No errors, do the update
     # First get the ranking template in use
     my $group = $self->tournament_group;

@@ -184,8 +184,8 @@ sub create_or_edit {
   $timezone = "UTC" if !defined($timezone) or ( defined($timezone) and !DateTime::TimeZone->is_valid_name($timezone) );
   my $pinned_expires;
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     fields => {headline => $headline},
@@ -198,7 +198,7 @@ sub create_or_edit {
   
   if ( $action ne "create" and $action ne "edit" ) {
     # Invalid action passed
-    push(@{$response->{errors}}, $lang->maketext("admin.form.invalid-action", $action));
+    push(@{$response->{error}}, $lang->maketext("admin.form.invalid-action", $action));
     return $response;
   } elsif ( $action eq "edit" ) {
     if ( defined($article) ) {
@@ -206,18 +206,18 @@ sub create_or_edit {
       if ( ref($article) ne "TopTable::Model::DB::NewsArticle" ) {
         # Check if it's a valid ID
         $article = $class->find($article);
-        push( @{$response->{errors}}, $lang->maketext("news.form.error.invalid-news-article")) unless defined($article);
+        push( @{$response->{error}}, $lang->maketext("news.form.error.invalid-news-article")) unless defined($article);
         return $response;
       }
     } else {
-        push(@{$response->{errors}}, $lang->maketext("news.form.error.no-news-article-specified"));
+        push(@{$response->{error}}, $lang->maketext("news.form.error.no-news-article-specified"));
         return $response;
     }
   }
   
   # Error checking
   # Check we have a headline and some article text
-  push(@{$response->{errors}}, $lang->maketext("news.form.error.no-headline")) unless defined($headline) and $headline;
+  push(@{$response->{error}}, $lang->maketext("news.form.error.no-headline")) unless defined($headline) and $headline;
   
   # Check pinned details
   if ( $pin_article ) {
@@ -245,13 +245,13 @@ sub create_or_edit {
             day => $day,
           );
         } catch {
-          push(@{$response->{errors}}, $lang->maketext("news.form.error.pin-expiry-date-invalid"));
+          push(@{$response->{error}}, $lang->maketext("news.form.error.pin-expiry-date-invalid"));
         };
       }
       
       # Check if we have a valid pin expiry time
       if ( defined($pin_expiry_hour) and $pin_expiry_hour !~ m/^(?:0[0-9]|1[0-9]|2[0-3])$/ ) {
-        push(@{$response->{errors}}, $lang->maketext("news.form.error.pin-expiry-hour-invalid"));
+        push(@{$response->{error}}, $lang->maketext("news.form.error.pin-expiry-hour-invalid"));
         undef($pin_expiry_hour);
       }
       
@@ -270,16 +270,16 @@ sub create_or_edit {
       undef($pinned_expires);
         
       # Check we don't have a time without a date
-      push(@{$response->{errors}}, $lang->maketext("news.form.error.expires-time-passed-without-date")) if defined($pin_expiry_hour) or defined($pin_expiry_minute);
+      push(@{$response->{error}}, $lang->maketext("news.form.error.expires-time-passed-without-date")) if defined($pin_expiry_hour) or defined($pin_expiry_minute);
     }
     
     if ( defined($pinned_expires) ) {
       my $now = DateTime->now(time_zone => $timezone);
-      push(@{$response->{errors}}, $lang->maketext("news.form.error.pin-expires-in-past")) if $pinned_expires->ymd("") . $pinned_expires->hms("") < $now->ymd("") . $now->hms("");
+      push(@{$response->{error}}, $lang->maketext("news.form.error.pin-expires-in-past")) if $pinned_expires->ymd("") . $pinned_expires->hms("") < $now->ymd("") . $now->hms("");
     }
   } elsif ( defined($pinned_expires) and ( defined($pin_expiry_hour) or defined($pin_expiry_minute) ) ) {
     # Either hour or minute is specified, but not both, error
-    push(@{$response->{errors}}, $lang->maketext("news.form.error.pin-expiry-time-incomplete"));
+    push(@{$response->{error}}, $lang->maketext("news.form.error.pin-expiry-time-incomplete"));
   } else {
     # Not pinning, ensure expiry date is undef.  Time already will be, since we build that up from the hour and minute as necessary
     $pinned_expires = undef;
@@ -293,13 +293,13 @@ sub create_or_edit {
   # To check the content we need tor strip out the HTML first, then strip leading and trailing whitespace (trim)
   my $raw_article_content = TopTable->model("FilterHTML")->filter($article_content);
   $raw_article_content =~ s/^\s+|\s+$//g if defined($raw_article_content);
-  push(@{$response->{errors}}, $lang->maketext("news.form.error.no-article-content")) unless defined($raw_article_content) and $raw_article_content;
+  push(@{$response->{error}}, $lang->maketext("news.form.error.no-article-content")) unless defined($raw_article_content) and $raw_article_content;
   
   # Filter the HTML.  Do this before we check if we have any errors so we can feed back into the sanitised fields
   $article_content = TopTable->model("FilterHTML")->filter($article_content, "textarea");
   $response->{fields}{article_content} = $article_content;
   
-  unless ( scalar(@{$response->{errors}}) ) {
+  unless ( scalar(@{$response->{error}}) ) {
     # Get the current year and month
     my $today = DateTime->today(time_zone => "UTC");
     my ($published_year, $published_month) = ($today->year, $today->month);

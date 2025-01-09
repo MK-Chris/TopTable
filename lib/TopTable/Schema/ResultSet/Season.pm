@@ -301,8 +301,8 @@ sub create_or_edit {
   my $rules = $params->{rules} || undef;
   my $divisions = $params->{divisions} // [];
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     fields => {
@@ -318,7 +318,7 @@ sub create_or_edit {
   
   if ( $action ne "create" and $action ne "edit" ) {
     # Invalid action passed
-    push(@{$response->{errors}}, $lang->maketext("admin.form.invalid-action", $action));
+    push(@{$response->{error}}, $lang->maketext("admin.form.invalid-action", $action));
     
     return $response;
   } elsif ( $action eq "edit" ) {
@@ -329,13 +329,13 @@ sub create_or_edit {
         $season = $class->find_id_or_url_key($season);
         
         # Definitely error if we're now undef
-        push(@{$response->{errors}}, $lang->maketext("seasons.form.error.season-invalid")) unless defined($season);
+        push(@{$response->{error}}, $lang->maketext("seasons.form.error.season-invalid")) unless defined($season);
         
         # Another fatal error
         return $response;
       }
     } else {
-      push(@{$response->{errors}}, $lang->maketext("seasons.form.error.season-not-specified"));
+      push(@{$response->{error}}, $lang->maketext("seasons.form.error.season-not-specified"));
     }
     
     # Find out if we can edit the dates for this season; otherwise we'll ignore the date inputs
@@ -351,10 +351,10 @@ sub create_or_edit {
   # Error checking
   # Check the names were entered and don't exist already.
   if ( defined($name) ) {
-    push(@{$response->{errors}}, $lang->maketext("seasons.form.error.name-exists", encode_entities($name))) if defined($class->search_single_field({field => "name", value => $name, exclusion_obj => $season}));
+    push(@{$response->{error}}, $lang->maketext("seasons.form.error.name-exists", encode_entities($name))) if defined($class->search_single_field({field => "name", value => $name, exclusion_obj => $season}));
   } else {
     # Name omitted.
-    push(@{$response->{errors}}, $lang->maketext("seasons.form.error.name-exists"));
+    push(@{$response->{error}}, $lang->maketext("seasons.form.error.name-exists"));
   }
   
   # Check the entered start time values (hour and minute) are valid
@@ -375,13 +375,13 @@ sub create_or_edit {
             day => $day,
           );
         } catch {
-          push(@{$response->{errors}}, $lang->maketext("seasons.form.error.start-date-invalid"));
+          push(@{$response->{error}}, $lang->maketext("seasons.form.error.start-date-invalid"));
         };
       } elsif ( ref($start_date) ne "DateTime" ) {
-        push(@{$response->{errors}}, $lang->maketext("seasons.form.error.start-date-invalid"));
+        push(@{$response->{error}}, $lang->maketext("seasons.form.error.start-date-invalid"));
       }
     } else {
-      push(@{$response->{errors}}, $lang->maketext("seasons.form.error.start-date-invalid"));
+      push(@{$response->{error}}, $lang->maketext("seasons.form.error.start-date-invalid"));
     }
     
     $response->{fields}{start_date} = $start_date;
@@ -402,40 +402,40 @@ sub create_or_edit {
             day => $day,
           );
         } catch {
-          push(@{$response->{errors}}, $lang->maketext("seasons.form.error.end-date-invalid"));
+          push(@{$response->{error}}, $lang->maketext("seasons.form.error.end-date-invalid"));
         };
       } elsif ( ref($end_date) ne "DateTime" ) {
-        push(@{$response->{errors}}, $lang->maketext("seasons.form.error.end-date-invalid"));
+        push(@{$response->{error}}, $lang->maketext("seasons.form.error.end-date-invalid"));
       }
     } else {
-      push(@{$response->{errors}}, $lang->maketext("seasons.form.error.end-date-invalid"));
+      push(@{$response->{error}}, $lang->maketext("seasons.form.error.end-date-invalid"));
     }
     
     $response->{fields}{end_date} = $end_date;
     
     if ( defined($start_hour) ) {
       # Start hour submitted, validate it
-      push(@{$response->{errors}}, $lang->maketext("seasons.form.error.start-hour-invalid")) unless $start_hour =~ m/^(?:0[0-9]|1[0-9]|2[0-3])$/;
+      push(@{$response->{error}}, $lang->maketext("seasons.form.error.start-hour-invalid")) unless $start_hour =~ m/^(?:0[0-9]|1[0-9]|2[0-3])$/;
     } else {
       # Blank start hour
-      push(@{$response->{errors}}, $lang->maketext("seasons.form.error.start-hour-blank"));
+      push(@{$response->{error}}, $lang->maketext("seasons.form.error.start-hour-blank"));
     }
     
     if ( defined($start_minute) ) {
       # Start hour submitted, validate it
-      push(@{$response->{errors}}, $lang->maketext("seasons.form.error.start-minute-invalid")) unless $start_minute =~ m/^(?:[0-5][0-9])$/;
+      push(@{$response->{error}}, $lang->maketext("seasons.form.error.start-minute-invalid")) unless $start_minute =~ m/^(?:[0-5][0-9])$/;
     } else {
       # Blank start hour
-      push(@{$response->{errors}}, $lang->maketext("seasons.form.error.start-minute-blank"));
+      push(@{$response->{error}}, $lang->maketext("seasons.form.error.start-minute-blank"));
     }
     
     if ( defined($timezone) ) {
       unless ( DateTime::TimeZone->is_valid_name($timezone) ) {
-        push(@{$response->{errors}}, $lang->maketext("seasons.form.error.timezone-invalid"));
+        push(@{$response->{error}}, $lang->maketext("seasons.form.error.timezone-invalid"));
         undef($timezone);
       }
     } else {
-      push(@{$response->{errors}}, $lang->maketext("seasons.form.error.timezone-blank"));
+      push(@{$response->{error}}, $lang->maketext("seasons.form.error.timezone-blank"));
     }
     
     $response->{fields}{timezone} = $timezone;
@@ -446,7 +446,7 @@ sub create_or_edit {
       
       if ( $date_compare == 0 or $date_compare == 1 ) {
         # Start date is equal to or after the end date
-        push(@{$response->{errors}}, $lang->maketext("seasons.form.error.start-date-after-end-date"));
+        push(@{$response->{error}}, $lang->maketext("seasons.form.error.start-date-after-end-date"));
       } else {
         # Change our week days to the Monday in the same week, if they're not already
         $start_date = TopTable::Controller::Root::get_day_in_same_week($start_date, 1);
@@ -476,10 +476,10 @@ sub create_or_edit {
       $allow_loan_players_multiple_teams_per_division = $allow_loan_players_multiple_teams_per_division ? 1 : 0;
       
       # Check the limits are numeric and not negative
-      push(@{$response->{errors}}, $lang->maketext("seasons.form.error.loan-players-limit-per-player-invalid")) unless $loan_players_limit_per_player =~ m/^\d{1,2}$/;
-      push(@{$response->{errors}}, $lang->maketext("seasons.form.error.loan-players-limit-per-player-per-team-invalid")) unless $loan_players_limit_per_player_per_team =~ m/^\d{1,2}$/;
-      push(@{$response->{errors}}, $lang->maketext("seasons.form.error.loan-players-limit-per-player-per-opposition-invalid")) unless $loan_players_limit_per_player_per_opposition =~ m/^\d{1,2}$/;
-      push(@{$response->{errors}}, $lang->maketext("seasons.form.error.loan-players-limit-per-team-invalid")) unless $loan_players_limit_per_team =~ m/^\d{1,2}$/;
+      push(@{$response->{error}}, $lang->maketext("seasons.form.error.loan-players-limit-per-player-invalid")) unless $loan_players_limit_per_player =~ m/^\d{1,2}$/;
+      push(@{$response->{error}}, $lang->maketext("seasons.form.error.loan-players-limit-per-player-per-team-invalid")) unless $loan_players_limit_per_player_per_team =~ m/^\d{1,2}$/;
+      push(@{$response->{error}}, $lang->maketext("seasons.form.error.loan-players-limit-per-player-per-opposition-invalid")) unless $loan_players_limit_per_player_per_opposition =~ m/^\d{1,2}$/;
+      push(@{$response->{error}}, $lang->maketext("seasons.form.error.loan-players-limit-per-team-invalid")) unless $loan_players_limit_per_team =~ m/^\d{1,2}$/;
     } else {
       # No loan players, zero all other options
       $allow_loan_players_above = 0;
@@ -515,7 +515,7 @@ sub create_or_edit {
   #$rules = TopTable->model("FilterHTML")->filter($rules, "textarea");
   $response->{fields}{rules} = $rules;
   
-  if ( scalar @{$response->{errors}} == 0 ) {
+  if ( scalar @{$response->{error}} == 0 ) {
     my $url_key;
     if ( $action eq "edit" ) {
       
@@ -616,8 +616,8 @@ sub create_or_edit {
       });
       
       # Push any responses we get back to the calling routine
-      push(@{$response->{errors}}, @{$division_response->{errors}});
-      push(@{$response->{warnings}}, @{$division_response->{warnings}});
+      push(@{$response->{error}}, @{$division_response->{error}});
+      push(@{$response->{warning}}, @{$division_response->{warning}});
       push(@{$response->{info}}, @{$division_response->{info}});
       push(@{$response->{success}}, @{$division_response->{success}});
       $response->{divisions} = $division_response->{divisions};

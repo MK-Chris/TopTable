@@ -7,6 +7,14 @@ away_team_html = match.team_season_away_team_season.full_name | html_entity;
 <fieldset>
   <legend>[% c.maketext("matches.update.form.legend.match-details") %]</legend>
   
+[%
+IF match.postponed;
+  SET postponed_checked = ' checked="checked"';
+ELSE;
+  SET postponed_checked = '';
+END;
+-%]
+  <input type="checkbox" id="postpone" name="postpone" data-label="[% c.maketext("matches.field.postpone") %]" value="1"[% postponed_checked %] />
   <div class="label-field-container">
     <label for="played-date">[% c.maketext("matches.field.date") %]</label>
     <div class="field-container">

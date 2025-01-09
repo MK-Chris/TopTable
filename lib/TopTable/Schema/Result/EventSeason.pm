@@ -450,8 +450,8 @@ sub _set_meeting_details {
   
   # Set the response hash up
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     fields => {
@@ -472,7 +472,7 @@ sub _set_meeting_details {
   # Now check if we have anyone who appears on both lists
   if ( scalar(@{$people->{conflict}}) == 1 ) {
     # One person on both lists elicits a different message to multiple people
-    push(@{$response->{errors}}, $lang->maketext("meetings.form.error.attendee-on-both-lists", encode_entities($people->{conflict}[0]->display_name)));
+    push(@{$response->{error}}, $lang->maketext("meetings.form.error.attendee-on-both-lists", encode_entities($people->{conflict}[0]->display_name)));
   } elsif ( scalar(@{$people->{conflict}}) > 1 ) {
     # Multiple people on both lists, get their names and encode them for the error message
     # Save the number of conflicts, as we'll be popping the last one off here to build the message, so we need to get the total number early on
@@ -486,12 +486,12 @@ sub _set_meeting_details {
     
     my $conflict_people = sprintf("%s %s %s", join(", ", @people_names), $lang->maketext("msg.and"), $last);
     
-    push(@{$response->{errors}}, $lang->maketext("meetings.form.error.attendees-on-both-lists", $conflicts, $conflict_people));
+    push(@{$response->{error}}, $lang->maketext("meetings.form.error.attendees-on-both-lists", $conflicts, $conflict_people));
   }
   
   # Check for invalid attendees / apologies
-  push(@{$response->{errors}}, $lang->maketext("meetings.form.error.attendees-invalid", $people->{attendees}{invalid})) if $people->{attendees}{invalid};
-  push(@{$response->{errors}}, $lang->maketext("meetings.form.error.apologies-invalid", $people->{apologies}{invalid})) if $people->{apologies}{invalid};
+  push(@{$response->{error}}, $lang->maketext("meetings.form.error.attendees-invalid", $people->{attendees}{invalid})) if $people->{attendees}{invalid};
+  push(@{$response->{error}}, $lang->maketext("meetings.form.error.apologies-invalid", $people->{apologies}{invalid})) if $people->{apologies}{invalid};
   
   # Start a transaction so we don't have a partially updated database
   my $transaction = $self->result_source->schema->txn_scope_guard;

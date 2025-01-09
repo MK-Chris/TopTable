@@ -114,8 +114,8 @@ sub create_or_edit {
   my $criteria = delete $params->{criteria} || undef;
   my $user = delete $params->{user} || undef;
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     fields => {
@@ -133,7 +133,7 @@ sub create_or_edit {
   } elsif ( $action eq "edit" ) {
     unless ( defined( $filter ) and ref( $filter ) eq "TopTable::Model::DB::AverageFilter" ) {
       # Editing a meeting type that doesn't exist.
-      push(@{$response->{errors}}, $lang->maketext("average-filter.form.error.filter-invalid"));
+      push(@{$response->{error}}, $lang->maketext("average-filter.form.error.filter-invalid"));
       
       # Another fatal error
       return $response;
@@ -145,7 +145,7 @@ sub create_or_edit {
     # Creating - make sure we have a valid user (if defined).  We should never set this error, as the currently
     # logged in user should get passed in. 
     if ( defined($user) and ref($user) ne "Catalyst::Authentication::Store::DBIx::Class::User" ) {
-      push(@{$response->{errors}}, $lang->maketext("average-filter.form.error.user-invalid"));
+      push(@{$response->{error}}, $lang->maketext("average-filter.form.error.user-invalid"));
       return $response;
     }
   }
@@ -176,10 +176,10 @@ sub create_or_edit {
     
     # The message is slightly different for public and user filters
     my $message_id = ( defined($user) ) ? "average-filter.form.error.name-exists-user" : "average-filter.form.error.name-exists-public";
-    push(@{$response->{errors}}, $lang->maketext($message_id)) if defined($filter_name_check);
+    push(@{$response->{error}}, $lang->maketext($message_id)) if defined($filter_name_check);
   } else {
     # Name omitted.
-    push(@{$response->{errors}}, $lang->maketext("average-filter.form.error.name-blank"));
+    push(@{$response->{error}}, $lang->maketext("average-filter.form.error.name-blank"));
   }
   
   # Check player types - first set to an arrayref if it's not already, so we know we can loop
@@ -204,31 +204,31 @@ sub create_or_edit {
     $response->{fields}{show_inactive} = $show_inactive;
     
     # No valid types selected
-    push(@{$response->{errors}}, $lang->maketext("average-filter.form.error.no-player-types")) unless $show_active or $show_loan or $show_inactive;
+    push(@{$response->{error}}, $lang->maketext("average-filter.form.error.no-player-types")) unless $show_active or $show_loan or $show_inactive;
   } else {
     # No recipients, error
-    push(@{$response->{errors}}, $lang->maketext("average-filter.form.error.no-player-types"));
+    push(@{$response->{error}}, $lang->maketext("average-filter.form.error.no-player-types"));
   }
   
   # Check the criteria fields as long as at least one is filled out
   if ( defined($criteria_field) or defined($operator) or defined($criteria) or defined($criteria_type) ) {
     unless ( $criteria_field eq "played" or $criteria_field eq "won" or $criteria_field eq "lost" ) {
-      push(@{$response->{errors}}, $lang->maketext("average-filter.form.error.criteria-field-invalid"));
+      push(@{$response->{error}}, $lang->maketext("average-filter.form.error.criteria-field-invalid"));
       $criteria_field = "";
     }
     
     unless ( $operator eq ">" or $operator eq ">=" or $operator eq "=" or $operator eq "<=" or $operator eq "<" ) {
-      push(@{$response->{errors}}, $lang->maketext("average-filter.form.error.operator-invalid"));
+      push(@{$response->{error}}, $lang->maketext("average-filter.form.error.operator-invalid"));
       $operator = "";    
     }
     
     unless ( !defined($criteria) or $criteria =~ /^\d+$/ ) {
-      push(@{$response->{errors}}, $lang->maketext("average-filter.form.error.criteria-invalid"));
+      push(@{$response->{error}}, $lang->maketext("average-filter.form.error.criteria-invalid"));
       $criteria = "";
     }
     
     unless ( $criteria_type eq "matches" or $criteria_type eq "matches-pc" or $criteria_type eq "games" ) {
-      push(@{$response->{errors}}, $lang->maketext("average-filter.form.error.criteria-type-invalid"));
+      push(@{$response->{error}}, $lang->maketext("average-filter.form.error.criteria-type-invalid"));
       $criteria_type = "";
     }
   }
@@ -238,7 +238,7 @@ sub create_or_edit {
   $response->{fields}{criteria} = $criteria;
   $response->{fields}{criteria_type} = $criteria_type;
   
-  if ( scalar(@{$response->{errors}} ) == 0 ) {
+  if ( scalar(@{$response->{error}} ) == 0 ) {
     # Generate a new URL key
     my $url_key;
     if ( $action eq "edit" ) {

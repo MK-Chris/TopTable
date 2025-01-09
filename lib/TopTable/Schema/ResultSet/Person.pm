@@ -255,8 +255,8 @@ sub create_or_edit {
   my $noindex = $params->{noindex} || 0;
   my $user = $params->{user} || undef;
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     fields => {
@@ -285,14 +285,14 @@ sub create_or_edit {
   
   unless ( defined($season) ) {
     # Redirect and show the error
-    push(@{$response->{errors}}, $lang->maketext("people.create.no-season"));
+    push(@{$response->{error}}, $lang->maketext("people.create.no-season"));
     return $response;
   }
   
   my ( $person_seasons, $active_person_season );
   if ( $action ne "create" and $action ne "edit" ) {
     # Invalid action passed
-    push(@{$response->{errors}}, $lang->maketext("admin.form.invalid-action", $action));
+    push(@{$response->{error}}, $lang->maketext("admin.form.invalid-action", $action));
     
     # This error is fatal, so we return straight away
     return $response;
@@ -310,12 +310,12 @@ sub create_or_edit {
         $active_person_season = $person_seasons->find({team_membership_type => "active"}) if $person_seasons->count > 0;
       } else {
         # Not valid.
-        push(@{$response->{errors}}, $lang->maketext("people.form.error.person-not-valid"));
+        push(@{$response->{error}}, $lang->maketext("people.form.error.person-not-valid"));
         return $response;
       }
     } else {
       # Not specified.
-      push(@{$response->{errors}}, $lang->maketext("people.form.error.person-not-specified"));
+      push(@{$response->{error}}, $lang->maketext("people.form.error.person-not-specified"));
       return $response;
     }
   }
@@ -339,24 +339,24 @@ sub create_or_edit {
       });
     }
     
-    push(@{$response->{errors}}, $lang->maketext("people.form.error.duplicate-name", encode_entities(sprintf("%s %s", $first_name, $surname)))) if defined($person_name_check);
+    push(@{$response->{error}}, $lang->maketext("people.form.error.duplicate-name", encode_entities(sprintf("%s %s", $first_name, $surname)))) if defined($person_name_check);
   } else {
-    push(@{$response->{errors}}, $lang->maketext("people.form.error.first-name-blank")) unless defined($first_name);
-    push(@{$response->{errors}}, $lang->maketext("people.form.error.surname-blank")) unless defined($surname);
+    push(@{$response->{error}}, $lang->maketext("people.form.error.first-name-blank")) unless defined($first_name);
+    push(@{$response->{error}}, $lang->maketext("people.form.error.surname-blank")) unless defined($surname);
   }
   
   # Check the email address is valid if we have one.
   if ( defined($email_address) ) {
     # We have an email addreess, check it's vali
     $email_address = Email::Valid->address($email_address);
-    push(@{$response->{errors}}, $lang->maketext("people.form.error.email-invalid")) unless defined($email_address);
+    push(@{$response->{error}}, $lang->maketext("people.form.error.email-invalid")) unless defined($email_address);
   }
   
   # Check the specified gender is valid (if there is one)
   if ( defined($gender) ) {
     # Gender is defined, so check it.  Not specifying a gender is fine
     $gender = $schema->resultset("LookupGender")->find($gender) unless ref($gender) eq "TopTable::Model::DB::LookupGender";
-    push(@{$response->{errors}}, $lang->maketext("people.form.error.gender-invalid")) unless defined($gender);
+    push(@{$response->{error}}, $lang->maketext("people.form.error.gender-invalid")) unless defined($gender);
   }
   
   $response->{fields}{gender} = $gender;
@@ -387,7 +387,7 @@ sub create_or_edit {
   
   $response->{fields}{date_of_birth} = $date_of_birth;
   
-  push(@{$response->{errors}}, $date_error) if defined($date_error);
+  push(@{$response->{error}}, $date_error) if defined($date_error);
   
   undef($date_error);
   if ( defined($registration_date) ) {
@@ -415,7 +415,7 @@ sub create_or_edit {
   
   $response->{fields}{registration_date} = $registration_date;
   
-  push(@{$response->{errors}}, $date_error) if defined($date_error);
+  push(@{$response->{error}}, $date_error) if defined($date_error);
   
   # Check the team entered is correct
   if ( defined($team) ) {
@@ -427,10 +427,10 @@ sub create_or_edit {
       my $team_season = $team->search_related("team_seasons", {season => $season->id});
       
       # If we don't find a team season, they're not entered yet
-      push(@{$response->{errors}}, $lang->maketext("people.form.error.team-not-entered", sprintf("%s %s", encode_entities($team->club->short_name), encode_entities($team->name)), encode_entities($season->name))) unless defined($team_season);
+      push(@{$response->{error}}, $lang->maketext("people.form.error.team-not-entered", sprintf("%s %s", encode_entities($team->club->short_name), encode_entities($team->name)), encode_entities($season->name))) unless defined($team_season);
     } else {
       # The team isn't valid
-      push(@{$response->{errors}}, $lang->maketext("people.form.error.team-invalid"));
+      push(@{$response->{error}}, $lang->maketext("people.form.error.team-invalid"));
     }
   }
   
@@ -457,11 +457,11 @@ sub create_or_edit {
           push(@team_captains, $captain_team);
         } else {
           # If we don't find a team season, they're not entered yet
-          push(@{$response->{errors}}, "people.form.error.captain-team-not-entered", sprintf("%s %s", encode_entities($captain_team->club->short_name), encode_entities($captain_team->name)), encode_entities($season->name));
+          push(@{$response->{error}}, "people.form.error.captain-team-not-entered", sprintf("%s %s", encode_entities($captain_team->club->short_name), encode_entities($captain_team->name)), encode_entities($season->name));
         }
       } else {
         # Invalid captain after lookup
-        push(@{$response->{warnings}}, $lang->maketext("people.form.warning.captain-team-invalid"));
+        push(@{$response->{warning}}, $lang->maketext("people.form.warning.captain-team-invalid"));
       }
     }
   }
@@ -486,7 +486,7 @@ sub create_or_edit {
         push (@club_secretary_ids, $club->id) if $action eq "edit";
       } else {
         # Invalid club, warn, but don't error
-        push(@{$response->{warnings}}, $lang->maketext("people.form.warning.secretary-club-invalid"));
+        push(@{$response->{warning}}, $lang->maketext("people.form.warning.secretary-club-invalid"));
       }
     }
   }
@@ -508,12 +508,12 @@ sub create_or_edit {
     $user = $schema->resultset("User")->find_id_or_url_key($user) unless ref($user) eq "TopTable::Model::DB::User";
     
     # Check the user is valid
-    push(@{$response->{warnings}}, $lang->maketext("people.form.warning.username-invalid", encode_entities($first_name))) unless defined($user);
+    push(@{$response->{warning}}, $lang->maketext("people.form.warning.username-invalid", encode_entities($first_name))) unless defined($user);
   }
   
   $response->{fields}{user} = $user;
   
-  if ( scalar @{$response->{errors}} == 0 ) {
+  if ( scalar @{$response->{error}} == 0 ) {
     # Display name is just first name surname
     my $display_name = "$first_name $surname";
     
@@ -762,8 +762,8 @@ sub import {
   my $fh = $params->{fh};
   my $date_format = $params->{date_format};
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     fields => {},
@@ -778,12 +778,12 @@ sub import {
   
   unless ( defined($season) ) {
     # Redirect and show the error
-    push(@{$response->{errors}}, $lang->maketext("people.import.no-season"));
+    push(@{$response->{error}}, $lang->maketext("people.import.no-season"));
     return $response;
   }
   
-  my $csv = Text::CSV->new({binary => 1}) or push(@{$response->{errors}}, $lang->maketext("people.form.import-results.csv-error", encode_entities(Text::CSV->error_diag)));
-  return $response if scalar @{$response->{errors}};
+  my $csv = Text::CSV->new({binary => 1}) or push(@{$response->{error}}, $lang->maketext("people.form.import-results.csv-error", encode_entities(Text::CSV->error_diag)));
+  return $response if scalar @{$response->{error}};
   
   # This will hold the data we read in.  It will largely resemble what should go into a ->populate command,
   # but not quite because we need the return values to potentially update clubs and teams with secretaries
@@ -811,8 +811,8 @@ sub import {
     if ( $i > 1 ) {
       # Setup the initial array row
       push(@people, {
-        errors => [],
-        warnings => [],
+        error => [],
+        warning => [],
         info => [],
         success => [],
         fields => {},
@@ -834,7 +834,7 @@ sub import {
           push(@people_field_positions, $field);
         } else {
           # Field not recognised
-          push(@{$response->{errors}}, $lang->maketext("people.form.import-results.field-heading-invalid", $field));
+          push(@{$response->{error}}, $lang->maketext("people.form.import-results.field-heading-invalid", $field));
         }
       } else {
         # Column data, push the value on to this field's column (or undef if it's blank)
@@ -878,24 +878,24 @@ sub import {
       if ( defined($team) ) {
         $person->{fields}{team} = $team;
       } else {
-        push(@{$person->{fields}{errors}}, $lang->maketext("people.form.error.team-invalid"));
+        push(@{$person->{fields}{error}}, $lang->maketext("people.form.error.team-invalid"));
       }
     } elsif ( defined($club_name) ) {
       # Club specified but no team
-      push(@{$person->{errors}}, $lang->maketext("people.form.import-results.team-not-specified"));
+      push(@{$person->{error}}, $lang->maketext("people.form.import-results.team-not-specified"));
     } elsif ( defined($team_name) ) {
       # Team specified but no club
-      push(@{$person->{errors}}, $lang->maketext("people.form.import-results.club-not-specified"));
+      push(@{$person->{error}}, $lang->maketext("people.form.import-results.club-not-specified"));
     }
     
     # Validate the gender if there is one
     if ( defined($person->{fields}{gender}) ) {
       $person->{fields}{gender} = $schema->resultset("LookupGender")->find($person->{fields}{gender});
-      push(@{$person->{errors}}, $lang->maketext("people.form.import-results.gender-invalid")) unless defined($person->{fields}{gender});
+      push(@{$person->{error}}, $lang->maketext("people.form.import-results.gender-invalid")) unless defined($person->{fields}{gender});
     }
     
     # If we had an (some) error(s) on this row, we'll need to splice it out and append it (them) to the main returned error
-    if ( scalar @{$person->{errors}} ) {
+    if ( scalar @{$person->{error}} ) {
       # Push our failed row on to the failed rows array
       push(@failed_rows, $person);
     } else {
@@ -903,20 +903,20 @@ sub import {
       my $create_result = $class->create_or_edit("create", $person->{fields});
       
       # Check our responses
-      my @errors = @{$create_result->{errors}};
-      my @warnings = @{$create_result->{warnings}};
+      my @errors = @{$create_result->{error}};
+      my @warnings = @{$create_result->{warning}};
       my @info = @{$create_result->{info}};
       my @success = @{$create_result->{success}};
       
-      push(@{$person->{errors}}, @errors);
-      push(@{$person->{warnings}}, @warnings);
+      push(@{$person->{error}}, @errors);
+      push(@{$person->{warning}}, @warnings);
       push(@{$person->{info}}, @info);
       push(@{$person->{success}}, @success);
       
       $person->{person} = $create_result->{person};
       
       # Check for errors
-      if ( scalar @{$create_result->{errors}} ) {
+      if ( scalar @{$create_result->{error}} ) {
         # If there are errors, we need to push this row on to the failed rows array after assigning the error in the array row
         push(@failed_rows, $person);
       } else {
@@ -937,7 +937,7 @@ sub import {
   $response->{successful_rows} = \@successful_rows;
   $response->{failed_rows} = \@failed_rows;
   push(@{$response->{success}}, $lang->maketext("people.form.import-results.successfully-imported", scalar @successful_rows)) if scalar @successful_rows;
-  push(@{$response->{errors}}, $lang->maketext("people.form.import-results.import-failures", scalar @failed_rows)) if scalar @failed_rows;
+  push(@{$response->{error}}, $lang->maketext("people.form.import-results.import-failures", scalar @failed_rows)) if scalar @failed_rows;
   
   return $response;
 }

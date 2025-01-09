@@ -124,8 +124,8 @@ sub create_or_edit {
   my $points_per_draw = $params->{points_per_draw};
   my $points_per_loss = $params->{points_per_loss};
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     fields => {
@@ -140,7 +140,7 @@ sub create_or_edit {
   
   if ( $action ne "create" and $action ne "edit" ) {
     # Invalid action passed
-    push(@{$response->{errors}}, $lang->maketext("admin.form.invalid-action", $action));
+    push(@{$response->{error}}, $lang->maketext("admin.form.invalid-action", $action));
   } elsif ( $action eq "edit" ) {
     if ( defined($tt_template) ) {
       if ( !$tt_template->isa("TopTable::Schema::Result::TemplateLeagueTableRanking") ) {
@@ -148,29 +148,29 @@ sub create_or_edit {
         $tt_template = $class->find_id_or_url_key($tt_template);
         
         # Definitely error if we're now undef
-        push(@{$response->{errors}}, $lang->maketext("templates.league-table-ranking.form.error.template-invalid")) unless defined($tt_template);
+        push(@{$response->{error}}, $lang->maketext("templates.league-table-ranking.form.error.template-invalid")) unless defined($tt_template);
       }
       
       # Template is valid, check we can edit it.
       unless ( $tt_template->can_edit_or_delete ) {
-        push(@{$response->{errors}}, $lang->maketext("templates.edit.error.not-allowed", $tt_template->name));
+        push(@{$response->{error}}, $lang->maketext("templates.edit.error.not-allowed", $tt_template->name));
       }
     } else {
       # Editing a template that doesn't exist.
-      push(@{$response->{errors}}, $lang-maketext("templates.league-table-ranking.form.error.template-not-specified"));
+      push(@{$response->{error}}, $lang-maketext("templates.league-table-ranking.form.error.template-not-specified"));
     }
   }
   
   # Any errors at this point are fatal, so we return early
-  return $response if scalar @{$response->{errors}};
+  return $response if scalar @{$response->{error}};
   
   # Error checking
   # Check the names were entered and don't exist already.
   if ( defined($name) ) {
-    push(@{$response->{errors}}, $lang->maketext("templates.form.error.name-exists", encode_entities($name))) if defined($class->search_single_field({field => "name", value => $name, exclusion_obj => $tt_template}));
+    push(@{$response->{error}}, $lang->maketext("templates.form.error.name-exists", encode_entities($name))) if defined($class->search_single_field({field => "name", value => $name, exclusion_obj => $tt_template}));
   } else {
     # Name omitted.
-    push(@{$response->{errors}}, $lang->maketext("templates.form.error.name-blank"));
+    push(@{$response->{error}}, $lang->maketext("templates.form.error.name-blank"));
   }
   
   # Check the game type has been selected and is valid
@@ -180,26 +180,26 @@ sub create_or_edit {
     
     if ( defined($points_per_win) ) {
       # Value is submitted, ensure it's valid
-      push(@{$response->{errors}}, $lang->maketext("templates.league-table-ranking.form.error.points-per-win-invalid")) if $points_per_win !~ m/\d{1,2}/ or $points_per_win < 1;
+      push(@{$response->{error}}, $lang->maketext("templates.league-table-ranking.form.error.points-per-win-invalid")) if $points_per_win !~ m/\d{1,2}/ or $points_per_win < 1;
     } else {
       # Not submitted
-      push(@{$response->{errors}}, $lang->maketext("templates.league-table-ranking.form.error.points-per-win-blank"));
+      push(@{$response->{error}}, $lang->maketext("templates.league-table-ranking.form.error.points-per-win-blank"));
     }
     
     if ( defined($points_per_draw) ) {
       # Value is submitted, ensure it's valid
-      push(@{$response->{errors}}, $lang->maketext("templates.league-table-ranking.form.error.points-per-draw-invalid")) if $points_per_draw !~ m/\d{1,2}/ or $points_per_draw < 1;
+      push(@{$response->{error}}, $lang->maketext("templates.league-table-ranking.form.error.points-per-draw-invalid")) if $points_per_draw !~ m/\d{1,2}/ or $points_per_draw < 1;
     } else {
       # Not submitted
-      push(@{$response->{errors}}, $lang->maketext("templates.league-table-ranking.form.error.points-per-draw-blank"));
+      push(@{$response->{error}}, $lang->maketext("templates.league-table-ranking.form.error.points-per-draw-blank"));
     }
     
     if ( defined($points_per_loss) ) {
       # Value is submitted, ensure it's valid
-      push(@{$response->{errors}}, $lang->maketext("templates.league-table-ranking.form.error.points-per-loss-invalid")) if $points_per_draw !~ m/\d{1,2}/ or $points_per_draw < 1;
+      push(@{$response->{error}}, $lang->maketext("templates.league-table-ranking.form.error.points-per-loss-invalid")) if $points_per_draw !~ m/\d{1,2}/ or $points_per_draw < 1;
     } else {
       # Not submitted
-      push(@{$response->{errors}}, $lang->maketext("templates.league-table-ranking.form.error.points-per-loss-blank"));
+      push(@{$response->{error}}, $lang->maketext("templates.league-table-ranking.form.error.points-per-loss-blank"));
     }
   } else {
     # Blank out the points per win / draw / loss, as we won't be using them
@@ -209,7 +209,7 @@ sub create_or_edit {
     undef($points_per_loss);
   }
   
-  if ( scalar @{$response->{errors}} == 0 ) {
+  if ( scalar @{$response->{error}} == 0 ) {
     # Build the key from the name
     my $url_key;
     if ( $action eq "edit" ) {

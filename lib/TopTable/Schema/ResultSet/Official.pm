@@ -115,8 +115,8 @@ sub create_or_edit {
   my $holder_ids = $params->{holder_ids};
   my @officials_in_season = ();
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     fields => {
@@ -128,14 +128,14 @@ sub create_or_edit {
   
   if ( $action ne "create" and $action ne "edit" ) {
     # Invalid action passed
-    push(@{$response->{errors}}, $lang->maketext("admin.form.invalid-action", $action));
+    push(@{$response->{error}}, $lang->maketext("admin.form.invalid-action", $action));
     
     # This error is fatal, so we return straight away
     return $response;
   } elsif ( $action eq "edit" ) {
     unless ( defined($position) and ref($position) eq "TopTable::Model::DB::Official" ) {
       # Editing a meeting type that doesn't exist.
-      push(@{$response->{errors}}, $lang->maketext("officials.form.error.position-invalid"));
+      push(@{$response->{error}}, $lang->maketext("officials.form.error.position-invalid"));
       
       # Another fatal error
       return $response;
@@ -148,7 +148,7 @@ sub create_or_edit {
   
   unless ( defined($season) ) {
     # No current season, which is a fatal error, return
-    push(@{$response->{errors}}, $lang->maketext("officials.form.error.no-current-season"));
+    push(@{$response->{error}}, $lang->maketext("officials.form.error.no-current-season"));
     return $response;
   }
 
@@ -169,10 +169,10 @@ sub create_or_edit {
       undef($position); # Make sure we don't have a position passed in if we're creating
     }
     
-    push(@{$response->{errors}}, $lang->maketext("officials.form.error.name-exists")) if defined($position_name_check);
+    push(@{$response->{error}}, $lang->maketext("officials.form.error.name-exists")) if defined($position_name_check);
   } else {
     # Name omitted.
-    push(@{$response->{errors}}, $lang->maketext("officials.form.error.name-blank"));
+    push(@{$response->{error}}, $lang->maketext("officials.form.error.name-blank"));
   }
   
   # Check holders - first set to an arrayref if it's not already, so we know we can loop
@@ -226,14 +226,14 @@ sub create_or_edit {
     
     if ( $invalid_holders ) {
       my $message_id = ( $invalid_holders == 1 ) ? "officials.form.error.invalid-holders-single" : "officials.form.error.invalid-holders-multiple";
-      push(@{$response->{errors}}, $lang->maketext($message_id, $invalid_holders));
+      push(@{$response->{error}}, $lang->maketext($message_id, $invalid_holders));
     }
   } else {
     # No holders, error
-    push(@{$response->{errors}}, $lang->maketext("officials.form.error.no-holders"));
+    push(@{$response->{error}}, $lang->maketext("officials.form.error.no-holders"));
   }
   
-  if ( scalar(@{$response->{errors}}) == 0 ) {
+  if ( scalar(@{$response->{error}}) == 0 ) {
     # Generate a new URL key
     my $url_key;
     if ( $action eq "edit" ) {
@@ -335,8 +335,8 @@ sub reorder {
   # Grab the fields
   my $official_ids = $params->{official_positions};
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     fields => {},
@@ -348,7 +348,7 @@ sub reorder {
   
   unless ( defined( $season ) ) {
     # No current season, fatal error
-    push( @{$response->{errors}}, $lang->maketext("officials.reorder.error.no-current-season") );
+    push( @{$response->{error}}, $lang->maketext("officials.reorder.error.no-current-season") );
     $response->{can_complete} = 0;
     return $response;
   }
@@ -357,7 +357,7 @@ sub reorder {
     
   # If we have a grid and a season, we need to see if matches have already been set for that grid
   if ( $officials->count == 0 ) {
-    push(@{$response->{errors}}, $lang->maketext("officials.reorder.error.no-officials-in-current-season") );
+    push(@{$response->{error}}, $lang->maketext("officials.reorder.error.no-officials-in-current-season") );
     $response->{can_complete} = 0;
     return $response;
   }
@@ -402,7 +402,7 @@ sub reorder {
         $used_values{$official->url_key}{$position} = [$official->position_name];
       }
     } else {
-      push(@{$response->{errors}}, $lang->maketext("officials.reorder.error.wrong-official-id", $id));
+      push(@{$response->{error}}, $lang->maketext("officials.reorder.error.wrong-official-id", $id));
     }
     
     $position++;
@@ -412,20 +412,20 @@ sub reorder {
   $officials->reset;
   while ( my $official = $officials->next ) {
     my $official_season = $official->get_season($season);
-    push(@{$response->{errors}}, $lang->maketext("officials.reorder.error.no-position-for-official", encode_entities($official->position_name), encode_entities($season->name)))  if !exists($submitted_data{$official->url_key});
+    push(@{$response->{error}}, $lang->maketext("officials.reorder.error.no-position-for-official", encode_entities($official->position_name), encode_entities($season->name)))  if !exists($submitted_data{$official->url_key});
   }
   
   # Now loop through our %used_values hash and make sure we haven't used any position more than once for each division.
   foreach my $official_key ( keys(%used_values) ) {
     foreach my $position ( keys( %{$used_values{$official_key}} ) ) {
-      push(@{$response->{errors}}, $lang->maketext("officials.reorder.error.position-used-more-than-once", $position, join(", ", @{$used_values{$official_key}{$position}}))) if scalar(@{$used_values{$official_key}{$position}}) > 1;
+      push(@{$response->{error}}, $lang->maketext("officials.reorder.error.position-used-more-than-once", $position, join(", ", @{$used_values{$official_key}{$position}}))) if scalar(@{$used_values{$official_key}{$position}}) > 1;
     }
   }
   
   $response->{fields} = \%submitted_data;
   
   # Check for errors
-  if ( scalar @{$response->{errors}} == 0 ) {
+  if ( scalar @{$response->{error}} == 0 ) {
     # Start a transaction so we don't have a partially updated database
     my $transaction = $class->result_source->schema->txn_scope_guard;
     

@@ -160,8 +160,8 @@ sub create_or_edit {
   my $geolocation = $params->{geolocation} || undef;
   my $active = $params->{active};
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     fields => {
@@ -182,7 +182,7 @@ sub create_or_edit {
   
   if ( $action ne "create" and $action ne "edit" ) {
     # Invalid action passed
-    push(@{$response->{errors}}, $lang->maketext("admin.form.invalid-action", $action));
+    push(@{$response->{error}}, $lang->maketext("admin.form.invalid-action", $action));
     
     # This error is fatal, so we return straight away
     return $response;
@@ -193,13 +193,13 @@ sub create_or_edit {
         $venue = $class->find_id_or_url_key($venue);
         
         # Definitely error if we're now undef
-        push(@{$response->{errors}}, $lang->maketext("venues.form.error.venue-invalid")) unless defined($venue);
+        push(@{$response->{error}}, $lang->maketext("venues.form.error.venue-invalid")) unless defined($venue);
         
         # Another fatal error
         return $response;
       }
     } else {
-      push(@{$response->{errors}}, $lang->maketext("venues.form.error.venue-not-specified"));
+      push(@{$response->{error}}, $lang->maketext("venues.form.error.venue-not-specified"));
       return $response;
     }
     
@@ -211,10 +211,10 @@ sub create_or_edit {
   # Error checking
   # Check the names were entered and don't exist already.
   if ( defined($name) ) {
-    push(@{$response->{errors}}, $lang->maketext("venues.form.error.name-exists", encode_entities($name))) if defined($class->search_single_field({field => "name", value => $name, exclusion_obj => $venue}));
+    push(@{$response->{error}}, $lang->maketext("venues.form.error.name-exists", encode_entities($name))) if defined($class->search_single_field({field => "name", value => $name, exclusion_obj => $venue}));
   } else {
     # Name omitted.
-    push(@{$response->{errors}}, $lang->maketext("venues.form.error.name-blank"));
+    push(@{$response->{error}}, $lang->maketext("venues.form.error.name-blank"));
   }
   
   my ( $map_lat, $map_lng );
@@ -231,16 +231,16 @@ sub create_or_edit {
       # Split it out again after
       ( $map_lat, $map_lng ) = split(",", $geolocation);
     } else {
-      push(@{$response->{errors}}, $lang->maketext("venues.form.error.map-coordinates-invalid"));
+      push(@{$response->{error}}, $lang->maketext("venues.form.error.map-coordinates-invalid"));
     }
   }
   
   # Phone / email - check they're valid (if entered)
-  push(@{$response->{errors}}, $lang->maketext("venues.form.error.telephone-invalid")) if ( defined($telephone) and $telephone !~ m/([0-9x ])/ );
+  push(@{$response->{error}}, $lang->maketext("venues.form.error.telephone-invalid")) if ( defined($telephone) and $telephone !~ m/([0-9x ])/ );
   
   if ( defined($email_address) ) {
     $email_address = Email::Valid->address($email_address);
-    push(@{$response->{errors}}, $lang->maketext("venues.form.error.email-invalid")) unless defined($email_address);
+    push(@{$response->{error}}, $lang->maketext("venues.form.error.email-invalid")) unless defined($email_address);
   }
   
   # Active - must be 1 or 0
@@ -252,7 +252,7 @@ sub create_or_edit {
     #$logger->("debug", sprintf("Active is not defined, setting to 0: %s", $active));
   }
   
-  if ( scalar @{$response->{errors}} == 0 ) {
+  if ( scalar @{$response->{error}} == 0 ) {
     # Success, we need to create the venue
     if ( $action eq "create" ) {
       $venue = $class->create({

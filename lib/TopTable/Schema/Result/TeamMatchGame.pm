@@ -861,8 +861,8 @@ sub update_score {
   my $remove_missing = $params->{remove_missing} || 0; # If update_person called this with a delete flag, remove any player missing flags
   my ( $home_player_missing, $away_player_missing ) = qw( 0 0 );
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     completed => 0,
@@ -881,7 +881,7 @@ sub update_score {
   my $update_check = $delete ? "delete-score" : "score";
   my %can = $match->can_update($update_check);
   if ( !$can{allowed} ) {
-    push(@{$response->{errors}}, $can{reason});
+    push(@{$response->{error}}, $can{reason});
     return $response;
   }
   
@@ -894,7 +894,7 @@ sub update_score {
   if ( $self->doubles_game ) {
     # Doubles game - validate that the doubles pair have been entered
     if ( !defined($home_player) or !defined($away_player) ) {
-      push(@{$response->{errors}}, $lang->maketext("matches.game.update-score.doubles.error.select-players"));
+      push(@{$response->{error}}, $lang->maketext("matches.game.update-score.doubles.error.select-players"));
       return $response;
     }
   } else {
@@ -921,7 +921,7 @@ sub update_score {
     
     if ( !defined($home_player) or !defined($away_player) ) {
       unless ( $delete or $home_player_missing or $away_player_missing ) {
-        push(@{$response->{errors}}, $lang->maketext("matches.game.update-score.singles.error.select-players"));
+        push(@{$response->{error}}, $lang->maketext("matches.game.update-score.singles.error.select-players"));
         return $response;
       }
     }
@@ -1082,9 +1082,9 @@ sub update_score {
         # There are still legs to play
         # Check the scores are numeric and more than zero
         if ( $home_score !~ m/^\d+$/ or $home_score < 0 or $away_score !~ m/^\d+$/ or $away_score < 0 ) {
-          push(@{$response->{errors}}, $lang->maketext("matches.game.update-score.error.home-not-numeric-or-less-than-zero", $leg_number))
+          push(@{$response->{error}}, $lang->maketext("matches.game.update-score.error.home-not-numeric-or-less-than-zero", $leg_number))
               if $home_score !~ m/^\d+$/ or $home_score < 0;
-          push(@{$response->{errors}}, $lang->maketext("matches.game.update-score.error.away-not-numeric-or-less-than-zero", $leg_number))
+          push(@{$response->{error}}, $lang->maketext("matches.game.update-score.error.away-not-numeric-or-less-than-zero", $leg_number))
               if $away_score !~ m/^\d+$/ or $away_score < 0;
         } else {
           # Add the to points totals
@@ -1094,7 +1094,7 @@ sub update_score {
           # Leg not forefeited 
           # Check the scores are not equal
           if ( $home_score == $away_score and !$awarded ) {
-            push(@{$response->{errors}}, $lang->maketext("matches.game.update-score.error.home-and-away-scores-equal", $leg_number));
+            push(@{$response->{error}}, $lang->maketext("matches.game.update-score.error.home-and-away-scores-equal", $leg_number));
           } else {
             # Check who's got the higher score
             if ( $home_score > $away_score ) {
@@ -1198,7 +1198,7 @@ sub update_score {
               $game_finished = 1;
             } else {
               # The score is not valid
-              push(@{$response->{errors}}, $lang->maketext("matches.game.update-score.error.score-invalid", $leg_number, $home_score, $away_score, $game_rules->minimum_points_win, $game_rules->clear_points_win));
+              push(@{$response->{error}}, $lang->maketext("matches.game.update-score.error.score-invalid", $leg_number, $home_score, $away_score, $game_rules->minimum_points_win, $game_rules->clear_points_win));
             }
           }
         }
@@ -1223,12 +1223,12 @@ sub update_score {
   unless ( $delete or $home_player_missing or $away_player_missing or $awarded ) {
     # Make sure we properly finished the game with a winner
     # Error if the required number of games have not been played
-    push(@{$response->{errors}}, $lang->maketext("matches.game.update-score.error.score-incomplete", $self->scheduled_game_number))
+    push(@{$response->{error}}, $lang->maketext("matches.game.update-score.error.score-incomplete", $self->scheduled_game_number))
         if ( defined($legs_required_to_win) && $winner_legs < $legs_required_to_win) || ( !defined($legs_required_to_win) && $legs_played < $game_rules->legs_per_game);
   }
   
   # Don't go any further if we've had an error
-  return $response if scalar @{$response->{errors}};
+  return $response if scalar @{$response->{error}};
   
   ### ERROR CHECKING FINISHED ###
   #### TRANSACTIONS: LOOK AT https://metacpan.org/dist/DBIx-Class/view/lib/DBIx/Class/ResultSource.pm#schema (schema object has txn_scope_guard)
@@ -2039,6 +2039,7 @@ sub update_score {
   $match->home_team_match_score($current_home_match_score);
   $match->away_team_match_score($current_away_match_score);
   $match->complete($match_complete);
+  $match->postponed(0); # If we're updating the score, the match is no longer postponed
   
   my $total_legs = $match_home_team_legs_won + $match_away_team_legs_won;
   if ( $total_legs ) {
@@ -2631,8 +2632,8 @@ sub update_doubles_pair {
   my $location = $params->{location} || undef;
   my $players = $params->{players} || [];
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     completed => 0,
@@ -2643,13 +2644,13 @@ sub update_doubles_pair {
   
   # First check the match wasn't cancelled; if it was, we return straight away
   if ( $match->cancelled ) {
-    push(@{$response->{errors}}, $lang->maketext("matches.update.error.match-cancelled"));
+    push(@{$response->{error}}, $lang->maketext("matches.update.error.match-cancelled"));
     return $response;
   }
   
   if ( $season->complete ) {
     # Error, season is complete
-    push(@{$response->{errors}}, $lang->maketext("matches.update.error.season-complete"));
+    push(@{$response->{error}}, $lang->maketext("matches.update.error.season-complete"));
     return $response;
   } else {
     # Check the game we're updating is actually a doubles game
@@ -2670,7 +2671,7 @@ sub update_doubles_pair {
           ( $player1, $player2 ) = ( $players->[0], $players->[1] );
         } else {
           # More than two elements is an error
-          push(@{$response->{errors}}, $lang->maketext("matches.game.update-doubles.error.wrong-number-of-players"));
+          push(@{$response->{error}}, $lang->maketext("matches.game.update-doubles.error.wrong-number-of-players"));
           return $response;
         }
         
@@ -2806,22 +2807,22 @@ sub update_doubles_pair {
           # Add - first check the players are valid people
           if ( defined($player1) ) {
             $player1 = $schema->resultset("Person")->find_id_or_url_key($player1) unless $player1->isa("TopTable::Schema::Result::Person");
-            push(@{$response->{errors}}, $lang->maketext("matches.game.update-doubles.error.$location-player1-invalid")) unless defined($player1);
+            push(@{$response->{error}}, $lang->maketext("matches.game.update-doubles.error.$location-player1-invalid")) unless defined($player1);
           } else {
             # We shouldn't get here, but just to make sure
-            push(@{$response->{errors}}, $lang->maketext("matches.game.update-doubles.error.$location-player1-blank"));
+            push(@{$response->{error}}, $lang->maketext("matches.game.update-doubles.error.$location-player1-blank"));
           }
           
           if ( defined($player2) ) {
             $player2 = $schema->resultset("Person")->find_id_or_url_key($player2) unless $player2->isa("TopTable::Schema::Result::Person");
-            push(@{$response->{errors}}, $lang->maketext("matches.game.update-doubles.error.$location-player2-invalid")) unless defined($player2);
+            push(@{$response->{error}}, $lang->maketext("matches.game.update-doubles.error.$location-player2-invalid")) unless defined($player2);
           } else {
             # We shouldn't get here, but just to make sure
-            push(@{$response->{errors}}, $lang->maketext("matches.game.update-doubles.error.$location-player2-blank"));
+            push(@{$response->{error}}, $lang->maketext("matches.game.update-doubles.error.$location-player2-blank"));
           }
           
           # If either player is invalid, we return at this point, as they are fatal errors
-          if ( scalar @{$response->{errors}} ) {
+          if ( scalar @{$response->{error}} ) {
             return $response;
             $transaction->rollback;
           }
@@ -2830,10 +2831,10 @@ sub update_doubles_pair {
           my $enc_player2_display = encode_entities($player2->display_name);
           
           # Check we don't have two references to the same person
-          push(@{$response->{errors}}, $lang->maketext("matches.game.update-doubles.error.players-identical", $location)) if $player1->id == $player2->id;
+          push(@{$response->{error}}, $lang->maketext("matches.game.update-doubles.error.players-identical", $location)) if $player1->id == $player2->id;
           
           # Return if we have an error here
-          return $response if scalar @{$response->{errors}};
+          return $response if scalar @{$response->{error}};
           
           # Get person season for this team if there is one so we can search from the doubles pair from that
           
@@ -2876,10 +2877,10 @@ sub update_doubles_pair {
             }
           
             # Advise about ineligible players if either are
-            push(@{$response->{errors}}, $lang->maketext("matches.game.update-doubles.error.player-ineligible", $enc_player1_display, $enc_team_name)) unless $player1_eligible;
-            push(@{$response->{errors}}, $lang->maketext("matches.game.update-doubles.error.player-ineligible", $enc_player2_display, $enc_team_name)) unless $player2_eligible;
+            push(@{$response->{error}}, $lang->maketext("matches.game.update-doubles.error.player-ineligible", $enc_player1_display, $enc_team_name)) unless $player1_eligible;
+            push(@{$response->{error}}, $lang->maketext("matches.game.update-doubles.error.player-ineligible", $enc_player2_display, $enc_team_name)) unless $player2_eligible;
             
-            return $response if scalar @{$response->{errors}};
+            return $response if scalar @{$response->{error}};
             
             # Now do the create
             $doubles_pair = $person1_season->create_related("doubles_pairs_person1_season_teams", {
@@ -3182,11 +3183,11 @@ sub update_doubles_pair {
         $transaction->commit;
       } else {
         # Invalid location
-        push(@{$response->{errors}}, $lang->maketext("matches.game.update-doubles.error.location-invalid"));
+        push(@{$response->{error}}, $lang->maketext("matches.game.update-doubles.error.location-invalid"));
       }
     } else {
       # Error, game is not a doubles game.
-      push(@{$response->{errors}}, $lang->maketext("matches.game.update-doubles.error.not-doubles-game", $self->scheduled_game_number));
+      push(@{$response->{error}}, $lang->maketext("matches.game.update-doubles.error.not-doubles-game", $self->scheduled_game_number));
     }
   }
   

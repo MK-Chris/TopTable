@@ -464,8 +464,8 @@ sub update_person {
   my $originally_missing = 0;
   my $game_scores_deleted = 0;
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     completed => 0,
@@ -478,7 +478,7 @@ sub update_person {
   # Critieria for updating players is the same as that for updating the score
   my %can = $match->can_update("score");
   if ( !$can{allowed} ) {
-    push(@{$response->{errors}}, $can{reason});
+    push(@{$response->{error}}, $can{reason});
     return $response;
   }
   
@@ -510,7 +510,7 @@ sub update_person {
       $person = $schema->resultset("Person")->find_id_or_url_key($person) unless $person->isa("TopTable::Schema::Result::Person");
       
       if ( !defined($person) ) {
-        push(@{$response->{errors}}, $lang->maketext("matches.add-player.error.person-invalid"));
+        push(@{$response->{error}}, $lang->maketext("matches.add-player.error.person-invalid"));
         return $response;
       }
       
@@ -567,7 +567,7 @@ sub update_person {
           # If it's a loan player, there's an initial check to ensure they are not actively playing for either of the teams involved in the match
           if ( $active_season->team_season->team->id == $match->team_season_home_team_season->team->id or $active_season->team_season->team->id == $match->team_season_away_team_season->team->id ) {
             # Can't use this person as a sub in a match involving their active team
-            push(@{$response->{errors}}, $lang->maketext("matches.loan-player.add.error.player-active-for-team", $enc_display_name, $enc_active_team));
+            push(@{$response->{error}}, $lang->maketext("matches.loan-player.add.error.player-active-for-team", $enc_display_name, $enc_active_team));
           } else {
             # Get the loan player's active team
             $loan_team = $active_season->team_season->team;
@@ -598,7 +598,7 @@ sub update_person {
               my $loan_times_played = $person->matches_on_loan($comp)->count;
               
               # Error if the person has already played up the maximum number of times
-              push(@{$response->{errors}}, $lang->maketext("matches.loan-player.add.error.played-too-many-times", $enc_display_name, $loan_allow_player_limit, $enc_first_name, $enc_playing_for_team_name))
+              push(@{$response->{error}}, $lang->maketext("matches.loan-player.add.error.played-too-many-times", $enc_display_name, $loan_allow_player_limit, $enc_first_name, $enc_playing_for_team_name))
                   if $loan_times_played >= $loan_allow_player_limit;
             }
             
@@ -607,7 +607,7 @@ sub update_person {
               my $loan_played_this_team = $person->matches_on_loan($comp, {for_team => $playing_for_team})->count;
               
               # Error if this person has already played on loan for this team the maximum number of times
-              push(@{$response->{errors}}, $lang->maketext("matches.loan-player.add.error.played-too-many-times-for-team", $enc_display_name, $enc_playing_for_team_name, $loan_allow_player_limit_per_team, $enc_first_name))
+              push(@{$response->{error}}, $lang->maketext("matches.loan-player.add.error.played-too-many-times-for-team", $enc_display_name, $enc_playing_for_team_name, $loan_allow_player_limit_per_team, $enc_first_name))
                   if $loan_played_this_team >= $loan_allow_player_limit_per_team;
             }
             
@@ -616,7 +616,7 @@ sub update_person {
               my $loan_played_against_this_team = $person->matches_on_loan($comp, {against_team => $playing_against_team})->count;
               
               # Error if this person has played on loan against this team the maximum number of times
-              push(@{$response->{errors}}, $lang->maketext("matches.loan-player.add.error.played-too-many-times-against-opposition", $enc_display_name, $enc_playing_against_team_name, $loan_allow_player_limit_per_opposition))
+              push(@{$response->{error}}, $lang->maketext("matches.loan-player.add.error.played-too-many-times-against-opposition", $enc_display_name, $enc_playing_against_team_name, $loan_allow_player_limit_per_opposition))
                   if $loan_played_against_this_team >= $loan_allow_player_limit_per_opposition;
             }
             
@@ -625,7 +625,7 @@ sub update_person {
               my $matches_with_loan_players = $playing_for_team->loan_players($comp)->count;
               
               # Error if this team has already played the maximum number of loan players
-              push(@{$response->{errors}}, $lang->maketext("matches.loan-player.add.error.team-played-too-many-loan-players", $enc_playing_for_team_name, $loan_allow_team_limit))
+              push(@{$response->{error}}, $lang->maketext("matches.loan-player.add.error.team-played-too-many-loan-players", $enc_playing_for_team_name, $loan_allow_team_limit))
                   if $matches_with_loan_players >= $loan_allow_team_limit;
             }
             
@@ -634,7 +634,7 @@ sub update_person {
               my $matches_with_loan_players = $playing_for_team->loan_players($comp)->count;
               
               # Error if this person has already played on loan for a different team in this division
-              push(@{$response->{errors}}, $lang->maketext("matches.loan-player.add.error.cannot-play-for-more-than-one-team-in-division", $enc_display_name, $enc_team_division))
+              push(@{$response->{error}}, $lang->maketext("matches.loan-player.add.error.cannot-play-for-more-than-one-team-in-division", $enc_display_name, $enc_team_division))
                   if $person->matches_on_loan($comp, {
                     division => $team_division,
                     not_for_team => $playing_for_team,
@@ -648,21 +648,21 @@ sub update_person {
             # Check if we can allow people from lower divisions to play on loan
             if ( !$loan_allow_div_below ) {
               # Error if this player is from a division below
-              push(@{$response->{errors}}, $lang->maketext("matches.loan-player.add.error.cant-add-from-division-below", $enc_display_name, $enc_loan_division, $enc_team_division))
+              push(@{$response->{error}}, $lang->maketext("matches.loan-player.add.error.cant-add-from-division-below", $enc_display_name, $enc_loan_division, $enc_team_division))
                   if $loan_division->rank > $team_division->rank;
             }
             
             # Check if we can allow people from higher divisions to play on loan
             if ( !$loan_allow_div_above ) {
               # Error if this player is from a division above
-              push(@{$response->{errors}}, $lang->maketext("matches.loan-player.add.error.cant-add-from-division-above", $enc_display_name, $enc_loan_division, $enc_team_division))
+              push(@{$response->{error}}, $lang->maketext("matches.loan-player.add.error.cant-add-from-division-above", $enc_display_name, $enc_loan_division, $enc_team_division))
                   if $loan_division->rank < $team_division->rank;
             }
             
             # Check if we can allow people from the same divisional rank to play on loan
             if ( !$loan_allow_div_same ) {
               # Error if this player is from the same divisional rank
-              push(@{$response->{errors}}, $lang->maketext("matches.loan-player.add.error.cant-add-from-same-division", $enc_display_name, $enc_loan_division))
+              push(@{$response->{error}}, $lang->maketext("matches.loan-player.add.error.cant-add-from-same-division", $enc_display_name, $enc_loan_division))
                   if $loan_division->rank == $team_division->rank;
             }
           }
@@ -673,7 +673,7 @@ sub update_person {
             my $playing_club = $location eq "home" ? $match->team_season_home_team_season->team->club : $match->team_season_away_team_season->team->club;
             
             # Error if this person plays for a different club
-            push(@{$response->{errors}}, $lang->maketext("matches.loan-player.add.error.cant-play-for-different-clubs", $enc_display_name, encode_entities($playing_club->full_name), encode_entities($loan_club->full_name)))
+            push(@{$response->{error}}, $lang->maketext("matches.loan-player.add.error.cant-play-for-different-clubs", $enc_display_name, encode_entities($playing_club->full_name), encode_entities($loan_club->full_name)))
                 if $loan_club->id != $playing_club->id;
           }
         }
@@ -687,16 +687,16 @@ sub update_person {
           rows => 1,
         })->single;
         
-        push(@{$response->{errors}}, $lang->maketext("matches.add-player.error.player-already-set", $enc_display_name, $player_already_set->player_number))
+        push(@{$response->{error}}, $lang->maketext("matches.add-player.error.player-already-set", $enc_display_name, $player_already_set->player_number))
             if defined($player_already_set);
         
       } else {
         # No teams for this person this season
-        push(@{$response->{errors}}, $lang->maketext("matches.loan-player.add.error.player-not-active", $enc_display_name, encode_entities($season->name)));
+        push(@{$response->{error}}, $lang->maketext("matches.loan-player.add.error.player-not-active", $enc_display_name, encode_entities($season->name)));
       }
     } else {
       # No player specified
-      push(@{$response->{errors}}, $lang->maketext("matches.add-player.error.person-blank"));
+      push(@{$response->{error}}, $lang->maketext("matches.add-player.error.person-blank"));
       return $response;
     }
   } else {
@@ -741,10 +741,10 @@ sub update_person {
         
         if ( $action eq "add" ) {
           # Adding a player
-          push(@{$response->{errors}}, $lang->maketext("matches.add-player.error.cant-replace-loan-player-set-in-doubles-game", $enc_original_player_name, $game_number));
+          push(@{$response->{error}}, $lang->maketext("matches.add-player.error.cant-replace-loan-player-set-in-doubles-game", $enc_original_player_name, $game_number));
         } else {
           # Deleting the player
-          push(@{$response->{errors}}, $lang->maketext("matches.remove-player.error.loan-player-set-in-doubles-game", $enc_original_player_name, $game_number));
+          push(@{$response->{error}}, $lang->maketext("matches.remove-player.error.loan-player-set-in-doubles-game", $enc_original_player_name, $game_number));
         }
       } elsif ( $doubles_games->count > 1 ) {
         # More than one doubles game
@@ -758,10 +758,10 @@ sub update_person {
         
         if ( $action eq "add" ) {
           # Adding a player
-          push(@{$response->{errors}}, $lang->maketext("matches.add-player.error.cant-replace-loan-player-set-in-doubles-games", $enc_original_player_name, $game_numbers));
+          push(@{$response->{error}}, $lang->maketext("matches.add-player.error.cant-replace-loan-player-set-in-doubles-games", $enc_original_player_name, $game_numbers));
         } else {
           # Deleting the player
-          push(@{$response->{errors}}, $lang->maketext("matches.remove-player.error.loan-player-set-in-doubles-games", $enc_original_player_name, $game_numbers));
+          push(@{$response->{error}}, $lang->maketext("matches.remove-player.error.loan-player-set-in-doubles-games", $enc_original_player_name, $game_numbers));
         }
       }
     }
@@ -769,7 +769,7 @@ sub update_person {
   
   # Check if we got an error
   #$logger->("debug", "check for errors");
-  if ( scalar @{$response->{errors}} == 0 ) {
+  if ( scalar @{$response->{error}} == 0 ) {
     #$logger->("debug", "no errors");
     # Wrap all our database writing into a transaction
     my $transaction = $self->result_source->schema->txn_scope_guard;

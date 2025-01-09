@@ -346,8 +346,8 @@ sub register :Global {
     });
     
     # Log our responses
-    $c->log->error($_) foreach @{$banned->{errors}};
-    $c->log->warning($_) foreach @{$banned->{warnings}};
+    $c->log->error($_) foreach @{$banned->{error}};
+    $c->log->warning($_) foreach @{$banned->{warning}};
     $c->log->info($_) foreach @{$banned->{info}};
     
     if ( $banned->{is_banned} ) {
@@ -516,8 +516,8 @@ sub process_form :Private {
   });
   
   # Set the status messages we need to show on redirect
-  my @errors = @{$response->{errors}};
-  my @warnings = @{$response->{warnings}};
+  my @errors = @{$response->{error}};
+  my @warnings = @{$response->{warning}};
   my @info = @{$response->{info}};
   my @success = @{$response->{success}};
   my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});
@@ -633,8 +633,8 @@ sub do_delete :Chained("base") :PathPart("do-delete") :Args(0) {
   my $response = $user->check_and_delete;
   
   # Set the status messages we need to show on redirect
-  my @errors = @{$response->{errors}};
-  my @warnings = @{$response->{warnings}};
+  my @errors = @{$response->{error}};
+  my @warnings = @{$response->{warning}};
   my @info = @{$response->{info}};
   my @success = @{$response->{success}};
   my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});
@@ -673,8 +673,8 @@ sub regenerate_activation_key :Chained("base") :PathPart("regenerate-activation-
   my $response = $user->regenerate_activation_key({activation_expiry_limit => $activation_expiry_limit});
   
   # Set the status messages we need to show on redirect
-  my @errors = @{$response->{errors}};
-  my @warnings = @{$response->{warnings}};
+  my @errors = @{$response->{error}};
+  my @warnings = @{$response->{warning}};
   my @info = @{$response->{info}};
   my @success = @{$response->{success}};
   my $redirect_uri = $c->uri_for("/", {mid => $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success})});
@@ -752,8 +752,8 @@ sub activate :Chained("base") :PathPart("activate") :Args(1) {
     });
     
     # Set the status messages we need to show on redirect
-    my @errors = @{$response->{errors}};
-    my @warnings = @{$response->{warnings}};
+    my @errors = @{$response->{error}};
+    my @warnings = @{$response->{warning}};
     my @info = @{$response->{info}};
     my @success = @{$response->{success}};
     my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});
@@ -929,8 +929,8 @@ sub bulk_approval :Path("bulk-approval") :Args(0) {
         
         my $response = $c->forward("approve");
         
-        my @user_errors = @{$response->{errors}};
-        my @user_warnings = @{$response->{warnings}};
+        my @user_errors = @{$response->{error}};
+        my @user_warnings = @{$response->{warning}};
         my @user_info = @{$response->{info}};
         my @user_success = @{$response->{success}};
         
@@ -996,8 +996,8 @@ sub approve :Chained("base") :PathPart("approve") :Args(0) {
     });
     
     # Set the status messages we need to show on redirect
-    my @errors = @{$response->{errors}};
-    my @warnings = @{$response->{warnings}};
+    my @errors = @{$response->{error}};
+    my @warnings = @{$response->{warning}};
     my @info = @{$response->{info}};
     my @success = @{$response->{success}};
     my $redirect_uri;
@@ -1062,8 +1062,8 @@ sub approve :Chained("base") :PathPart("approve") :Args(0) {
     });
     
     # Set the status messages we need to show on redirect
-    my @errors = @{$response->{errors}};
-    my @warnings = @{$response->{warnings}};
+    my @errors = @{$response->{error}};
+    my @warnings = @{$response->{warning}};
     my @info = @{$response->{info}};
     my @success = @{$response->{success}};
     my $redirect_uri;
@@ -1116,8 +1116,8 @@ sub login :Global {
     });
     
     # Log our responses
-    $c->log->error($_) foreach @{$banned->{errors}};
-    $c->log->warning($_) foreach @{$banned->{warnings}};
+    $c->log->error($_) foreach @{$banned->{error}};
+    $c->log->warning($_) foreach @{$banned->{warning}};
     $c->log->info($_) foreach @{$banned->{info}};
     
     if ( $banned->{is_banned} ) {
@@ -1280,8 +1280,8 @@ sub do_login :Path("authenticate") {
         });
         
         # Log our responses
-        $c->log->error($_) foreach @{$banned->{errors}};
-        $c->log->warning($_) foreach @{$banned->{warnings}};
+        $c->log->error($_) foreach @{$banned->{error}};
+        $c->log->warning($_) foreach @{$banned->{warning}};
         $c->log->info($_) foreach @{$banned->{info}};
         
         if ( $banned->{is_banned} ) {
@@ -1504,8 +1504,8 @@ sub send_reset_link :Path("send-reset-link") {
       
       # If we've got this far, we've passed the CAPTCHA (or it was disabled), so we set a password reset link
       my $response = $user->set_password_reset_key;
-      push(@errors, @{$response->{errors}});
-      push(@warnings, @{$response->{warnings}});
+      push(@errors, @{$response->{error}});
+      push(@warnings, @{$response->{warning}});
       push(@info, @{$response->{info}});
       push(@success, @{$response->{success}});
       
@@ -1633,8 +1633,8 @@ sub reset_password :Chained("base") :PathPart("reset-password") :Args(1) {
       logger => sub{ my $level = shift; $c->log->$level( @_ ); },
     });
     
-    my @errors = @{$response->{errors}};
-    my @warnings = @{$response->{warnings}};
+    my @errors = @{$response->{error}};
+    my @warnings = @{$response->{warning}};
     my @info = @{$response->{info}};
     my @success = @{$response->{success}};
     

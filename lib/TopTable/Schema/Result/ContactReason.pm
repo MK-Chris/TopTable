@@ -189,8 +189,8 @@ sub check_and_delete {
   $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
   my $lang = $schema->lang;
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     completed => 0,
@@ -199,7 +199,7 @@ sub check_and_delete {
   # Check we can delete
   my $enc_name = encode_entities($self->name);
   unless ( $self->can_delete ) {
-    push(@{$response->{errors}}, $lang->maketext("contact-reasons.delete.error.cannot-delete", $enc_name));
+    push(@{$response->{error}}, $lang->maketext("contact-reasons.delete.error.cannot-delete", $enc_name));
     return $response;
   }
   
@@ -211,7 +211,7 @@ sub check_and_delete {
     $response->{completed} = 1;
     push(@{$response->{success}}, $lang->maketext("admin.forms.success", $enc_name, $lang->maketext("admin.message.deleted")));
   } else {
-    push(@{$response->{errors}}, $lang->maketext("admin.delete.error.database", $enc_name));
+    push(@{$response->{error}}, $lang->maketext("admin.delete.error.database", $enc_name));
   }
   
   return $response;

@@ -1310,8 +1310,8 @@ sub transfer_statistics {
   $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
   my $lang = $schema->lang;
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     completed => 0,
@@ -1334,11 +1334,11 @@ sub transfer_statistics {
     if ( defined($to_person) ) {
       $response->{fields}{to_person} = $to_person;
     } else {
-      push(@{$response->{errors}}, $lang->maketext("people.transfer.to-person-invalid"));
+      push(@{$response->{error}}, $lang->maketext("people.transfer.to-person-invalid"));
     }
   } else {
     # Blank
-    push(@{$response->{errors}}, $lang->maketext("people.transfer.to-person-blank"));
+    push(@{$response->{error}}, $lang->maketext("people.transfer.to-person-blank"));
   }
   
   if ( defined($season) ) {
@@ -1349,14 +1349,14 @@ sub transfer_statistics {
     if ( defined($season) ) {
       $response->{fields}{season} = $season;
     } else {
-      push(@{$response->{errors}}, $lang->maketext("people.transfer.season-invalid"));
+      push(@{$response->{error}}, $lang->maketext("people.transfer.season-invalid"));
     }
   } else {
     # Blank
-    push(@{$response->{errors}}, $lang->maketext("people.transfer.season-blank"));
+    push(@{$response->{error}}, $lang->maketext("people.transfer.season-blank"));
   }
   
-  if ( scalar @{$response->{errors}} == 0 ) {
+  if ( scalar @{$response->{error}} == 0 ) {
     # Search the "to" person to make sure they have no current season statistics.
     my $memberships = $self->result_source->schema->resultset("PersonSeason")->get_person_season_and_teams_and_divisions({
       person => $to_person,
@@ -1365,7 +1365,7 @@ sub transfer_statistics {
     })->count;
     
     if ( $memberships ) {
-      push(@{$response->{errors}}, $lang->maketext("people.transfer.has-memberhsips"));
+      push(@{$response->{error}}, $lang->maketext("people.transfer.has-memberhsips"));
     } else {
       # No errors, now search for memberships to transfer
       my @memberships = $self->result_source->schema->resultset("PersonSeason")->get_person_season_and_teams_and_divisions({
@@ -1445,7 +1445,7 @@ sub transfer_statistics {
         $response->{completed} = 1;
         push(@{$response->{success}}, $lang->maketext("people.transfer.success"));
       } else {
-        push(@{$response->{errors}}, $lang->maketext("people.transfer.nothing-to-transfer"));
+        push(@{$response->{error}}, $lang->maketext("people.transfer.nothing-to-transfer"));
       }
     }
   }
@@ -1529,8 +1529,8 @@ sub check_and_delete {
   $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
   my $lang = $schema->lang;
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     completed => 0,
@@ -1541,7 +1541,7 @@ sub check_and_delete {
   
   # Check we can delete
   unless ( $self->can_delete ) {
-    push(@{$response->{errors}}, $lang->maketext("people.delete.error.not-allowed", $name));
+    push(@{$response->{error}}, $lang->maketext("people.delete.error.not-allowed", $name));
     return $response;
   }
   
@@ -1562,7 +1562,7 @@ sub check_and_delete {
     $response->{completed} = 1;
     push(@{$response->{success}}, $lang->maketext("admin.forms.success", $name, $lang->maketext("admin.message.deleted")));
   } else {
-    push(@{$response->{errors}}, $lang->maketext("admin.delete.error.database", $name));
+    push(@{$response->{error}}, $lang->maketext("admin.delete.error.database", $name));
   }
   
   return $response;

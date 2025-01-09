@@ -100,8 +100,8 @@ sub search {
   my $reverse = $params->{reverse} || 0;
   my $loc_param = $reverse ? "latlng" : "address";
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     results => [],
@@ -119,7 +119,7 @@ sub search {
   my $res = $self->ua->get($url);
   
   if ( $res->is_error ) {
-    push(@{$response->{errors}}, $lang->maketext("google.maps.geocode.errors", $res->status_line, $res->message));
+    push(@{$response->{error}}, $lang->maketext("google.maps.geocode.errors", $res->status_line, $res->message));
     return $response;
   }
   

@@ -69,8 +69,8 @@ sub create_or_edit {
   my $tt_template = $params->{tt_template} || undef;
   my @games = @{$params->{games}};
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     fields => {},
@@ -83,24 +83,24 @@ sub create_or_edit {
       $tt_template = $class->find_id_or_url_key($tt_template);
       
       # Definitely error if we're now undef
-      push(@{$response->{errors}}, $lang->maketext("templates.team-match.form.error.template-invalid")) unless defined($tt_template);
+      push(@{$response->{error}}, $lang->maketext("templates.team-match.form.error.template-invalid")) unless defined($tt_template);
     }
     
     # Template is valid, check we can edit it.
     unless ( $tt_template->can_edit_or_delete ) {
-      push(@{$response->{errors}}, $lang->maketext("templates.edit.error.not-allowed", $tt_template->name));
+      push(@{$response->{error}}, $lang->maketext("templates.edit.error.not-allowed", $tt_template->name));
     }
   } else {
     # Editing a template that doesn't exist.
-    push(@{$response->{errors}}, $lang-maketext("templates.team-match.form.error.template-not-specified"));
+    push(@{$response->{error}}, $lang-maketext("templates.team-match.form.error.template-not-specified"));
   }
   
   # Fatal if we have an error at this point
-  return $response if scalar @{$response->{errors}};
+  return $response if scalar @{$response->{error}};
   
   # Check we are allowed to edit this template
   unless ( $tt_template->can_edit_or_delete ) {
-    push(@{$response->{errors}}, $lang->maketext("templates.edit.error.not-allowed", encode_entities($tt_template->name)));
+    push(@{$response->{error}}, $lang->maketext("templates.edit.error.not-allowed", encode_entities($tt_template->name)));
   }
   
   # Populate will be used to do the creation
@@ -124,14 +124,14 @@ sub create_or_edit {
       if ( !$ind_match_tpl->isa("TopTable::Schema::Result::TemplateMatchIndividual") ) {
           # Not passed as an object, try and look it up
           $ind_match_tpl = $schema->resultset("TemplateMatchIndividual")->find_id_or_url_key($ind_match_tpl);
-          push(@{$response->{errors}}, $lang->maketext("templates.team-match.games.error.ind-template-invalid", $game_num)) unless defined($ind_match_tpl);
+          push(@{$response->{error}}, $lang->maketext("templates.team-match.games.error.ind-template-invalid", $game_num)) unless defined($ind_match_tpl);
         }
     } else {
-      push(@{$response->{errors}}, $lang->maketext("templates.team-match.games.error.ind-template-blank", $game_num));
+      push(@{$response->{error}}, $lang->maketext("templates.team-match.games.error.ind-template-blank", $game_num));
     }
     
     # Can't have an individual match template with a handicap if the overall team template has a handicap
-    push(@{$response->{errors}}, $lang->maketext("templates.team-match.games.error.ind-template-and-team-template-both-handicapped", $game_num)) if defined($ind_match_tpl) and $tt_template->handicapped and $ind_match_tpl->handicapped;
+    push(@{$response->{error}}, $lang->maketext("templates.team-match.games.error.ind-template-and-team-template-both-handicapped", $game_num)) if defined($ind_match_tpl) and $tt_template->handicapped and $ind_match_tpl->handicapped;
     
     if ( $doubles ) {
       # Undef home / away players
@@ -141,18 +141,18 @@ sub create_or_edit {
       # Check for invalid player numbers
       if ( defined($home_player) ) {
         # Selected, make sure it's valid
-        push(@{$response->{errors}}, $lang->maketext("templates.team-match.games.error.home-player-number-invalid", $game_num, $tt_template->singles_players_per_team)) if $home_player !~ m/\d{1,2}/ or $home_player > $tt_template->singles_players_per_team;
+        push(@{$response->{error}}, $lang->maketext("templates.team-match.games.error.home-player-number-invalid", $game_num, $tt_template->singles_players_per_team)) if $home_player !~ m/\d{1,2}/ or $home_player > $tt_template->singles_players_per_team;
       } else {
         # Not selected
-        push(@{$response->{errors}}, $lang->maketext("templates.team-match.games.error.home-player-number-blank", $game_num));
+        push(@{$response->{error}}, $lang->maketext("templates.team-match.games.error.home-player-number-blank", $game_num));
       }
       
       if ( defined($away_player) ) {
         # Selected, make sure it's valid
-        push(@{$response->{errors}}, $lang->maketext("templates.team-match.games.error.away-player-number-invalid", $game_num, ($tt_template->singles_players_per_team + 1), ($tt_template->singles_players_per_team * 2))) if $away_player !~ m/\d{1,2}/ or $away_player < ($tt_template->singles_players_per_team + 1) or $away_player > ($tt_template->singles_players_per_team * 2);
+        push(@{$response->{error}}, $lang->maketext("templates.team-match.games.error.away-player-number-invalid", $game_num, ($tt_template->singles_players_per_team + 1), ($tt_template->singles_players_per_team * 2))) if $away_player !~ m/\d{1,2}/ or $away_player < ($tt_template->singles_players_per_team + 1) or $away_player > ($tt_template->singles_players_per_team * 2);
       } else {
         # Not selected
-        push(@{$response->{errors}}, $lang->maketext("templates.team-match.games.error.away-player-number-blank", $game_num));
+        push(@{$response->{error}}, $lang->maketext("templates.team-match.games.error.away-player-number-blank", $game_num));
       }
     }
     
@@ -164,7 +164,7 @@ sub create_or_edit {
       doubles_game => $doubles,
       singles_home_player_number => $home_player,
       singles_away_player_number => $away_player,
-    }) unless scalar @{$response->{errors}};
+    }) unless scalar @{$response->{error}};
     
     push(@fields, {
       team_match_template => $tt_template,
@@ -178,7 +178,7 @@ sub create_or_edit {
   
   $response->{fields}{games} = \@fields;
   
-  if ( scalar(@{$response->{errors}}) == 0 ) {
+  if ( scalar(@{$response->{error}}) == 0 ) {
     # No errors, so we need to delete any existing games, as these new ones will overwrite.
     my $games_to_delete = $tt_template->search_related("template_match_team_games")->count;
     $tt_template->delete_related("template_match_team_games") if $games_to_delete;

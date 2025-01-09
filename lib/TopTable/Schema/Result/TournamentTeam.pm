@@ -879,8 +879,8 @@ sub adjust_points {
   my $lang = $schema->lang;
   
   my $response = {
-    errors => [],
-    warnings => [],
+    error => [],
+    warning => [],
     info => [],
     success => [],
     completed => 0,
@@ -891,7 +891,7 @@ sub adjust_points {
   my %can = $self->can_update("points");
   
   unless ( $can{allowed} ) {
-    push(@{$response->{errors}}, $can{reason});
+    push(@{$response->{error}}, $can{reason});
     return $response;
   }
   
@@ -905,7 +905,7 @@ sub adjust_points {
   if ( defined($tourn_round_team) ) {
     $response = $tourn_round_team->adjust_points($params);
   } else {
-    push(@{$response->{errors}}, $lang->maketext("tables.adjustments.error.team-not-entered-season", encode_entities($self->full_name)));
+    push(@{$response->{error}}, $lang->maketext("tables.adjustments.error.team-not-entered-season", encode_entities($self->full_name)));
   }
 }
 
