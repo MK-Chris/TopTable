@@ -1130,6 +1130,37 @@ sub allow_final_score_override {
   return $self->team_match_template->allow_final_score_override;
 }
 
+=head2 table_ranking_template
+
+Get the rank template for tables, either from 
+
+=cut
+
+sub table_ranking_template {
+  my $self = shift;
+  
+  if ( defined($self->division_season) ) {
+    # Ranking template comes from the division
+    return $self->division_season->league_table_ranking_template;
+  } elsif ( defined($self->tournament_group) ) {
+    # Although it relates to the group, the rank template is held at round level
+    return $self->tournament_round->rank_template;
+  } else {
+    return undef;
+  }
+}
+
+=head2 in_table
+
+We're in a table if this is a league match (league table) or this is a tournament match for a group round (group table).
+
+=cut
+
+sub in_table {
+  my $self = shift;
+  return (defined($self->division_season) or defined($self->tournament_group)) ? 1 : 0;
+}
+
 =head2 handicap_format
 
 Tells us if the handicap has been set or needs setting.  Returns undef if this isn't a handicapped match.
@@ -2326,15 +2357,8 @@ sub override_score {
   );
   
   # Get the ranking rules
-  my ( $ranking_template, $assign_points, $points_per_win, $points_per_draw, $points_per_loss );
-  
-  if ( defined($self->division_season) ) {
-    # Ranking template comes from the division
-    $ranking_template = $self->division_season->league_table_ranking_template;
-  } elsif ( defined($self->tournament_group) ) {
-    # Although it relates to the group, the rank template is held at round level
-    $ranking_template = $self->tournament_round->rank_template;
-  }
+  my ( $assign_points, $points_per_win, $points_per_draw, $points_per_loss );
+  my $ranking_template = $self->table_ranking_template;
   
   if ( defined($ranking_template) ) {
     # If the ranking template is defined either through division ranking template or tournament group ranking template
@@ -2559,76 +2583,110 @@ sub cancel {
   
   # Transaction so if we fail, nothing is updated
   my $transaction = $self->result_source->schema->txn_scope_guard;
+  my ( $points_field, $points_against_field, $diff_field );
   
-  # Loop through all the games and delete the scores
-  my $games = $self->team_match_games;
-  while ( my $game = $games->next ) {
-    my $game_result = $game->update_score({delete => 1}) if $game->complete;
+  # Don't worry about table points here - games or points are awarded based on the submitted values, table points follow the rank rules
+  if ( $self->winner_type eq "games" ) {
+    $points_field = "games_won";
+    $points_against_field = "games_lost";
+    $diff_field = "games_difference";
+  } else {
+    $points_field = "points_won";
+    $points_against_field = "points_lost";
+    $diff_field = "points_difference";
   }
   
   # Fields to update the points values for - depends on whether we assign points for win / loss / draw or
-  my $league_table_ranking_template = $self->division_season->league_table_ranking_template;
+  my $table_ranking_template = $self->table_ranking_template;
+  my ( $assign_points, $points_per_win, $points_per_draw, $points_per_loss ) = qw( 0 0 0 0 );
   
-  my ( $points_field, $points_against_field, $diff_field );
-  if ( $league_table_ranking_template->assign_points ) {
-    $points_field = "table_points";
-  } else {
-    if ( $self->winner_type eq "games" ) {
-      $points_field = "games_won";
-      $points_against_field = "games_lost";
-      $diff_field = "games_difference";
-    } else {
-      $points_field = "points_won";
-      $points_against_field = "points_lost";
-      $diff_field = "points_difference";
-    }
+  if ( defined($table_ranking_template) ) {
+    # If the ranking template is defined either through division ranking template or tournament group ranking template
+    $assign_points = $table_ranking_template->assign_points;
+    $points_per_win = $table_ranking_template->points_per_win;
+    $points_per_draw = $table_ranking_template->points_per_draw;
+    $points_per_loss = $table_ranking_template->points_per_loss;
   }
   
   # Get and update the team season objects
-  my $season = $self->season;
-  my ( $home_team, $away_team ) = ( $self->team_season_home_team_season, $self->team_season_away_team_season );
+  my @home_team_stats = $self->team_stats("home");
+  my @away_team_stats = $self->team_stats("away");
   
-  # If the match was previously cancelled and we're just changing the values, we need to alter the awarded points
+  # Score adjustments for matches / games played / won / lost / drawn.  Should be -1, 0 or 1 to take 1, make no adjustment or add 1 to that value
+  # The exception to this is table_points, where we obey the template rule if there is one
+  my %matches_adjustments = (
+    home => {
+      matches_played => 0,
+      matches_won => 0,
+      matches_drawn => 0,
+      matches_lost => 0,
+      matches_cancelled => 0,
+      table_points => 0,
+    }, away => {
+      matches_played => 0,
+      matches_won => 0,
+      matches_drawn => 0,
+      matches_lost => 0,
+      matches_cancelled => 0,
+      table_points => 0,
+    },
+  );
+  
+  my $in_table = $self->in_table;
   if ( $self->cancelled ) {
+    # If the match was previously cancelled and we're just changing the values, we need to alter the awarded points
     # Remove played / won / lost counts (they'll be added to again further down)
-    # To be removed in a future update when we don't update matches played / won / lost / drawn for cancellations
-    $home_team->matches_played($home_team->matches_played - 1);
-    $away_team->matches_played($away_team->matches_played - 1);
+    $matches_adjustments{home}{matches_played} += -1;
+    $matches_adjustments{away}{matches_played} += -1;
     
     if ( $self->home_team_match_score > $self->away_team_match_score ) {
       # Home points awarded are more than away points awarded, so the home team has "won"
-      $home_team->matches_won($home_team->matches_won - 1);
-      $away_team->matches_lost($away_team->matches_lost - 1);
+      $matches_adjustments{home}{matches_won} += -1;
+      $matches_adjustments{away}{matches_lost} += -1;
+      
+      if ( $in_table and $assign_points ) {
+        # Remove points awarded for this match
+        $matches_adjustments{home}{table_points} -= $points_per_win;
+        $matches_adjustments{away}{table_points} -= $points_per_loss;
+      }
     } elsif ( $self->home_team_match_score < $self->away_team_match_score ) {
       # Away points awarded are more than home points awarded, so the away team has "won"
-      $away_team->matches_won($away_team->matches_won - 1);
-      $home_team->matches_lost($home_team->matches_lost  -1);
+      $matches_adjustments{home}{matches_lost} += -1;
+      $matches_adjustments{away}{matches_won} += -1;
+      
+      if ( $in_table and $assign_points ) {
+        # Remove points awarded for this match
+        $matches_adjustments{home}{table_points} -= $points_per_loss;
+        $matches_adjustments{away}{table_points} -= $points_per_win;
+      }
     } else {
       # Points awarded are equal, so this is a draw
-      $away_team->matches_drawn($away_team->matches_drawn - 1);
-      $home_team->matches_drawn($home_team->matches_drawn - 1);
+      $matches_adjustments{home}{matches_drawn} += -1;
+      $matches_adjustments{away}{matches_drawn} += -1;
+      
+      if ( $in_table and $assign_points ) {
+        # Remove points awarded for this match
+        $matches_adjustments{home}{table_points} -= $points_per_draw;
+        $matches_adjustments{away}{table_points} -= $points_per_draw;
+      }
     }
     
     # Update the awarded points in the relevant field - also points against if required - the points against should be awarded what the opposite team have been awarded
     # i.e., the away team's points against will be $home_points_awarded
-    $home_team->$points_field($home_team->$points_field - $self->home_team_match_score);
-    $away_team->$points_field($away_team->$points_field - $self->away_team_match_score);
     
-    if ( defined($points_against_field) ) {
-      $home_team->$points_against_field($home_team->$points_against_field - $self->away_team_match_score);
-      $away_team->$points_against_field($away_team->$points_against_field - $self->home_team_match_score);
+    foreach my $home_team_stat ( @home_team_stats ) {
+      $home_team_stat->$points_field($home_team_stat->$points_field - $self->home_team_match_score);
+      $home_team_stat->$points_against_field($home_team_stat->$points_against_field - $self->away_team_match_score);
+    }
+    
+    foreach my $away_team_stat ( @away_team_stats ) {
+      $away_team_stat->$points_field($away_team_stat->$points_field - $self->away_team_match_score);
+      $away_team_stat->$points_against_field($away_team_stat->$points_against_field - $self->home_team_match_score);
     }
   } else {
     # It wasn't previously cancelled, so we need to add one to the matches_cancelled count
-    $home_team->matches_cancelled($home_team->matches_cancelled + 1);
-    $away_team->matches_cancelled($away_team->matches_cancelled + 1);
-  }
-    
-  # Get a list of the players in this match and remove them; this includes the action of removing the score as well.
-  my $players = $self->search_related("team_match_players");
-  
-  while ( my $player = $players->next ) {
-    $player->update_person({action => "remove"});
+    $matches_adjustments{home}{matches_cancelled} += 1;
+    $matches_adjustments{away}{matches_cancelled} += 1;
   }
   
   # Update the match score and cancelled flag, remove any postponed flag
@@ -2639,40 +2697,77 @@ sub cancel {
     postponed => 0,
   });
   
-  # Update the awarded points in the relevant field - also points against if required - the points against should be awarded what the opposite team have been awarded
+  # Update the awarded points for and against in the relevant field - the points against should be awarded what the opposite team have been awarded
   # i.e., the away team's points against will be $home_points_awarded
-  $home_team->$points_field($home_team->$points_field + $home_points_awarded);
-  $away_team->$points_field($away_team->$points_field + $away_points_awarded);
+  # Then calculate the difference field
+  foreach my $home_team_stat ( @home_team_stats ) {
+    $home_team_stat->$points_field($home_team_stat->$points_field + $home_points_awarded);
+    $home_team_stat->$points_against_field($home_team_stat->$points_against_field + $away_points_awarded);
+    $home_team_stat->$diff_field($home_team_stat->$points_field - $home_team_stat->$points_against_field);
+  }
   
-  if ( defined($points_against_field) ) {
-    $home_team->$points_against_field($home_team->$points_against_field + $away_points_awarded);
-    $away_team->$points_against_field($away_team->$points_against_field + $home_points_awarded);
+  foreach my $away_team_stat ( @away_team_stats ) {
+    $away_team_stat->$points_field($away_team_stat->$points_field + $away_points_awarded);
+    $away_team_stat->$points_against_field($away_team_stat->$points_against_field + $home_points_awarded);
+    $away_team_stat->$diff_field($away_team_stat->$points_field - $away_team_stat->$points_against_field);
   }
   
   # Update the values we know what to update straight off
   # To be removed in a future update when we don't update matches played / won / lost / drawn for cancellations
-  $home_team->matches_played($home_team->matches_played + 1);
-  $away_team->matches_played($away_team->matches_played + 1);
+  $matches_adjustments{home}{matches_played} += 1;
+  $matches_adjustments{away}{matches_played} += 1;
   
   if ( $home_points_awarded > $away_points_awarded ) {
     # Home points awarded are more than away points awarded, so the home team has "won"
-    $home_team->matches_won($home_team->matches_won + 1);
-    $away_team->matches_lost($away_team->matches_lost + 1);
+    $matches_adjustments{home}{matches_won} += 1;
+    $matches_adjustments{away}{matches_lost} += 1;
+    
+    if ( $in_table and $assign_points ) {
+      # Add table points if we need them
+      $matches_adjustments{home}{table_points} += $points_per_win;
+      $matches_adjustments{away}{table_points} += $points_per_loss;
+    }
   } elsif ( $home_points_awarded < $away_points_awarded ) {
     # Away points awarded are more than home points awarded, so the away team has "won"
-    $away_team->matches_won($away_team->matches_won + 1);
-    $home_team->matches_lost($home_team->matches_lost + 1);
+    $matches_adjustments{home}{matches_lost} += 1;
+    $matches_adjustments{away}{matches_won} += 1;
+      
+    if ( $in_table and $assign_points ) {
+      # Add table points if required for this match
+      $matches_adjustments{home}{table_points} += $points_per_loss;
+      $matches_adjustments{away}{table_points} += $points_per_win;
+    }
   } else {
     # Points awarded are equal, so this is a draw
-    $away_team->matches_drawn($away_team->matches_drawn + 1);
-    $home_team->matches_drawn($home_team->matches_drawn + 1);
+    $matches_adjustments{home}{matches_drawn} += 1;
+    $matches_adjustments{away}{matches_drawn} += 1;
+    
+    if ( $in_table and $assign_points ) {
+      # Add table points
+      $matches_adjustments{home}{table_points} += $points_per_draw;
+      $matches_adjustments{away}{table_points} += $points_per_draw;
+    }
   }
   
-  # Do the update
-  $home_team->$diff_field($home_team->$points_field - $home_team->$points_against_field);
-  $away_team->$diff_field($away_team->$points_field - $away_team->$points_against_field);
-  $home_team->update;
-  $away_team->update;
+  # Run the matches_adjustments updates
+  foreach my $stat_team ( keys %matches_adjustments ) {
+    # Work out which team we're modifying at the moment
+    my @team_stats = $stat_team eq "home" ? @home_team_stats : @away_team_stats;
+    
+    # Now loop through each of the fields to update (i.e., matches_played, matches_won, etc)
+    foreach my $field ( keys %{$matches_adjustments{$stat_team}} ) {
+      # For every team stat object to update, update it!
+      # For league matches, this is just the team season object; for tournaments, there will be the tournament team object,
+      # then if it's a group round, it'll be the tournament group team object too.
+      foreach my $team_stat ( @team_stats ) {
+        $team_stat->$field($team_stat->$field + $matches_adjustments{$stat_team}{$field}) if $team_stat->result_source->has_column($field);
+      }
+    }
+    
+    # Now update each stats array
+    $_->update foreach @team_stats;
+  }
+  
   push(@{$response->{success}}, $lang->maketext("matches.cancel.success"));
   $response->{completed} = 1;
   
@@ -2706,19 +2801,66 @@ sub uncancel {
     can_complete => 1, # Default to allowed, set to if the season is complete
   };
   
-  # Can't uncancel a match match in a completed season
-  if ( $self->season->complete ) {
-    push(@{$response->{error}}, $lang->maketext("matches.uncancel.error.season-complete"));
+  # Can't cancel a match in a completed season
+  my %can = $self->can_update("uncancel");
+  if ( !$can{allowed} ) {
+    push(@{$response->{error}}, $can{reason});
     $response->{can_complete} = 0;
     return $response;
   }
   
-  # Can't uncancel a match that isn't cancelled
-  unless ( $self->cancelled ) {
-    push(@{$response->{error}}, $lang->maketext("matches.uncancel.error.not-cancelled"));
-    $response->{can_complete} = 0;
-    return $response;
+  # Return with errors if we have them
+  return $response if scalar @{$response->{error}};
+  my ( $points_field, $points_against_field, $diff_field );
+  
+  # Don't worry about table points here - games or points are awarded based on the originally awarded values, table points follow the rank rules
+  if ( $self->winner_type eq "games" ) {
+    $points_field = "games_won";
+    $points_against_field = "games_lost";
+    $diff_field = "games_difference";
+  } else {
+    $points_field = "points_won";
+    $points_against_field = "points_lost";
+    $diff_field = "points_difference";
   }
+  
+  # Fields to update the points values for - depends on whether we assign points for win / loss / draw or
+  my $table_ranking_template = $self->table_ranking_template;
+  my ( $assign_points, $points_per_win, $points_per_draw, $points_per_loss ) = qw( 0 0 0 0 );
+  
+  if ( defined($table_ranking_template) ) {
+    # If the ranking template is defined either through division ranking template or tournament group ranking template
+    $assign_points = $table_ranking_template->assign_points;
+    $points_per_win = $table_ranking_template->points_per_win;
+    $points_per_draw = $table_ranking_template->points_per_draw;
+    $points_per_loss = $table_ranking_template->points_per_loss;
+  }
+  
+  # Get and update the team season objects
+  my @home_team_stats = $self->team_stats("home");
+  my @away_team_stats = $self->team_stats("away");
+  
+  # Score adjustments for matches / games played / won / lost / drawn.  Should be -1, 0 or 1 to take 1, make no adjustment or add 1 to that value
+  # The exception to this is table_points, where we obey the template rule if there is one
+  my %matches_adjustments = (
+    home => {
+      matches_played => 0,
+      matches_won => 0,
+      matches_drawn => 0,
+      matches_lost => 0,
+      matches_cancelled => 0,
+      table_points => 0,
+    }, away => {
+      matches_played => 0,
+      matches_won => 0,
+      matches_drawn => 0,
+      matches_lost => 0,
+      matches_cancelled => 0,
+      table_points => 0,
+    },
+  );
+  
+  my $in_table = $self->in_table;
   
   # Grab the points that were previously awarded so we can remove them from the home team / away team season totals
   my $home_points_awarded = $self->home_team_match_score;
@@ -2734,63 +2876,78 @@ sub uncancel {
     cancelled => 0,
   });
   
-  # Get and update the team season objects
-  my $season = $self->season;
-  my ( $home_team, $away_team ) = ( $self->team_season_home_team_season, $self->team_season_away_team_season );
+  # Work out the match adjustments
+  # Remove played / won / lost counts (they'll be added to again further down)
+  $matches_adjustments{home}{matches_played} += -1;
+  $matches_adjustments{away}{matches_played} += -1;
+  $matches_adjustments{home}{matches_cancelled} += -1;
+  $matches_adjustments{away}{matches_cancelled} += -1;
   
-  my $league_table_ranking_template = $self->division_season->league_table_ranking_template;
-  
-  # Fields to update the points values for - depends on whether we assign points for win / loss / draw or
-  my ( $points_field, $points_against_field, $diff_field );
-  if ( $league_table_ranking_template->assign_points ) {
-    $points_field = "table_points";
+  if ( $home_points_awarded > $away_points_awarded ) {
+    # Home points awarded are more than away points awarded, so the home team has "won"
+    $matches_adjustments{home}{matches_won} += -1;
+    $matches_adjustments{away}{matches_lost} += -1;
+    
+    if ( $in_table and $assign_points ) {
+      # Remove points awarded for this match
+      $matches_adjustments{home}{table_points} -= $points_per_win;
+      $matches_adjustments{away}{table_points} -= $points_per_loss;
+    }
+  } elsif ( $home_points_awarded < $away_points_awarded ) {
+    # Away points awarded are more than home points awarded, so the away team has "won"
+    $matches_adjustments{home}{matches_lost} += -1;
+    $matches_adjustments{away}{matches_won} += -1;
+    
+    if ( $in_table and $assign_points ) {
+      # Remove points awarded for this match
+      $matches_adjustments{home}{table_points} -= $points_per_loss;
+      $matches_adjustments{away}{table_points} -= $points_per_win;
+    }
   } else {
-    if ( $self->winner_type eq "games" ) {
-      $points_field = "games_won";
-      $points_against_field = "games_lost";
-      $diff_field = "games_difference";
-    } else {
-      $points_field = "points_won";
-      $points_against_field = "points_lost";
-      $diff_field = "points_difference";
+    # Points awarded are equal, so this is a draw
+    $matches_adjustments{home}{matches_drawn} += -1;
+    $matches_adjustments{away}{matches_drawn} += -1;
+    
+    if ( $in_table and $assign_points ) {
+      # Remove points awarded for this match
+      $matches_adjustments{home}{table_points} -= $points_per_draw;
+      $matches_adjustments{away}{table_points} -= $points_per_draw;
     }
   }
   
   # Update the awarded points in the relevant field - also points against if required - the points against should be awarded what the opposite team have been awarded
   # i.e., the away team's points against will be $home_points_awarded
-  $home_team->$points_field($home_team->$points_field - $home_points_awarded);
-  $away_team->$points_field($away_team->$points_field - $away_points_awarded);
   
-  if ( defined($points_against_field) ) {
-    $home_team->$points_against_field($home_team->$points_against_field - $away_points_awarded);
-    $away_team->$points_against_field($away_team->$points_against_field - $home_points_awarded);
+  foreach my $home_team_stat ( @home_team_stats ) {
+    $home_team_stat->$points_field($home_team_stat->$points_field - $home_points_awarded);
+    $home_team_stat->$points_against_field($home_team_stat->$points_against_field - $away_points_awarded);
+    $home_team_stat->$diff_field($home_team_stat->$points_field - $home_team_stat->$points_against_field);
   }
   
-  # Update the values we know what to update straight off
-  $home_team->matches_played($home_team->matches_played - 1);
-  $away_team->matches_played($away_team->matches_played - 1);
-  $home_team->matches_cancelled($home_team->matches_cancelled - 1);
-  $away_team->matches_cancelled($away_team->matches_cancelled - 1);
-  
-  if ( $home_points_awarded > $away_points_awarded ) {
-    # Home points awarded are more than away points awarded, so the home team has "won"
-    $home_team->matches_won($home_team->matches_won - 1);
-    $away_team->matches_lost($away_team->matches_lost - 1);
-  } elsif ( $home_points_awarded < $away_points_awarded ) {
-    # Away points awarded are more than home points awarded, so the away team has "won"
-    $away_team->matches_won($away_team->matches_won - 1);
-    $home_team->matches_lost($home_team->matches_lost - 1);
-  } else {
-    # Points awarded are equal, so this is a draw
-    $away_team->matches_drawn($away_team->matches_drawn - 1);
-    $home_team->matches_drawn($home_team->matches_drawn - 1);
+  foreach my $away_team_stat ( @away_team_stats ) {
+    $away_team_stat->$points_field($away_team_stat->$points_field - $away_points_awarded);
+    $away_team_stat->$points_against_field($away_team_stat->$points_against_field - $home_points_awarded);
+    $away_team_stat->$diff_field($away_team_stat->$points_field - $away_team_stat->$points_against_field);
   }
   
-  # Do the update
-  $home_team->$diff_field($home_team->$points_field - $home_team->$points_against_field);
-  $away_team->$diff_field($away_team->$points_field - $away_team->$points_against_field);
-  $home_team->update;
-  $away_team->update;
+  # Run the matches_adjustments updates
+  foreach my $stat_team ( keys %matches_adjustments ) {
+    # Work out which team we're modifying at the moment
+    my @team_stats = $stat_team eq "home" ? @home_team_stats : @away_team_stats;
+    
+    # Now loop through each of the fields to update (i.e., matches_played, matches_won, etc)
+    foreach my $field ( keys %{$matches_adjustments{$stat_team}} ) {
+      # For every team stat object to update, update it!
+      # For league matches, this is just the team season object; for tournaments, there will be the tournament team object,
+      # then if it's a group round, it'll be the tournament group team object too.
+      foreach my $team_stat ( @team_stats ) {
+        $team_stat->$field($team_stat->$field + $matches_adjustments{$stat_team}{$field}) if $team_stat->result_source->has_column($field);
+      }
+    }
+    
+    # Now update each stats array
+    $_->update foreach @team_stats;
+  }
   push(@{$response->{success}}, $lang->maketext("matches.uncancel.success"));
   $response->{completed} = 1;
   
@@ -3032,7 +3189,7 @@ sub can_update {
   my $lang = $schema->lang;
   
   # Check we have a valid type, if it's provided (if it's not provided, check all types)
-  return undef if defined($type) and $type ne "handicaps" and $type ne "score" and $type ne "delete-score" and $type ne "cancel" and $type ne "override" and $type ne "date" and $type ne "venue" and $type ne "postponed";
+  return undef if defined($type) and $type ne "handicaps" and $type ne "score" and $type ne "delete-score" and $type ne "cancel" and $type ne "uncancel" and $type ne "override" and $type ne "date" and $type ne "venue" and $type ne "postponed";
   
   # Default to allowed.
   my $allowed = 1;
@@ -3068,6 +3225,10 @@ sub can_update {
               allowed => 0,
               reason => $reason,
               level => "error",
+            }, uncancel => {
+              allowed => 0,
+              reason => $reason,
+              level => "error",
             }, override => {
               allowed => 0,
               reason => $reason,
@@ -3091,6 +3252,7 @@ sub can_update {
           score => 0,
           "delete-score" => 0,
           cancel => 0,
+          uncancel => 0,
           override => 0,
           postponed => 0,
           date => 0,
@@ -3113,6 +3275,8 @@ sub can_update {
       %can = $self->_can_delete_score;
     } elsif ( $type eq "cancel" ) {
       %can = $self->_can_cancel_match;
+    } elsif ( $type eq "uncancel" ) {
+      %can = $self->_can_uncancel_match;
     } elsif ( $type eq "override" ) {
       %can = $self->_can_update_override;
     } elsif ( $type eq "postponed") {
@@ -3132,6 +3296,7 @@ sub can_update {
     my %score = $self->_can_update_score;
     my %delete_score = $self->_can_delete_score;
     my %cancel = $self->_can_cancel_match;
+    my %uncancel = $self->_can_uncancel_match;
     my %override = $self->_can_update_override;
     my %postponed = $self->_can_postpone_match;
     
@@ -3153,6 +3318,10 @@ sub can_update {
             allowed => $cancel{allowed},
             reason => $cancel{reason},
             level => $cancel{level},
+          }, uncancel => {
+            allowed => $uncancel{allowed},
+            reason => $uncancel{reason},
+            level => $uncancel{level},
           }, override => {
             allowed => $override{allowed},
             reason => $override{reason},
@@ -3172,6 +3341,7 @@ sub can_update {
         score => $score{allowed},
         "delete-score" => $delete_score{allowed},
         cancel => $cancel{allowed},
+        uncancel => $uncancel{allowed},
         override => $override{allowed},
         postponed => $postponed{allowed},
         date => 1,
@@ -3183,7 +3353,7 @@ sub can_update {
   }
 }
 
-=head2 _can_update_handicaps, _can_update_score, _can_delete_score, _can_cancel_match, _can_update_override, _can_postpone_match
+=head2 _can_update_handicaps, _can_update_score, _can_delete_score, _can_cancel_match, _can_uncancel_match, _can_update_override, _can_postpone_match
 
 Internal methods, do not call directly.  These assume the check for $season->complete has been done, so we only check the other parts.  Called from can_update.
 
@@ -3286,6 +3456,29 @@ sub _can_cancel_match {
     # If the score's been overridden, we can't update
     $allowed = 0;
     $reason = $lang->maketext("matches.cancel.error.started");
+    $level = "error";
+  }
+  
+  return (allowed => $allowed, reason => $reason, level => $level);
+}
+
+sub _can_uncancel_match {
+  my $self = shift;
+  my ( $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  
+  # Score can be overridden, so long as the match is completed, and the team match template specifies you can override
+  my $allowed = 1;
+  my ( $reason, $level );
+  if ( !$self->cancelled ) {
+    # If the score's been overridden, we can't update
+    $allowed = 0;
+    $reason = $lang->maketext("matches.uncancel.error.not-cancelled");
     $level = "error";
   }
   
