@@ -40,19 +40,17 @@ IF rounds.size;
         <ul class="option-list">
 [%
   FOREACH round = rounds;
-    round_html = round.name | html_entity;
-    
     IF specific_season;
       SET view_uri = c.uri_for_action("/events/round_view_specific_season", [event.url_key, season.url_key, round.url_key]);
     ELSE;
       SET view_uri = c.uri_for_action("/events/round_view_current_season", [event.url_key, round.url_key]);
     END;
 -%]
-          <li><a href="[% view_uri %]">[% round_html %] 
+          <li><a href="[% view_uri %]">[% round.name %] 
 [%-
 IF authorisation.event_edit;
 -%]
-<a href="[% c.uri_for_action("/events/edit_round", [event.url_key, round.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-16.png") %]" alt="[% c.maketext("admin.edit-object", round_html) %]" title="[% c.maketext("admin.edit-object", round_html) %]" /></a>
+<a href="[% c.uri_for_action("/events/edit_round", [event.url_key, round.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-32.png") %]" alt="[% c.maketext("admin.edit-object", round_html) %]" title="[% c.maketext("admin.edit-object", round_html) %]" /></a>
 [%-
 END;
 -%]</li>
@@ -61,6 +59,14 @@ END;
 END;
 -%]
         </ul>
+[%-
+IF authorisation.event_edit;
+# AND event.can_update("add_round")
+-%]
+        <a href="[% c.uri_for_action("/events/add_next_round", [event.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0009-Add-icon-32.png") %]" alt="[% c.maketext("admin.add-next-round", enc_name) %]" title="[% c.maketext("admin.add-next-round", enc_name) %]" /></a>
+[%
+END;
+-%]
       </div>
     </div>
   </div>

@@ -159,7 +159,8 @@ sub create_or_edit {
   my $round_team_match_template = $params->{round_team_match_template} || undef;
   my $round_individual_match_template = $params->{round_individual_match_template} || undef;
   my $round_date = $params->{round_date} || undef;
-  my $round_venue = $params->{round_venue} || undef;
+  my $round_week_commencing = $params->{round_week_commencing} || undef;
+  my $round_venue = $params->{round_venue} || 0;
   
   # Setup the dates in a hash for looping through
   my @dates = ( $start_date, $end_date, $round_date );
@@ -438,7 +439,7 @@ sub create_or_edit {
         # Date is valid, set the relevant var
         if ( $date_fld eq "start_date" ) {
           $start_date = $date;
-        } else {
+        } elsif ( $date_fld eq "end_date" ) {
           # End date is set to the start date if it's blank
           if ( defined($date) ) {
             $end_date = $date; # Set end date if it's supplied
@@ -449,6 +450,8 @@ sub create_or_edit {
             # End time not specified, neither was the date, just undef it
             undef($end_date);
           }
+        } else {
+          # Round date
         }
       } else {
         # Date is invalid  - set date to undef
@@ -659,13 +662,13 @@ sub create_or_edit {
         
         if ( $first_round_required ) {
           $round_response = $tournament->create_or_edit_round(undef, {
-            name => $round_name,
-            group => $round_group,
-            rank_template => defined($round_group_rank_template) ? $round_group_rank_template->id : undef,
-            team_match_template => defined($round_team_match_template) ? $round_team_match_template->id : undef,
-            individual_match_template => defined($round_individual_match_template) ? $round_individual_match_template->id : undef,
-            date => $round_date,
-            venue => $round_venue,
+            round_name => $round_name,
+            round_group => $round_group,
+            round_group_rank_template => $round_group_rank_template,
+            round_team_match_template => $round_team_match_template,
+            round_individual_match_template => $round_individual_match_template,
+            round_date => $round_date,
+            round_venue => $round_venue,
           });
           
           # Push any responses we get back to the calling routine

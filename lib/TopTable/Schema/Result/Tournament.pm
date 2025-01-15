@@ -500,12 +500,14 @@ sub create_or_edit_round {
   my $lang = $schema->lang;
   
   # Grab the fields
-  my $name = $params->{name} || undef;
-  my $group = $params->{group} || 0;
-  my $rank_template = $params->{rank_template} || undef;
-  my $match_template = $params->{match_template} || undef;
-  my $date = $params->{date};
-  my $venue = $params->{venue};
+  my $name = $params->{round_name};
+  my $group = $params->{round_group} || 0;
+  my $rank_template = $params->{round_group_rank_template};
+  my $team_match_template = $params->{round_team_match_template} || undef;
+  my $individual_match_template = $params->{round_individual_match_template} || undef;
+  my $date = $params->{round_date};
+  my $week_commencing = $params->{round_week_commencing};
+  my $venue = $params->{round_venue} || undef;
   my $response = {
     error => [],
     warning => [],
@@ -567,9 +569,9 @@ sub create_or_edit_round {
   }
   
   # Get the class to check the template again based on whether this is a team entry or not
-  my ( $tpl_class, $tpl_fld ) = $self->entry_type->id eq "team"
-    ? qw( TemplateMatchTeam team_match_template )
-    : qw( TemplateMatchIndividual individual_match_template );
+  my ( $match_template, $tpl_class, $tpl_fld ) = $self->entry_type->id eq "team"
+    ? ($team_match_template, qw( TemplateMatchTeam team_match_template ))
+    : ($individual_match_template, qw( TemplateMatchIndividual individual_match_template ));
   
   # Check the template
   if ( defined($match_template) ) {
@@ -579,6 +581,10 @@ sub create_or_edit_round {
   
   # Check the date if it was sent
   if ( defined($date) ) {
+    # Check if the week beginning field is ticked - if it is, we require a Monday to be selected
+    $week_commencing = ( defined($week_commencing) and $week_commencing ) ? 1 : 0;
+    my $date_error = 0;
+    
     if ( ref($date) eq "HASH" ) {
       # Hashref, get the year, month, day
       my $year = $date->{year};
@@ -594,10 +600,24 @@ sub create_or_edit_round {
         );
       } catch {
         push(@{$response->{error}}, $lang->maketext("tournaments.form.error.date-invalid"));
+        $date_error = 1;
       };
     } elsif ( !$date->isa("DateTime") ) {
       # Not a hashref, not a DateTime
       push(@{$response->{error}}, $lang->maketext("tournaments.form.error.date-invalid"));
+      $date_error = 1;
+    }
+    
+    if ( !$date_error ) {
+      push(@{$response->{error}}, $lang->maketext("tournaments.rounds.form.error.date-should-be-monday")) unless $date->day_of_week;
+    }
+  } else {
+    # Week beginning has to be undef if the date is also
+    undef($week_commencing);
+    
+    # If it's not a group round, we need a date
+    if ( !$group ) {
+      push(@{$response->{error}}, $lang->maketext("tournaments.rounds.form.error.date-required"));
     }
   }
   
@@ -621,7 +641,7 @@ sub create_or_edit_round {
     my $url_key = $schema->resultset("TournamentRound")->make_url_key($self, $name, $round) if defined($name);
     
     if ( $create ) {
-      $self->create_related("tournament_rounds", {
+      $round = $self->create_related("tournament_rounds", {
         url_key => $url_key,
         round_number => $round_number,
         name => $name,
@@ -629,6 +649,7 @@ sub create_or_edit_round {
         rank_template => $rank_template,
         $tpl_fld => defined($match_template) ? $match_template->id : undef,
         date => defined($date) ? $date->ymd : undef,
+        week_commencing => $week_commencing,
         venue => defined($venue) ? $venue->id : undef,
       });
     } else {
@@ -639,10 +660,12 @@ sub create_or_edit_round {
         group_round => $group,
         $tpl_fld => defined($match_template) ? $match_template->id : undef,
         date => defined($date) ? $date->ymd : undef,
+        week_commencing => $week_commencing,
         venue => defined($venue) ? $venue->id : undef,
       });
     }
     
+    $response->{round} = $round;
     $response->{completed} = 1;
   }
   
@@ -682,6 +705,17 @@ sub has_group_round {
   return $self->search_related("tournament_rounds", {group_round => 1})->count ? 1 : 0;
 }
 
+=head2 has_ko_round
+
+Return 1 if the tournament has at least one knock-out round, or 0 if not.
+
+=cut
+
+sub has_ko_round {
+  my $self = shift;
+  return $self->search_related("tournament_rounds", {group_round => 0})->count ? 1 : 0;
+}
+
 =head2 rounds
 
 Return the rounds in round number order.
@@ -707,14 +741,35 @@ sub find_round_by_number_or_url_key {
   
   if ( $round_id =~ m/^\d+$/ ) {
     # Numeric value, check the ID first, then check the URL key
-    my $obj = $self->find_related("tournament_rounds", {round_number => $round_id});
+    my $obj = $self->find_related("tournament_rounds", {round_number => $round_id}, {
+      prefetch => [qw( venue )],
+    });
     return $obj if defined($obj);
-    $obj = $self->find_related("tournament_rounds", {url_key => $round_id});
+    $obj = $self->find_related("tournament_rounds", {url_key => $round_id}, {
+      prefetch => [qw( venue )],
+    });
     return $obj;
   } else {
     # Not numeric, so it can't be the ID - just check the URL key
-    return $self->find_related("tournament_rounds", {url_key => $round_id});
+    return $self->find_related("tournament_rounds", {url_key => $round_id}, {
+      prefetch => [qw( venue )],
+    });
   }
+}
+
+=head2 first_knockout_round
+
+Return the first round that's a knockout round (not a group round).  This will either be round 1 or 2.
+
+=cut
+
+sub first_knockout_round {
+  my $self = shift;
+  
+  return $self->search_related("tournament_rounds", {group_round => 0}, {
+    order_by => {-asc => [qw( round_number )]},
+    rows => 1,
+  })->single;
 }
 
 =head2 get_team_by_url_key

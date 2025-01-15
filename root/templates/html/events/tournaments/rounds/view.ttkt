@@ -1,0 +1,50 @@
+<div id="tabs">
+  <ul>
+    <li><a href="#matches">[% c.maketext("events.tournaments.rounds.heading.matches") %]</a></li>
+    <li><a href="#summary">[% c.maketext("events.tournaments.rounds.heading.summary") %]</a></li>
+  </ul>
+  <div id="matches">
+[%
+INCLUDE "html/fixtures-results/view$handicapped/group-days-ordering-no-comp.ttkt";
+-%]
+  </div>
+  <div id="summary">
+    <div class="table-wrap">
+      <div class="table-layout table-layout-centre">
+        <table class="vertical">
+          <tr>
+[%
+IF round.date;
+  SET date = round.date;
+  CALL date.set_locale(c.locale);
+  
+  IF round.week_commencing;
+    SET date_text = c.maketext("events.tournaments.rounds.date.week-beginning", c.i18n_datetime_format_date_long.format_datetime(date));
+  ELSE;
+    SET date_text = c.i18n_datetime_format_date_long.format_datetime(date);
+  END;
+-%]
+            <th>[% c.maketext("events.tournaments.rounds.date") %]</th>
+            <td>[% date_text %]</td>
+[%
+END;
+-%]
+          </tr>
+          <tr>
+[%
+IF round.venue;
+  venue = round.venue.name | html_entity;
+  SET venue_text = '<a href="' _ c.uri_for_action("/venues/view", [round.venue.url_key]) _ '">' _ venue _ '</a>';
+ELSE;
+  SET venue = c.maketext("events.tournaments.rounds.venue-use-home-team");
+  SET venue_text = venue;
+END;
+-%]
+            <th>[% c.maketext("events.tournaments.rounds.venue") %]</th>
+            <td>[% venue_text %]</td>
+          </tr>
+        </table>
+      </div><!-- .table-layout -->
+    </div><!-- .table-wrap -->
+  </div><!-- #summary -->
+</div>

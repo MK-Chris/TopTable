@@ -118,6 +118,14 @@ __PACKAGE__->table("tournament_rounds");
 
 If this is a team match, this can be null, which indicates that the matches are to be played on the home night of the home team.
 
+=head2 week_commencing
+
+  data_type: 'tinyint'
+  extra: {unsigned => 1}
+  is_nullable: 1
+
+This is a modifier for the date field - if this is true, the date field is a week commencing date (meaning matches start in that week).  In this case, the date selected must be a Monday.   Should only be NULL if date is also NULL; if date is set, this should be 1 or 0.
+
 =head2 venue
 
   data_type: 'integer'
@@ -187,6 +195,8 @@ __PACKAGE__->add_columns(
   },
   "date",
   { data_type => "date", datetime_undef_if_invalid => 1, is_nullable => 1 },
+  "week_commencing",
+  { data_type => "tinyint", extra => { unsigned => 1 }, is_nullable => 1 },
   "venue",
   {
     data_type => "integer",
@@ -282,7 +292,7 @@ Related object: L<TopTable::Schema::Result::SystemEventLogEventRound>
 __PACKAGE__->has_many(
   "system_event_log_event_rounds",
   "TopTable::Schema::Result::SystemEventLogEventRound",
-  { "foreign.object_round" => "self.id" },
+  { "foreign.object_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
@@ -417,8 +427,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-12-31 16:31:44
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:sSJSuNCYin8HUFVDFqaJYA
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2025-01-14 23:27:22
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:jxxcYOs3cRNAFPq6XMHjHg
 
 use HTML::Entities;
 use List::MoreUtils qw( duplicates );
@@ -651,6 +661,70 @@ sub next_group_order {
   
   # Return the date as a DateTime object if we have a result; if not return undef
   return $next_group_order;
+}
+
+=head2 prev_round
+
+Return the previous round in the tournament; if there's no previous round, return undef.
+
+=cut
+
+sub prev_round {
+  my $self = shift;
+  
+  # If this is round 1, there's no previous round
+  return undef if $self->round_number == 1;
+  
+  my $target_round = $self->round_number;
+  return $self->tournament->find_related("tournament_rounds", {round_number => $target_round});
+}
+
+=head2 first_knockout_round
+
+Returns 1 if this is the first knock-out round of the tournament, 0 if not.
+
+=cut
+
+sub first_knockout_round {
+  my $self = shift;
+  
+  # If this is a group round, just return 0 straight away
+  return 0 if $self->group_round;
+  
+  # We can only be the first knock-out round if this is round 1 or 2
+  return 0 if $self->round_number > 2;
+  
+  # If not, try and get the previous round
+  my $prev_round = $self->prev_round;
+  
+  if ( defined($prev_round) ) {
+    # If the previous round is a group round, return 1, otherwise return 0
+    return $prev_round->group_round ? 1 : 0;
+  } else {
+    # There's no previous round, this must be the first round - we already know it's not a group round, so return 1
+    return 1;
+  }
+}
+
+=head2 qualifiers
+
+The number of qualifiers to go through from this round.  If this is a group round, it'll be the minimum number of qualifiers that can go through (taken from the sum of automatic_qualifiers in all groups); if it's a knock-out round it'll be half the number of people in the group.
+
+=cut
+
+sub qualifiers {
+  my $self = shift;
+  
+  if ( $self->group_round ) {
+    return $self->search_related("tournament_round_groups", {}, {
+      select => [{sum => "automatic_qualifiers"}],
+      as => [qw( total_qualifiers )],
+      rows => 1,
+    })->single->get_column("total_qualifiers");
+  } else {
+    # If the previous round doesn't exist, or is a group round (i.e., this is the first knock-out round)
+    return $self->round_of / 2;
+  }
 }
 
 =head2 create_or_edit_group

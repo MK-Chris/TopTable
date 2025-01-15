@@ -82,6 +82,7 @@ function handle_tournament_type() {
     $("#finish-time-container").hide();
     $("#season-details").hide();
     $("#enter-online").hide();
+    $("div.wb").show();
   } else {
     $("#venue-container").show();
     $("#date-container").show();
@@ -90,6 +91,8 @@ function handle_tournament_type() {
     $("#finish-time-container").show();
     $("#season-details").show();
     $("#enter-online").show();
+    $("#week_beginning").prettyCheckable("uncheck");
+    $("div.wb").hide();
   }
   
   // If it's a tournament, handle the entry type and the match template field we'll show

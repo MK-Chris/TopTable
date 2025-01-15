@@ -599,7 +599,7 @@ input.button-reset {
 input[type=radio], input[type=checkbox] {vertical-align: text-bottom;}
 input[type=number] {width:50px;}
 input.wide[type=number] {width:100px; margin-right: 5px;}
-input.date_picker {width: 100px;}
+input.date_picker, #round_date {width: 100px;}
 .ie7 input[type=checkbox] {vertical-align: baseline;}
 label, input[type=submit], input[type=button], input[type=image], button, select {cursor: pointer;}
 

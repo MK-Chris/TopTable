@@ -490,6 +490,7 @@ IF action == "create";
   <legend>[% c.maketext("events.legend.tournament.first-round-details") %]</legend>
   
 [%
+# Round creation fields for round 1, since the round is being created with the event
 PROCESS "html/events/tournaments/rounds/fields.ttkt" first = 1;
 -%]
 </fieldset>

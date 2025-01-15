@@ -3939,6 +3939,9 @@ msgstr "%1 details"
 msgid "events.legend.tournament.first-round-details"
 msgstr "First round details"
 
+msgid "events.legend.tournament.round-details"
+msgstr "Round details"
+
 msgid "events.field.organiser"
 msgstr "Organiser"
 
@@ -3976,13 +3979,10 @@ msgid "events.tournament.field.group-round"
 msgstr "Group round"
 
 msgid "events.tournament.field.group-ranking-template"
-msgstr "Ranking template"
-
-msgid "events.tournament.field.match-template"
 msgstr "Group table ranking template"
 
 msgid "events.tournament.field.match-template"
-msgstr "Match template"
+msgstr "Match template (optional)"
 
 msgid "events.none"
 msgstr "There are no events to view."
@@ -4145,6 +4145,24 @@ msgstr "Please enter a reason for the points adjustment."
 
 msgid "tournament.team.update.success"
 msgstr "A points adjustment has been created."
+
+msgid "events.tournaments.rounds.heading.matches"
+msgstr "Matches"
+
+msgid "events.tournaments.rounds.heading.summary"
+msgstr "Round summary"
+
+msgid "events.tournaments.rounds.date"
+msgstr "Date"
+
+msgid "events.tournaments.rounds.date.week-beginning"
+msgstr "Week beginning %1"
+
+msgid "events.tournaments.rounds.venue"
+msgstr "Venue"
+
+msgid "events.tournaments.rounds.venue-use-home-team"
+msgstr "Use home team&#39;s venue"
 
 ### Reports
 msgid "reports.name.loan-players"
@@ -5176,6 +5194,12 @@ msgstr "Reorder"
 
 msgid "admin.edit-round"
 msgstr "Edit round %1 of %2"
+
+msgid "admin.add-next-round"
+msgstr "Add the next round to %1"
+
+msgid "admin.add-next-round-crumbs"
+msgstr "Add the next round"
 
 # Currently only used for people, but could be expanded, so keep it generic
 msgid "admin.import"
@@ -6618,23 +6642,26 @@ msgstr "Entrants to tournaments are teams and the matches follow the same specif
 msgid "tournaments.type.team"
 msgstr "Team tournament"
 
-msgid "tournaments.round.details"
-msgstr "Tournament round details"
-
 msgid "tournaments.rounds.field.name"
 msgstr "Name (optional)"
 
 msgid "tournaments.rounds.placeholder.name"
-msgstr "Left blank, the name will be &quot;Round X&quot;"
+msgstr "Left blank, the name will be &quot;Round %1&quot;"
 
 msgid "tournaments.rounds.field.group-round"
 msgstr "Group round"
 
-msgid "tournaments.rounds.field.date"
+msgid "tournaments.rounds.field.week-beginning"
+msgstr "Week beginning"
+
+msgid "tournaments.rounds.field.date-singles"
+msgstr "Date (optional)"
+
+msgid "tournaments.rounds.field.date-doubles"
 msgstr "Date (optional)"
 
 msgid "tournaments.rounds.field.date-team"
-msgstr "Date (leave blank to use home team nights)"
+msgstr "Date (tick &#39;Week beginning&#39; to use team home nights)"
 
 msgid "tournaments.rounds.field.date-individual"
 msgstr "Date (leave blank to use the tournament date)"
@@ -6896,6 +6923,12 @@ msgstr "The ranking template is invalid; please supply a valid template, or dese
 
 msgid "events.tournaments.rounds.form.error.table-ranking-template-blank"
 msgstr "The ranking template is was not supplied; please supply a valid template, or deselect the &#39;Group round&#39; field."
+
+msgid "tournaments.rounds.form.error.date-should-be-monday"
+msgstr "The week beginning option was selected, so the date selected must be a Monday."
+
+msgid "tournaments.rounds.form.error.date-required"
+msgstr "Please submit a date for the round."
 
 msgid "events.tournaments.rounds.delete-matches.explain"
 msgstr "Delete %1 matches in %2?  The matches will need to be recreated."

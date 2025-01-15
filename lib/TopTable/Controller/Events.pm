@@ -3,6 +3,7 @@ use Moose;
 use namespace::autoclean;
 use HTML::Entities;
 use JSON;
+use DDP;
 
 BEGIN { extends 'Catalyst::Controller'; }
 
@@ -405,12 +406,14 @@ sub prepare_form_event :Private {
       $c->uri_for("/static/script/standard/datepicker.js"),
       $c->uri_for("/static/script/standard/prettycheckable.js"),
       $c->uri_for("/static/script/events/create-edit.js"),
+      $c->uri_for("/static/script/events/tournaments/rounds/create-edit.js"),
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
       $c->uri_for("/static/css/tokeninput/token-input-tt2.css"),
       $c->uri_for("/static/css/prettycheckable/prettyCheckable.css"),
     ],
+    create_event => 1,
     tokeninput_confs => $tokeninput_confs,
     venues => [$c->model("DB::Venue")->active_venues],
     event_types => [$c->model("DB::LookupEventType")->all_types],
@@ -1390,6 +1393,35 @@ sub round_view :Private {
     
     $template = "view-groups";
   } else {
+    # Grab the matches and check if there are handicapped ones in there
+    my $matches = $c->model("DB::TeamMatch")->matches_in_tourn_round({round => $round});
+    
+    # Add handicapped flag for template / JS if there are handicapped matches
+    my $handicapped = $matches->handicapped_matches->count ? "/hcp" : "";
+    
+    @external_scripts = (
+      $c->uri_for("/static/script/plugins/responsive-tabs/jquery.responsiveTabs.mod.js"),
+      $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
+      $c->uri_for("/static/script/standard/vertical-table.js"),
+      $c->uri_for("/static/script/events/tournaments/rounds$handicapped/view.js"),
+    );
+    
+    @external_styles = (
+      $c->uri_for("/static/css/responsive-tabs/responsive-tabs.css"),
+      $c->uri_for("/static/css/responsive-tabs/style-jqueryui.css"),
+      $c->uri_for("/static/css/chosen/chosen.min.css"),
+      $c->uri_for("/static/css/datatables/dataTables.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/fixedColumns.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/rowGroup.dataTables.min.css"),
+    );
+    
     $template = "view";
   }
   
@@ -1435,32 +1467,16 @@ sub edit_round :Chained("rounds_current_season") :PathPart("edit") :Args(0) {
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.edit-events"), 1]);
   
   $c->stash({
-    template => "html/events/tournaments/rounds/edit.ttkt",
-    external_scripts => [
-      $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
-      $c->uri_for("/static/script/standard/chosen.js"),
-      $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
-      $c->uri_for("/static/script/standard/prettycheckable.js"),
-      $c->uri_for("/static/script/templates/match/individual/create-edit.js"),
-    ],
-    external_styles => [
-      $c->uri_for("/static/css/chosen/chosen.min.css"),
-      $c->uri_for("/static/css/prettycheckable/prettyCheckable.css"),
-    ],
     form_action => $c->uri_for_action("/events/do_edit_round", [$event->url_key, $round->url_key]),
-    team_match_templates => [$c->model("DB::TemplateMatchTeam")->all_templates],
-    ind_match_templates => [$c->model("DB::TemplateMatchIndividual")->all_templates],
-    rank_templates => [$c->model("DB::TemplateLeagueTableRanking")->all_templates],
-    venues => [$c->model("DB::Venue")->active_venues],
-    view_online_display => "Editing tournament rounds",
-    view_online_link => 0,
   });
   
   # Breadcrumbs
   push(@{$c->stash->{breadcrumbs}}, {
-    path => $c->uri_for("/templates/match/individual/create"),
-    label => $c->maketext("admin.create"),
+    path => $c->uri_for("/events/edit_round", [$event->url_key, $round->url_key]),
+    label => $c->maketext("admin.edit"),
   });
+  
+  $c->detach("prepare_form_round", [qw( create )]);
 }
 
 =head2 do_edit_round
@@ -1479,6 +1495,98 @@ sub do_edit_round :Chained("rounds_current_season") :PathPart("do-edit-round") :
   
   # Forward to the create / edit routine
   $c->detach("process_form", [qw( round edit )]);
+}
+
+=head2 add_next_round
+
+Show the form to add the next round to this event.
+
+=cut
+
+sub add_next_round :Chained("base_current_season") :PathPart("add-next-round") :Args(0) {
+  my ( $self, $c ) = @_;
+  my $event = $c->stash->{event};
+  my $enc_name = $c->stash->{enc_name};
+  my $season = $c->stash->{season};
+  my $event_type = $c->stash->{event_type};
+  
+  # If this isn't a tournament, there are no rounds to add, so show a 404
+  if ( $event_type ne "single_tournament" ) {
+    $c->detach(qw(TopTable::Controller::Root default));
+    return;
+  }
+  
+  if ( $season->complete ) {
+    # The stashed season is complete (this is chained from the base_current_season routine, which gets the current or last complete season) so we can't edit the event
+    $c->response->redirect($c->uri_for("/events/view_current_season", [$event->url_key],
+                                {mid => $c->set_status_msg({error => $c->maketext("events.edit.error.no-current-season")})}));
+    $c->detach;
+    return;
+  }
+  
+  # Don't cache this page.
+  $c->response->header("Cache-Control" => "no-cache, no-store, must-revalidate");
+  $c->response->header("Pragma" => "no-cache");
+  $c->response->header("Expires" => 0);
+  
+  # Check that we are authorised to edit events
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.edit-events"), 1]);
+  
+  # Breadcrumbs
+  push(@{$c->stash->{breadcrumbs}}, {
+    path => $c->uri_for("/events/add_next_round", [$event->url_key]),
+    label => $c->maketext("admin.add-next-round-crumbs"),
+  });
+  
+  $c->stash({
+    form_action => $c->uri_for_action("/events/do_add_next_round", [$event->url_key]),
+  });
+  
+  $c->detach("prepare_form_round", [qw( create )]);
+}
+
+=head2 do_add_next_round
+
+Process the form to add the next round.
+
+=cut
+
+sub do_add_next_round :Chained("base_current_season") :PathPart("do-add-next-round") :Args(0) {
+  my ( $self, $c ) = @_;
+  
+  # Forward to the create / edit routine
+  $c->detach("process_form", [qw( round create )]);
+}
+
+=head2 prepare_form_round
+
+Prepare and show the form to create or edit a round.
+
+=cut
+
+sub prepare_form_round :Private {
+  my ( $self, $c ) = @_;
+  
+  $c->stash({
+    template => "html/events/tournaments/rounds/create-edit.ttkt",
+    external_scripts => [
+      $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
+      $c->uri_for("/static/script/standard/chosen.js"),
+      $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
+      $c->uri_for("/static/script/standard/prettycheckable.js"),
+      $c->uri_for("/static/script/events/tournaments/rounds/create-edit.js"),
+    ],
+    external_styles => [
+      $c->uri_for("/static/css/chosen/chosen.min.css"),
+      $c->uri_for("/static/css/prettycheckable/prettyCheckable.css"),
+    ],
+    team_match_templates => [$c->model("DB::TemplateMatchTeam")->all_templates],
+    ind_match_templates => [$c->model("DB::TemplateMatchIndividual")->all_templates],
+    rank_templates => [$c->model("DB::TemplateLeagueTableRanking")->all_templates],
+    venues => [$c->model("DB::Venue")->active_venues],
+    view_online_display => "Editing tournament rounds",
+    view_online_link => 0,
+  });
 }
 
 =head2 groups_current_season, groups_specific_season
@@ -2430,15 +2538,24 @@ sub process_form :Private {
   my $response = {}; # Store the response from the form processing
   
   if ( $type eq "event" ) {
-    my @field_names = qw( name event_type tournament_type venue organiser start_hour start_minute all_day end_hour end_minute default_team_match_template default_individual_match_template allow_loan_players allow_loan_players_above allow_loan_players_below allow_loan_players_across allow_loan_players_same_club_only allow_loan_players_multiple_teams loan_players_limit_per_player loan_players_limit_per_player_per_team loan_players_limit_per_player_per_opposition loan_players_limit_per_team void_unplayed_games_if_both_teams_incomplete forefeit_count_averages_if_game_not_started missing_player_count_win_in_averages rules round_name round_group round_group_rank_template round_team_match_template round_individual_match_template round_venue );
+    my @field_names = qw( name event_type tournament_type venue organiser start_hour start_minute all_day end_hour end_minute default_team_match_template default_individual_match_template allow_loan_players allow_loan_players_above allow_loan_players_below allow_loan_players_across allow_loan_players_same_club_only allow_loan_players_multiple_teams loan_players_limit_per_player loan_players_limit_per_player_per_team loan_players_limit_per_player_per_opposition loan_players_limit_per_team void_unplayed_games_if_both_teams_incomplete forefeit_count_averages_if_game_not_started missing_player_count_win_in_averages rules round_name round_group round_group_rank_template round_team_match_template round_individual_match_template round_week_commencing round_venue );
     @processed_field_names = ( @field_names, qw( start_date end_date round_date ) );
     
-    # The rest of the error checking is done in the Club model
     $response = $c->model("DB::Event")->create_or_edit($action, {
       logger => sub{ my $level = shift; $c->log->$level( @_ ); },
       event => $event,
       start_date => defined($c->req->params->{start_date}) ? $c->i18n_datetime_format_date->parse_datetime($c->req->params->{start_date}) : undef,
       end_date => defined($c->req->params->{end_date}) ? $c->i18n_datetime_format_date->parse_datetime($c->req->params->{end_date}) : undef,
+      round_date => defined($c->req->params->{round_date}) ? $c->i18n_datetime_format_date->parse_datetime($c->req->params->{round_date}) : undef,
+      map {$_ => $c->req->params->{$_}} @field_names, # All the fields from the form - put this last because otherwise the following elements are seen as part of the map
+    });
+  } elsif ( $type eq "round" ) {
+    @field_names =  qw( round_name round_team_match_template round_individual_match_template round_week_commencing round_venue );
+    @processed_field_names = ( @field_names, qw( round_date ) );
+    my $round_number = defined($round) ? $round->round_number : undef;
+    
+    $response = $tournament->create_or_edit_round($round_number, {
+      logger => sub{ my $level = shift; $c->log->$level( @_ ); },
       round_date => defined($c->req->params->{round_date}) ? $c->i18n_datetime_format_date->parse_datetime($c->req->params->{round_date}) : undef,
       map {$_ => $c->req->params->{$_}} @field_names, # All the fields from the form - put this last because otherwise the following elements are seen as part of the map
     });
@@ -2523,11 +2640,18 @@ sub process_form :Private {
       $obj_name = $event->name;
       %log_ids = (id => $event->id);
       $redirect_uri = $c->uri_for_action("/events/view_current_season", [$event->url_key], {mid => $mid});
+    } elsif ( $type eq "round" ) {
+      $round = $response->{round};
+      $obj_type = "event-round";
+      $log_obj = $round;
+      $obj_name = sprintf("%s: %s", $event->name, $round->name);
+      %log_ids = (id => $round->id);
+      $redirect_uri = $c->uri_for_action("/events/round_view_current_season", [$event->url_key, $round->url_key], {mid => $mid});
     } elsif ( $type eq "group" ) {
       $group = $response->{group} if $action eq "create";
       $obj_type = "event-group";
       $log_obj = $group;
-      $obj_name = sprintf("%s %s", $event->name, $group->name);
+      $obj_name = sprintf("%s: %s", $event->name, $group->name);
       %log_ids = (id => $group->id);
       $redirect_uri = $c->uri_for_action("/events/group_view_current_season", [$event->url_key, $round->url_key, $group->url_key], {mid => $mid});
     } elsif ( $type eq "team" ) {
@@ -2547,7 +2671,6 @@ sub process_form :Private {
       $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["team-match", "create", $response->{match_ids}, $response->{match_names}]);
     } else {
       # Everything else is related to the event, group or round
-      $c->log->debug("Logging event for $obj_type, $action");
       $c->forward("TopTable::Controller::SystemEventLog", "add_event", [$obj_type, $action, \%log_ids, $obj_name]);
     }
   } else {
@@ -2557,6 +2680,12 @@ sub process_form :Private {
         $redirect_uri = $c->uri_for("/events/create", {mid => $mid});
       } else {
         $redirect_uri = $c->uri_for_action("/events/edit", [$event->url_key], {mid => $mid});
+      }
+    } elsif ( $type eq "round" ) {
+      if ( $action eq "create" ) {
+        $redirect_uri = $c->uri_for_action("/events/add_next_round", [$event->url_key], {mid => $mid});
+      } elsif ( $action eq "edit" ) {
+        $redirect_uri = $c->uri_for_action("/events/edit_round", [$event->url_key, $round->url_key], {mid => $mid});
       }
     } elsif ( $type eq "group" ) {
       if ( $action eq "create" ) {
