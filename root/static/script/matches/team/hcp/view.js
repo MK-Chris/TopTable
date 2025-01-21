@@ -31,10 +31,11 @@ $(document).ready(function(){
     searching: false,
     columns: [
       {responsivePriority: 1}, // Team
-      {responsivePriority: 3}, // Legs won
-      {responsivePriority: 2}, // Legs average
-      {responsivePriority: 5}, // Points won
-      {responsivePriority: 4} // Points average
+      {responsivePriority: 2}, // Handicap
+      {responsivePriority: 4}, // Legs won
+      {responsivePriority: 3}, // Legs average
+      {responsivePriority: 6}, // Points won
+      {responsivePriority: 5} // Points average
     ]
   });
   

@@ -15,10 +15,12 @@ $(document).ready(function(){
     searching: false,
     columns: [
       {responsivePriority: 1}, // Team
-      {responsivePriority: 3}, // Legs won
-      {responsivePriority: 2}, // Legs average
-      {responsivePriority: 5}, // Points won
-      {responsivePriority: 4} // Points average
+      {responsivePriority: 2}, // Division
+      {responsivePriority: 3}, // Handicap
+      {responsivePriority: 5}, // Legs won
+      {responsivePriority: 4}, // Legs average
+      {responsivePriority: 7}, // Points won
+      {responsivePriority: 6} // Points average
     ]
   });
   

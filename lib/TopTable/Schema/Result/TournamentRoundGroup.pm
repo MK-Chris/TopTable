@@ -346,8 +346,12 @@ sub members {
   if ( $entry_type eq "team" ) {
     $member_rel = "tournament_round_teams";
     $attrib{prefetch} = {
-      tournament_team => {
-        team_season => [qw( team )]
+      prefetch => {
+        tournament_team => {
+          team_season => [qw( team ), {
+            club_season => [qw( club )],
+          }]
+        }
       }
     };
   } elsif ( $entry_type eq "singles" ) {

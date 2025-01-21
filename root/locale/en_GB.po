@@ -236,6 +236,9 @@ msgid "menu.text.averagefilter"
 msgstr "Average Filters"
 
 ### Title link text
+msgid "title.link.calendar.download"
+msgstr "Download these events to your calendar"
+
 msgid "title.link.text.view-event"
 msgstr "View %1"
 
@@ -2699,9 +2702,8 @@ msgstr "Webcal link for subscribing to the calendar"
 msgid "calendar-types.link.copy"
 msgstr "Copy"
 
-### iCal downloads
-msgid "calendar.download"
-msgstr "Download these events to your calendar"
+msgid "links.view-league"
+msgstr "View the league
 
 ### Matches
 msgid "matches.versus-abbreviation"
@@ -2848,6 +2850,12 @@ msgstr "Scheduled game"
 
 msgid "matches.game.field.result"
 msgstr "Result"
+
+msgid "matches.game.field.scores"
+msgstr "Games"
+
+msgid "matches.game.field.total-score"
+msgstr "Total score"
 
 msgid "matches.game.field.score"
 msgstr "Score"
@@ -3175,6 +3183,12 @@ msgstr "No players have been entered for the match yet."
 
 msgid "matches.summaries.heading.team"
 msgstr "Team"
+
+msgid "matches.summaries.heading.division"
+msgstr "League division"
+
+msgid "matches.summaries.heading.handicap"
+msgstr "Handicap"
 
 msgid "matches.summaries.heading.games-played"
 msgstr "Games played"
@@ -4152,6 +4166,21 @@ msgstr "Matches"
 msgid "events.tournaments.rounds.heading.summary"
 msgstr "Round summary"
 
+msgid "events.tournaments.rounds.heading.round"
+msgstr "Round name"
+
+msgid "events.tournaments.rounds.heading.date"
+msgstr "Date"
+
+msgid "events.tournaments.rounds.matches-dates-not-set"
+msgstr "Match dates not yet set."
+
+msgid "events.tournaments.rounds.date-range"
+msgstr "%1 to %2"
+
+msgid "events.tournaments.rounds.heading.venue"
+msgstr "Venue"
+
 msgid "events.tournaments.rounds.date"
 msgstr "Date"
 
@@ -4162,7 +4191,7 @@ msgid "events.tournaments.rounds.venue"
 msgstr "Venue"
 
 msgid "events.tournaments.rounds.venue-use-home-team"
-msgstr "Use home team&#39;s venue"
+msgstr "Home team&#39;s venue"
 
 ### Reports
 msgid "reports.name.loan-players"
@@ -6670,10 +6699,16 @@ msgid "tournaments.rounds.field.venue"
 msgstr "Venue (optional)"
 
 msgid "tournaments.rounds.field.venue-team"
-msgstr "Venue (leave blank to use home team venues)"
+msgstr "Venue (leave blank for home venue)"
 
-msgid "tournaments.rounds.field.venue-individual"
+msgid "tournaments.rounds.field.venue-singles"
 msgstr "Venue (leave blank to use the tournament venue)"
+
+msgid "tournaments.rounds.field.venue-doubles"
+msgstr "Venue (leave blank to use the tournament venue)"
+
+msgid "tournaments.rounds.field.round-of"
+msgstr "Number of entrants"
 
 msgid "tournaments.rounds.group.details"
 msgstr "Group %1 details"
@@ -6689,6 +6724,9 @@ msgstr "You can&#39;t add or edit rounds in a tournament that&#39;s not in the c
 
 msgid "tournaments.form.error.round-doesnt-exist"
 msgstr "Trying to edit a tournament round that doesn&#39;t exist."
+
+msgid "tournaments.form.error.rounds-complete"
+msgstr "All rounds for %1 have already been created."
 
 msgid "tournaments.form.error.round-name-exists"
 msgstr "The name &#39;%1&#39; is already in use for another round in %2."
@@ -6710,6 +6748,18 @@ msgstr "The venue for the round is invalid."
 
 msgid "tournaments.form.error.venue-inactive"
 msgstr "%1 is not an active venue; you must select an active venue, or edit %1 to make it active first."
+
+msgid "tournaments.form.error.number-of-entrants-required"
+msgstr "This will be the first knock-out round, so the number of entrants must be specified so the number of rounds required can be calculated."
+
+msgid "tournaments.form.error.number-of-entrants-invalid"
+msgstr "Please enter the number of entrants as a positive number."
+
+msgid "tournaments.form.error.number-of-entrants-invalid-min"
+msgstr "Please enter the number of entrants as a number above %1."
+
+msgid "tournaments.form.error.number-of-entrants-too-low"
+msgstr "The number of entrants must be at least %1, since the group round that precedes this has %1 automatic qualification places."
 
 msgid "tournaments.round.groups.details"
 msgstr "Group details"
@@ -6743,6 +6793,15 @@ msgstr "Create a group for %1"
 
 msgid "tournaments.round.group.form.error.season-not-current"
 msgstr "You can&#39;t add or edit groups in a tournament that&#39;s not in the current season."
+
+msgid "events.tournaments.rounds.groups.create.error.season-complete"
+msgstr "The season is complete, groups cannot be added."
+
+msgid "events.tournaments.rounds.groups.create.error.not-group-round"
+msgstr "%1 is not a group round, so cannot have groups."
+
+msgid "events.tournaments.rounds.groups.create.error.matches-created"
+msgstr "Groups can no longer be added because matches in this round have already been created; if a group needs to be created, delete the existing matches and add the group, before recreating."
 
 msgid "tournaments.round.group.form.error.not-group-round"
 msgstr "This round is not a group round and can&#39;t have groups added to it."
@@ -6925,7 +6984,7 @@ msgid "events.tournaments.rounds.form.error.table-ranking-template-blank"
 msgstr "The ranking template is was not supplied; please supply a valid template, or deselect the &#39;Group round&#39; field."
 
 msgid "tournaments.rounds.form.error.date-should-be-monday"
-msgstr "The week beginning option was selected, so the date selected must be a Monday."
+msgstr "The week beginning option was selected, so the date selected must be a Monday - the date selected falls on a %1."
 
 msgid "tournaments.rounds.form.error.date-required"
 msgstr "Please submit a date for the round."

@@ -146,8 +146,8 @@ __PACKAGE__->belongs_to(
   {
     is_deferrable => 1,
     join_type     => "LEFT",
-    on_delete     => "RESTRICT",
-    on_update     => "RESTRICT",
+    on_delete     => "SET NULL",
+    on_update     => "CASCADE",
   },
 );
 
@@ -167,8 +167,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07051 @ 2025-01-14 23:27:22
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:nIRMSwrYH3Sc0Rb7Pqyarg
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2025-01-16 08:32:19
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:aGEZxtp3FbRMm393ARG9uQ
 
 # Enable automatic date handling
 __PACKAGE__->add_columns(

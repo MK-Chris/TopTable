@@ -39,9 +39,9 @@ ELSE;
   CALL end_date.set_time_zone(c.timezone);
   event_type = event.event_type.id;
   tournament_type = event_season.event_detail.entry_type.id;
-  online_entry_check = event.allow_online_entries;
-  def_team_match_tpl = event.default_team_match_template;
-  def_ind_match_tpl = event.default_individual_match_template;
+  online_entry_check = event_detail.allow_online_entries;
+  def_team_match_tpl = event_detail.default_team_match_template.id;
+  def_ind_match_tpl = event_detail.default_individual_match_template.id;
   venue = event_season.venue;
   start_hour = start_date.hour;
   start_minute = start_date.minute;
@@ -92,22 +92,29 @@ CALL c.log.debug("var name: " _ event_name);
     <div class="clear-fix"></div>
   </div>
   
+[%
+IF action == "edit";
+  SET disabled = ' disabled="disabled"';
+ELSE;
+  SET disabled = "";
+END;
+-%]
   <div class="label-field-container">
     <label for="event_type">[% c.maketext("events.field.event-type") %]</label>
     <div class="field-container">
-      <select id="event_type" name="event_type" data-placeholder="[% c.maketext("events.field.event-type") %]">
+      <select id="event_type" name="event_type" data-placeholder="[% c.maketext("events.field.event-type") %]"[% disabled %]>
         <option value=""></option>
 [%
-FOREACH type = event_types;
-  IF type.id == event_type;
-    SET selected_text = ' selected="selected"';
-  ELSE;
-    SET selected_text = '';
-  END;
+  FOREACH type = event_types;
+    IF type.id == event_type;
+      SET selected_text = ' selected="selected"';
+    ELSE;
+      SET selected_text = '';
+    END;
 -%]
         <option value="[% type.id %]" title="[% c.maketext("event-type.description." _ type.id) %]"[% selected_text %]>[% c.maketext("event-type.name." _ type.id) %]</option>
 [%
-END;
+  END;
 -%]
       </select>
     </div>
@@ -121,7 +128,7 @@ END;
   <div class="label-field-container">
     <label for="tournament_type">[% c.maketext("events.field.tournament-type") %]</label>
     <div class="field-container">
-      <select id="tournament_type" name="tournament_type" data-placeholder="[% c.maketext("events.field.tournament-type") %]">
+      <select id="tournament_type" name="tournament_type" data-placeholder="[% c.maketext("events.field.tournament-type") %]"[% disabled %]>
         <option value=""></option>
 [%
 FOREACH type = tournament_types;
@@ -150,10 +157,17 @@ END;
     <input type="checkbox" id="allow_online_entries" name="allow_online_entries" value="1"[% checked %] data-label="[% c.maketext("events.field.allow-online-entries") %]" />
   </div>
   
+[%
+IF event_detail.can_edit_default_templates;
+  SET template_disabled = "";
+ELSE;
+  SET template_disabled = ' disabled="disabled"';
+END;
+-%]
   <div class="label-field-container" id="def-team-match-tpl-container">
     <label for="default_team_match_template">[% c.maketext("events.field.tournament.default-match-template") %]</label>
     <div class="field-container">
-      <select id="default_team_match_template" name="default_team_match_template" data-placeholder="[% c.maketext("events.field.tournament.default-match-template") %]">
+      <select id="default_team_match_template" name="default_team_match_template" data-placeholder="[% c.maketext("events.field.tournament.default-match-template") %]"[% template_disabled %]>
         <option value=""></option>
 [%
 FOREACH tpl IN team_match_templates;
@@ -175,7 +189,7 @@ END;
   <div class="label-field-container" id="def-ind-match-tpl-container">
     <label for="default_individual_match_template">[% c.maketext("events.field.tournament.default-match-template") %]</label>
     <div class="field-container">
-      <select id="default_individual_match_template" name="default_individual_match_template" data-placeholder="[% c.maketext("events.field.tournament.default-match-template") %]">
+      <select id="default_individual_match_template" name="default_individual_match_template" data-placeholder="[% c.maketext("events.field.tournament.default-match-template") %]"[% template_disabled %]>
         <option value=""></option>
 [%
 FOREACH tpl IN ind_match_templates;
@@ -484,14 +498,13 @@ END;
 
 [%
 # Only show this on creation, if we're editing, round 1 will exist
-IF action == "create";
+IF action == "create" OR new_season;
 %]
 <fieldset id="tournament-round-container">
   <legend>[% c.maketext("events.legend.tournament.first-round-details") %]</legend>
   
 [%
-# Round creation fields for round 1, since the round is being created with the event
-PROCESS "html/events/tournaments/rounds/fields.ttkt" first = 1;
+  PROCESS "html/events/tournaments/rounds/fields.ttkt" first = 1;
 -%]
 </fieldset>
 [%

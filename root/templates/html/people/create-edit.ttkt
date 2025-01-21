@@ -183,7 +183,7 @@ END;
 IF action == "edit" and person_season and !c.flash.team_changed;
 -%]
     <div class="label-field-container" id="person-team-not-editable">
-      <label for="change_team">[% c.maketext("people.form.field.team") | html_entity %]</label>
+      <label for="change_team">[% c.maketext("people.form.field.team") %]</label>
       <div class="field-container">
         [% person_season.team_season.team.club.short_name | html_entity %] [% person_season.team_season.team.name | html_entity %] <input type="button" id="change_team" name="button" value="[% c.maketext("people.form.button.change-team") %]" />
       </div>
@@ -271,7 +271,7 @@ END;
 <div class="clear-fix"></div>
     
 
-<input type="submit" name="Submit" value="[% c.maketext("form.button.save") | html_entity %]" />
+<input type="submit" name="Submit" value="[% c.maketext("form.button.save") %]" />
 </form>
 
 [%
@@ -279,7 +279,7 @@ IF action == "edit" and person_season;
   first_name_html = person.first_name | html_entity;
   team_html = person_season.team_season.full_name | html_entity;
 -%]
-<div id="dialog" title="[% c.maketext("people.form.dialog.change-team.title") | html_entity %]">[% c.maketext("people.form.dialog.change-team", first_name_html, team_html) %]</div>
+<div id="dialog" title="[% c.maketext("people.form.dialog.change-team.title") %]">[% c.maketext("people.form.dialog.change-team", first_name_html, team_html) %]</div>
 [%
 END;
 -%]

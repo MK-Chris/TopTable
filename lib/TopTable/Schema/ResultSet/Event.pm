@@ -160,7 +160,8 @@ sub create_or_edit {
   my $round_individual_match_template = $params->{round_individual_match_template} || undef;
   my $round_date = $params->{round_date} || undef;
   my $round_week_commencing = $params->{round_week_commencing} || undef;
-  my $round_venue = $params->{round_venue} || 0;
+  my $round_venue = $params->{round_venue} || undef;
+  my $round_of = $params->{round_of};
   
   # Setup the dates in a hash for looping through
   my @dates = ( $start_date, $end_date, $round_date );
@@ -181,6 +182,13 @@ sub create_or_edit {
     completed => 0,
   };
   
+  if ( !defined($season) ) {
+    my $action_desc = $action eq "create" ? $lang->maketext("admin.message.created") : $lang->maketext("admin.message.edited");
+    push(@{$response->{error}}, $lang->maketext("events.form.error.no-current-season", $action_desc));
+    return $response;
+  }
+  
+  my ( $new_season, $event_season, $detail );
   if ( $action ne "create" and $action ne "edit" ) {
     # Invalid action passed
     push(@{$response->{error}}, $lang->maketext("admin.form.invalid-action", $action));
@@ -195,11 +203,21 @@ sub create_or_edit {
       # Another fatal error
       return $response;
     }
+  } else {
+    # Action is create - we will definitely need a new season object, since the event itself doesn't exist yet.
+    $new_season = 1;
   }
   
-  unless ( defined($season) ) {
-    my $action_desc = $action eq "create" ? $lang->maketext("admin.message.created") : $lang->maketext("admin.message.edited");
-    push(@{$response->{error}}, $lang->maketext("events.form.error.no-current-season", $action_desc));
+  if ( $action eq "edit" ) {
+    $event_season = $event->get_season($season);
+    
+    if ( defined($event_season) ) {
+      $detail = $event_season->event_detail;
+      $new_season = 0;
+    } else {
+      # We don't already have a season object, so the new instance needs creating
+      $new_season = 1;
+    }
   }
   
   # Required fields - certain keys get deleted depending on the values of other fields
@@ -217,62 +235,75 @@ sub create_or_edit {
     push(@{$response->{error}}, $lang->maketext("events.form.error.name-blank"));
   }
   
-  if ( $action eq "create" or $event->can_edit_event_type ) {
+  my $can_edit_templates;
+  if ( $action eq "edit" ) {
+    # Editing and the event is specified, check we can edit
+    # If the event for some reason isn't specified, we'll assume we can edit (this will allow other errors, i.e., invalid event type, to show)
+    $can_edit_templates = defined($event) ? $event->can_edit_default_templates : 1;
+  } elsif ( $action eq "create" ) {
+    # We can always edit if we're creating
+    $can_edit_templates = 1;
+  }
+  
+  # Get the event type from the DB if we are editing - this means we can carry out the rest of the checks
+  $event_type = $event->event_type if $action eq "edit";
+  if ( defined($event_type) ) {
+    # We have an event type passed, make sure it's either a valid event type object, or an ID we can look up
+    $event_type = $schema->resultset("LookupEventType")->find($event_type) unless $event_type->isa("TopTable::Schema::Result::LookupEventType");
+    
     if ( defined($event_type) ) {
-      # We have an event type passed, make sure it's either a valid event type object, or an ID we can look up
-      $event_type = $schema->resultset("LookupEventType")->find($event_type) unless $event_type->isa("TopTable::Schema::Result::LookupEventType");
-      
-      if ( defined($event_type) ) {
-        # Valid event type, check if it's a tournament
-        if ( $event_type->id eq "single_tournament" ) {
-          # If the event is a single-event tournament, then we have to have some default templates (team or individual, depending on entry type) and first round details
-          ( $default_template_required, $first_round_required ) = qw( 1 1 );
+      # Valid event type, check if it's a tournament
+      if ( $event_type->id eq "single_tournament" ) {
+        # If the event is a single-event tournament, then we have to have some default templates (team or individual, depending on entry type) and first round details
+        ( $default_template_required, $first_round_required ) = qw( 1 1 );
+        
+        # Check we have a tournament type
+        # If we can't edit the type, then we need to leave it as it already is
+        $tournament_type = $event->tournament_entry_type if $action eq "edit";
+        
+        if ( defined($tournament_type) ) {
+          $tournament_type = $schema->resultset("LookupTournamentType")->find($tournament_type) unless $tournament_type->isa("TopTable::Schema::Result::LookupTournamentType");
           
-          # Check we have a tournament type
           if ( defined($tournament_type) ) {
-            $tournament_type = $schema->resultset("LookupTournamentType")->find($tournament_type) unless $tournament_type->isa("TopTable::Schema::Result::LookupTournamentType");
-            
-            if ( defined($tournament_type) ) {
-              if ( $tournament_type->id eq "team" ) {
-                # Event type is 'single_tournament' and tournament type is 'team', so the venue, date, start time, all day flag and finish time are cleared
-                undef($venue);
-                undef($start_hour);
-                undef($start_minute);
-                undef($all_day);
-                undef($end_hour);
-                undef($end_minute);
-                ( $venue_required, $start_date_required, $start_time_required, $allow_online_entries ) = qw( 0 0 0 0 );
-              } else {
-                # Tournament, but not a team tournament - sanity check the allow online entries flag to ensure it's 1 or 0 but nothing else
-                $allow_online_entries = $allow_online_entries ? 1 : 0;
-              }
+            if ( $tournament_type->id eq "team" ) {
+              # Event type is 'single_tournament' and tournament type is 'team', so the venue, date, start time, all day flag and finish time are cleared
+              undef($venue);
+              undef($start_hour);
+              undef($start_minute);
+              undef($all_day);
+              undef($end_hour);
+              undef($end_minute);
+              ( $venue_required, $start_date_required, $start_time_required, $allow_online_entries ) = qw( 0 0 0 0 );
             } else {
-              # Invalid tournament type
-              push(@{$response->{error}}, $lang->maketext("events.form.error.tournament-type-invalid"));
+              # Tournament, but not a team tournament - sanity check the allow online entries flag to ensure it's 1 or 0 but nothing else
+              $allow_online_entries = $allow_online_entries ? 1 : 0;
             }
           } else {
-            # Tournament type not given
-            push(@{$response->{error}}, $lang->maketext("events.form.error.tournament-type-blank"));
+            # Invalid tournament type
+            push(@{$response->{error}}, $lang->maketext("events.form.error.tournament-type-invalid"));
           }
         } else {
-          # Not a tournament, so we don't need a tournament type
-          undef($tournament_type);
+          # Tournament type not given
+          push(@{$response->{error}}, $lang->maketext("events.form.error.tournament-type-blank"));
         }
       } else {
-        # Event type invalid
-        push(@{$response->{error}}, $lang->maketext("events.form.error.event-type-invalid"));
+        # Not a tournament, so we don't need a tournament type
+        undef($tournament_type);
       }
     } else {
-      # Event type blank
-      push(@{$response->{error}}, $lang->maketext("events.form.error.event-type-blank"));
+      # Event type invalid
+      push(@{$response->{error}}, $lang->maketext("events.form.error.event-type-invalid"));
     }
+  } else {
+    # Event type blank
+    push(@{$response->{error}}, $lang->maketext("events.form.error.event-type-blank"));
   }
   
   # Ensure the sanitised event / tournament type is passed back
   $response->{fields}{event_type} = $event_type;
   $response->{fields}{tournament_type} = $tournament_type;
   
-  if ( $default_template_required and defined($tournament_type) ) {
+  if ( $default_template_required and defined($tournament_type) and $can_edit_templates ) {
     if ( $tournament_type->id eq "team" ) {
       # Templates have to be team
       if ( defined($default_team_match_template) ) {
@@ -625,21 +656,28 @@ sub create_or_edit {
         name => $name,
         event_type => $event_type->id,
       });
-      
+    } else {
+      $event->update({
+        url_key => $url_key,
+        name => $name,
+      });
+    }
+    
+    if ( $new_season ) {  
       # This needs to be done as create_related, rather than in the above create statement, because we need a handle to the object
       # to be able to create the meeting / tournament
-      my $event_season = $event->create_related("event_seasons", {
+      $event_season = $event->create_related("event_seasons", {
         season => $season->id,
         name => $name,
         start_date_time => $start_date,
         all_day => $all_day,
         end_date_time => $end_date,
-        organiser => $organiser,
-        venue => $venue,
+        organiser => defined($organiser) ? $organiser->id : undef,
+        venue => defined($venue) ? $venue->id : undef,
       });
       
       if ( $event_type->id eq "single_tournament" ) {
-        my $tournament = $event_season->create_related("tournaments", {
+        $detail = $event_season->create_related("tournaments", {
           season => $season->id,
           name => $name,
           entry_type => $tournament_type->id,
@@ -661,7 +699,7 @@ sub create_or_edit {
         });
         
         if ( $first_round_required ) {
-          $round_response = $tournament->create_or_edit_round(undef, {
+          $round_response = $detail->create_or_edit_round(undef, {
             round_name => $round_name,
             round_group => $round_group,
             round_group_rank_template => $round_group_rank_template,
@@ -669,6 +707,7 @@ sub create_or_edit {
             round_individual_match_template => $round_individual_match_template,
             round_date => $round_date,
             round_venue => $round_venue,
+            round_of => $round_of,
           });
           
           # Push any responses we get back to the calling routine
@@ -680,51 +719,53 @@ sub create_or_edit {
           $commit = 0 unless $response->{round_completed};
         }
       } elsif ( $event_type->id eq "meeting" ) {
-        my $meeting = $event_season->create_related("meetings", {season => $season->id});
+        $detail = $event_season->create_related("meetings", {season => $season->id});
       }
-      
-      $response->{completed} = 1 if $commit;
-      push(@{$response->{success}}, $lang->maketext("admin.forms.success", $event->name, $lang->maketext("admin.message.created")));
     } else {
-      if ( $event->can_edit_event_type ) {
-        if ( defined($event_type) and $event_type->id ne $event->event_type->id ) {
-          # Event type has changed, get the old value then update the field
-          my $old_event_type = $event->event_type->id;
-          $event->event_type($event_type->id);
-          
-          # Now depending on the old event type, we need to delete meetings or tournaments
-          if ( $old_event_type eq "single_tournament" ) {
-            # Delete tournament matches
-            
-          } elsif ( $old_event_type eq "meeting" ) {
-            # Delete meetings
-            
-          }
-        }
-      }
-      
-      $event->url_key($url_key);
-      $event->name($name);
-      
-      $event->update;
-      
-      # Update the details for this season
-      my $event_season = $event->single_season($season);
       $event_season->update({
         name => $name,
         start_date_time => $start_date,
         all_day => $all_day,
         end_date_time => $end_date,
-        organiser => $organiser,
-        venue => $venue,
+        organiser => defined($organiser) ? $organiser->id : undef,
+        venue => defined($venue) ? $venue->id : undef,
       });
       
-      $response->{completed} = 1 if $commit;
-      push(@{$response->{success}}, $lang->maketext("admin.forms.success", $event->name, $lang->maketext("admin.message.edited")));
+      if ( $event_type->id eq "single_tournament" ) {
+        my %update = (
+          name => $name,
+          allow_online_entries => $allow_online_entries,
+          allow_loan_players_above => $allow_loan_players_above,
+          allow_loan_players_below => $allow_loan_players_below,
+          allow_loan_players_across => $allow_loan_players_across,
+          allow_loan_players_same_club_only => $allow_loan_players_same_club_only,
+          allow_loan_players_multiple_teams => $allow_loan_players_multiple_teams,
+          loan_players_limit_per_player => $loan_players_limit_per_player,
+          loan_players_limit_per_player_per_team => $loan_players_limit_per_player_per_team,
+          loan_players_limit_per_player_per_opposition => $loan_players_limit_per_player_per_opposition,
+          loan_players_limit_per_team => $loan_players_limit_per_team,
+          void_unplayed_games_if_both_teams_incomplete => $void_unplayed_games_if_both_teams_incomplete,
+          forefeit_count_averages_if_game_not_started => $forefeit_count_averages_if_game_not_started,
+          missing_player_count_win_in_averages => $missing_player_count_win_in_averages,
+        );
+        
+        if ( $can_edit_templates ) {
+          $update{default_team_match_template} = defined($default_team_match_template) ? $default_team_match_template->id : undef;
+          $update{default_individual_match_template} = defined($default_individual_match_template) ? $default_individual_match_template->id : undef; 
+        }
+        
+        $detail->update(\%update);
+      } elsif ( $event_type->id eq "meeting" ) {
+        $detail = $event_season->create_related("meetings", {season => $season->id});
+      }
     }
     
-    # Commit the transaction if there are no errors
-    $transaction->commit if $commit;
+    if ( $commit ) {
+      $response->{completed} = 1;
+      my $msg = $action eq "create" ? $lang->maketext("admin.message.created") : $lang->maketext("admin.message.edited");
+      push(@{$response->{success}}, $lang->maketext("admin.forms.success", $event->name, $lang->maketext("admin.message.created")));
+      $transaction->commit;
+    }
     
     $response->{event} = $event;
   }

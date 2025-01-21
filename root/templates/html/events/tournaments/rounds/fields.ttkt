@@ -135,7 +135,7 @@ END;
   </div>
   
   <div class="label-field-container">
-    <label for="round_venue">[% c.maketext("tournaments.rounds.field.venue") %]</label>
+    <label for="round_venue">[% c.maketext("tournaments.rounds.field.venue-" _ entry_type) %]</label>
     <div class="field-container">
       <select id="round_venue" name="round_venue" data-placeholder="[% venue_label %]">
         <option value=""></option>
@@ -154,4 +154,18 @@ END;
       </select>
     </div>
     <div class="clear-fix"></div>
+[%
+IF first OR !event_detail.has_ko_round;
+  # Show this field if this is going to be the first round (as we will need it if we're not adding the first round as a group round)
+  # OR if there are no knock-out rounds in the tournament yet (i.e., the first round is a group round and this will be the second round)
+-%]
+  <div class="label-field-container" id="round-of-container">
+    <label for="round_of">[% c.maketext("tournaments.rounds.field.round-of") %]</label>
+    <div class="field-container">
+      <input type="number" id="round_of" name="round_of" autocomplete="off" value="[% round.round_of OR c.flash.round_of %]" />
+    </div>
+    <div class="clear-fix"></div>
   </div>
+[%
+END;
+-%]

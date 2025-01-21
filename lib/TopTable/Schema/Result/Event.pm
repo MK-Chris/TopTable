@@ -170,13 +170,13 @@ __PACKAGE__->has_many(
 # Created by DBIx::Class::Schema::Loader v0.07051 @ 2025-01-14 23:27:22
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:ib8OoPGsJeIhr481/YjaxA
 
-=head2 single_season
+=head2 get_season
 
 Get a single specified season associated with this event.
 
 =cut
 
-sub single_season {
+sub get_season {
   my $self = shift;
   my ( $season ) = @_;
   
@@ -196,7 +196,7 @@ sub can_edit_details {
   
   if ( defined($current_season) ) {
     # IF there's an instance this season, we can edit the details of it; if there's not, we can't
-    return defined($self->single_season($current_season)) ? 1 : 0;
+    return defined($self->get_season($current_season)) ? 1 : 0;
   } else {
     # No current season, can't edit details
     return 0;
@@ -260,55 +260,85 @@ sub check_and_delete {
   return $response;
 }
 
-=head2 can_edit_event_type
+=head2 event_detail($season)
 
-Determines whether the event type is editable by searching for previous seasons 
+Get the event details (tournament or meeting) for the specified season.
 
 =cut
 
-sub can_edit_event_type {
+sub event_detail {
+  my $self = shift;
+  my ( $season ) = @_;
+  
+  my $event_season = $self->find_related("event_seasons", {"season.id" => $season->id}, {join => [qw( season )]});
+  return defined($event_season) ? $event_season->event_detail : undef;
+}
+
+=head2 last_event_season
+
+The event_season from the last season this event was used.
+
+=cut
+
+sub last_event_season {
   my $self = shift;
   
-  # We're going to set this to false for now - it's more complex than originally thought, so we'll just not allow editing of event types unless / until I can work out
-  # all the logic
-  return 0;
-  
-  # First search for this event in previous (completed) seasons
-  my $previous_events = $self->search_related("event_seasons", {
-    "season.complete" => 1,
-  }, {
-    join => "season",
-  })->count;
-  
-  # If we have any, we straight away return false, as we can't edit and event type where the event
-  # has already been used in previous seasons.
-  return 0;
-  
-  # Now search for the event-type specific stuff, if there are any
-  if ( $self->event_type->id eq "single-tournament" ) {
-    my $tournament_matches_started = $self->search_related("tournaments", {
-      "team_matches.started" => 1,
-      "team_matches.complete" => 1,
+  return $self->search_related("event_seasons", {}, {
+    join => [qw( season )],
+    order_by => [{
+      -asc => [qw( season.complete )],
     }, {
-      join => {
-        tournament_seasons => {tournament_rounds => "team_matches"}
-      }
-    });
-    
-    return 0 if $tournament_matches_started->count;
-  } elsif ( $self->event_type->id eq "meeting" ) {
-    my $meetings_attended = $self->search_related("event_seasons", {}, {
-      select => ["name", {count => "meeting_attendees.person"}],
-      as => [qw( name attendees )],
-      join => {meetings => "meeting_attendees"},
-      group_by => "id",
-      rows => 1,
-    })->single;
-    
-    return 0 if $meetings_attended->get_column("attendees") > 0;
-  }
+      -desc => [qw( season.start_date season.end_date )],
+    }],
+    rows => 1,
+  })->single;
+}
+
+=head2 can_edit_default_templates
+
+Shortcut to the tournament can_edit_default_templates routine based on the current season.
+
+=cut
+
+sub can_edit_default_templates {
+  my $self = shift;
+  my ( $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
   
-  return 1;
+  # First check event type, there are no templates for non-tournament events
+  if ( $self->event_type->id eq "single_tournament" ) {
+    # Get the current season
+    my $current_season = $schema->resultset("Season")->get_current;
+    
+    if ( defined($current_season) ) {
+      return $self->event_detail($current_season)->can_edit_default_templates;
+    } else {
+      # If there's no current season, we can't edit anything
+      return 0;
+    }
+  } else {
+    # Undef if it's not a tournament event
+    return undef;
+  }
+}
+
+=head2 tournament_entry_type
+
+Get the tournament entry type (if it's a tournament, otherwise undef).
+
+=cut
+
+sub tournament_entry_type {
+  my $self = shift;
+  
+  return undef unless $self->event_type->id eq "single_tournament";
+  
+  # Get the last event season, as it doesn't matter which season we get, the entry type will be the same
+  return $self->last_event_season->event_detail->entry_type->id;
 }
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

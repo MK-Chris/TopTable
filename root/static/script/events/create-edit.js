@@ -11,7 +11,7 @@ $(document).ready(function() {
     $("#name").focus();
   } else if ( $("#event_type").val() === "" ) {
     $("#event_type").trigger("chosen:activate");
-  } else if ( $("#event_type").val() === "single-tournament" && $("#tournament_type").val() === "" ) {
+  } else if ( $("#event_type").val() === "single_tournament" && $("#tournament_type").val() === "" ) {
     $("#tournament_type").trigger("chosen:activate");
   } else if ( $("#venue").val() === "" ) {
     $("#venue").trigger("chosen:activate");
@@ -40,7 +40,7 @@ $(document).ready(function() {
   */
   handle_event_type();
   handle_tournament_type();
-  handle_group_ranking();
+  handle_round_type_fields();
   
   /*
     Show / hide tournament details based on the event type value when it changes
@@ -54,7 +54,7 @@ $(document).ready(function() {
     Show or hide the ranking template based on whether or not the first round is a group round
   */
   $("#round_group").on("change", function() {
-    handle_group_ranking();
+    handle_round_type_fields();
   });
 });
 
@@ -170,11 +170,16 @@ function handle_tournament_type() {
   }
 }
 
-/* Show the group ranking if it's a group round */
-function handle_group_ranking() {
+/* Show the group ranking if it's a group round, show the number of entrants if it's not */
+function handle_round_type_fields() {
   if ( $("#round_group").prop("checked") ) {
+    // Group round
     $("#round-group-rank-tpl-container").show();
+    $("#round-of-container").hide();
+    $("#round_of").val("");
   } else {
+    // Straight knock-out
+    $("#round-of-container").show();
     $("#round-group-rank-tpl-container").hide();
     $("#round_group_rank_template").val("");
     $("#round_group_rank_template").trigger("chosen:updated");

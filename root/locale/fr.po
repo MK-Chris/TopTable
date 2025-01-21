@@ -1340,8 +1340,8 @@ msgstr "Jeu planifi�e"
 msgid "matches.game.field.result"
 msgstr "R�sultat"
 
-msgid "matches.game.field.score"
-msgstr "But"
+msgid "matches.game.field.scores"
+msgstr "Buts"
 
 msgid "matches.game.field.match-score"
 msgstr "Score du match"
