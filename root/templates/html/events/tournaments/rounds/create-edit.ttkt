@@ -1,0 +1,19 @@
+<form method="post" action="[% form_action %]">
+<fieldset id="tournament-round-container">
+  <legend>[% c.maketext("events.legend.tournament.round-details") %]</legend>
+    
+  
+[%
+# If we're editing, the round will be the round number for the stashed round; if we're creating, it's a new round and it can't be round 1,
+# since that's done with the event creation
+IF round.round_number == 1;
+  SET first_round = 1;
+ELSE;
+  SET first_round = 0;
+END;
+
+PROCESS "html/events/tournaments/rounds/fields.ttkt" first = first_round;
+-%]
+</fieldset>
+<input type="submit" name="Submit" value="[% c.maketext("form.button.save") %]" />
+</form>

@@ -519,9 +519,9 @@ sub create_or_edit {
     my $url_key;
     if ( $action eq "edit" ) {
       
-      $url_key = $class->make_url_key({name => $name, id => $season});
+      $url_key = $class->make_url_key($name, $season);
     } else {
-      $url_key = $class->make_url_key({name => $name});
+      $url_key = $class->make_url_key($name);
     }
     
     my @fixtures_weeks = ();

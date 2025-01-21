@@ -1084,7 +1084,6 @@ sub doubles_pairs_averages {
   my $criteria = $params->{criteria};
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   
-  $logger->("debug", "Searching for doubles pairs");
   my %where;
   if ( defined($criteria_field) and defined($operator) and defined($criteria) and ( $operator eq "<" or $operator eq "<=" or $operator eq "=" or $operator eq ">=" or $operator eq ">" ) and $criteria =~ /^\d+$/ ) {
     $where{sprintf("me.games_%s", $criteria_field)} = {
@@ -1105,8 +1104,6 @@ sub doubles_pairs_averages {
       -asc  => [qw( person_season_person1_season_team.surname person_season_person1_season_team.first_name person_season_person2_season_team.surname person_season_person2_season_team.first_name )],
     }],
   });
-  
-  $logger->("debug", sprintf("Found %d records", $recs->count));
   
   return $recs
 }

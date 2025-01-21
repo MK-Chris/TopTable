@@ -140,17 +140,19 @@ sub base :Private {
   my $noindex = $match->noindex_set(1)->count;
   $c->stash->{noindex} = 1 if $noindex;
   
-  my ( $subtitle2, $subtitle3, $subtitle4, $subtitle5 );
+  my ( $subtitle2, $subtitle3, $subtitle4, $subtitle5, $is_tourn );
   my $date = $match->played_date->set_locale($c->locale);
   my $date_str = $c->i18n_datetime_format_date_long->format_datetime($date);
   
   if ( defined($match->division_season) ) {
     $subtitle2 = $c->maketext("matches.field.competition.value.league");
     $subtitle3 = encode_entities($match->division_season->name);
+    $is_tourn = 0;
   } else {
     $subtitle2 = encode_entities($match->tournament_round->tournament->event_season->name);
     $subtitle3 = $match->tournament_round->name;
     $subtitle3 .= sprintf(" - %s", $match->tournament_group->name) if defined($match->tournament_group);
+    $is_tourn = 1;
     
     # Add a warning for matches that don't have a division (attached to an event instead)
     $c->add_event_test_msg;
@@ -173,6 +175,7 @@ sub base :Private {
     division_season => $match->division_season,
     home_players => $home_players,
     away_players => $away_players,
+    is_tourn => $is_tourn,
   });
 }
 
@@ -206,6 +209,7 @@ sub view :Private {
   my $scoreless_name = $c->stash->{scoreless_name};
   my $score = $c->stash->{score};
   my $date = $c->stash->{date};
+  my $is_tourn = $c->stash->{is_tourn};
   
   # Check that we are authorised to view matches
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["match_view", $c->maketext("user.auth.view-matches"), 1]);
@@ -253,15 +257,14 @@ sub view :Private {
     $c->uri_for("/static/script/standard/vertical-table.js"),
   );
   
-  if ( $match->cancelled ) {
-    # The match has been cancelled, we don't specify a tab and it will default to the first one (games)
-    push(@external_scripts, $c->uri_for("/static/script/matches/team/view-cancelled.js"));
-  } elsif ( $match->started ) {
+  my $tourn_flag = $is_tourn ? "/tourn" : "";
+  my $hcp_flag = $match->handicapped ? "/hcp" : "";
+  if ( $match->started ) {
     # The match has started, we don't specify a tab and it will default to the first one (games)
-    push(@external_scripts, $c->uri_for("/static/script/matches/team/view.js", {v => 3}));
+    push(@external_scripts, $c->uri_for("/static/script/matches/team$tourn_flag$hcp_flag/view.js", {v => 4}));
   } else {
     # The match has not started, start on the match details tab
-    push(@external_scripts, $c->uri_for("/static/script/matches/team/view-not-started.js", {v => 3}));
+    push(@external_scripts, $c->uri_for("/static/script/matches/team$tourn_flag$hcp_flag/view-not-started.js", {v => 4}));
   }
   
   # Inform that the scorecard is not yet complete if it's started but not complete

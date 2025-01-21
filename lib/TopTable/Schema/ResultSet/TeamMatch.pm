@@ -283,6 +283,53 @@ sub matches_for_team {
   }], $attributes);
 }
 
+=head2 matches_in_tourn_round
+
+A search for matches in the specified tournament round.
+
+=cut
+
+sub matches_in_tourn_round {
+  my $class = shift;
+  my ( $params ) = @_;
+  my $round = $params->{round};
+  my ( $page_number, $results_per_page );
+  
+  # These attributes are constant
+  my %attributes = (
+    prefetch => [qw( venue ), {
+      team_season_home_team_season => [ qw( team ), {club_season => "club"}],
+      team_season_away_team_season => [ qw( team ), {club_season => "club"}],
+      division_season => [qw( division )],
+      tournament_round => {
+        tournament => {event_season => [qw( event )]},
+      },
+    }],
+    order_by => {
+      -asc => [qw( division.rank played_date )]
+    }
+  );
+  
+  # If we have a page number and a number of results per page, paginate
+  if ( exists( $params->{page_number} ) or exists( $params->{results_per_page} ) ) {
+    $page_number = delete $params->{page_number};
+    $results_per_page = delete $params->{results_per_page};
+    
+    # Set a default for results per page if it's not provided or invalid
+    $results_per_page = 25 if !defined($results_per_page) or $results_per_page !~ m/^\d+$/;
+    
+    # Default the page number to 1
+    $page_number = 1 if !defined($page_number) or $page_number !~ m/^\d+$/;
+    
+    $attributes{page} = $page_number;
+    $attributes{rows} = $results_per_page;
+  }
+  
+  return $class->search({
+    "tournament_round.id" => $round->id,
+  }, \%attributes);
+}
+
 =head2 matches_in_division
 
 A search for matches involving the specified division in the specified season.

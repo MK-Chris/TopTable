@@ -147,22 +147,22 @@ sub base :Chained("/") :PathPart("events") :CaptureArgs(1) {
   
   if ( defined($event) ) {
     # Encode the name for future use later in the chain (saves encoding multiple times, which is expensive)
-    my $enc_name = encode_entities($event->name);
+    my $enc_event_name = encode_entities($event->name);
     
     # Event found, stash it, then stash the name / view URL in the breadcrumbs section of our stash
     $c->stash({
       event => $event,
       event_type => $event->event_type->id,
       is_event => 1,
-      subtitle1 => $enc_name,
-      enc_name => $enc_name,
+      subtitle1 => $enc_event_name,
+      enc_event_name => $enc_event_name,
     });
     
     # Push the events list page on to the breadcrumbs
     push(@{$c->stash->{breadcrumbs}}, {
       # Event view page (current season)
       path => $c->uri_for_action("/events/view_current_season", [$event->url_key]),
-      label => $enc_name,
+      label => $enc_event_name,
     });
   } else {
     # 404
@@ -181,7 +181,7 @@ sub base_current_season :Chained("base") :PathPart("") :CaptureArgs(0) {
   my ( $self, $c ) = @_;
   my $event = $c->stash->{event};
   my $site_name = $c->stash->{enc_site_name};
-  my $event_name = $c->stash->{enc_name};
+  my $event_name = $c->stash->{enc_event_name};
   
   # Try to find the current season (or the last completed season if there is no current season)
   my $season = $c->model("DB::Season")->get_current_or_last;
@@ -213,7 +213,7 @@ sub base_specific_season :Chained("base") :PathPart("seasons") :CaptureArgs(1) {
   my ( $self, $c, $season_id ) = @_;
   my $event = $c->stash->{event};
   my $site_name = $c->stash->{enc_site_name};
-  my $event_name = $c->stash->{enc_name};
+  my $event_name = $c->stash->{enc_event_name};
   
   # Try to find the current season (or the last completed season if there is no current season)
   my $season = $c->model("DB::Season")->find_id_or_url_key($season_id);
@@ -253,7 +253,7 @@ sub get_event_season :Private {
   my ( $self, $c ) = @_;
   my ( $event, $season ) = ( $c->stash->{event}, $c->stash->{season} );
   
-  my $event_season = $event->single_season($season);
+  my $event_season = $event->get_season($season);
   $c->stash({event_season => $event_season});
   
   if ( defined($event_season) ) {
@@ -313,7 +313,7 @@ Display the form to edit the event.
 sub edit :Chained("base_current_season") :PathPart("edit") :Args(0) {
   my ($self, $c) = @_;
   my $event = $c->stash->{event};
-  my $enc_name = $c->stash->{enc_name};
+  my $enc_event_name = $c->stash->{enc_event_name};
   
   # Check that we are authorised to edit clubs
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.edit-events"), 1]);  # Try to find the current season (or the last completed season if there is no current season)
@@ -328,13 +328,16 @@ sub edit :Chained("base_current_season") :PathPart("edit") :Args(0) {
     return;
   }
   
+  my $event_season = $event->get_season($season);
+  
   # Stash the form action, this is dependent on the form
   $c->stash({
     form_action => $c->uri_for_action("/events/do_edit", [$event->url_key]),
-    view_online_display => sprintf("Editing %s", $enc_name),
+    view_online_display => sprintf("Editing %s", $enc_event_name),
     subtitle2 => $c->maketext("admin.edit"),
     action => "edit",
-    #subtitle1 => $enc_name,
+    new_season => defined($event_season) ? 0 : 1, # Flag to show first round fields if this is going to be a new season instance
+    #subtitle1 => $enc_event_name,
   });
   
   # Push the breadcrumbs links
@@ -355,7 +358,7 @@ Process the event creation / edit form.  Private, forwarded to from the create /
 sub prepare_form_event :Private {
   my ( $self, $c, $action ) = @_;
   my $event = $c->stash->{event};
-  my $enc_name = $c->stash->{enc_name};
+  my $enc_event_name = $c->stash->{enc_event_name};
   
   # Don't cache this page.
   $c->response->header("Cache-Control" => "no-cache, no-store, must-revalidate");
@@ -405,12 +408,14 @@ sub prepare_form_event :Private {
       $c->uri_for("/static/script/standard/datepicker.js"),
       $c->uri_for("/static/script/standard/prettycheckable.js"),
       $c->uri_for("/static/script/events/create-edit.js"),
+      $c->uri_for("/static/script/events/tournaments/rounds/create-edit.js"),
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
       $c->uri_for("/static/css/tokeninput/token-input-tt2.css"),
       $c->uri_for("/static/css/prettycheckable/prettyCheckable.css"),
     ],
+    create_event => 1,
     tokeninput_confs => $tokeninput_confs,
     venues => [$c->model("DB::Venue")->active_venues],
     event_types => [$c->model("DB::LookupEventType")->all_types],
@@ -446,14 +451,14 @@ Display the form asking if the user really wants to delete the event.
 sub delete :Chained("base") :PathPart("delete") :Args(0) {
   my ( $self, $c ) = @_;
   my $event = $c->stash->{event};
-  my $enc_name = $c->stash->{enc_name};
+  my $enc_event_name = $c->stash->{enc_event_name};
   
   # Check that we are authorised to delete clubs
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_delete", $c->maketext("user.auth.delete-events"), 1]);
   
   unless ( $event->can_delete ) {
     $c->response->redirect( $c->uri_for_action("/events/view_current_season", [$event->url_key],
-                                {mid => $c->set_status_msg({error => $c->maketext("events.delete.error.cannot-delete", $enc_name)})}));
+                                {mid => $c->set_status_msg({error => $c->maketext("events.delete.error.cannot-delete", $enc_event_name)})}));
     $c->detach;
     return;
   }
@@ -465,7 +470,7 @@ sub delete :Chained("base") :PathPart("delete") :Args(0) {
   $c->forward("view_current_season");
   
   $c->stash({
-    subtitle1 => $enc_name,
+    subtitle1 => $enc_event_name,
     subtitle2 => $c->maketext("admin.delete"),
     template => "html/events/delete.ttkt",
     view_online_display => sprintf("Deleting %s", $event->name),
@@ -545,7 +550,7 @@ Get and stash the current season (or last complete one if it doesn't exist) for 
 sub view_current_season :Chained("base_current_season") :PathPart("") :Args(0) {
   my ( $self, $c ) = @_;
   my $site_name = $c->stash->{enc_site_name};
-  my $event_name = $c->stash->{enc_name};
+  my $event_name = $c->stash->{enc_event_name};
   
   # Check we can view
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_view", $c->maketext("user.auth.view-events"), 1]);
@@ -566,7 +571,7 @@ View an event in a specific season.  Matches /events/*/seasons/* (End of chain)
 sub view_specific_season :Chained("base_specific_season") :PathPart("") :Args(0) {
   my ( $self, $c ) = @_;
   my $site_name = $c->stash->{enc_site_name};
-  my $event_name = $c->stash->{enc_name};
+  my $event_name = $c->stash->{enc_event_name};
   
   # Check we can view
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_view", $c->maketext("user.auth.view-events"), 1]);
@@ -588,7 +593,7 @@ sub view_finalise :Private {
   my $event_type = $event->event_type->id;
   my $season = $c->stash->{season};
   my $event_season = $c->stash->{event_season};
-  my $enc_name = $c->stash->{enc_name};
+  my $enc_event_name = $c->stash->{enc_event_name};
   my $delete_screen = $c->stash->{delete_screen};
   
   # Set up the title links if we need them
@@ -599,13 +604,13 @@ sub view_finalise :Private {
     if ( $c->stash->{authorisation}{event_edit} ) {
       push(@title_links, {
         image_uri => $c->uri_for("/static/images/icons/0018-Pencil-icon-32.png"),
-        text => $c->maketext("admin.edit-object", $enc_name),
+        text => $c->maketext("admin.edit-object", $enc_event_name),
         link_uri => $c->uri_for_action("/events/edit", [$event->url_key]),
       });
       
       push(@title_links, {
         image_uri => $c->uri_for("/static/images/icons/0037-Notepad-icon-32.png"),
-        text => $c->maketext("admin.edit-object-details", $enc_name),
+        text => $c->maketext("admin.edit-object-details", $enc_event_name),
         link_uri => $c->uri_for_action("/events/edit_details", [$event->url_key]),
       }) if $event_type eq "meeting" and $event->can_edit_details;
     }
@@ -613,7 +618,7 @@ sub view_finalise :Private {
     # Push a delete link if we're authorised and the event can be deleted
     push(@title_links, {
       image_uri => $c->uri_for("/static/images/icons/0005-Delete-icon-32.png"),
-      text => $c->maketext("admin.delete-object", $enc_name),
+      text => $c->maketext("admin.delete-object", $enc_event_name),
       link_uri => $c->uri_for_action("/events/delete", [$event->url_key]),
     }) if $c->stash->{authorisation}{event_delete} and $event->can_delete;
   }
@@ -628,9 +633,7 @@ sub view_finalise :Private {
   # Set up the template to use - meetings have their own viewing template
   my @external_scripts = (
     $c->uri_for("/static/script/plugins/responsive-tabs/jquery.responsiveTabs.mod.js"),
-    $c->uri_for("/static/script/standard/responsive-tabs.js"),
     $c->uri_for("/static/script/standard/vertical-table.js"),
-    $c->uri_for("/static/script/standard/option-list.js"),
   );
   
   my @external_styles = (
@@ -642,6 +645,11 @@ sub view_finalise :Private {
   if ( $event_type eq "meeting" ) {
     my $meeting = $event_season->get_meeting;
     $template_path = "events/view-meeting.ttkt";
+    
+    push(@external_scripts,
+      $c->uri_for("/static/script/standard/option-list.js"),
+      $c->uri_for("/static/script/standard/responsive-tabs.js"),
+    );
     
     $c->stash({
       meeting => $meeting,
@@ -678,7 +686,8 @@ sub view_finalise :Private {
         $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
         $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
         $table_view_js,
-        $c->uri_for("/static/script/tables/points-adjustments.js")
+        $c->uri_for("/static/script/tables/points-adjustments.js"),
+        $c->uri_for("/static/script/events/tournaments/view.js"),
       );
       
       push(@external_styles,
@@ -704,7 +713,7 @@ sub view_finalise :Private {
   $c->stash({
     template => "html/$template_path",
     title_links => \@title_links,
-    view_online_display => sprintf("Viewing %s", $enc_name),
+    view_online_display => sprintf("Viewing %s", $enc_event_name),
     view_online_link => 1,
     external_scripts => \@external_scripts,
     external_styles => \@external_styles,
@@ -807,18 +816,19 @@ sub teams :Private {
   my $tourn_team = $c->stash->{tourn_team};
   my $team_season = $c->stash->{team_season};
   my $team = $c->stash->{team};
-  my $enc_name = $c->stash->{enc_name};
+  my $enc_event_name = $c->stash->{enc_event_name};
   my $enc_team_name = encode_entities($tourn_team->object_name);
   my $season = $c->stash->{season};
   my $specific_season = $c->stash->{specific_season};
   
-  my $team_link = $specific_season
-    ? $c->uri_for_action("/teams/view_specific_season_by_url_key", [$team_season->club_season->club->url_key, $team->url_key, $season->url_key])
-    : $c->uri_for_action("/teams/view_current_season_by_url_key", [$team_season->club_season->club->url_key, $team->url_key]);
+  my $event_link = $specific_season
+    ? $c->uri_for_action("events/view_specific_season", [$event->url_key, $season->url_key])
+    : $c->uri_for_action("/events/view_current_season", [$event->url_key]);
   
   $c->stash({
-    subtitle3 => $enc_team_name,
-    subtitle3_uri => {link => $team_link, title => $c->maketext("title.link.text.view-team-league", $enc_team_name)},
+    subtitle1 => $enc_team_name,
+    subtitle2 => $enc_event_name,
+    subtitle2_uri => {link => $event_link, title => $c->maketext("title.link.text.view-event", $enc_event_name)},
     enc_team_name => $enc_team_name,
   });
 }
@@ -895,9 +905,10 @@ sub teams_view :Private {
   my $tourn_team = $c->stash->{tourn_team};
   my $team_season = $c->stash->{team_season};
   my $team = $c->stash->{team};
-  my $enc_name = $c->stash->{enc_name};
+  my $enc_event_name = $c->stash->{enc_event_name};
   my $enc_team_name = $c->stash->{enc_team_name};
   my $season = $c->stash->{season};
+  my $specific_season = $c->stash->{specific_season};
   
   my $canonical_uri = ( $season->complete )
     ? $c->uri_for_action("/events/teams_view_by_url_key_specific_season", [$event->url_key, $season->url_key, $team_season->club_season->club->url_key, $team->url_key])
@@ -914,21 +925,30 @@ sub teams_view :Private {
   $c->forward("get_team_stats");
   
   # Set up the title links if we need them
-  my @title_links = ();
+  my $team_link = $specific_season
+    ? $c->uri_for_action("/teams/view_specific_season_by_url_key", [$team_season->club_season->club->url_key, $team->url_key, $season->url_key])
+    : $c->uri_for_action("/teams/view_current_season_by_url_key", [$team_season->club_season->club->url_key, $team->url_key]);
+  
+  my @title_links = ({
+    image_uri => $c->uri_for("/static/images/icons/league-32.png"),
+    text => $c->maketext("title.link.text.view-team-league", $enc_team_name),
+    link_uri => $team_link,
+  });
+  
   my $can_update = $tourn_team->can_update;
   
   if ( $c->stash->{authorisation}{event_edit} ) {
     push(@title_links, {
-    image_uri => $c->uri_for("/static/images/icons/plus-minus-32.png"),
-    text => $c->maketext("admin.points-adjust-object-tourn", $enc_team_name, $enc_name),
-    link_uri => $c->uri_for_action("/events/teams_points_adjustment_by_url_key", [$event->url_key, $team->club->url_key, $team->url_key]),
+      image_uri => $c->uri_for("/static/images/icons/plus-minus-32.png"),
+      text => $c->maketext("admin.points-adjust-object-tourn", $enc_team_name, $enc_event_name),
+      link_uri => $c->uri_for_action("/events/teams_points_adjustment_by_url_key", [$event->url_key, $team->club->url_key, $team->url_key]),
     }) if $can_update->{points};
   }
   
   # Set up the template to use
   $c->stash({
     template => "html/events/tournaments/teams/view.ttkt",
-    view_online_display => sprintf("Viewing %s", $enc_name),
+    view_online_display => sprintf("Viewing %s", $enc_event_name),
     canonical_uri => $canonical_uri,
     title_links => \@title_links,
     external_scripts => [
@@ -950,7 +970,7 @@ sub teams_view :Private {
       $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
     ],
-    view_online_display => sprintf("Viewing %s", $enc_name),
+    view_online_display => sprintf("Viewing %s", $enc_event_name),
     view_online_link => 1,
     no_filter => 1, # Don't include the averages filter form on a team averages view
     matches => $matches,
@@ -988,7 +1008,8 @@ sub teams_points_adjustment :Private {
   my $tourn_team = $c->stash->{tourn_team};
   my $team_season = $c->stash->{team_season};
   my $team = $c->stash->{team};
-  my $enc_name = $c->stash->{enc_name};
+  my $enc_event_name = $c->stash->{enc_event_name};
+  my $enc_team_name = $c->stash->{enc_team_name};
   my $season = $c->stash->{season};
   
   # Check that we are authorised to adjust points
@@ -1011,14 +1032,16 @@ sub teams_points_adjustment :Private {
       $c->uri_for("/static/css/chosen/chosen.min.css"),
     ],
     form_action => $c->uri_for_action("/events/teams_do_points_adjustment_by_url_key", [$event->url_key, $team->club->url_key, $team->url_key]),
-    view_online_display => "Adjusting league points for $enc_name",
+    view_online_display => "Adjusting league points for $enc_event_name",
     view_online_link => 0,
-    subtitle2 => $c->maketext("admin.points-adjustment"),
+    subtitle1 => $c->maketext("admin.points-adjustment"),
+    subtitle2 => $enc_team_name,
+    subtitle3 => $enc_event_name,
   });
   
   # Breadcrumbs
   push(@{$c->stash->{breadcrumbs}}, {
-    path => $c->uri_for_action("/events/teams_points_adjustment_by_url_key", [$team->club->url_key, $team->url_key]),
+    path => $c->uri_for_action("/events/teams_points_adjustment_by_url_key", [$event->url_key, $team->club->url_key, $team->url_key]),
     label => $c->maketext("admin.points-adjustment"),
   });
 }
@@ -1159,18 +1182,20 @@ sub people :Private {
   my $tourn_person = $c->stash->{tourn_person};
   my $person_season = $c->stash->{person_season};
   my $person = $c->stash->{person};
-  my $enc_name = $c->stash->{enc_name};
+  my $enc_event_name = $c->stash->{enc_event_name};
   my $enc_person_name = encode_entities($tourn_person->object_name);
   my $season = $c->stash->{season};
   my $specific_season = $c->stash->{specific_season};
   
-  my $team_link = $specific_season
-    ? $c->uri_for_action("/people/view_specific_season", [$person->url_key, $season->url_key])
-    : $c->uri_for_action("/people/view_current_season", [$person->url_key]);
+  my $event_link = $specific_season
+    ? $c->uri_for_action("events/view_specific_season", [$event->url_key, $season->url_key])
+    : $c->uri_for_action("/events/view_current_season", [$event->url_key]);
   
   $c->stash({
-    subtitle3 => $enc_person_name,
-    subtitle3_uri => {link => $team_link, title => $c->maketext("title.link.text.view-person-league", $enc_person_name)},
+    subtitle1 => $enc_person_name,
+    subtitle2 => $enc_event_name,
+    subtitle2_uri => {link => $event_link, title => $c->maketext("title.link.text.view-event", $enc_event_name)},
+    enc_person_name => $enc_person_name,
   });
 }
 
@@ -1212,12 +1237,7 @@ sub rounds_current_season :Chained("base_current_season") :PathPart("rounds") :C
   my ( $self, $c, $round_id ) = @_;
   my $event = $c->stash->{event};
   my $round = $c->stash->{round};
-  my $enc_name = $c->stash->{enc_name};
-  
-  $c->stash({
-    subtitle1 => $enc_name,
-    subtitle1_uri => {link => $c->uri_for_action("/events/view_current_season", [$event->url_key]), title => $c->maketext("title.link.text.view-event", $enc_name)},
-  });
+  my $enc_event_name = $c->stash->{enc_event_name};
   
   $c->forward("rounds", [$round_id]);
 }
@@ -1227,15 +1247,8 @@ sub rounds_specific_season :Chained("base_specific_season") :PathPart("rounds") 
   my $event = $c->stash->{event};
   my $season = $c->stash->{season};
   my $round = $c->stash->{round};
-  my $enc_name = $c->stash->{enc_name};
+  my $enc_event_name = $c->stash->{enc_event_name};
   my $enc_season_name = $c->stash->{enc_season_name};
-  
-  $c->stash({
-    subtitle1 => $enc_name,
-    subtitle1_uri => {link => $c->uri_for_action("/events/view_specific_season", [$event->url_key, $season->url_key]), title => $c->maketext("title.link.text.view-event-specific-season", $enc_name, $enc_season_name)},
-    subtitle2 => $round->name,
-    subtitle3 => $enc_season_name,
-  });
   
   $c->forward("rounds", [$round_id]);
 }
@@ -1244,6 +1257,9 @@ sub rounds :Private {
   my ( $self, $c, $round_id ) = @_;
   my $event = $c->stash->{event};
   my $event_type = $c->stash->{event_type};
+  my $enc_event_name = $c->stash->{enc_event_name};
+  my $specific_season = $c->stash->{specific_season};
+  my $season = $c->stash->{season};
   
   if ( $event_type ne "single_tournament" ) {
     # 404 - event is not a tournament
@@ -1262,8 +1278,15 @@ sub rounds :Private {
     return;
   }
   
+  my $event_link = $specific_season
+    ? $c->uri_for_action("events/view_specific_season", [$event->url_key, $season->url_key])
+    : $c->uri_for_action("/events/view_current_season", [$event->url_key]);
+  
+  
   $c->stash({
-    subtitle2 => $round->name,
+    subtitle1 => $round->name,
+    subtitle2 => $enc_event_name,
+    subtitle2_uri => {link => $event_link, title => $c->maketext("title.link.text.view-event", $enc_event_name)},
     round => $round,
   });
 }
@@ -1328,7 +1351,7 @@ sub round_view :Private {
   my $season = $c->stash->{season};
   my $event_season = $c->stash->{event_season};
   my $tournament = $c->stash->{event_detail};
-  my $enc_name = $c->stash->{enc_name};
+  my $enc_event_name = $c->stash->{enc_event_name};
   my $round = $c->stash->{round};
   
   # Set up the title links if we need them
@@ -1338,7 +1361,7 @@ sub round_view :Private {
   if ( $c->stash->{authorisation}{event_edit} ) {
     push(@title_links, {
       image_uri => $c->uri_for("/static/images/icons/0018-Pencil-icon-32.png"),
-      text => $c->maketext("admin.edit-object", $enc_name),
+      text => $c->maketext("admin.edit-object", $enc_event_name),
       link_uri => $c->uri_for_action("/events/edit_round", [$event->url_key, $round->url_key]),
     });
   }
@@ -1390,13 +1413,42 @@ sub round_view :Private {
     
     $template = "view-groups";
   } else {
+    # Grab the matches and check if there are handicapped ones in there
+    my $matches = $c->model("DB::TeamMatch")->matches_in_tourn_round({round => $round});
+    
+    # Add handicapped flag for template / JS if there are handicapped matches
+    my $handicapped = $matches->handicapped_matches->count ? "/hcp" : "";
+    
+    @external_scripts = (
+      $c->uri_for("/static/script/plugins/responsive-tabs/jquery.responsiveTabs.mod.js"),
+      $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
+      $c->uri_for("/static/script/standard/vertical-table.js"),
+      $c->uri_for("/static/script/events/tournaments/rounds$handicapped/view.js"),
+    );
+    
+    @external_styles = (
+      $c->uri_for("/static/css/responsive-tabs/responsive-tabs.css"),
+      $c->uri_for("/static/css/responsive-tabs/style-jqueryui.css"),
+      $c->uri_for("/static/css/chosen/chosen.min.css"),
+      $c->uri_for("/static/css/datatables/dataTables.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/fixedColumns.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/rowGroup.dataTables.min.css"),
+    );
+    
     $template = "view";
   }
   
   $c->stash({
     template => "html/events/tournaments/rounds/$template.ttkt",
     title_links => \@title_links,
-    view_online_display => sprintf("Viewing %s", $enc_name),
+    view_online_display => sprintf("Viewing %s", $enc_event_name),
     view_online_link => 1,
     external_scripts => \@external_scripts,
     external_styles => \@external_styles,
@@ -1415,7 +1467,7 @@ sub edit_round :Chained("rounds_current_season") :PathPart("edit") :Args(0) {
   my ( $self, $c ) = @_;
   my $event = $c->stash->{event};
   my $round = $c->stash->{round};
-  my $enc_name = $c->stash->{enc_name};
+  my $enc_event_name = $c->stash->{enc_event_name};
   my $season = $c->stash->{season};
     
   if ( $season->complete ) {
@@ -1435,32 +1487,16 @@ sub edit_round :Chained("rounds_current_season") :PathPart("edit") :Args(0) {
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.edit-events"), 1]);
   
   $c->stash({
-    template => "html/events/tournaments/rounds/edit.ttkt",
-    external_scripts => [
-      $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
-      $c->uri_for("/static/script/standard/chosen.js"),
-      $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
-      $c->uri_for("/static/script/standard/prettycheckable.js"),
-      $c->uri_for("/static/script/templates/match/individual/create-edit.js"),
-    ],
-    external_styles => [
-      $c->uri_for("/static/css/chosen/chosen.min.css"),
-      $c->uri_for("/static/css/prettycheckable/prettyCheckable.css"),
-    ],
     form_action => $c->uri_for_action("/events/do_edit_round", [$event->url_key, $round->url_key]),
-    team_match_templates => [$c->model("DB::TemplateMatchTeam")->all_templates],
-    ind_match_templates => [$c->model("DB::TemplateMatchIndividual")->all_templates],
-    rank_templates => [$c->model("DB::TemplateLeagueTableRanking")->all_templates],
-    venues => [$c->model("DB::Venue")->active_venues],
-    view_online_display => "Editing tournament rounds",
-    view_online_link => 0,
   });
   
   # Breadcrumbs
   push(@{$c->stash->{breadcrumbs}}, {
-    path => $c->uri_for("/templates/match/individual/create"),
-    label => $c->maketext("admin.create"),
+    path => $c->uri_for("/events/edit_round", [$event->url_key, $round->url_key]),
+    label => $c->maketext("admin.edit"),
   });
+  
+  $c->detach("prepare_form_round", [qw( create )]);
 }
 
 =head2 do_edit_round
@@ -1474,11 +1510,111 @@ We only need to chain this to the current season, as we don't allow editing of r
 sub do_edit_round :Chained("rounds_current_season") :PathPart("do-edit-round") :Args(0) {
   my ( $self, $c ) = @_;
   my $event = $c->stash->{event};
-  my $tournament = $c->stash->{event_season}->event_detail;
   my $round = $c->stash->{round};
   
   # Forward to the create / edit routine
   $c->detach("process_form", [qw( round edit )]);
+}
+
+=head2 add_next_round
+
+Show the form to add the next round to this event.
+
+=cut
+
+sub add_next_round :Chained("base_current_season") :PathPart("add-next-round") :Args(0) {
+  my ( $self, $c ) = @_;
+  my $event = $c->stash->{event};
+  my $enc_event_name = $c->stash->{enc_event_name};
+  my $season = $c->stash->{season};
+  my $event_type = $c->stash->{event_type};
+  my $tournament = $c->stash->{event_detail};
+  
+  # If this isn't a tournament, there are no rounds to add, so show a 404
+  if ( $event_type ne "single_tournament" ) {
+    $c->detach(qw(TopTable::Controller::Root default));
+    return;
+  }
+  
+  if ( $season->complete ) {
+    # The stashed season is complete (this is chained from the base_current_season routine, which gets the current or last complete season) so we can't edit the event
+    $c->response->redirect($c->uri_for_action("/events/view_current_season", [$event->url_key],
+      {mid => $c->set_status_msg({error => $c->maketext("events.edit.error.no-current-season")})}));
+    $c->detach;
+    return;
+  }
+  
+  if ( !$tournament->can_add_round ) {
+    # We can add a round
+    $c->response->redirect($c->uri_for_action("/events/view_current_season", [$event->url_key],
+      {mid => $c->set_status_msg({error => $c->maketext("tournaments.form.error.rounds-complete", $enc_event_name)})}));
+    $c->detach;
+    return;
+  }
+  
+  # Don't cache this page.
+  $c->response->header("Cache-Control" => "no-cache, no-store, must-revalidate");
+  $c->response->header("Pragma" => "no-cache");
+  $c->response->header("Expires" => 0);
+  
+  # Check that we are authorised to edit events
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.edit-events"), 1]);
+  
+  # Breadcrumbs
+  push(@{$c->stash->{breadcrumbs}}, {
+    path => $c->uri_for("/events/add_next_round", [$event->url_key]),
+    label => $c->maketext("admin.add-next-round-crumbs"),
+  });
+  
+  $c->stash({
+    form_action => $c->uri_for_action("/events/do_add_next_round", [$event->url_key]),
+  });
+  
+  $c->detach("prepare_form_round", [qw( create )]);
+}
+
+=head2 do_add_next_round
+
+Process the form to add the next round.
+
+=cut
+
+sub do_add_next_round :Chained("base_current_season") :PathPart("do-add-next-round") :Args(0) {
+  my ( $self, $c ) = @_;
+  
+  # Forward to the create / edit routine
+  $c->detach("process_form", [qw( round create )]);
+}
+
+=head2 prepare_form_round
+
+Prepare and show the form to create or edit a round.
+
+=cut
+
+sub prepare_form_round :Private {
+  my ( $self, $c ) = @_;
+  
+  $c->stash({
+    template => "html/events/tournaments/rounds/create-edit.ttkt",
+    external_scripts => [
+      $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
+      $c->uri_for("/static/script/standard/chosen.js"),
+      $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
+      $c->uri_for("/static/script/standard/prettycheckable.js"),
+      $c->uri_for("/static/script/events/tournaments/rounds/create-edit.js"),
+    ],
+    external_styles => [
+      $c->uri_for("/static/css/chosen/chosen.min.css"),
+      $c->uri_for("/static/css/prettycheckable/prettyCheckable.css"),
+    ],
+    team_match_templates => [$c->model("DB::TemplateMatchTeam")->all_templates],
+    ind_match_templates => [$c->model("DB::TemplateMatchIndividual")->all_templates],
+    rank_templates => [$c->model("DB::TemplateLeagueTableRanking")->all_templates],
+    venues => [$c->model("DB::Venue")->active_venues],
+    view_online_display => "Editing tournament rounds",
+    view_online_link => 0,
+  });
 }
 
 =head2 groups_current_season, groups_specific_season
@@ -1493,13 +1629,17 @@ sub groups_current_season :Chained("rounds_current_season") :PathPart("groups") 
   my ( $self, $c, $group_id ) = @_;
   my $event = $c->stash->{event};
   my $round = $c->stash->{round};
-  my $enc_name = $c->stash->{enc_name};
+  my $enc_event_name = $c->stash->{enc_event_name};
   
   # Setup the round view link
   $c->stash({
     subtitle2_uri => {
       link => $c->uri_for_action("/events/round_view_current_season", [$event->url_key, $round->url_key]),
-      title => $c->maketext("title.link.text.view-event-round", $round->name, $enc_name),
+      title => $c->maketext("title.link.text.view-event-round", $round->name, $enc_event_name),
+    },
+    subtitle3_uri => {
+      link => $c->uri_for_action("/events/view_current_season", [$event->url_key]),
+      title => $c->maketext("title.link.text.view-event", $enc_event_name),
     },
   });
   
@@ -1511,14 +1651,18 @@ sub groups_specific_season :Chained("rounds_specific_season") :PathPart("groups"
   my $event = $c->stash->{event};
   my $season = $c->stash->{season};
   my $round = $c->stash->{round};
-  my $enc_name = $c->stash->{enc_name};
+  my $enc_event_name = $c->stash->{enc_event_name};
   my $enc_season_name = $c->stash->{enc_season_name};
   
   # Setup the round view link
   $c->stash({
     subtitle2_uri => {
       link => $c->uri_for_action("/events/round_view_current_season", [$event->url_key, $round->url_key]),
-      title => $c->maketext("title.link.text.view-event-round-specific-season", $round->name, $enc_name, $enc_season_name),
+      title => $c->maketext("title.link.text.view-event-round-specific-season", $round->name, $enc_event_name, $enc_season_name),
+    },
+    subtitle3_uri => {
+      link => $c->uri_for_action("/events/view_specific_season", [$event->url_key, $season->url_key]),
+      title => $c->maketext("title.link.text.view-event-specific-season", $enc_event_name, $enc_season_name),
     },
   });
   
@@ -1530,6 +1674,7 @@ sub groups :Private {
   my $event = $c->stash->{event};
   my $round = $c->stash->{round};
   my $event_type = $c->stash->{event_type};
+  my $enc_event_name = $c->stash->{enc_event_name};
   
   if ( $event_type ne "single_tournament" ) {
     # 404 - event is not a tournament
@@ -1548,8 +1693,9 @@ sub groups :Private {
   
   $c->stash({
     group => $group,
+    subtitle1 => $group->name,
     subtitle2 => $round->name,
-    subtitle3 => $group->name,
+    subtitle3 => $enc_event_name,
   });
 }
 
@@ -1609,7 +1755,7 @@ sub group_view :Private {
   my $event_season = $c->stash->{event_season};
   my $tournament = $c->stash->{event_detail};
   my $entry_type = $tournament->entry_type->id;
-  my $enc_name = $c->stash->{enc_name};
+  my $enc_event_name = $c->stash->{enc_event_name};
   my $round = $c->stash->{round};
   my $group = $c->stash->{group};
   
@@ -1702,7 +1848,7 @@ sub group_view :Private {
   $c->stash({
     template => "html/events/tournaments/rounds/groups/view.ttkt",
     title_links => \@title_links,
-    view_online_display => sprintf("Viewing %s", $enc_name),
+    view_online_display => sprintf("Viewing %s", $enc_event_name),
     view_online_link => 1,
     entrants => [$group->get_entrants_in_table_order],
     last_updated => $group->get_tables_last_updated_timestamp,
@@ -1733,11 +1879,13 @@ sub group_create :Chained("rounds_current_season") :PathPart("groups/create") :A
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.edit-events"), 1]);
   
   my $season = $c->stash->{season};
-    
-  if ( $season->complete ) {
-    # The stashed season is complete (this is chained from the base_current_season routine, which gets the current or last complete season) so we can't edit the event
-    $c->response->redirect($c->uri_for("/events/view_current_season", [$event->url_key],
-                                {mid => $c->set_status_msg({error => $c->maketext("events.edit.error.no-current-season")})}));
+  
+  my %can_add = $round->can_update("add-groups");
+  if ( !$can_add{allowed} ) {
+    # Not allowed to override, get the reason and redirect
+    # Redirect with the correct message if we can't override
+    $c->response->redirect($c->uri_for_action("/events/view_current_season", [$event->url_key],
+      {mid => $c->set_status_msg({$can_add{level} => $can_add{reason}})}));
     $c->detach;
     return;
   }
@@ -1936,6 +2084,14 @@ sub group_do_create :Chained("rounds_current_season") :PathPart("groups/do-creat
     # The stashed season is complete (this is chained from the base_current_season routine, which gets the current or last complete season) so we can't edit the event
     $c->response->redirect($c->uri_for("/events/view_current_season", [$event->url_key],
                                 {mid => $c->set_status_msg({error => $c->maketext("events.edit.error.no-current-season")})}));
+    $c->detach;
+    return;
+  }
+  
+  if ( !$round->group_round ) {
+    # If this is not a group round, we can't create groups
+    $c->uri_for_action("/events/round_view_current_season", [$event->url_key, $round->url_key],
+      {mid => $c->set_status_msg({error => $c->maketext("events.tournaments.rounds.groups.create.error.not-group-round")})});
     $c->detach;
     return;
   }
@@ -2320,7 +2476,7 @@ sub view_seasons :Chained("base") :PathPart("seasons") :CaptureArgs(0) {
   my ( $self, $c ) = @_;
   my $event = $c->stash->{event};
   my $site_name = $c->stash->{enc_site_name};
-  my $event_name = $c->stash->{enc_name};
+  my $event_name = $c->stash->{enc_event_name};
   
   # Stash the template; the data will be retrieved when we know what page we're on
   $c->stash({
@@ -2430,15 +2586,24 @@ sub process_form :Private {
   my $response = {}; # Store the response from the form processing
   
   if ( $type eq "event" ) {
-    my @field_names = qw( name event_type tournament_type venue organiser start_hour start_minute all_day end_hour end_minute default_team_match_template default_individual_match_template allow_loan_players allow_loan_players_above allow_loan_players_below allow_loan_players_across allow_loan_players_same_club_only allow_loan_players_multiple_teams loan_players_limit_per_player loan_players_limit_per_player_per_team loan_players_limit_per_player_per_opposition loan_players_limit_per_team void_unplayed_games_if_both_teams_incomplete forefeit_count_averages_if_game_not_started missing_player_count_win_in_averages rules round_name round_group round_group_rank_template round_team_match_template round_individual_match_template round_venue );
+    my @field_names = qw( name event_type tournament_type venue organiser start_hour start_minute all_day end_hour end_minute default_team_match_template default_individual_match_template allow_loan_players allow_loan_players_above allow_loan_players_below allow_loan_players_across allow_loan_players_same_club_only allow_loan_players_multiple_teams loan_players_limit_per_player loan_players_limit_per_player_per_team loan_players_limit_per_player_per_opposition loan_players_limit_per_team void_unplayed_games_if_both_teams_incomplete forefeit_count_averages_if_game_not_started missing_player_count_win_in_averages rules round_name round_group round_group_rank_template round_team_match_template round_individual_match_template round_week_commencing round_venue round_of );
     @processed_field_names = ( @field_names, qw( start_date end_date round_date ) );
     
-    # The rest of the error checking is done in the Club model
     $response = $c->model("DB::Event")->create_or_edit($action, {
       logger => sub{ my $level = shift; $c->log->$level( @_ ); },
       event => $event,
       start_date => defined($c->req->params->{start_date}) ? $c->i18n_datetime_format_date->parse_datetime($c->req->params->{start_date}) : undef,
       end_date => defined($c->req->params->{end_date}) ? $c->i18n_datetime_format_date->parse_datetime($c->req->params->{end_date}) : undef,
+      round_date => defined($c->req->params->{round_date}) ? $c->i18n_datetime_format_date->parse_datetime($c->req->params->{round_date}) : undef,
+      map {$_ => $c->req->params->{$_}} @field_names, # All the fields from the form - put this last because otherwise the following elements are seen as part of the map
+    });
+  } elsif ( $type eq "round" ) {
+    @field_names =  qw( round_name round_team_match_template round_individual_match_template round_week_commencing round_venue round_of );
+    @processed_field_names = ( @field_names, qw( round_date ) );
+    my $round_number = defined($round) ? $round->round_number : undef;
+    
+    $response = $tournament->create_or_edit_round($round_number, {
+      logger => sub{ my $level = shift; $c->log->$level( @_ ); },
       round_date => defined($c->req->params->{round_date}) ? $c->i18n_datetime_format_date->parse_datetime($c->req->params->{round_date}) : undef,
       map {$_ => $c->req->params->{$_}} @field_names, # All the fields from the form - put this last because otherwise the following elements are seen as part of the map
     });
@@ -2523,11 +2688,18 @@ sub process_form :Private {
       $obj_name = $event->name;
       %log_ids = (id => $event->id);
       $redirect_uri = $c->uri_for_action("/events/view_current_season", [$event->url_key], {mid => $mid});
+    } elsif ( $type eq "round" ) {
+      $round = $response->{round};
+      $obj_type = "event-round";
+      $log_obj = $round;
+      $obj_name = sprintf("%s: %s", $event->name, $round->name);
+      %log_ids = (id => $round->id);
+      $redirect_uri = $c->uri_for_action("/events/round_view_current_season", [$event->url_key, $round->url_key], {mid => $mid});
     } elsif ( $type eq "group" ) {
       $group = $response->{group} if $action eq "create";
       $obj_type = "event-group";
       $log_obj = $group;
-      $obj_name = sprintf("%s %s", $event->name, $group->name);
+      $obj_name = sprintf("%s: %s", $event->name, $group->name);
       %log_ids = (id => $group->id);
       $redirect_uri = $c->uri_for_action("/events/group_view_current_season", [$event->url_key, $round->url_key, $group->url_key], {mid => $mid});
     } elsif ( $type eq "team" ) {
@@ -2547,7 +2719,6 @@ sub process_form :Private {
       $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["team-match", "create", $response->{match_ids}, $response->{match_names}]);
     } else {
       # Everything else is related to the event, group or round
-      $c->log->debug("Logging event for $obj_type, $action");
       $c->forward("TopTable::Controller::SystemEventLog", "add_event", [$obj_type, $action, \%log_ids, $obj_name]);
     }
   } else {
@@ -2557,6 +2728,12 @@ sub process_form :Private {
         $redirect_uri = $c->uri_for("/events/create", {mid => $mid});
       } else {
         $redirect_uri = $c->uri_for_action("/events/edit", [$event->url_key], {mid => $mid});
+      }
+    } elsif ( $type eq "round" ) {
+      if ( $action eq "create" ) {
+        $redirect_uri = $c->uri_for_action("/events/add_next_round", [$event->url_key], {mid => $mid});
+      } elsif ( $action eq "edit" ) {
+        $redirect_uri = $c->uri_for_action("/events/edit_round", [$event->url_key, $round->url_key], {mid => $mid});
       }
     } elsif ( $type eq "group" ) {
       if ( $action eq "create" ) {
@@ -2601,7 +2778,7 @@ Show a form to edit the details of a
 sub edit_details :Chained("base") :PathPart("edit-details") :Args(0) {
   my ( $self, $c ) = @_;
   my $event = $c->stash->{event};
-  my $enc_name = $c->stash->{enc_name};
+  my $enc_event_name = $c->stash->{enc_event_name};
   
   # Check we can edit events
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.edit-events"), 1]);  # Try to find the current season (or the last completed season if there is no current season)
@@ -2626,7 +2803,7 @@ sub edit_details :Chained("base") :PathPart("edit-details") :Args(0) {
   if ( !defined($event_season) ) {
     # No season created for this event
     $c->response->redirect($c->uri_for("/events/edit", [$event->url_key],
-                                {mid => $c->set_status_msg({error => $c->maketext("events.edit-details.error.no-event-this-season", $enc_name, encode_entities($current_season->name))})}));
+                                {mid => $c->set_status_msg({error => $c->maketext("events.edit-details.error.no-event-this-season", $enc_event_name, encode_entities($current_season->name))})}));
     $c->detach;
     return;
   }
@@ -2650,7 +2827,7 @@ sub edit_meeting :Private {
   my ( $self, $c ) = @_;
   my $event = $c->stash->{event};
   my $event_season = $c->stash->{event_season};
-  my $enc_name = $c->stash->{enc_name};
+  my $enc_event_name = $c->stash->{enc_event_name};
   
   # Attendees / apologies
   my $attendees_tokeninput_options = {
@@ -2717,7 +2894,7 @@ sub edit_meeting :Private {
   }];
   
   $c->stash({
-    view_online_display => sprintf("Editing details for %s", $enc_name),
+    view_online_display => sprintf("Editing details for %s", $enc_event_name),
     view_online_link => 1,
     external_scripts => [
       $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js", {v => 2}),
@@ -2743,10 +2920,10 @@ sub edit_single_tournament :Private {
   my ( $self, $c ) = @_;
   my $event = $c->stash->{event};
   my $event_season = $c->stash->{event_season};
-  my $enc_name = $c->stash->{enc_name};
+  my $enc_event_name = $c->stash->{enc_event_name};
   
   $c->stash({
-    view_online_display => sprintf("Editing details for %s", $enc_name),
+    view_online_display => sprintf("Editing details for %s", $enc_event_name),
     view_online_link => 1,
     external_scripts => [
       $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js", {v => 2}),
@@ -2762,7 +2939,7 @@ sub edit_single_tournament :Private {
 sub do_edit_details :Chained("base") :PathPart("do-edit-details") :Args(0) {
   my ( $self, $c ) = @_;
   my $event = $c->stash->{event};
-  my $enc_name = $c->stash->{enc_name};
+  my $enc_event_name = $c->stash->{enc_event_name};
   
   # Check we can edit events
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.edit-events"), 1]);  # Try to find the current season (or the last completed season if there is no current season)
@@ -2787,7 +2964,7 @@ sub do_edit_details :Chained("base") :PathPart("do-edit-details") :Args(0) {
   if ( !defined($event_season) ) {
     # No season created for this event
     $c->response->redirect($c->uri_for("/events/edit", [$event->url_key],
-                                {mid => $c->set_status_msg({error => $c->maketext("events.edit-details.error.no-event-this-season", $enc_name, encode_entities($current_season->name))})}));
+                                {mid => $c->set_status_msg({error => $c->maketext("events.edit-details.error.no-event-this-season", $enc_event_name, encode_entities($current_season->name))})}));
     $c->detach;
     return;
   }

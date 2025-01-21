@@ -1,14 +1,22 @@
 [%
 USE scalar;
 
-IF authorisation.event_edit;
+IF tourn_view;
+  SET can_add_groups = group_round.scalar.can_update("add-groups");
+  SET round_name = group_round.name;
+ELSE;
+  SET can_add_groups = group_round.scalar.can_update("add-groups");
+  SET round_name = round.name;
+END;
+
+IF authorisation.event_edit AND can_add_groups;
   IF tourn_view;
     SET create_uri = c.uri_for_action("/events/group_create", [event.url_key, group_round.url_key]);
   ELSE;
     SET create_uri = c.uri_for_action("/events/group_create", [event.url_key, round.url_key]);
   END;
 -%]
-    <a href="[% create_uri %]"><img src="[% c.uri_for("/static/images/icons/0009-Add-icon-32.png") %]" alt="[% c.maketext("tournaments.round.create-group", enc_name) %]" title="[% c.maketext("tournaments.round.create-group", enc_name) %]" /></a><br /><br />
+    <a href="[% create_uri %]"><img src="[% c.uri_for("/static/images/icons/0009-Add-icon-32.png") %]" alt="[% c.maketext("tournaments.round.create-group", round_name) %]" title="[% c.maketext("tournaments.round.create-group", round_name) %]" /></a><br /><br />
 [%
 END;
 
@@ -71,14 +79,15 @@ IF groups.size;
 [%
   END;
 END;
-IF authorisation.event_edit;
+
+IF authorisation.event_edit AND can_add_groups;
   IF tourn_view;
-    SET create_uri = c.uri_for_action("/events/group_create", [event.url_key, rounds.item(0).url_key]);
+    SET create_uri = c.uri_for_action("/events/group_create", [event.url_key, group_round.url_key]);
   ELSE;
     SET create_uri = c.uri_for_action("/events/group_create", [event.url_key, round.url_key]);
   END;
 -%]
-    <a href="[% create_uri %]"><img src="[% c.uri_for("/static/images/icons/0009-Add-icon-32.png") %]" alt="[% c.maketext("tournaments.round.create-group", enc_name) %]" title="[% c.maketext("tournaments.round.create-group", enc_name) %]" /></a><br /><br />
+    <a href="[% create_uri %]"><img src="[% c.uri_for("/static/images/icons/0009-Add-icon-32.png") %]" alt="[% c.maketext("tournaments.round.create-group", round_name) %]" title="[% c.maketext("tournaments.round.create-group", round_name) %]" /></a><br /><br />
 [%
 END;
 -%]

@@ -482,6 +482,28 @@ __PACKAGE__->has_many(
 # Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-11-25 16:29:37
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:zXGd/SsNUDmgatdvZbvNBQ
 use HTML::Entities;
+use POSIX;
+use Math::Complex;
+
+=head2 can_add_round
+
+Check if we can create another round for the tournament, return 1 if we can or 0 if not. 
+
+=cut
+
+sub can_add_round {
+  my $self = shift;
+  
+  if ( $self->has_ko_round ) {
+    # We have a knock-out round, so we should know exactly how many rounds we need to create
+    my $existing_ko_rounds = $self->search_related("tournament_rounds", {group_round => 0})->count;
+    my $required_ko_rounds = $self->calculate_ko_rounds->{rounds};
+    return $existing_ko_rounds < $required_ko_rounds ? 1 : 0;
+  } else {
+    # No knock-out rounds yet - we can create
+    return 1;
+  }
+}
 
 =head2 create_or_edit_round
 
@@ -500,12 +522,16 @@ sub create_or_edit_round {
   my $lang = $schema->lang;
   
   # Grab the fields
-  my $name = $params->{name} || undef;
-  my $group = $params->{group} || 0;
-  my $rank_template = $params->{rank_template} || undef;
-  my $match_template = $params->{match_template} || undef;
-  my $date = $params->{date};
-  my $venue = $params->{venue};
+  my $name = $params->{round_name};
+  my $group = $params->{round_group} || 0;
+  my $rank_template = $params->{round_group_rank_template};
+  my $team_match_template = $params->{round_team_match_template} || undef;
+  my $individual_match_template = $params->{round_individual_match_template} || undef;
+  my $date = $params->{round_date};
+  my $week_commencing = $params->{round_week_commencing};
+  my $venue = $params->{round_venue} || undef;
+  my $round_of = $params->{round_of};
+  
   my $response = {
     error => [],
     warning => [],
@@ -524,7 +550,7 @@ sub create_or_edit_round {
   my ( $round, $create );
   if ( defined($round_number) ) {
     $create = 0;
-    $round = $self->search_related("tournament_rounds", {round_number => $round_number});
+    $round = $self->find_related("tournament_rounds", {round_number => $round_number});
     
     if ( !defined($round) ) {
       push(@{$response->{error}}, $lang->maketext("tournaments.form.error.round-doesnt-exist"));
@@ -534,6 +560,12 @@ sub create_or_edit_round {
     # If a round number wasn't passed in, we create a new round, 
     $create = 1;
     $round_number = $self->next_round_number;
+  }
+  
+  # Check we can create rounds
+  if ( !$self->can_add_round ) {
+    push(@{$response->{error}}, $lang->maketext("tournaments.form.error.rounds-complete", encode_entities($self->name)));
+    return $response; # fatal
   }
   
   # Round name check - can be null, as we can just use the round number instead.  Must be unique to the current tournament
@@ -567,9 +599,9 @@ sub create_or_edit_round {
   }
   
   # Get the class to check the template again based on whether this is a team entry or not
-  my ( $tpl_class, $tpl_fld ) = $self->entry_type->id eq "team"
-    ? qw( TemplateMatchTeam team_match_template )
-    : qw( TemplateMatchIndividual individual_match_template );
+  my ( $match_template, $tpl_class, $tpl_fld ) = $self->entry_type->id eq "team"
+    ? ($team_match_template, qw( TemplateMatchTeam team_match_template ))
+    : ($individual_match_template, qw( TemplateMatchIndividual individual_match_template ));
   
   # Check the template
   if ( defined($match_template) ) {
@@ -579,6 +611,10 @@ sub create_or_edit_round {
   
   # Check the date if it was sent
   if ( defined($date) ) {
+    # Check if the week beginning field is ticked - if it is, we require a Monday to be selected
+    $week_commencing = ( defined($week_commencing) and $week_commencing ) ? 1 : 0;
+    my $date_error = 0;
+    
     if ( ref($date) eq "HASH" ) {
       # Hashref, get the year, month, day
       my $year = $date->{year};
@@ -594,10 +630,24 @@ sub create_or_edit_round {
         );
       } catch {
         push(@{$response->{error}}, $lang->maketext("tournaments.form.error.date-invalid"));
+        $date_error = 1;
       };
     } elsif ( !$date->isa("DateTime") ) {
       # Not a hashref, not a DateTime
       push(@{$response->{error}}, $lang->maketext("tournaments.form.error.date-invalid"));
+      $date_error = 1;
+    }
+    
+    if ( !$date_error ) {
+      push(@{$response->{error}}, $lang->maketext("tournaments.rounds.form.error.date-should-be-monday", $date->day_name)) if $week_commencing and $date->day_of_week != 1;
+    }
+  } else {
+    # Week beginning has to be undef if the date is also
+    undef($week_commencing);
+    
+    # If it's not a group round, we need a date
+    if ( !$group ) {
+      push(@{$response->{error}}, $lang->maketext("tournaments.rounds.form.error.date-required"));
     }
   }
   
@@ -614,6 +664,27 @@ sub create_or_edit_round {
     push(@{$response->{error}}, $lang->maketext("tournaments.form.error.venue-inactive", encode_entities($venue->name))) if defined($venue) and !$venue->active;
   }
   
+  if ( defined($round_of) ) {
+    my ( $group_round, $group_qualifiers );
+    
+    if ( $self->has_group_round ) {
+      $group_round = $self->find_round_by_number_or_url_key(1);
+      $group_qualifiers = $group_round->qualifiers;
+    }
+    
+    if ( $round_of =~ m/^\d+$/ ) {
+      # Number of entrants is valid, save the value into the fields to be written back in case of errors
+      $response->{fields}{round_of} = $round_of;
+      
+      # If the number of qualifiers from the group rounds is greater than the number we've specified here, we need to ask the user to increase
+      push(@{$response->{error}}, $lang->maketext("tournaments.form.error.number-of-entrants-too-low", $group_qualifiers)) if $self->has_group_round and $round_of < $group_qualifiers;
+    } else {
+      # Number of entrants invalid
+      push(@{$response->{error}}, $lang->maketext("tournaments.form.error.number-of-entrants-invalid-min", $group_qualifiers));
+    }
+  } else {
+    push(@{$response->{error}}, $lang->maketext("tournaments.form.error.number-of-entrants-required")) unless $group or $self->has_ko_round;
+  }
   
   if ( scalar(@{$response->{error}}) == 0 ) {
     # Success, we need to create / edit the event
@@ -621,7 +692,7 @@ sub create_or_edit_round {
     my $url_key = $schema->resultset("TournamentRound")->make_url_key($self, $name, $round) if defined($name);
     
     if ( $create ) {
-      $self->create_related("tournament_rounds", {
+      $round = $self->create_related("tournament_rounds", {
         url_key => $url_key,
         round_number => $round_number,
         name => $name,
@@ -629,7 +700,9 @@ sub create_or_edit_round {
         rank_template => $rank_template,
         $tpl_fld => defined($match_template) ? $match_template->id : undef,
         date => defined($date) ? $date->ymd : undef,
+        week_commencing => $week_commencing,
         venue => defined($venue) ? $venue->id : undef,
+        round_of => $round_of,
       });
     } else {
       $round->update({
@@ -639,10 +712,13 @@ sub create_or_edit_round {
         group_round => $group,
         $tpl_fld => defined($match_template) ? $match_template->id : undef,
         date => defined($date) ? $date->ymd : undef,
+        week_commencing => $week_commencing,
         venue => defined($venue) ? $venue->id : undef,
+        round_of => $round_of,
       });
     }
     
+    $response->{round} = $round;
     $response->{completed} = 1;
   }
   
@@ -671,6 +747,44 @@ sub next_round_number {
   return $next_round_number;
 }
 
+=head2 can_edit_default_templates
+
+Determines whether the match and ranking (for groups only) templates can be edited.  They can't if matches already exist in the tournament.
+
+=cut
+
+sub can_edit_default_templates {
+  my $self = shift;
+  my ( $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  
+  # Now search for the event-type specific stuff, if there are any
+  my $event_season = $self->event_season;
+  my $season = $event_season->season;
+  
+  if ( $season->complete ) {
+    # Season complete, nothing can be edited
+    return 0;
+  } else {
+    my $matches = $schema->resultset("TeamMatch")->search({
+      "tournament.id" => $self->id,
+    }, {
+      join => {
+        tournament_round => [qw( tournament )]
+      }
+    });
+    
+    return 0 if $matches->count;
+  }
+  
+  # If we get this far, we can edit the event type
+  return 1;
+}
+
 =head2 has_group_round
 
 Return 1 if the tournament has a group round, or 0 if not.  Group rounds can only be round 1.
@@ -680,6 +794,47 @@ Return 1 if the tournament has a group round, or 0 if not.  Group rounds can onl
 sub has_group_round {
   my $self = shift;
   return $self->search_related("tournament_rounds", {group_round => 1})->count ? 1 : 0;
+}
+
+=head2 has_ko_round
+
+Return 1 if the tournament has at least one knock-out round, or 0 if not.
+
+=cut
+
+sub has_ko_round {
+  my $self = shift;
+  return $self->search_related("tournament_rounds", {group_round => 0})->count ? 1 : 0;
+}
+
+=head2 calculate_ko_rounds
+
+Takes a number of participants and calculates the number of knock-out rounds that will be needed to whittle it down to a two-participant final.  Also returns the number of byes in the first round required, if we can't have matches for everyone.
+
+Returned as a hash (or hashref in scalar context): %response = (rounds => x, byes => y).
+
+=cut
+
+sub calculate_ko_rounds {
+  my $self = shift;
+  
+  # If we don't have a knock-out round yet, we can't work out how many rounds will be needed.
+  return undef unless $self->has_ko_round;
+  
+  my $ko = $self->first_ko_round;
+  
+  # If the round is complete, we'll take the entrants that have been setup, otherwise take the entered value
+  my $players = $ko->complete ? $ko->entrants : $ko->round_of;
+  
+  # Rounds is base 2 logarithm of the number of players, rounded up (ceil).
+  my $rounds = ceil(logn($players, 2));
+  
+  # Byes is 2 to the power of the number of rounds, minus the number of players
+  my $byes = (2 ** $rounds) - $players;
+  
+  # Return our values
+  my %response = (rounds => $rounds, byes => $byes);
+  return wantarray ? %response : \%response;
 }
 
 =head2 rounds
@@ -707,14 +862,35 @@ sub find_round_by_number_or_url_key {
   
   if ( $round_id =~ m/^\d+$/ ) {
     # Numeric value, check the ID first, then check the URL key
-    my $obj = $self->find_related("tournament_rounds", {round_number => $round_id});
+    my $obj = $self->find_related("tournament_rounds", {round_number => $round_id}, {
+      prefetch => [qw( venue )],
+    });
     return $obj if defined($obj);
-    $obj = $self->find_related("tournament_rounds", {url_key => $round_id});
+    $obj = $self->find_related("tournament_rounds", {url_key => $round_id}, {
+      prefetch => [qw( venue )],
+    });
     return $obj;
   } else {
     # Not numeric, so it can't be the ID - just check the URL key
-    return $self->find_related("tournament_rounds", {url_key => $round_id});
+    return $self->find_related("tournament_rounds", {url_key => $round_id}, {
+      prefetch => [qw( venue )],
+    });
   }
+}
+
+=head2 first_ko_round
+
+Return the first round that's a knockout round (not a group round).  This will either be round 1 or 2.
+
+=cut
+
+sub first_ko_round {
+  my $self = shift;
+  
+  return $self->search_related("tournament_rounds", {group_round => 0}, {
+    order_by => {-asc => [qw( round_number )]},
+    rows => 1,
+  })->single;
 }
 
 =head2 get_team_by_url_key

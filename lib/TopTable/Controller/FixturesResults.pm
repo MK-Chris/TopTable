@@ -569,7 +569,7 @@ sub view_team :Private {
     subtitle1 => $season->complete ? $c->maketext("fixtures-results.title.results", $old_club_and_team): $c->maketext("fixtures-results.title.fixtures-results", $old_club_and_team),
     title_links => [{
       image_uri => $c->uri_for("/static/images/icons/0038-Calender-icon-32.png"),
-      text => $c->maketext("calendar.download"),
+      text => $c->maketext("title.link.calendar.download"),
       link_uri => $c->uri_for_action("/fixtures-results/download_team_by_url_key_specific_season", [$season->url_key, $team->club->url_key, $team->url_key, "calendar"]),
     }],
     external_scripts => [
@@ -836,7 +836,7 @@ sub view_division :Private {
     subtitle1 => $season->complete ? $c->maketext("fixtures-results.title.results", $enc_old_division_name): $c->maketext("fixtures-results.title.fixtures-results", $enc_old_division_name),
     title_links => [{
       image_uri => $c->uri_for("/static/images/icons/0038-Calender-icon-32.png"),
-      text => $c->maketext("calendar.download"),
+      text => $c->maketext("title.link.calendar.download"),
       link_uri => $c->uri_for_action("/fixtures-results/download_division_specific_season", [$season->url_key, $division->url_key, "calendar"]),
     }],
     external_scripts => [
@@ -1012,7 +1012,7 @@ sub view_venue :Private {
     view_online_display => $online_display,
     title_links => [{
       image_uri => $c->uri_for("/static/images/icons/0038-Calender-icon-32.png"),
-      text => $c->maketext("calendar.download"),
+      text => $c->maketext("title.link.calendar.download"),
       link_uri => $c->uri_for_action("/fixtures-results/download_venue_specific_season", [$season->url_key, $venue->url_key, "calendar"]),
     }],
     external_scripts => [
@@ -1202,7 +1202,7 @@ sub view_month :Private {
     subtitle1 => $season->complete ? $c->maketext("fixtures-results.title.results", $enc_month): $c->maketext("fixtures-results.title.fixtures-results", $enc_month),
     title_links => [{
       image_uri => $c->uri_for("/static/images/icons/0038-Calender-icon-32.png"),
-      text => $c->maketext("calendar.download"),
+      text => $c->maketext("title.link.calendar.download"),
       link_uri => $c->uri_for_action("/fixtures-results/download_month_specific_season", [$season->url_key, $start_date->year, sprintf("%02d", $start_date->month), "calendar"]),
     }],
     external_scripts => [
@@ -1462,7 +1462,7 @@ sub view_week :Private {
     subtitle1 => $season->complete ? $c->maketext("fixtures-results.title.results", $enc_week_text): $c->maketext("fixtures-results.title.fixtures-results", $enc_week_text),
     title_links => [{
       image_uri => $c->uri_for("/static/images/icons/0038-Calender-icon-32.png"),
-      text => $c->maketext("calendar.download"),
+      text => $c->maketext("title.link.calendar.download"),
       link_uri => $c->uri_for_action("/fixtures-results/download_week_specific_season", [$season->url_key, $week_start_date->year, sprintf("%02d", $week_start_date->month), sprintf("%02d", $week_start_date->day), "calendar"]),
     }],
     external_scripts => [
@@ -1643,7 +1643,7 @@ sub view_day :Private {
     subtitle1 => $season->complete ? $c->maketext("fixtures-results.title.results", $enc_date): $c->maketext("fixtures-results.title.fixtures-results", $enc_date),
     title_links => [{
       image_uri => $c->uri_for("/static/images/icons/0038-Calender-icon-32.png"),
-      text => $c->maketext("calendar.download"),
+      text => $c->maketext("title.link.calendar.download"),
       link_uri => $c->uri_for_action("/fixtures-results/download_day_specific_season", [$season->url_key, $date->year, sprintf("%02d", $date->month), sprintf("%02d", $date->day), "calendar"]),
     }],
     external_scripts => [

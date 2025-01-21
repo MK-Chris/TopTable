@@ -76,6 +76,14 @@ __PACKAGE__->table("tournament_rounds");
   extra: {unsigned => 1}
   is_nullable: 0
 
+=head2 round_of
+
+  data_type: 'smallint'
+  extra: {unsigned => 1}
+  is_nullable: 1
+
+Round of how many competitors - NULL if this is a group round, otherwise contains the number of competitors in the round.  If the number of competitors does not split down to 2 in the final, there may be bye(s) in this round.  This must be manually provided  for the first knock-out round, but can be calculated after that.
+
 =head2 name
 
   accessor: '_name'
@@ -117,6 +125,14 @@ __PACKAGE__->table("tournament_rounds");
   is_nullable: 1
 
 If this is a team match, this can be null, which indicates that the matches are to be played on the home night of the home team.
+
+=head2 week_commencing
+
+  data_type: 'tinyint'
+  extra: {unsigned => 1}
+  is_nullable: 1
+
+This is a modifier for the date field - if this is true, the date field is a week commencing date (meaning matches start in that week).  In this case, the date selected must be a Monday.   Should only be NULL if date is also NULL; if date is set, this should be 1 or 0.
 
 =head2 venue
 
@@ -160,6 +176,8 @@ __PACKAGE__->add_columns(
   },
   "round_number",
   { data_type => "tinyint", extra => { unsigned => 1 }, is_nullable => 0 },
+  "round_of",
+  { data_type => "smallint", extra => { unsigned => 1 }, is_nullable => 1 },
   "name",
   { accessor => "_name", data_type => "varchar", is_nullable => 1, size => 150 },
   "group_round",
@@ -187,6 +205,8 @@ __PACKAGE__->add_columns(
   },
   "date",
   { data_type => "date", datetime_undef_if_invalid => 1, is_nullable => 1 },
+  "week_commencing",
+  { data_type => "tinyint", extra => { unsigned => 1 }, is_nullable => 1 },
   "venue",
   {
     data_type => "integer",
@@ -282,7 +302,7 @@ Related object: L<TopTable::Schema::Result::SystemEventLogEventRound>
 __PACKAGE__->has_many(
   "system_event_log_event_rounds",
   "TopTable::Schema::Result::SystemEventLogEventRound",
-  { "foreign.object_round" => "self.id" },
+  { "foreign.object_id" => "self.id" },
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
@@ -417,8 +437,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-12-31 16:31:44
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:sSJSuNCYin8HUFVDFqaJYA
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2025-01-16 08:32:20
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:1+XYGQxbhVSU0jun7KYaeA
 
 use HTML::Entities;
 use List::MoreUtils qw( duplicates );
@@ -495,6 +515,192 @@ sub groups {
   return $self->search_related("tournament_round_groups", {}, {
     order_by => {-asc => [qw( group_order )]}
   });
+}
+
+=head2 can_update($type)
+
+1 if we can update the round $type; 0 if not.
+
+In list context, a hash will be returned with keys 'allowed' (1 or 0) and potentially 'reason' (if not allowed, to give the reason we can't update).  The reason can be passed back in the interface as an error message.
+
+No permissions are checked here, this is purely to see if it's possible to update the round based on factors in the tournament.
+
+$type tells us what we want to update and is currently just could be "add-groups".  If not passed, we get a hash (or hashref in scalar context) of all types - scalar context just returns 1 or 0 for all of these, list context returns the hashref with allowed and reason keys.  If nothing can be updated for the same reason (i.e., the season is complete), the types will not be returned, and you'll get a 1 or 0 in scalar context, or 'allowed' and 'reason' keys in list context, just as if it had been called with a specific type.
+
+=cut
+
+sub can_update {
+  my $self = shift;
+  my ( $type, $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  
+  # Check we have a valid type, if it's provided (if it's not provided, check all types)
+  return undef if defined($type) and $type ne "add-groups";
+  
+  # Default to allowed.
+  my $allowed = 1;
+  my ( $reason, $level );
+  my $season = $self->tournament->event_season->season;
+  
+  # If the season is complete, we can't update anything
+  if ( $season->complete ) {
+    $allowed = 0;
+    $reason = $lang->maketext("events.tournaments.rounds.groups.create.error.season-complete");
+    
+    if ( defined($type) ) {
+      # We have a type, so not expecting multiple keys
+      return wantarray ? (allowed => $allowed, reason => $reason) : $allowed;
+    } else {
+      # No type, so the caller will expect all the keys back
+      my %types = wantarray
+        ? (
+            "add-groups" => {
+              allowed => 0,
+              reason => $reason,
+              level => "error",
+            },
+          ) # We want the reasons back if we've asked for an array, the hash will contain 'allowed' and 'reason' keys
+        : (
+          "add-groups" => 0,
+        );
+        
+      # Return a reference to the hash in scalar context, or the hash itself in list context
+      return wantarray ? %types : \%types;
+    }
+  }
+  
+  # What we do now depends on type.
+  if ( defined($type) ) {
+    my %can;
+    if ( $type eq "add-groups" ) {
+      %can = $self->_can_add_groups;
+    }
+    
+    # Grab the reason and allowed flag
+    $reason = $can{reason};
+    $allowed = $can{allowed};
+    $level = $can{level};
+    
+    # Return the requested results
+    return wantarray ? (allowed => $allowed, reason => $reason, level => $level) : $allowed;
+  } else {
+    # All types, get the hashes back for each one
+    my %add_groups = $self->_can_add_groups;
+    
+    my %types = wantarray
+      ? (
+          "add-groups" => {
+            allowed => $add_groups{allowed},
+            reason => $add_groups{reason},
+            level => $add_groups{level},
+          },
+        ) # We want the reasons back if we've asked for an array, the hash will contain 'allowed' and 'reason' keys
+      : (
+        "add-groups" => $add_groups{allowed},
+      );
+    
+    # Return a reference to the hash in scalar context, or the hash itself in list context
+    return wantarray ? %types : \%types;
+  }
+}
+
+=head2 _can_add_groups
+
+Check if we can add groups.  Don't do the season complete check, this is done in can_update.
+
+=cut
+
+sub _can_add_groups {
+  my $self = shift;
+  my ( $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  
+  my $allowed = 1;
+  my ( $reason, $level );
+  # Handicap can be updated if this is a handicapped match and the match doesn't have any scores (so isn't marked as 'started').
+  if ( !$self->group_round ) {
+    # Can't set handicap, this match isn't handicapped
+    $allowed = 0;
+    $reason = $lang->maketext("events.tournaments.rounds.groups.create.error.not-group-round");
+    $level = "error";
+  } elsif ( $self->search_related("team_matches")->count ) {
+    $allowed = 0;
+    $reason = $lang->maketext("events.tournaments.rounds.groups.create.error.matches-created");
+    $level = "error";
+  }
+  
+  return (allowed => $allowed, reason => $reason, level => $level);
+}
+
+=head2 date_range
+
+Return a hash (or hashref in scalar context) with keys 'first' and 'last' containing the first and last dates of the round, taken from the dates of matches assigned to this round.
+
+=cut
+
+sub date_range {
+  my $self = shift;
+  my $schema = $self->result_source->schema;
+  my $dtf = $schema->storage->datetime_parser;
+  
+  # First check there are matches
+  my $matches = $self->search_related("team_matches")->count;
+  return undef unless $matches;
+  
+  my $first = $self->search_related("team_matches", {}, {
+    columns => [{
+      first_date => {min => "played_date"}
+    }],
+  })->single->get_column("first_date");
+  
+  my $last = $self->search_related("team_matches", {}, {
+    columns => [{
+      last_date => {max => "played_date"}
+    }],
+  })->single->get_column("last_date");
+  
+  $first = $dtf->parse_date($first) if defined($first);
+  $last = $dtf->parse_date($last) if defined($last);
+  
+  return wantarray ? (first_date => $first, last_date => $last) : {first_date => $first, last_date => $last};
+}
+
+=head2 entrants
+
+Return the entrants (what these are depends on the entry type of the tournament).
+
+=cut
+
+sub entrants {
+  my $self = shift;
+  my $entry_type = $self->entry_type;
+  
+  my $entrants;
+  if ( $entry_type eq "team" ) {
+    $entrants = $self->search_related("tournament_round_teams", {}, {
+      prefetch => {
+        tournament_team => {
+          team_season => [qw( team ), {
+            club_season => [qw( club )],
+          }]
+        }
+      }
+    });
+  } elsif ( $entry_type eq "singles" ) {
+    $entrants = $self->search_related("tournament_round_people");
+  } elsif ( $entry_type eq "doubles" ) {
+    $entrants = $self->search_related("tournament_rounds_doubles");
+  }
 }
 
 =head2 groups_can_be_named
@@ -605,12 +811,6 @@ sub complete {
       # No matches, not complete
       return 0;
     } else {
-      # Check if there's another round after this one
-      my $next_round = $tourn->find_related("tournament_rounds", {round_number => $round_number + 1});
-      
-      # If there's a round after this one, it's complete
-      return 1 if defined($next_round);
-      
       # If there's no Check all matches are complete
       if ( $matches->incomplete_and_not_cancelled->count == 0 ) {
         # All matches are complete
@@ -619,8 +819,6 @@ sub complete {
         # Not all matches are complete, round is not complete
         return 0;
       }
-      
-      return 1;
     }
   } elsif ( $entry_type eq "singles" ) {
     # To be completed
@@ -651,6 +849,86 @@ sub next_group_order {
   
   # Return the date as a DateTime object if we have a result; if not return undef
   return $next_group_order;
+}
+
+=head2 prev_round
+
+Return the previous round in the tournament; if there's no previous round, return undef.
+
+=cut
+
+sub prev_round {
+  my $self = shift;
+  
+  # If this is round 1, there's no previous round
+  return undef if $self->round_number == 1;
+  
+  my $target_round = $self->round_number - 1;
+  return $self->tournament->find_related("tournament_rounds", {round_number => $target_round});
+}
+
+=head2 next_round
+
+Return the next round in the tournament; if there's no next round, return undef.
+
+=cut
+
+sub next_round {
+  my $self = shift;
+  
+  # If this is round 1, there's no previous round
+  return undef if $self->round_number == 1;
+  
+  my $target_round = $self->round_number + 1;
+  return $self->tournament->find_related("tournament_rounds", {round_number => $target_round});
+}
+
+=head2 first_ko_round
+
+Returns 1 if this is the first knock-out round of the tournament, 0 if not.
+
+=cut
+
+sub first_ko_round {
+  my $self = shift;
+  
+  # If this is a group round, just return 0 straight away
+  return 0 if $self->group_round;
+  
+  # We can only be the first knock-out round if this is round 1 or 2
+  return 0 if $self->round_number > 2;
+  
+  # If not, try and get the previous round
+  my $prev_round = $self->prev_round;
+  
+  if ( defined($prev_round) ) {
+    # If the previous round is a group round, return 1, otherwise return 0
+    return $prev_round->group_round ? 1 : 0;
+  } else {
+    # There's no previous round, this must be the first round - we already know it's not a group round, so return 1
+    return 1;
+  }
+}
+
+=head2 qualifiers
+
+The number of qualifiers to go through from this round.  If this is a group round, it'll be the minimum number of qualifiers that can go through (taken from the sum of automatic_qualifiers in all groups); if it's a knock-out round it'll be half the number of people in the group.
+
+=cut
+
+sub qualifiers {
+  my $self = shift;
+  
+  if ( $self->group_round ) {
+    return $self->search_related("tournament_round_groups", {}, {
+      select => [{sum => "automatic_qualifiers"}],
+      as => [qw( total_qualifiers )],
+      rows => 1,
+    })->single->get_column("total_qualifiers");
+  } else {
+    # If the previous round doesn't exist, or is a group round (i.e., this is the first knock-out round)
+    return $self->round_of / 2;
+  }
 }
 
 =head2 create_or_edit_group

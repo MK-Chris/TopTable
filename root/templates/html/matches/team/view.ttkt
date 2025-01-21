@@ -30,7 +30,7 @@ SET away_team = match.team_season_away_team_season;
 <div id="tabs">
   <ul>
 [%
-IF !match.cancelled;
+IF match.started;
 -%]
     <li><a href="#games">[% c.maketext("matches.heading.games") %]</a></li>
 [%
@@ -38,7 +38,7 @@ END;
 -%]
     <li><a href="#teams">[% c.maketext("matches.heading.team-summaries") %]</a></li>
 [%
-IF !match.cancelled;
+IF match.started;
 -%]
     <li><a href="#players">[% c.maketext("matches.heading.player-summaries") %]</a></li>
 [%
@@ -54,7 +54,12 @@ END;
 -%]
   </ul>
 [%
-IF !match.cancelled;
+IF match.started;
+  IF match.winner_type == "points";
+    SET score_heading = c.maketext("matches.game.field.total-score");
+  ELSE;
+    SET score_heading = c.maketext("matches.game.field.score");
+  END;
 -%]
   <div id="games">
     <div class="table-wrap">
@@ -64,7 +69,8 @@ IF !match.cancelled;
             <tr>
               <th class="game-number">[% c.maketext("matches.game.field.game-number") %]</th>
               <th>[% c.maketext("matches.game.field.result") %]</th>
-              <th>[% c.maketext("matches.game.field.score") %]</th>
+              <th>[% c.maketext("matches.game.field.scores") %]</th>
+              <th>[% score_heading %]</th>
               <th>[% c.maketext("matches.game.field.match-score") %]</th>
             </tr>
           </thead>
@@ -256,15 +262,7 @@ IF !match.cancelled;
         SET result = home_links _ winner_text _ away_links;
       END; # END for IF game.awarded
 -%]
-          <td>[% result %]
-[%-
-      IF summary_score.home OR summary_score.away;
--%]
- ([% summary_score.home %]-[% summary_score.away %])
-[%-
-      END;
--%]
-</td>
+          <td>[% result %]</td>
 [%
       # These only get displayed if the game is complete
       # Set the detailed (leg) scores up
@@ -287,6 +285,14 @@ IF !match.cancelled;
       END;
 -%]
           <td class="leg-scores">[% score_html %]</td>
+[%
+      IF summary_score.home OR summary_score.away;
+        SET legs_score = summary_score.home _ "-" _ summary_score.away;
+      ELSE;
+        SET legs_score = "&nbsp;";
+      END;
+-%]
+          <td>[% legs_score %]</td>
           <td>[% game.home_team_match_score %]-[% game.away_team_match_score %]</td>
 [%
     ELSE; # ELSE for IF game.complete
@@ -337,7 +343,7 @@ END;
 home_team_html = team_seasons.home.full_name | html_entity;
 away_team_html = team_seasons.away.full_name | html_entity;
 
-IF match.tournament_round;
+IF is_tourn;
   SET tourn_round = match.tournament_round;
   SET tourn = tourn_round.tournament;
   SET event = tourn.event_season.event;
@@ -350,10 +356,14 @@ IF match.tournament_round;
     # Tournament match, link to the team's tournament page
     SET home_uri = c.uri_for_action("/events/teams_view_by_url_key_specific_season", [event.url_key, season.url_key, home_team.team.club.url_key, home_team.team.url_key]);
     SET away_uri = c.uri_for_action("/events/teams_view_by_url_key_specific_season", [event.url_key, season.url_key, away_team.team.club.url_key, away_team.team.url_key]);
+    SET home_div_uri = c.uri_for_action("/league-tables/view_specific_season", [home_team.division_season.division.url_key, season.url_key]);
+    SET away_div_uri = c.uri_for_action("/league-tables/view_specific_season", [away_team.division_season.division.url_key, season.url_key]);
   ELSE;
     # League match, link to the team's main page
     SET home_uri = c.uri_for_action("/events/teams_view_by_url_key_current_season", [event.url_key, home_team.team.club.url_key, home_team.team.url_key]);
     SET away_uri = c.uri_for_action("/events/teams_view_by_url_key_current_season", [event.url_key, away_team.team.club.url_key, away_team.team.url_key]);
+    SET home_div_uri = c.uri_for_action("/league-tables/view_current_season", [home_team.division_season.division.url_key]);
+    SET away_div_uri = c.uri_for_action("/league-tables/view_current_season", [away_team.division_season.division.url_key]);
   END;
 ELSE;
   # Current season team links
@@ -371,7 +381,6 @@ ELSE;
     SET away_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [away_team.team.club.url_key, away_team.team.url_key]);
   END;
 END;
-
 -%]
     <div class="table-wrap">
       <div class="table-layout table-layout-centre">
@@ -379,6 +388,20 @@ END;
           <thead>
             <tr>
               <th>[% c.maketext("matches.summaries.heading.team") %]</th>
+[%
+IF is_tourn;
+  # For tournaments, we put the team divisions in too
+-%]
+              <th class="numeric">[% c.maketext("matches.summaries.heading.division") %]</th>
+[%
+END;
+IF match.handicapped;
+  # Handicapped matches have a handicap column
+-%]
+              <th class="numeric">[% c.maketext("matches.summaries.heading.handicap") %]</th>
+[%
+END;
+-%]
               <th class="numeric">[% c.maketext("matches.summaries.heading.legs-won") %]</th>
               <th class="numeric">[% c.maketext("matches.summaries.heading.legs-average") %]</th>
               <th class="numeric">[% c.maketext("matches.summaries.heading.points-won") %]</th>
@@ -388,17 +411,41 @@ END;
           <tbody>
             <tr>
               <td data-label="[% c.maketext("matches.summaries.heading.team") %]"><a title="[% home_uri_title %]" href="[% home_uri %]">[% home_team_html %]</a></td>
-              <td class="numeric">[% match.home_team_legs_won %]</td>
-              <td class="numeric">[% match.home_team_average_leg_wins | format('%.2f') %]</td>
-              <td class="numeric">[% match.home_team_points_won %]</td>
-              <td class="numeric">[% match.home_team_average_point_wins | format('%.2f') %]</td>
+[%
+IF is_tourn;
+-%]
+              <td data-label="[% c.maketext("matches.summaries.heading.division") %]"><a href="[% home_div_uri %]">[% home_team.division_season.name | html_entity %]</a></td>
+[%
+END;
+IF match.handicapped;
+-%]
+              <td data-label="[% c.maketext("matches.summaries.heading.handicap") %]" class="numeric">[% match.home_team_handicap %]</td>
+[%
+END;
+-%]
+              <td data-label="[% c.maketext("matches.summaries.heading.legs-won") %]" class="numeric">[% match.home_team_legs_won %]</td>
+              <td data-label="[% c.maketext("matches.summaries.heading.legs-average") %]" class="numeric">[% match.home_team_average_leg_wins | format('%.2f') %]</td>
+              <td data-label="[% c.maketext("matches.summaries.heading.points-won") %]" class="numeric">[% match.home_team_points_won %]</td>
+              <td data-label="[% c.maketext("matches.summaries.heading.points-average") %]" class="numeric">[% match.home_team_average_point_wins | format('%.2f') %]</td>
             </tr>
             <tr>
               <td data-label="[% c.maketext("matches.summaries.heading.team") %]"><a title="[% away_uri_title %]" href="[% away_uri %]">[% away_team_html %]</a></td>
-              <td class="numeric">[% match.away_team_legs_won %]</td>
-              <td class="numeric">[% match.away_team_average_leg_wins | format('%.2f') %]</td>
-              <td class="numeric">[% match.away_team_points_won %]</td>
-              <td class="numeric">[% match.away_team_average_point_wins | format('%.2f') %]</td>
+[%
+IF is_tourn;
+-%]
+              <td data-label="[% c.maketext("matches.summaries.heading.division") %]"><a href="[% away_div_uri %]">[% away_team.division_season.name | html_entity %]</a></td>
+[%
+END;
+IF match.handicapped;
+-%]
+              <td data-label="[% c.maketext("matches.summaries.heading.handicap") %]" class="numeric">[% match.away_team_handicap %]</td>
+[%
+END;
+-%]
+              <td data-label="[% c.maketext("matches.summaries.heading.legs-won") %]" class="numeric">[% match.away_team_legs_won %]</td>
+              <td data-label="[% c.maketext("matches.summaries.heading.legs-average") %]" class="numeric">[% match.away_team_average_leg_wins | format('%.2f') %]</td>
+              <td data-label="[% c.maketext("matches.summaries.heading.points-won") %]" class="numeric">[% match.away_team_points_won %]</td>
+              <td data-label="[% c.maketext("matches.summaries.heading.points-average") %]" class="numeric">[% match.away_team_average_point_wins | format('%.2f') %]</td>
             </tr>
           </tbody>
         </table>
@@ -406,7 +453,7 @@ END;
     </div>
   </div>
 [%
-IF !match.cancelled;
+IF match.started;
 -%]
   <div id="players">
     <div class="table-wrap">
