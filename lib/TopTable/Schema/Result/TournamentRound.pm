@@ -464,6 +464,8 @@ Return the name of the round, or the default (from the user's language) for that
 sub name {
   my $self = shift;
   my ( $params ) = @_;
+  # Encoding has to be explicitly turned off; if it's not specified, it's on by default.
+  my $encode = exists($params->{encode}) and !$params->{encode} ? 0 : 1;
   
   # Setup schema / lang
   my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
@@ -471,7 +473,16 @@ sub name {
   $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
   my $lang = $schema->lang;
   
-  return defined($self->_name) ? encode_entities($self->_name) : $lang->maketext("tournament.round.default-name", $self->round_number);
+  my $name;
+  if ( defined($self->_name) ) {
+    # If encoding is on, encode the name first.
+    $name = $encode ? encode_entities($self->_name) : $self->_name;
+  } else {
+    # If encoding is OFF, we need to decode the name, as the language code is encoded already.
+    $name = $encode ? $lang->maketext("tournament.round.default-name", $self->round_number) : decode_entities($lang->maketext("tournament.round.default-name", $self->round_number));
+  }
+  
+  return $name;
 }
 
 =head2 entry_type

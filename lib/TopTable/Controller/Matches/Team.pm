@@ -522,10 +522,7 @@ sub update_game_score :Private {
   
   if ( $response->{completed} ) {
     # Completed, log that we updated the match
-    my $match_name = $c->maketext("matches.name", $match->team_season_home_team_season->full_name, $match->team_season_away_team_season->full_name);
-    $match_name .= " (" . $match->tournament_round->tournament->event_season->name . ")" if defined($match->tournament_round);
-    
-    $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["team-match", "update", {home_team => $match->team_season_home_team_season->team->id, away_team => $match->team_season_away_team_season->team->id, scheduled_date => $match->scheduled_date->ymd}, $match_name]);
+    $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["team-match", "update", {home_team => $match->team_season_home_team_season->team->id, away_team => $match->team_season_away_team_season->team->id, scheduled_date => $match->scheduled_date->ymd}, $match->name_with_competition]);
   } else {
     # Wasn't completed, return with an error code
     $c->res->status(400);

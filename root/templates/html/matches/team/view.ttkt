@@ -301,6 +301,7 @@ IF match.started;
               <td>[% c.maketext("matches.game.score.not-yet-updated") %]</td>
               <td>&nbsp;</td>
               <td>&nbsp;</td>
+              <td>&nbsp;</td>
 [%
     END;
 -%]

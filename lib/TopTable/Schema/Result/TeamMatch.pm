@@ -1044,6 +1044,40 @@ sub name {
   }
 }
 
+=head2 name_with_competition
+
+Return the match name (no handicaps or scores) with the competition name prepended.  For example:
+
+League match - Home Team v Away Team (Division Name)
+Tournament match (group round) - Home Team v Away Team (Tournament Name - Group Name)
+Tournament match (not a group round) - Home Team v Away Team (Tournament Name - Round Name)
+
+=cut
+
+sub name_with_competition {
+  my $self = shift;
+  my ( $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  
+  # The first part will always be Home Team v Away Team
+  
+  # Shorten the team seasons link
+  my $name = sprintf("%s %s %s", $self->team_season_home_team_season->full_name, decode_entities($lang->maketext("matches.versus-abbreviation")), $self->team_season_away_team_season->full_name);
+  
+  if ( defined($self->tournament_round) ) {
+    # Tournament match, add the name of the tournament
+    my $round_group = defined($self->tournament_group) ? $self->tournament_group->name({encode => 0}) : $self->tournament_round->name({encode => 0});
+    $name .= sprintf(" (%s - %s)", $self->tournament_round->tournament->name, $round_group);
+  } else {
+    $name .= sprintf(" (%s)", $self->division_season->name);
+  }
+}
+
 =head2 competition_name
 
 Return the competition name - this will be "League - [division]" or "[Tournament name] - [round]" (if this is part of a group round, the group name will also be returned)
