@@ -2852,7 +2852,7 @@ msgid "matches.game.field.result"
 msgstr "Result"
 
 msgid "matches.game.field.scores"
-msgstr "Sets"
+msgstr "Games"
 
 msgid "matches.game.field.total-score"
 msgstr "Total score"
