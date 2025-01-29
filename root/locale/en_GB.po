@@ -420,7 +420,7 @@ msgid "menu.text.template-team-match-breadcrumbs-nav"
 msgstr "Team"
 
 msgid "menu.text.template-team-match-games"
-msgstr "Games"
+msgstr "Sets"
 
 msgid "menu.text.template-league-table-ranking"
 msgstr "League table ranking templates"
@@ -922,28 +922,28 @@ msgid "teams.matches-lost"
 msgstr "Matches lost"
 
 msgid "teams.games-played"
-msgstr "Games played"
+msgstr "Sets played"
 
 msgid "teams.games-won"
-msgstr "Games won"
+msgstr "Sets won"
 
 msgid "teams.games-lost"
-msgstr "Games lost"
+msgstr "Sets lost"
 
 msgid "teams.games-won-percentage"
-msgstr "Games won (%)"
+msgstr "Sets won (%)"
 
 msgid "teams.legs-played"
-msgstr "Legs played"
+msgstr "Games played"
 
 msgid "teams.legs-won"
-msgstr "Legs won"
+msgstr "Games won"
 
 msgid "teams.legs-lost"
-msgstr "Legs lost"
+msgstr "Games lost"
 
 msgid "teams.legs-won-percentage"
-msgstr "Legs won (%)"
+msgstr "Games won (%)"
 
 msgid "teams.points-played"
 msgstr "Points played"
@@ -1433,10 +1433,10 @@ msgid "people.summary.officialdoms"
 msgstr "Official positions"
 
 msgid "people.head-to-head.singles.all-seasons.notice"
-msgstr "This form is not specific to the season you're viewing and will show all games between %1 and the opposition person you enter, regardless of the season it was played in."
+msgstr "This form is not specific to the season you're viewing and will show all sets between %1 and the opposition person you enter, regardless of the season it was played in."
 
 msgid "people.head-to-head.doubles.all-seasons.notice"
-msgstr "This form is not specific to the season you're viewing and will show all games between %1 &amp; %2 and the opposition pairing you enter, regardless of the season it was played in."
+msgstr "This form is not specific to the season you're viewing and will show all sets between %1 &amp; %2 and the opposition pairing you enter, regardless of the season it was played in."
 
 msgid "people.head-to-head.singles.form.field.opponent"
 msgstr "Search for an opponent"
@@ -1469,7 +1469,7 @@ msgid "people.head-to-head.heading.opposing-team"
 msgstr "Opposing team"
 
 msgid "people.head-to-head.heading.game-score"
-msgstr "Game score"
+msgstr "Set score"
 
 msgid "people.head-to-head.heading.scores"
 msgstr "Scores"
@@ -1496,16 +1496,16 @@ msgid "people.head-to-head.doubles.error.person-in-both-pairs"
 msgstr "You cannot specify %1 in the opponent pair, because they cannot play themselves."
 
 msgid "people.head-to-head.singles.opponent-populated.no-results"
-msgstr "There is no record of any games between these players."
+msgstr "There is no record of any sets between these players."
 
 msgid "people.head-to-head.singles.opponent-not-populated.no-results"
-msgstr "Enter an opponent to view head-to-head games."
+msgstr "Enter an opponent to view head-to-head sets."
 
 msgid "people.head-to-head.doubles.opponent-populated.no-results"
-msgstr "There is no record of any doubles games between these players."
+msgstr "There is no record of any doubles sets between these players."
 
 msgid "people.head-to-head.doubles.opponent-not-populated.no-results"
-msgstr "Enter an opponent team (two people) to view head-to-head games."
+msgstr "Enter an opponent team (two people) to view head-to-head sets."
 
 msgid "people.head-to-head.doubles.error.two-people-not-entered"
 msgstr "Please search for two people to display head-to-head data with."
@@ -1532,16 +1532,16 @@ msgid "people.teams.inactive"
 msgstr "Inactive"
 
 msgid "people.singles-games"
-msgstr "Singles games"
+msgstr "Singles sets"
 
 msgid "people.doubles-games"
-msgstr "Doubles games"
+msgstr "Doubles sets"
 
 msgid "people.no-singles-games-played"
-msgstr "%1 has not played any singles games yet."
+msgstr "%1 has not played any singles sets yet."
 
 msgid "people.no-doubles-games-played"
-msgstr "%1 has not played any doubles games yet."
+msgstr "%1 has not played any doubles sets yet."
 
 msgid "people.message.did-not-enter"
 msgstr "%1 did not enter %2."
@@ -1638,7 +1638,7 @@ msgid "doubles.tabs.summary"
 msgstr "Summary"
 
 msgid "doubles.tabs.games"
-msgstr "Games"
+msgstr "Sets"
 
 msgid "doubles.tabs.head-to-head"
 msgstr "Head-to-head"
@@ -1651,10 +1651,10 @@ msgid "stats.heading.matches"
 msgstr "Matches"
 
 msgid "stats.heading.games"
-msgstr "Games"
+msgstr "Sets"
 
 msgid "stats.heading.legs"
-msgstr "Legs"
+msgstr "Games"
 
 msgid "stats.heading.points"
 msgstr "Points"
@@ -1867,7 +1867,7 @@ msgid "seasons.form.legend.loan-players"
 msgstr "Loan players"
 
 msgid "seasons.form.legend.rules-when-games-not-completed"
-msgstr "What to do when games can&#39;t be completed"
+msgstr "What to do when sets can&#39;t be completed"
 
 msgid "seasons.form.field.allow-loan-players"
 msgstr "Allow loan players"
@@ -1912,16 +1912,16 @@ msgid "seasons.award-forefeit-rules"
 msgstr "Award &amp; forefeit rules"
 
 msgid "seasons.form.legend.rules-when-games-not-completed"
-msgstr "What to do when games can&#39;t be completed"
+msgstr "What to do when sets can&#39;t be completed"
 
 msgid "seasons.form.field.void-unplayed-games-if-both-teams-incomplete"
-msgstr "Void unplayed games if both teams have missing players"
+msgstr "Void unplayed sets if both teams have missing players"
 
 msgid "seasons.form.field.forefeit-count-averages-if-game-not-started"
-msgstr "Count a forefeited game in the averages, even if it wasn&#39;t started"
+msgstr "Count a forefeited set in the averages, even if it wasn&#39;t started"
 
 msgid "seasons.form.field.seasons.form.field.missing-player-count-win-in-averages"
-msgstr "Count an unplayed game due to a missing player as a win in the averages for the other player (not relevant if both teams have players missing and the void games setting is in effect)"
+msgstr "Count an unplayed set due to a missing player as a win in the averages for the other player (not relevant if both teams have players missing and the void sets setting is in effect)"
 
 msgid "seasons.form.rules"
 msgstr "Rules"
@@ -2352,10 +2352,10 @@ msgid "fixtures-grids.form.matches.error.team-overused"
 msgstr "In round %1, team %2 is used more than once: (%3).  Please ensure each team is used only once in a given round."
 
 msgid "fixtures-grids.form.matches.error.dynamic-winner-team-overused"
-msgstr "In round %1, the winner of game %2 in the previous round is used more than once (%3).  Please ensure each competitor is used only once in a given round."
+msgstr "In round %1, the winner of set %2 in the previous round is used more than once (%3).  Please ensure each competitor is used only once in a given round."
 
 msgid "fixtures-grids.form.matches.error.dynamic-loser-team-overused"
-msgstr "In round %1, the loser of game %2 in the previous round is used more than once (%3).  Please ensure each competitor is used only once in a given round."
+msgstr "In round %1, the loser of set %2 in the previous round is used more than once (%3).  Please ensure each competitor is used only once in a given round."
 
 msgid "fixtures-grids.form.matches.error.team-overused.match-details.home"
 msgstr "match %1 (home)"
@@ -2797,14 +2797,14 @@ msgid "matches.field.player-missing"
 msgstr "Player missing"
 
 msgid "matches.update.form.legend.games"
-msgstr "Games"
+msgstr "Sets"
 
 msgid "matches.update.games.notice"
-msgstr "Only the first leg fields will be shown to start with; the scores are completed, a valid score will yield the next fields to be filled out.<br />"
-"If the games were played in a different order, you can drag the <span class="ui-icon ui-icon-triangle-2-n-s"></span> icon in the game headings into the correct order."
+msgstr "Only the first game fields will be shown to start with; the scores are completed, a valid score will yield the next fields to be filled out.<br />"
+"If the sets were played in a different order, you can drag the <span class="ui-icon ui-icon-triangle-2-n-s"></span> icon in the game headings into the correct order."
 
 msgid "matches.game.header.number"
-msgstr "Game %1"
+msgstr "Set %1"
 
 msgid "matches.game.header.doubles"
 msgstr "doubles"
@@ -2834,25 +2834,25 @@ msgid "matches.game.field.scores.void"
 msgstr "Void"
 
 msgid "matches.game.award-home-label"
-msgstr "H"
+msgstr "Award to home"
 
 msgid "matches.game.award-away-label"
-msgstr "A"
+msgstr "Award to away"
 
 msgid "matches.game.void-label"
-msgstr "V"
+msgstr "Void set"
 
 msgid "matches.game.field.game-number"
-msgstr "Game"
+msgstr "Set"
 
 msgid "matches.game.field.scheduled-game-number"
-msgstr "Scheduled game"
+msgstr "Scheduled set"
 
 msgid "matches.game.field.result"
 msgstr "Result"
 
 msgid "matches.game.field.scores"
-msgstr "Games"
+msgstr "Sets"
 
 msgid "matches.game.field.total-score"
 msgstr "Total score"
@@ -2870,16 +2870,16 @@ msgid "matches.game.fill-out-players.doubles-notice"
 msgstr "Please enter all players before filling out the score for this game."
 
 msgid "matches.game.player-missing-notice"
-msgstr "There are players in this game marked as missing, so you aren&#39;t able to fill out a score for it."
+msgstr "There are players in this set marked as missing, so you aren&#39;t able to fill out a score for it."
 
 msgid "matches.update-playing-order.success"
-msgstr "Game playing order successfully changed."
+msgstr "Set playing order successfully changed."
 
 msgid "matches.update-playing-order.error.game-number-invalid"
-msgstr "The actual game number specified (%1) for scheduled game %2 is invalid; it must be a number between 1 and %3."
+msgstr "The actual set number specified (%1) for scheduled set %2 is invalid; it must be a number between 1 and %3."
 
 msgid "matches.update-playing-order.error.game-specified-multiple"
-msgstr "The number %1 has been specified more than once (for game number %2 and %3)."
+msgstr "The number %1 has been specified more than once (for set number %2 and %3)."
 
 msgid "matches.postpone-match.error.match-started"
 msgstr "The match cannot be postponed because there are scores entered for it already."
@@ -2972,22 +2972,22 @@ msgid "matches.add-player.error.person-invalid"
 msgstr "The person specified to add to this position is invalid."
 
 msgid "matches.add-player.error.update-game-failed"
-msgstr "Failed to update game %1 in the team match games table: %2."
+msgstr "Failed to update set %1 in the team match sets table: %2."
 
 msgid "matches.add-player.error.update-failed"
 msgstr "Failed to update player; please refresh the page and try again.  If the error persists, please contact the system administrator."
 
 msgid "matches.add-player.error.cant-replace-loan-player-set-in-doubles-game"
-msgstr "You cannot replace %1 as a player in this match until they are removed from a doubles pair in game %2; loan players can only play in doubles games where they are also playing singles on loan for the same team."
+msgstr "You cannot replace %1 as a player in this match until they are removed from a doubles pair in set %2; loan players can only play in doubles sets where they are also playing singles on loan for the same team."
 
 msgid "matches.add-player.error.cant-replace-loan-player-set-in-doubles-games"
-msgstr "You cannot replace %1 as a loan player in this match until they are removed from a doubles pair in games %2; loan players can only play in doubles games where they are also playing singles on loan for the same team."
+msgstr "You cannot replace %1 as a loan player in this match until they are removed from a doubles pair in sets %2; loan players can only play in doubles sets where they are also playing singles on loan for the same team."
 
 msgid "matches.remove-player.error.loan-player-set-in-doubles-game"
-msgstr "You cannot remove %1 as a player in this match until they are removed from a doubles pair in game %2; loan players can only play in doubles games where they are also playing singles on loan for the same team."
+msgstr "You cannot remove %1 as a player in this match until they are removed from a doubles pair in set %2; loan players can only play in doubles sets where they are also playing singles on loan for the same team."
 
 msgid "matches.remove-player.error.loan-player-set-in-doubles-games"
-msgstr "You cannot remove %1 as a player in this match until they are removed from a doubles pair in games %2; loan players can only play in doubles games where they are also playing singles on loan for the same team."
+msgstr "You cannot remove %1 as a player in this match until they are removed from a doubles pair in sets %2; loan players can only play in doubles sets where they are also playing singles on loan for the same team."
 
 msgid "matches.loan-player.add.success"
 msgstr "%1 was added as a loan player to position %2."
@@ -3002,25 +3002,7 @@ msgid "matches.player.set-missing.success"
 msgstr "Player position %1 successfully set as missing."
 
 msgid "matches.loan-player.add.refresh-doubles-lists.error"
-msgstr "Failed to refresh the list of players for doubles; if the loan player just added played in a doubles game, you will need to refresh the page in order to select the player from the list."
-
-msgid "matches.umpire.tokeninput.hint-text"
-msgstr "Start typing the name of the umpire"
-
-msgid "matches.umpire.add.database-error"
-msgstr "Error adding the umpire; please refresh the page and try again.  If the problem persists, please contact the system administrator."
-
-msgid "matches.umpire.add.error.person-invalid"
-msgstr "The person specified is invalid."
-
-msgid "matches.umpire.remove.database-error"
-msgstr "Error removing the umpire; please refresh the page and try again.  If the problem persists, please contact the system administrator."
-
-msgid "matches.umpire.add.success"
-msgstr "%1 successfully set as the umpire for game %2."
-
-msgid "matches.umpire.remove.success"
-msgstr "Umpire for game %1 successfully removed."
+msgstr "Failed to refresh the list of players for doubles; if the loan player just added played in a doubles set, you will need to refresh the page in order to select the player from the list."
 
 msgid "matches.update.error.match-invalid"
 msgstr "The match specified is invalid."
@@ -3068,19 +3050,19 @@ msgid "matches.override-score.error.score-invalid"
 msgstr "The %1 score is invalid; it must be a number greater than 0."
 
 msgid "matches.update-single.error.game-invalid"
-msgstr "The game specified is invalid."
+msgstr "The set specified is invalid."
 
 msgid "matches.update-single.error.leg-invalid"
-msgstr "The leg specified is invalid."
+msgstr "The game specified is invalid."
 
 msgid "matches.game.update-doubles.error.not-doubles-game"
-msgstr "Game %1 is not a doubles game."
+msgstr "Set %1 is not a doubles set."
 
 msgid "matches.game.update-doubles.error.location-invalid"
 msgstr "The location must be specified as &#39;home&#39; or &#39;away&#39; to indicate which team is being updated."
 
 msgid "matches.game.update-doubles.error.wrong-number-of-players"
-msgstr "The wrong number of players has been specified; you must either specify two players or no players (to remove the doubles pair from the game)."
+msgstr "The wrong number of players has been specified; you must either specify two players or no players (to remove the doubles pair from the set)."
 
 msgid "matches.game.update-doubles.error.home-player1-invalid"
 msgstr "The person specified as the first home doubles player is invalid."
@@ -3116,43 +3098,43 @@ msgid "matches.game.update-doubles.add.success"
 msgstr "%1 &amp; %2 have been set as the %3 doubles pair for game %4."
 
 msgid "matches.game.update-doubles.remove.success"
-msgstr "The %1 doubles pair has been removed from game %2; if any scores were input, they have been zeroed and will need to be reinput when you enter the doubles pair."
+msgstr "The %1 doubles pair has been removed from set %2; if any scores were input, they have been zeroed and will need to be reinput when you enter the doubles pair."
 
 msgid "matches.game.update-score.singles.error.select-players"
-msgstr "You cannot update the score for a game without both players being selected first."
+msgstr "You cannot update the score for a set without both players being selected first."
 
 msgid "matches.game.update-score.doubles.error.select-players"
-msgstr "You cannot update the score for a doubles game without all players being selected first."
+msgstr "You cannot update the score for a doubles set without all players being selected first."
 
 msgid "matches.game.update-score.singles.error.player-missing"
-msgstr "You cannot update the score for a game where one of the players is marked as &#39;missing&#39;.  Select a player if you wish to fill out the score for this game."
+msgstr "You cannot update the score for a set where one of the players is marked as &#39;missing&#39;.  Select a player if you wish to fill out the score for this set."
 
 msgid "matches.game.update-score.error.home-not-numeric-or-less-than-zero"
-msgstr "The home score in leg %1 is not a valid numeric value greater than zero."
+msgstr "The home score in game %1 is not a valid numeric value greater than zero."
 
 msgid "matches.game.update-score.error.away-not-numeric-or-less-than-zero"
-msgstr "The away score in leg %1 is not a valid numeric value greater than zero."
+msgstr "The away score in game %1 is not a valid numeric value greater than zero."
 
 msgid "matches.game.update-score.error.home-and-away-scores-equal"
-msgstr "The home and away scores for leg %1 are the same; there must be a winner of each leg."
+msgstr "The home and away scores for game %1 are the same; there must be a winner of each game."
 
 msgid "matches.game.update-score.error.score-invalid"
-msgstr "The leg %1 score (%2-%3) is not a valid final score; the winner must have %4 points and win by %5 or more, or must have more than %4 and win by exactly %5 points."
+msgstr "The game %1 score (%2-%3) is not a valid final score; the winner must have %4 points and win by %5 or more, or must have more than %4 and win by exactly %5 points."
 
 msgid "matches.game.update-score.error.score-incomplete"
-msgstr "The score submitted in game %1 does not appear to be a complete score; please fill out the fields completely."
+msgstr "The score submitted in set %1 does not appear to be a complete score; please fill out the fields completely."
 
 msgid "matches.game.update-score.success-game-complete"
 msgstr "The scorecard was successfully updated."
 
 msgid "matches.game.update-score.success-game-reset"
-msgstr "The game score was successfully reset and will now have to be entered again."
+msgstr "The set score was successfully reset and will now have to be entered again."
 
 msgid "matches.game.update-score.success-match-complete"
 msgstr "The match has been successfully completed."
 
 msgid "matches.game.button.score-reset"
-msgstr "Reset game score to 0-0.  This game will have to have the score re-entered."
+msgstr "Reset set score to 0-0.  This set will have to have the score re-entered."
 
 msgid "matches.message.info.not-started"
 msgstr "This match scorecard has not yet been filled out."
@@ -3191,25 +3173,25 @@ msgid "matches.summaries.heading.handicap"
 msgstr "Handicap"
 
 msgid "matches.summaries.heading.games-played"
-msgstr "Games played"
+msgstr "Sets played"
 
 msgid "matches.summaries.heading.games-won"
-msgstr "Games won"
+msgstr "Sets won"
 
 msgid "matches.summaries.heading.games-average"
-msgstr "Games average (%)"
+msgstr "Sets average (%)"
 
 msgid "matches.summaries.heading.games-average"
-msgstr "Games won (%)"
+msgstr "Sets won (%)"
 
 msgid "matches.summaries.heading.legs-played"
-msgstr "Legs played"
+msgstr "Games played"
 
 msgid "matches.summaries.heading.legs-won"
-msgstr "Legs won"
+msgstr "Games won"
 
 msgid "matches.summaries.heading.legs-average"
-msgstr "Legs average (%)"
+msgstr "Games average (%)"
 
 msgid "matches.summaries.heading.points-played"
 msgstr "Points played"
@@ -3227,10 +3209,10 @@ msgid "matches.link-title.team-league"
 msgstr "View the league statistics for %1"
 
 msgid "matches.heading.games"
-msgstr "Games"
+msgstr "Sets"
 
 msgid "matches.game.score.not-yet-updated"
-msgstr "This game has not yet been updated."
+msgstr "This set has not yet been updated."
 
 msgid "matches.game.result.doubles-and"
 msgstr "&amp;"
@@ -3283,8 +3265,11 @@ msgstr "<a href="%2">%1</a> <span class="game-result">v</span> absent player"
 msgid "matches.game.score.away-player-missing-void"
 msgstr "Void because the away player was absent and the home team also have absent players"
 
+msgid "matches.game.result.void-with-players"
+msgstr "<a href="%2">%1</a> <span class="game-result">v</span> <a href="%4">%3</a>: not played, the result is void."
+
 msgid "matches.game.result.void"
-msgstr "Void"
+msgstr "Not played: result void"
 
 msgid "matches.game.result.home-singles-player-forefeited"
 msgstr "not played because the home player pulled out"
@@ -3303,10 +3288,10 @@ msgstr "finished early because the away player retired."
 #msgstr "<a href=\"%3\"%5>%1</a> <span class=\"game-result\">v</span> <a href=\"%4\"%6>%2</a>: finished early because the away player retired"
 
 msgid "matches.game.result.home-doubles-player-forefeited"
-msgstr "This game was not played because the home team pulled out"
+msgstr "The set was not played because the home team pulled out"
 
 msgid "matches.game.result.away-doubles-player-forefeited"
-msgstr "This game was not played because the away team pulled out"
+msgstr "The set was not played because the away team pulled out"
 
 msgid "matches.game.result.home-doubles-player-retired"
 msgstr "finished early because the home team retired"
@@ -3507,10 +3492,10 @@ msgid "stats.table-heading.matches-available"
 msgstr "Matches available"
 
 msgid "stats.table-heading.games-difference"
-msgstr "GD"
+msgstr "SD"
 
 msgid "stats.table-heading.games-difference.full"
-msgstr "Games difference"
+msgstr "Sets difference"
 
 msgid "stats.table-heading.points-difference"
 msgstr "PD"
@@ -3522,7 +3507,7 @@ msgid "stats.table-heading.for"
 msgstr "F"
 
 msgid "stats.table-heading.games-for.full"
-msgstr "Games for"
+msgstr "Sets for"
 
 msgid "stats.table-heading.points-for.full"
 msgstr "Points for"
@@ -3531,7 +3516,7 @@ msgid "stats.table-heading.against"
 msgstr "A"
 
 msgid "stats.table-heading.games-against.full"
-msgstr "Games against"
+msgstr "Sets against"
 
 msgid "stats.table-heading.points-against.full"
 msgstr "Points against"
@@ -3546,7 +3531,7 @@ msgid "stats.table-heading.handicap.full"
 msgstr "Total handicap"
 
 msgid "stats.table-heading.games-played"
-msgstr "Games"
+msgstr "Sets"
 
 msgid "stats.table-heading.games-won"
 msgstr "W"
@@ -3555,13 +3540,13 @@ msgid "stats.table-heading.games-lost"
 msgstr "L"
 
 msgid "stats.table-heading.legs-played"
-msgstr "Legs played"
+msgstr "Games played"
 
 msgid "stats.table-heading.legs-won"
-msgstr "Legs won"
+msgstr "Games won"
 
 msgid "stats.table-heading.legs-lost"
-msgstr "Legs lost"
+msgstr "Games lost"
 
 msgid "stats.table-heading.points-played"
 msgstr "Points played"
@@ -3632,7 +3617,7 @@ msgstr "Only show \n"
 " <option value=""></option>\n"
 " <option value="matches"%14>matches</option>\n"
 " <option value="matches-pc"%15>% of available matches</option>\n"
-" <option value="games"%16>games</option>\n"
+" <option value="games"%16>sets</option>\n"
 "</select> \n"
 
 msgid "averages.filter-form.custom-options-doubles-individuals"
@@ -3658,7 +3643,7 @@ msgstr "Only show \n"
 " <option value="<="%11>at most</option>\n"
 " <option value="<"%12>less than</option>\n"
 "</select> \n"
-"<input type="number" name="criteria" min="0" value="%13" /> games\n"
+"<input type="number" name="criteria" min="0" value="%13" /> sets\n"
 
 msgid "averages.filter-form.custom-options-doubles-pairs"
 msgstr "Only show pairs who have \n"
@@ -3676,7 +3661,7 @@ msgstr "Only show pairs who have \n"
 " <option value="<="%11>at most</option>\n"
 " <option value="<"%12>less than</option>\n"
 "</select> \n"
-"<input type="number" name="criteria" min="0" value="%13" /> games\n"
+"<input type="number" name="criteria" min="0" value="%13" /> sets\n"
 
 msgid "averages.filter-form.custom-options-doubles-teams"
 msgstr "Only show teams who have \n"
@@ -3694,7 +3679,7 @@ msgstr "Only show teams who have \n"
 " <option value="<="%11>at most</option>\n"
 " <option value="<"%12>less than</option>\n"
 "</select> \n"
-"<input type="number" name="criteria" min="0" value="%13" /> games\n"
+"<input type="number" name="criteria" min="0" value="%13" /> sets\n"
 
 msgid "averages.filter-form.criteria-field"
 msgstr "field"
@@ -3730,7 +3715,7 @@ msgid "averages.filter-form.criteria-type.matches"
 msgstr "matches"
 
 msgid "averages.filter-form.criteria-type.games"
-msgstr "games"
+msgstr "sets"
 
 msgid "matches-pc"
 msgstr "% of available matches"
@@ -3775,7 +3760,7 @@ msgid "average-filter.form.error.operator-invalid"
 msgstr "The operator must be &#39;more than&#39;, &#39;at least&#39;, &#39;exactly&#39;, &#39;at most&#39; or &#39;less than&#39;."
 
 msgid "average-filter.form.error.criteria-type-invalid"
-msgstr "The criteria field must be &#39;matches&#39; or &#39;games&#39;."
+msgstr "The criteria field must be &#39;matches&#39; or &#39;sets&#39;."
 
 msgid "average-filter.view-list"
 msgstr "View average filters"
@@ -3817,7 +3802,7 @@ msgid "average-filters.criteria-type.matches-percentage"
 msgstr "% of available matches"
 
 msgid "average-filters.criteria-type.games"
-msgstr "Games"
+msgstr "Sets"
 
 msgid "average-filters.operator"
 msgstr "operator"
@@ -3933,16 +3918,16 @@ msgid "events.award-forefeit-rules"
 msgstr "Award &amp; forefeit rules"
 
 msgid "events.form.legend.rules-when-games-not-completed"
-msgstr "What to do when games can&#39;t be completed"
+msgstr "What to do when sets can&#39;t be completed"
 
 msgid "events.form.field.void-unplayed-games-if-both-teams-incomplete"
-msgstr "Void unplayed games if both teams have missing players"
+msgstr "Void unplayed sets if both teams have missing players"
 
 msgid "events.form.field.forefeit-count-averages-if-game-not-started"
-msgstr "Count a forefeited game in the averages, even if it wasn&#39;t started"
+msgstr "Count a forefeited set in the averages, even if it wasn&#39;t started"
 
 msgid "events.form.field.seasons.form.field.missing-player-count-win-in-averages"
-msgstr "Count an unplayed game due to a missing player as a win in the averages for the other player (not relevant if both teams have players missing and the void games setting is in effect)"
+msgstr "Count an unplayed set due to a missing player as a win in the averages for the other player (not relevant if both teams have players missing and the void sets setting is in effect)"
 
 msgid "events.legend.award-forefeit-rules"
 msgstr "Award &amp; forefeit rules"
@@ -4563,7 +4548,7 @@ msgid "templates.heading.template-rules"
 msgstr "Template rules"
 
 msgid "templates.heading.template-games"
-msgstr "Template games"
+msgstr "Template sets"
 
 msgid "templates.field.name"
 msgstr "Name"
@@ -4629,10 +4614,10 @@ msgid "templates.league-table-ranking.none"
 msgstr "There are no league table ranking templates to view."
 
 msgid "templates.individual-match.field.game-type"
-msgstr "Game type"
+msgstr "Set type"
 
 msgid "templates.individual-match.field.legs-per-game"
-msgstr "Legs per game"
+msgstr "Games per set"
 
 msgid "templates.individual-match.form.legend.win-requirements"
 msgstr "Win requirements"
@@ -4665,28 +4650,28 @@ msgid "templates.individual-match.form.error.template-not-specified"
 msgstr "You must specify a match template to edit."
 
 msgid "templates.individual-match.form.error.game-type-invalid"
-msgstr "The game type specified is invalid."
+msgstr "The set type specified is invalid."
 
 msgid "templates.individual-match.form.error.game-type-blank"
-msgstr "You must select a game type."
+msgstr "You must select a set type."
 
 msgid "templates.individual-match.form.error.legs-per-game-invalid"
-msgstr "The legs per game field must be a numeric value between 1 and 99."
+msgstr "The games per set field must be a numeric value between 1 and 99."
 
 msgid "templates.individual-match.form.error.legs-per-game-blank"
-msgstr "You must enter a number of legs per game."
+msgstr "You must enter a number of games per set."
 
 msgid "templates.individual-match.form.error.minimum-points-win-invalid"
 msgstr "The minimum points to win field must be a numeric value between 1 and 99."
 
 msgid "templates.individual-match.form.error.minimum-points-win-blank"
-msgstr "You must enter the minimum number of points required to win a leg."
+msgstr "You must enter the minimum number of points required to win a game."
 
 msgid "templates.individual-match.form.error.clear-points-win-invalid"
-msgstr "The clear points lead required to win a game must be a numeric value between 1 and 99."
+msgstr "The clear points lead required to win a set must be a numeric value between 1 and 99."
 
 msgid "templates.individual-match.form.error.clear-points-win-blank"
-msgstr "You must enter the number of clear points required to win a leg (even if this is only 1)."
+msgstr "You must enter the number of clear points required to win a game (even if this is only 1)."
 
 msgid "templates.individual-match.form.error.serve-type-invalid"
 msgstr "The serve type value is invalid."
@@ -4740,16 +4725,16 @@ msgid "templates.team-match.field.allow-score-override"
 msgstr "Allow final score override"
 
 msgid "templates.team-match.games.success"
-msgstr "%1 games for %2 have been created."
+msgstr "%1 sets for %2 have been created."
 
 msgid "templates.team-match.games.delete"
-msgstr "Delete game %1 and any that come after it"
+msgstr "Delete set %1 and any that come after it"
 
 msgid "templates.team-match.games.field.game-number"
-msgstr "Game number"
+msgstr "Set number"
 
 msgid "templates.team-match.games.field.game-template"
-msgstr "Game template"
+msgstr "Set template"
 
 msgid "templates.team-match.games.field.singles-players"
 msgstr "Singles players"
@@ -4770,34 +4755,34 @@ msgid "templates.team-match.games.field.players"
 msgstr "Doubles"
 
 msgid "templates.team-match.games.field.doubles-game"
-msgstr "Doubles game"
+msgstr "Doubles set"
 
 msgid "templates.team-match.games.error.ind-template-invalid"
-msgstr "The individual match template specified for game %1 is invalid."
+msgstr "The individual match template specified for set %1 is invalid."
 
 msgid "templates.team-match.games.error.ind-template-blank"
-msgstr "You must select a template for game %1."
+msgstr "You must select a template for set %1."
 
 msgid "templates.team-match.games.error.ind-template-and-team-template-both-handicapped"
-msgstr "Game %1 has an individual match template with a handicap set; this is not allowed, since the team template has a handicap set as well."
+msgstr "Set %1 has an individual match template with a handicap set; this is not allowed, since the team template has a handicap set as well."
 
 msgid "templates.team-match.games.error.home-player-number-invalid"
-msgstr "The singles home player number in game %1 is invalid; it must be a number between 1 and %2."
+msgstr "The singles home player number in set %1 is invalid; it must be a number between 1 and %2."
 
 msgid "templates.team-match.games.error.home-player-number-blank"
-msgstr "You must select a home player number in game %1, or tick to specify a doubles game."
+msgstr "You must select a home player number in set %1, or tick to specify a doubles set."
 
 msgid "templates.team-match.games.error.away-player-number-invalid"
-msgstr "The singles home player number in game %1 is invalid; it must be a number between %2 and %3."
+msgstr "The singles home player number in set %1 is invalid; it must be a number between %2 and %3."
 
 msgid "templates.team-match.games.error.away-player-number-blank"
-msgstr "You must select an away player in game %2, or tick to specify a doubles game."
+msgstr "You must select an away player in set %2, or tick to specify a doubles set."
 
 msgid "templates.team-match.games.form.legend.game"
-msgstr "Game"
+msgstr "Set"
 
 msgid "templates.team-match.games.modify"
-msgstr "Modify match games"
+msgstr "Modify match sets"
 
 ### Contact reasons
 msgid "contact-reasons.none"
@@ -6549,16 +6534,16 @@ msgstr "herself"
 
 ### Game types
 msgid "game-type.name.best-of"
-msgstr "Best of (x) games wins"
+msgstr "Best of (x) sets wins"
 
 msgid "game-type.name.static"
 msgstr "Static"
 
 msgid "game-type.description.best-of"
-msgstr "The match is won by the player to win the best of (x) legs, where (x) is the number set below in the &#39;legs per game&#39; field."
+msgstr "The match is won by the player to win the best of (x) games, where (x) is the number set below in the &#39;games per set&#39; field."
 
 msgid "game-type.description.static"
-msgstr "The match ends after (x) legs, regardless of the current score, where (x) is the number set below in the &#39;legs per game&#39; field."
+msgstr "The match ends after (x) games, regardless of the current score, where (x) is the number set below in the &#39;games per set&#39; field."
 
 ### Serve types
 msgid "serve-type.name.last-point"
@@ -6568,7 +6553,7 @@ msgid "serve-type.name.static"
 msgstr "Static"
 
 msgid "serve-type.name.whole-leg"
-msgstr "One player serves for the whole leg"
+msgstr "One player serves for the whole game"
 
 msgid "serve-type.description.last-point"
 msgstr "Each point is served by the player who won the last point."
@@ -6577,17 +6562,17 @@ msgid "serve-type.description.static"
 msgstr "Service swaps after (x) points, where (x) is a number set as &#39;serves&#39; and &#39;serves in deuce&#39;."
 
 msgid "serve-type.description.whole-leg"
-msgstr "The same player serves for the entire leg and service swaps when a new leg starts."
+msgstr "The same player serves for the entire game and service swaps when a new game starts."
 
 ### Winner types
 msgid "winner-type.name.games"
-msgstr "Games"
+msgstr "Sets"
 
 msgid "winner-type.name.points"
 msgstr "Points"
 
 msgid "winner-type.description.games"
-msgstr "The team with the most games wins."
+msgstr "The team with the most sets wins."
 
 msgid "winner-type.description.points"
 msgstr "The team with the most points wins."
@@ -6612,7 +6597,7 @@ msgid "team-membership-type.description.active"
 msgstr "The team that this player is registered to for the season; this can change if they start playing for one team, then re-register for another (in which case the original "active" membership becomes "inactive" - there is therefore only one of these per player, per season at any one time)."
 
 msgid "team-membership-type.description.loan"
-msgstr "A team for whom the player has played as a loan player.  There can be more than one of these if players are allowed to play for more than one team.  They can also be upgraded to "active", in which case the previously active membership becomes "inactive" if the player had played games for that team already (if not, the membership is just deleted)."
+msgstr "A team for whom the player has played as a loan player.  There can be more than one of these if players are allowed to play for more than one team.  They can also be upgraded to "active", in which case the previously active membership becomes "inactive" if the player had played sets for that team already (if not, the membership is just deleted)."
 
 msgid "team-membership-type.description.inactive"
 msgstr "An inactive team membership.  This would previously have been active; the player must have played for the team and then re-registered for a different team for a membership to be marked as inactive."
@@ -6665,7 +6650,7 @@ msgid "tournament-type.description.doubles"
 msgstr "Entrants to tournaments are doubles partners and matches follow an individual match template."
 
 msgid "tournament-type.description.team"
-msgstr "Entrants to tournaments are teams and the matches follow the same specification as league matches (where you supply a team match template and each game has an individual match template).  Unless otherwise specified (set per round), each match of the tournament is played at the home team&#39;s venue on the home team&#39;s home night at the default match start time for the home team.  For each round, you will specify a &#39;week&#39; of the season that the round takes place in."
+msgstr "Entrants to tournaments are teams and the matches follow the same specification as league matches (where you supply a team match template and each set has an individual match template).  Unless otherwise specified (set per round), each match of the tournament is played at the home team&#39;s venue on the home team&#39;s home night at the default match start time for the home team.  For each round, you will specify a &#39;week&#39; of the season that the round takes place in."
 
 ### Tournaments
 msgid "tournaments.type.team"
@@ -6709,6 +6694,15 @@ msgstr "Venue (leave blank to use the tournament venue)"
 
 msgid "tournaments.rounds.field.round-of"
 msgstr "Number of entrants"
+
+msgid "events.tournaments.rounds.entrants.update.error.round-complete"
+msgstr "This round is already complete, so entrants cannot be updated."
+
+msgid "events.tournaments.rounds.entrants.update.error.not-first-ko-round"
+msgstr "Entrants can only be selected on the first knock-out round of the tournament."
+
+msgid "events.tournaments.rounds.entrants.update.error.prev-round-incomplete"
+msgstr "Entrants can only be selected once the previous round is complete."
 
 msgid "tournaments.rounds.group.details"
 msgstr "Group %1 details"
@@ -6794,7 +6788,7 @@ msgstr "Create a group for %1"
 msgid "tournaments.round.group.form.error.season-not-current"
 msgstr "You can&#39;t add or edit groups in a tournament that&#39;s not in the current season."
 
-msgid "events.tournaments.rounds.groups.create.error.season-complete"
+msgid "events.tournaments.rounds.update.error.season-complete"
 msgstr "The season is complete, groups cannot be added."
 
 msgid "events.tournaments.rounds.groups.create.error.not-group-round"
@@ -7196,13 +7190,13 @@ msgid "system-event-log.description.adjust-group-points"
 msgstr "Adjusted the group table points for %1%2."
 
 msgid "system-event-log.description.create-games"
-msgstr "Created games for %1%2."
+msgstr "Created sets for %1%2."
 
 msgid "system-event-log.description.edit-games"
-msgstr "Edited games for %1%2."
+msgstr "Edited sets for %1%2."
 
 msgid "system-event-log.description.delete-games"
-msgstr "Deleted games for %1%2."
+msgstr "Deleted sets for %1%2."
 
 msgid "system-event-log.description.activate"
 msgstr "%1%2 activated."
@@ -7413,10 +7407,10 @@ msgid "object.plural.templates.match-team"
 msgstr "team match templates"
 
 msgid "object.singular.templates.match-team-game"
-msgstr "team match template game"
+msgstr "team match template set"
 
 msgid "object.plural.templates.match-team-game"
-msgstr "team match template games"
+msgstr "team match template sets"
 
 msgid "object.singular.contact-reasons"
 msgstr "contact reason"

@@ -3,6 +3,8 @@ use strict;
 use warnings;
 use base qw( DBIx::Class::ResultSet );
 
+__PACKAGE__->load_components(qw( Helper::ResultSet::SetOperations ));
+
 =head2 find_url_key
 
 Same as find(), but uses the key column instead of the id.  So we can use human-readable URLs.

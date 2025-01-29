@@ -2076,7 +2076,7 @@ sub calculate_match_score {
           ( $home_score, $away_score, $home_games_won, $away_games_won, $games_drawn ) = ( $_home_score, $_away_score, $_home_games_won, $_away_games_won, $_games_drawn );
         } else {
           # If no winner is defined, the match is void
-          ( $home_score, $away_score ) = qw( 0 0 );
+          ( $home_score, $away_score ) = ( $_home_score, $_away_score );
         }
       } else {
         # Not played yet

@@ -669,7 +669,7 @@ sub create_or_edit_round {
     
     if ( $self->has_group_round ) {
       $group_round = $self->find_round_by_number_or_url_key(1);
-      $group_qualifiers = $group_round->qualifiers;
+      $group_qualifiers = $group_round->num_qualifiers;
     }
     
     if ( $round_of =~ m/^\d+$/ ) {

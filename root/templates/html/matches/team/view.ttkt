@@ -233,7 +233,11 @@ IF match.started;
             END;
           ELSE;
             # Game is void for another reason
-            SET result = c.maketext("matches.game.result.void");
+            IF game.doubles_game;
+              SET result = c.maketext("matches.game.result.void");
+            ELSE;
+              SET result = c.maketext("matches.game.result.void-with-players", home_name_html, home_uri, away_name_html, away_uri);
+            END;
           END;
       ELSE; # ELSE for IF game.awarded
         # Game wasn't awarded or voided, show the standard text - with player links
@@ -289,7 +293,7 @@ IF match.started;
       IF summary_score.home OR summary_score.away;
         SET legs_score = summary_score.home _ "-" _ summary_score.away;
       ELSE;
-        SET legs_score = "&nbsp;";
+        SET legs_score = "0-0";
       END;
 -%]
           <td>[% legs_score %]</td>

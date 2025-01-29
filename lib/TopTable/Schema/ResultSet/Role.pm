@@ -6,8 +6,6 @@ use base qw( TopTable::Schema::ResultSet );
 use HTML::Entities;
 use Set::Object;
 
-__PACKAGE__->load_components(qw(Helper::ResultSet::SetOperations));
-
 =head2 all_roles
 
 Return a list of all roles ordered by built-in status (system roles at the top), then sysadmin status (sysadmin at the top), then anonymous status (anonymous at the top), then name.

@@ -1,7 +1,7 @@
 [%
 SET winner_type = match_template.winner_type.id;
 -%]
-        <table class="league-table stripe hover row-border">
+        <table class="league-table stripe hover row-border" style="width:100%">
           <thead>
             <tr>
               <th title="[% c.maketext("stats.table-heading.position.full") %]" class="numeric">[% c.maketext("stats.table-heading.position") %]</th>
