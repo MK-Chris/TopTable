@@ -494,7 +494,7 @@ sub do_create :Path("do-create") {
   my ( $self, $c ) = @_;
   
   # Check that we are authorised to create clubs
-  $c->forward("TopTable::Controller::Users", "check_authorisation", ["club_create", $c->maketext("user.auth.create-events"), 1]);
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_create", $c->maketext("user.auth.create-events"), 1]);
   
   # Forward to the create / edit routine
   $c->detach("process_form", [qw( event create )]);
@@ -1469,6 +1469,9 @@ sub edit_round :Chained("rounds_current_season") :PathPart("edit") :Args(0) {
   my $round = $c->stash->{round};
   my $enc_event_name = $c->stash->{enc_event_name};
   my $season = $c->stash->{season};
+  
+  # Check that we are authorised to edit events
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.edit-events"), 1]);
     
   if ( $season->complete ) {
     # The stashed season is complete (this is chained from the base_current_season routine, which gets the current or last complete season) so we can't edit the event
@@ -1482,9 +1485,6 @@ sub edit_round :Chained("rounds_current_season") :PathPart("edit") :Args(0) {
   $c->response->header("Cache-Control" => "no-cache, no-store, must-revalidate");
   $c->response->header("Pragma" => "no-cache");
   $c->response->header("Expires" => 0);
-  
-  # Check that we are authorised to edit events
-  $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.edit-events"), 1]);
   
   $c->stash({
     form_action => $c->uri_for_action("/events/do_edit_round", [$event->url_key, $round->url_key]),
@@ -1536,6 +1536,9 @@ sub add_next_round :Chained("base_current_season") :PathPart("add-next-round") :
     return;
   }
   
+  # Check that we are authorised to edit events
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.edit-events"), 1]);
+  
   if ( $season->complete ) {
     # The stashed season is complete (this is chained from the base_current_season routine, which gets the current or last complete season) so we can't edit the event
     $c->response->redirect($c->uri_for_action("/events/view_current_season", [$event->url_key],
@@ -1557,17 +1560,14 @@ sub add_next_round :Chained("base_current_season") :PathPart("add-next-round") :
   $c->response->header("Pragma" => "no-cache");
   $c->response->header("Expires" => 0);
   
-  # Check that we are authorised to edit events
-  $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.edit-events"), 1]);
+  $c->stash({
+    form_action => $c->uri_for_action("/events/do_add_next_round", [$event->url_key]),
+  });
   
   # Breadcrumbs
   push(@{$c->stash->{breadcrumbs}}, {
     path => $c->uri_for("/events/add_next_round", [$event->url_key]),
     label => $c->maketext("admin.add-next-round-crumbs"),
-  });
-  
-  $c->stash({
-    form_action => $c->uri_for_action("/events/do_add_next_round", [$event->url_key]),
   });
   
   $c->detach("prepare_form_round", [qw( create )]);
@@ -1581,9 +1581,84 @@ Process the form to add the next round.
 
 sub do_add_next_round :Chained("base_current_season") :PathPart("do-add-next-round") :Args(0) {
   my ( $self, $c ) = @_;
+  my $event_type = $c->stash->{event_type};
+  
+  # If this isn't a tournament, there are no rounds to add, so show a 404
+  if ( $event_type ne "single_tournament" ) {
+    $c->detach(qw(TopTable::Controller::Root default));
+    return;
+  }
+  
+  # Check that we are authorised to edit events
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.edit-events"), 1]);
   
   # Forward to the create / edit routine
   $c->detach("process_form", [qw( round create )]);
+}
+
+# =head2 round_select_entrants
+
+# Show a form to add the entrants to a round - this is only used for knock-out rounds; if this is the first round, entants can be anyone registered for the season, otherwise they must be from the previous round.  This is a formality in most situations, but sometimes we may need to select qualifiers from a list of best runners up.
+
+# Knock-out rounds that follow knock-out rounds will automatically have the entrants set to the winners of the previous round, or those who had a bye from the round before that, so this is only needed for the first knock-out round.
+
+# =cut
+
+# sub round_select_entrants :Chained("rounds_current_season") :PathPart("select-entrants") :Args(0) {
+#   my ( $self, $c ) = @_;
+#   my $event = $c->stash->{event};
+#   my $enc_event_name = $c->stash->{enc_event_name};
+#   my $season = $c->stash->{season};
+#   my $event_type = $c->stash->{event_type};
+#   my $tournament = $c->stash->{event_detail};
+#   my $round = $c->stash->{round};
+  
+#   # Check that we are authorised to edit events
+#   $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.edit-events"), 1]);
+  
+#   my %can = $round->can_update("entrants");
+  
+#   # Setup template and scripts
+#   $c->stash({
+#     template => "html/events/tournaments/rounds/select-entrants.ttkt",
+#     external_scripts => [
+#       $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
+#       $c->uri_for("/static/script/standard/chosen.js"),
+#       $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
+#       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
+#       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
+#       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
+#       $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
+#       $c->uri_for("/static/script/events/tournaments/rounds/select-entrants.js"),
+#     ],
+#     external_styles => [
+#       $c->uri_for("/static/css/chosen/chosen.min.css"),
+#       $c->uri_for("/static/css/datatables/dataTables.dataTables.min.css"),
+#       $c->uri_for("/static/css/datatables/fixedColumns.dataTables.min.css"),
+#       $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
+#       $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
+#       $c->uri_for("/static/css/datatables/rowGroup.dataTables.min.css"),
+#     ],
+#     view_online_display => "Selecting entrants for $enc_event_name",
+#     view_online_link => 0,
+#     automatic_qualifiers => $round->automatic_qualifiers,
+#   });
+# }
+
+=head2 do_round_select_entrants
+
+Process the form to add the entrants to a round.
+
+=cut
+
+sub do_round_select_entrants :Chained("rounds_current_season") :PathPart("do-select-entrants") :Args(0) {
+  my ( $self, $c ) = @_;
+  
+  # Check that we are authorised to edit events
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.edit-events"), 1]);
+  
+  # Forward to the create / edit routine
+  $c->detach("process_form", [qw( round entrants )]);
 }
 
 =head2 prepare_form_round

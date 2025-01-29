@@ -4,8 +4,6 @@ use strict;
 use warnings;
 use base qw( TopTable::Schema::ResultSet );
 
-__PACKAGE__->load_components(qw(Helper::ResultSet::SetOperations));
-
 =head2 get_doubles_pairs_in_division_in_averages_order
 
 Retrieve doubles pairs in a given season / division in averages order.  If the $criteria hashref is given, these will be added to the query.

@@ -695,6 +695,10 @@ Retrieve entrants in the order they'll be placed in the table.
 
 sub get_entrants_in_table_order {
   my $self = shift;
+  my ( $params ) = @_;
+  my $logger = $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $rows = $params->{rows};
+  my $prefetch_group = $params->{prefetch_group} || 0;
   my $member_rel;
   my $tourn_round = $self->tournament_round;
   my $entry_type = $self->entry_type;
@@ -754,13 +758,24 @@ sub get_entrants_in_table_order {
     }
     
     $member_rel = "tournament_round_teams";
-    $attrib{prefetch} = {
-      tournament_team => {
-        team_season => [qw( team ), {
-          club_season => [qw( club )],
-        }]
-      }
-    };
+    
+    if ( $prefetch_group ) {
+      $attrib{prefetch} = [qw( tournament_group ), {
+        tournament_team => {
+          team_season => [qw( team ), {
+            club_season => [qw( club )],
+          }]
+        }
+      }];
+    } else {
+      $attrib{prefetch} = {
+        tournament_team => {
+          team_season => [qw( team ), {
+            club_season => [qw( club )],
+          }]
+        }
+      };
+    }
     
     push(@{$attrib{order_by}}, {-asc => [qw( club.short_name team.name )]});
   } elsif ( $entry_type eq "singles" ) {
@@ -769,7 +784,28 @@ sub get_entrants_in_table_order {
     $member_rel = "tournament_round_doubles";
   }
   
+  $attrib{rows} = $rows if defined($rows);
+  
   return $self->search_related($member_rel, {}, \%attrib);
+}
+
+=head2 get_automatic_qualifiers
+
+Return the current automatic qualifiers in the top [automatic_qualifiers] positions.
+
+=cut
+
+sub get_automatic_qualifiers {
+  my $self = shift;
+  my ( $params ) = @_;
+  my $logger = $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  
+  my $auto = $self->get_entrants_in_table_order({
+    rows => $self->automatic_qualifiers,
+    prefetch_group => 1,
+  });
+  
+  return $auto;
 }
 
 =head2 get_entrants_in_grid_position_order

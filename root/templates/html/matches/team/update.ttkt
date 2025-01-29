@@ -280,7 +280,6 @@ FOREACH game IN match.team_match_games;
           <div class="label-field-container-multi">
             <div class="field-container">[% c.maketext("matches.game.field.scores.home") %]</div>
             <div class="field-container">[% c.maketext("matches.game.field.scores.away") %]</div>
-            <div class="field-container">[% c.maketext("matches.game.field.scores.award") %]</div>
             <div class="clear-fix"></div>
           </div><!-- End label-field-container-multi div for game [% game.scheduled_game_number %] headings -->
 [%
@@ -290,31 +289,6 @@ FOREACH game IN match.team_match_games;
             <div class="label-field-container-multi">
               <div class="field-container"><input type="number" class="game-score" name="game_[% game.scheduled_game_number %]_leg_[% leg.leg_number %]_home" id="game_[% game.scheduled_game_number %]_leg_[% leg.leg_number %]_home" min="0" data-game="[% game.scheduled_game_number %]" data-leg="[% leg.leg_number %]" data-player-location="home"[% game_type _ home_player_number _ away_player_number %] value="[% leg.home_team_points_won OR "0" %]" /></div>
               <div class="field-container"><input type="number" class="game-score away-score" name="game_[% game.scheduled_game_number %]_leg_[% leg.leg_number %]_away" id="game_[% game.scheduled_game_number %]_leg_[% leg.leg_number %]_away" min="0" data-game="[% game.scheduled_game_number %]" data-leg="[% leg.leg_number %]" data-player-location="away"[% game_type _ home_player_number _ away_player_number %] value="[% leg.away_team_points_won OR "0" %]" /></div>
-              <div class="button-toggle" id="game_[% game.scheduled_game_number %]_leg_[% leg.leg_number %]_award">
-[%
-      IF leg.awarded;
-        IF leg.winner.id == match.team_season_home_team_season.team.id;
-          # Awarded to the home team
-          SET home_checked = ' checked="checked"';
-          SET away_checked = '';
-        ELSIF leg.winner.id == match.team_season_away_team_season.team.id;
-          # Awarded to the away team
-          SET home_checked = '';
-          SET away_checked = ' checked="checked"';
-        ELSE;
-          # Awarded to no one (shouldn't happen)
-          SET home_checked = '';
-          SET away_checked = '';
-        END;
-      ELSE;
-        # No awarded
-          SET home_checked = '';
-          SET away_checked = '';
-      END;
--%]
-                <input type="checkbox" class="button-toggle award-game award-game-[% game.scheduled_game_number %]" value="1"[% home_checked %] id="game_[% game.scheduled_game_number %]_leg_[% leg.leg_number %]_home_award" name="game_[% game.scheduled_game_number %]_leg_[% leg.leg_number %]_home_award" data-game-number="[% game.scheduled_game_number %]" data-leg-number="[% leg.leg_number %]" data-location="home" /><label for="game_[% game.scheduled_game_number %]_leg_[% leg.leg_number %]_home_award">[% c.maketext("matches.game.award-home-label") %]</label>
-                <input type="checkbox" class="button-toggle award-game award-game-[% game.scheduled_game_number %]" value="1"[% away_checked %] id="game_[% game.scheduled_game_number %]_leg_[% leg.leg_number %]_away_award" name="game_[% game.scheduled_game_number %]_leg_[% leg.leg_number %]_away_award" data-game-number="[% game.scheduled_game_number %]" data-leg-number="[% leg.leg_number %]" data-location="away" /><label for="game_[% game.scheduled_game_number %]_leg_[% leg.leg_number %]_away_award">[% c.maketext("matches.game.award-away-label") %]</label>
-              </div><!-- End button toggle div for game [% game.scheduled_game_number %], leg [% leg.leg_number %] -->
               <div class="clear-fix"></div>
             </div><!-- End label-field-container-multi div for game [% game.scheduled_game_number %], leg [% leg.leg_number %] -->
           </div><!-- End score div for game [% game.scheduled_game_number %], leg [% leg.leg_number %] -->
@@ -324,6 +298,45 @@ FOREACH game IN match.team_match_games;
     END;
 -%]
         </div><!-- End score div for game [% game.scheduled_game_number %] -->
+        <div class="game_award_void field-container-wide" id="game_[% game.scheduled_game_number %]_award_void">
+          <div class="clear-fix"></div>
+          <div class="button-toggle" id="game_[% game.scheduled_game_number %]_award">
+[%
+    IF game.awarded;
+      IF game.winner.id == match.team_season_home_team_season.team.id;
+        # Awarded to the home team
+        SET home_checked = ' checked="checked"';
+        SET away_checked = '';
+        SET void_checked = '';
+      ELSIF game.winner.id == match.team_season_away_team_season.team.id;
+        # Awarded to the away team
+        SET home_checked = '';
+        SET away_checked = ' checked="checked"';
+        SET void_checked = '';
+      ELSE;
+        # Awarded to no one (shouldn't happen)
+        SET home_checked = '';
+        SET away_checked = '';
+        SET void_checked = '';
+      END;
+    ELSIF game.void;
+        SET home_checked = '';
+        SET away_checked = '';
+        SET void_checked = ' checked="checked"';
+    ELSE;
+      # No awarded
+        SET home_checked = '';
+        SET away_checked = '';
+        SET void_checked = '';
+    END;
+-%]
+            <input type="checkbox" class="button-toggle award-game award-game-[% game.scheduled_game_number %]" value="1"[% home_checked %] id="game_[% game.scheduled_game_number %]_home_award" name="game_[% game.scheduled_game_number %]_leg_[% leg.leg_number %]_home_award" data-game-number="[% game.scheduled_game_number %]" data-location="home" /><label for="game_[% game.scheduled_game_number %]_home_award">[% c.maketext("matches.game.award-home-label") %]</label>
+            <input type="checkbox" class="button-toggle void-game void-game-[% game.scheduled_game_number %]" value="1"[% void_checked %] id="game_[% game.scheduled_game_number %]_void" name="game_[% game.scheduled_game_number %]_void" data-game-number="[% game.scheduled_game_number %]" /><label for="game_[% game.scheduled_game_number %]_void">[% c.maketext("matches.game.void-label") %]</label>
+            <input type="checkbox" class="button-toggle award-game award-game-[% game.scheduled_game_number %]" value="1"[% away_checked %] id="game_[% game.scheduled_game_number %]_away_award" name="game_[% game.scheduled_game_number %]_leg_[% leg.leg_number %]_away_award" data-game-number="[% game.scheduled_game_number %]" data-location="away" /><label for="game_[% game.scheduled_game_number %]_away_award">[% c.maketext("matches.game.award-away-label") %]</label>
+          </div><!-- End button toggle div for game [% game.scheduled_game_number %], leg [% leg.leg_number %] -->
+          <!--<div class="clear-fix"></div>-->
+        </div>
+        <div class="clear-fix"></div>
       </div><!-- End accordion div for game [% game.scheduled_game_number %] -->
     </div><!-- End group for game [% game.scheduled_game_number %] -->
 [%

@@ -455,9 +455,7 @@ sub do_update :Private {
     
   } else {
     # Log an update
-    my $match_name = $c->maketext("matches.name", $match->team_season_home_team_season->full_name, $match->team_season_away_team_season->full_name);
-    $match_name .= " (" . $match->tournament_round->tournament->event_season->name . ")" if defined($match->tournament_round);
-    $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["team-match", "update", {home_team => $match->home_team->id, away_team => $match->away_team->id, scheduled_date => $match->scheduled_date->ymd}, $match_name]);
+    $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["team-match", "update", {home_team => $match->home_team->id, away_team => $match->away_team->id, scheduled_date => $match->scheduled_date->ymd}, $match->name_with_competition]);
   }
 }
 
@@ -714,9 +712,7 @@ sub change_played_date :Private {
   
   if ( $response->{completed} ) {
     # Completed, log that we updated the match
-    my $match_name = $c->maketext("matches.name", $match->team_season_home_team_season->full_name, $match->team_season_away_team_season->full_name);
-    $match_name .= " (" . $match->tournament_round->tournament->event_season->name . ")" if defined($match->tournament_round);
-    $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["team-match", "date-change", {home_team => $match->team_season_home_team_season->team->id, away_team => $match->team_season_away_team_season->team->id, scheduled_date => $match->scheduled_date->ymd}, $match_name]);
+    $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["team-match", "date-change", {home_team => $match->team_season_home_team_season->team->id, away_team => $match->team_season_away_team_season->team->id, scheduled_date => $match->scheduled_date->ymd}, $match->name_with_competition]);
   } else {
     # Wasn't completed, return with an error code
     $c->res->status(400);
@@ -770,9 +766,7 @@ sub change_venue :Private {
   
   if ( $response->{completed} ) {
     # Completed, log that we updated the match
-    my $match_name = $c->maketext("matches.name", $match->team_season_home_team_season->full_name, $match->team_season_away_team_season->full_name);
-    $match_name .= " (" . $match->tournament_round->tournament->event_season->name . ")" if defined($match->tournament_round);
-    $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["team-match", "venue-change", {home_team => $match->team_season_home_team_season->team->id, away_team => $match->team_season_away_team_season->team->id, scheduled_date => $match->scheduled_date->ymd}, $match_name]);
+    $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["team-match", "venue-change", {home_team => $match->team_season_home_team_season->team->id, away_team => $match->team_season_away_team_season->team->id, scheduled_date => $match->scheduled_date->ymd}, $match->name_with_competition]);
   } else {
     # Wasn't completed, return with an error code
     $c->res->status(400);
@@ -1032,9 +1026,7 @@ sub do_cancel :Private {
     $redirect_uri = $c->uri_for_action("/matches/team/view_by_url_keys", $match->url_keys, {mid => $mid});
     
     # Completed, so we log an event
-    my $match_name = $c->maketext("matches.name", $match->team_season_home_team_season->full_name, $match->team_season_away_team_season->full_name);
-    $match_name .= " (" . $match->tournament_round->tournament->event_season->name . ")" if defined($match->tournament_round);
-    $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["team-match", $action, {home_team => $match->team_season_home_team_season->team->id, away_team => $match->team_season_away_team_season->team->id, scheduled_date => $match->scheduled_date->ymd}, $match_name]);
+    $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["team-match", $action, {home_team => $match->team_season_home_team_season->team->id, away_team => $match->team_season_away_team_season->team->id, scheduled_date => $match->scheduled_date->ymd}, $match->name_with_competition]);
   } else {
     # Not complete - check if we need to redirect back to the create or view page
     if ( $response->{can_complete} ) {
@@ -1178,9 +1170,7 @@ sub do_override_score :Private {
       my $override_score = $c->req->params->{override_score} || 0;
       my $action = $override_score ? "override-score" : "override-remove";
       
-      my $match_name = $c->maketext("matches.name", $match->team_season_home_team_season->full_name, $match->team_season_away_team_season->full_name);
-      $match_name .= " (" . $match->tournament_round->tournament->event_season->name . ")" if defined($match->tournament_round);
-      $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["team-match", $action, {home_team => $match->team_season_home_team_season->team->id, away_team => $match->team_season_away_team_season->team->id, scheduled_date => $match->scheduled_date->ymd}, $match_name]);
+      $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["team-match", $action, {home_team => $match->team_season_home_team_season->team->id, away_team => $match->team_season_away_team_season->team->id, scheduled_date => $match->scheduled_date->ymd}, $match->name_with_competition]);
     }
     
     $redirect_uri = $c->uri_for_action("/matches/team/view_by_url_keys", $match->url_keys, {mid => $mid});
@@ -1300,9 +1290,7 @@ sub publish_report :Private {
     $redirect_uri = $c->uri_for_action("/matches/team/view_by_url_keys", $match->url_keys, {mid => $mid});
     
     # Completed, so we log an event
-    my $match_name = $c->maketext("matches.name", $match->team_season_home_team_season->full_name, $match->team_season_away_team_season->full_name);
-    $match_name .= " (" . $match->tournament_round->tournament->event_season->name . ")" if defined($match->tournament_round);
-    $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["team-match", "report-$action", {home_team => $home_team->team->id, away_team => $away_team->team->id, scheduled_date => $match->scheduled_date->ymd}, $match_name]);
+    $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["team-match", "report-$action", {home_team => $home_team->team->id, away_team => $away_team->team->id, scheduled_date => $match->scheduled_date->ymd}, $match->name_with_competition]);
   } else {
     $redirect_uri = $c->uri_for_action("/matches/team/report_by_url_keys", $match->url_keys, {mid => $mid});
     
@@ -1497,9 +1485,7 @@ sub set_handicaps :Private {
     $redirect_uri = $c->uri_for_action("/matches/team/view_by_url_keys", $match->url_keys, {mid => $mid});
     
     # Completed, so we log an event
-    my $match_name = $c->maketext("matches.name", $match->team_season_home_team_season->full_name, $match->team_season_away_team_season->full_name);
-    $match_name .= " (" . $match->tournament_round->tournament->event_season->name . ")" if defined($match->tournament_round);
-    $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["team-match", "handicap-change", {home_team => $match->team_season_home_team_season->team->id, away_team => $match->team_season_away_team_season->team->id, scheduled_date => $match->scheduled_date->ymd}, $match_name]);
+    $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["team-match", "handicap-change", {home_team => $match->team_season_home_team_season->team->id, away_team => $match->team_season_away_team_season->team->id, scheduled_date => $match->scheduled_date->ymd}, $match->name_with_competition]);
   } else {
     # Not complete - check if we need to redirect back to the create or view page
     $redirect_uri = $c->uri_for_action("/matches/team/change_handicaps_by_url_keys", $match->url_keys, {mid => $mid});

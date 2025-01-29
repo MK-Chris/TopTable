@@ -140,11 +140,9 @@ FOREACH game IN match.team_match_games;
       void: Boolean([% game.void OR 0 %]),
       winner: [% game.winner.id OR "undefined" %],
       
-      // Transient information
-      
-      
       // URIs
       uris: {
+        update_score: "[% c.uri_for_action("/matches/team/update_game_score_by_ids", [match.team_season_home_team_season.team.id, match.team_season_away_team_season.team.id, match.scheduled_date.year, match_month, match_day]) %]",
         reset: "[% c.uri_for_action('/matches/team/game/reset_score_by_ids', [match.team_season_home_team_season.team.id, match.team_season_away_team_season.team.id, match.scheduled_date.year, match_month, match_day, game.scheduled_game_number]) %]",
         doubles_pair: "[% c.uri_for_action('/matches/team/game/doubles_pair_by_ids', [match.team_season_home_team_season.team.id, match.team_season_away_team_season.team.id, match.scheduled_date.year, match_month, match_day, game.scheduled_game_number]) %]"
       }
@@ -475,7 +473,7 @@ END;
     var legs_played;
     var leg_to_hide;
     var next_game_number;
-    while ( loop_leg <= legs_per_game ) {
+    while ( loop_leg < legs_per_game ) {
       loop_leg++;
       home_field = $("#game_" + game_number + "_leg_" + loop_leg + "_home");
       away_field = $("#game_" + game_number + "_leg_" + loop_leg + "_away");
@@ -487,7 +485,7 @@ END;
         next_leg = undefined;
       }
       
-      // Score checks
+      // Score check
       if ( $.isNumeric($(home_field).val()) && $.isNumeric($(away_field).val()) && $(home_field).val() >= 0 && $(away_field).val() >= 0 ) {
         // Both scores are numeric and greater than zero (minus scores don't make sense)
         if ( parseInt($(home_field).val()) > parseInt($(away_field).val()) ) {
@@ -516,7 +514,7 @@ END;
             * If the winning score is greater than the minimum points required for a win, the difference between the winning and losing scores must be exactly equal to the number of clear points difference required to win.
             * In all other circumstances, nothing is done (unless one of the 'award' buttons is ticked).
         */
-        if ( (winning_score == minimum_points_win && clear_points >= clear_points_win) || (winning_score > minimum_points_win && clear_points == clear_points_win) || ( $("#game_" + game_number + "_leg_" + loop_leg + "_home_award").prop("checked") ) || ( $("#game_" + game_number + "_leg_" + loop_leg + "_away_award").prop("checked") ) ) {
+        if ( (winning_score == minimum_points_win && clear_points >= clear_points_win) || (winning_score > minimum_points_win && clear_points == clear_points_win) || ( $("#game_" + game_number + "_home_award").prop("checked") ) || ( $("#game_" + game_number + "_away_award").prop("checked") ) ) {
           // Valid win or awarded game, increase some values
           // First work out whether it's a valid win or an awarded game - default to awarded, then change in the below if statement if we get that far
           var game_awarded = true;
@@ -531,7 +529,7 @@ END;
           
           if ( game_awarded ) {
             // If the game has been awarded, we may need to change the winner
-            if ( $("#game_" + game_number + "_leg_" + loop_leg + "_home_award").prop("checked") ) {
+            if ( $("#game_" + game_number + "_home_award").prop("checked") ) {
               // The away team wins (awarded)
               winner = "home";
             } else {
@@ -549,12 +547,6 @@ END;
               $("#game_" + game_number + "_leg_" + leg_to_hide + "_score").hide();
               leg_to_hide++;
             }
-          } else {
-            // If the score is valid, we can't award the game at this point, as someone has already won, so we hide the award buttonset
-            $("#game_" + game_number + "_leg_" + loop_leg + "_award").hide();
-            $("#game_" + game_number + "_leg_" + loop_leg + "_home_award").prop("checked", false);
-            $("#game_" + game_number + "_leg_" + loop_leg + "_away_award").prop("checked", false);
-            $("#game_" + game_number + "_leg_" + loop_leg + "_award").controlgroup("refresh");
           }
 [%
 IF match.team_match_template.winner_type.id == "points";
@@ -642,6 +634,14 @@ END;
               }
             }
             
+            if ( game_awarded === false ) {
+              // At this point, the game is complete and not awarded; we can't award or void a completed game, so hide the buttons
+              $("#game_" + game_number + "_award_void").hide();
+              $("#game_" + game_number + "_home_award").prop("checked", false);
+              $("#game_" + game_number + "_away_award").prop("checked", false);
+              $("#game_" + game_number + "_award").controlgroup("refresh");
+            }
+            
             // Send the update if we're on the away score
             if ( disable_ajax === false && t.data("player-location") === "away" ) {
               var ajax_parameters = {"game": game_number};
@@ -661,7 +661,7 @@ END;
               }
               
               $.ajax({
-                url: "[% c.uri_for_action("/matches/team/update_game_score_by_ids", [match.team_season_home_team_season.team.id, match.team_season_away_team_season.team.id, match.scheduled_date.year, match_month, match_day]) %]",
+                url: match_games[game_number]["uris"].update_score,
                 type: "POST",
                 dataType: "json",
                 data: ajax_parameters,
@@ -733,6 +733,18 @@ END;
                   } else {
                     show_messages(xhr.responseJSON);
                   }
+                  
+                  if ( award_button_press ) {
+                    // Revert to the previous states
+                    $("#game_" + game_number + "_home_award").prop("checked", home_award_checked);
+                    $("#game_" + game_number + "_away_award").prop("checked", away_award_checked);
+                    $("#game_" + game_number + "_void").prop("checked", void_checked);
+                    $("#game_" + game_number + "_award").controlgroup("refresh");
+                    home_award_checked = undefined;
+                    away_award_checked = undefined;
+                    void_checked = undefined;
+                    award_button_press = false; // Revert back
+                  }
                 }
               });
               
@@ -775,8 +787,8 @@ END;
             leg_to_hide++;
           }
           
-          // Since this leg hasn't been won yet, show the award buttonsets
-          $("#game_" + game_number + "_leg_" + loop_leg + "_award").show();
+          // Show the award / void buttons
+          $("#game_" + game_number + "_award_void").show();
           
           // If this is leg 1, we need to make sure we set the score in the div heading to 'v', which means unplayed and zero the hidden fields
           if ( loop_leg == 1 ) {
@@ -822,7 +834,7 @@ END;
         away_field.val(0);
         
         // Show the 'award' buttonset
-        $("#game_" + game_number + "_leg_" + loop_leg + "_award").show();
+        $("#game_" + game_number + "_award_void").show();
         
         // If this is leg 1, we need to make sure we set the score in the div heading to 'v', which means unplayed and zero the home / away scores
         if (loop_leg == 1) {
@@ -846,34 +858,54 @@ END;
   
   
   /**
-   *  Handle award button clicks
+   *  Handle award / void button clicks
    *
    */
+  
+  // Save the previous states of these so we can revert back if we need
+  var home_award_checked, away_award_checked, void_checked;
+  var award_button_press = false;
   $("input.award-game").on("change", function() {
+    award_button_press = true; // If we trigger a blur, we need that function to know the award button was pressed
     if ( disable_ajax === false ) {
-      var $this_button = $(this);
-      var game_number = $this_button.data("game-number");
-      var leg_number = $this_button.data("leg-number");
-      var location = $this_button.data("location");
-      var opposite_location;
+      let $this_button = $(this);
+      let game_number = $this_button.data("game-number");
+      let location = $this_button.data("location");
+      let opposite_location;
+      let $opposite_button;
+      let $void_button = $("#game_" + game_number + "_void");
+      let button_checked, opposite_button_checked;
       
       // Work out the 'opposite' button - i.e., if the 
       if ( location === "home" ) {
         opposite_location = "away";
+        $opposite_button = $("#game_" + game_number + "_away_award");
+        home_award_checked = $this_button.prop("checked") ? 0 : 1; // Save the opposite state of the pressed button, if it was checked, it now isn't
+        away_award_checked = $opposite_button.prop("checked");
+        button_checked = home_award_checked;
+        opposite_button_checked = away_award_checked;
       } else {
         opposite_location = "home";
+        $opposite_button = $("#game_" + game_number + "_home_award");
+        away_award_checked = $this_button.prop("checked") ? 0 : 1; // Save the opposite state of the pressed button, if it was checked, it now isn't
+        home_award_checked = $opposite_button.prop("checked");
+        button_checked = away_award_checked;
+        opposite_button_checked = home_award_checked;
       }
       
+      void_checked = $void_button.prop("checked");
+      
       if ( $this_button.prop("checked") ) {
-        // If this button is checked, ensure the opposite one is not
-        $("#game_" + game_number + "_leg_" + leg_number + "_" + opposite_location + "_award").prop("checked", false);
-        $("#game_" + game_number + "_leg_" + leg_number + "_award").controlgroup("refresh");
+        // If this button is checked, ensure the opposite one is not, and neither is the void one
+        $opposite_button.prop("checked", false);
+        $void_button.prop("checked", false);
+        $("#game_" + game_number + "_award").controlgroup("refresh");
       }
       
       // Now check that ONE of the buttons is checked, so that we can work out whether to trigger an update, or send the AJAX request to reset (delete) the existing score
-      if ( $this_button.prop("checked") || $("#game_" + game_number + "_leg_" + leg_number + "_" + opposite_location + "_award").prop("checked") ) {
+      if ( $this_button.prop("checked") || $("#game_" + game_number + "_" + opposite_location + "_award").prop("checked") ) {
         // One of the award fields is now checked, so trigger the update to calculate the scores / tables / etc.
-        $("#game_" + game_number + "_leg_" + leg_number + "_away").trigger("blur");
+        $("#game_" + game_number + "_leg_1_away").trigger("blur");
       } else {
         // None of the fields is checked, we must have unchecked the field - send the request to reset the score
         $.ajax({
@@ -885,6 +917,7 @@ END;
             update_running_scores(response.match_scores);
           },
           error: function(xhr, ajax_options, thrown_error) {
+            console.error("Error in AJAX on award button press");
             if ( typeof xhr.responseJSON === "undefined" ) {
               $().toastmessage("showToast", {
                 text: "<br />" + thrown_error + ": [% c.maketext("ajax.error.refresh-advice") %]",
@@ -895,11 +928,119 @@ END;
             } else {
               show_messages(xhr.responseJSON);
             }
+            
+            // Revert to the previous states
+            $this_button.prop("checked", button_checked);
+            $opposite_button.prop("checked", opposite_button_checked);
+            $void_button.prop("checked", void_checked);
+            $("#game_" + game_number + "_award").controlgroup("refresh");
           }
         });
       }
     }
   }); // End of award button click handler
+  
+  $("input.void-game").on("change", function() {
+    if ( disable_ajax === false ) {
+      var $this_button = $(this);
+      var game_number = $this_button.data("game-number");
+      
+      if ( $this_button.prop("checked") ) {
+        // If this button is checked, ensure the award ones are not
+        $("#game_" + game_number + "_home_award").prop("checked", false);
+        $("#game_" + game_number + "_away_award").prop("checked", false);
+        $("#game_" + game_number + "_award").controlgroup("refresh");
+      }
+      
+      // Now check that ONE of the buttons is checked, so that we can work out whether to trigger an update, or send the AJAX request to reset (delete) the existing score
+      let uri, ajax_parameters, move_accordion;
+      if ( $this_button.prop("checked") ) {
+        // Void the game
+        uri = match_games[game_number]["uris"].update_score;
+        ajax_parameters = {"game": game_number, "void": 1};
+        move_accordion = true;
+      } else {
+        uri = match_games[game_number]["uris"].reset;
+        ajax_parameters = {};
+        move_accordion = false;
+      }
+      
+      // Do the AJAX call
+      $.ajax({
+        url: uri,
+        data: ajax_parameters,
+        type: "POST",
+        dataType: "json",
+        success: function(response) {
+          if ( response.redirect_uri ) {
+            window.location.href = response.redirect_uri;
+          } else {
+            show_messages(response);
+            disable_postpone_call = true;
+            $("#postpone").prettyCheckable("uncheck");
+            disable_postpone_call = false;
+            
+            // Move on to the next one (if there is one)
+            if ( active_game_number < total_games ) {
+              if ( disable_accordion_change === false ) {
+                // Get the currently active accordion and increase item
+                move_to_next_playable_game();
+              }
+              
+              // Focus on the home score for the first leg of the next game
+              if ( typeof match_games[active_game_number] !== "undefined" ) {
+                // There is another game after this
+                if ( match_games[active_game_number].doubles_game ) {
+                  // Doubles game, check if either doubles pair is blank  
+                  if ( typeof match_games[active_game_number].home_doubles_pair === "undefined" ) {
+                    // No home doubles pair, focus on that
+                    $("#game_" + active_game_number + "_home_doubles_pairing").trigger("chosen:open");
+                  } else if ( typeof match_games[active_game_number].away_doubles_pair === "undefined" ) {
+                    // No away doubles pair, focus on that
+                    $("#game_" + active_game_number + "_away_doubles_pairing").trigger("chosen:open");
+                  } else {
+                    // If we have both doubles pairs, focus on the home score in leg 1
+                    $("#game_" + active_game_number + "_leg_1_home").focus();
+                  }
+                } else {
+                  // Singles game, focus on the score
+                  $("#game_" + active_game_number + "_leg_1_home").focus();
+                }
+              }
+              
+              $("#game_" + active_game_number + "_leg_1_home").focus();
+            }
+          }
+          
+          // After the game has been updated, we need to update the running scores
+          if ( disable_running_score_call === false ) {
+            update_running_scores(response.match_scores);
+          }
+        },
+        error: function(xhr, ajax_options, thrown_error) {
+          if ( typeof xhr.responseJSON === "undefined" ) {
+            $().toastmessage("showToast", {
+              text: "<br />" + thrown_error + ": [% c.maketext("ajax.error.refresh-advice") %]",
+              sticky: true,
+              position: "top-center",
+              type: "error"
+            });
+          } else {
+            show_messages(xhr.responseJSON);
+          }
+          
+          // Undo the button check if there was an error
+          if ( $this_button.prop("checked") ) {
+            $this_button.prop("checked", false);
+            $("#game_" + game_number + "_award").controlgroup("refresh");
+          } else {
+            $this_button.prop("checked", true);
+            $("#game_" + game_number + "_award").controlgroup("refresh");
+          }
+        }
+      });
+    }
+  }); // End of void button click handler
   
   /**
    *  Handle reset score button clicks
@@ -923,15 +1064,8 @@ END;
         // Disable changing the accordion and AJAX score changes
         disable_accordion_change = true;
         disable_ajax = true;
-[%
-FOREACH leg = game.team_match_legs;
--%]
-        $("#game_" + game_number + "_leg_[% leg.leg_number %]_home_award").prop("checked", false);
-        $("#game_" + game_number + "_leg_[% leg.leg_number %]_away_award").prop("checked", false);
-        $("#game_" + game_number + "_leg_[% leg.leg_number %]_award").controlgroup("refresh");
-[%
-END;
--%]
+        $("#game_" + game_number + "_home_award").prop("checked", false);
+        $("#game_" + game_number + "_award").controlgroup("refresh");
         $("#game_" + game_number + "_leg_1_away").trigger("blur");
         update_running_scores(response.match_scores);
         disable_accordion_change = false;

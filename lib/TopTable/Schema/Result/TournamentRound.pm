@@ -508,7 +508,8 @@ sub match_template {
   
   if ( $entry_type eq "team" ) {
     # Team match template
-    return defined($self->team_match_template) ? $self->team_match_template : $self->tournament->default_team_match_template;
+    my %attrib = (prefetch => [qw( winner_type )]);
+    return defined($self->team_match_template) ? $self->find_related("team_match_template", {}, \%attrib) : $self->tournament->find_related("default_team_match_template", {}, \%attrib);
   } else {
     # Individual match template for singles and doubles
     return defined($self->individual_match_template) ? $self->individual_match_template : $self->tournament->default_individual_match_template;
@@ -536,7 +537,7 @@ In list context, a hash will be returned with keys 'allowed' (1 or 0) and potent
 
 No permissions are checked here, this is purely to see if it's possible to update the round based on factors in the tournament.
 
-$type tells us what we want to update and is currently just could be "add-groups".  If not passed, we get a hash (or hashref in scalar context) of all types - scalar context just returns 1 or 0 for all of these, list context returns the hashref with allowed and reason keys.  If nothing can be updated for the same reason (i.e., the season is complete), the types will not be returned, and you'll get a 1 or 0 in scalar context, or 'allowed' and 'reason' keys in list context, just as if it had been called with a specific type.
+$type tells us what we want to update and can be "add-groups" or "entrants".  If not passed, we get a hash (or hashref in scalar context) of all types - scalar context just returns 1 or 0 for all of these, list context returns the hashref with allowed and reason keys.  If nothing can be updated for the same reason (i.e., the season is complete), the types will not be returned, and you'll get a 1 or 0 in scalar context, or 'allowed' and 'reason' keys in list context, just as if it had been called with a specific type.
 
 =cut
 
@@ -551,7 +552,7 @@ sub can_update {
   my $lang = $schema->lang;
   
   # Check we have a valid type, if it's provided (if it's not provided, check all types)
-  return undef if defined($type) and $type ne "add-groups";
+  return undef if defined($type) and $type ne "add-groups" and $type ne "entrants";
   
   # Default to allowed.
   my $allowed = 1;
@@ -561,7 +562,7 @@ sub can_update {
   # If the season is complete, we can't update anything
   if ( $season->complete ) {
     $allowed = 0;
-    $reason = $lang->maketext("events.tournaments.rounds.groups.create.error.season-complete");
+    $reason = $lang->maketext("events.tournaments.rounds.update.error.season-complete");
     
     if ( defined($type) ) {
       # We have a type, so not expecting multiple keys
@@ -575,9 +576,15 @@ sub can_update {
               reason => $reason,
               level => "error",
             },
+            entrants => {
+              allowed => 0,
+              reason => $reason,
+              level => "error",
+            },
           ) # We want the reasons back if we've asked for an array, the hash will contain 'allowed' and 'reason' keys
         : (
           "add-groups" => 0,
+          entrants => 0,
         );
         
       # Return a reference to the hash in scalar context, or the hash itself in list context
@@ -590,6 +597,8 @@ sub can_update {
     my %can;
     if ( $type eq "add-groups" ) {
       %can = $self->_can_add_groups;
+    } elsif ( $type eq "entrants" ) {
+      %can = $self->_can_update_entrants;
     }
     
     # Grab the reason and allowed flag
@@ -602,6 +611,7 @@ sub can_update {
   } else {
     # All types, get the hashes back for each one
     my %add_groups = $self->_can_add_groups;
+    my %entrants = $self->_can_update_entrants;
     
     my %types = wantarray
       ? (
@@ -609,10 +619,15 @@ sub can_update {
             allowed => $add_groups{allowed},
             reason => $add_groups{reason},
             level => $add_groups{level},
-          },
+          }, entrants => {
+            allowed => $entrants{allowed},
+            reason => $entrants{reason},
+            level => $entrants{level},
+          }
         ) # We want the reasons back if we've asked for an array, the hash will contain 'allowed' and 'reason' keys
       : (
         "add-groups" => $add_groups{allowed},
+        entrants => $entrants{allowed},
       );
     
     # Return a reference to the hash in scalar context, or the hash itself in list context
@@ -648,6 +663,50 @@ sub _can_add_groups {
     $allowed = 0;
     $reason = $lang->maketext("events.tournaments.rounds.groups.create.error.matches-created");
     $level = "error";
+  }
+  
+  return (allowed => $allowed, reason => $reason, level => $level);
+}
+
+=head2 _can_update_entrants
+
+Check if we can add entrants to the round.  Don't do the season complete check, this is done in can_update.
+
+=cut
+
+sub _can_update_entrants {
+  my $self = shift;
+  my ( $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  
+  my $allowed = 1;
+  my ( $reason, $level );
+  
+  # The entrants of a round can't be updated if:
+  # - The round is complete
+  # - The round before it is not yet complete
+  # - It's not the first knock-out round of the tournament
+  if ( $self->complete ) {
+    $allowed = 0;
+    $reason = $lang->maketext("events.tournaments.rounds.entrants.update.error.round-complete");
+    $level = "error";
+  } elsif ( !$self->is_first_ko_round ) {
+    $allowed = 0;
+    $reason = $lang->maketext("events.tournaments.rounds.entrants.update.error.not-first-ko-round");
+    $level = "error";
+  } else {
+    my $prev_round = $self->prev_round;
+    
+    if ( defined($prev_round) and !$prev_round->complete ) {
+      $allowed = 0;
+      $reason = $lang->maketext("events.tournaments.rounds.entrants.update.error.prev-round-incomplete");
+      $level = "error";
+    }
   }
   
   return (allowed => $allowed, reason => $reason, level => $level);
@@ -894,13 +953,13 @@ sub next_round {
   return $self->tournament->find_related("tournament_rounds", {round_number => $target_round});
 }
 
-=head2 first_ko_round
+=head2 is_first_ko_round
 
 Returns 1 if this is the first knock-out round of the tournament, 0 if not.
 
 =cut
 
-sub first_ko_round {
+sub is_first_ko_round {
   my $self = shift;
   
   # If this is a group round, just return 0 straight away
@@ -921,13 +980,13 @@ sub first_ko_round {
   }
 }
 
-=head2 qualifiers
+=head2 num_qualifiers
 
 The number of qualifiers to go through from this round.  If this is a group round, it'll be the minimum number of qualifiers that can go through (taken from the sum of automatic_qualifiers in all groups); if it's a knock-out round it'll be half the number of people in the group.
 
 =cut
 
-sub qualifiers {
+sub num_qualifiers {
   my $self = shift;
   
   if ( $self->group_round ) {
@@ -939,6 +998,68 @@ sub qualifiers {
   } else {
     # If the previous round doesn't exist, or is a group round (i.e., this is the first knock-out round)
     return $self->round_of / 2;
+  }
+}
+
+=head2 automatic_qualifiers
+
+Get the entrants into this round (in all groups if it's a group round) that have automatically qualified for the next round.  It doesn't matter if the round is finished, this will show in current positions.
+
+=cut
+
+sub automatic_qualifiers {
+  my $self = shift;
+  my ( $group, $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  
+  my $entry_type = $self->entry_type;
+  if ( $self->group_round ) {
+    # Group round - we need to get all the groups, then map that into automatic qualifiers from each group
+    
+    
+    my @groups = $self->search_related("tournament_round_groups", {}, {
+      order_by => {-asc => [qw( group_order )]}
+    });
+    
+    # Now map the array so it's the automatic qualifiers from each group
+    @groups = map($_->get_automatic_qualifiers, @groups);
+    
+    # We can't union due to Dbix::Class::Helpers::ResultSet::SetOperations not formatting the query correctly when each query has order_by / limit clauses,
+    # so just return the array.  Each element is a resultset of group qualifiers (top X from each group).
+    #return wantarray ? @groups : \@groups;
+    
+    # Flatten the array so we just get the qualifiers
+    my @qualifiers;
+    foreach my $group ( @groups ) {
+      while ( my $qual = $group->next ) {
+        push(@qualifiers, $qual);
+      }
+    }
+    
+    if ( wantarray ) {
+      return @qualifiers;
+    } else {
+      my $groups = $self->result_source->resultset;
+      $groups->set_cache(\@qualifiers);
+      
+      return $groups;
+    }
+  }
+}
+
+=head2 non_qualifiers
+
+Get the entrants into this round (in all groups if it's a group round) that have NOT automatically qualified for the next round.  It doesn't matter if the round is finished, this will show in current positions.
+
+=cut
+
+sub non_qualifiers {
+  my $self = shift;
+  
+  if ( $self->group_round ) {
+    # Get the automatic qualifiers first - we can't just get the others, because LIMIT and PAGE queries 
+    my $automatic_qualifiers = $self->automatic_qualifiers;
   }
 }
 
