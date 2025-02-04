@@ -3202,6 +3202,9 @@ msgstr "Points won"
 msgid "matches.summaries.heading.points-average"
 msgstr "Points average (%)"
 
+msgid "matches.summaries.heading.points-difference"
+msgstr "Points difference"
+
 msgid "matches.link-title.team-tournament"
 msgstr "View the %2 statistics for %1"
 

@@ -344,6 +344,22 @@ References a person on the away team who has verified the result.
   default_value: 0
   is_nullable: 0
 
+=head2 home_team_points_difference
+
+  data_type: 'smallint'
+  default_value: 0
+  is_nullable: 0
+
+Calculated home team points difference from points won / lost (and with handicaps taken into account).  If this is a handicapped match, and there are players absent, this will be calculated to be fair.
+
+=head2 away_team_points_difference
+
+  data_type: 'smallint'
+  default_value: 0
+  is_nullable: 0
+
+Calculated away team points difference from points won / lost (and with handicaps taken into account).  If this is a handicapped match, and there are players absent, this will be calculated to be fair.
+
 =cut
 
 __PACKAGE__->add_columns(
@@ -595,6 +611,10 @@ __PACKAGE__->add_columns(
   },
   "cancelled",
   { data_type => "tinyint", default_value => 0, is_nullable => 0 },
+  "home_team_points_difference",
+  { data_type => "smallint", default_value => 0, is_nullable => 0 },
+  "away_team_points_difference",
+  { data_type => "smallint", default_value => 0, is_nullable => 0 },
 );
 
 =head1 PRIMARY KEY
@@ -942,8 +962,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07051 @ 2025-01-08 16:21:52
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:OZ48GwnJBBobx4JMFFUXEw
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2025-01-30 13:59:36
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:weoZv3p4ezhvsmPJgva1jg
 
 use Try::Tiny;
 use DateTime::Duration;
@@ -1231,13 +1251,15 @@ sub handicap_format {
   return $hcp_text;
 }
 
-=head2 relative_handicap
+=head2 relative_handicap_text($location)
 
 Pass in "home" or "away" as the first argument, the handicap returned is relative to what is passed in (i.e., 'home', the handicap is relative to the home team - if the home team gets the headstart, the handicap will return as a positive; if the away team gets the start, it'll be negative).
 
+Returns with a signed prefix (+ or -) if the handicap is not 0.  If it is zero, we'll get the language code for "scratch" (i.e., no handicap); if it's not set, we'll get the language code for that.
+
 =cut
 
-sub relative_handicap {
+sub relative_handicap_text {
   my $self = shift;
   my ( $location, $params ) = @_;
   # Setup schema / logging
@@ -1277,6 +1299,37 @@ sub relative_handicap {
   }
   
   return $hcp_text;
+}
+
+=head2 relative_handicap($location)
+
+Pass in "home" or "away" as the first argument, the handicap returned is relative to what is passed in (i.e., 'home', the handicap is relative to the home team - if the home team gets the headstart, the handicap will return as a positive; if the away team gets the start, it'll be negative).
+
+Returns with a number, if it's a handicapped match and the handicap has been set; if it's not been set, we'll return undef.
+
+=cut
+
+sub relative_handicap {
+  my $self = shift;
+  my ( $location, $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  
+  # return undef if the match isn't handicapped, or the handicap isn't set
+  return undef unless $self->handicapped and $self->handicap_set;
+  
+  # Pick up the right field to format
+  if ( $location eq "home" ) {
+    return $self->home_team_handicap - $self->away_team_handicap;
+  } elsif ( $location eq "away" ) {
+    return $self->away_team_handicap - $self->home_team_handicap;
+  } else {
+    return undef;
+  }
 }
 
 =head2 handicap_set

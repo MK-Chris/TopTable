@@ -13,14 +13,31 @@ $(document).ready(function(){
     ordering: false,
     fixedHeader: true,
     searching: false,
-    columns: [
-      {responsivePriority: 1}, // Team
-      {responsivePriority: 2}, // Handicap
-      {responsivePriority: 4}, // Legs won
-      {responsivePriority: 3}, // Legs average
-      {responsivePriority: 6}, // Points won
-      {responsivePriority: 5} // Points average
-    ]
+    columnDefs: [{
+      // Team
+      targets: 0,
+      responsivePriority: 1
+    }, {
+      // Handicap
+      targets: 1,
+      responsivePriority: 2
+    }, {
+      // Legs won
+      targets: 2,
+      responsivePriority: 4
+    }, {
+      // Legs average
+      targets: 3,
+      responsivePriority: 3
+    }, {
+      // Points won
+      targets: 4,
+      responsivePriority: 6
+    }, {
+      // Points won
+      targets: 4,
+      responsivePriority: 5
+    }]
   });
   
   /*

@@ -1073,7 +1073,7 @@ sub update_person {
             $stat->legs_played ? $stat->average_leg_wins(( $stat->legs_won / $stat->legs_played ) * 100)  : $stat->average_leg_wins(0);
             $stat->points_played ? $stat->average_point_wins(( $stat->points_won / $stat->points_played ) * 100)  : $stat->average_point_wins(0);
           }
-            
+          
           $stat->update;
         }
       }
@@ -1088,7 +1088,7 @@ sub update_person {
       
       foreach my $stat ( @new_player_stats ) {
         # We know the match has started, and since this is a new player in the match, we have to add 1 to matches played.
-        $stat->update({matches_played => $stat->matches_played + 1});
+        $stat->matches_played($stat->matches_played + 1);
         
         if ( $match->complete ) {
           # Matches won / lost / drawn need to be worked out if the match is complete
@@ -1115,6 +1115,8 @@ sub update_person {
             $stat->matches_drawn($stat->matches_drawn + 1);
           }
         }
+        
+        $stat->update;
       }
     }
     
