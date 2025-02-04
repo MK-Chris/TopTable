@@ -830,7 +830,7 @@ sub update_score {
   
   # Get the objects we need and setup the response hash
   my $match = $self->team_match;
-  my $winner_type = $self->team_match->team_match_template->winner_type->id;
+  my $winner_type = $match->winner_type;
   
   # Home / away team seasons are most of the time what we'll be using to updating stats, however for tournaments we'll need a different object to update
   # We do need the home / away seasons in order to access the team objects though, so we'll get them regardless
@@ -989,7 +989,7 @@ sub update_score {
     
     # Home / away score MUST be zero if we're deleting, so we will force them to be if this flag is set.
     # Otherwise, get them from the passed params (i.e., {"leg1-home" => 11, "leg1-away => 7"})
-    my ( $home_score, $away_score ) = ( $delete or $home_player_missing or $away_player_missing ) ? qw( 0 0 ) : ( $params->{sprintf("leg%d-home", $leg->leg_number)} || 0, $params->{sprintf("leg%d-away", $leg->leg_number)} || 0 );
+    my ( $home_score, $away_score ) = ( $delete or $void or $home_player_missing or $away_player_missing ) ? qw( 0 0 ) : ( $params->{sprintf("leg%d-home", $leg->leg_number)} || 0, $params->{sprintf("leg%d-away", $leg->leg_number)} || 0 );
     my ( $winning_score, $losing_score ) = qw( 0 0 );
     my $winner;
     
@@ -1259,7 +1259,7 @@ sub update_score {
     });
   }
   
-  # Update the game
+  # Update the game - if it's awarded, void or played, it's still complete; if we're deleting it's obviously not.
   my $complete = $delete ? 0 : 1;
   
   $self->update({
@@ -2067,6 +2067,105 @@ sub update_score {
     $match->away_team_average_point_wins(0);
   }
   
+  # Calculate the points differences for each team - they may need to be adjusted from the actual points if it's a handicapped match that's been awarded
+  my ( $home_team_points_difference, $away_team_points_difference );
+  
+  if ( $winner_type eq "points" ) {
+    # Use the match score rather thant points won if the match is won based on points; this ensures awarded (unplayed) games get taken into account.
+    $home_team_points_difference = $current_home_match_score - $current_away_match_score;
+    $away_team_points_difference = $current_away_match_score - $current_home_match_score;
+  } else {
+    $home_team_points_difference = $match_home_team_points_won - $match_away_team_points_won;
+    $away_team_points_difference = $match_away_team_points_won - $match_home_team_points_won;
+  }
+  
+  #$logger->("debug", sprintf("Home team points difference: %d, Away team points difference: %d", $home_team_points_difference, $away_team_points_difference));
+  
+  # If this is a handicapped match, we need to apply the handicap to the points difference
+  if ( $match->handicapped and $winner_type eq "points" ) {
+    # Apply the handicap
+    # $logger->("debug", "Apply points difference for handicapped match");
+    # $home_team_points_difference += $match->home_team_handicap - $match->away_team_handicap;
+    # $away_team_points_difference += $match->away_team_handicap - $match->home_team_handicap;
+    # $logger->("debug", sprintf("Post handicap: Home team points difference: %d, Away team points difference: %d", $home_team_points_difference, $away_team_points_difference));
+    
+    # Get the awarded games in the match that weren't started - so either a player pulled out, or was missing from the match.
+    my $match_games = $match->search_related("team_match_games");
+    #$logger->("debug", "Total games: " . $match_games->count);
+    my $home_awarded_games = $match_games->search({winner => $home_team->id, awarded => 1, started => 0, void => 0});
+    my $away_awarded_games = $match_games->search({winner => $away_team->id, awarded => 1, started => 0, void => 0});
+    
+    if ( $home_awarded_games->count or $away_awarded_games->count ) {
+      #$logger->("debug", sprintf("Home games awarded: %s, Away games awarded: %s", $home_awarded_games->count, $away_awarded_games->count));
+      my $pct_per_game = 100 / $match_games->count;
+      #$logger->("debug", "Percentage per game: $pct_per_game");
+      
+      # Hash so we can loop through
+      my %points_differences = (
+        home => {
+          points => $home_team_points_difference,
+          awarded_games => $home_awarded_games,
+        },
+        away => {
+          points => $away_team_points_difference,
+          awarded_games => $away_awarded_games,
+        },
+      );
+      
+      foreach my $location ( keys %points_differences ) {
+        #$logger->("debug", "++++++++++++++++START OF \U$location++++++++++++++++");
+        my $points_difference = $points_differences{$location}{points};
+        my $awarded_games = $points_differences{$location}{awarded_games};
+        my $hcp = $match->relative_handicap($location);
+        #$logger->("debug", "Calculating points difference for $location - originally $points_difference");
+        #$logger->("debug", "Relative handicap: $hcp");
+        $hcp *= -1;
+        #$logger->("debug", "Adjusted handicap: $hcp");
+        my $hcp_pct = $hcp / 100;
+        #$logger->("debug", "Handicap 1%: $hcp_pct");
+        
+        if ( $awarded_games->count ) {
+          #$logger->("debug", sprintf("%d games awarded to %s", $awarded_games->count, $location));
+          # We have awarded games to the home team, adjust the points differences for each
+          # Get the relative handicap for the home team (this will be negative if they are giving away the handicap)
+          while ( my $awarded_game = $awarded_games->next ) {
+            # Get from the individual match template the number of points awarded for a walkover in this game
+            #$logger->("debug", sprintf("----------------START OF GAME %d---------------", $awarded_game->scheduled_game_number));
+            my $game_template = $awarded_game->individual_match_template;
+            my $walkover_points = $game_template->legs_per_game * $game_template->minimum_points_win;
+            #$logger->("debug", "Walkover points: $walkover_points");
+            
+            # The handicap to take off is the handicap percentage (handicap / 100) multiplied by the percentage of the match this game represents (i.e., 10% for a 10 game match)
+            my $hcp_this_game = $hcp_pct * $pct_per_game;
+            #$logger->("debug", "Handicap for this game: $hcp_this_game");
+            
+            # Finally subtract the handicap for this game from the walkover points, then remove that from the points difference
+            my $hcp_subtraction = $walkover_points - $hcp_this_game;
+            #$logger->("debug", "Subtracting $hcp_subtraction from points difference");
+            $points_difference -= $hcp_subtraction;
+            #$logger->("debug", "Points difference for $location now $points_difference");
+            #$logger->("debug", sprintf("-----------------END OF GAME %d----------------", $awarded_game->scheduled_game_number));
+          }
+        }
+        
+        # Update the points difference value
+        $points_differences{$location}{points} = $points_difference;
+        #$logger->("debug", "+++++++++++++++++END OF \U$location+++++++++++++++++");
+      }
+      
+      # Save points difference values into their original variables
+      $home_team_points_difference = $points_differences{home}{points};
+      $away_team_points_difference = $points_differences{away}{points};
+    }
+  }
+  
+  #$logger->("debug", sprintf("POST CALCULATION: Home team points difference: %d, Away team points difference: %d", $home_team_points_difference, $away_team_points_difference));
+  
+  # Update the points differences
+  my ( $og_home_team_points_difference, $og_away_team_points_difference ) = ( $match->home_team_points_difference, $match->away_team_points_difference );
+  $match->home_team_points_difference($home_team_points_difference);
+  $match->away_team_points_difference($away_team_points_difference);
+  
   # Write the field updates to the match
   $match->update;
   
@@ -2149,6 +2248,7 @@ sub update_score {
   
   # Team match statistics were updated during the match update routine, so we just need to do the season (or tournament) statistics
   # Team statistics - these are done regardless of whether it's a doubles game or not; doubles contributes to the team's legs / points played
+  #$logger->("debug", "Home stats objects: " . scalar(@home_team_stats));
   foreach my $home_team_stat ( @home_team_stats ) {
     $home_team_stat->games_difference($home_team_stat->games_won - $home_team_stat->games_lost);
     $home_team_stat->legs_played($home_team_stat->legs_played - ( $game_original_home_team_score + $game_original_away_team_score ) + ( $home_legs + $away_legs ));
@@ -2158,28 +2258,9 @@ sub update_score {
     $home_team_stat->points_played($home_team_stat->points_played - ( $game_original_home_team_points + $game_original_away_team_points ) + ( $home_team_points + $away_team_points ));
     $home_team_stat->points_won($home_team_stat->points_won - $game_original_home_team_points + $home_team_points);
     $home_team_stat->points_lost($home_team_stat->points_lost - $game_original_away_team_points + $away_team_points);
-    
-    my $points_difference = $home_team_stat->points_won - $home_team_stat->points_lost;
-    
-    if ( $match->handicapped ) {
-      # Grab a list of handicapped matches whose handicaps we need to take into account
-      # Regardless of tournament or round, this function exists
-      my $matches = $home_team_stat->matches_for_team({started => 1});
-      
-      if ( $matches->count ) {
-        while ( my $other_match = $matches->next ) {
-          if ( $other_match->home_team == $home_team->id ) {
-            # Home team
-            $points_difference += $other_match->home_team_handicap - $other_match->away_team_handicap;
-          } else {
-            # Away team
-            $points_difference += $other_match->away_team_handicap - $other_match->home_team_handicap;
-          }
-        }
-      }
-    }
-    
-    $home_team_stat->points_difference($points_difference);
+    my $og_val = $home_team_stat->points_difference;
+    $home_team_stat->points_difference($home_team_stat->points_difference + ($home_team_points_difference - $og_home_team_points_difference));
+    #$logger->("debug", sprintf("HOME (%s) - Type: %s, original match PD: %d, new match PD: %d, original PD: %d, new PD: %d, calculation: %d + (%d - %d)", $home_team_stat->object_name, ref($home_team_stat), $og_home_team_points_difference, $home_team_points_difference, $og_val, $home_team_stat->points_difference, $og_val, $home_team_points_difference, $og_home_team_points_difference));
     
     # Averages
     $home_team_stat->games_played ? $home_team_stat->average_game_wins(( $home_team_stat->games_won / $home_team_stat->games_played ) * 100) : $home_team_stat->average_game_wins(0);
@@ -2203,6 +2284,7 @@ sub update_score {
     }
   }
   
+  #$logger->("debug", "Away stats objects: " . scalar(@away_team_stats));
   foreach my $away_team_stat ( @away_team_stats ) {
     $away_team_stat->games_difference($away_team_stat->games_won - $away_team_stat->games_lost);
     $away_team_stat->legs_played($away_team_stat->legs_played - ( $game_original_home_team_score + $game_original_away_team_score ) +  ( $home_legs + $away_legs ));
@@ -2212,26 +2294,9 @@ sub update_score {
     $away_team_stat->points_played($away_team_stat->points_played - ( $game_original_home_team_points + $game_original_away_team_points ) + ( $home_team_points + $away_team_points ));
     $away_team_stat->points_won($away_team_stat->points_won - $game_original_away_team_points + $away_team_points);
     $away_team_stat->points_lost($away_team_stat->points_lost - $game_original_home_team_points + $home_team_points);
-    
-    my $points_difference = $away_team_stat->points_won - $away_team_stat->points_lost;
-    
-    if ( $match->handicapped ) {
-      my $matches = $away_team_stat->matches_for_team({started => 1});
-      
-      if ( $matches->count ) {
-        while ( my $other_match = $matches->next ) {
-          if ( $other_match->home_team == $away_team->id ) {
-            # Home team
-            $points_difference += $other_match->home_team_handicap - $other_match->away_team_handicap;
-          } else {
-            # Away team
-            $points_difference += $other_match->away_team_handicap - $other_match->home_team_handicap;
-          }
-        }
-      }
-    }
-    
-    $away_team_stat->points_difference($points_difference);
+    my $og_val = $away_team_stat->points_difference;
+    $away_team_stat->points_difference($away_team_stat->points_difference + ($away_team_points_difference - $og_away_team_points_difference));
+    #$logger->("debug", sprintf("AWAY (%s) - Type: %s, original match PD: %d, new match PD: %d, original PD: %d, new PD: %d, calculation: %d + (%d - %d)", $away_team_stat->object_name, ref($away_team_stat), $og_away_team_points_difference, $away_team_points_difference, $og_val, $away_team_stat->points_difference, $og_val, $away_team_points_difference, $og_away_team_points_difference));
     
     # Averages
     $away_team_stat->games_played ? $away_team_stat->average_game_wins(( $away_team_stat->games_won / $away_team_stat->games_played ) * 100) : $away_team_stat->average_game_wins(0);

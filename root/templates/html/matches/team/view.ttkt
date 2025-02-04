@@ -411,6 +411,14 @@ END;
               <th class="numeric">[% c.maketext("matches.summaries.heading.legs-average") %]</th>
               <th class="numeric">[% c.maketext("matches.summaries.heading.points-won") %]</th>
               <th class="numeric">[% c.maketext("matches.summaries.heading.points-average") %]</th>
+[%
+IF match.handicapped;
+  # Points difference column, as this may have been calculated
+-%]
+              <th class="numeric">[% c.maketext("matches.summaries.heading.points-difference") %]</th>
+[%
+END;
+-%]
             </tr>
           </thead>
           <tbody>
@@ -432,6 +440,14 @@ END;
               <td data-label="[% c.maketext("matches.summaries.heading.legs-average") %]" class="numeric">[% match.home_team_average_leg_wins | format('%.2f') %]</td>
               <td data-label="[% c.maketext("matches.summaries.heading.points-won") %]" class="numeric">[% match.home_team_points_won %]</td>
               <td data-label="[% c.maketext("matches.summaries.heading.points-average") %]" class="numeric">[% match.home_team_average_point_wins | format('%.2f') %]</td>
+[%
+IF match.handicapped;
+  # Points difference column, as this may have been calculated
+-%]
+              <td data-label="[% c.maketext("matches.summaries.heading.points-difference") %]" class="numeric">[% match.home_team_points_difference %]</td>
+[%
+END;
+-%]
             </tr>
             <tr>
               <td data-label="[% c.maketext("matches.summaries.heading.team") %]"><a title="[% away_uri_title %]" href="[% away_uri %]">[% away_team_html %]</a></td>
@@ -451,6 +467,14 @@ END;
               <td data-label="[% c.maketext("matches.summaries.heading.legs-average") %]" class="numeric">[% match.away_team_average_leg_wins | format('%.2f') %]</td>
               <td data-label="[% c.maketext("matches.summaries.heading.points-won") %]" class="numeric">[% match.away_team_points_won %]</td>
               <td data-label="[% c.maketext("matches.summaries.heading.points-average") %]" class="numeric">[% match.away_team_average_point_wins | format('%.2f') %]</td>
+[%
+IF match.handicapped;
+  # Points difference column, as this may have been calculated
+-%]
+              <td data-label="[% c.maketext("matches.summaries.heading.points-difference") %]" class="numeric">[% match.away_team_points_difference %]</td>
+[%
+END;
+-%]
             </tr>
           </tbody>
         </table>

@@ -13,13 +13,27 @@ $(document).ready(function(){
     ordering: false,
     fixedHeader: true,
     searching: false,
-    columns: [
-      {responsivePriority: 1}, // Team
-      {responsivePriority: 3}, // Legs won
-      {responsivePriority: 2}, // Legs average
-      {responsivePriority: 5}, // Points won
-      {responsivePriority: 4} // Points average
-    ]
+    columnDefs: [{
+      // Game number
+      targets: 0,
+      responsivePriority: 5
+    }, {
+      // Result (X beat Y)
+      targets: 1,
+      responsivePriority: 1
+    }, {
+      // Detailed scores
+      targets: 2,
+      responsivePriority: 3
+    }, {
+      // Score (3-1)
+      targets: 3,
+      responsivePriority: 2
+    }, {
+      // Match score
+      targets: 4,
+      responsivePriority: 4
+    }]
   });
   
   /*

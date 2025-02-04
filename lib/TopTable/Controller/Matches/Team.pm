@@ -261,10 +261,10 @@ sub view :Private {
   my $hcp_flag = $match->handicapped ? "/hcp" : "";
   if ( $match->started ) {
     # The match has started, we don't specify a tab and it will default to the first one (games)
-    push(@external_scripts, $c->uri_for("/static/script/matches/team$tourn_flag$hcp_flag/view.js", {v => 4}));
+    push(@external_scripts, $c->uri_for("/static/script/matches/team$tourn_flag$hcp_flag/view.js", {v => 5}));
   } else {
     # The match has not started, start on the match details tab
-    push(@external_scripts, $c->uri_for("/static/script/matches/team$tourn_flag$hcp_flag/view-not-started.js", {v => 4}));
+    push(@external_scripts, $c->uri_for("/static/script/matches/team$tourn_flag$hcp_flag/view-not-started.js", {v => 5}));
   }
   
   # Inform that the scorecard is not yet complete if it's started but not complete

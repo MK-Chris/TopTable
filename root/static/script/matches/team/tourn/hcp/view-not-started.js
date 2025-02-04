@@ -13,15 +13,35 @@ $(document).ready(function(){
     ordering: false,
     fixedHeader: true,
     searching: false,
-    columns: [
-      {responsivePriority: 1}, // Team
-      {responsivePriority: 2}, // Division
-      {responsivePriority: 3}, // Handicap
-      {responsivePriority: 5}, // Legs won
-      {responsivePriority: 4}, // Legs average
-      {responsivePriority: 7}, // Points won
-      {responsivePriority: 6} // Points average
-    ]
+    columnDefs: [{
+      // Team
+      targets: 0,
+      responsivePriority: 1
+    }, {
+      // Division
+      targets: 1,
+      responsivePriority: 2
+    }, {
+      // Handicap
+      targets: 2,
+      responsivePriority: 3
+    }, {
+      // Legs won
+      targets: 3,
+      responsivePriority: 5
+    }, {
+      // Legs average
+      targets: 4,
+      responsivePriority: 4
+    }, {
+      // Points won
+      targets: 5,
+      responsivePriority: 7
+    }, {
+      // Points won
+      targets: 6,
+      responsivePriority: 6
+    }]
   });
   
   /*
