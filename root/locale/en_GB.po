@@ -4181,6 +4181,21 @@ msgstr "Venue"
 msgid "events.tournaments.rounds.venue-use-home-team"
 msgstr "Home team&#39;s venue"
 
+msgid "events.legend.tournament.round.selec-entrants.auto"
+msgstr "Automatic qualifiers (you cannot change these)"
+
+msgid "events.legend.tournament.round.selec-entrants.manual"
+msgstr "Best runners up (select these from the list)"
+
+msgid "events.tournament.rounds.entrants.group"
+msgstr "Group"
+
+msgid "events.tournament.rounds.entrants.select"
+msgstr "Selection"
+
+msgid "events.tournament.rounds.entrants.group-pos"
+msgstr "Group position"
+
 ### Reports
 msgid "reports.name.loan-players"
 msgstr "Loan players"

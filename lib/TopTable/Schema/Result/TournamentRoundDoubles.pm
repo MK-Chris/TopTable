@@ -514,6 +514,28 @@ sub object_name2 {
   return $self->tournament_pair->season_pair->person_season_person2_season_team->display_name;
 }
 
+=head2 group_position
+
+Get the group position for the team (return undef if there's no group).
+
+=cut
+
+sub group_position {
+  my $self = shift;
+  
+  my $group = $self->tournament_group;
+  return undef unless defined($group);
+  my @entrants = $group->get_entrants_in_table_order;
+  
+  my $pos = 0;
+  # Loop through entrants until we find the current team (IDs match)
+  foreach my $entrant ( @entrants ) {
+    # Increment the position so we know which position we're in and can return that number
+    $pos++;
+    return $pos if $entrant->id == $self->id;
+  }
+}
+
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 __PACKAGE__->meta->make_immutable;
 1;

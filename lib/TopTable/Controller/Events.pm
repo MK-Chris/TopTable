@@ -1288,6 +1288,8 @@ sub rounds :Private {
     subtitle2 => $enc_event_name,
     subtitle2_uri => {link => $event_link, title => $c->maketext("title.link.text.view-event", $enc_event_name)},
     round => $round,
+    match_template => $round->match_template,
+    rank_template => $round->rank_template,
   });
 }
 
@@ -1612,15 +1614,24 @@ sub do_add_next_round :Chained("base_current_season") :PathPart("do-add-next-rou
 #   my $event_type = $c->stash->{event_type};
 #   my $tournament = $c->stash->{event_detail};
 #   my $round = $c->stash->{round};
+#   my $prev_round = $round->prev_round;
+#   my $match_template = $prev_round->match_template;
+#   my $ranking_template = $prev_round->rank_template;
   
 #   # Check that we are authorised to edit events
 #   $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.edit-events"), 1]);
   
 #   my %can = $round->can_update("entrants");
   
+#   my $js = "select-entrants";
+#   $js .= "-points" if $ranking_template->assign_points;
+#   $js .= "-hcp" if $match_template->handicapped;
+#   $js = $c->uri_for("/static/script/events/tournaments/rounds/$js.js");
+  
 #   # Setup template and scripts
 #   $c->stash({
 #     template => "html/events/tournaments/rounds/select-entrants.ttkt",
+#     form_action => $c->uri_for_action("/events/do_round_select_entrants", [$event->url_key, $round->url_key]),
 #     external_scripts => [
 #       $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
 #       $c->uri_for("/static/script/standard/chosen.js"),
@@ -1629,7 +1640,9 @@ sub do_add_next_round :Chained("base_current_season") :PathPart("do-add-next-rou
 #       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
 #       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
 #       $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
-#       $c->uri_for("/static/script/events/tournaments/rounds/select-entrants.js"),
+#       $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
+#       $c->uri_for("/static/script/standard/prettycheckable.js"),
+#       $js,
 #     ],
 #     external_styles => [
 #       $c->uri_for("/static/css/chosen/chosen.min.css"),
@@ -1638,28 +1651,34 @@ sub do_add_next_round :Chained("base_current_season") :PathPart("do-add-next-rou
 #       $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
 #       $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
 #       $c->uri_for("/static/css/datatables/rowGroup.dataTables.min.css"),
+#       $c->uri_for("/static/css/prettycheckable/prettyCheckable.css"),
 #     ],
 #     view_online_display => "Selecting entrants for $enc_event_name",
 #     view_online_link => 0,
-#     automatic_qualifiers => $round->automatic_qualifiers,
+#     prev_round => $prev_round,
+#     auto_qualifiers => [$prev_round->auto_qualifiers],
+#     non_auto_qualifiers => [$prev_round->non_auto_qualifiers],
+#     winner_type => $match_template->winner_type->id,
+#     match_template => $match_template,
+#     ranking_template => $ranking_template,
 #   });
 # }
 
-=head2 do_round_select_entrants
+# =head2 do_round_select_entrants
 
-Process the form to add the entrants to a round.
+# Process the form to add the entrants to a round.
 
-=cut
+# =cut
 
-sub do_round_select_entrants :Chained("rounds_current_season") :PathPart("do-select-entrants") :Args(0) {
-  my ( $self, $c ) = @_;
+# sub do_round_select_entrants :Chained("rounds_current_season") :PathPart("do-select-entrants") :Args(0) {
+#   my ( $self, $c ) = @_;
   
-  # Check that we are authorised to edit events
-  $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.edit-events"), 1]);
+#   # Check that we are authorised to edit events
+#   $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.edit-events"), 1]);
   
-  # Forward to the create / edit routine
-  $c->detach("process_form", [qw( round entrants )]);
-}
+#   # Forward to the create / edit routine
+#   $c->detach("process_form", [qw( round entrants )]);
+# }
 
 =head2 prepare_form_round
 

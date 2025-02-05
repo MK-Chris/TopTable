@@ -706,57 +706,11 @@ sub get_entrants_in_table_order {
   my $match_template = $tourn_round->match_template;
   
   # Setup the initial sort attribs
-  my %attrib;
+  my %attrib = (
+    order_by => $self->tournament_round->get_table_order_attribs,
+  );
   
   if ( $entry_type eq "team" ) {
-    my $winner_type = $match_template->winner_type->id;
-    
-    if ( $rank_template->assign_points ) {
-      if ( $winner_type eq "games" ) {
-        %attrib = (
-          order_by => [{
-            -desc => [qw( me.table_points me.games_won me.matches_won me.matches_drawn me.matches_played )],
-          }, {
-            -asc  => [qw( me.games_lost me.matches_lost )],
-          }, {
-            -desc => [qw( me.games_won )],
-          }, {
-            -asc => [qw( club_season.short_name team_season.name )]
-          }]
-        );
-      } else {
-        %attrib = (
-          order_by => [{
-            -desc => [qw( me.table_points me.points_difference me.points_won me.matches_played )],
-          }, {
-            -asc  => [qw( me.points_lost me.matches_lost club_season.short_name team_season.name )],
-          }]
-        );
-      }
-    } else {
-      if ( $winner_type eq "games" ) {
-        %attrib = (
-          order_by => [{
-            -desc => [qw( me.games_won me.matches_won me.matches_drawn me.matches_played )],
-          }, {
-            -asc  => [qw( me.games_lost me.matches_lost )],
-          }, {
-            -desc => [qw( me.games_won )],
-          }, {
-            -asc => [qw( club_season.short_name team_season.name )]
-          }]
-        );
-      } else {
-        %attrib = (
-          order_by => [{
-            -desc => [qw( me.points_difference me.points_won me.matches_played )],
-          }, {
-            -asc  => [qw( me.points_lost me.matches_lost club_season.short_name team_season.name )],
-          }]
-        );
-      }
-    }
-    
     $member_rel = "tournament_round_teams";
     
     if ( $prefetch_group ) {

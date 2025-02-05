@@ -1001,22 +1001,73 @@ sub num_qualifiers {
   }
 }
 
-=head2 automatic_qualifiers
+=head2 get_table_order_attribs
+
+Based on the rules for this round, get the table sort instructions for the entrants.  The return value from this can be used directly in an order_by attribute clause.
+
+=cut
+
+sub get_table_order_attribs {
+  my $self = shift;
+  my ( $params ) = @_;
+  my $logger = $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $entry_type = $self->entry_type;
+  my $rank_template = $self->rank_template;
+  my $match_template = $self->match_template;
+  my $winner_type = $match_template->winner_type->id;
+  
+  my $order_by;
+  if ( $rank_template->assign_points ) {
+    if ( $winner_type eq "games" ) {
+      $order_by = [{
+        -desc => [qw( me.table_points me.games_won me.matches_won me.matches_drawn me.matches_played )],
+      }, {
+        -asc  => [qw( me.games_lost me.matches_lost )],
+      }, {
+        -desc => [qw( me.games_won )],
+      }];
+    } else {
+      $order_by = [{
+        -desc => [qw( me.table_points me.points_difference me.points_won me.matches_played )],
+      }, {
+        -asc  => [qw( me.points_lost me.matches_lost )],
+      }];
+    }
+  } else {
+    if ( $winner_type eq "games" ) {
+      $order_by = [{
+        -desc => [qw( me.games_won me.matches_won me.matches_drawn me.matches_played )],
+      }, {
+        -asc  => [qw( me.games_lost me.matches_lost )],
+      }, {
+        -desc => [qw( me.games_won )],
+      }];
+    } else {
+      $order_by = [{
+        -desc => [qw( me.points_difference me.points_won me.matches_played )],
+      }, {
+        -asc  => [qw( me.points_lost me.matches_lost )],
+      }];
+    }
+  }
+  
+  return $order_by;
+}
+
+=head2 auto_qualifiers
 
 Get the entrants into this round (in all groups if it's a group round) that have automatically qualified for the next round.  It doesn't matter if the round is finished, this will show in current positions.
 
 =cut
 
-sub automatic_qualifiers {
+sub auto_qualifiers {
   my $self = shift;
   my ( $group, $params ) = @_;
   # Setup schema / logging
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   
-  my $entry_type = $self->entry_type;
   if ( $self->group_round ) {
     # Group round - we need to get all the groups, then map that into automatic qualifiers from each group
-    
     
     my @groups = $self->search_related("tournament_round_groups", {}, {
       order_by => {-asc => [qw( group_order )]}
@@ -1030,37 +1081,146 @@ sub automatic_qualifiers {
     #return wantarray ? @groups : \@groups;
     
     # Flatten the array so we just get the qualifiers
-    my @qualifiers;
+    my @qual_ids;
     foreach my $group ( @groups ) {
       while ( my $qual = $group->next ) {
-        push(@qualifiers, $qual);
+        push(@qual_ids, $qual->id);
       }
     }
     
-    if ( wantarray ) {
-      return @qualifiers;
-    } else {
-      my $groups = $self->result_source->resultset;
-      $groups->set_cache(\@qualifiers);
-      
-      return $groups;
+    # Since we had to get the qualifiers from each group individually, we now want to rank them in the same way we would have if we'd got them all in one go.
+    # First convert to resultset
+    my $rs;
+    my $entry_type = $self->entry_type;
+    if ( $entry_type eq "team" ) {
+      $rs = "Team";
+    } elsif ( $entry_type eq "singles" ) {
+      $rs = "Person";
+    } elsif ( $entry_type eq "doubles" ) {
+      $rs = "Doubles";
     }
+    
+    return $self->result_source->schema->resultset("TournamentRound$rs")->search({
+      "me.id" => {-in => \@qual_ids},
+    }, {
+      order_by => $self->get_table_order_attribs,
+    });
   }
 }
 
-=head2 non_qualifiers
+=head2 non_auto_qualifiers
 
 Get the entrants into this round (in all groups if it's a group round) that have NOT automatically qualified for the next round.  It doesn't matter if the round is finished, this will show in current positions.
 
 =cut
 
-sub non_qualifiers {
+sub non_auto_qualifiers {
   my $self = shift;
+  my ( $params ) = @_;
+  my $logger = $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $member_rel;
+  my $entry_type = $self->entry_type;
+  my $rank_template = $self->rank_template;
+  my $match_template = $self->match_template;
+  
+  # Setup the initial sort attribs
+  my %attrib;
+  
+  if ( $entry_type eq "team" ) {
+    # Prefetch is the same for team entry regardless of the other rank / winner type settings
+    %attrib = (
+      prefetch => [qw( tournament_group ), {
+        tournament_team => {
+          team_season => [qw( team ), {
+            club_season => [qw( club )],
+          }],
+        },
+      }],
+      order_by => $self->get_table_order_attribs,
+    );
+    
+    $member_rel = "tournament_round_teams";
+    push(@{$attrib{order_by}}, {-asc => [qw( club.short_name team.name )]});
+  } elsif ( $entry_type eq "singles" ) {
+    $member_rel = "tournament_round_people";
+  } elsif ( $entry_type eq "doubles" ) {
+    $member_rel = "tournament_round_doubles";
+  }
   
   if ( $self->group_round ) {
-    # Get the automatic qualifiers first - we can't just get the others, because LIMIT and PAGE queries 
-    my $automatic_qualifiers = $self->automatic_qualifiers;
+    # Get the automatic qualifiers first, then grab the rest by specifying the IDs we don't want
+    my @auto_qualifiers = $self->auto_qualifiers;
+    @auto_qualifiers = map($_->id, @auto_qualifiers);
+    
+    my $rel;
+    if ( $self->entry_type eq "team" ) {
+      $rel = "tournament_round_teams";
+    } elsif ( $self->entry_type eq "singles" ) {
+      $rel = "tournament_round_people";
+    } elsif ( $self->entry_type eq "doubles" ) {
+      $rel = "tournament_rounds_doubles";
+    }
+    
+    return $self->search_related($rel, {
+      "me.id" => {-not_in => \@auto_qualifiers},
+    }, \%attrib);
   }
+}
+
+=head2 get_entrants_in_table_order($group)
+
+Retrieve entrants in the order they'll be placed in the table (returns undef if not a group round; $group specifies the group we'll return.  The reason this is not a TournamentRoundGroup method, is the group can be undef, in which case the entrants are returned for all groups, which is helpful when calculating best X entrants who've not qualified ).
+
+=cut
+
+sub get_entrants_in_table_order {
+  my $self = shift;
+  my ( $params ) = @_;
+  my $logger = $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $rows = $params->{rows};
+  my $prefetch_group = $params->{prefetch_group} || 0;
+  my $member_rel;
+  my $tourn_round = $self->tournament_round;
+  my $entry_type = $self->entry_type;
+  my $rank_template = $tourn_round->rank_template;
+  my $match_template = $tourn_round->match_template;
+  
+  # Setup the initial sort attribs
+  my %attrib = (
+    order_by => $self->get_table_order_attribs,
+  );
+  
+  if ( $entry_type eq "team" ) {
+    $member_rel = "tournament_round_teams";
+    
+    if ( $prefetch_group ) {
+      $attrib{prefetch} = [qw( tournament_group ), {
+        tournament_team => {
+          team_season => [qw( team ), {
+            club_season => [qw( club )],
+          }]
+        }
+      }];
+    } else {
+      $attrib{prefetch} = {
+        tournament_team => {
+          team_season => [qw( team ), {
+            club_season => [qw( club )],
+          }]
+        }
+      };
+    }
+    
+    push(@{$attrib{order_by}}, {-asc => [qw( club.short_name team.name )]});
+  } elsif ( $entry_type eq "singles" ) {
+    $member_rel = "tournament_round_people";
+  } elsif ( $entry_type eq "doubles" ) {
+    $member_rel = "tournament_round_doubles";
+  }
+  
+  $attrib{rows} = $rows if defined($rows);
+  
+  return $self->search_related($member_rel, {}, \%attrib);
 }
 
 =head2 create_or_edit_group
