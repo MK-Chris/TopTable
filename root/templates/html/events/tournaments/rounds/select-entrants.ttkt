@@ -1,0 +1,147 @@
+<form action="[% form_action %]">
+<fieldset>
+  <legend>[% c.maketext("events.legend.tournament.round.selec-entrants.auto") %]</legend>
+  <div class="table-wrap">
+    <div class="table-layout table-layout-centre">
+      <table class="stripe hover row-border" id="auto-table">
+        <thead>
+          <tr>
+            <th>[% c.maketext("events.tournament.rounds.entrants.group") %]</th>
+            <th>[% c.maketext("events.tournament.rounds.entrants.group-pos") %]</th>
+            <th>[% c.maketext("stats.table-heading.team") %]</th>
+            <th class="numeric" title="[% c.maketext("stats.table-heading.team-matches-played.full") %]">[% c.maketext("stats.table-heading.team-matches-played") %]</th>
+            <th class="numeric" title="[% c.maketext("stats.table-heading.matches-won.full") %]">[% c.maketext("stats.table-heading.matches-won") %]</th>
+            <th class="numeric" title="[% c.maketext("stats.table-heading.matches-drawn.full") %]">[% c.maketext("stats.table-heading.matches-drawn") %]</th>
+            <th class="numeric" title="[% c.maketext("stats.table-heading.matches-lost.full") %]">[% c.maketext("stats.table-heading.matches-lost") %]</th>
+            <th class="numeric" title="[% c.maketext("stats.table-heading." _ winner_type _ "-for.full") %]">[% c.maketext("stats.table-heading.for") %]</th>
+            <th class="numeric" title="[% c.maketext("stats.table-heading." _ winner_type _ "-against.full") %]">[% c.maketext("stats.table-heading.against") %]</th>
+[%
+IF match_template.handicapped;
+-%]
+            <th class="numeric"><span title="[% c.maketext("stats.table-heading.handicap.full") %]">[% c.maketext("stats.table-heading.handicap") %]</span></th>
+[%
+END;
+-%]
+            <th class="numeric" title="[% c.maketext("stats.table-heading."_ winner_type _ "-difference.full") %]">[% c.maketext("stats.table-heading."_ winner_type _"-difference") %]</th>
+[%
+IF ranking_template.assign_points;
+-%]
+            <th class="numeric">[% c.maketext("stats.table-heading.points") %]</th>
+[%
+END;
+-%]
+          </tr>
+        </thead>
+        <tbody>
+[%
+FOREACH entrant = auto_qualifiers;
+-%]
+                <tr>
+                  <td data-label="[% c.maketext("events.tournament.rounds.entrants.group") %]">[% entrant.tournament_group.name %]</td>
+                  <td data-label="[% c.maketext("events.tournament.rounds.entrants.group-pos") %]">[% entrant.group_position %]</td>
+                  <td data-label="[% c.maketext("stats.table-heading.team") %]">[% entrant.object_name | html_entity %]</td>
+                  <td data-label="[% c.maketext("stats.table-heading.team-matches-played.full") %]" class="numeric">[% c.i18n_numberformat.format_number(entrant.matches_played) %]</td>
+                  <td data-label="[% c.maketext("stats.table-heading.matches-won.full") %]" class="numeric">[% c.i18n_numberformat.format_number(entrant.matches_won) %]</td>
+                  <td data-label="[% c.maketext("stats.table-heading.matches-drawn.full") %]" class="numeric">[% c.i18n_numberformat.format_number(entrant.matches_drawn) %]</td>
+                  <td data-label="[% c.maketext("stats.table-heading.matches-lost") %]" class="numeric">[% c.i18n_numberformat.format_number(entrant.matches_lost) %]</td>
+                  <td data-label="[% c.maketext("stats.table-heading." _ winner_type _ "-for.full") %]" class="numeric">[% c.i18n_numberformat.format_number(for) %]</td>
+                  <td data-label="[% c.maketext("stats.table-heading." _ winner_type _ "-against.full") %]" class="numeric">[% c.i18n_numberformat.format_number(against) %]</td>
+[%
+IF match_template.handicapped;
+-%]
+                  <td data-label="[% c.maketext("stats.table-heading.handicap.full") %]" class="numeric">[% c.i18n_numberformat.format_number(entrant.total_handicap) %]</td>
+[%
+END;
+-%]
+                  <td data-label="[% c.maketext("stats.table-heading." _ winner_type _ "-difference.full") %]" class="numeric">[% c.i18n_numberformat.format_number(entrant.points_difference) %]</td>
+[%
+IF ranking_template.assign_points;
+-%]
+                  <td data-label="[% c.maketext("stats.table-heading.points") %]" class="numeric">[% c.i18n_numberformat.format_number(entrant.table_points) %]</td>
+[%
+END;
+-%]
+                </tr>
+[%
+END;
+-%]
+        </tbody>
+      </table>
+    </div><!-- .table-layout -->
+  </div><!-- .table-wrap -->
+</fieldset>
+<fieldset>
+  <legend>[% c.maketext("events.legend.tournament.round.selec-entrants.manual") %]</legend>
+  <div class="table-wrap">
+    <div class="table-layout table-layout-centre">
+      <table class="stripe hover row-border" id="non-auto-table">
+        <thead>
+          <tr>
+            <th>[% c.maketext("events.tournament.rounds.entrants.select") %]</th>
+            <th>[% c.maketext("events.tournament.rounds.entrants.group") %]</th>
+            <th>[% c.maketext("events.tournament.rounds.entrants.group-pos") %]</th>
+            <th>[% c.maketext("stats.table-heading.team") %]</th>
+            <th class="numeric" title="[% c.maketext("stats.table-heading.team-matches-played.full") %]">[% c.maketext("stats.table-heading.team-matches-played") %]</th>
+            <th class="numeric" title="[% c.maketext("stats.table-heading.matches-won.full") %]">[% c.maketext("stats.table-heading.matches-won") %]</th>
+            <th class="numeric" title="[% c.maketext("stats.table-heading.matches-drawn.full") %]">[% c.maketext("stats.table-heading.matches-drawn") %]</th>
+            <th class="numeric" title="[% c.maketext("stats.table-heading.matches-lost.full") %]">[% c.maketext("stats.table-heading.matches-lost") %]</th>
+            <th class="numeric" title="[% c.maketext("stats.table-heading." _ winner_type _ "-for.full") %]">[% c.maketext("stats.table-heading.for") %]</th>
+            <th class="numeric" title="[% c.maketext("stats.table-heading." _ winner_type _ "-against.full") %]">[% c.maketext("stats.table-heading.against") %]</th>
+[%
+IF match_template.handicapped;
+-%]
+            <th class="numeric"><span title="[% c.maketext("stats.table-heading.handicap.full") %]">[% c.maketext("stats.table-heading.handicap") %]</span></th>
+[%
+END;
+-%]
+            <th class="numeric" title="[% c.maketext("stats.table-heading."_ winner_type _ "-difference.full") %]">[% c.maketext("stats.table-heading."_ winner_type _"-difference") %]</th>
+[%
+IF ranking_template.assign_points;
+-%]
+            <th class="numeric">[% c.maketext("stats.table-heading.points") %]</th>
+[%
+END;
+-%]
+          </tr>
+        </thead>
+        <tbody>
+[%
+FOREACH entrant = non_auto_qualifiers;
+-%]
+                <tr>
+                  <td data-label="[% c.maketext("events.tournament.rounds.entrants.select") %]"><input type="checkbox" name="select-[% entrant.id %]" id="select-[% entrant.id %]" value="1" /></td>
+                  <td data-label="[% c.maketext("events.tournament.rounds.entrants.group") %]">[% entrant.tournament_group.name %]</td>
+                  <td data-label="[% c.maketext("events.tournament.rounds.entrants.group-pos") %]">[% entrant.group_position %]</td>
+                  <td data-label="[% c.maketext("stats.table-heading.team") %]">[% entrant.object_name | html_entity %]</td>
+                  <td data-label="[% c.maketext("stats.table-heading.team-matches-played.full") %]" class="numeric">[% c.i18n_numberformat.format_number(entrant.matches_played) %]</td>
+                  <td data-label="[% c.maketext("stats.table-heading.matches-won.full") %]" class="numeric">[% c.i18n_numberformat.format_number(entrant.matches_won) %]</td>
+                  <td data-label="[% c.maketext("stats.table-heading.matches-drawn.full") %]" class="numeric">[% c.i18n_numberformat.format_number(entrant.matches_drawn) %]</td>
+                  <td data-label="[% c.maketext("stats.table-heading.matches-lost") %]" class="numeric">[% c.i18n_numberformat.format_number(entrant.matches_lost) %]</td>
+                  <td data-label="[% c.maketext("stats.table-heading." _ winner_type _ "-for.full") %]" class="numeric">[% c.i18n_numberformat.format_number(for) %]</td>
+                  <td data-label="[% c.maketext("stats.table-heading." _ winner_type _ "-against.full") %]" class="numeric">[% c.i18n_numberformat.format_number(against) %]</td>
+[%
+IF match_template.handicapped;
+-%]
+                  <td data-label="[% c.maketext("stats.table-heading.handicap.full") %]" class="numeric">[% c.i18n_numberformat.format_number(entrant.total_handicap) %]</td>
+[%
+END;
+-%]
+                  <td data-label="[% c.maketext("stats.table-heading." _ winner_type _ "-difference.full") %]" class="numeric">[% c.i18n_numberformat.format_number(entrant.points_difference) %]</td>
+[%
+IF ranking_template.assign_points;
+-%]
+                  <td data-label="[% c.maketext("stats.table-heading.points") %]" class="numeric">[% c.i18n_numberformat.format_number(entrant.table_points) %]</td>
+[%
+END;
+-%]
+                </tr>
+[%
+END;
+-%]
+        </tbody>
+      </table>
+    </div><!-- .table-layout -->
+  </div><!-- .table-wrap -->
+</fieldset>
+<input type="submit" name="Submit" value="[% c.maketext("form.button.save") %]" />
+</form>

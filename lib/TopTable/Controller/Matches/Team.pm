@@ -1010,7 +1010,7 @@ sub do_cancel :Private {
   # Now forward to the match cancellation routine, which does all the error checking
   my $response = $cancel
     ? $match->cancel({home_points_awarded => $home_points_awarded, away_points_awarded => $away_points_awarded, logger => sub{ my $level = shift; $c->log->$level( @_ ); }})
-    : $match->uncancel;
+    : $match->uncancel({logger => sub{ my $level = shift; $c->log->$level( @_ ); }});
   
   # Set the status messages we need to show on redirect
   my @errors = @{$response->{error}};

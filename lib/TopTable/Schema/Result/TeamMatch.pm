@@ -2673,7 +2673,8 @@ sub cancel {
   my ( $points_field, $points_against_field, $diff_field );
   
   # Don't worry about table points here - games or points are awarded based on the submitted values, table points follow the rank rules
-  if ( $self->winner_type eq "games" ) {
+  my $winner_type = $self->winner_type;
+  if ( $winner_type eq "games" ) {
     $points_field = "games_won";
     $points_against_field = "games_lost";
     $diff_field = "games_difference";
@@ -2777,12 +2778,19 @@ sub cancel {
   }
   
   # Update the match score and cancelled flag, remove any postponed flag
-  $self->update({
-    home_team_match_score => $home_points_awarded,
-    away_team_match_score => $away_points_awarded,
-    cancelled => 1,
-    postponed => 0,
-  });
+  $self->home_team_match_score($home_points_awarded);
+  $self->away_team_match_score($away_points_awarded);
+  $self->cancelled(1);
+  $self->postponed(0);
+  
+  my $og_home_points_diff = $self->home_team_points_difference;
+  my $og_away_points_diff = $self->away_team_points_difference;
+  if ( $winner_type eq "points" ) {
+    $self->home_team_points_difference($home_points_awarded - $away_points_awarded);
+    $self->away_team_points_difference($away_points_awarded - $home_points_awarded);
+  }
+  
+  $self->update;
   
   # Update the awarded points for and against in the relevant field - the points against should be awarded what the opposite team have been awarded
   # i.e., the away team's points against will be $home_points_awarded
@@ -2790,13 +2798,23 @@ sub cancel {
   foreach my $home_team_stat ( @home_team_stats ) {
     $home_team_stat->$points_field($home_team_stat->$points_field + $home_points_awarded);
     $home_team_stat->$points_against_field($home_team_stat->$points_against_field + $away_points_awarded);
-    $home_team_stat->$diff_field($home_team_stat->$points_field - $home_team_stat->$points_against_field);
+    
+    if ( $winner_type eq "games" ) {
+      $home_team_stat->$diff_field($home_team_stat->$points_field - $home_team_stat->$points_against_field);
+    } else {
+      $home_team_stat->$diff_field($home_team_stat->$diff_field + ($self->home_team_points_difference - $og_home_points_diff));
+    }
   }
   
   foreach my $away_team_stat ( @away_team_stats ) {
     $away_team_stat->$points_field($away_team_stat->$points_field + $away_points_awarded);
     $away_team_stat->$points_against_field($away_team_stat->$points_against_field + $home_points_awarded);
-    $away_team_stat->$diff_field($away_team_stat->$points_field - $away_team_stat->$points_against_field);
+    
+    if ( $winner_type eq "games" ) {
+      $away_team_stat->$diff_field($away_team_stat->$points_field - $away_team_stat->$points_against_field);
+    } else {
+      $away_team_stat->$diff_field($away_team_stat->$diff_field + ($self->away_team_points_difference - $og_away_points_diff));
+    }
   }
   
   # Update the values we know what to update straight off
@@ -2901,7 +2919,8 @@ sub uncancel {
   my ( $points_field, $points_against_field, $diff_field );
   
   # Don't worry about table points here - games or points are awarded based on the originally awarded values, table points follow the rank rules
-  if ( $self->winner_type eq "games" ) {
+  my $winner_type = $self->winner_type;
+  if ( $winner_type eq "games" ) {
     $points_field = "games_won";
     $points_against_field = "games_lost";
     $diff_field = "games_difference";
@@ -2957,11 +2976,19 @@ sub uncancel {
   my $transaction = $self->result_source->schema->txn_scope_guard;
   
   # Remove the match score and cancelled flag
-  $self->update({
-    home_team_match_score => 0,
-    away_team_match_score => 0,
-    cancelled => 0,
-  });
+  $self->home_team_match_score(0);
+  $self->away_team_match_score(0);
+  $self->cancelled(0);
+  
+  my $og_home_points_diff = $self->home_team_points_difference;
+  my $og_away_points_diff = $self->away_team_points_difference;
+  
+  if ( $winner_type eq "points" ) {
+    $self->home_team_points_difference(0);
+    $self->away_team_points_difference(0);
+  }
+  
+  $self->update;
   
   # Work out the match adjustments
   # Remove played / won / lost counts (they'll be added to again further down)
@@ -3008,13 +3035,23 @@ sub uncancel {
   foreach my $home_team_stat ( @home_team_stats ) {
     $home_team_stat->$points_field($home_team_stat->$points_field - $home_points_awarded);
     $home_team_stat->$points_against_field($home_team_stat->$points_against_field - $away_points_awarded);
-    $home_team_stat->$diff_field($home_team_stat->$points_field - $home_team_stat->$points_against_field);
+    
+    if ( $winner_type eq "games" ) {
+      $home_team_stat->$diff_field($home_team_stat->$points_field - $home_team_stat->$points_against_field);
+    } else {
+      $home_team_stat->$diff_field($home_team_stat->$diff_field - $og_home_points_diff);
+    }
   }
   
   foreach my $away_team_stat ( @away_team_stats ) {
     $away_team_stat->$points_field($away_team_stat->$points_field - $away_points_awarded);
     $away_team_stat->$points_against_field($away_team_stat->$points_against_field - $home_points_awarded);
-    $away_team_stat->$diff_field($away_team_stat->$points_field - $away_team_stat->$points_against_field);
+    
+    if ( $winner_type eq "games" ) {
+      $away_team_stat->$diff_field($away_team_stat->$points_field - $away_team_stat->$points_against_field);
+    } else {
+      $away_team_stat->$diff_field($away_team_stat->$diff_field - $og_away_points_diff);
+    }
   }
   
   # Run the matches_adjustments updates
