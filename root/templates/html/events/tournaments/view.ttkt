@@ -90,8 +90,13 @@ IF rounds.size;
               <td><a href="[% view_uri %]">[% round.name %]</a>[%-
 IF authorisation.event_edit;
 -%]
-<a href="[% c.uri_for_action("/events/edit_round", [event.url_key, round.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-32.png") %]" alt="[% c.maketext("admin.edit-object", round_html) %]" title="[% c.maketext("admin.edit-object", round_html) %]" /></a>
+<a href="[% c.uri_for_action("/events/edit_round", [event.url_key, round.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0018-Pencil-icon-32.png") %]" alt="[% c.maketext("admin.edit-object-tourn", round.name, enc_event_name) %]" title="[% c.maketext("admin.edit-object-tourn", round.name, enc_event_name) %]" /></a>
 [%-
+  IF round.scalar.can_update("entrants");
+-%]
+<a href="[% c.uri_for_action("/events/round_select_entrants", [event.url_key, round.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/select-qualifiers-32.png") %]" alt="[% c.maketext("admin.select-qualifiers", round.name, enc_event_name) %]" title="[% c.maketext("admin.select-qualifiers", round.name, enc_event_name) %]" /></a>
+[%
+  END;
 END;
 -%]
 </td>
