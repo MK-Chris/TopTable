@@ -896,6 +896,7 @@ Return matches where a player has played on loan.
 sub matches_on_loan {
   my $self = shift;
   my ( $comp, $params ) = @_;
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   my ( $season, $tournament, $is_tourn );
   
   # Work out if we're checking the tournament or the season (league matches check against the season)
@@ -950,8 +951,14 @@ sub matches_on_loan {
       $where->[1]{"me.season"} = $season->id;
       
       # Add divisional criteria if passed in
-      $where->[0]{"me.division"} = $division->id if defined($division);
-      $where->[1]{"me.division"} = $division->id if defined($division);
+      if ( defined($division) ) {
+        $where->[0]{"me.division"} = $division->id;
+        $where->[1]{"me.division"} = $division->id;
+      } else {
+        # If no division is passed in, we need to check we're only checking league matches, so check the division isn't null
+        $where->[0]{"me.division"} = {"<>" => undef};
+        $where->[1]{"me.division"} = {"<>" => undef};
+      }
     }
     
     if ( defined($for_team) ) {
@@ -995,8 +1002,27 @@ sub matches_on_loan {
       "team_match_players.loan_team" => {"<>" => undef},
     };
     
+    if ( $is_tourn ) {
+      # Tournament match, check against the tournament
+      $where->{"tournament.id"} = $tournament->id;
+      
+      # Add to the attributes so we retrieve the tournament too
+      # Element 1 is the hash
+      $attrib{join}[1]{tournament_round} = [qw( tournament )];
+    } else {
+      # League match, check against the season
+      $where->{"me.season"} = $season->id;
+      
+      # Add divisional criteria if passed in
+      if ( defined($division) ) {
+        $where->{"me.division"} = $division->id;
+      } else {
+        # If no division is passed in, we need to check we're only checking league matches, so check the division isn't null
+        $where->{"me.division"} = {"<>" => undef};
+      }
+    }
+    
     $where->{"me.season"} = $season->id if defined($season);
-    $where->{"me.division"} = $division->id if defined($division);
   }
   
   return $self->result_source->schema->resultset("TeamMatch")->search($where, \%attrib);
