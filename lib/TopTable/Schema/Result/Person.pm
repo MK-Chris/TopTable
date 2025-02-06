@@ -1136,6 +1136,89 @@ sub doubles_games_played_in_season {
   });
 }
 
+=head2 get_season_and_teams_and_divisions
+
+A find() wrapper that also prefetches the teams and divisions; the 'active' membership is shown first.
+
+=cut
+
+sub get_season_and_teams_and_divisions {
+  my $self = shift;
+  my ( $params ) = @_;
+  my $season = $params->{season};
+  my $separate_membership_types = $params->{separate_membership_types} || 0;
+  
+  if ( $separate_membership_types ) {
+    my %teams = (
+      # Get ACTIVE team
+      active => $self->find_related("person_seasons", {
+        "me.season" => $season->id,
+        "team_seasons.season" => $season->id,
+        "me.team_membership_type" => "active",
+      }, {
+        prefetch => {
+          team => {
+            team_seasons => [qw( division club )],
+          },
+        },
+      }),
+      
+      # Get LOAN teams
+      loan => $self->search_related("person_seasons", {
+        "me.season" => $season->id,
+        "team_seasons.season" => $season->id,
+        "me.team_membership_type" => "loan",
+        "me.matches_played" => {">" => 0}, # If one of the loan memberships is for a tournament, we may have 0 matches played
+      }, {
+        prefetch => {
+          team => {
+            team_seasons => [qw( division club )],
+          },
+        },
+        order_by => {
+          -asc => [ qw( division.rank club.short_name team.name ) ],
+        },
+      }),
+      
+      inactive => $self->search_related("person_seasons", {
+        "me.season" => $season->id,
+        "team_seasons.season" => $season->id,
+        "me.team_membership_type" => "inactive",
+      }, {
+        prefetch => {
+          team => {
+            team_seasons => [qw( division club )],
+          },
+        },
+        order_by => {
+          -asc => [qw( division.rank club.short_name team.name )],
+        },
+      }),
+    );
+    
+    return \%teams;
+  } else {
+    # We're not separating, just return as called.
+    return $self->search_related("person_seasons", [{
+      "team_membership_type.id" => "loan",
+      "me.matches_played" => {">" => 0},
+      "me.season" => $season->id,
+      "team_season.season" => $season->id,
+    }, {
+      "team_membership_type.id" => {"<>" => "loan"},
+      "me.season" => $season->id,
+      "team_season.season" => $season->id,
+    }], {
+      prefetch => ["team_membership_type", {
+        team_season => ["team", {division_season => "division", club_season => "club"}],
+      }],
+      order_by => {
+        -asc => [qw( team_membership_type.display_order division.rank club_season.short_name team_season.name )],
+      },
+    });
+  }
+}
+
 =head2 head_to_heads
 
 Return a list of head-to-heads with this person and the other person specified in the function call.  Pass in an ID / URL key or a person object.
@@ -1384,21 +1467,13 @@ sub transfer_statistics {
   
   if ( scalar @{$response->{error}} == 0 ) {
     # Search the "to" person to make sure they have no current season statistics.
-    my $memberships = $self->result_source->schema->resultset("PersonSeason")->get_person_season_and_teams_and_divisions({
-      person => $to_person,
-      season => $season,
-      separate_membership_types => 0,
-    })->count;
+    my $memberships = $to_person->get_season_and_teams_and_divisions({season => $season, separate_membership_types => 0})->count;
     
     if ( $memberships ) {
       push(@{$response->{error}}, $lang->maketext("people.transfer.has-memberhsips"));
     } else {
       # No errors, now search for memberships to transfer
-      my @memberships = $self->result_source->schema->resultset("PersonSeason")->get_person_season_and_teams_and_divisions({
-        person => $self,
-        season => $season,
-        separate_membership_types => 0,
-      });
+      my @memberships = $self->get_season_and_teams_and_divisions({season => $season, separate_membership_types => 0});
       
       # Check if we have any memberships
       if ( scalar @memberships ) {
@@ -1410,21 +1485,21 @@ sub transfer_statistics {
           surname => $to_person->surname,
         }) foreach ( @memberships );
         
-        # Look for doubles pairings to update
-        my @doubles_pairs = $self->result_source->schema->resultset("DoublesPair")->pairs_involving_person({
-          person => $self,
-          season => $season,
-        });
+        # Look for doubles pairings to update - THIS SHOULD BE DONE BY THE FOREIGN KEY CASCADE
+        # my @doubles_pairs = $self->result_source->schema->resultset("DoublesPair")->pairs_involving_person({
+        #   person => $self,
+        #   season => $season,
+        # });
         
-        foreach my $pair ( @doubles_pairs ) {
-          if ( $pair->person_season_person1_season_team->person->id == $self->id ) {
-            # Person 1 matches our "from" person and needs to change
-            $pair->update({person_season_person1_season_team => $to_person->id});
-          } elsif ( $pair->person_season_person1_season_team->person->id == $self->id ) {
-            # Person 2 matches our "from" person and needs to change
-            $pair->update({person_season_person2_season_team => $to_person->id});
-          }
-        }
+        # foreach my $pair ( @doubles_pairs ) {
+        #   if ( $pair->person_season_person1_season_team->person->id == $self->id ) {
+        #     # Person 1 matches our "from" person and needs to change
+        #     $pair->update({person_season_person1_season_team => $to_person->id});
+        #   } elsif ( $pair->person_season_person1_season_team->person->id == $self->id ) {
+        #     # Person 2 matches our "from" person and needs to change
+        #     $pair->update({person_season_person2_season_team => $to_person->id});
+        #   }
+        # }
         
         # Look for team match players to update
         my @player_positions = $self->result_source->schema->resultset("TeamMatchPlayer")->search({

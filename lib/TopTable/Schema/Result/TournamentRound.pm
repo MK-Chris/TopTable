@@ -529,6 +529,29 @@ sub groups {
   });
 }
 
+=head2 has_entrants
+
+Check if this round has entrants, return 1 or 0.
+
+=cut
+
+sub has_entrants {
+  my $self = shift;
+  my $entry_type = $self->entry_type;
+  
+  my $rel;
+  if ( $entry_type eq "team" ) {
+    # Team match template
+    $rel = "tournament_round_teams";
+  } elsif ( $entry_type eq "singles" ) {
+    $rel = "tournament_round_people";
+  } elsif ( $entry_type eq "doubles" ) {
+    $rel = "tournament_rounds_doubles";
+  }
+  
+  return $self->search_related($rel)->count ? 1 : 0;
+}
+
 =head2 can_update($type)
 
 1 if we can update the round $type; 0 if not.
@@ -688,16 +711,16 @@ sub _can_update_entrants {
   my ( $reason, $level );
   
   # The entrants of a round can't be updated if:
-  # - The round is complete
+  # - The round is a group round
+  # - The round already has entrants
   # - The round before it is not yet complete
-  # - It's not the first knock-out round of the tournament
-  if ( $self->complete ) {
+  if ( $self->group_round ) {
     $allowed = 0;
-    $reason = $lang->maketext("events.tournaments.rounds.entrants.update.error.round-complete");
+    $reason = $lang->maketext("events.tournaments.rounds.entrants.update.error.group-round", $self->name);
     $level = "error";
-  } elsif ( !$self->is_first_ko_round ) {
+  } elsif ( $self->has_entrants ) {
     $allowed = 0;
-    $reason = $lang->maketext("events.tournaments.rounds.entrants.update.error.not-first-ko-round");
+    $reason = $lang->maketext("events.tournaments.rounds.entrants.update.error.round-already-has-entrants");
     $level = "error";
   } else {
     my $prev_round = $self->prev_round;

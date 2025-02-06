@@ -1363,8 +1363,14 @@ sub round_view :Private {
   if ( $c->stash->{authorisation}{event_edit} ) {
     push(@title_links, {
       image_uri => $c->uri_for("/static/images/icons/0018-Pencil-icon-32.png"),
-      text => $c->maketext("admin.edit-object", $enc_event_name),
+      text => $c->maketext("admin.edit-object-tourn", $round->name, $enc_event_name),
       link_uri => $c->uri_for_action("/events/edit_round", [$event->url_key, $round->url_key]),
+    });
+    
+    push(@title_links, {
+      image_uri => $c->uri_for("/static/images/icons/select-qualifiers-32.png"),
+      text => $c->maketext("admin.select-qualifiers", $round->name, $enc_event_name),
+      link_uri => $c->uri_for_action("/events/round_select_entrants", [$event->url_key, $round->url_key]),
     });
   }
   
@@ -1598,87 +1604,96 @@ sub do_add_next_round :Chained("base_current_season") :PathPart("do-add-next-rou
   $c->detach("process_form", [qw( round create )]);
 }
 
-# =head2 round_select_entrants
+=head2 round_select_entrants
 
-# Show a form to add the entrants to a round - this is only used for knock-out rounds; if this is the first round, entants can be anyone registered for the season, otherwise they must be from the previous round.  This is a formality in most situations, but sometimes we may need to select qualifiers from a list of best runners up.
+Show a form to add the entrants to a round - this is only used for knock-out rounds; if this is the first round, entants can be anyone registered for the season, otherwise they must be from the previous round.  This is a formality in most situations, but sometimes we may need to select qualifiers from a list of best runners up.
 
-# Knock-out rounds that follow knock-out rounds will automatically have the entrants set to the winners of the previous round, or those who had a bye from the round before that, so this is only needed for the first knock-out round.
+Knock-out rounds that follow knock-out rounds will automatically have the entrants set to the winners of the previous round, or those who had a bye from the round before that, so this is only needed for the first knock-out round.
 
-# =cut
+=cut
 
-# sub round_select_entrants :Chained("rounds_current_season") :PathPart("select-entrants") :Args(0) {
-#   my ( $self, $c ) = @_;
-#   my $event = $c->stash->{event};
-#   my $enc_event_name = $c->stash->{enc_event_name};
-#   my $season = $c->stash->{season};
-#   my $event_type = $c->stash->{event_type};
-#   my $tournament = $c->stash->{event_detail};
-#   my $round = $c->stash->{round};
-#   my $prev_round = $round->prev_round;
-#   my $match_template = $prev_round->match_template;
-#   my $ranking_template = $prev_round->rank_template;
+sub round_select_entrants :Chained("rounds_current_season") :PathPart("select-entrants") :Args(0) {
+  my ( $self, $c ) = @_;
+  my $event = $c->stash->{event};
+  my $enc_event_name = $c->stash->{enc_event_name};
+  my $season = $c->stash->{season};
+  my $event_type = $c->stash->{event_type};
+  my $tournament = $c->stash->{event_detail};
+  my $round = $c->stash->{round};
+  my $prev_round = $round->prev_round;
   
-#   # Check that we are authorised to edit events
-#   $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.edit-events"), 1]);
+  # Check that we are authorised to edit events
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.edit-events"), 1]);
   
-#   my %can = $round->can_update("entrants");
+  my %can = $round->can_update("entrants");
+  use DDP;
+  $c->log->debug(np %can);
+  if ( !$can{allowed} ) {
+    $c->response->redirect($c->uri_for_action("/events/round_view_current_season", [$event->url_key, $round->url_key],
+      {mid => $c->set_status_msg({$can{level} => $can{reason}})}));
+    $c->detatch;
+    return;
+  }
   
-#   my $js = "select-entrants";
-#   $js .= "-points" if $ranking_template->assign_points;
-#   $js .= "-hcp" if $match_template->handicapped;
-#   $js = $c->uri_for("/static/script/events/tournaments/rounds/$js.js");
+  my $match_template = $prev_round->match_template;
+  my $ranking_template = $prev_round->rank_template;
   
-#   # Setup template and scripts
-#   $c->stash({
-#     template => "html/events/tournaments/rounds/select-entrants.ttkt",
-#     form_action => $c->uri_for_action("/events/do_round_select_entrants", [$event->url_key, $round->url_key]),
-#     external_scripts => [
-#       $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
-#       $c->uri_for("/static/script/standard/chosen.js"),
-#       $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
-#       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
-#       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
-#       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
-#       $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
-#       $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
-#       $c->uri_for("/static/script/standard/prettycheckable.js"),
-#       $js,
-#     ],
-#     external_styles => [
-#       $c->uri_for("/static/css/chosen/chosen.min.css"),
-#       $c->uri_for("/static/css/datatables/dataTables.dataTables.min.css"),
-#       $c->uri_for("/static/css/datatables/fixedColumns.dataTables.min.css"),
-#       $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
-#       $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
-#       $c->uri_for("/static/css/datatables/rowGroup.dataTables.min.css"),
-#       $c->uri_for("/static/css/prettycheckable/prettyCheckable.css"),
-#     ],
-#     view_online_display => "Selecting entrants for $enc_event_name",
-#     view_online_link => 0,
-#     prev_round => $prev_round,
-#     auto_qualifiers => [$prev_round->auto_qualifiers],
-#     non_auto_qualifiers => [$prev_round->non_auto_qualifiers],
-#     winner_type => $match_template->winner_type->id,
-#     match_template => $match_template,
-#     ranking_template => $ranking_template,
-#   });
-# }
+  my $js = "select-entrants";
+  $js .= "-points" if $ranking_template->assign_points;
+  $js .= "-hcp" if $match_template->handicapped;
+  $js = $c->uri_for("/static/script/events/tournaments/rounds/$js.js");
+  
+  # Setup template and scripts
+  $c->stash({
+    template => "html/events/tournaments/rounds/select-entrants.ttkt",
+    form_action => $c->uri_for_action("/events/do_round_select_entrants", [$event->url_key, $round->url_key]),
+    external_scripts => [
+      $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
+      $c->uri_for("/static/script/standard/chosen.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
+      $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
+      $c->uri_for("/static/script/standard/prettycheckable.js"),
+      $js,
+    ],
+    external_styles => [
+      $c->uri_for("/static/css/chosen/chosen.min.css"),
+      $c->uri_for("/static/css/datatables/dataTables.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/fixedColumns.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/rowGroup.dataTables.min.css"),
+      $c->uri_for("/static/css/prettycheckable/prettyCheckable.css"),
+    ],
+    view_online_display => "Selecting entrants for $enc_event_name",
+    view_online_link => 0,
+    prev_round => $prev_round,
+    auto_qualifiers => [$prev_round->auto_qualifiers],
+    non_auto_qualifiers => [$prev_round->non_auto_qualifiers],
+    winner_type => $match_template->winner_type->id,
+    match_template => $match_template,
+    ranking_template => $ranking_template,
+  });
+}
 
-# =head2 do_round_select_entrants
+=head2 do_round_select_entrants
 
-# Process the form to add the entrants to a round.
+Process the form to add the entrants to a round.
 
-# =cut
+=cut
 
-# sub do_round_select_entrants :Chained("rounds_current_season") :PathPart("do-select-entrants") :Args(0) {
-#   my ( $self, $c ) = @_;
+sub do_round_select_entrants :Chained("rounds_current_season") :PathPart("do-select-entrants") :Args(0) {
+  my ( $self, $c ) = @_;
   
-#   # Check that we are authorised to edit events
-#   $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.edit-events"), 1]);
+  # Check that we are authorised to edit events
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.edit-events"), 1]);
   
-#   # Forward to the create / edit routine
-#   $c->detach("process_form", [qw( round entrants )]);
-# }
+  # Forward to the create / edit routine
+  $c->detach("process_form", [qw( round entrants )]);
+}
 
 =head2 prepare_form_round
 

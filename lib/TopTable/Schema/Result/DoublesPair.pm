@@ -365,7 +365,7 @@ __PACKAGE__->belongs_to(
   "person_season_person1_season_team",
   "TopTable::Schema::Result::PersonSeason",
   { person => "person1", season => "season", team => "team" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "CASCADE" },
 );
 
 =head2 person_season_person2_season_team
@@ -380,7 +380,7 @@ __PACKAGE__->belongs_to(
   "person_season_person2_season_team",
   "TopTable::Schema::Result::PersonSeason",
   { person => "person2", season => "season", team => "team" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "CASCADE" },
 );
 
 =head2 season
@@ -459,8 +459,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-09-29 23:47:56
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:tpPWZqs0jEChIo0v+x3VWQ
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2025-02-06 12:35:15
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Kj3i026whEQuTXGnK6thsg
 
 __PACKAGE__->add_columns(
     "last_updated",

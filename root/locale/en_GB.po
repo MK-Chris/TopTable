@@ -5252,6 +5252,9 @@ msgstr "Import some new %1"
 msgid "admin.edit-object"
 msgstr "Edit %1"
 
+msgid "admin.edit-object-tourn"
+msgstr "Edit %1 in %2"
+
 msgid "admin.edit-object-details"
 msgstr "Edit the event details for %1"
 
@@ -5277,7 +5280,10 @@ msgid "admin.points-adjust-object"
 msgstr "Adjust the points for %1"
 
 msgid "admin.points-adjust-object-tourn"
-msgstr "Adjust the points for %1 in %2."
+msgstr "Adjust the points for %1 in %2"
+
+msgid "admin.select-qualifiers"
+msgstr "Select the qualifiers for %1 in %2"
 
 msgid "admin.approve-object"
 msgstr "Approve %1"
@@ -6713,11 +6719,11 @@ msgstr "Venue (leave blank to use the tournament venue)"
 msgid "tournaments.rounds.field.round-of"
 msgstr "Number of entrants"
 
-msgid "events.tournaments.rounds.entrants.update.error.round-complete"
-msgstr "This round is already complete, so entrants cannot be updated."
+msgid "events.tournaments.rounds.entrants.update.error.round-already-has-entrants"
+msgstr "The entrants for %1 have already been selected."
 
-msgid "events.tournaments.rounds.entrants.update.error.not-first-ko-round"
-msgstr "Entrants can only be selected on the first knock-out round of the tournament."
+msgid "events.tournaments.rounds.entrants.update.error.group-round"
+msgstr "%1 is a group round, so entrants are selected by adding groups."
 
 msgid "events.tournaments.rounds.entrants.update.error.prev-round-incomplete"
 msgstr "Entrants can only be selected once the previous round is complete."

@@ -281,12 +281,8 @@ sub get_person_season :Private {
   my ( $self, $c ) = @_;
   my ( $person, $season, $person_name ) = ( $c->stash->{person}, $c->stash->{season}, $c->stash->{enc_display_name} );
   
-  my $teams = $c->model("DB::PersonSeason")->get_person_season_and_teams_and_divisions({
-    person => $person,
-    season => $season,
-  });
-  
-  my $team_season = $teams->first;
+  my @teams = $person->get_season_and_teams_and_divisions({season => $season});
+  my $team_season = scalar @teams ? $teams[0] : undef;
   my $person_season_name = encode_entities($team_season->display_name) if defined($team_season);
   
   # If the name has changed, we need to display a notice
@@ -307,7 +303,7 @@ sub get_person_season :Private {
   
   $c->stash({
     subtitle1 => $person_season_name || $person_name,
-    teams => $teams,
+    teams => \@teams,
     types => scalar $c->model("DB::PersonSeason")->get_team_membership_types_for_person_in_season({
       person => $person,
       season => $season,
@@ -315,7 +311,7 @@ sub get_person_season :Private {
     singles_games => $singles_games,
     doubles_games => $doubles_games,
     season => $season,
-    loan_matches => scalar $person->matches_on_loan($season),
+    loan_matches => scalar $person->matches_on_loan($season, {logger => sub{ my $level = shift; $c->log->$level( @_ ); }}),
     inactive_memberships => scalar $person->inactive_memberships({season => $season}),
     captaincies => scalar $person->captaincies({season => $season}),
     secretaryships => scalar $person->secretaryships({season => $season}),
