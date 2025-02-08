@@ -1,0 +1,31 @@
+[%
+USE scalar;
+%]
+<form method="post" action="[% form_action %]">
+<fieldset>
+  <legend>[% c.maketext("events.legend.tournament.round.delete-entrants") %]</legend>
+  <div class="table-wrap">
+    <div class="table-layout table-layout-centre">
+      <table id="entrants" class="stripe hover row-border" width="100%">
+        <thead>
+          <tr>
+            <th>[% c.maketext("events.tournaments.rounds.entry-list.col-header-" _ round.entry_type) %]</th>
+          </tr>
+        </thead>
+        <tbody>
+[%
+WHILE (entrant = entrants.next);
+-%]
+          <tr>
+            <td>[% entrant.object_name | html_entity %]</td>
+          </tr>
+[%
+END;
+-%]
+        </tbody>
+      </table>
+    </div><!-- .table-layout -->
+  </div><!-- .table-wrap -->
+</fieldset>
+<input type="submit" name="Submit" value="[% c.maketext("form.button.delete") %]" />
+</form>

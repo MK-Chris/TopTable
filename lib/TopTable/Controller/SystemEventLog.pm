@@ -194,7 +194,11 @@ sub load_events_js :Path("load.js") :Args(0) {
         $tooltip_obj_text .= "<br />" if $obj_count > 1;
         
         # Set this name into the tooltip
-        $tooltip_obj_text .= "<a class='tip' href='" . $c->uri_for_action($event->system_event_log_type->view_action_for_uri, $tooltip_obj->{ids}) . "'>" . $tooltip_obj->{name} . "</a>";
+        if ( $tooltip_obj->{ids}[0] and $event->system_event_log_type->view_action_for_uri ) {
+          $tooltip_obj_text .= "<a class='tip' href='" . $c->uri_for_action($event->system_event_log_type->view_action_for_uri, $tooltip_obj->{ids}) . "'>" . $tooltip_obj->{name} . "</a>";
+        } else {
+          $tooltip_obj_text .= $tooltip_obj->{name};
+        }
       }
       
       # Set our 'others'

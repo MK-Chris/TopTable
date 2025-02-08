@@ -4235,6 +4235,9 @@ msgstr "Some of the submitted teams are invalid."
 msgid "events.tournament.rounds.select-entrants.wrong-number-of-entrants-selected"
 msgstr "%1 entrants for the round were selected; %2 must be selected."
 
+msgid "events.legend.tournament.round.delete-entrants"
+msgstr "Delete entrants"
+
 ### Reports
 msgid "reports.name.loan-players"
 msgstr "Loan players"
@@ -5322,7 +5325,10 @@ msgid "admin.points-adjust-object-tourn"
 msgstr "Adjust the points for %1 in %2"
 
 msgid "admin.select-qualifiers"
-msgstr "Select the qualifiers for %1 in %2"
+msgstr "Set the entry list for %1 in %2"
+
+msgid "admin.delete-qualifiers"
+msgstr "Delete the entry list for %1 in %2"
 
 msgid "admin.approve-object"
 msgstr "Approve %1"
@@ -6772,6 +6778,21 @@ msgstr "Automatic qualifiers from the previous round fill all spaces in this one
 
 msgid "events.tournaments.rounds.entrants.update.error.prev-round-incomplete"
 msgstr "Entrants can only be selected once the previous round is complete."
+
+msgid "events.tournaments.rounds.entrants.delete.error.group-round"
+msgstr "%1 is a group round, so entrants are selected by adding groups and must be removed by manipulation of the groups."
+
+msgid "events.tournaments.rounds.entrants.update.success"
+msgstr "The entry list for %1 has successfully been set."
+
+msgid "events.tournaments.rounds.entrants.delete.error.round-no-entrants"
+msgstr "%1 doesn't have its entry list set yet, so there are no entrants to delete."
+
+msgid "events.tournaments.rounds.entrants.delete.error.matches-created"
+msgstr "The matches for %1 have been created, so entrants to the round cannot be deleted."
+
+msgid "events.tournaments.rounds.entrants.delete.success"
+msgstr "The entry list for %1 has successfully been deleted; entrants must now be re-added to the round."
 
 msgid "tournaments.rounds.group.details"
 msgstr "Group %1 details"
