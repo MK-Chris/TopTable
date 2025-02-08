@@ -580,9 +580,13 @@ In list context, a hash will be returned with keys 'allowed' (1 or 0) and potent
 
 No permissions are checked here, this is purely to see if it's possible to update the round based on factors in the tournament.
 
-$type tells us what we want to update and can be "add-groups", "entrants" or "manual-entrants".  If not passed, we get a hash (or hashref in scalar context) of all types - scalar context just returns 1 or 0 for all of these, list context returns the hashref with allowed and reason keys.  If nothing can be updated for the same reason (i.e., the season is complete), the types will not be returned, and you'll get a 1 or 0 in scalar context, or 'allowed' and 'reason' keys in list context, just as if it had been called with a specific type.
+$type tells us what we want to update and can be "add-groups", "entrants", "manual-entrants" or "delete-entrants".  If not passed, we get a hash (or hashref in scalar context) of all types - scalar context just returns 1 or 0 for all of these, list context returns the hashref with allowed and reason keys.  If nothing can be updated for the same reason (i.e., the season is complete), the types will not be returned, and you'll get a 1 or 0 in scalar context, or 'allowed' and 'reason' keys in list context, just as if it had been called with a specific type.
 
-If $type is "add-groups", we're checking if we can add groups to the round; "entrants" checks we can add entrants to the round and "manual-entrants" checks if we can add entrants manually (along with the automatic qualifiers) to the round - this doesn't do any checking that "entrants" does, so they'll need to be called separately.
+Possible $type values:
+"add-groups": we're checking if we can add groups to the round.
+"entrants": checks we can add entrants to the round.
+"manual-entrants": checks if we can add entrants manually (along with the automatic qualifiers) to the round - this doesn't do any checking that "entrants" does, so they'll need to be called separately.
+"delete-entrants": checks if we can remove the entrants from this round.
 
 =cut
 
@@ -597,7 +601,7 @@ sub can_update {
   my $lang = $schema->lang;
   
   # Check we have a valid type, if it's provided (if it's not provided, check all types)
-  return undef if defined($type) and $type ne "add-groups" and $type ne "entrants" and $type ne "manual-entrants";
+  return undef if defined($type) and $type ne "add-groups" and $type ne "entrants" and $type ne "manual-entrants" and $type ne "delete-entrants";
   
   # Default to allowed.
   my $allowed = 1;
@@ -631,11 +635,17 @@ sub can_update {
               reason => $reason,
               level => "error",
             },
+            "delete-entrants" => {
+              allowed => 0,
+              reason => $reason,
+              level => "error",
+            }
           ) # We want the reasons back if we've asked for an array, the hash will contain 'allowed' and 'reason' keys
         : (
           "add-groups" => 0,
           entrants => 0,
           "manual-entrants" => 0,
+          "delete-entrants" => 0,
         );
         
       # Return a reference to the hash in scalar context, or the hash itself in list context
@@ -652,6 +662,8 @@ sub can_update {
       %can = $self->_can_update_entrants;
     } elsif ( $type eq "manual-entrants" ) {
       %can = $self->_can_add_manual_entrants;
+    } elsif ( $type eq "delete-entrants" ) {
+      %can = $self->_can_delete_entrants;
     }
     
     # Grab the reason and allowed flag
@@ -666,6 +678,7 @@ sub can_update {
     my %add_groups = $self->_can_add_groups;
     my %entrants = $self->_can_update_entrants;
     my %manual_entrants = $self->_can_add_manual_entrants;
+    my %delete_entrants = $self->_can_delete_entrants;
     
     my %types = wantarray
       ? (
@@ -673,20 +686,28 @@ sub can_update {
             allowed => $add_groups{allowed},
             reason => $add_groups{reason},
             level => $add_groups{level},
-          }, entrants => {
+          },
+          entrants => {
             allowed => $entrants{allowed},
             reason => $entrants{reason},
             level => $entrants{level},
-          }, "manual-entrants" => {
+          },
+          "manual-entrants" => {
             allowed => $manual_entrants{allowed},
             reason => $manual_entrants{reason},
             level => $manual_entrants{level},
           },
+          "delete-entrants" => {
+            allowed => $delete_entrants{allowed},
+            reason => $delete_entrants{reason},
+            level => $delete_entrants{level},
+          }
         ) # We want the reasons back if we've asked for an array, the hash will contain 'allowed' and 'reason' keys
       : (
         "add-groups" => $add_groups{allowed},
         entrants => $entrants{allowed},
         "manual-entrants" => $manual_entrants{allowed},
+        "delete-entrants" => $delete_entrants{allowed},
       );
     
     # Return a reference to the hash in scalar context, or the hash itself in list context
@@ -807,6 +828,46 @@ sub _can_add_manual_entrants {
       }
     }
     
+  }
+  
+  return (allowed => $allowed, reason => $reason, level => $level);
+}
+
+=head2 _can_delete_entrants
+
+Check if we can add entrants to the round.  Don't do the season complete check, this is done in can_update.
+
+=cut
+
+sub _can_delete_entrants {
+  my $self = shift;
+  my ( $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  
+  my $allowed = 1;
+  my ( $reason, $level );
+  
+  # The entrants of a round can't be deleted if:
+  # - It's a group round
+  # - They haven't been set
+  # - There are matches in this round
+  if ( $self->group_round ) {
+    $allowed = 0;
+    $reason = $lang->maketext("events.tournaments.rounds.entrants.delete.error.group-round", $self->name);
+    $level = "error";
+  } elsif ( !$self->has_entrants ) {
+    $allowed = 0;
+    $reason = $lang->maketext("events.tournaments.rounds.entrants.delete.error.round-no-entrants", $self->name);
+    $level = "error";
+  } elsif ( $self->has_matches ) {
+    $allowed = 0;
+    $reason = $lang->maketext("events.tournaments.rounds.entrants.delete.error.matches-created");
+    $level = "error";
   }
   
   return (allowed => $allowed, reason => $reason, level => $level);
@@ -1754,8 +1815,6 @@ sub add_entrants {
   # Grab the fields
   my $manual_entrants = $params->{manual_entrants};
   my @manual_entrants = @{$manual_entrants};
-  use DDP;
-  $logger->("debug", sprintf("MANUAL ENTRANTS PASSED IN:\n%s", np($manual_entrants)));
   my $response = {
     error => [],
     warning => [],
@@ -1804,8 +1863,6 @@ sub add_entrants {
   
   # Check we have the right number of entrants selected
   my $expected_entrants = $self->round_of - $prev_round->num_qualifiers;
-  $logger->("debug", sprintf("SIZES: Auto: %d, submitted: %d, expected: %d", $auto_ids->size, scalar @manual_entrants, $expected_entrants));
-  $logger->("debug", np(@manual_entrants));
   push(@{$response->{error}}, $lang->maketext("events.tournament.rounds.select-entrants.wrong-number-of-entrants-selected", $submitted_ids->size, $expected_entrants)) if $submitted_ids->size != $expected_entrants;
   
   if ( scalar @{$response->{error}} == 0 ) {
@@ -1849,6 +1906,78 @@ sub add_entrants {
     }
     
     $transaction->commit;
+    push(@{$response->{success}}, $lang->maketext("events.tournaments.rounds.entrants.update.success"));
+    $response->{round} = $self; # Because the code we're returning to expects a round in the response 
+    $response->{completed} = 1;
+  }
+  
+  return $response;
+}
+
+=head2 delete_entrants
+
+Delete the entrants from the round.
+
+=cut
+
+sub delete_entrants {
+  my $self = shift;
+  my ( $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  
+  # Grab the entrants
+  my $response = {
+    error => [],
+    warning => [],
+    info => [],
+    success => [],
+    fields => {
+      manual_entrants => [],
+    },
+    completed => 0,
+    can_complete => 1,
+  };
+  
+  my %can = $self->can_update("delete-entrants");
+  
+  if ( !$can{allowed} ) {
+    $response->{can_complete} = 0;
+    push(@{$response->{level}}, $can{reason});
+    return;
+  }
+  
+  if ( scalar @{$response->{error}} == 0 ) {
+    # No errors, make our list
+    # Translate our submitted IDs into the TournamentRound[Type] objects - these will be for the previous round, so we then need to grab the TournamentX object and create a
+    # record for this tournament.
+    my $entry_type = $self->entry_type;
+    my ( $member_class, $round_member_class, $member_rel_tourn, $member_rel_round );
+    if ( $entry_type eq "team" ) {
+      $member_class = "Team";
+      $member_rel_round = "tournament_round_teams";
+      $member_rel_tourn = "tournament_team";
+    } elsif ( $entry_type eq "singles" ) {
+      $member_class = "Person";
+      $member_rel_round = "tournament_round_people";
+      $member_rel_tourn = "tournament_person";
+    } elsif ( $entry_type eq "doubles" ) {
+      $member_class = "Person";
+      $member_rel_round = "tournament_rounds_doubles";
+      $member_rel_tourn = "tournament_pair";
+    }
+    
+    $round_member_class = "TournamentRound$member_class";
+    
+    my $transaction = $self->result_source->schema->txn_scope_guard;
+    $self->delete_related($member_rel_round);
+    
+    $transaction->commit;
+    push(@{$response->{success}}, $lang->maketext("events.tournaments.rounds.entrants.delete.success"));
     $response->{round} = $self; # Because the code we're returning to expects a round in the response 
     $response->{completed} = 1;
   }

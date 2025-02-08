@@ -1372,6 +1372,12 @@ sub round_view :Private {
       text => $c->maketext("admin.select-qualifiers", $round->name, $enc_event_name),
       link_uri => $c->uri_for_action("/events/round_select_entrants", [$event->url_key, $round->url_key]),
     }) if $round->can_update("entrants");
+    
+    push(@title_links, {
+      image_uri => $c->uri_for("/static/images/icons/delete-qualifiers-32.png"),
+      text => $c->maketext("admin.delete-qualifiers", $round->name, $enc_event_name),
+      link_uri => $c->uri_for_action("/events/round_delete_entrants", [$event->url_key, $round->url_key]),
+    }) if $round->can_update("delete-entrants");
   }
   
   # Set up the canonical URI
@@ -1695,6 +1701,76 @@ sub do_round_select_entrants :Chained("rounds_current_season") :PathPart("do-sel
   
   # Forward to the create / edit routine
   $c->detach("process_form", [qw( round create-entrants )]);
+}
+
+=head2 round_delete_entrants
+
+Show a form to delete the entrants for a round - this is only used for knock-out rounds.  Entry lists are not created automatically due to the need to sometimes override match scores after updating them.
+
+=cut
+
+sub round_delete_entrants :Chained("rounds_current_season") :PathPart("delete-entrants") :Args(0) {
+  my ( $self, $c ) = @_;
+  my $event = $c->stash->{event};
+  my $enc_event_name = $c->stash->{enc_event_name};
+  my $season = $c->stash->{season};
+  my $event_type = $c->stash->{event_type};
+  my $tournament = $c->stash->{event_detail};
+  my $round = $c->stash->{round};
+  
+  # Check that we are authorised to edit events
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.edit-events"), 1]);
+  
+  my %can = $round->can_update("delete-entrants");
+  if ( !$can{allowed} ) {
+    $c->response->redirect($c->uri_for_action("/events/round_view_current_season", [$event->url_key, $round->url_key],
+      {mid => $c->set_status_msg({$can{level} => $can{reason}})}));
+    $c->detatch;
+    return;
+  }
+  
+  # Setup template and scripts
+  $c->stash({
+    template => "html/events/tournaments/rounds/delete-entrants.ttkt",
+    form_action => $c->uri_for_action("/events/do_round_delete_entrants", [$event->url_key, $round->url_key]),
+    external_scripts => [
+      $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
+      $c->uri_for("/static/script/standard/chosen.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
+      $c->uri_for("/static/script/events/tournaments/rounds/delete-entrants.js"),
+    ],
+    external_styles => [
+      $c->uri_for("/static/css/chosen/chosen.min.css"),
+      $c->uri_for("/static/css/datatables/dataTables.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/fixedColumns.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/rowGroup.dataTables.min.css"),
+    ],
+    view_online_display => "Deleting entrants for $enc_event_name",
+    view_online_link => 0,
+    entrants => $round->entrants,
+  });
+}
+
+=head2 do_round_delete_entrants
+
+Process the form to delete the entrants from a round.
+
+=cut
+
+sub do_round_delete_entrants :Chained("rounds_current_season") :PathPart("do-delete-entrants") :Args(0) {
+  my ( $self, $c ) = @_;
+  
+  # Check that we are authorised to edit events
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.edit-events"), 1]);
+  
+  # Forward to the create / edit routine
+  $c->detach("process_form", [qw( round delete-entrants )]);
 }
 
 =head2 prepare_form_round
@@ -2733,14 +2809,13 @@ sub process_form :Private {
         }
       }
       
-      use DDP;
-      $c->log->debug(np(@manual_entrants));
-      
       # @entrants (if any) are the manual entrants, auto ones will be selected automatically
       $response = $round->add_entrants({
         logger => sub{ my $level = shift; $c->log->$level( @_ ); },
         manual_entrants => \@manual_entrants,
       });
+    } elsif ( $action eq "delete-entrants" ) {
+      $response = $round->delete_entrants;
     }
   } elsif ( $type eq "group" ) {
     # Group forms to process
@@ -2872,6 +2947,13 @@ sub process_form :Private {
       } elsif ( $action eq "create-entrants" ) {
         if ( $response->{can_complete} ) {
           $redirect_uri = $c->uri_for_action("/events/round_select_entrants", [$event->url_key, $round->url_key], {mid => $mid});
+        } else {
+          # Can't complete, just redirect to the view page
+          $redirect_uri = $c->uri_for_action("/events/round_view_current_season", [$event->url_key, $round->url_key], {mid => $mid});
+        }
+      } elsif ( $action eq "delete-entrants" ) {
+        if ( $response->{can_complete} ) {
+          $redirect_uri = $c->uri_for_action("/events/round_delete_entrants", [$event->url_key, $round->url_key], {mid => $mid});
         } else {
           # Can't complete, just redirect to the view page
           $redirect_uri = $c->uri_for_action("/events/round_view_current_season", [$event->url_key, $round->url_key], {mid => $mid});
