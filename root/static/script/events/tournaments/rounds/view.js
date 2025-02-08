@@ -58,6 +58,25 @@ $(document).ready(function() {
     width: "75px"
   });
   
+  let entrants_table = $("#entrants").DataTable({
+    responsive: true,
+    paging: true,
+    pageLength: 25,
+    lengthChange: true,
+    lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+    info: true,
+    fixedHeader: true,
+    searching: true,
+    ordering: false,
+  });
+  
+  $("select[name=entrants_length]").chosen({
+    disable_search: true,
+    single_backstroke_delete: false,
+    allow_single_deselect: true,
+    width: "75px"
+  });
+  
   /*
     Responsive tabs
   */
@@ -68,6 +87,8 @@ $(document).ready(function() {
       if (tab.selector == "#matches") {
         // Redraw the adjustments table
         matches_table.responsive.recalc();
+      } else if (tab.selector == "#summary") {
+        entrants_table.responsive.recalc();
       }
     }
   });

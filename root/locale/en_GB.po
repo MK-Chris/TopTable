@@ -3022,6 +3022,12 @@ msgstr "Unable to update the score for this handicapped match before the handica
 msgid "matches.update.error.score-overridden"
 msgstr "The score for this match has been overridden, so the score can't be updated.  Delete the score override before updating."
 
+msgid "matches.update.error.next-round-matches-created"
+msgstr "The round following the one that this match is in already has its matches set, so scores in %1 cannot be altered."
+
+msgid "matches.update.error.next-round-entry-list-complete"
+msgstr "The entry list for the round following the one that this match is in already is already set, so scores in %1 cannot be altered."
+
 msgid "matches.update.delete.error.score-overridden"
 msgstr "You cannot delete scores in a match that&#39;s had the score overridden; delete the score override before deleting scores."
 
@@ -4181,11 +4187,32 @@ msgstr "Venue"
 msgid "events.tournaments.rounds.venue-use-home-team"
 msgstr "Home team&#39;s venue"
 
-msgid "events.legend.tournament.round.selec-entrants.auto"
+msgid "events.tournaments.rounds.entry-list-team"
+msgstr "Team list"
+
+msgid "events.tournaments.rounds.entry-list.col-header-team"
+msgstr "Team"
+
+msgid "events.tournaments.rounds.entry-list-singles"
+msgstr "Player list"
+
+msgid "events.tournaments.rounds.entry-list.col-header-team"
+msgstr "Player"
+
+msgid "events.tournaments.rounds.entry-list-doubles"
+msgstr "Player list"
+
+msgid "events.tournaments.rounds.entry-list.col-header-team"
+msgstr "Pair"
+
+msgid "events.legend.tournament.round.select-entrants"
+msgstr "Qualifiers"
+
+msgid "events.legend.tournament.round.select-entrants.auto"
 msgstr "Automatic qualifiers (you cannot change these)"
 
-msgid "events.legend.tournament.round.selec-entrants.manual"
-msgstr "Best runners up (select these from the list)"
+msgid "events.legend.tournament.round.select-entrants.manual"
+msgstr "Best runners up (select %1 from the list using the checkboxes)"
 
 msgid "events.tournament.rounds.entrants.group"
 msgstr "Group"
@@ -4193,8 +4220,20 @@ msgstr "Group"
 msgid "events.tournament.rounds.entrants.select"
 msgstr "Selection"
 
+msgid "events.tournament.rounds.entrants.select-id"
+msgstr "Selection ID"
+
 msgid "events.tournament.rounds.entrants.group-pos"
 msgstr "Group position"
+
+msgid "events.tournament.rounds.select-entrants.in-auto-qualifiers"
+msgstr "%1 of the submitted teams are in the auto-qualifiers list, so cannot be manually selected."
+
+msgid "events.tournament.rounds.select-entrants.invalid-entries"
+msgstr "Some of the submitted teams are invalid."
+
+msgid "events.tournament.rounds.select-entrants.wrong-number-of-entrants-selected"
+msgstr "%1 entrants for the round were selected; %2 must be selected."
 
 ### Reports
 msgid "reports.name.loan-players"
@@ -6720,10 +6759,16 @@ msgid "tournaments.rounds.field.round-of"
 msgstr "Number of entrants"
 
 msgid "events.tournaments.rounds.entrants.update.error.round-already-has-entrants"
-msgstr "The entrants for %1 have already been selected."
+msgstr "The entrants for the %1 have already been selected."
 
 msgid "events.tournaments.rounds.entrants.update.error.group-round"
 msgstr "%1 is a group round, so entrants are selected by adding groups."
+
+msgid "events.tournaments.rounds.entrants.update.add-manual.error.not-first-ko-round"
+msgstr "Manual entrants can only be selected for the first knock-out round of a tournament."
+
+msgid "events.tournaments.rounds.entrants.update.add-manual.error.auto-fills-all-spaces"
+msgstr "Automatic qualifiers from the previous round fill all spaces in this one."
 
 msgid "events.tournaments.rounds.entrants.update.error.prev-round-incomplete"
 msgstr "Entrants can only be selected once the previous round is complete."
@@ -7293,6 +7338,12 @@ msgstr "Edited %1%2."
 
 msgid "system-event-log.description.delete-group"
 msgstr "Deleted %1%2."
+
+msgid "system-event-log.description.create-round-entrants"
+msgstr "Created the entry list for %1%2."
+
+msgid "system-event-log.description.delete-round-entrants"
+msgstr "Removed the entry list for %1%2."
 
 msgid "system-event-log.and"
 msgstr "and"

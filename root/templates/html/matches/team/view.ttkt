@@ -397,7 +397,7 @@ END;
 IF is_tourn;
   # For tournaments, we put the team divisions in too
 -%]
-              <th class="numeric">[% c.maketext("matches.summaries.heading.division") %]</th>
+              <th>[% c.maketext("matches.summaries.heading.division") %]</th>
 [%
 END;
 IF match.handicapped;

@@ -3535,6 +3535,23 @@ sub _can_update_score {
     $allowed = 0;
     $reason = $lang->maketext("matches.update.error.score-overridden");
     $level = "error";
+  } elsif ( defined($self->tournament_round) ) {
+    # If it's a tournament match, we can't update if we have entrants in the next round
+    my $round = $self->tournament_round;
+    my $next_round = $round->next_round;
+    
+    if ( defined($next_round) ) {
+      # There's a round that follows this one, so make sure we have the round number
+      if ( $next_round->has_matches ) {
+        $allowed = 0;
+        $reason = $lang->maketext("matches.update.error.next-round-matches-created", $round->name);
+        $level = "error";
+      } elsif ( $next_round->has_entrants ) {
+        $allowed = 0;
+        $reason = $lang->maketext("matches.update.error.next-round-entry-list-complete", $round->name);
+        $level = "error";
+      }
+    }
   }
   
   return (allowed => $allowed, reason => $reason, level => $level);
@@ -3558,6 +3575,23 @@ sub _can_delete_score {
     $allowed = 0;
     $reason = $lang->maketext("matches.update.delete.error.score-overridden");
     $level = "error";
+  } elsif ( defined($self->tournament_round) ) {
+    # If it's a tournament match, we can't update if we have entrants in the next round
+    my $round = $self->tournament_round;
+    my $next_round = $round->next_round;
+    
+    if ( defined($next_round) ) {
+      # There's a round that follows this one, so make sure we have the round number
+      if ( $next_round->has_matches ) {
+        $allowed = 0;
+        $reason = $lang->maketext("matches.update.error.next-round-matches-created", $round->name);
+        $level = "error";
+      } elsif ( $next_round->has_entrants ) {
+        $allowed = 0;
+        $reason = $lang->maketext("matches.update.error.next-round-entry-list-complete", $round->name);
+        $level = "error";
+      }
+    }
   }
   
   return (allowed => $allowed, reason => $reason, level => $level);
@@ -3581,6 +3615,23 @@ sub _can_cancel_match {
     $allowed = 0;
     $reason = $lang->maketext("matches.cancel.error.started");
     $level = "error";
+  } elsif ( defined($self->tournament_round) ) {
+    # If it's a tournament match, we can't update if we have entrants in the next round
+    my $round = $self->tournament_round;
+    my $next_round = $round->next_round;
+    
+    if ( defined($next_round) ) {
+      # There's a round that follows this one, so make sure we have the round number
+      if ( $next_round->has_matches ) {
+        $allowed = 0;
+        $reason = $lang->maketext("matches.update.error.next-round-matches-created", $round->name);
+        $level = "error";
+      } elsif ( $next_round->has_entrants ) {
+        $allowed = 0;
+        $reason = $lang->maketext("matches.update.error.next-round-entry-list-complete", $round->name);
+        $level = "error";
+      }
+    }
   }
   
   return (allowed => $allowed, reason => $reason, level => $level);
@@ -3604,6 +3655,23 @@ sub _can_uncancel_match {
     $allowed = 0;
     $reason = $lang->maketext("matches.uncancel.error.not-cancelled");
     $level = "error";
+  } elsif ( defined($self->tournament_round) ) {
+    # If it's a tournament match, we can't update if we have entrants in the next round
+    my $round = $self->tournament_round;
+    my $next_round = $round->next_round;
+    
+    if ( defined($next_round) ) {
+      # There's a round that follows this one, so make sure we have the round number
+      if ( $next_round->has_matches ) {
+        $allowed = 0;
+        $reason = $lang->maketext("matches.update.error.next-round-matches-created", $round->name);
+        $level = "error";
+      } elsif ( $next_round->has_entrants ) {
+        $allowed = 0;
+        $reason = $lang->maketext("matches.update.error.next-round-entry-list-complete", $round->name);
+        $level = "error";
+      }
+    }
   }
   
   return (allowed => $allowed, reason => $reason, level => $level);
@@ -3634,6 +3702,23 @@ sub _can_update_override {
     $allowed = 0;
     $reason = $lang->maketext("matches.override-score.error.match-not-complete");
     $level = "error";
+  } elsif ( defined($self->tournament_round) ) {
+    # If it's a tournament match, we can't update if we have entrants in the next round
+    my $round = $self->tournament_round;
+    my $next_round = $round->next_round;
+    
+    if ( defined($next_round) ) {
+      # There's a round that follows this one, so make sure we have the round number
+      if ( $next_round->has_matches ) {
+        $allowed = 0;
+        $reason = $lang->maketext("matches.update.error.next-round-matches-created", $round->name);
+        $level = "error";
+      } elsif ( $next_round->has_entrants ) {
+        $allowed = 0;
+        $reason = $lang->maketext("matches.update.error.next-round-entry-list-complete", $round->name);
+        $level = "error";
+      }
+    }
   }
   
   return (allowed => $allowed, reason => $reason, level => $level);
@@ -3660,6 +3745,23 @@ sub _can_postpone_match {
     $allowed = 0;
     $reason = $lang->maketext("matches.postpone-match.error.match-cancelled");
     $level = "error";
+  } elsif ( defined($self->tournament_round) ) {
+    # If it's a tournament match, we can't update if we have entrants in the next round
+    my $round = $self->tournament_round;
+    my $next_round = $round->next_round;
+    
+    if ( defined($next_round) ) {
+      # There's a round that follows this one, so make sure we have the round number
+      if ( $next_round->has_matches ) {
+        $allowed = 0;
+        $reason = $lang->maketext("matches.update.error.next-round-matches-created", $round->name);
+        $level = "error";
+      } elsif ( $next_round->has_entrants ) {
+        $allowed = 0;
+        $reason = $lang->maketext("matches.update.error.next-round-entry-list-complete", $round->name);
+        $level = "error";
+      }
+    }
   }
   
   return (allowed => $allowed, reason => $reason, level => $level);

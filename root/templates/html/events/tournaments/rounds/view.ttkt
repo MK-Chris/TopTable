@@ -44,6 +44,45 @@ END;
             <td>[% venue_text %]</td>
           </tr>
         </table>
+        
+[%
+IF entrants.count;
+-%]
+        <h4>[% c.maketext("events.tournaments.rounds.entry-list-" _ round.entry_type) %]</h4>
+        <table id="entrants" class="stripe hover row-border" width="100%">
+          <thead>
+            <tr>
+              <th>[% c.maketext("events.tournaments.rounds.entry-list.col-header-" _ round.entry_type) %]</th>
+            </tr>
+          </thead>
+          <tbody>
+[%
+  WHILE (entrant = entrants.next);
+    SWITCH round.entry_type;
+      CASE "team";
+        SET club = entrant.tournament_team.team_season.club_season.club;
+        SET team = entrant.tournament_team.team_season.team;
+        IF specific_season;
+          SET uri = c.uri_for_action("/events/teams_view_by_url_key_specific_season", [event.url_key, season.url_key, club.url_key, team.url_key]);
+        ELSE;
+          SET uri = c.uri_for_action("/events/teams_view_by_url_key_current_season", [event.url_key, club.url_key, team.url_key]);
+        END;
+      CASE "singles";
+      
+      CASE "doubles";
+    END;
+-%]
+            <tr>
+              <td><a href="[% uri %]">[% entrant.object_name | html_entity %]</a></td>
+            </tr>
+[%
+  END;
+-%]
+          </tbody>
+        </table>
+[%
+END;
+-%]
       </div><!-- .table-layout -->
     </div><!-- .table-wrap -->
   </div><!-- #summary -->

@@ -1371,7 +1371,7 @@ sub round_view :Private {
       image_uri => $c->uri_for("/static/images/icons/select-qualifiers-32.png"),
       text => $c->maketext("admin.select-qualifiers", $round->name, $enc_event_name),
       link_uri => $c->uri_for_action("/events/round_select_entrants", [$event->url_key, $round->url_key]),
-    });
+    }) if $round->can_update("entrants");
   }
   
   # Set up the canonical URI
@@ -1458,6 +1458,7 @@ sub round_view :Private {
     title_links => \@title_links,
     view_online_display => sprintf("Viewing %s", $enc_event_name),
     view_online_link => 1,
+    entrants => $round->entrants,
     external_scripts => \@external_scripts,
     external_styles => \@external_styles,
   });
@@ -1626,8 +1627,6 @@ sub round_select_entrants :Chained("rounds_current_season") :PathPart("select-en
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.edit-events"), 1]);
   
   my %can = $round->can_update("entrants");
-  use DDP;
-  $c->log->debug(np %can);
   if ( !$can{allowed} ) {
     $c->response->redirect($c->uri_for_action("/events/round_view_current_season", [$event->url_key, $round->url_key],
       {mid => $c->set_status_msg({$can{level} => $can{reason}})}));
@@ -1639,9 +1638,12 @@ sub round_select_entrants :Chained("rounds_current_season") :PathPart("select-en
   my $ranking_template = $prev_round->rank_template;
   
   my $js = "select-entrants";
-  $js .= "-points" if $ranking_template->assign_points;
+  $js .= "-points" if defined($ranking_template) and $ranking_template->assign_points;
   $js .= "-hcp" if $match_template->handicapped;
   $js = $c->uri_for("/static/script/events/tournaments/rounds/$js.js");
+  
+  my @auto_qualifiers = $prev_round->auto_qualifiers;
+  my @non_auto_qualifiers = $prev_round->non_auto_qualifiers;
   
   # Setup template and scripts
   $c->stash({
@@ -1671,8 +1673,8 @@ sub round_select_entrants :Chained("rounds_current_season") :PathPart("select-en
     view_online_display => "Selecting entrants for $enc_event_name",
     view_online_link => 0,
     prev_round => $prev_round,
-    auto_qualifiers => [$prev_round->auto_qualifiers],
-    non_auto_qualifiers => [$prev_round->non_auto_qualifiers],
+    auto_qualifiers => \@auto_qualifiers,
+    non_auto_qualifiers => \@non_auto_qualifiers,
     winner_type => $match_template->winner_type->id,
     match_template => $match_template,
     ranking_template => $ranking_template,
@@ -1692,7 +1694,7 @@ sub do_round_select_entrants :Chained("rounds_current_season") :PathPart("do-sel
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.edit-events"), 1]);
   
   # Forward to the create / edit routine
-  $c->detach("process_form", [qw( round entrants )]);
+  $c->detach("process_form", [qw( round create-entrants )]);
 }
 
 =head2 prepare_form_round
@@ -2707,15 +2709,39 @@ sub process_form :Private {
       map {$_ => $c->req->params->{$_}} @field_names, # All the fields from the form - put this last because otherwise the following elements are seen as part of the map
     });
   } elsif ( $type eq "round" ) {
-    @field_names =  qw( round_name round_team_match_template round_individual_match_template round_week_commencing round_venue round_of );
-    @processed_field_names = ( @field_names, qw( round_date ) );
-    my $round_number = defined($round) ? $round->round_number : undef;
-    
-    $response = $tournament->create_or_edit_round($round_number, {
-      logger => sub{ my $level = shift; $c->log->$level( @_ ); },
-      round_date => defined($c->req->params->{round_date}) ? $c->i18n_datetime_format_date->parse_datetime($c->req->params->{round_date}) : undef,
-      map {$_ => $c->req->params->{$_}} @field_names, # All the fields from the form - put this last because otherwise the following elements are seen as part of the map
-    });
+    if ( $action eq "create" or $action eq "edit" ) {
+      @field_names =  qw( round_name round_team_match_template round_individual_match_template round_week_commencing round_venue round_of );
+      @processed_field_names = ( @field_names, qw( round_date ) );
+      my $round_number = defined($round) ? $round->round_number : undef;
+      
+      $response = $tournament->create_or_edit_round($round_number, {
+        logger => sub{ my $level = shift; $c->log->$level( @_ ); },
+        round_date => defined($c->req->params->{round_date}) ? $c->i18n_datetime_format_date->parse_datetime($c->req->params->{round_date}) : undef,
+        map {$_ => $c->req->params->{$_}} @field_names, # All the fields from the form - put this last because otherwise the following elements are seen as part of the map
+      });
+    } elsif ( $action eq "create-entrants" ) {
+      # Create entrants
+      my @manual_entrants = ();
+      @processed_field_names = qw( manual_entrants );
+      
+      foreach my $key ( keys %{$c->req->params} ) {
+        my $id;
+        if ( $key =~ m/^select-(\d+)$/ ) {
+          $id = $1;
+          $c->log->debug(sprintf("param: %s, ID: %s", $key, $id));
+          push(@manual_entrants, $id);
+        }
+      }
+      
+      use DDP;
+      $c->log->debug(np(@manual_entrants));
+      
+      # @entrants (if any) are the manual entrants, auto ones will be selected automatically
+      $response = $round->add_entrants({
+        logger => sub{ my $level = shift; $c->log->$level( @_ ); },
+        manual_entrants => \@manual_entrants,
+      });
+    }
   } elsif ( $type eq "group" ) {
     # Group forms to process
     @field_names = qw( name manual_fixtures fixtures_grid automatic_qualifiers );
@@ -2843,6 +2869,13 @@ sub process_form :Private {
         $redirect_uri = $c->uri_for_action("/events/add_next_round", [$event->url_key], {mid => $mid});
       } elsif ( $action eq "edit" ) {
         $redirect_uri = $c->uri_for_action("/events/edit_round", [$event->url_key, $round->url_key], {mid => $mid});
+      } elsif ( $action eq "create-entrants" ) {
+        if ( $response->{can_complete} ) {
+          $redirect_uri = $c->uri_for_action("/events/round_select_entrants", [$event->url_key, $round->url_key], {mid => $mid});
+        } else {
+          # Can't complete, just redirect to the view page
+          $redirect_uri = $c->uri_for_action("/events/round_view_current_season", [$event->url_key, $round->url_key], {mid => $mid});
+        }
       }
     } elsif ( $type eq "group" ) {
       if ( $action eq "create" ) {
