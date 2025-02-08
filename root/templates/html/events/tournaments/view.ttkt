@@ -97,7 +97,7 @@ IF authorisation.event_edit;
 <a href="[% c.uri_for_action("/events/round_select_entrants", [event.url_key, round.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/select-qualifiers-32.png") %]" alt="[% c.maketext("admin.select-qualifiers", round.name, enc_event_name) %]" title="[% c.maketext("admin.select-qualifiers", round.name, enc_event_name) %]" /></a>
 [%
   END;
-  IF round.scalar.can_update("entrants");
+  IF round.scalar.can_update("delete-entrants");
 -%]
 <a href="[% c.uri_for_action("/events/round_delete_entrants", [event.url_key, round.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/delete-qualifiers-32.png") %]" alt="[% c.maketext("admin.delete-qualifiers", round.name, enc_event_name) %]" title="[% c.maketext("admin.delete-qualifiers", round.name, enc_event_name) %]" /></a>
 [%
