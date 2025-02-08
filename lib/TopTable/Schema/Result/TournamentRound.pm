@@ -552,6 +552,26 @@ sub has_entrants {
   return $self->search_related($rel)->count ? 1 : 0;
 }
 
+=head2 has_matches
+
+Check if the round has any matches yet; return 1 if so or 0 if not.
+
+=cut
+
+sub has_matches {
+  my $self = shift;
+  my $entry_type = $self->entry_type;
+  
+  if ( $entry_type eq "team" ) {
+    # Team match search
+    return $self->search_related("team_matches")->count ? 1 : 0;
+  } elsif ( $entry_type eq "singles" ) {
+    # Individual search
+  } elsif ( $entry_type eq "doubles" ) {
+    # Doubles search
+  }
+}
+
 =head2 can_update($type)
 
 1 if we can update the round $type; 0 if not.
@@ -560,7 +580,9 @@ In list context, a hash will be returned with keys 'allowed' (1 or 0) and potent
 
 No permissions are checked here, this is purely to see if it's possible to update the round based on factors in the tournament.
 
-$type tells us what we want to update and can be "add-groups" or "entrants".  If not passed, we get a hash (or hashref in scalar context) of all types - scalar context just returns 1 or 0 for all of these, list context returns the hashref with allowed and reason keys.  If nothing can be updated for the same reason (i.e., the season is complete), the types will not be returned, and you'll get a 1 or 0 in scalar context, or 'allowed' and 'reason' keys in list context, just as if it had been called with a specific type.
+$type tells us what we want to update and can be "add-groups", "entrants" or "manual-entrants".  If not passed, we get a hash (or hashref in scalar context) of all types - scalar context just returns 1 or 0 for all of these, list context returns the hashref with allowed and reason keys.  If nothing can be updated for the same reason (i.e., the season is complete), the types will not be returned, and you'll get a 1 or 0 in scalar context, or 'allowed' and 'reason' keys in list context, just as if it had been called with a specific type.
+
+If $type is "add-groups", we're checking if we can add groups to the round; "entrants" checks we can add entrants to the round and "manual-entrants" checks if we can add entrants manually (along with the automatic qualifiers) to the round - this doesn't do any checking that "entrants" does, so they'll need to be called separately.
 
 =cut
 
@@ -575,7 +597,7 @@ sub can_update {
   my $lang = $schema->lang;
   
   # Check we have a valid type, if it's provided (if it's not provided, check all types)
-  return undef if defined($type) and $type ne "add-groups" and $type ne "entrants";
+  return undef if defined($type) and $type ne "add-groups" and $type ne "entrants" and $type ne "manual-entrants";
   
   # Default to allowed.
   my $allowed = 1;
@@ -604,10 +626,16 @@ sub can_update {
               reason => $reason,
               level => "error",
             },
+            "manual-entrants" => {
+              allowed => 0,
+              reason => $reason,
+              level => "error",
+            },
           ) # We want the reasons back if we've asked for an array, the hash will contain 'allowed' and 'reason' keys
         : (
           "add-groups" => 0,
           entrants => 0,
+          "manual-entrants" => 0,
         );
         
       # Return a reference to the hash in scalar context, or the hash itself in list context
@@ -622,6 +650,8 @@ sub can_update {
       %can = $self->_can_add_groups;
     } elsif ( $type eq "entrants" ) {
       %can = $self->_can_update_entrants;
+    } elsif ( $type eq "manual-entrants" ) {
+      %can = $self->_can_add_manual_entrants;
     }
     
     # Grab the reason and allowed flag
@@ -635,6 +665,7 @@ sub can_update {
     # All types, get the hashes back for each one
     my %add_groups = $self->_can_add_groups;
     my %entrants = $self->_can_update_entrants;
+    my %manual_entrants = $self->_can_add_manual_entrants;
     
     my %types = wantarray
       ? (
@@ -646,11 +677,16 @@ sub can_update {
             allowed => $entrants{allowed},
             reason => $entrants{reason},
             level => $entrants{level},
-          }
+          }, "manual-entrants" => {
+            allowed => $manual_entrants{allowed},
+            reason => $manual_entrants{reason},
+            level => $manual_entrants{level},
+          },
         ) # We want the reasons back if we've asked for an array, the hash will contain 'allowed' and 'reason' keys
       : (
         "add-groups" => $add_groups{allowed},
         entrants => $entrants{allowed},
+        "manual-entrants" => $manual_entrants{allowed},
       );
     
     # Return a reference to the hash in scalar context, or the hash itself in list context
@@ -720,7 +756,7 @@ sub _can_update_entrants {
     $level = "error";
   } elsif ( $self->has_entrants ) {
     $allowed = 0;
-    $reason = $lang->maketext("events.tournaments.rounds.entrants.update.error.round-already-has-entrants");
+    $reason = $lang->maketext("events.tournaments.rounds.entrants.update.error.round-already-has-entrants", $self->name);
     $level = "error";
   } else {
     my $prev_round = $self->prev_round;
@@ -730,6 +766,47 @@ sub _can_update_entrants {
       $reason = $lang->maketext("events.tournaments.rounds.entrants.update.error.prev-round-incomplete");
       $level = "error";
     }
+  }
+  
+  return (allowed => $allowed, reason => $reason, level => $level);
+}
+
+=head2 _can_add_manual_entrants
+
+Check if we can add entrants manually to the round.  Don't do the season complete check, this is done in can_update.  This doesn't do any of the checks of _can_update_entrants, so they'll need to be called separately.
+
+=cut
+
+sub _can_add_manual_entrants {
+  my $self = shift;
+  my ( $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  
+  my $allowed = 1;
+  my ( $reason, $level );
+  
+  if ( !$self->is_first_ko_round ) {
+    $allowed = 0;
+    $reason = $lang->maketext("events.tournaments.rounds.entrants.update.add-manual.error.not-first-ko-round");
+    $level = "error";
+  } else {
+    my $prev_round = $self->prev_round;
+    
+    if ( defined($prev_round) ) {
+      if ( $prev_round->num_qualifiers >= $self->round_of ) {
+        # There's a previous round and the number of qualifiers are greater than or equal to the number of people in this round
+        # (they should never be greater than, but let's just be safe).
+        $allowed = 0;
+        $reason = $lang->maketext("events.tournaments.rounds.entrants.update.add-manual.error.auto-fills-all-spaces");
+        $level = "error";
+      }
+    }
+    
   }
   
   return (allowed => $allowed, reason => $reason, level => $level);
@@ -787,6 +864,9 @@ sub entrants {
             club_season => [qw( club )],
           }]
         }
+      },
+      order_by => {
+        -asc => [qw( club_season.short_name team_season.name )],
       }
     });
   } elsif ( $entry_type eq "singles" ) {
@@ -896,7 +976,7 @@ sub complete {
   my $tourn = $self->tournament;
   my $entry_type = $self->entry_type;
   
-  if ( $entry_type eq "teams" ) {
+  if ( $entry_type eq "team" ) {
     # Teams - work out if we have matches
     my $matches = $self->search_related("team_matches");
     
@@ -953,11 +1033,17 @@ Return the previous round in the tournament; if there's no previous round, retur
 sub prev_round {
   my $self = shift;
   
-  # If this is round 1, there's no previous round
-  return undef if $self->round_number == 1;
-  
-  my $target_round = $self->round_number - 1;
-  return $self->tournament->find_related("tournament_rounds", {round_number => $target_round});
+  # Find and return the first round that comes before this one.  Search all rows where the round number
+  # is less than this one, but order by round number descendingly and only return the top 1; this is safer than
+  # searching by round number specifically, just in case things have gone awry in round numbering.
+  return $self->tournament->search_related("tournament_rounds", {
+    round_number => {"<" => $self->round_number},
+  }, {
+    order_by => {
+      -desc => [qw( round_number )],
+    },
+    rows => 1,
+  })->single;
 }
 
 =head2 next_round
@@ -969,11 +1055,17 @@ Return the next round in the tournament; if there's no next round, return undef.
 sub next_round {
   my $self = shift;
   
-  # If this is round 1, there's no previous round
-  return undef if $self->round_number == 1;
-  
-  my $target_round = $self->round_number + 1;
-  return $self->tournament->find_related("tournament_rounds", {round_number => $target_round});
+  # Find and return the first round that comes after this one.  Search all rows where the round number
+  # is greater than this one, but order by round number and only return the top 1; this is safer than
+  # searching by round number specifically, just in case things have gone awry in round numbering.
+  return $self->tournament->search_related("tournament_rounds", {
+    round_number => {">" => $self->round_number},
+  }, {
+    order_by => {
+      -asc => [qw( round_number )],
+    },
+    rows => 1,
+  })->single;
 }
 
 =head2 is_first_ko_round
@@ -1040,7 +1132,7 @@ sub get_table_order_attribs {
   my $winner_type = $match_template->winner_type->id;
   
   my $order_by;
-  if ( $rank_template->assign_points ) {
+  if ( defined($rank_template) and $rank_template->assign_points ) {
     if ( $winner_type eq "games" ) {
       $order_by = [{
         -desc => [qw( me.table_points me.games_won me.matches_won me.matches_drawn me.matches_played )],
@@ -1637,6 +1729,127 @@ sub create_or_edit_group {
     
     $transaction->commit;
     $response->{group} = $group;
+    $response->{completed} = 1;
+  }
+  
+  return $response;
+}
+
+=head2 add_entrants
+
+Add the entrants to the round.
+
+=cut
+
+sub add_entrants {
+  my $self = shift;
+  my ( $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  
+  # Grab the fields
+  my $manual_entrants = $params->{manual_entrants};
+  my @manual_entrants = @{$manual_entrants};
+  use DDP;
+  $logger->("debug", sprintf("MANUAL ENTRANTS PASSED IN:\n%s", np($manual_entrants)));
+  my $response = {
+    error => [],
+    warning => [],
+    info => [],
+    success => [],
+    fields => {
+      manual_entrants => [],
+    },
+    completed => 0,
+    can_complete => 1,
+  };
+  
+  my %can = $self->can_update("entrants");
+  
+  if ( !$can{allowed} ) {
+    $response->{can_complete} = 0;
+    push(@{$response->{level}}, $can{reason});
+    return;
+  }
+  
+  # Get the previous round so we can get the list of automatic / possible manual entrants
+  my $prev_round = $self->prev_round;
+  
+  my ( @auto_qualifiers, @non_auto_qualifiers );
+  my @entrants_to_add;
+  if ( defined($prev_round) ) {
+    @auto_qualifiers = $prev_round->auto_qualifiers;
+    @non_auto_qualifiers = $prev_round->non_auto_qualifiers;
+  }
+  
+  # Set object arrays for the IDs so we can compare
+  my $auto_ids = Set::Object->new(map($_->id, @auto_qualifiers));
+  my $non_auto_ids = Set::Object->new(map($_->id, @non_auto_qualifiers));
+  my @submitted_ids = map{
+    ref ? $_->id : $_ # Return the ID of the object if it's an object, or the value itself if it's not (assume it's the ID)
+  } @manual_entrants;
+  my $submitted_ids = Set::Object->new(@submitted_ids);
+  $response->{fields}{manual_entrants} = \@submitted_ids;
+  
+  # First check none of our submitted IDs are in the auto qualifier list
+  my $submitted_autos = $submitted_ids->intersection($auto_ids);
+  push(@{$response->{error}}, $lang->maketext("events.tournament.rounds.select-entrants.in-auto-qualifiers", $submitted_autos->size)) if $submitted_autos->size;
+  
+  # Check all the submitted values are in the non-qualifiers list
+  push(@{$response->{error}}, $lang->maketext("events.tournament.rounds.select-entrants.invalid-entries")) if $non_auto_ids->includes($submitted_ids);
+  
+  # Check we have the right number of entrants selected
+  my $expected_entrants = $self->round_of - $prev_round->num_qualifiers;
+  $logger->("debug", sprintf("SIZES: Auto: %d, submitted: %d, expected: %d", $auto_ids->size, scalar @manual_entrants, $expected_entrants));
+  $logger->("debug", np(@manual_entrants));
+  push(@{$response->{error}}, $lang->maketext("events.tournament.rounds.select-entrants.wrong-number-of-entrants-selected", $submitted_ids->size, $expected_entrants)) if $submitted_ids->size != $expected_entrants;
+  
+  if ( scalar @{$response->{error}} == 0 ) {
+    # No errors, make our list
+    # Translate our submitted IDs into the TournamentRound[Type] objects - these will be for the previous round, so we then need to grab the TournamentX object and create a
+    # record for this tournament.
+    my $entry_type = $self->entry_type;
+    my ( $member_class, $round_member_class, $member_rel_tourn, $member_rel_round );
+    if ( $entry_type eq "team" ) {
+      $member_class = "Team";
+      $member_rel_round = "tournament_round_teams";
+      $member_rel_tourn = "tournament_team";
+    } elsif ( $entry_type eq "singles" ) {
+      $member_class = "Person";
+      $member_rel_round = "tournament_round_people";
+      $member_rel_tourn = "tournament_person";
+    } elsif ( $entry_type eq "doubles" ) {
+      $member_class = "Person";
+      $member_rel_round = "tournament_rounds_doubles";
+      $member_rel_tourn = "tournament_pair";
+    }
+    
+    $round_member_class = "TournamentRound$member_class";
+    
+    my $transaction = $self->result_source->schema->txn_scope_guard;
+    
+    # Combine the audo IDs and the submitted ones into a single array 
+    my @ids_to_create = ( @$auto_ids, @submitted_ids );
+    $logger->("debug", sprintf("IDs count: %d", scalar @ids_to_create));
+    foreach my $entrant ( @ids_to_create ) {
+      # Find the entrant - we know it exists, because it was in the list of valid IDs we could select - this is why we also have no need to
+      # check if this ID is for the correct tournament / round.
+      $entrant = $schema->resultset($round_member_class)->find($entrant);
+      $logger->("debug", sprintf("Entrant ref - %s: %s", ref($entrant), $entrant->object_name));
+      my $tourn_entry = $entrant->$member_rel_tourn;
+      $logger->("debug", sprintf("Entrant tourn ref - %s: %s", ref($tourn_entry), $tourn_entry->object_name));
+      my $new_round_entrant = $tourn_entry->create_related($member_rel_round, {
+        tournament_round => $self->id,
+      });
+      $logger->("debug", "Created tournament round entry in " . $self->name);
+    }
+    
+    $transaction->commit;
+    $response->{round} = $self; # Because the code we're returning to expects a round in the response 
     $response->{completed} = 1;
   }
   

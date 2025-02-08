@@ -19,11 +19,11 @@ $(document).ready(function() {
       targets: 0
     }, {
       // Group position
-      responsivePriority: 2,
+      responsivePriority: 3,
       targets: 1
     }, {
       // Entrant (team / player / pair)
-      responsivePriority: 1,
+      responsivePriority: 2,
       targets: 2
     }, {
       // Matches played
@@ -31,32 +31,32 @@ $(document).ready(function() {
       targets: 3
     }, {
       // Won
-      responsivePriority: 6,
+      responsivePriority: 7,
       targets: 4
     }, {
       // Drawn
-      responsivePriority: 8,
+      responsivePriority: 10,
       targets: 5
     }, {
       // Lost
-      responsivePriority: 7,
+      responsivePriority: 8,
       targets: 6
     }, {
       // For
-      responsivePriority: 4,
+      responsivePriority: 5,
       targets: 7
     }, {
       // Against
-      responsivePriority: 5,
+      responsivePriority: 6,
       targets: 8
     }, {
       // Points / games difference
-      responsivePriority: 3,
+      responsivePriority: 4,
       targets: 9
     }]
   });
   
-  $("#non-auto-table").DataTable({
+  let select_tb = $("#non-auto-table").DataTable({
     responsive: true,
     paging: true,
     pageLength: -1,
@@ -67,46 +67,67 @@ $(document).ready(function() {
     searching: true,
     ordering: false,
     columnDefs: [{
-      // Group
-      responsivePriority: 11,
+      // Selection ID (hidden)
+      visible: 0,
       targets: 0
     }, {
-      // Group position
-      responsivePriority: 2,
+      // Section checkbox
+      responsivePriority: 1,
       targets: 1
     }, {
-      // Entrant (team / player / pair)
-      responsivePriority: 1,
+      // Group
+      responsivePriority: 11,
       targets: 2
+    }, {
+      // Group position
+      responsivePriority: 3,
+      targets: 3
+    }, {
+      // Entrant (team / player / pair)
+      responsivePriority: 2,
+      targets: 4
     }, {
       // Matches played
       responsivePriority: 9,
-      targets: 3
-    }, {
-      // Won
-      responsivePriority: 6,
-      targets: 4
-    }, {
-      // Drawn
-      responsivePriority: 8,
       targets: 5
     }, {
-      // Lost
+      // Won
       responsivePriority: 7,
       targets: 6
     }, {
-      // For
-      responsivePriority: 4,
+      // Drawn
+      responsivePriority: 10,
       targets: 7
     }, {
-      // Against
-      responsivePriority: 5,
+      // Lost
+      responsivePriority: 8,
       targets: 8
     }, {
-      // Points / games difference
-      responsivePriority: 3,
+      // For
+      responsivePriority: 5,
       targets: 9
+    }, {
+      // Against
+      responsivePriority: 6,
+      targets: 10
+    }, {
+      // Points / games difference
+      responsivePriority: 4,
+      targets: 11
     }]
+  });
+  
+  select_tb.on("click", "tbody tr", function(event) {
+    let ent_id = select_tb.row(this).data()[0];
+    
+    if ( event.target.localName !== "a" ) {
+      // Toggle checked property
+      if ( $("#select-" + ent_id).prop("checked") ) {
+        $("#select-" + ent_id).prettyCheckable("uncheck");
+      } else {
+        $("#select-" + ent_id).prettyCheckable("check");
+      }
+    }
   });
   
   $("select[name=auto-table_length], select[name=non-auto-table_length]").chosen({
@@ -115,4 +136,6 @@ $(document).ready(function() {
     allow_single_deselect: true,
     width: "75px"
   });
+  
+  $("#accordion").accordion({heightStyle: "content"});
 });
