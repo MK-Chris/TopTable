@@ -1,6 +1,5 @@
 [%
 USE zeroes = format("%02d");
-CALL c.log.debug("flashed: " _ c.flash.show_flashed);
 IF c.flash.show_flashed;
   SET event_name = c.flash.name;
   SET start_date = c.flash.start_date;
@@ -158,7 +157,7 @@ END;
   </div>
   
 [%
-IF event_detail.can_edit_default_templates;
+IF action == "create" OR event_detail.can_edit_default_templates;
   SET template_disabled = "";
 ELSE;
   SET template_disabled = ' disabled="disabled"';
@@ -504,7 +503,8 @@ IF action == "create" OR new_season;
   <legend>[% c.maketext("events.legend.tournament.first-round-details") %]</legend>
   
 [%
-  PROCESS "html/events/tournaments/rounds/fields.ttkt" first = 1;
+  SET entry_type = "unknown" IF action == "create";
+  PROCESS "html/events/tournaments/rounds/fields.ttkt" first = 1, entry_type = entry_type;
 -%]
 </fieldset>
 [%

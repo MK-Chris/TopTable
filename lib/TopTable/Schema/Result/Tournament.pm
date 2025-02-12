@@ -530,7 +530,7 @@ sub create_or_edit_round {
   my $date = $params->{round_date};
   my $week_commencing = $params->{round_week_commencing};
   my $venue = $params->{round_venue} || undef;
-  my $round_of = $params->{round_of};
+  my $round_of = $params->{round_of} || undef;
   
   my $response = {
     error => [],
@@ -664,7 +664,7 @@ sub create_or_edit_round {
     push(@{$response->{error}}, $lang->maketext("tournaments.form.error.venue-inactive", encode_entities($venue->name))) if defined($venue) and !$venue->active;
   }
   
-  if ( defined($round_of) ) {
+  if ( defined($round_of) and !$group ) {
     my ( $group_round, $group_qualifiers );
     
     if ( $self->has_group_round ) {
@@ -690,6 +690,28 @@ sub create_or_edit_round {
     # Success, we need to create / edit the event
     # Build the key from the name
     my $url_key = $schema->resultset("TournamentRound")->make_url_key($self, $name, $round) if defined($name);
+    
+    if ( !defined($round_of) and $self->has_ko_round ) {
+      # If this isn't the first knockout round, we need to work out the $round_of figure; if it's a group round, we need this
+      # to be undef; if it's the first knock-out round, the round_of figure is entered by the user
+      my $prev_round = $self->search_related("tournament_rounds", {
+        round_number => {"<" => $round_number},
+      }, {
+        order_by => {
+          -desc => [qw( round_number )],
+        },
+        rows => 1,
+      })->single;
+      
+      if ( $prev_round->is_first_ko_round )  {
+        # If the previous round is the first knock-out round, we will need to calculate with the number of byes and then halve that.
+        my %round_calc = $self->calculate_ko_rounds;
+        $round_of = ($prev_round->round_of + $round_calc{byes}) / 2;
+      } else {
+        # Otherwise, take the round_of figure and just halve it.
+        $round_of = $prev_round->round_of / 2;
+      }
+    }
     
     if ( $create ) {
       $round = $self->create_related("tournament_rounds", {
@@ -824,7 +846,7 @@ sub calculate_ko_rounds {
   my $ko = $self->first_ko_round;
   
   # If the round is complete, we'll take the entrants that have been setup, otherwise take the entered value
-  my $players = $ko->complete ? $ko->entrants : $ko->round_of;
+  my $players = $ko->complete ? $ko->get_entrants : $ko->round_of;
   
   # Rounds is base 2 logarithm of the number of players, rounded up (ceil).
   my $rounds = ceil(logn($players, 2));

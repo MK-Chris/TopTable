@@ -1361,6 +1361,7 @@ sub round_view :Private {
   
   # Push edit link if we are authorised
   if ( $c->stash->{authorisation}{event_edit} ) {
+    my $can = $round->can_update;
     push(@title_links, {
       image_uri => $c->uri_for("/static/images/icons/0018-Pencil-icon-32.png"),
       text => $c->maketext("admin.edit-object-tourn", $round->name, $enc_event_name),
@@ -1371,13 +1372,25 @@ sub round_view :Private {
       image_uri => $c->uri_for("/static/images/icons/select-qualifiers-32.png"),
       text => $c->maketext("admin.select-qualifiers", $round->name, $enc_event_name),
       link_uri => $c->uri_for_action("/events/round_select_entrants", [$event->url_key, $round->url_key]),
-    }) if $round->can_update("entrants");
+    }) if $can->{entrants};
     
     push(@title_links, {
       image_uri => $c->uri_for("/static/images/icons/delete-qualifiers-32.png"),
       text => $c->maketext("admin.delete-qualifiers", $round->name, $enc_event_name),
       link_uri => $c->uri_for_action("/events/round_delete_entrants", [$event->url_key, $round->url_key]),
-    }) if $round->can_update("delete-entrants");
+    }) if $can->{"delete-entrants"};
+    
+    push(@title_links, {
+      image_uri => $c->uri_for("/static/images/icons/fixtures-32.png"),
+      text => $c->maketext("admin.tournament.round.create-matches", $round->name, $enc_event_name),
+      link_uri => $c->uri_for_action("/events/round_create_matches", [$event->url_key, $round->url_key]),
+    }) if $can->{matches};
+    
+    push(@title_links, {
+      image_uri => $c->uri_for("/static/images/icons/fixturesdel-32.png"),
+      text => $c->maketext("admin.tournament.round.delete-matches", $round->name, $enc_event_name),
+      link_uri => $c->uri_for_action("/events/round_delete_matches", [$event->url_key, $round->url_key]),
+    }) if $can->{"delete-matches"};
   }
   
   # Set up the canonical URI
@@ -1389,7 +1402,6 @@ sub round_view :Private {
   
   my ( $template, @external_scripts, @external_styles );
   if ( $round->group_round ) {
-    
     # Get the ranking template for the table - we need this before we stash because one of the scripts depends
     # on whether or not we're assigning points (as there's an extra column if we are)
     my $ranking_template = $round->rank_template;
@@ -1457,6 +1469,12 @@ sub round_view :Private {
     );
     
     $template = "view";
+    
+    $c->stash({
+      matches => $matches,
+      entrants => scalar $round->get_entrants,
+      handicapped => $handicapped,
+    });
   }
   
   $c->stash({
@@ -1464,7 +1482,6 @@ sub round_view :Private {
     title_links => \@title_links,
     view_online_display => sprintf("Viewing %s", $enc_event_name),
     view_online_link => 1,
-    entrants => $round->entrants,
     external_scripts => \@external_scripts,
     external_styles => \@external_styles,
   });
@@ -1753,7 +1770,7 @@ sub round_delete_entrants :Chained("rounds_current_season") :PathPart("delete-en
     ],
     view_online_display => "Deleting entrants for $enc_event_name",
     view_online_link => 0,
-    entrants => $round->entrants,
+    entrants => $round->get_entrants,
   });
 }
 
@@ -1771,6 +1788,182 @@ sub do_round_delete_entrants :Chained("rounds_current_season") :PathPart("do-del
   
   # Forward to the create / edit routine
   $c->detach("process_form", [qw( round delete-entrants )]);
+}
+
+=head2 round_create_matches
+
+Show the form to create matches for the round.
+
+=cut
+
+sub round_create_matches :Chained("rounds_current_season") :PathPart("create-matches") :Args(0) {
+  my ( $self, $c ) = @_;
+  my $season = $c->stash->{season};
+  my $event = $c->stash->{event};
+  my $tournament = $c->stash->{event_detail};
+  my $entry_type = $tournament->entry_type->id;
+  my $round = $c->stash->{round};
+  my $enc_event_name = $c->stash->{enc_event_name};
+  
+  # Check that we are authorised to edit events
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.edit-events"), 1]);
+  
+  # Check we're ready to create matches
+  my %can = $round->can_update("matches");
+  if ( !$can{allowed} ) {
+    $c->response->redirect($c->uri_for_action("/events/round_view_current_season", [$event->url_key, $round->url_key],
+      {mid => $c->set_status_msg({$can{level} => $can{reason}})}));
+    $c->detatch;
+    return;
+  }
+  
+  # Don't cache this page.
+  $c->response->header("Cache-Control" => "no-cache, no-store, must-revalidate");
+  $c->response->header("Pragma" => "no-cache");
+  $c->response->header("Expires" => 0);
+  
+  # Stash the bits we need that don't care if there's a grid or not
+  $c->stash({
+    template => "html/events/tournaments/rounds/create-matches.ttkt",
+    subtitle1 => $c->maketext("events.tournaments.create-matches"),
+    subtitle2 => $round->name,
+    subtitle3 => $enc_event_name,
+    form_action => $c->uri_for_action("/events/round_do_create_matches", [$event->url_key, $round->url_key]),
+    external_scripts => [
+      $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
+      $c->uri_for("/static/script/standard/chosen.js"),
+      $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
+      $c->uri_for("/static/script/standard/prettycheckable.js"),
+      $c->uri_for("/static/script/events/tournaments/rounds/create-matches.js"),
+    ],
+    external_styles => [
+      $c->uri_for("/static/css/chosen/chosen.min.css"),
+      $c->uri_for("/static/css/prettycheckable/prettyCheckable.css"),
+    ],
+    entrants => [$round->get_entrants],
+    venues => [$c->model("DB::Venue")->active_venues],
+    days => [$c->model("DB::LookupWeekday")->all_days],
+    view_online_display => "Creating fixtures for " . $round->name,
+    view_online_link => 0,
+  });
+  
+  # Push the breadcrumbs links
+  push(@{$c->stash->{breadcrumbs}}, {
+    path => $c->uri_for_action("/events/round_create_matches", [$event->url_key, $round->url_key]),
+    label => $c->maketext("events.tournaments.create-matches"),
+  });
+}
+
+
+=head2 round_do_create_matches
+
+Process the form to create matches for the round.
+
+=cut
+
+sub round_do_create_matches :Chained("rounds_current_season") :PathPart("do-create-matches") :Args(0) {
+  my ( $self, $c ) = @_;
+  
+  # Check that we are authorised to edit events
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.edit-events"), 1]);
+  
+  # Forward to the create / edit routine
+  $c->detach("process_form", [qw( round create-matches )]);
+}
+
+=head2 round_delete_matches
+
+Show a form to delete the entrants for a round - this is only used for knock-out rounds.  Entry lists are not created automatically due to the need to sometimes override match scores after updating them.
+
+=cut
+
+sub round_delete_matches :Chained("rounds_current_season") :PathPart("delete-matches") :Args(0) {
+  my ( $self, $c ) = @_;
+  my $event = $c->stash->{event};
+  my $enc_event_name = $c->stash->{enc_event_name};
+  my $season = $c->stash->{season};
+  my $event_type = $c->stash->{event_type};
+  my $tournament = $c->stash->{event_detail};
+  my $round = $c->stash->{round};
+  
+  # Check that we are authorised to edit events
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.edit-events"), 1]);
+  
+  my %can = $round->can_update("delete-matches");
+  if ( !$can{allowed} ) {
+    $c->response->redirect($c->uri_for_action("/events/round_view_current_season", [$event->url_key, $round->url_key],
+      {mid => $c->set_status_msg({$can{level} => $can{reason}})}));
+    $c->detach;
+    return;
+  }
+  
+  # Setup template and scripts
+  $c->stash({
+    template => "html/events/tournaments/rounds/delete-matches.ttkt",
+    form_action => $c->uri_for_action("/events/round_do_delete_matches", [$event->url_key, $round->url_key]),
+    external_scripts => [
+      $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
+      $c->uri_for("/static/script/standard/chosen.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
+      $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
+      $c->uri_for("/static/script/events/tournaments/rounds/delete-entrants.js"),
+    ],
+    external_styles => [
+      $c->uri_for("/static/css/chosen/chosen.min.css"),
+      $c->uri_for("/static/css/datatables/dataTables.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/fixedColumns.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
+      $c->uri_for("/static/css/datatables/rowGroup.dataTables.min.css"),
+    ],
+    view_online_display => "Deleting entrants for $enc_event_name",
+    view_online_link => 0,
+    entrants => $round->get_entrants,
+  });
+}
+
+=head2 round_do_delete_matches
+
+Process the form to delete the entrants from a round.
+
+=cut
+
+sub round_do_delete_matches :Chained("rounds_current_season") :PathPart("do-delete-matches") :Args(0) {
+  my ( $self, $c ) = @_;
+  my $event = $c->stash->{event};
+  my $tournament = $c->stash->{event_detail};
+  my $entry_type = $tournament->entry_type->id;
+  my $round = $c->stash->{round};
+  
+  # Check that we are authorised to edit events
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.edit-events"), 1]);
+  
+  # Don't cache this page.
+  $c->response->header("Cache-Control" => "no-cache, no-store, must-revalidate");
+  $c->response->header("Pragma" => "no-cache");
+  $c->response->header("Expires" => 0);
+  
+  my $response = $round->delete_matches;
+  
+  # Set the status messages we need to show on redirect
+  my @errors = @{$response->{error}};
+  my @warnings = @{$response->{warning}};
+  my @info = @{$response->{info}};
+  my @success = @{$response->{success}};
+  my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});
+  my $redirect_uri = $c->uri_for_action("/events/round_view_current_season", [$event->url_key, $round->url_key], {mid => $mid});
+  
+  
+  # If it was completed, we log an event
+  $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["team-match", "delete", $response->{match_ids}, $response->{match_names}]) if $response->{completed};
+  
+  # Redirect
+  $c->response->redirect($redirect_uri);
+  $c->detach;
+  return;
 }
 
 =head2 prepare_form_round
@@ -1952,6 +2145,7 @@ sub group_view :Private {
   # Push edit link if we are authorised
   if ( !$season->complete and !$c->stash->{delete_screen} ) {
     if ( $c->stash->{authorisation}{event_edit} ) {
+      my $can = $group->can_update;
       push(@title_links, {
         image_uri => $c->uri_for("/static/images/icons/0018-Pencil-icon-32.png"),
         text => $c->maketext("admin.edit-object", $group->name),
@@ -1966,15 +2160,15 @@ sub group_view :Private {
       
       push(@title_links, {
         image_uri => $c->uri_for("/static/images/icons/fixtures-32.png"),
-        text => $c->maketext("admin.fixtures-grid.create-fixtures", $group->name),
+        text => $c->maketext("admin.tournament.group.create-matches", $group->name, $enc_event_name),
         link_uri => $c->uri_for_action("/events/group_create_matches", [$event->url_key, $round->url_key, $group->url_key]),
-      }) if $group->can_create_matches;
+      }) if $can->{matches};
       
       push(@title_links, {
         image_uri => $c->uri_for("/static/images/icons/fixturesdel-32.png"),
         text => $c->maketext("admin.fixtures-grid.delete-fixtures", $group->name),
         link_uri => $c->uri_for_action("/events/group_delete_matches", [$event->url_key, $round->url_key, $group->url_key]),
-      }) if $group->can_delete_matches;
+      }) if $can->{"delete-matches"};
       
       push(@title_links, {
         image_uri => $c->uri_for("/static/images/icons/0005-Delete-icon-32.png"),
@@ -2467,16 +2661,12 @@ sub group_create_matches :Chained("groups_current_season") :PathPart("create-mat
   # Check that we are authorised to edit events
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.edit-events"), 1]);
   
-  # Check we're ready to create fixtures
-  if ( !$group->can_create_matches ) {
-    # Error, can't create fixtures
-    my $msg = defined($group->fixtures_grid)
-      ? $c->maketext("events.tournaments.rounds.groups.create-fixtures.error.grid-positions-not-set")
-      : $c->maketext("events.tournaments.rounds.groups.create-fixtures.error.matches-already-exist");
-    
-    $c->response->redirect($c->uri_for_action("/events/group_view_current_season", [$event->url_key, $round->url_key, $group->url_key],
-                                {mid => $c->set_status_msg({error => $msg})}));
-    $c->detach;
+  # Check we're ready to create matches
+  my %can = $group->can_update("matches");
+  if ( !$can{allowed} ) {
+    $c->response->redirect($c->uri_for_action("/events/round_view_current_season", [$event->url_key, $round->url_key],
+      {mid => $c->set_status_msg({$can{level} => $can{reason}})}));
+    $c->detatch;
     return;
   }
   
@@ -2565,7 +2755,7 @@ sub group_do_create_matches :Chained("groups_current_season") :PathPart("do-crea
   $c->response->header("Expires" => 0);
   
   # Forward to the create / edit routine
-  $c->detach("process_form", [qw( group matches )]);
+  $c->detach("process_form", [qw( group create-matches )]);
 }
 
 =head2 group_delete_matches
@@ -2804,7 +2994,6 @@ sub process_form :Private {
         my $id;
         if ( $key =~ m/^select-(\d+)$/ ) {
           $id = $1;
-          $c->log->debug(sprintf("param: %s, ID: %s", $key, $id));
           push(@manual_entrants, $id);
         }
       }
@@ -2816,16 +3005,21 @@ sub process_form :Private {
       });
     } elsif ( $action eq "delete-entrants" ) {
       $response = $round->delete_entrants;
+    } elsif ( $action eq "create-matches" ) {
+      @processed_field_names = qw( matches );
+      my %matches = ();
+      foreach ( keys %{$c->req->params } ) {
+        # Pass in anything that starts with 'round_' - the rest will be dealt with in the model.
+        $matches{$_} = $c->req->params->{$_} if m/^match_/;
+      }
+      
+      $response = $round->create_matches(undef, {
+        matches => \%matches,
+        logger => sub{ my $level = shift; $c->log->$level( @_ ); },
+      });
     }
   } elsif ( $type eq "group" ) {
     # Group forms to process
-    @field_names = qw( name manual_fixtures fixtures_grid automatic_qualifiers );
-    
-    my @members = ();
-    foreach my $key ( keys %{$c->req->params} ) {
-      push(@members, [split(",", $c->req->params->{$key})]) if $key =~ /^members\d+$/;
-    }
-    
     if ( $action eq "create" or $action eq "edit" ) {
       # Create or edit group
       @field_names = qw( name manual_fixtures fixtures_grid automatic_qualifiers );
@@ -2851,7 +3045,7 @@ sub process_form :Private {
         grid_positions => [split(",", $c->req->params->{grid_positions})],
         map {$_ => $c->req->params->{$_}} @field_names, # All the fields from the form - put this last because otherwise the following elements are seen as part of the map
       });
-    } elsif ( $action eq "matches" ) {
+    } elsif ( $action eq "create-matches" ) {
       # Create matches
       @processed_field_names = qw( rounds );
       my %rounds = ();
@@ -2899,7 +3093,7 @@ sub process_form :Private {
       %log_ids = (id => $event->id);
       $redirect_uri = $c->uri_for_action("/events/view_current_season", [$event->url_key], {mid => $mid});
     } elsif ( $type eq "round" ) {
-      $round = $response->{round};
+      $round = $response->{round} if $action eq "create" or $action eq "edit";
       $obj_type = "event-round";
       $log_obj = $round;
       $obj_name = sprintf("%s: %s", $event->name, $round->name);
@@ -2924,7 +3118,7 @@ sub process_form :Private {
     }
     
     # Completed, so we log an event
-    if ( $action eq "matches" ) {
+    if ( $action eq "create-matches" ) {
       # Matches have a match event to log
       $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["team-match", "create", $response->{match_ids}, $response->{match_names}]);
     } else {

@@ -91,7 +91,11 @@ function handle_tournament_type() {
     $("#finish-time-container").show();
     $("#season-details").show();
     $("#enter-online").show();
-    $("#week_beginning").prettyCheckable("uncheck");
+    
+    if ( $("#week_beginning").length ) {
+      $("#week_beginning").prettyCheckable("uncheck");
+    }
+    
     $("div.wb").hide();
   }
   

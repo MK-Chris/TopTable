@@ -1080,7 +1080,9 @@ sub update_person {
       
       foreach my $stat ( @og_stats_deletable ) {
         # Delete but only if no matches are played
-        $stat->delete if $stat->matches_played == 0;
+        if ( $stat->matches_played == 0 and (($stat->result_source->has_column("doubles_games_played") and $stat->doubles_games_played == 0) or !$stat->result_source->has_column("doubles_games_played")) ) {
+          $stat->delete;
+        }
       }
     } elsif ( $match->started and $action ne "set-missing" and $action ne "remove" ) {
       # We're adding a player where there wasn't previously one (we don't do this for the other way round - removing a player where

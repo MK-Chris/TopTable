@@ -993,6 +993,13 @@ sub create_matches {
       push(@{$response->{error}}, $lang->maketext("fixtures-grids.form.create-fixtures.error.grid-invalid"));
       $response->{can_complete} = 0;
     }
+    
+    my %can = $tourn_group->can_update("matches");
+    
+    if ( !$can{allowed} ) {
+      push(@{$response->{$can{level}}}, $can{reason});
+      return $response;
+    }
   }
   
   # If we have errors at the moment, just return straight away
