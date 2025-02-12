@@ -4203,7 +4203,7 @@ msgid "events.tournaments.rounds.entry-list-doubles"
 msgstr "Player list"
 
 msgid "events.tournaments.rounds.entry-list.col-header-team"
-msgstr "Pair"
+msgstr "Team"
 
 msgid "events.legend.tournament.round.select-entrants"
 msgstr "Qualifiers"
@@ -5347,6 +5347,15 @@ msgstr "Set the league divisional positions for %1"
 
 msgid "admin.fixtures-grid.create-fixtures"
 msgstr "Create the league fixtures for %1"
+
+msgid "admin.tournament.group.create-matches"
+msgstr "Create the matches for %1 in %2."
+
+msgid "admin.tournament.round.create-matches"
+msgstr "Create the matches for %1 in %2."
+
+msgid "admin.tournament.round.delete-matches"
+msgstr "Delete the matches for %1 in %2."
 
 msgid "admin.fixtures-grid.delete-fixtures"
 msgstr "Delete the league fixtures for %1"
@@ -6749,8 +6758,11 @@ msgstr "Date (tick &#39;Week beginning&#39; to use team home nights)"
 msgid "tournaments.rounds.field.date-individual"
 msgstr "Date (leave blank to use the tournament date)"
 
-msgid "tournaments.rounds.field.venue"
-msgstr "Venue (optional)"
+msgid "tournaments.rounds.field.date-"
+msgstr "Date (leave blank to use the tournament date for singles or doubles; team tournaments tick &#39;Week beginning&#39; to use team home nights)"
+
+msgid "tournaments.rounds.field.venue-"
+msgstr "Venue (optional; for team tournaments leave blank for home venue)"
 
 msgid "tournaments.rounds.field.venue-team"
 msgstr "Venue (leave blank for home venue)"
@@ -6793,6 +6805,36 @@ msgstr "The matches for %1 have been created, so entrants to the round cannot be
 
 msgid "events.tournaments.rounds.entrants.delete.success"
 msgstr "The entry list for %1 has successfully been deleted; entrants must now be re-added to the round."
+
+msgid "events.tournaments.rounds.matches.create.error.group-round"
+msgstr "%1 is a group round, so matches are created in individual groups."
+
+msgid "events.tournaments.rounds.matches.create.error.round-has-no-entrants"
+msgstr "%1 does not have its entry list yet, set the entrants before creating matches."
+
+msgid "events.tournaments.rounds.matches.create.error.round-already-has-matches"
+msgstr "%1 already has its matches set."
+
+msgid "events.tournaments.rounds.matches.create.error.group-not-in-round"
+msgstr "The group specified doesn&#39;t belong to %1 in %2."
+
+msgid "events.tournaments.rounds.matches.create.error.group-not-specified"
+msgstr "%1 is a group round, so matches must be created in individual groups."
+
+msgid "events.tournaments.rounds.matches.create.error.comp-not-in-round"
+msgstr "%1 has been selected as the %2 team in match %3; however they are not on the entry list for the round."
+
+msgid "events.tournaments.rounds.matches.delete.error.group-round"
+msgstr "%1 is a group round, so matches are deleted in individual groups."
+
+msgid "events.tournaments.rounds.matches.delete.error.round-has-no-matches"
+msgstr "%1 has no matches, so matches to delete."
+
+msgid "events.tournaments.rounds.matches.delete.error.matches-have-results"
+msgstr "Some of the matches in %1 have results, so they can&#39;t be deleted."
+
+msgid "events.tournaments.rounds.delete-fixtures.success"
+msgstr "Deleted %1 matches from %2."
 
 msgid "tournaments.rounds.group.details"
 msgstr "Group %1 details"
@@ -6975,10 +7017,10 @@ msgid "events.tournaments.rounds.groups.create-fixtures.error.season-complete"
 msgstr "Matches cannot be created for this group, because the season it occurs in has been archived."
 
 msgid "events.tournaments.rounds.groups.create-fixtures.error.grid-positions-not-set"
-msgstr "Grid positions for this group must be set before the fixtures can be created."
+msgstr "Grid positions for %1 must be set before the fixtures can be created."
 
 msgid "events.tournaments.rounds.groups.create-fixtures.error.matches-already-exist"
-msgstr "Fixtures for this group have already been created."
+msgstr "Fixtures for %1 have already been created."
 
 msgid "events.tournaments.rounds.groups.create-fixtures.error.round-blank"
 msgstr "The date for round %1 has not been selected."
@@ -7028,6 +7070,15 @@ msgstr "You must set a handicap, or select &#39;Scratch (no handicap)&#39 or &#3
 msgid "events.tournaments.rounds.groups.create-fixtures.error.handicap-invalid"
 msgstr "The handicap for round %1, match %2 is invalid; it must be a positive number above 0."
 
+msgid "events.tournaments.rounds.create-matches.success"
+msgstr "%1 fixtures for %2 have been created."
+
+msgid "events.tournaments.rounds.groups.delete-matches.error.no-matches"
+msgstr "There are no matches in %1 to delete."
+
+msgid "events.tournaments.rounds.groups.delete-matches.error.matches-have-results"
+msgstr "Matches in %1 cannot be deleted because some of the matches have results."
+
 msgid "events.tournaments.rounds.groups.create-fixtures.entrant-used-too-many-times"
 msgstr "In round %1, %2 is used %3 times; each entrant in the group must only be used once per round."
 
@@ -7036,9 +7087,6 @@ msgstr "In round %1, there are entrants not being used - you must use all entran
 
 msgid "events.tournaments.rounds.groups.create-fixtures.entrants-unused-with-bye"
 msgstr "In round %1, there are entrants not being used - you must use all entrants in each round, other than one that has a bye."
-
-msgid "events.tournaments.create-fixtures.success"
-msgstr "%1 fixtures for the group have been created."
 
 msgid "events.tournaments.rounds.groups.delete.error.cannot-delete"
 msgstr "You cannot delete %1, as it has matches, or the season is now complete."
@@ -7051,6 +7099,15 @@ msgstr "Deleted %1 matches from %2."
 
 msgid "events.tournaments.rounds.groups.error.delete-failed"
 msgstr "Failed to delete matches."
+
+msgid "events.tournaments.rounds.groups.auto-qualifiers.error.all-matches-complete"
+msgstr "The number of automatic qualifiers can&#39; be changed because all matches in %1 are completed."
+
+msgid "events.tournaments.rounds.groups.members.error.matches-created"
+msgstr "Members of %1 can&#39;t be changed because the matches have been created already."
+
+msgid "events.tournaments.rounds.groups.grid.error.matches-created"
+msgstr "The fixtures grid setttings for %1 can&#39;t be changed because the matches have been created already."
 
 msgid "events.tournaments.rounds.form.error.match-template-invalid"
 msgstr "The round match template is invalid; select a valid one, or leave blank to use the default template for the event."
@@ -7075,6 +7132,21 @@ msgstr "Please submit a date for the round."
 
 msgid "events.tournaments.rounds.delete-matches.explain"
 msgstr "Delete %1 matches in %2?  The matches will need to be recreated."
+
+msgid "events.tournaments.rounds.create-matches.fieldset.match"
+msgstr "Match %1"
+
+msgid "events.tournaments.rounds.create-matches.field.home"
+msgstr "Home participant"
+
+msgid "events.tournaments.rounds.create-matches.field.away"
+msgstr "Away participant"
+
+msgid "events.tournaments.rounds.groups.create-fixtures.home"
+msgstr "home"
+
+msgid "events.tournaments.rounds.groups.create-fixtures.away"
+msgstr "away"
 
 msgid "events.tournaments.rounds.groups.create-matches.fieldset.match-round"
 msgstr "Round %1 of matches"

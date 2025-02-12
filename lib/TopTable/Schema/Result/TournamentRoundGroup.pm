@@ -385,57 +385,335 @@ sub members {
   return $self->search_related($member_rel);
 }
 
-=head2 can_edit_fixtures_settings
+=head2 can_update($type)
 
-Return 1 if we can change the fixtures settings (that is the fixtures grid, or lack thereof - lack of a fixtures grid means you have to set fixtures manually).  Return 0 otherwise; return undef if this isn't a group round, as that's not relevant.
+1 if we can update the round $type; 0 if not.
+
+In list context, a hash will be returned with keys 'allowed' (1 or 0) and potentially 'reason' (if not allowed, to give the reason we can't update).  The reason can be passed back in the interface as an error message.
+
+No permissions are checked here, this is purely to see if it's possible to update the round based on factors in the tournament.
+
+$type tells us what we want to update and can be "matches", "members", "auto-qualifiers", or "delete-matches".  If not passed, we get a hash (or hashref in scalar context) of all types - scalar context just returns 1 or 0 for all of these, list context returns the hashref with allowed and reason keys.  If nothing can be updated for the same reason (i.e., the season is complete), the types will not be returned, and you'll get a 1 or 0 in scalar context, or 'allowed' and 'reason' keys in list context, just as if it had been called with a specific type.
+
+Possible $type values:
+"auto-qualifiers": checks if we can change the number of auto-qualifiers from the group
+"members": checks we can change the entrants for the group
+"grid": checks if we can change the grid, or change whether we use a grid for this group
+"grid-positions": checks if we can set / change the grid positions for the group
+"matches": we're checking if we can add matches
+"delete-matches": checks if we can delete matches from this group
 
 =cut
 
-sub can_edit_fixtures_settings {
+sub can_update {
   my $self = shift;
+  my ( $type, $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
   
-  # If we have team matches (or individual matches when they're added), we can't edit fixtures settings
-  my $team_matches = $self->search_related("team_matches")->count;
-  return $team_matches ? 0 : 1;
+  # Check we have a valid type, if it's provided (if it's not provided, check all types)
+  return undef if defined($type) and $type ne "auto-qualifiers" and $type ne "members" and $type ne "grid-positions" and $type ne "matches" and $type ne "delete-matches";
+  
+  # Default to allowed.
+  my $allowed = 1;
+  my ( $reason, $level );
+  my $season = $self->tournament_round->tournament->event_season->season;
+  
+  # If the season is complete, we can't update anything
+  if ( $season->complete ) {
+    $allowed = 0;
+    $reason = $lang->maketext("events.tournaments.rounds.update.error.season-complete");
+    
+    if ( defined($type) ) {
+      # We have a type, so not expecting multiple keys
+      return wantarray ? (allowed => $allowed, reason => $reason) : $allowed;
+    } else {
+      # No type, so the caller will expect all the keys back
+      my %types = wantarray
+        ? (
+            "auto-qualifiers" => {
+              allowed => 0,
+              reason => $reason,
+              level => "error",
+            },
+            members => {
+              allowed => 0,
+              reason => $reason,
+              level => "error",
+            },
+            grid => {
+              allowed => 0,
+              reason => $reason,
+              level => "error",
+            },
+            "grid-positions" => {
+              allowed => 0,
+              reason => $reason,
+              level => "error",
+            },
+            matches => {
+              allowed => 0,
+              reason => $reason,
+              level => "error",
+            },
+            "delete-matches" => {
+              allowed => 0,
+              reason => $reason,
+              level => "error",
+            },
+          ) # We want the reasons back if we've asked for an array, the hash will contain 'allowed' and 'reason' keys
+        : (
+          "auto-qualifiers" => 0,
+          members => 0,
+          grid => 0,
+          "grid-positions" => 0,
+          matches => 0,
+          "delete-matches" => 0,
+        );
+        
+      # Return a reference to the hash in scalar context, or the hash itself in list context
+      return wantarray ? %types : \%types;
+    }
+  }
+  
+  # What we do now depends on type.
+  if ( defined($type) ) {
+    my %can;
+    if ( $type eq "auto-qualifiers" ) {
+      %can = $self->_can_edit_auto_qualifiers;
+    } elsif ( $type eq "members" ) {
+      %can = $self->_can_update_members;
+    } elsif ( $type eq "grid" ) {
+      %can = $self->_can_add_manual_entrants;
+    } elsif ( $type eq "delete-entrants" ) {
+      %can = $self->_can_delete_entrants;
+    } elsif ( $type eq "matches" ) {
+      %can = $self->_can_create_matches;
+    } elsif ( $type eq "delete-matches" ) {
+      %can = $self->_can_delete_matches;
+    }
+    
+    # Grab the reason and allowed flag
+    $reason = $can{reason};
+    $allowed = $can{allowed};
+    $level = $can{level};
+    
+    # Return the requested results
+    return wantarray ? (allowed => $allowed, reason => $reason, level => $level) : $allowed;
+  } else {
+    # All types, get the hashes back for each one
+    my %auto_quals = $self->_can_edit_auto_qualifiers;
+    my %members = $self->_can_update_members;
+    my %grid = $self->_can_update_grid;
+    my %matches = $self->_can_create_matches;
+    my %delete_matches = $self->_can_delete_matches;
+    
+    my %types = wantarray
+      ? (
+          "auto-qualifiers" => {
+            allowed => $auto_quals{allowed},
+            reason => $auto_quals{reason},
+            level => $auto_quals{level},
+          },
+          members => {
+            allowed => $members{allowed},
+            reason => $members{reason},
+            level => $members{level},
+          },
+          grid => {
+            allowed => $grid{allowed},
+            reason => $grid{reason},
+            level => $grid{level},
+          },
+          matches => {
+            allowed => $matches{allowed},
+            reason => $matches{reason},
+            level => $matches{level},
+          },
+          "delete-matches" => {
+            allowed => $delete_matches{allowed},
+            reason => $delete_matches{reason},
+            level => $delete_matches{level},
+          },
+        ) # We want the reasons back if we've asked for an array, the hash will contain 'allowed' and 'reason' keys
+      : (
+        "auto-qualifiers" => $auto_quals{allowed},
+        members => $members{allowed},
+        grid => $grid{allowed},
+        matches => $matches{allowed},
+        "delete-matches" => $delete_matches{allowed},
+      );
+    
+    # Return a reference to the hash in scalar context, or the hash itself in list context
+    return wantarray ? %types : \%types;
+  }
 }
 
-=head2 can_edit_members
+=head2 _can_edit_auto_qualifiers
 
-Return 1 if we can change the members of the group.  Return 0 otherwise.
-
-=cut
-
-sub can_edit_members {
-  my $self = shift;
-  
-  # If we have team matches (or individual matches when they're added), we can't edit members
-  my $team_matches = $self->search_related("team_matches")->count;
-  return $team_matches ? 0 : 1;
-}
-
-=head2 can_edit_auto_qualifiers
-
-Return 1 if we can change the number of automatic qualifiers of the group.  Return 0 otherwise.
+Check if we can change the number of automatic qualifiers of the group.
 
 =cut
 
-sub can_edit_auto_qualifiers {
+sub _can_edit_auto_qualifiers {
   my $self = shift;
+  my ( $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
   
-  # This needs changing once the relationships are in place to check if matches have been created
-  # If we have no incomplete team matches (or individual matches when they're added), we can't edit members - we can have matches, but we must have some incomplete
+  my $allowed = 1;
+  my ( $reason, $level );
+  # Auto-qualifying number can be updated if there are no matches, or if there are incomplete matches.
   my $matches = $self->search_related("team_matches");
-  
   if ( $matches->count ) {
+    # If we have matches, we need to check some are incomplete
     my $incomplete_matches = $matches->search({
       complete => 0,
     });
     
-    return $incomplete_matches ? 1 : 0;
-  } else {
-    # No matches, we can edit
-    return 1;
+    if ( $incomplete_matches ) {
+      $allowed = 0;
+      $reason = $lang->maketext("events.tournaments.rounds.groups.auto-qualifiers.error.all-matches-complete", $self->name);
+      $level = "error";
+    }
   }
+  
+  return (allowed => $allowed, reason => $reason, level => $level);
+}
+
+=head2 _can_update_members
+
+Check if we can change the members of the group.
+
+=cut
+
+sub _can_update_members {
+  my $self = shift;
+  my ( $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  
+  my $allowed = 1;
+  my ( $reason, $level );
+  # Members can be updated if there are no matches in the group (individuals need adding in when that's done)
+  my $matches = $self->search_related("team_matches")->count;
+  if ( $matches ) {
+    $allowed = 0;
+    $reason = $lang->maketext("events.tournaments.rounds.groups.members.error.matches-created", $self->name);
+    $level = "error";
+  }
+  
+  return (allowed => $allowed, reason => $reason, level => $level);
+}
+
+=head2 _can_update_grid
+
+Check if we can change the fixtures grid (change the grid, or remove it - or add one that wasn't being used).
+
+=cut
+
+sub _can_update_grid {
+  my $self = shift;
+  my ( $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  
+  my $allowed = 1;
+  my ( $reason, $level );
+  # Members can be updated if there are no matches in the group (individuals need adding in when that's done)
+  my $matches = $self->search_related("team_matches")->count;
+  if ( $matches ) {
+    $allowed = 0;
+    $reason = $lang->maketext("events.tournaments.rounds.groups.grid.error.matches-created", $self->name);
+    $level = "error";
+  }
+  
+  return (allowed => $allowed, reason => $reason, level => $level);
+}
+
+=head2 _can_create_matches
+
+Check if matches can be created (either the grid positions are set, or there is no grid and fixtures are manually set, and there are no matches for this round already).
+
+=cut
+
+sub _can_create_matches {
+  my $self = shift;
+  my ( $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  
+  my $allowed = 1;
+  my ( $reason, $level );
+  if ( $self->has_fixtures_grid ) {
+    if ( !$self->grid_positions_set ) {
+      $allowed = 0;
+      $reason = $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.grid-positions-not-set", $self->name);
+      $level = "error";
+    }
+  }
+  
+  if ( $allowed ) {
+    if ( $self->matches->count ) {
+      $allowed = 0;
+      $reason = $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.matches-already-exist");
+      $level = "error";
+    }
+  }
+  
+  return (allowed => $allowed, reason => $reason, level => $level);
+}
+
+=head2 _can_delete_matches
+
+Check if matches can be deleted.
+
+=cut
+
+sub _can_delete_matches {
+  my $self = shift;
+  my ( $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  
+  my $allowed = 1;
+  my ( $reason, $level );
+  my $matches = $self->matches;
+  if ( $matches->count == 0 ) {
+    $allowed = 0;
+    $reason = $lang->maketext("events.tournaments.rounds.groups.delete-matches.error.no-matches", $self->name);
+    $level = "error";
+  } elsif ( $matches->search([{started => 1}, {complete => 1}, {cancelled => 1}])->count ) {
+    $allowed = 0;
+    $reason = $lang->maketext("events.tournaments.rounds.groups.delete-matches.error.matches-have-results", $self->name);
+    $level = "error";
+  }
+  
+  return (allowed => $allowed, reason => $reason, level => $level);
 }
 
 =head2 has_fixtures_grid
@@ -474,29 +752,6 @@ sub can_set_grid_positions {
   
   # We can set the positions if we get this far, so long as there are no matches already for this group.
   return 1 unless $self->matches->count;
-}
-
-=head2 can_create_matches
-
-Return 1 if fixtures can be created (either the grid positions are set, or there is no grid and fixtures are manually set, and there are no matches for this round already).
-
-=cut
-
-sub can_create_matches {
-  my $self = shift;
-  
-  if ( defined($self->fixtures_grid) ) {
-    # If there's a fixtures grid set, first check if we have the grid positions set already
-    return 0 unless $self->grid_positions_set;
-  }
-  
-  # Check the season this group is in is current
-  my $season = $self->tournament_round->tournament->event_season->season;
-  return 0 if $season->complete;
-  
-  # Now check if we have matches
-  # If we have matches, we can't create more; if we don't, we can
-  return $self->matches->count ? 0 : 1;
 }
 
 =head2 can_delete
@@ -1087,11 +1342,6 @@ sub create_matches {
   my $lang = $schema->lang;
   
   my $grid = $self->fixtures_grid;
-  my $tourn_round = $self->tournament_round;
-  my $tournament = $tourn_round->tournament;
-  my $entry_type = $self->entry_type;
-  my $match_template = $tourn_round->match_template;
-  my $handicapped = $match_template->handicapped;
   my $response = {
     error => [],
     warning => [],
@@ -1101,429 +1351,15 @@ sub create_matches {
     completed => 0,
   };
   
-  my $season = $tournament->event_season->season;
-  
-  if ( !$self->can_create_matches ) {
-    # Error, can't create fixtures
-    my $msg;
-    if ( $season->complete ) {
-      $msg = $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.season-complete");
-    } else {
-      $msg = defined($self->fixtures_grid)
-        ? $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.grid-positions-not-set")
-        : $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.matches-already-exist");
-      
-    }
-    
-    push(@{$response->{error}}, $msg);
-    return $response;
-  }
-  
-  if ( defined($grid) ) {
-    # Create matches via the grid
-    $response = $grid->create_matches($self, $params);
-  } else {
-    # Do the manual match creation
-    
-    # Hash structure:
-    # $rounds{$roundnum}{round_date}{week_beginnind_id, week_beginning_date} = season week (team entry only)
-    # $rounds{$roundnum}{matches}{$matchnum} = {
-    #   home => (id),
-    #   away team => (id),
-    #   venue => (id), (null if using default),
-    #   day (id), (null if using default),
-    #   handicap => {headstart, awarded_to}
-    #}
-    my %rounds = ();
-    my $raw_round_data = $params->{rounds};
-    foreach my $key ( keys %{$raw_round_data} ) {
-      if ( $key =~ /^round_(\d{1,2})_week$/ ) {
-        # Just the week setting, not related to the match
-        $rounds{$1}{round_date}{week_beginning_id} = $raw_round_data->{$key};
-      } elsif ( $key =~ /^round_(\d{1,2})_match_(\d{1,2})_(home|away|venue|day|handicap_award|handicap)$/ ) {
-        if ( $3 eq "handicap" ) {
-          $rounds{$1}{matches}{$2}{handicap}{headstart} = $raw_round_data->{$key};
-        } elsif ( $3 eq "handicap_award" ) {
-          $rounds{$1}{matches}{$2}{handicap}{awarded_to} = $raw_round_data->{$key};
-        } else {
-          $rounds{$1}{matches}{$2}{$3} = $raw_round_data->{$key} || undef;
-        }
-      }
-    }
-    
-    # Master copy of the entrants - so we only have to get them from the DB once, then read them into a hash.
-    my @entrants_master = $self->get_entrants;
-    my %entrants_master;
-    $entrants_master{$_->object_id} = $_->object_name foreach @entrants_master;
-    
-    my $last_week;
-    # Loop through all the rounds we *should* have and check them
-    foreach my $round ( 1 .. $self->match_rounds ) {
-      if ( $entry_type eq "team" ) {
-        # If it's team entry, we need a season week to set these matches in
-        if ( my $week_id = $rounds{$round}{round_date}{week_beginning_id} ) {
-          my $week = $season->find_related("fixtures_weeks", {id => $week_id});
-          
-          if ( defined($week) ) {
-            $rounds{$round}{round_date}{week_beginning_date} = $week->week_beginning_date;
-            
-            # The week is valid; ensure it doesn't occur prior to the last one.
-            push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.date-occurs-before-previous-date", $round))
-                if defined($last_week) and $week->week_beginning_date->ymd("") <= $last_week->week_beginning_date->ymd("");
-            
-            # Set the last season week so that we can check the next one occurs at a later date on the next iteration.
-            $last_week = $week;
-          } else {
-            # Error, season week not found
-            push(@{$response->{error}}, $lang->maketext("fixtures-grids.form.create-fixtures.error.week-invalid", $round));
-          }
-          
-          $rounds{$round}{week} = $week;
-        } else {
-          # Error, season week not specified.
-          push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.round-blank", $round));
-        }
-      }
-      
-      # Now loop through the matches and check all the data given
-      # %used_entrants will hold entrants as we use them, with a count so we can check nothing is used more tha once in a given round
-      # %entrants_to_use will hold all the entrants at the start, deleting as we use, so we can check at the end that there are none left
-      # (there will be one left if we have an odd number of entrants, this is fine)
-      my %used_entrants = ();
-      my %entrants_to_use = %entrants_master;
-      foreach my $match ( 1 .. $self->matches_per_round ) {
-        my $home = $rounds{$round}{matches}{$match}{home};
-        my $away = $rounds{$round}{matches}{$match}{away};
-        my $venue = $rounds{$round}{matches}{$match}{venue} || undef;
-        my $day = $rounds{$round}{matches}{$match}{day} || undef;
-        my $handicap_start = $rounds{$round}{matches}{$match}{handicap}{headstart};
-        my $handicap_awarded_to = $rounds{$round}{matches}{$match}{handicap}{awarded_to};
-        
-        # Hash to check the home / away competitors, so we can loop through
-        my %check_competitors = (home => $home, away => $away);
-        
-        # Do any lookups we need to - we can pass in objects or IDs (URL keys too if it's not a team - teams also need club URL keys, and there's no way to pass in both)
-        # Reverse key sort so we do home before away
-        foreach my $home_away ( reverse sort keys %check_competitors ) {
-          my $competitor = $check_competitors{$home_away};
-          if ( defined($competitor) ) {
-            # Look up the competitor from the relevant class
-            my ( $comp_class, $object_name );
-            if ( $entry_type eq "team" ) {
-              $comp_class = "Team";
-              $object_name = "full_name";
-            } else {
-              # Singles and doubles check the person class, just we check it twice for doubles
-              $comp_class = "Person";
-              $object_name = "display_name";
-            }
-            
-            $competitor = $schema->resultset($comp_class)->find($competitor) unless $competitor->isa("TopTable::Schema::Result::$comp_class");
-            
-            if ( defined($competitor) ) {
-              # Home team is valid, but check it's in the group
-              if ( $self->has_entrant($competitor) ) {
-                # Valid, set into the %used_entrants hash and delete from entrants to use
-                if ( exists($used_entrants{$competitor->id}) ) {
-                  # Seen already, increase the count
-                  $used_entrants{$competitor->id}{count}++;
-                } else {
-                  # Not already seen, add into the hash
-                  $used_entrants{$competitor->id} = {count => 1, name => $entrants_to_use{$competitor->id}};
-                }
-                
-                delete $entrants_to_use{$competitor->id};
-              } else {
-                # Error, team not in the group
-                if ( $entry_type eq "team" ) {
-                  $object_name = $competitor->full_name;
-                } elsif ( $entry_type eq "singles" ) {
-                  $object_name = $competitor->display_name;
-                } else {
-                  # Doubles
-                  #$object_name = 
-                }
-                
-                push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.comp-not-in-group", encode_entities($object_name), $lang->maketext("events.tournaments.rounds.groups.create-fixtures.$home_away"), $round, $match));
-              }
-            } else {
-              # Home team is invalid
-              push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.comp-invalid", $lang->maketext("events.tournaments.rounds.groups.create-fixtures.$home_away"), $round, $match));
-            }
-          } else {
-            # Error, home team not passed in
-            push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.comp-blank", $lang->maketext("events.tournaments.rounds.groups.create-fixtures.$home_away"), $round, $match));
-          }
-          
-          # Set the value we looked up (even if undef) back into the hash
-          $rounds{$round}{matches}{$match}{$home_away} = $competitor;
-        }
-        
-        # If either the venue or the day are undefined, we need to grab the home night / venue from the team's season settings
-        # Make sure $home now refers to the team object we looked up
-        $home = $rounds{$round}{matches}{$match}{home};
-        my $home_season;
-        $home_season = $home->get_season($season) if defined($home) and (!defined($venue) or !defined($day));
-        
-        if ( defined($venue) ) {
-          # Venue passed in, so we will override
-          $venue = $schema->resultset("Venue")->find($venue) unless $venue->isa("TopTable::Schema::Result::Venue");
-          
-          if ( defined($venue) ) {
-            if ( $venue->active ) {
-              $rounds{$round}{matches}{$match}{venue} = $venue;
-            } else {
-              push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.venue-inactive", encode_entities($venue->name), $round, $match));
-            }
-          } else {
-            # Venue is now not defined after lookup, so can't have been valid
-            push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.venue-invalid", $round, $match));
-          }
-        } else {
-          # Venue not passed in - get it from the round settings if there's one there, or the team's home venue if not
-          if ( defined($tourn_round->venue) ) {
-            $rounds{$round}{matches}{$match}{venue} = $tourn_round->venue;
-          } elsif ( defined($home_season) ) {
-            $rounds{$round}{matches}{$match}{venue} = $home_season->club_season->venue;
-          }
-        }
-        
-        my $scheduled_date;
-        my $week_date = $rounds{$round}{round_date}{week_beginning_date};
-        if ( defined($day) ) {
-          # Day passed in, so we will override
-          $day = $schema->resultset("LookupWeekday")->find($day) unless $day->isa("TopTable::Schema::Result::LookupWeekday");
-          
-          # Day is now not defined after lookup, so can't have been valid
-          if ( defined($day) ) {
-            # Set the date to be a DateTime object based on the day selected
-            $scheduled_date = TopTable::Controller::Root::get_day_in_same_week($week_date, $day->weekday_number);
-            $rounds{$round}{matches}{$match}{day} = $day;
-          } else {
-            push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.day-invalid", $round, $match));
-          }
-        } else {
-          # Otherwise use the home team's night
-          $scheduled_date = TopTable::Controller::Root::get_day_in_same_week($week_date, $home_season->home_night->weekday_number) if defined($home_season);
-        }
-        
-        $rounds{$round}{matches}{$match}{date} = $scheduled_date;
-        
-        # Check handicaps - first check if this is a handicapped event
-        if ( defined($handicap_awarded_to) ) {
-          # Handicap is defined
-          if ( $handicapped ) {
-            if ( $handicap_awarded_to eq "home" or $handicap_awarded_to eq "away" ) {
-              if ( defined($handicap_start) ) {
-                # Check there's a positive numeric value (not 0) in the handicap
-                push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.handicap-invalid", $round, $match)) unless $handicap_start =~ /^[1-9]\d{0,2}$/;
-              } else {
-                # Error, no handicap set
-                push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.handicap-not-set", $round, $match));
-              }
-            } elsif ( $handicap_awarded_to eq "set_later" or $handicap_awarded_to eq "scratch" ) {
-              # Nothing to do here
-            } else {
-              # Error, invalid handicap option
-              push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.invalid-handicap-option", $round, $match));
-            }
-          } else {
-            # Handicap passed in, but the event isn't handicapped - this is just info, we can just not set the handicaps
-            push(@{$response->{info}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.handicap-set-needlessly", $round, $match));
-          }
-        } else {
-          # Handicap not defined - error 
-          push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.handicap-option-blank", $round, $match)) if $handicapped;
-        }
-      }
-      
-      # Check nothing has been used more than once, and nothing has been left unused
-      foreach my $entrant_used ( keys %used_entrants ) {
-        push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.entrant-used-too-many-times", $round, $used_entrants{$entrant_used}{name}, $used_entrants{$entrant_used}{count})) if $used_entrants{$entrant_used}{count} > 1;
-      }
-      
-      # Check nothing is left behind - slightly complicated by the fact we can have a bye round if there's an odd number ( % 2 gives a true value, because there is a remainder)
-      my $bye_allowed = scalar @entrants_master % 2 ? 1 : 0;
-      my $unused_count = scalar keys %entrants_to_use;
-      if ( $bye_allowed ) {
-        push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.entrants-unused-with-bye", $round)) if $unused_count > 1;
-      } else {
-        push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.entrants-unused", $round)) if $unused_count;
-      }
-    }
-    
-    $response->{fields}{rounds} = \%rounds;
-    
-    if ( @{$response->{error}} == 0 ) {
-      # No errors, build the match data
-      my ( @match_games, @match_legs, @template_games );
-      if ( $entry_type eq "team" ) {
-        # If it's team entry, we have a team match template, which will have games - we need to build an array of games
-        # so that we can just use that, rather than referring back to the DB each time.  Do this outside the loop here
-        # because it's the same for each game being created
-        my $template_games = $match_template->template_match_team_games;
-        while ( my $game = $template_games->next ) {
-          push(@template_games, {
-            singles_home_player_number => $game->singles_home_player_number,
-            singles_away_player_number => $game->singles_away_player_number,
-            doubles_game => $game->doubles_game,
-            match_template => $game->individual_match_template,
-            match_game_number => $game->match_game_number,
-            legs_per_game => $game->individual_match_template->legs_per_game,
-          });
-        }
-      }
-      
-      # This will be the data used to populate the matches
-      my ( $matches, @matches, @match_ids, @match_names );
-      foreach my $round ( 1 .. $self->match_rounds ) {
-        my $scheduled_week = $rounds{$round}{round_date}{week_beginning_id};
-        my $week_beginning_date = $rounds{$round}{round_date}{week_beginning_date};
-        
-        # Loop through the matches
-        foreach my $match ( 1 .. $self->matches_per_round ) {
-          my $home = $rounds{$round}{matches}{$match}{home};
-          my $away = $rounds{$round}{matches}{$match}{away};
-          my $venue = $rounds{$round}{matches}{$match}{venue};
-          my $handicap_start = $rounds{$round}{matches}{$match}{handicap}{headstart};
-          my $handicap_awarded_to = $rounds{$round}{matches}{$match}{handicap}{awarded_to};
-          my $scheduled_date = $rounds{$round}{matches}{$match}{date};
-          my ( $start_time, %match_data );
-          
-          if ( $entry_type eq "team" ) {
-            $start_time = $home->default_match_start // $home->club->default_match_start // $season->default_match_start;
-            
-            # Team match template, populate an array of games
-            
-            
-            # Empty arrayref for the games - these will be populated in the next loop
-            my @match_games = ();
-            
-            # Set up the league team match games / legs
-            foreach my $game_template ( @template_games ) {
-              # Loop through creating legs for each game
-              # Empty arrayref for the legs - this will be populated on the next loop
-              my @match_legs = ();
-              foreach my $i ( 1 .. $game_template->{legs_per_game} ) {
-                push(@match_legs, {
-                  home_team => $home->id,
-                  away_team => $away->id,
-                  scheduled_date => $scheduled_date->ymd,
-                  scheduled_game_number => $game_template->{match_game_number},
-                  leg_number => $i,
-                });
-              }
-              
-              # What we populate will be different, depending on whether it's a doubles game or not
-              my %game = (
-                home_team => $home->id,
-                away_team => $away->id,
-                scheduled_date => $scheduled_date->ymd,
-                scheduled_game_number => $game_template->{match_game_number},
-                actual_game_number => $game_template->{match_game_number},
-                individual_match_template => $game_template->{match_template}->id,
-                doubles_game => $game_template->{doubles_game},
-                team_match_legs => \@match_legs,
-              );
-              
-              # Add player numbers for a doubles game
-              if ( !$game_template->{doubles_game} ) {
-                $game{home_player_number} = $game_template->{singles_home_player_number};
-                $game{away_player_number} = $game_template->{singles_away_player_number};
-              }
-              
-              push(@match_games, \%game);
-            }
-            
-            # Now loop through and build the players.  We loop through twice for the number of players per team,
-            # so that we do it for both teams
-            # Empty arrayref to start off with
-            my @match_players = ();
-            foreach my $i ( 1 .. ( $match_template->singles_players_per_team * 2 ) ) {
-              # Is it home or away?  If our loop counter is greater than the number of players in a team, we must have moved on to the away team
-              my $location = $i > $match_template->singles_players_per_team ? "away" : "home";
-              
-              push(@match_players, {
-                home_team => $home->id,
-                away_team => $away->id,
-                player_number => $i,
-                location => $location,
-              });
-            }
-            
-            # Push on to the array that will populate the DB
-            my %match = (
-              home_team => $home->id,
-              away_team => $away->id,
-              scheduled_date => $scheduled_date->ymd,
-              played_date => $scheduled_date->ymd,
-              scheduled_start_time => $start_time,
-              season => $season->id,
-              division => undef,
-              tournament_round => $tourn_round->id,
-              tournament_group => $self->id,
-              venue => $venue->id,
-              scheduled_week => $scheduled_week,
-              team_match_template => $match_template->id,
-              team_match_games => \@match_games,
-              team_match_players => \@match_players,
-            );
-            
-            if ( $handicapped ) {
-              # The only other option here is set later, in which case we leave the handicap fields alone and they get set to null
-              if ( $handicap_awarded_to eq "home" ) {
-                # Home get the head start, set home handicap to the handicap we want and away to 0
-                $match{home_team_handicap} = $handicap_start;
-                $match{away_team_handicap} = 0;
-              } elsif ( $handicap_awarded_to eq "away" ) {
-                # Away get the head start, set away handicap to the handicap we want and home to 0
-                $match{home_team_handicap} = 0;
-                $match{away_team_handicap} = $handicap_start;
-              } elsif ( $handicap_awarded_to eq "scratch" ) {
-                # Scratch, no one gets a head start, set both handicap fields to 0
-                $match{home_team_handicap} = 0;
-                $match{away_team_handicap} = 0;
-              }
-            }
-            
-            push(@matches, \%match);
-            
-            # Increase the number of matches we are creating
-            $matches++;
-            
-            # Push on to the IDs / names arrays that we'll use for the event log
-            push(@match_ids, {
-              home_team => $home->id,
-              away_team => $away->id,
-              scheduled_date => $scheduled_date->ymd,
-            });
-            
-            push(@match_names, sprintf("%s, (%s - %s)", $lang->maketext("matches.name", $home->full_name, $away->full_name), $tournament->event_season->name, $scheduled_date->dmy("/")));
-          } else {
-            # Individual match template
-            
-          }
-        }
-      }
-      
-      if ( $entry_type eq "team" ) {
-        $schema->resultset("TeamMatch")->populate(\@matches);
-        $response->{completed} = 1;
-        push(@{$response->{success}}, $lang->maketext("events.tournaments.create-fixtures.success", scalar(@match_ids), $self->name, $season->name));
-        
-        $response->{match_ids} = \@match_ids;
-        $response->{match_names} = \@match_names;
-        $response->{matches} = \@matches;
-      }
-    }
-  }
+  my $match_create_cls = defined($grid) ? $grid : $self->tournament_round;
+  $response = $match_create_cls->create_matches($self, $params);
   
   return $response;
 }
 
 =head2 delete_matches
 
-
+Delete the matches in this group.
 
 =cut
 
@@ -1591,7 +1427,7 @@ sub delete_matches {
 
 =head2 matches
 
-Return the matches associated with this round.
+Return the matches associated with this group.
 
 =cut
 

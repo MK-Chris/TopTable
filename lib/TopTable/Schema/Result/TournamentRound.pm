@@ -444,6 +444,12 @@ use HTML::Entities;
 use List::MoreUtils qw( duplicates );
 use Set::Object;
 
+# Enable automatic date handling
+__PACKAGE__->add_columns(
+    "date",
+    { data_type => "date", timezone => "UTC", set_on_create => 0, set_on_update => 0, datetime_undef_if_invalid => 1, is_nullable => 0, },
+);
+
 =head2 url_key
 
 Return the URL key if defined, or the round number if not.
@@ -552,6 +558,39 @@ sub has_entrants {
   return $self->search_related($rel)->count ? 1 : 0;
 }
 
+=head2 has_entrant
+
+Return true if the group has the given entrant (passed as a DB object - team, person or pair of people for doubles).
+
+=cut
+
+sub has_entrant {
+  my $self = shift;
+  my $member_rel;
+  my $entry_type = $self->entry_type;
+  
+  # Take two parameters, as we'll need the second one if we search for a doubles pairing
+  my ( $potential1, $potential2 ) = @_;
+  
+  my %where = ();
+  my %attrib = ();
+  if ( $entry_type eq "team" ) {
+    $member_rel = "tournament_round_teams";
+    $where{"team.id"} = $potential1->id;
+    $attrib{join} = {
+      tournament_team => {
+        team_season => [qw( team )]
+      }
+    };
+  } elsif ( $entry_type eq "singles" ) {
+    $member_rel = "tournament_round_people";
+  } elsif ( $entry_type eq "doubles" ) {
+    $member_rel = "tournament_rounds_doubles";
+  }
+  
+  return $self->search_related($member_rel, \%where, \%attrib)->count;
+}
+
 =head2 has_matches
 
 Check if the round has any matches yet; return 1 if so or 0 if not.
@@ -572,6 +611,40 @@ sub has_matches {
   }
 }
 
+=head2 matches
+
+Return the matches associated with this round.
+
+=cut
+
+sub matches {
+  my $self = shift;
+  my ( $params ) = @_;
+  my $no_prefetch = $params->{no_prefetch};
+  my ( $member_rel, %attrib );
+  my $entry_type = $self->entry_type;
+  
+  if ( $entry_type eq "team" ) {
+    $member_rel = "team_matches";
+    %attrib = (
+      prefetch  => [qw( venue ), {
+        team_season_home_team_season => [qw( team ), {club_season => "club"}],
+      }, {
+        team_season_away_team_season => [qw( team ), {club_season => "club"}],
+      }],
+      order_by => {
+        -asc => [qw( played_date club_season.short_name team_season_home_team_season.name )]
+      },
+    ) unless $no_prefetch;
+  } elsif ( $entry_type eq "singles" ) {
+    $member_rel = "tournament_group_people";
+  } elsif ( $entry_type eq "doubles" ) {
+    $member_rel = "tournament_group_doubles";
+  }
+  
+  return $self->search_related($member_rel, {}, \%attrib);
+}
+
 =head2 can_update($type)
 
 1 if we can update the round $type; 0 if not.
@@ -580,13 +653,15 @@ In list context, a hash will be returned with keys 'allowed' (1 or 0) and potent
 
 No permissions are checked here, this is purely to see if it's possible to update the round based on factors in the tournament.
 
-$type tells us what we want to update and can be "add-groups", "entrants", "manual-entrants" or "delete-entrants".  If not passed, we get a hash (or hashref in scalar context) of all types - scalar context just returns 1 or 0 for all of these, list context returns the hashref with allowed and reason keys.  If nothing can be updated for the same reason (i.e., the season is complete), the types will not be returned, and you'll get a 1 or 0 in scalar context, or 'allowed' and 'reason' keys in list context, just as if it had been called with a specific type.
+$type tells us what we want to update and can be "add-groups", "entrants", "manual-entrants", "delete-entrants" or "matches".  If not passed, we get a hash (or hashref in scalar context) of all types - scalar context just returns 1 or 0 for all of these, list context returns the hashref with allowed and reason keys.  If nothing can be updated for the same reason (i.e., the season is complete), the types will not be returned, and you'll get a 1 or 0 in scalar context, or 'allowed' and 'reason' keys in list context, just as if it had been called with a specific type.
 
 Possible $type values:
 "add-groups": we're checking if we can add groups to the round.
 "entrants": checks we can add entrants to the round.
 "manual-entrants": checks if we can add entrants manually (along with the automatic qualifiers) to the round - this doesn't do any checking that "entrants" does, so they'll need to be called separately.
 "delete-entrants": checks if we can remove the entrants from this round.
+"matches": checks if we can create matches for this round.  If it's a group round, this will be 0, as matches are created in individual groups, not in the round as a whole.
+"delete-matches": checks if we can delete matches for this round.  If it's a group round, this will be 0, as matches are deleted in individual groups, not in the round as a whole.
 
 =cut
 
@@ -601,7 +676,7 @@ sub can_update {
   my $lang = $schema->lang;
   
   # Check we have a valid type, if it's provided (if it's not provided, check all types)
-  return undef if defined($type) and $type ne "add-groups" and $type ne "entrants" and $type ne "manual-entrants" and $type ne "delete-entrants";
+  return undef if defined($type) and $type ne "add-groups" and $type ne "entrants" and $type ne "manual-entrants" and $type ne "delete-entrants" and $type ne "matches" and $type ne "delete-matches";
   
   # Default to allowed.
   my $allowed = 1;
@@ -639,13 +714,25 @@ sub can_update {
               allowed => 0,
               reason => $reason,
               level => "error",
-            }
+            },
+            matches => {
+              allowed => 0,
+              reason => $reason,
+              level => "error",
+            },
+            "delete-matches" => {
+              allowed => 0,
+              reason => $reason,
+              level => "error",
+            },
           ) # We want the reasons back if we've asked for an array, the hash will contain 'allowed' and 'reason' keys
         : (
           "add-groups" => 0,
           entrants => 0,
           "manual-entrants" => 0,
           "delete-entrants" => 0,
+          matches => 0,
+          "delete-matches" => 0,
         );
         
       # Return a reference to the hash in scalar context, or the hash itself in list context
@@ -664,6 +751,10 @@ sub can_update {
       %can = $self->_can_add_manual_entrants;
     } elsif ( $type eq "delete-entrants" ) {
       %can = $self->_can_delete_entrants;
+    } elsif ( $type eq "matches" ) {
+      %can = $self->_can_create_matches;
+    } elsif ( $type eq "delete-matches" ) {
+      %can = $self->_can_delete_matches;
     }
     
     # Grab the reason and allowed flag
@@ -679,6 +770,8 @@ sub can_update {
     my %entrants = $self->_can_update_entrants;
     my %manual_entrants = $self->_can_add_manual_entrants;
     my %delete_entrants = $self->_can_delete_entrants;
+    my %matches = $self->_can_create_matches;
+    my %delete_matches = $self->_can_delete_matches;
     
     my %types = wantarray
       ? (
@@ -701,13 +794,25 @@ sub can_update {
             allowed => $delete_entrants{allowed},
             reason => $delete_entrants{reason},
             level => $delete_entrants{level},
-          }
+          },
+          matches => {
+            allowed => $matches{allowed},
+            reason => $matches{reason},
+            level => $matches{level},
+          },
+          "delete-matches" => {
+            allowed => $delete_matches{allowed},
+            reason => $delete_matches{reason},
+            level => $delete_matches{level},
+          },
         ) # We want the reasons back if we've asked for an array, the hash will contain 'allowed' and 'reason' keys
       : (
         "add-groups" => $add_groups{allowed},
         entrants => $entrants{allowed},
         "manual-entrants" => $manual_entrants{allowed},
         "delete-entrants" => $delete_entrants{allowed},
+        matches => $matches{allowed},
+        "delete-matches" => $delete_matches{allowed},
       );
     
     # Return a reference to the hash in scalar context, or the hash itself in list context
@@ -737,7 +842,7 @@ sub _can_add_groups {
   if ( !$self->group_round ) {
     # Can't set handicap, this match isn't handicapped
     $allowed = 0;
-    $reason = $lang->maketext("events.tournaments.rounds.groups.create.error.not-group-round");
+    $reason = $lang->maketext("events.tournaments.rounds.groups.create.error.not-group-round", $self->name);
     $level = "error";
   } elsif ( $self->search_related("team_matches")->count ) {
     $allowed = 0;
@@ -782,7 +887,7 @@ sub _can_update_entrants {
   } else {
     my $prev_round = $self->prev_round;
     
-    if ( defined($prev_round) and !$prev_round->complete ) {
+    if ( defined($prev_round) and !$prev_round->complete({logger => $logger}) ) {
       $allowed = 0;
       $reason = $lang->maketext("events.tournaments.rounds.entrants.update.error.prev-round-incomplete");
       $level = "error";
@@ -866,8 +971,89 @@ sub _can_delete_entrants {
     $level = "error";
   } elsif ( $self->has_matches ) {
     $allowed = 0;
-    $reason = $lang->maketext("events.tournaments.rounds.entrants.delete.error.matches-created");
+    $reason = $lang->maketext("events.tournaments.rounds.entrants.delete.error.matches-created", $self->name);
     $level = "error";
+  }
+  
+  return (allowed => $allowed, reason => $reason, level => $level);
+}
+
+=head2 _can_create_matches
+
+Check if we can create matches for the round.  Don't do the season complete check, this is done in can_update.
+
+=cut
+
+sub _can_create_matches {
+  my $self = shift;
+  my ( $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  
+  my $allowed = 1;
+  my ( $reason, $level );
+  
+  # The entrants of a round can't be updated if:
+  # - The round is a group round
+  # - The round doesn't have entrants
+  if ( $self->group_round ) {
+    $allowed = 0;
+    $reason = $lang->maketext("events.tournaments.rounds.matches.create.error.group-round", $self->name);
+    $level = "error";
+  } elsif ( !$self->has_entrants ) {
+    $allowed = 0;
+    $reason = $lang->maketext("events.tournaments.rounds.matches.create.error.round-has-no-entrants", $self->name);
+    $level = "error";
+  } elsif ( $self->has_matches ) {
+    $allowed = 0;
+    $reason = $lang->maketext("events.tournaments.rounds.matches.create.error.round-already-has-matches", $self->name);
+    $level = "error";
+  }
+  
+  return (allowed => $allowed, reason => $reason, level => $level);
+}
+
+=head2 _can_delete_matches
+
+Check if we can delete matches for the round.  Don't do the season complete check, this is done in can_update.
+
+=cut
+
+sub _can_delete_matches {
+  my $self = shift;
+  my ( $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  
+  my $allowed = 1;
+  my ( $reason, $level );
+  
+  # The entrants of a round can't be updated if:
+  # - The round is a group round
+  # - The round doesn't have entrants
+  if ( $self->group_round ) {
+    $allowed = 0;
+    $reason = $lang->maketext("events.tournaments.rounds.matches.delete.error.group-round", $self->name);
+    $level = "error";
+  } elsif ( !$self->has_matches ) {
+    $allowed = 0;
+    $reason = $lang->maketext("events.tournaments.rounds.matches.delete.error.round-has-no-matches", $self->name);
+    $level = "error";
+  } else {
+    my $with_results = $self->matches->search([{complete => 1}, {started => 1}, {cancelled => 1}]);
+    if ( $with_results->count ) {
+      $allowed = 0;
+      $reason = $lang->maketext("events.tournaments.rounds.matches.delete.error.matches-have-results", $self->name);
+      $level = "error";
+    }
   }
   
   return (allowed => $allowed, reason => $reason, level => $level);
@@ -906,19 +1092,18 @@ sub date_range {
   return wantarray ? (first_date => $first, last_date => $last) : {first_date => $first, last_date => $last};
 }
 
-=head2 entrants
+=head2 get_entrants
 
 Return the entrants (what these are depends on the entry type of the tournament).
 
 =cut
 
-sub entrants {
+sub get_entrants {
   my $self = shift;
   my $entry_type = $self->entry_type;
   
-  my $entrants;
   if ( $entry_type eq "team" ) {
-    $entrants = $self->search_related("tournament_round_teams", {}, {
+    return $self->search_related("tournament_round_teams", {}, {
       prefetch => {
         tournament_team => {
           team_season => [qw( team ), {
@@ -931,9 +1116,9 @@ sub entrants {
       }
     });
   } elsif ( $entry_type eq "singles" ) {
-    $entrants = $self->search_related("tournament_round_people");
+    return $self->search_related("tournament_round_people");
   } elsif ( $entry_type eq "doubles" ) {
-    $entrants = $self->search_related("tournament_rounds_doubles");
+    return $self->search_related("tournament_rounds_doubles");
   }
 }
 
@@ -1032,6 +1217,9 @@ Work out if this round is complete, return 1 if so or 0 if not.
 
 sub complete {
   my $self = shift;
+  my ( $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   
   my $round_number = $self->round_number;
   my $tourn = $self->tournament;
@@ -1047,7 +1235,17 @@ sub complete {
     } else {
       # If there's no Check all matches are complete
       if ( $matches->incomplete_and_not_cancelled->count == 0 ) {
-        # All matches are complete
+        # All matches are complete - but if it's a group round we need to check all groups have matches
+        if ( $self->group_round ) {
+          # If it's a group round we need to do an additional check for groups without matches
+          my @groups = $self->search_related("tournament_round_groups");
+          
+          foreach my $group ( @groups ) {
+            # As soon as we come across a group with no matches, return 0
+            return 0 if $group->search_related("team_matches")->count == 0;
+          }
+        }
+        
         return 1;
       } else {
         # Not all matches are complete, round is not complete
@@ -1463,6 +1661,7 @@ sub create_or_edit_group {
     return $response;
   }
   
+  my $can_update;
   if ( defined($group) ) {
     # Group specified, we must be editing
     $action = "edit";
@@ -1470,9 +1669,7 @@ sub create_or_edit_group {
     # Check the group passed is valid
     if ( $group->isa("TopTable::Schema::Result::TournamentRoundGroup") ) {
       # Group is defined, set the ability to edit settings from that
-      $can_edit{fixtures} = $group->can_edit_fixtures_settings;
-      $can_edit{members} = $group->can_edit_members;
-      $can_edit{qualifiers} = $group->can_edit_auto_qualifiers;
+      $can_update = $group->can_update;
       
       # Group order is the same as it was if we're editing
       $write_data{group_order} = $group->group_order;
@@ -1485,6 +1682,11 @@ sub create_or_edit_group {
   } else {
     # No group specified, so we're creating
     $action = "create";
+    $can_update = {
+      "auto-qualifiers" => 1,
+      members => 1,
+      grid => 1,
+    };
     
     # Creation means we just add to the list of groups at the end
     $write_data{group_order} = $self->next_group_order;
@@ -1507,7 +1709,7 @@ sub create_or_edit_group {
     push(@{$response->{error}}, $lang->maketext("tournaments.round.group.form.error.name-not-blank-but-should-be")) if defined($name);
   }
   
-  if ( $can_edit{fixtures} ) {
+  if ( $can_update->{grid} ) {
     # Sanity check - 1 or 0
     $manual_fixtures = $manual_fixtures ? 1 : 0;
     
@@ -1534,7 +1736,7 @@ sub create_or_edit_group {
   $response->{fields}{manual_fixtures} = $manual_fixtures;
   
   my ( $member_class, %member_cls_attrib, $tourn_member_class, $round_member_class, $group_member_class, $member_rel_round );
-  if ( $can_edit{members} ) {
+  if ( $can_update->{members} ) {
     # Check the members of the group
     # First check we're checking the right table
     my @dup_check = (); # Will hold a list of all the submitted IDs
@@ -1705,7 +1907,7 @@ sub create_or_edit_group {
   $response->{fields}{members} = [map($schema->resultset($member_class)->find($_, \%member_cls_attrib), @members)];
   
   # Check the number of qualifiers
-  if ( $can_edit{qualifiers} ) {
+  if ( $can_update->{"auto-qualifiers"} ) {
     if ( defined($automatic_qualifiers) ) {
       # We have a value, ensure it's positive and numeric, and not more than the number of competitors in the group.
       push(@{$response->{error}}, $lang->maketext("tournaments.round.group.form.error.qualifiers-invalid")) unless $automatic_qualifiers =~ m/^\d+$/ or $automatic_qualifiers > scalar @members;
@@ -1731,7 +1933,7 @@ sub create_or_edit_group {
     }
     
     # Update the members if we're allowed
-    if ( $can_edit{members} ) {
+    if ( $can_update->{members} ) {
       my $round = $group->tournament_round;
       
       if ( $action eq "edit" ) {
@@ -1794,6 +1996,25 @@ sub create_or_edit_group {
   }
   
   return $response;
+}
+
+=head2 number_of_matches
+
+Calculate the number of matches required; this will return undef for a group round, it's to work out the number of matches required to play a knock-out round
+
+=cut
+
+sub number_of_matches {
+  my $self = shift;
+  
+  if ( $self->is_first_ko_round ) {
+    # For the first knock-out round, it's not just the number of participants, we need to work out based on the number of byes too
+    my %calc = $self->tournament->calculate_ko_rounds;
+    return ($self->round_of - $calc{byes}) / 2;
+  } else {
+    # Otherwise it's just the number of participants divided by 2.
+    return $self->round_of / 2;
+  }
 }
 
 =head2 add_entrants
@@ -1891,18 +2112,14 @@ sub add_entrants {
     
     # Combine the audo IDs and the submitted ones into a single array 
     my @ids_to_create = ( @$auto_ids, @submitted_ids );
-    $logger->("debug", sprintf("IDs count: %d", scalar @ids_to_create));
     foreach my $entrant ( @ids_to_create ) {
       # Find the entrant - we know it exists, because it was in the list of valid IDs we could select - this is why we also have no need to
       # check if this ID is for the correct tournament / round.
       $entrant = $schema->resultset($round_member_class)->find($entrant);
-      $logger->("debug", sprintf("Entrant ref - %s: %s", ref($entrant), $entrant->object_name));
       my $tourn_entry = $entrant->$member_rel_tourn;
-      $logger->("debug", sprintf("Entrant tourn ref - %s: %s", ref($tourn_entry), $tourn_entry->object_name));
       my $new_round_entrant = $tourn_entry->create_related($member_rel_round, {
         tournament_round => $self->id,
       });
-      $logger->("debug", "Created tournament round entry in " . $self->name);
     }
     
     $transaction->commit;
@@ -1980,6 +2197,588 @@ sub delete_entrants {
     push(@{$response->{success}}, $lang->maketext("events.tournaments.rounds.entrants.delete.success"));
     $response->{round} = $self; # Because the code we're returning to expects a round in the response 
     $response->{completed} = 1;
+  }
+  
+  return $response;
+}
+
+=head2 create_matches
+
+Create the matches for this round.
+
+=cut
+
+sub create_matches {
+  my $self = shift;
+  my ( $group, $params ) = @_;
+  # Setup schema / logging
+  my $logger = $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  
+  my $tournament = $self->tournament;
+  my $entry_type = $self->entry_type;
+  my $match_template = $self->match_template;
+  my $handicapped = $match_template->handicapped;
+  my $response = {
+    error => [],
+    warning => [],
+    info => [],
+    success => [],
+    fields => {},
+    completed => 0,
+  };
+  
+  # Hash structure:
+  # $rounds{$roundnum}{round_date}{week_beginnind_id, week_beginning_date} = season week (team entry only)
+  # $rounds{$roundnum}{matches}{$matchnum} = {
+  #   home => (id),
+  #   away team => (id),
+  #   venue => (id), (null if using default),
+  #   day (id), (null if using default),
+  #   handicap => {headstart, awarded_to}
+  #}
+  # If this isn't a group round, there will only be one round, but we'll put it in the same structure (without the round_date element)
+  my %rounds = ();
+  my $group_round = $self->group_round;
+  if ( $group_round ) {
+    if ( defined($group) ) {
+      # Make sure we have a group if it's a group round
+      if ( $group->tournament_round->id != $self->id ) {
+        # The group specified doesn't belong to this round, so can't be correct
+        push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.matches.create.error.group-not-in-round", $self->name, encode_entities($self->tournament->name)));
+        return $response;
+      }
+    } else {
+      # No group specified
+      push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.matches.create.error.group-not-specified", $self->name));
+      return $response;
+    }
+    
+    # Chekc from the group whether we can create matches
+    my %can = $group->can_update("matches");
+    if ( !$can{allowed} ) {
+      push(@{$response->{$can{level}}}, $can{reason});
+      return $response;
+    }
+    
+    my $raw_data = $params->{rounds};
+    foreach my $key ( keys %{$raw_data} ) {
+      if ( $key =~ /^round_(\d{1,2})_week$/ ) {
+        # Just the week setting, not related to the match
+        $rounds{$1}{round_date}{week_beginning_id} = $raw_data->{$key};
+      } elsif ( $key =~ /^round_(\d{1,2})_match_(\d{1,2})_(home|away|venue|day|handicap_award|handicap)$/ ) {
+        if ( $3 eq "handicap" ) {
+          $rounds{$1}{matches}{$2}{handicap}{headstart} = $raw_data->{$key};
+        } elsif ( $3 eq "handicap_award" ) {
+          $rounds{$1}{matches}{$2}{handicap}{awarded_to} = $raw_data->{$key};
+        } else {
+          $rounds{$1}{matches}{$2}{$3} = $raw_data->{$key} || undef;
+        }
+      }
+    }
+  } else {
+    # Not a group round, check from the round whether we can create matches
+    my %can = $self->can_update("matches");
+    if ( !$can{allowed} ) {
+      push(@{$response->{$can{level}}}, $can{reason});
+      return $response;
+    }
+    
+    my $raw_data = $params->{matches};
+    foreach my $key ( keys %{$raw_data} ) {
+      if ( $key =~ /^match_(\d{1,2})_(home|away|venue|day|handicap_award|handicap)$/ ) {
+        if ( $2 eq "handicap" ) {
+          $rounds{1}{matches}{$1}{handicap}{headstart} = $raw_data->{$key};
+        } elsif ( $2 eq "handicap_award" ) {
+          $rounds{1}{matches}{$1}{handicap}{awarded_to} = $raw_data->{$key};
+        } else {
+          $rounds{1}{matches}{$1}{$2} = $raw_data->{$key} || undef;
+        }
+      }
+    }
+    
+    # Make sure group is undef
+    undef($group);
+  }
+  
+  # Master copy of the entrants - so we only have to get them from the DB once, then read them into a hash.
+  my @entrants_master = $group_round ? $group->get_entrants : $self->get_entrants;
+  my %entrants_master;
+  $entrants_master{$_->object_id} = $_->object_name foreach @entrants_master;
+  
+  # Grab the season
+  my $season = $tournament->event_season->season;
+  
+  my $last_week;
+  # Loop through all the rounds we *should* have and check them
+  # If it's not a group round, it'll just be looping from 1 to 1
+  my $rounds = $group_round ? $group->match_rounds : 1;
+  foreach my $round ( 1 .. $rounds ) {
+    if ( $entry_type eq "team" ) {
+      # If it's team entry, we need a season week to set these matches in
+      if ( $group_round ) {
+        if ( my $week_id = $rounds{$round}{round_date}{week_beginning_id} ) {
+          my $week = $season->find_related("fixtures_weeks", {id => $week_id});
+          
+          if ( defined($week) ) {
+            $rounds{$round}{round_date}{week_beginning_date} = $week->week_beginning_date;
+            
+            # The week is valid; ensure it doesn't occur prior to the last one.
+            push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.date-occurs-before-previous-date", $round))
+              if defined($last_week) and $week->week_beginning_date->ymd("") <= $last_week->week_beginning_date->ymd("");
+            
+            # Set the last season week so that we can check the next one occurs at a later date on the next iteration.
+            $last_week = $week;
+          } else {
+            # Error, season week not found
+            push(@{$response->{error}}, $lang->maketext("fixtures-grids.form.create-fixtures.error.week-invalid", $round));
+          }
+          
+          $rounds{$round}{week} = $week;
+        } else {
+          # Error, season week not specified.
+          push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.round-blank", $round));
+        }
+      }
+    }
+    
+    # Setup the week date for this round
+    my ( $week_date, $scheduled_date );
+    my $wc = $self->week_commencing;
+    if ( $group_round ) {
+      $week_date = $rounds{$round}{round_date}{week_beginning_date};
+    } else {
+      if ( $wc ) {
+        # Week commencing, set the week date from the round's date
+        $week_date = $self->date;
+      } else {
+        $scheduled_date = $self->date;
+      }
+    }
+    
+    # Now loop through the matches and check all the data given
+    # %used_entrants will hold entrants as we use them, with a count so we can check nothing is used more tha once in a given round
+    # %entrants_to_use will hold all the entrants at the start, deleting as we use, so we can check at the end that there are none left
+    # (there will be one left if we have an odd number of entrants, this is fine)
+    my %used_entrants = ();
+    my %entrants_to_use = %entrants_master;
+    my $matches = $group_round ? $group->matches_per_round : $self->number_of_matches;
+    foreach my $match ( 1 .. $matches ) {
+      $logger->("debug", "match $match");
+      my $home = $rounds{$round}{matches}{$match}{home};
+      my $away = $rounds{$round}{matches}{$match}{away};
+      my $venue = $rounds{$round}{matches}{$match}{venue} || undef;
+      my $day = $rounds{$round}{matches}{$match}{day} || undef;
+      my $handicap_start = $rounds{$round}{matches}{$match}{handicap}{headstart};
+      my $handicap_awarded_to = $rounds{$round}{matches}{$match}{handicap}{awarded_to};
+      
+      # Hash to check the home / away competitors, so we can loop through
+      my %check_competitors = (home => $home, away => $away);
+      
+      # Do any lookups we need to - we can pass in objects or IDs (URL keys too if it's not a team - teams also need club URL keys, and there's no way to pass in both)
+      # Reverse key sort so we do home before away
+      foreach my $home_away ( reverse sort keys %check_competitors ) {
+        my $competitor = $check_competitors{$home_away};
+        if ( defined($competitor) ) {
+          # Look up the competitor from the relevant class
+          my ( $comp_class, $object_name );
+          if ( $entry_type eq "team" ) {
+            $comp_class = "Team";
+            $object_name = "full_name";
+          } else {
+            # Singles and doubles check the person class, just we check it twice for doubles
+            $comp_class = "Person";
+            $object_name = "display_name";
+          }
+          
+          $competitor = $schema->resultset($comp_class)->find($competitor) unless $competitor->isa("TopTable::Schema::Result::$comp_class");
+          $logger->("debug", sprintf("loction: %s, competitor: %s, name: %s", $home_away, $competitor, defined($competitor) ? $competitor->object_name : "not found"));
+          
+          if ( defined($competitor) ) {
+            # Home team is valid, but check it's in the group
+            my $has_entrant = $group_round ? $group->has_entrant($competitor) : $self->has_entrant($competitor);
+            
+            if ( $has_entrant ) {
+              # Valid, set into the %used_entrants hash and delete from entrants to use
+              if ( exists($used_entrants{$competitor->id}) ) {
+                # Seen already, increase the count
+                $used_entrants{$competitor->id}{count}++;
+              } else {
+                # Not already seen, add into the hash
+                $used_entrants{$competitor->id} = {count => 1, name => $entrants_to_use{$competitor->id}};
+              }
+              
+              delete $entrants_to_use{$competitor->id};
+            } else {
+              # Error, team not in the group
+              if ( $entry_type eq "team" ) {
+                $object_name = $competitor->full_name;
+              } elsif ( $entry_type eq "singles" ) {
+                $object_name = $competitor->display_name;
+              } else {
+                # Doubles
+                #$object_name = 
+              }
+              
+              if ( defined($group) ) {
+                # Group message
+                push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.comp-not-in-group", encode_entities($object_name), $lang->maketext("events.tournaments.rounds.groups.create-fixtures.$home_away"), $round, $match));
+              } else {
+                # Round message
+                push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.matches.create.error.comp-not-in-round", encode_entities($object_name), $lang->maketext("events.tournaments.rounds.create-matches.$home_away"), $match));
+              }
+            }
+          } else {
+            # Team is invalid
+            push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.comp-invalid", $lang->maketext("events.tournaments.rounds.groups.create-fixtures.$home_away"), $round, $match));
+          }
+        } else {
+          # Error, team not passed in
+          push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.comp-blank", $lang->maketext("events.tournaments.rounds.groups.create-fixtures.$home_away"), $round, $match));
+        }
+        
+        # Set the value we looked up (even if undef) back into the hash
+        $rounds{$round}{matches}{$match}{$home_away} = $competitor;
+      }
+      
+      # If either the venue or the day are undefined, we need to grab the home night / venue from the team's season settings
+      # Make sure $home now refers to the team object we looked up
+      $home = $rounds{$round}{matches}{$match}{home};
+      my $home_season;
+      $home_season = $home->get_season($season) if defined($home) and (!defined($venue) or !defined($day));
+      
+      if ( defined($venue) ) {
+        # Venue passed in, so we will override
+        $venue = $schema->resultset("Venue")->find($venue) unless $venue->isa("TopTable::Schema::Result::Venue");
+        
+        if ( defined($venue) ) {
+          if ( $venue->active ) {
+            $rounds{$round}{matches}{$match}{venue} = $venue;
+          } else {
+            push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.venue-inactive", encode_entities($venue->name), $round, $match));
+          }
+        } else {
+          # Venue is now not defined after lookup, so can't have been valid
+          push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.venue-invalid", $round, $match));
+        }
+      } else {
+        # Venue not passed in - get it from the round settings if there's one there, or the team's home venue if not
+        if ( defined($self->venue) ) {
+          $rounds{$round}{matches}{$match}{venue} = $self->venue;
+        } elsif ( defined($home_season) ) {
+          $rounds{$round}{matches}{$match}{venue} = $home_season->club_season->venue;
+        }
+      }
+      
+      if ( $group_round ) {
+        # Group round, take the submitted date for this round of matches
+        if ( defined($day) ) {
+          # Day passed in, so we will override the home team's night
+          $day = $schema->resultset("LookupWeekday")->find($day) unless $day->isa("TopTable::Schema::Result::LookupWeekday");
+          
+          if ( defined($day) ) {
+            # Set the date to be a DateTime object based on the day selected
+            $scheduled_date = TopTable::Controller::Root::get_day_in_same_week($week_date, $day->weekday_number);
+            $rounds{$round}{matches}{$match}{day} = $day;
+          } else {
+            # Day is now not defined after lookup, so can't have been valid
+            push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.day-invalid", $round, $match));
+          }
+        } else {
+          # Otherwise use the home team's night
+          $scheduled_date = TopTable::Controller::Root::get_day_in_same_week($week_date, $home_season->home_night->weekday_number) if defined($home_season);
+        }
+      } else {
+        # Not a group round, take the date from the round date
+        if ( $wc ) {
+          # Use the team's home night, set the day from the week date and home team's night - if this is not the case, the scheduled date is already set for all matches this round
+          $scheduled_date = TopTable::Controller::Root::get_day_in_same_week($week_date, $home_season->home_night->weekday_number);
+        }
+      }
+      
+      $rounds{$round}{matches}{$match}{date} = $scheduled_date;
+      
+      # Check handicaps - first check if this is a handicapped event
+      if ( defined($handicap_awarded_to) ) {
+        # Handicap is defined
+        if ( $handicapped ) {
+          if ( $handicap_awarded_to eq "home" or $handicap_awarded_to eq "away" ) {
+            if ( defined($handicap_start) ) {
+              # Check there's a positive numeric value (not 0) in the handicap
+              push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.handicap-invalid", $round, $match)) unless $handicap_start =~ /^[1-9]\d{0,2}$/;
+            } else {
+              # Error, no handicap set
+              push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.handicap-not-set", $round, $match));
+            }
+          } elsif ( $handicap_awarded_to eq "set_later" or $handicap_awarded_to eq "scratch" ) {
+            # Nothing to do here
+          } else {
+            # Error, invalid handicap option
+            push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.invalid-handicap-option", $round, $match));
+          }
+        } else {
+          # Handicap passed in, but the event isn't handicapped - this is just info, we can just not set the handicaps
+          push(@{$response->{info}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.handicap-set-needlessly", $round, $match));
+        }
+      } else {
+        # Handicap not defined - error 
+        push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.error.handicap-option-blank", $round, $match)) if $handicapped;
+      }
+    }
+    
+    # Check nothing has been used more than once, and nothing has been left unused
+    foreach my $entrant_used ( keys %used_entrants ) {
+      push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.entrant-used-too-many-times", $round, $used_entrants{$entrant_used}{name}, $used_entrants{$entrant_used}{count})) if $used_entrants{$entrant_used}{count} > 1;
+    }
+    
+    # Check nothing is left behind - slightly complicated by the fact we can have a bye round if there's an odd number ( % 2 gives a true value, because there is a remainder)
+    my $bye_allowed = scalar @entrants_master % 2 ? 1 : 0;
+    my $unused_count = scalar keys %entrants_to_use;
+    if ( $bye_allowed ) {
+      push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.entrants-unused-with-bye", $round)) if $unused_count > 1;
+    } else {
+      push(@{$response->{error}}, $lang->maketext("events.tournaments.rounds.groups.create-fixtures.entrants-unused", $round)) if $unused_count;
+    }
+  }
+  
+  $response->{fields}{rounds} = \%rounds;
+  
+  if ( @{$response->{error}} == 0 ) {
+    # No errors, build the match data
+    my ( @match_games, @match_legs, @template_games );
+    if ( $entry_type eq "team" ) {
+      # If it's team entry, we have a team match template, which will have games - we need to build an array of games
+      # so that we can just use that, rather than referring back to the DB each time.  Do this outside the loop here
+      # because it's the same for each game being created
+      my $template_games = $match_template->template_match_team_games;
+      while ( my $game = $template_games->next ) {
+        push(@template_games, {
+          singles_home_player_number => $game->singles_home_player_number,
+          singles_away_player_number => $game->singles_away_player_number,
+          doubles_game => $game->doubles_game,
+          match_template => $game->individual_match_template,
+          match_game_number => $game->match_game_number,
+          legs_per_game => $game->individual_match_template->legs_per_game,
+        });
+      }
+    }
+    
+    # This will be the data used to populate the matches
+    my ( $matches, @matches, @match_ids, @match_names );
+    foreach my $round ( 1 .. $rounds ) {
+      my $scheduled_week = $rounds{$round}{round_date}{week_beginning_id};
+      my $week_beginning_date = $rounds{$round}{round_date}{week_beginning_date};
+      
+      # Loop through the matches
+      my $matches = $group_round ? $group->matches_per_round : $self->number_of_matches;
+      foreach my $match ( 1 .. $matches ) {
+        my $home = $rounds{$round}{matches}{$match}{home};
+        my $away = $rounds{$round}{matches}{$match}{away};
+        my $venue = $rounds{$round}{matches}{$match}{venue};
+        my $handicap_start = $rounds{$round}{matches}{$match}{handicap}{headstart};
+        my $handicap_awarded_to = $rounds{$round}{matches}{$match}{handicap}{awarded_to};
+        my $scheduled_date = $rounds{$round}{matches}{$match}{date};
+        my ( $start_time, %match_data );
+        
+        if ( $entry_type eq "team" ) {
+          $start_time = $home->default_match_start // $home->club->default_match_start // $season->default_match_start;
+          
+          # Team match template, populate an array of games
+          
+          
+          # Empty arrayref for the games - these will be populated in the next loop
+          my @match_games = ();
+          
+          # Set up the league team match games / legs
+          foreach my $game_template ( @template_games ) {
+            # Loop through creating legs for each game
+            # Empty arrayref for the legs - this will be populated on the next loop
+            my @match_legs = ();
+            foreach my $i ( 1 .. $game_template->{legs_per_game} ) {
+              push(@match_legs, {
+                home_team => $home->id,
+                away_team => $away->id,
+                scheduled_date => $scheduled_date->ymd,
+                scheduled_game_number => $game_template->{match_game_number},
+                leg_number => $i,
+              });
+            }
+            
+            # What we populate will be different, depending on whether it's a doubles game or not
+            my %game = (
+              home_team => $home->id,
+              away_team => $away->id,
+              scheduled_date => $scheduled_date->ymd,
+              scheduled_game_number => $game_template->{match_game_number},
+              actual_game_number => $game_template->{match_game_number},
+              individual_match_template => $game_template->{match_template}->id,
+              doubles_game => $game_template->{doubles_game},
+              team_match_legs => \@match_legs,
+            );
+            
+            # Add player numbers for a doubles game
+            if ( !$game_template->{doubles_game} ) {
+              $game{home_player_number} = $game_template->{singles_home_player_number};
+              $game{away_player_number} = $game_template->{singles_away_player_number};
+            }
+            
+            push(@match_games, \%game);
+          }
+          
+          # Now loop through and build the players.  We loop through twice for the number of players per team,
+          # so that we do it for both teams
+          # Empty arrayref to start off with
+          my @match_players = ();
+          foreach my $i ( 1 .. ( $match_template->singles_players_per_team * 2 ) ) {
+            # Is it home or away?  If our loop counter is greater than the number of players in a team, we must have moved on to the away team
+            my $location = $i > $match_template->singles_players_per_team ? "away" : "home";
+            
+            push(@match_players, {
+              home_team => $home->id,
+              away_team => $away->id,
+              player_number => $i,
+              location => $location,
+            });
+          }
+          
+          # Push on to the array that will populate the DB
+          my %match = (
+            home_team => $home->id,
+            away_team => $away->id,
+            scheduled_date => $scheduled_date->ymd,
+            played_date => $scheduled_date->ymd,
+            scheduled_start_time => $start_time,
+            season => $season->id,
+            division => undef,
+            tournament_round => $self->id,
+            tournament_group => defined($group) ? $group->id : undef,
+            venue => $venue->id,
+            scheduled_week => $scheduled_week,
+            team_match_template => $match_template->id,
+            team_match_games => \@match_games,
+            team_match_players => \@match_players,
+          );
+          
+          if ( $handicapped ) {
+            # The only other option here is set later, in which case we leave the handicap fields alone and they get set to null
+            if ( $handicap_awarded_to eq "home" ) {
+              # Home get the head start, set home handicap to the handicap we want and away to 0
+              $match{home_team_handicap} = $handicap_start;
+              $match{away_team_handicap} = 0;
+            } elsif ( $handicap_awarded_to eq "away" ) {
+              # Away get the head start, set away handicap to the handicap we want and home to 0
+              $match{home_team_handicap} = 0;
+              $match{away_team_handicap} = $handicap_start;
+            } elsif ( $handicap_awarded_to eq "scratch" ) {
+              # Scratch, no one gets a head start, set both handicap fields to 0
+              $match{home_team_handicap} = 0;
+              $match{away_team_handicap} = 0;
+            }
+          }
+          
+          push(@matches, \%match);
+          
+          # Increase the number of matches we are creating
+          $matches++;
+          
+          # Push on to the IDs / names arrays that we'll use for the event log
+          push(@match_ids, {
+            home_team => $home->id,
+            away_team => $away->id,
+            scheduled_date => $scheduled_date->ymd,
+          });
+          
+          push(@match_names, sprintf("%s, (%s - %s)", $lang->maketext("matches.name", $home->full_name, $away->full_name), $tournament->event_season->name, $scheduled_date->dmy("/")));
+        } else {
+          # Individual match template
+          
+        }
+      }
+    }
+    
+    if ( $entry_type eq "team" ) {
+      $schema->resultset("TeamMatch")->populate(\@matches);
+      $response->{completed} = 1;
+      my $created_in = $group_round ? $group->name : $self->name;
+      push(@{$response->{success}}, $lang->maketext("events.tournaments.rounds.create-matches.success", scalar(@match_ids), $created_in));
+      
+      $response->{match_ids} = \@match_ids;
+      $response->{match_names} = \@match_names;
+      $response->{matches} = \@matches;
+    }
+  }
+  
+  return $response;
+}
+
+=head2 delete_matches
+
+Delete the matches in this group.
+
+=cut
+
+sub delete_matches {
+  my $self = shift;
+  my ( $params ) = @_;
+  
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  
+  # Grab the fields
+  my $response = {
+    error => [],
+    warning => [],
+    info => [],
+    success => [],
+    fields => {},
+    completed => 0,
+    can_complete => 1, # Default to 1, set to 0 if we hit certain errors.  This is so the application calling this routine knows not to return back to the form if we can't actually do it anyway
+  };
+  
+  my %can = $self->can_update("delete-matches");
+  if ( !$can{allowed} ) {
+    push(@{$response->{$can{level}}}, $can{reason});
+    return $response;
+  }
+  
+  my @rows_to_delete = $self->matches;
+  
+  # These arrays will be used in event log creation
+  my ( @match_names, @match_ids );
+  
+  if ( scalar( @rows_to_delete ) ) {
+    foreach my $match ( @rows_to_delete ) {
+      push(@match_ids, {
+        home_team => undef,
+        away_team => undef,
+        scheduled_date => undef,
+      });
+      
+      push(@match_names, sprintf("%s %s v %s %s (%s)", $match->team_season_home_team_season->club_season->short_name, $match->team_season_home_team_season->name, $match->team_season_away_team_season->club_season->short_name, $match->team_season_away_team_season->name, $match->scheduled_date->dmy("/")));
+    }
+    
+    my $ok = $self->matches->delete;
+    
+    if ( $ok ) {
+      # Deleted ok
+      $response->{match_names} = \@match_names;
+      $response->{match_ids} = \@match_ids;
+      $response->{rows} = $ok;
+      $response->{completed} = 1;
+      push(@{$response->{success}}, $lang->maketext("events.tournaments.rounds.delete-fixtures.success", $ok, $self->name));
+    } else {
+      # Not okay, log an error
+      push(@{$response->{error}}, $lang->maktext("events.tournaments.rounds.groups.error.delete-failed"));
+    }
+  } else {
+    $response->{rows} = 0;
   }
   
   return $response;

@@ -113,7 +113,7 @@ If NULL, this must be part of a tournament
   data_type: 'integer'
   extra: {unsigned => 1}
   is_foreign_key: 1
-  is_nullable: 0
+  is_nullable: 1
 
 =head2 played_date
 
@@ -421,7 +421,7 @@ __PACKAGE__->add_columns(
     data_type => "integer",
     extra => { unsigned => 1 },
     is_foreign_key => 1,
-    is_nullable => 0,
+    is_nullable => 1,
   },
   "played_date",
   { data_type => "date", datetime_undef_if_invalid => 1, is_nullable => 0 },
@@ -767,7 +767,12 @@ __PACKAGE__->belongs_to(
   "scheduled_week",
   "TopTable::Schema::Result::FixturesWeek",
   { id => "scheduled_week" },
-  { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
+  {
+    is_deferrable => 1,
+    join_type     => "LEFT",
+    on_delete     => "RESTRICT",
+    on_update     => "RESTRICT",
+  },
 );
 
 =head2 season
@@ -962,8 +967,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07051 @ 2025-01-30 13:59:36
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:weoZv3p4ezhvsmPJgva1jg
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2025-02-12 11:29:51
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:pRbO1Wipm4vIgLcYzHFmqA
 
 use Try::Tiny;
 use DateTime::Duration;

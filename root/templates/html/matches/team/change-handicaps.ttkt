@@ -23,7 +23,7 @@ away_team = match.team_season_away_team_season.full_name | html_entity;
   </div>
   
   <div class="label-field-container">
-    <label for="away_team_handicap">[% c.maketext("matches.cancel.points-awarded", away_team) %]</label>
+    <label for="away_team_handicap">[% c.maketext("matches.handicaps.points-headstart", away_team) %]</label>
     <div class="field-container">
       <input type="number" id="away_team_handicap" name="away_team_handicap" value="[% away_team_handicap OR "0" %]" />
     </div>
