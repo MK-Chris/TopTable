@@ -698,13 +698,13 @@ IF match.tournament_round;
     ELSE;
       SET group_uri = c.uri_for_action("/events/group_view_current_season", [event.url_key, tourn_round.url_key, match.tournament_group.url_key]);
     END;
-  END;
 -%]
           <tr>
             <th scope="row">[% c.maketext("matches.field.tournament-group") %]</th>
             <td><a href="[% group_uri %]">[% match.tournament_group.name %]</a></td>
           </tr>
 [%
+  END;
 ELSE;
   # League
 -%]
