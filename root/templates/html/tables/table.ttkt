@@ -84,9 +84,35 @@ FOREACH entrant = entrants;
     SET against = entrant.points_lost;
     SET diff = entrant.points_difference;
   END;
+  
+  # If the table is complete, show trophy icons instead of position numbers in the top two positions
+  CALL c.log.debug("complete: " _ table_complete);
+  IF table_complete;
+    SWITCH i;
+      CASE [1, 2];
+        # First or second place - setup image.  Img src depends on specific place:
+        SWITCH i;
+          CASE 1;
+            SET img_src = c.uri_for("/static/images/icons/trophy-1st-16.png");
+          CASE 2;
+            SET img_src = c.uri_for("/static/images/icons/trophy-2nd-16.png");
+        END;
+        
+        SET pos_display = '<img src="' _ img_src _ '" title="' _ c.maketext("tables.positions." _ i) _ '" width="16" height="16" />';
+      CASE 2;
+        # Second place
+        SET pos_display = "text";
+      CASE;
+        # Further down
+        SET pos_display = i;
+    END;
+  ELSE;
+    # Table not complete, don't show any trophy icons
+    SET pos_display = i;
+  END;
 -%]
             <tr>
-              <td data-label="[% c.maketext("stats.table-heading.position.full") %]" class="numeric">[% i %]</td>
+              <td data-label="[% c.maketext("stats.table-heading.position.full") %]" class="numeric">[% pos_display %]</td>
               <td data-label="[% c.maketext("stats.table-heading.team") %]"><a href="[% team_uri %]"><nobr>[% team_season.club_season.short_name | html_entity %]</nobr> [% team_season.name | html_entity %]</a>[% qualified %]
 [%-
   IF authorisation.team_edit;

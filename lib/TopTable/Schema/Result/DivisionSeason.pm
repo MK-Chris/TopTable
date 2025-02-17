@@ -283,6 +283,31 @@ sub points_adjustments {
   return $self->search_related("team_seasons")->search_related("team_points_adjustments");
 }
 
+=head2 matches
+
+Return a list of matches for the division in this season.
+
+=cut
+
+sub matches {
+  my $self = shift;
+  
+  return $self->search_related("team_matches");
+}
+
+=head2 table_complete
+
+Return 1 if the season is complete, or all matches are complete; 0 otherwise.
+
+=cut
+
+sub table_complete {
+  my $self = shift;
+  my $season = $self->season;
+  
+  return ($season->complete or $self->matches->incomplete_and_not_cancelled->count == 0) ? 1 : 0;
+}
+
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 __PACKAGE__->meta->make_immutable;
 1;
