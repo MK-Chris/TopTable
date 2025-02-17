@@ -222,6 +222,11 @@ div.error-message, div.error-message-small {
   border: 1px solid #D8000C;
 }
 
+span.qual {
+  color: #4F8A10;
+  font-size: 1.1em;
+}
+
 /* Tables */
 .table-wrap {
   max-width: 1008px;

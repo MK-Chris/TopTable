@@ -1,6 +1,15 @@
 [%
 SET winner_type = match_template.winner_type.id;
 SET group_class = " tourn-group" IF multi_groups;
+
+IF tourn_group;
+  # Check if we have qualifiers from the group
+  IF tourn_view;
+    SET next_round = group_round.next_round;
+  ELSE;
+    SET next_round = round.next_round;
+  END;
+END;
 -%]
         <table class="league-table stripe hover row-border[% group_class %]" style="width:100%">
           <thead>
@@ -39,6 +48,12 @@ FOREACH entrant = entrants;
   IF tourn_group;
     SET team_season = entrant.tournament_team.team_season;
     
+    IF next_round.has_entrant(team_season.team);
+      SET qualified = ' <span class="qual" title="' _ c.maketext("tournaments.rounds.group.qual-full", next_round.name) _ '">' _ c.maketext("tournaments.rounds.group.qual-abbrev") _ '</span>';
+    ELSE;
+      SET qualified = "";
+    END;
+    
     # Links to team tournament page
     IF specific_season;
       SET team_uri = c.uri_for_action("/events/teams_view_by_url_key_specific_season", [event.url_key, season.url_key, team_season.team.club.url_key, team_season.team.url_key, season.url_key]);
@@ -47,6 +62,7 @@ FOREACH entrant = entrants;
     END;
   ELSE;
     SET team_season = entrant;
+    SET qualified = "";
     
     # Links to main team page
     IF specific_season;
@@ -71,7 +87,7 @@ FOREACH entrant = entrants;
 -%]
             <tr>
               <td data-label="[% c.maketext("stats.table-heading.position.full") %]" class="numeric">[% i %]</td>
-              <td data-label="[% c.maketext("stats.table-heading.team") %]"><a href="[% team_uri %]"><nobr>[% team_season.club_season.short_name | html_entity %]</nobr> [% team_season.name | html_entity %]</a>
+              <td data-label="[% c.maketext("stats.table-heading.team") %]"><a href="[% team_uri %]"><nobr>[% team_season.club_season.short_name | html_entity %]</nobr> [% team_season.name | html_entity %]</a>[% qualified %]
 [%-
   IF authorisation.team_edit;
 -%]
