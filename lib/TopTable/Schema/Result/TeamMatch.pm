@@ -1220,6 +1220,17 @@ sub in_table {
   return (defined($self->division_season) or defined($self->tournament_group)) ? 1 : 0;
 }
 
+=head2 is_final
+
+Return 1 if this match is the final of a tournament, or 0 if not.
+
+=cut
+
+sub is_final {
+  my $self = shift;
+  return defined($self->tournament_round) ? $self->tournament_round->is_final_round : 0;
+}
+
 =head2 handicap_format
 
 Tells us if the handicap has been set or needs setting.  Returns undef if this isn't a handicapped match.
@@ -1629,7 +1640,7 @@ sub score {
   $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
   my $lang = $schema->lang;
   
-  if ( $self->started ) {
+  if ( $self->started or $self->cancelled ) {
     # If the match is started, return the score regardless
     return sprintf("%d-%d", $self->team_score("home"), $self->team_score("away"));
   } else {
@@ -1689,6 +1700,28 @@ sub team_score {
     } else {
       return $self->away_team_match_score;
     }
+  }
+}
+
+=head2 winner
+
+Return the match winner as a team object (undef if it's a draw).
+
+=cut
+
+sub winner {
+  my $self = shift;
+  my ( $home_score, $away_score ) = ( $self->team_score("home"), $self->team_score("away") );
+  
+  if ( $home_score > $away_score ) {
+    # Home win
+    return $self->team_season_home_team_season->team;
+  } elsif ( $home_score < $away_score ) {
+    # Away win
+    return $self->team_season_away_team_season->team;
+  } else {
+    # No winner - undef
+    return undef;
   }
 }
 

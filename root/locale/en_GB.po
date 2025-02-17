@@ -1690,12 +1690,6 @@ msgid "stats.label.average"
 msgstr "Won (%)"
 
 ### Tables / points adjustments
-msgid "tables.positions.1"
-msgstr "Champions"
-
-msgid "tables.positions.2"
-msgstr "Runners up"
-
 msgid "tables.adjustments.fields.action"
 msgstr "Action"
 
@@ -3575,6 +3569,24 @@ msgstr "Points lost"
 msgid "stats.table-heading.average"
 msgstr "%"
 
+msgid "stats.positions.team.1"
+msgstr "Champions"
+
+msgid "stats.positions.team.2"
+msgstr "Runners up"
+
+msgid "stats.positions.doubles.1"
+msgstr "Champions"
+
+msgid "stats.positions.doubles.2"
+msgstr "Runners up"
+
+msgid "stats.positions.singles.1"
+msgstr "Champion"
+
+msgid "stats.positions.singles.2"
+msgstr "Runner up"
+
 ### League Tables
 msgid "stats.no-teams"
 msgstr "No teams have been entered into this season."
@@ -4307,14 +4319,23 @@ msgid "reports.columns.loan-players.games-won"
 msgstr "Won"
 
 ## Rearranged matches columns
+msgid "reports.columns.rearranged-matches.scheduled-date-sort"
+msgstr "Original date (sort)"
+
 msgid "reports.columns.rearranged-matches.scheduled-date"
 msgstr "Original date"
+
+msgid "reports.columns.rearranged-matches.rescheduled-date-sort"
+msgstr "Rescheduled date (sort)"
 
 msgid "reports.columns.rearranged-matches.rescheduled-date"
 msgstr "Rescheduled date"
 
-msgid "reports.columns.rearranged-matches.division"
-msgstr "Division"
+msgid "reports.columns.rearranged-matches.competition-sort"
+msgstr "Competition (sort)"
+
+msgid "reports.columns.rearranged-matches.competition"
+msgstr "Competition"
 
 msgid "reports.columns.rearranged-matches.home-team"
 msgstr "Home team"
@@ -4329,11 +4350,17 @@ msgid "reports.columns.rearranged-matches.venue"
 msgstr "Venue"
 
 ## Cancelled matches columns
+msgid "reports.columns.cancelled-matches.date-sort"
+msgstr "Date (sort)"
+
 msgid "reports.columns.cancelled-matches.date"
 msgstr "Date"
 
-msgid "reports.columns.cancelled-matches.division"
-msgstr "Division"
+msgid "reports.columns.cancelled-matches.competition-sort"
+msgstr "Competition (sort)
+
+msgid "reports.columns.cancelled-matches.competition"
+msgstr "Competition"
 
 msgid "reports.columns.cancelled-matches.home-team"
 msgstr "Home team"
@@ -4348,11 +4375,17 @@ msgid "reports.columns.cancelled-matches.venue"
 msgstr "Venue"
 
 ## Matches with missing players columns
+msgid "reports.columns.missing-players.date-sort"
+msgstr "Date (sort)"
+
 msgid "reports.columns.missing-players.date"
 msgstr "Date"
 
-msgid "reports.columns.missing-players.division"
-msgstr "Division"
+msgid "reports.columns.missing-players.competition-sort"
+msgstr "Competition (sort)"
+
+msgid "reports.columns.missing-players.competition"
+msgstr "Competition"
 
 msgid "reports.columns.missing-players.home-team"
 msgstr "Home team"

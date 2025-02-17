@@ -1354,6 +1354,17 @@ sub is_first_ko_round {
   }
 }
 
+=head2 is_final_round
+
+Return 1 if this is the final round, or 0 if not.
+
+=cut
+
+sub is_final_round {
+  my $self = shift;
+  return $self->round_of == 2 ? 1 : 0;
+}
+
 =head2 num_qualifiers
 
 The number of qualifiers to go through from this round.  If this is a group round, it'll be the minimum number of qualifiers that can go through (taken from the sum of automatic_qualifiers in all groups); if it's a knock-out round it'll be half the number of people in the group.

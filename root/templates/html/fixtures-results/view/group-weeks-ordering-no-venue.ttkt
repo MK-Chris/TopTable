@@ -37,6 +37,8 @@
     SET away_team = match.team_season_away_team_season;
     home_team_html = home_team.full_name | html_entity;
     away_team_html = away_team.full_name | html_entity;
+    SET home_pos_img = "";
+    SET away_pos_img = "";
     
     IF match.tournament_round;
       SET tourn_round = match.tournament_round;
@@ -66,6 +68,25 @@
         ELSE;
           SET comp_uri = c.uri_for_action("/events/round_view_current_season", [match.tournament_round.tournament.event_season.event.url_key, match.tournament_round.url_key]);
         END;
+      END;
+      
+      IF match.complete AND match.winner AND match.is_final;
+        IF match.winner.id == home_team.team.id;
+          # Home win
+          SET home_trophy_img_src = c.uri_for("/static/images/icons/trophy-1st-32.png");
+          SET home_trophy_alt = c.maketext("stats.positions.team.1");
+          SET away_trophy_img_src = c.uri_for("/static/images/icons/trophy-2nd-32.png");
+          SET away_trophy_alt = c.maketext("stats.positions.team.2");
+        ELSIF match.winner.id == away_team.team.id;
+          # Away win
+          SET home_trophy_img_src = c.uri_for("/static/images/icons/trophy-2nd-32.png");
+          SET home_trophy_alt = c.maketext("stats.positions.team.2");
+          SET away_trophy_img_src = c.uri_for("/static/images/icons/trophy-1st-32.png");
+          SET away_trophy_alt = c.maketext("stats.positions.team.1");
+        END;
+        
+        SET home_pos_img = ' <img src="' _ home_trophy_img_src _ '" title="' _ home_trophy_alt _ '" alt="' _ home_trophy_alt _ '" width="32" height="32" />';
+        SET away_pos_img = ' <img src="' _ away_trophy_img_src _ '" title="' _ away_trophy_alt _ '" alt="' _ home_trophy_alt _ '" width="32" height="32" />';
       END;
     ELSE;
       SET home_uri_title = c.maketext("matches.link-title.team-league", home_team_html);
@@ -99,8 +120,8 @@
     <td data-label="[% c.maketext("fixtures-results.heading.date") %]"><a href="[% fixtures_day_uri %]">[% c.i18n_datetime_format_date.format_datetime(date) %]</a></td>
     <td data-label="[% c.maketext("fixtures-results.heading.competition-sort") %]">[% match.competition_sort %]</td>
     <td data-label="[% c.maketext("fixtures-results.heading.competition") %]"><a href="[% comp_uri %]">[% match.competition_name %]</a></td>
-    <td data-label="[% c.maketext("fixtures-results.heading.home-team") %]"><a title="[% home_uri_title %]" href="[% home_team_uri %]">[% home_team_html %]</a></td>
-    <td data-label="[% c.maketext("fixtures-results.heading.away-team") %]"><a title="[% away_uri_title %]" href="[% away_team_uri %]">[% away_team_html %]</a></td>
+    <td data-label="[% c.maketext("fixtures-results.heading.home-team") %]"><a title="[% home_uri_title %]" href="[% home_team_uri %]">[% home_team_html %]</a>[% home_pos_img %]</td>
+    <td data-label="[% c.maketext("fixtures-results.heading.away-team") %]"><a title="[% away_uri_title %]" href="[% away_team_uri %]">[% away_team_html %]</a>[% away_pos_img %]</td>
     <td data-label="[% c.maketext("fixtures-results.heading.score-versus") %]"><a href="[% c.uri_for_action('/matches/team/view_by_url_keys', match.url_keys) %]" title="[% c.maketext("fixtures-results.view-scorecard") %]">[% match.score %]</a></td>
 [%
     IF authorisation.match_update OR authorisation.match_cancel;

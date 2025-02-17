@@ -631,6 +631,7 @@ sub league_matches {
     } elsif ( $mode eq "rearranged" ) {
       my $compare_field = "played_date";
       $where->{scheduled_date} = {"!=" => \$compare_field};
+      $where->{cancelled} = 0;
     } elsif ( $mode eq "missing-players" ) {
       $where->{"team_match_players.player_missing"} = 1;
       $attrib->{join} = "team_match_players";
