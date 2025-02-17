@@ -309,6 +309,7 @@ sub view_finalise :Private {
     
     push(@ext_styles, $c->uri_for("/static/css/datatables/rowGroup.dataTables.min.css"));
   }
+  
   # Stash the common details
   $c->stash({
     template => "html/tables/view.ttkt",
@@ -325,6 +326,7 @@ sub view_finalise :Private {
       season => $season,
       division => $division,
     }),
+    table_complete => $division_season->table_complete,
     points_adjustments => $points_adjustments,
     ranking_template => $ranking_template,
     match_template => $match_template,

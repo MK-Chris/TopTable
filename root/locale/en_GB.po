@@ -1690,6 +1690,12 @@ msgid "stats.label.average"
 msgstr "Won (%)"
 
 ### Tables / points adjustments
+msgid "tables.positions.1"
+msgstr "Champions"
+
+msgid "tables.positions.2"
+msgstr "Runners up"
+
 msgid "tables.adjustments.fields.action"
 msgstr "Action"
 
