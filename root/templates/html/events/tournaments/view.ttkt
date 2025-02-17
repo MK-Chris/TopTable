@@ -5,15 +5,36 @@ USE scalar;
 <div id="tabs">
   <ul>
 [%
+IF round_tabs.size;
+  FOREACH round = round_tabs;
+-%]
+    <li><a href="#[% round.url_key %]">[% round.name %]</a></li>
+[%
+  END;
+END;
+
 IF tournament.has_group_round;
 -%]
-    <li><a href="#groups">[% tournament.rounds.first.name OR c.maketext("events.tournaments.heading.round-group") %]</a></li>
+    <li><a href="#groups">[% tournament.rounds.first.name %]</a></li>
 [%
 END;
 -%]
     <li><a href="#summary">[% c.maketext("events.tournaments.heading.summary") %]</a></li>
   </ul>
 [%
+IF round_tabs.size;
+  FOREACH round = round_tabs;
+    SET matches = round.scalar.matches;
+-%]
+  <div id="[% round.url_key %]">
+[%
+INCLUDE "html/fixtures-results/view$handicapped/group-days-ordering-no-comp.ttkt" round_view = 1;
+-%]
+  </div>
+[%
+  END;
+END;
+
 IF tournament.has_group_round;
 -%]
   <div id="groups">
@@ -114,7 +135,7 @@ END;
 -%]
           </tbody>
         </table>
-[%-
+[%
 IF authorisation.event_edit AND tournament.can_add_round;
 -%]
         <a href="[% c.uri_for_action("/events/add_next_round", [event.url_key]) %]"><img src="[% c.uri_for("/static/images/icons/0009-Add-icon-32.png") %]" alt="[% c.maketext("admin.add-next-round", enc_event_name) %]" title="[% c.maketext("admin.add-next-round", enc_event_name) %]" /></a>

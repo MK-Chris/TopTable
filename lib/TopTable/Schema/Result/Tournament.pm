@@ -829,6 +829,17 @@ sub has_ko_round {
   return $self->search_related("tournament_rounds", {group_round => 0})->count ? 1 : 0;
 }
 
+=head2 ko_matches_setup
+
+Check if there are matches setup in at least one of the knock-out rounds.
+
+=cut
+
+sub ko_matches_setup {
+  my $self = shift;
+  return $self->matches({round_type => "ko"})->count ? 1 : 0;
+}
+
 =head2 calculate_ko_rounds
 
 Takes a number of participants and calculates the number of knock-out rounds that will be needed to whittle it down to a two-participant final.  Also returns the number of byes in the first round required, if we can't have matches for everyone.
@@ -869,6 +880,33 @@ sub rounds {
   my $self = shift;
   return $self->search_related("tournament_rounds", {}, {
     order_by => {-asc => [qw( round_number )]}
+  });
+}
+
+=head2 rounds_with_matches
+
+Return all the rounds with matches in them, in reverse order.
+
+=cut
+
+sub rounds_with_matches {
+  my $self = shift;
+  my ( $params ) = @_;
+  my $ko_only = $params->{ko_only} || 0;
+  my %where = ();
+  
+  if ( $ko_only ) {
+    # Knock-out rounds only
+    $where{"me.group_round"} = 0;
+  }
+  
+  return $self->search_related("tournament_rounds", \%where, {
+    select => [qw( me.id me.event me.season me.url_key me.round_number me.round_of me.name me.group_round ), {count => "team_matches.home_team"}],
+    as => [qw( id event season url_key  round_number round_of name group_round matches )],
+    join => [qw( team_matches )],
+    group_by => [qw( me.id )],
+    having => \["COUNT(team_matches.home_team) > ?", 0],
+    order_by => {-desc => [qw( me.round_number )]},
   });
 }
 
@@ -973,6 +1011,60 @@ sub get_person {
       person_season => [qw( person )],
     },
   });
+}
+
+=head2 matches
+
+Return the matches associated with this tournament.  Optional param {round_type => [group|ko]} returns only matches of that type.
+
+=cut
+
+sub matches {
+  my $self = shift;
+  my ( $params ) = @_;
+  # Setup schema / logging
+  my $schema = $self->result_source->schema;
+  my $no_prefetch = $params->{no_prefetch};
+  my $round_type = $params->{round_type} || "";
+  my ( $member_rel, %attrib );
+  my $entry_type = $self->entry_type->id;
+  
+  if ( $entry_type eq "team" ) {
+    $member_rel = "team_matches";
+    my %where = ("tournament.id" => $self->id);
+    
+    # If there's a round type, ensure we only bring that back
+    if ( $round_type eq "group" ) {
+      # Group only
+      $where{"me.tournament_group"} = {"<>" => undef};
+    } elsif ( $round_type eq "ko" ) {
+      # KO only
+      $where{"me.tournament_group"} = undef;
+    }
+    
+    %attrib = $no_prefetch ? () : (
+      prefetch  => [qw( venue ), {
+        team_season_home_team_season => [qw( team ), {club_season => "club"}],
+      }, {
+        team_season_away_team_season => [qw( team ), {club_season => "club"}],
+      }],
+      order_by => {
+        -asc => [qw( played_date club_season.short_name team_season_home_team_season.name )]
+      },
+    );
+    
+    $attrib{join} = {
+      tournament_round => [qw( tournament )],
+    };
+    
+    return $schema->resultset("TeamMatch")->search(\%where, \%attrib);
+  } elsif ( $entry_type eq "singles" ) {
+    $member_rel = "tournament_group_people";
+    return $self->search_related($member_rel, {}, \%attrib);
+  } elsif ( $entry_type eq "doubles" ) {
+    $member_rel = "tournament_group_doubles";
+    return $self->search_related($member_rel, {}, \%attrib);
+  }
 }
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
