@@ -5,7 +5,7 @@
   </ul>
   <div id="matches">
 [%
-INCLUDE "html/fixtures-results/view$handicapped/group-days-ordering-no-comp.ttkt";
+INCLUDE "html/fixtures-results/view$handicapped/group-days-ordering-no-comp.ttkt" round_view = 1;
 -%]
   </div>
   <div id="summary">
