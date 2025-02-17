@@ -6845,6 +6845,12 @@ msgstr "Delete group / match %1"
 msgid "tournaments.rounds.group.field.default-value"
 msgstr "Group / match %1"
 
+msgid "tournaments.rounds.group.qual-abbrev"
+msgstr "Q"
+
+msgid "tournaments.rounds.group.qual-full"
+msgstr "Qualified for %1"
+
 msgid "tournaments.round.form.error.season-not-current"
 msgstr "You can&#39;t add or edit rounds in a tournament that&#39;s not in the current season."
 

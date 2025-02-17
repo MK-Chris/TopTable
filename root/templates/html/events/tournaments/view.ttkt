@@ -39,7 +39,7 @@ IF tournament.has_group_round;
 -%]
   <div id="groups">
 [%
-INCLUDE "html/events/tournaments/rounds/view-groups.ttkt" tourn_view = 1;
+INCLUDE "html/events/tournaments/rounds/view-groups.ttkt" tourn_view = 1, multi_groups = 1;
 -%]
   </div>
 [%
