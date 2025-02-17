@@ -86,19 +86,18 @@ FOREACH entrant = entrants;
   END;
   
   # If the table is complete, show trophy icons instead of position numbers in the top two positions
-  CALL c.log.debug("complete: " _ table_complete);
   IF table_complete;
     SWITCH i;
       CASE [1, 2];
         # First or second place - setup image.  Img src depends on specific place:
         SWITCH i;
           CASE 1;
-            SET img_src = c.uri_for("/static/images/icons/trophy-1st-16.png");
+            SET img_src = c.uri_for("/static/images/icons/trophy-1st-32.png");
           CASE 2;
-            SET img_src = c.uri_for("/static/images/icons/trophy-2nd-16.png");
+            SET img_src = c.uri_for("/static/images/icons/trophy-2nd-32.png");
         END;
         
-        SET pos_display = '<img src="' _ img_src _ '" title="' _ c.maketext("tables.positions." _ i) _ '" width="16" height="16" />';
+        SET pos_display = '<img src="' _ img_src _ '" title="' _ c.maketext("stats.positions.team." _ i) _ '" width="32" height="32" />';
       CASE 2;
         # Second place
         SET pos_display = "text";
