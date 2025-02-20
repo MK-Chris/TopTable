@@ -86,6 +86,20 @@ ELSE;
 END;
 -%]</td>
       </tr>
+[%
+IF c.user_exists AND c.user.sysadmin;
+  SET error_num = 0;
+  FOREACH error = errors;
+    SET error_num = error_num + 1;
+-%]
+      <tr>
+        <th scope="row">[% c.maketext("error.info.error", error_num) %]</th>
+        <td>[% error %]</td>
+      </tr>
+[%
+  END;
+END;
+-%]
     </table>
   </div>
 </div>

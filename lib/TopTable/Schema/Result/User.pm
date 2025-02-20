@@ -1422,6 +1422,17 @@ sub search_display {
   };
 }
 
+=head2 sysadmin
+
+Returns true if the user is a sysadmin.
+
+=cut
+
+sub sysadmin {
+  my $self = shift;
+  return $self->has_role($self->result_source->schema->resultset("Role")->find({sysadmin => 1}));
+}
+
 =head2 registered_long_date
 
 Return the long registered date.
