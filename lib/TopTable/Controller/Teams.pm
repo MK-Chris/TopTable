@@ -453,8 +453,8 @@ sub view_finalise :Private {
     $c->uri_for("/static/script/teams$handicapped/view.js", {v => 4}),
   );
   
-  my $points_adjustments = $team_season->points_adjustments;
-  push(@ext_scripts, $c->uri_for("/static/script/teams/points-adjustment.js")) if $points_adjustments->count;
+  my $points_adjustments = defined($team_season) ? $team_season->points_adjustments : undef;
+  push(@ext_scripts, $c->uri_for("/static/script/teams/points-adjustment.js")) if defined($points_adjustments) and $points_adjustments->count;
   
   # Set up the template to use
   $c->stash({
