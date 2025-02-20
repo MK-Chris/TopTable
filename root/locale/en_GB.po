@@ -6526,6 +6526,9 @@ msgstr "User"
 msgid "error.info.user.not-logged-in"
 msgstr "Anonymous"
 
+msgid "error.info.error"
+msgstr "Error %1"
+
 msgid "footer.copyright"
 msgstr "Copyright"
 
