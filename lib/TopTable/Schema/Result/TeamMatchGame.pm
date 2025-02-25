@@ -2784,7 +2784,7 @@ sub update_doubles_pair {
         
         my ( @og_pair_stats, @og_player_stats, %og_stats, %og_stats_deletable, $round_team, $tourn_team, $tourn_round, $tourn_group );
         my $tourn_match = defined($match->tournament_round) ? 1 : 0;
-        my $tourn_group_round = $tourn_match and defined($match->tournament_group) ? 1 : 0;
+        my $tourn_group_round = ($tourn_match and defined($match->tournament_group)) ? 1 : 0;
         
         # Grab the tournament / round team objects up here, so we can do the lookups 
         if ( $tourn_match ) {
