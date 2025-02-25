@@ -503,7 +503,7 @@ sub update_person {
   my $team = $match->$match_team_field->team;
   
   my $tourn_match = defined($match->tournament_round) ? 1 : 0;
-  my $tourn_group_round = $tourn_match and defined($match->tournament_group) ? 1 : 0;
+  my $tourn_group_round = ($tourn_match and defined($match->tournament_group)) ? 1 : 0;
   if ( $action eq "add" ) {
     if ( defined($person) ) {
       # Lookup the person if we need to
