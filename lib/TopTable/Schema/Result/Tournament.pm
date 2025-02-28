@@ -857,7 +857,7 @@ sub calculate_ko_rounds {
   my $ko = $self->first_ko_round;
   
   # If the round is complete, we'll take the entrants that have been setup, otherwise take the entered value
-  my $players = $ko->complete ? $ko->get_entrants : $ko->round_of;
+  my $players = $ko->complete ? $ko->get_entrants->count : $ko->round_of;
   
   # Rounds is base 2 logarithm of the number of players, rounded up (ceil).
   my $rounds = ceil(logn($players, 2));

@@ -30,8 +30,14 @@ IF round_number > 1;
           <table class="stripe hover row-border" id="auto-table">
             <thead>
               <tr>
+[%
+  IF round.group_round;
+-%]
                 <th>[% c.maketext("events.tournament.rounds.entrants.group") %]</th>
                 <th>[% c.maketext("events.tournament.rounds.entrants.group-pos") %]</th>
+[%
+  END;
+-%]
                 <th>[% c.maketext("stats.table-heading.team") %]</th>
                 <th class="numeric" title="[% c.maketext("stats.table-heading.team-matches-played.full") %]">[% c.maketext("stats.table-heading.team-matches-played") %]</th>
                 <th class="numeric" title="[% c.maketext("stats.table-heading.matches-won.full") %]">[% c.maketext("stats.table-heading.matches-won") %]</th>
@@ -70,8 +76,14 @@ IF round_number > 1;
     END;
 -%]
                     <tr>
+[%
+  IF round.group_round;
+-%]
                       <td data-label="[% c.maketext("events.tournament.rounds.entrants.group") %]">[% entrant.tournament_group.name %]</td>
                       <td data-label="[% c.maketext("events.tournament.rounds.entrants.group-pos") %]">[% entrant.group_position %]</td>
+[%
+  END;
+-%]
                       <td data-label="[% c.maketext("stats.table-heading.team") %]">[% entrant.object_name | html_entity %]</td>
                       <td data-label="[% c.maketext("stats.table-heading.team-matches-played.full") %]" class="numeric">[% c.i18n_numberformat.format_number(entrant.matches_played) %]</td>
                       <td data-label="[% c.maketext("stats.table-heading.matches-won.full") %]" class="numeric">[% c.i18n_numberformat.format_number(entrant.matches_won) %]</td>
