@@ -860,6 +860,21 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
+=head2 team_matches_winner_seasons
+
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::TeamMatch>
+
+=cut
+
+__PACKAGE__->has_many(
+  "team_matches_winner_seasons",
+  "TopTable::Schema::Result::TeamMatch",
+  { "foreign.season" => "self.season", "foreign.winner" => "self.team" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
 =head2 team_points_adjustments
 
 Type: has_many
@@ -891,8 +906,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07051 @ 2025-02-28 09:16:11
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:Bt1YivqMRWTbRGzr0x176w
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2025-02-28 10:30:32
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:vJioYl4OU+/ERVGYZRCZYg
 
 __PACKAGE__->add_columns(
     "last_updated",

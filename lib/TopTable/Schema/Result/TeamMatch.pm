@@ -377,6 +377,15 @@ If the match is a in the knock-out round of a tournament, the result may have ha
 
 Only filled out if the winner has been chosen as part of a draw resolution; if not, we determine from the score (which could, of course, be a draw in a league match or tournament group).
 
+=head2 winner
+
+  data_type: 'integer'
+  extra: {unsigned => 1}
+  is_foreign_key: 1
+  is_nullable: 1
+
+Populated with the winning team ID, if there is a winner.  If the chosen_winner is populated, these must match.  NULL if the match is a draw or not complete.
+
 =cut
 
 __PACKAGE__->add_columns(
@@ -635,6 +644,13 @@ __PACKAGE__->add_columns(
   "draw_resolved",
   { data_type => "tinyint", default_value => 0, is_nullable => 0 },
   "chosen_winner",
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_foreign_key => 1,
+    is_nullable => 1,
+  },
+  "winner",
   {
     data_type => "integer",
     extra => { unsigned => 1 },
@@ -957,6 +973,26 @@ __PACKAGE__->belongs_to(
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
 );
 
+=head2 team_season_winner_season
+
+Type: belongs_to
+
+Related object: L<TopTable::Schema::Result::TeamSeason>
+
+=cut
+
+__PACKAGE__->belongs_to(
+  "team_season_winner_season",
+  "TopTable::Schema::Result::TeamSeason",
+  { season => "season", team => "winner" },
+  {
+    is_deferrable => 1,
+    join_type     => "LEFT",
+    on_delete     => "RESTRICT",
+    on_update     => "RESTRICT",
+  },
+);
+
 =head2 tournament_group
 
 Type: belongs_to
@@ -1013,8 +1049,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07051 @ 2025-02-28 09:16:11
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:lQ3MN0nh93CrPhBJDqzzrA
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2025-02-28 10:30:32
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:0fr4D3gTvMlmvpmD6zYspg
 
 use Try::Tiny;
 use DateTime::Duration;
@@ -1902,38 +1938,6 @@ sub team_score {
   }
 }
 
-=head2 winner
-
-Return the match winner as a team season object (undef if it's a draw).
-
-=cut
-
-sub winner {
-  my $self = shift;
-  
-  # If the match isn't complete, return undef
-  return undef unless $self->complete;
-  
-  if ( defined($self->chosen_winner) ) {
-    # Winner has been chosen manually, return that team as a TeamSeason object
-    return $self->team_season_chosen_winner_season;
-  } else {
-    # The winner is the team with the highest score
-    my ( $home_score, $away_score ) = ( $self->team_score("home"), $self->team_score("away") );
-    
-    if ( $home_score > $away_score ) {
-      # Home win
-      return $self->team_season_home_team_season->team;
-    } elsif ( $home_score < $away_score ) {
-      # Away win
-      return $self->team_season_away_team_season->team;
-    } else {
-      # No winner - undef
-      return undef;
-    }
-  }
-}
-
 =head2 get_team_seasons
 
 Retrieve the team season objects for the home and away teams in the season that the match took place.  This returns a hashref with 'home' and 'away' keys.
@@ -2730,6 +2734,10 @@ sub override_score {
   
   my ( $home_points_adjustment, $away_points_adjustment ) = qw( 0 0 );
   
+  # Team objects for accessing IDs
+  my $home_team = $self->team_season_home_team_season->team;
+  my $away_team = $self->team_season_away_team_season->team;
+  
   # Grab the stats objects we may need to update
   my @home_team_stats = $self->team_stats("home");
   my @away_team_stats = $self->team_stats("away");
@@ -2772,10 +2780,8 @@ sub override_score {
   if ( scalar @{$response->{error}} == 0 and ($override_score or $delete_override) ) {
     # No errors and we are overriding or deleting, do the stuff
     # First update the DB for this match
-    $self->update({
-      home_team_match_score_override => $scores{home},
-      away_team_match_score_override => $scores{away},
-    });
+    $self->home_team_match_score_override($scores{home});
+    $self->away_team_match_score_override($scores{away});
     
     # Work out if matches won / lost / drawn needs to change
     if ( $delete_override ) {
@@ -2790,6 +2796,8 @@ sub override_score {
     
     if ( $scores{home} > $scores{away} ) {
       # Home win
+      $self->winner($home_team->id);
+      
       if ( $existing_scores{home} < $existing_scores{away} ) {
         # Away team originally won, now a home win
         $update_fields{home}{matches_won} = 1;
@@ -2815,6 +2823,8 @@ sub override_score {
       }
     } elsif ( $scores{home} < $scores{away} ) {
       # Away win
+      $self->winner($away_team->id);
+      
       if ( $existing_scores{home} > $existing_scores{away} ) {
         # Originally a home win, now an away win
         $update_fields{home}{matches_won} = -1;
@@ -2839,6 +2849,8 @@ sub override_score {
         }
       }
     } else {
+      $self->winner(undef);
+      
       # Draw
       if ( $existing_scores{home} > $existing_scores{away} ) {
         # Originally a home win, now a draw
@@ -2893,6 +2905,7 @@ sub override_score {
       $_->update foreach ( @home_team_stats, @away_team_stats );
     }
     
+    $self->update;
     $response->{completed} = 1;
   }
   
@@ -3155,6 +3168,10 @@ sub cancel {
     $points_per_loss = $table_ranking_template->points_per_loss;
   }
   
+  # Team objects for accessing IDs
+  my $home_team = $self->team_season_home_team_season->team;
+  my $away_team = $self->team_season_away_team_season->team;
+  
   # Get and update the team season objects
   my @home_team_stats = $self->team_stats("home");
   my @away_team_stats = $self->team_stats("away");
@@ -3249,8 +3266,6 @@ sub cancel {
     $self->away_team_points_difference($away_points_awarded - $home_points_awarded);
   }
   
-  $self->update;
-  
   # Update the awarded points for and against in the relevant field - the points against should be awarded what the opposite team have been awarded
   # i.e., the away team's points against will be $home_points_awarded
   # Then calculate the difference field
@@ -3285,6 +3300,7 @@ sub cancel {
     # Home points awarded are more than away points awarded, so the home team has "won"
     $matches_adjustments{home}{matches_won} += 1;
     $matches_adjustments{away}{matches_lost} += 1;
+    $self->winner($home_team->id);
     
     if ( $in_table and $assign_points ) {
       # Add table points if we need them
@@ -3295,6 +3311,7 @@ sub cancel {
     # Away points awarded are more than home points awarded, so the away team has "won"
     $matches_adjustments{home}{matches_lost} += 1;
     $matches_adjustments{away}{matches_won} += 1;
+    $self->winner($away_team->id);
       
     if ( $in_table and $assign_points ) {
       # Add table points if required for this match
@@ -3305,6 +3322,7 @@ sub cancel {
     # Points awarded are equal, so this is a draw
     $matches_adjustments{home}{matches_drawn} += 1;
     $matches_adjustments{away}{matches_drawn} += 1;
+    $self->winner(undef);
     
     if ( $in_table and $assign_points ) {
       # Add table points
@@ -3331,6 +3349,8 @@ sub cancel {
     # Now update each stats array
     $_->update foreach @team_stats;
   }
+  
+  $self->update;
   
   push(@{$response->{success}}, $lang->maketext("matches.cancel.success"));
   $response->{completed} = 1;
@@ -3438,6 +3458,7 @@ sub uncancel {
   $self->home_team_match_score(0);
   $self->away_team_match_score(0);
   $self->cancelled(0);
+  $self->winner(undef);
   
   my $og_home_points_diff = $self->home_team_points_difference;
   my $og_away_points_diff = $self->away_team_points_difference;

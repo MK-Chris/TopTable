@@ -631,6 +631,8 @@ sub matches {
         team_season_home_team_season => [qw( team ), {club_season => "club"}],
       }, {
         team_season_away_team_season => [qw( team ), {club_season => "club"}],
+      }, {
+        team_season_winner_season => [qw( team ), {club_season => "club"}],
       }],
       order_by => {
         -asc => [qw( played_date club_season.short_name team_season_home_team_season.name )]
@@ -1451,9 +1453,9 @@ sub auto_qualifiers {
   # Setup schema / logging
   my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
   
+  my $entry_type = $self->entry_type;
   if ( $self->group_round ) {
     # Group round - we need to get all the groups, then map that into automatic qualifiers from each group
-    
     my @groups = $self->search_related("tournament_round_groups", {}, {
       order_by => {-asc => [qw( group_order )]}
     });
@@ -1476,7 +1478,6 @@ sub auto_qualifiers {
     # Since we had to get the qualifiers from each group individually, we now want to rank them in the same way we would have if we'd got them all in one go.
     # First convert to resultset
     my $rs;
-    my $entry_type = $self->entry_type;
     if ( $entry_type eq "team" ) {
       $rs = "Team";
     } elsif ( $entry_type eq "singles" ) {
@@ -1489,6 +1490,25 @@ sub auto_qualifiers {
       "me.id" => {-in => \@qual_ids},
     }, {
       order_by => $self->get_table_order_attribs,
+    });
+  } else {
+    # Knock-out round - get the list of winners
+    my ( $rel, $comp_tourn_rel, $comp_round_rel, $round_rel );
+    if ( $entry_type eq "team" ) {
+      $rel = "team_season_winner_season";
+      $comp_tourn_rel = "tournament_teams";
+      $comp_round_rel = "tournament_round_teams";
+      $round_rel = "tournament_round";
+    } elsif ( $entry_type eq "singles" ) {
+      #$rel = ""; # Unknown until we complete that bit
+    } elsif ( $entry_type eq "doubles" ) {
+      #$rel = ""; # Unknown until we complete that bit
+    }
+    
+    return $self->matches->search_related($rel)->search_related($comp_tourn_rel)->search_related($comp_round_rel, {
+      "$round_rel.round_number" => $self->round_number,
+    }, {
+      join => $round_rel,
     });
   }
 }
@@ -1532,24 +1552,22 @@ sub non_auto_qualifiers {
     $member_rel = "tournament_round_doubles";
   }
   
-  if ( $self->group_round ) {
-    # Get the automatic qualifiers first, then grab the rest by specifying the IDs we don't want
-    my @auto_qualifiers = $self->auto_qualifiers;
-    @auto_qualifiers = map($_->id, @auto_qualifiers);
-    
-    my $rel;
-    if ( $self->entry_type eq "team" ) {
-      $rel = "tournament_round_teams";
-    } elsif ( $self->entry_type eq "singles" ) {
-      $rel = "tournament_round_people";
-    } elsif ( $self->entry_type eq "doubles" ) {
-      $rel = "tournament_rounds_doubles";
-    }
-    
-    return $self->search_related($rel, {
-      "me.id" => {-not_in => \@auto_qualifiers},
-    }, \%attrib);
+  # Get the automatic qualifiers first, then grab the rest by specifying the IDs we don't want
+  my @auto_qualifiers = $self->auto_qualifiers;
+  @auto_qualifiers = map($_->id, @auto_qualifiers);
+  
+  my $rel;
+  if ( $self->entry_type eq "team" ) {
+    $rel = "tournament_round_teams";
+  } elsif ( $self->entry_type eq "singles" ) {
+    $rel = "tournament_round_people";
+  } elsif ( $self->entry_type eq "doubles" ) {
+    $rel = "tournament_rounds_doubles";
   }
+  
+  return $self->search_related($rel, {
+    "me.id" => {-not_in => \@auto_qualifiers},
+  }, \%attrib);
 }
 
 =head2 get_entrants_in_table_order($group)
@@ -2072,30 +2090,35 @@ sub add_entrants {
   
   my ( @auto_qualifiers, @non_auto_qualifiers );
   my @entrants_to_add;
+  my $can_add_manual = $self->can_update("manual-entrants");
   if ( defined($prev_round) ) {
     @auto_qualifiers = $prev_round->auto_qualifiers;
-    @non_auto_qualifiers = $prev_round->non_auto_qualifiers;
+    @non_auto_qualifiers = $prev_round->non_auto_qualifiers if $can_add_manual;
   }
   
   # Set object arrays for the IDs so we can compare
   my $auto_ids = Set::Object->new(map($_->id, @auto_qualifiers));
   my $non_auto_ids = Set::Object->new(map($_->id, @non_auto_qualifiers));
-  my @submitted_ids = map{
-    ref ? $_->id : $_ # Return the ID of the object if it's an object, or the value itself if it's not (assume it's the ID)
-  } @manual_entrants;
-  my $submitted_ids = Set::Object->new(@submitted_ids);
-  $response->{fields}{manual_entrants} = \@submitted_ids;
   
-  # First check none of our submitted IDs are in the auto qualifier list
-  my $submitted_autos = $submitted_ids->intersection($auto_ids);
-  push(@{$response->{error}}, $lang->maketext("events.tournament.rounds.select-entrants.in-auto-qualifiers", $submitted_autos->size)) if $submitted_autos->size;
-  
-  # Check all the submitted values are in the non-qualifiers list
-  push(@{$response->{error}}, $lang->maketext("events.tournament.rounds.select-entrants.invalid-entries")) if $non_auto_ids->includes($submitted_ids);
-  
-  # Check we have the right number of entrants selected
-  my $expected_entrants = $self->round_of - $prev_round->num_qualifiers;
-  push(@{$response->{error}}, $lang->maketext("events.tournament.rounds.select-entrants.wrong-number-of-entrants-selected", $submitted_ids->size, $expected_entrants)) if $submitted_ids->size != $expected_entrants;
+  my @submitted_ids = ();
+  if ( $can_add_manual ) {
+    @submitted_ids = map{
+      ref ? $_->id : $_ # Return the ID of the object if it's an object, or the value itself if it's not (assume it's the ID)
+    } @manual_entrants;
+    my $submitted_ids = Set::Object->new(@submitted_ids);
+    $response->{fields}{manual_entrants} = \@submitted_ids;
+    
+    # First check none of our submitted IDs are in the auto qualifier list
+    my $submitted_autos = $submitted_ids->intersection($auto_ids);
+    push(@{$response->{error}}, $lang->maketext("events.tournament.rounds.select-entrants.in-auto-qualifiers", $submitted_autos->size)) if $submitted_autos->size;
+    
+    # Check all the submitted values are in the non-qualifiers list
+    push(@{$response->{error}}, $lang->maketext("events.tournament.rounds.select-entrants.invalid-entries")) if $non_auto_ids->includes($submitted_ids);
+    
+    # Check we have the right number of entrants selected
+    my $expected_entrants = $self->round_of - $prev_round->num_qualifiers;
+    push(@{$response->{error}}, $lang->maketext("events.tournament.rounds.select-entrants.wrong-number-of-entrants-selected", $submitted_ids->size, $expected_entrants)) if $submitted_ids->size != $expected_entrants;
+  }
   
   if ( scalar @{$response->{error}} == 0 ) {
     # No errors, make our list

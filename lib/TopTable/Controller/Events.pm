@@ -1669,6 +1669,7 @@ sub round_select_entrants :Chained("rounds_current_season") :PathPart("select-en
   my $js = "select-entrants";
   $js .= "-points" if defined($ranking_template) and $ranking_template->assign_points;
   $js .= "-hcp" if $match_template->handicapped;
+  $js .= "-ko" unless $round->group_round;
   $js = $c->uri_for("/static/script/events/tournaments/rounds/$js.js");
   
   my @auto_qualifiers = $prev_round->auto_qualifiers;

@@ -1678,12 +1678,18 @@ sub update_score {
     # To work out who's won, we need to know which value we're checking by the winner type
     if ( $current_home_match_score > $current_away_match_score ) {
       $match_new_winner = "home";
+      $match->winner($home_team->id);
     } elsif ( $current_away_match_score > $current_home_match_score ) {
       $match_new_winner = "away";
+      $match->winner($away_team->id);
     } else {
       # Equal scores: draw
       $match_new_winner = "draw";
+      $match->winner(undef);
     }
+  } else {
+    # Match not complete
+    $match->winner(undef);
   }
   
   # Score adjustments for matches / games played / won / lost / drawn.  Should be -1, 0 or 1 to take 1, make no adjustment or add 1 to that value
