@@ -1,0 +1,168 @@
+[%
+home_team_html = match.team_season_home_team_season.object_name | html_entity;
+away_team_html = match.team_season_away_team_season.object_name | html_entity;
+
+IF c.flash.show_flashed;
+  SET resolution_type = c.flash.resolution_type;
+  SET away_team_match_score_override = c.flash.away_team_match_score_override;
+  SET override_score = c.flash.override_score;
+  SET ind_match_tpl = c.flash.ind_match_tpl;
+  SET doubles = c.flash.doubles;
+  SET home_player = c.flash.home_player;
+  SET away_player = c.flash.away_player;
+  SET home_handicap_adj = c.flash.home_handicap_adj;
+  SET away_handicap_adj = c.flash.away_handicap_adj;
+END;
+
+SWITCH resolution_type;
+  CASE "new_game";
+    SET new_game_checked = ' checked="checked"';
+    SET choose_winner_checked = "";
+    SET new_game_div_display = "";
+    SET choose_winner_div_display = ' style="display: none;"';
+    
+    IF doubles;
+      SET doubles_checked = ' checked="checked"';
+      SET singles_disabled = ' disabled="disabled"';
+    ELSE;
+      SET doubles_checked = "";
+      SET singles_disabled = "";
+    END;
+  CASE "choose_winner";
+    SET new_game_checked = "";
+    SET choose_winner_checked = ' checked="checked"';
+    SET new_game_div_display = ' style="display: none;"';
+    SET choose_winner_div_display = "";
+  CASE;
+    SET new_game_checked = "";
+    SET choose_winner_checked = "";
+    SET new_game_div_display = ' style="display: none;"';
+    SET choose_winner_div_display = ' style="display: none;"';
+END;
+-%]
+<form method="post" action="[% form_action %]">
+<fieldset>
+  <legend>[% c.maketext("matches.resolve-draw.legend.details") %]</legend>
+  <input type="radio" id="resolution_type_new_game" name="resolution_type" data-label="[% c.maketext("matches.resolve-draw.field.resolution-type.new-game") %]" value="new_game"[% new_game_checked %] />
+  
+  <div id="new_game_div"[% new_game_div_display %]>
+    <div class="label-field-container">
+      <label for="individual_match_template">[% c.maketext("templates.team-match.games.field.game-template") %]</label>
+      <div class="field-container">
+        <select id="individual_match_template" name="ind_match_tpl" class="individual_match_template" data-placeholder="[% c.maketext("templates.team-match.games.field.game-template") %]">
+          <option value=""></option>
+[%
+FOREACH ind_match IN individual_match_templates;
+  # Set selected text if needed;
+  IF ind_match_tpl.id == ind_match.id;
+    SET ind_match_selected = ' selected="selected"';
+  ELSE;
+    SET ind_match_selected = '';
+  END;
+-%]
+          <option value="[% ind_match.id %]"[% ind_match_selected %]>[% ind_match.name | html_entity %]</option>
+[%
+END;
+-%]
+        </select>
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+[%
+# Check the checked value of the doubles game;
+IF doubles;
+  doubles_checked = ' checked="checked"';
+  singles_disabled = ' disabled="disabled"';
+ELSE;
+  doubles_checked = '';
+  singles_disabled = '';
+END;
+-%]
+  
+    <input type="checkbox" id="doubles_game" name="doubles" class="doubles" data-label="[% c.maketext("templates.team-match.games.field.doubles-game") %]" value="1"[% doubles_checked %] />
+    
+    <div class="label-field-container">
+      <label for="singles_home_player_number">[% c.maketext("templates.team-match.games.field.singles-players") %]</label>
+      <div class="field-container">
+        <select id="singles_home_player_number" class="player-number" name="home_player"[% singles_disabled %] data-placeholder="[% c.maketext("templates.team-match.games.form.field.home-player") %]">
+          <option value=""></option>
+[%
+# Loop through until we reach the number of singles players in a match
+SET n = 1;
+WHILE (n <= match.team_match_template.singles_players_per_team);
+# set selected text if needed;
+  IF home_player == n;
+    SET home_selected = ' selected="selected"';
+  ELSE;
+    SET home_selected = '';
+  END;
+-%]
+          <option value="[% n %]"[% home_selected %]>[% n %]</option>
+[%
+n = n + 1;
+END;
+-%]
+        </select>
+        [% c.maketext("matches.versus-abbreviation") %]
+        <select id="singles_away_player_number" class="player-number" name="away_player"[% singles_disabled %] data-placeholder="[% c.maketext("templates.team-match.games.form.field.away-player") %]">
+          <option value=""></option>
+[%
+# Loop through until we reach the number of singles players in a match
+SET n = 1 + match.team_match_template.singles_players_per_team;
+WHILE (n <= (match.team_match_template.singles_players_per_team * 2));
+# set selected text if needed;
+  IF away_player == n;
+    SET away_selected = ' selected="selected"';
+  ELSE;
+    SET away_selected = '';
+  END;
+-%]
+          <option value="[% n %]"[% away_selected %]>[% n %]</option>
+[%
+n = n + 1;
+END;
+-%]
+        </select>
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+[%
+IF match.handicapped;
+-%]
+    <div class="label-field-container">
+      <label for="home_handicap_adj">[% c.maketext("matches.resolve-draw.handicaps.points-headstart", home_team_html) %]</label>
+      <div class="field-container">
+        <input type="number" id="home_handicap_adj" name="home_handicap_adj" value="[% home_handicap_adj OR "0" %]" />
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+    
+    <div class="label-field-container">
+      <label for="away_handicap_adj">[% c.maketext("matches.resolve-draw.handicaps.points-headstart", away_team_html) %]</label>
+      <div class="field-container">
+        <input type="number" id="away_handicap_adj" name="away_handicap_adj" value="[% away_handicap_adj OR "0" %]" />
+      </div>
+      <div class="clear-fix"></div>
+    </div>
+  </div>
+[%
+END;
+-%]
+  <input type="radio" id="resolution_type_choose_winner" name="resolution_type" data-label="[% c.maketext("matches.resolve-draw.field.resolution-type.choose-winner") %]" value="choose_winner"[% choose_winner_checked %] />
+  
+  <div class="label-field-container" id="choose_winner_div"[% choose_winner_div_display %]>
+    <label for="chosen_winner">[% c.maketext("matches.resolve-draw.field.chosen-winner.placeholder") %]</label>
+    <div class="field-container">
+      <select id="chosen_winner" name="chosen_winner" data-placeholder="[% c.maketext("matches.resolve-draw.field.chosen-winner.placeholder") %]">
+        <option value=""></option>
+        <option value="[% match.team_season_home_team_season.team.id %]">[% home_team_html %]</option>
+        <option value="[% match.team_season_away_team_season.team.id %]">[% away_team_html %]</option>
+      </select>
+    </div>
+    <div class="clear-fix"></div>
+  </div>
+  <div class="clear-fix"></div>
+      
+  <input type="submit" id="submit" name="submit" value="[% c.maketext("form.button.save") %]" />
+</fieldset>
+</form>

@@ -1,5 +1,6 @@
 [%
 SET match_date = match.played_date;
+SET has_handicap_adjustments = match.has_handicap_adjustments;
 CALL match_date.set_locale(c.locale);
 IF match.rescheduled;
   SET og_date = match.scheduled_date;
@@ -72,6 +73,13 @@ IF match.started;
               <th>[% c.maketext("matches.game.field.scores") %]</th>
               <th>[% score_heading %]</th>
               <th>[% c.maketext("matches.game.field.match-score") %]</th>
+[%
+  IF has_handicap_adjustments;
+-%]
+              <th class="numeric" title="[% c.maketext("matches.game.field.handicap-adjustment-full") %]">[% c.maketext("matches.game.field.handicap-adjustment-abbr") %]</th>
+[%
+  END;
+-%]
             </tr>
           </thead>
           <tbody>
@@ -299,6 +307,11 @@ IF match.started;
           <td>[% legs_score %]</td>
           <td>[% game.home_team_match_score %]-[% game.away_team_match_score %]</td>
 [%
+      IF has_handicap_adjustments;
+-%]
+          <td>[% game.relative_handicap_adjustment(game.handicap_adjustment_rec_team) OR "&nbsp;" %]</th>
+[%
+      END;
     ELSE; # ELSE for IF game.complete
       # Game not yet played
 -%]
@@ -307,6 +320,11 @@ IF match.started;
               <td>&nbsp;</td>
               <td>&nbsp;</td>
 [%
+      IF has_handicap_adjustments;
+-%]
+          <td class="numeric">[% game.relative_handicap_adjustment(game.handicap_adjustment_rec_team) OR "&nbsp;" %]</th>
+[%
+      END;
     END;
 -%]
             </tr>

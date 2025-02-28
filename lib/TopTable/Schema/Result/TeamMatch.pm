@@ -360,6 +360,23 @@ Calculated home team points difference from points won / lost (and with handicap
 
 Calculated away team points difference from points won / lost (and with handicaps taken into account).  If this is a handicapped match, and there are players absent, this will be calculated to be fair.
 
+=head2 draw_resolved
+
+  data_type: 'tinyint'
+  default_value: 0
+  is_nullable: 0
+
+If the match is a in the knock-out round of a tournament, the result may have had to be resolved if it was a draw.  This is 1 if that is the case, or 0 if not (including if the result is a draw that still needs resolving - we will only set to 1 once the draw is resolved).  The draw is resolved by adding another game, or picking a winner.  If the winner is picked, there will be no draw resolution game, so this will be the only way to determine that.
+
+=head2 chosen_winner
+
+  data_type: 'integer'
+  extra: {unsigned => 1}
+  is_foreign_key: 1
+  is_nullable: 1
+
+Only filled out if the winner has been chosen as part of a draw resolution; if not, we determine from the score (which could, of course, be a draw in a league match or tournament group).
+
 =cut
 
 __PACKAGE__->add_columns(
@@ -615,6 +632,15 @@ __PACKAGE__->add_columns(
   { data_type => "smallint", default_value => 0, is_nullable => 0 },
   "away_team_points_difference",
   { data_type => "smallint", default_value => 0, is_nullable => 0 },
+  "draw_resolved",
+  { data_type => "tinyint", default_value => 0, is_nullable => 0 },
+  "chosen_winner",
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_foreign_key => 1,
+    is_nullable => 1,
+  },
 );
 
 =head1 PRIMARY KEY
@@ -896,6 +922,26 @@ __PACKAGE__->belongs_to(
   { is_deferrable => 1, on_delete => "RESTRICT", on_update => "RESTRICT" },
 );
 
+=head2 team_season_chosen_winner_season
+
+Type: belongs_to
+
+Related object: L<TopTable::Schema::Result::TeamSeason>
+
+=cut
+
+__PACKAGE__->belongs_to(
+  "team_season_chosen_winner_season",
+  "TopTable::Schema::Result::TeamSeason",
+  { season => "season", team => "chosen_winner" },
+  {
+    is_deferrable => 1,
+    join_type     => "LEFT",
+    on_delete     => "RESTRICT",
+    on_update     => "RESTRICT",
+  },
+);
+
 =head2 team_season_home_team_season
 
 Type: belongs_to
@@ -967,8 +1013,8 @@ __PACKAGE__->belongs_to(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07051 @ 2025-02-12 11:29:51
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:pRbO1Wipm4vIgLcYzHFmqA
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2025-02-28 09:16:11
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:lQ3MN0nh93CrPhBJDqzzrA
 
 use Try::Tiny;
 use DateTime::Duration;
@@ -1220,6 +1266,60 @@ sub in_table {
   return (defined($self->division_season) or defined($self->tournament_group)) ? 1 : 0;
 }
 
+=head2 is_league_match
+
+Simple check to see if there's a tournament round assigned (if not it's a league match).
+
+=cut
+
+sub is_league_match {
+  my $self = shift;
+  return defined($self->tournament_round) ? 0 : 1;
+}
+
+=head2 is_tournament_group_match
+
+Simple check to see A) if there's a tournament round assigned and B) if there's a tournament group assigned.
+
+=cut
+
+sub is_tournament_group_match {
+  my $self = shift;
+  return (!$self->is_league_match && defined($self->tournament_group)) ? 1 : 0;
+}
+
+=head2 has_draw_resolution_games
+
+Check if we have draw resolution games added to the match.
+
+=cut
+
+sub has_draw_resolution_games {
+  my $self = shift;
+  # Quick returns that don't require a lookup
+  return 0 if $self->is_league_match or $self->is_tournament_group_match or !$self->started or !$self->handicapped;
+  return $self->search_related("team_match_games", {draw_resolution_game => 1})->count ? 1 : 0;
+}
+
+=head2 has_handicap_adjustments
+
+Check if there have been handicap adjustments for this match.
+
+=cut
+
+sub has_handicap_adjustments {
+  my $self = shift;
+  
+  if ( $self->has_draw_resolution_games ) {
+    # We have draw resolution games, so we need to check if there are any adjustments
+    my $draw_res_games = $self->search_related("team_match_games", {draw_resolution_game => 1});
+    return ($draw_res_games->get_column("home_team_handicap_adjustment")->sum or $draw_res_games->get_column("away_team_handicap_adjustment")->sum) ? 1 : 0;
+  } else {
+    # No draw resolution games, so no adjustments
+    return 0;
+  }
+}
+
 =head2 is_final
 
 Return 1 if this match is the final of a tournament, or 0 if not.
@@ -1229,6 +1329,73 @@ Return 1 if this match is the final of a tournament, or 0 if not.
 sub is_final {
   my $self = shift;
   return defined($self->tournament_round) ? $self->tournament_round->is_final_round : 0;
+}
+
+=head2 home_team_total_handicap, away_team_total_handicap
+
+Return the handicap for the home / away teams, calculated with draw resolution games if they exist.  These are public accessors that will forward to team_total_handicap($location).
+
+=cut
+
+sub home_team_total_handicap {
+  my $self = shift;
+  return $self->team_total_handicap("home");
+}
+
+sub away_team_total_handicap {
+  my $self = shift;
+  return $self->team_total_handicap("away");
+}
+
+=head2 team_total_handicap($location)
+
+Return the handicap for the given team (home / away), calculated with draw resolution games if they exist.  
+
+=cut
+
+sub team_total_handicap {
+  my $self = shift;
+  my ( $location ) = @_;
+  
+  # Check if we have draw resolution games
+  my $draw_res_games = $self->search_related("team_match_games", {draw_resolution_game => 1});
+  
+  if ( $draw_res_games->count ) {
+    # First grab the original handicap
+    my $hcp = $location eq "home" ? $self->home_team_handicap : $self->away_team_handicap;
+    
+    if ( $location eq "home" ) {
+      $hcp += $draw_res_games->get_column("home_team_handicap_adjustment")->sum;
+    } else {
+      $hcp += $draw_res_games->get_column("away_team_handicap_adjustment")->sum;
+    }
+  } else {
+    # No draw resolution games, just return the relevant handicap
+    return $location eq "home" ? $self->home_team_handicap : $self->away_team_handicap;
+  }
+}
+
+=head2 handicap_rec_team
+
+Check which team receives a handicap.  Return "home" or "away" (this can then be passed into any of the handicap methods that receive a $location parameter).
+
+=cut
+
+sub handicap_rec_team {
+  my $self = shift;
+  
+  if ( $self->handicapped ) {
+    if ( $self->home_team_handicap > $self->away_team_handicap ) {
+      return "home";
+    } elsif ( $self->home_team_handicap < $self->away_team_handicap ) {
+      return "away";
+    } else {
+      # Scratch handicap
+      return undef;
+    }
+  } else {
+    return undef;
+  }
 }
 
 =head2 handicap_format
@@ -1576,6 +1743,28 @@ sub games_reordered {
   return $reordered_games ? 1 : 0;
 }
 
+=head2 next_game_number
+
+Return the next game number if a game were to be added (this only happens if we add a new game as part of the resolution of a draw).
+
+=cut
+
+sub next_game_number {
+  my $self = shift;
+  my $last_game_number = $self->search_related("team_match_games", {}, {
+    columns => [{
+      last_game_number => {max => "scheduled_game_number"}
+    }],
+  })->single->get_column("last_game_number");
+  
+  # Next game number is either the last round number + 1, or game 1 (in practice we should never get game 1, since these matches should have templates
+  # that define a number of games to be played).
+  my $next_game_number = defined($last_game_number) ? $last_game_number + 1 : 1;
+  
+  # Return the next game number
+  return $next_game_number;
+}
+
 =head2 score_overridden
 
 Checks to see if the scores in the match have been overridden and returns 1 if so, 0 if not.
@@ -1642,7 +1831,17 @@ sub score {
   
   if ( $self->started or $self->cancelled ) {
     # If the match is started, return the score regardless
-    return sprintf("%d-%d", $self->team_score("home"), $self->team_score("away"));
+    my $score = sprintf("%d-%d", $self->team_score("home"), $self->team_score("away"));
+    if ( $self->complete ) {
+      # If it's a complete score, just return the score
+      return $score;
+    } elsif ( $self->cancelled ) {
+      # Cancelled, say it was cancelled before the score
+      return $lang->maketext("matches.versus.cancelled", $score);
+    } else {
+      # Not yet complete, we need to say the score is incomplete
+      return $lang->maketext("matches.versus.incomplete", $score);
+    }
   } else {
     # If the match is postponed, display that
     return $lang->maketext("matches.versus.postponed") if $self->postponed;
@@ -1705,23 +1904,33 @@ sub team_score {
 
 =head2 winner
 
-Return the match winner as a team object (undef if it's a draw).
+Return the match winner as a team season object (undef if it's a draw).
 
 =cut
 
 sub winner {
   my $self = shift;
-  my ( $home_score, $away_score ) = ( $self->team_score("home"), $self->team_score("away") );
   
-  if ( $home_score > $away_score ) {
-    # Home win
-    return $self->team_season_home_team_season->team;
-  } elsif ( $home_score < $away_score ) {
-    # Away win
-    return $self->team_season_away_team_season->team;
+  # If the match isn't complete, return undef
+  return undef unless $self->complete;
+  
+  if ( defined($self->chosen_winner) ) {
+    # Winner has been chosen manually, return that team as a TeamSeason object
+    return $self->team_season_chosen_winner_season;
   } else {
-    # No winner - undef
-    return undef;
+    # The winner is the team with the highest score
+    my ( $home_score, $away_score ) = ( $self->team_score("home"), $self->team_score("away") );
+    
+    if ( $home_score > $away_score ) {
+      # Home win
+      return $self->team_season_home_team_season->team;
+    } elsif ( $home_score < $away_score ) {
+      # Away win
+      return $self->team_season_away_team_season->team;
+    } else {
+      # No winner - undef
+      return undef;
+    }
   }
 }
 
@@ -2037,6 +2246,9 @@ sub update_playing_order {
     } elsif ( exists($game_numbers{$actual_game_number}) ) {
       # Number already specified
       push(@{$response->{error}}, $lang->maketext("matches.update-playing-order.error.game-specified-multiple", $actual_game_number, $game->scheduled_game_number, $game_numbers{$actual_game_number}));
+    } elsif ( $game->draw_resolution_game and $actual_game_number != $game->scheduled_game_number ) {
+      # Can't move a draw resolution game
+      push(@{$response->{error}}, $lang->maketext("matches.update-playing-order.error.game-draw-resolution", $game->scheduled_game_number));
     } else {
       $game_numbers{$actual_game_number} = $game->scheduled_game_number;
     }
@@ -2097,6 +2309,11 @@ sub calculate_match_score {
   
   # Now loop through the games
   foreach my $game ( @games ) {
+    if ( $game->draw_resolution_game ) {
+      $_home_score += $game->home_team_handicap_adjustment;
+      $_away_score += $game->away_team_handicap_adjustment;
+    }
+    
     if ( $winner_type eq "games" ) {
       # Match scores are determined by the number of games won
       if ( $game->complete ) {
@@ -2227,16 +2444,33 @@ Check whether a match is complete by whether all of the games are marked complet
 sub check_match_complete {
   my $self = shift;
   
-  # Loop through the current resultset and push into the array of incomplete games if this one is not complete yet
+  # Find any incomplete games in this match
   my $incomplete_games = $self->search_related("team_match_games", {complete => 0})->count;
   
   if ( $incomplete_games ) {
     # We have found some incomplete games, so return false
     return 0;
+  } elsif ( $self->can_update("resolve-draw") ) {
+    # All games are complete, but there's a draw to resolve
+    return 0;
   } else {
-    # All games are complete, so return true
+    # All games are complete and no draw to resolve (either it's not a draw or it's not a tournament knock-out match)
     return 1;
   }
+}
+
+=head2 all_games_complete
+
+Check whether all games in the match are complete.  They may be, even though the match is not marked complete, if the match is in the knock-out round of a tournament and has been determined as a draw.
+
+=cut
+
+sub all_games_complete {
+  my $self = shift;
+  
+  my $incomplete_games = $self->search_related("team_match_games", {complete => 0})->count;
+  
+  return $incomplete_games ? 0 : 1;
 }
 
 =head2 eligible_players
@@ -2410,6 +2644,7 @@ sub update_scorecard {
       $response->{match_originally_complete} = $game_response->{match_originally_complete};
       $response->{match_complete} = $game_response->{match_complete};
       $response->{match_scores} = $game_response->{match_scores};
+      $response->{can_resolve_draw} = $game_response->{can_resolve_draw};
       push(@{$response->{error}}, @{$game_response->{error}});
       push(@{$response->{warning}}, @{$game_response->{warning}});
       push(@{$response->{info}}, @{$game_response->{info}});
@@ -2659,6 +2894,192 @@ sub override_score {
     }
     
     $response->{completed} = 1;
+  }
+  
+  return $response;
+}
+
+=head2 resolve_draw
+
+Resolve the result of this match, if it's a draw and the match is in the knock-out round of a tournament.
+
+=cut
+
+sub resolve_draw {
+  my $self = shift;
+  my ( $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  
+  # Grab the fields
+  my $resolution_type = $params->{resolution_type};
+  my $team_match_tpl = $self->team_match_template;
+  my $ind_match_tpl = $params->{ind_match_tpl};
+  my $doubles = $params->{doubles};
+  my $home_player = $params->{home_player};
+  my $away_player = $params->{away_player};
+  my $home_handicap_adj = $params->{home_handicap_adj};
+  my $away_handicap_adj = $params->{away_handicap_adj};
+  my $chosen_winner = $params->{chosen_winner};
+  
+  my $response = {
+    error => [],
+    warning => [],
+    info => [],
+    success => [],
+    completed => 0,
+    nothing_to_do => 0,
+    can => 0,
+    fields => {
+      resolution_type => $resolution_type,
+    },
+  };
+  
+  # Check we can override scores for this match, if not return with the error logged
+  my %can = $self->can_update("resolve-draw");
+  
+  # Annoyingly, I've set the response keys to plurals, so need to change here
+  my $level = $can{level} eq "info" ? $can{level} : sprintf("%ss", $can{level});
+  
+  unless ( $can{allowed} ) {
+    push(@{$response->{$level}}, $can{reason});
+    return $response;
+  }
+  
+  # If we get this far, we can
+  $response->{can} = 1;
+  
+  # Check the values passed in
+  if ( $resolution_type ne "new_game" and $resolution_type ne "choose_winner" ) {
+    # If the resolution type is invalid, return straight away
+    push(@{$response->{error}}, $lang->maketext("matches.resolve-draw.error.invalid-type"));
+    return $response;
+  }
+  
+  $response->{fields}{resolution_type} = $resolution_type;
+  
+  if ( $resolution_type eq "new_game" ) {
+    # Check values passed in for a new game
+    if ( defined($ind_match_tpl) ) {
+      $ind_match_tpl = $schema->resultset("TemplateMatchIndividual")->find_id_or_url_key($ind_match_tpl) unless blessed($ind_match_tpl) and $ind_match_tpl->isa("TopTable::Schema::Result::TemplateMatchIndividual");
+      push(@{$response->{error}}, $lang->maketext("matches.resolve-draw.error.match-template-invalid")) unless defined($ind_match_tpl);
+    } else {
+      # Match template not submitted
+      push(@{$response->{error}}, $lang->maketext("matches.resolve-draw.error.match-template-blank"));
+    }
+    
+    $response->{fields}{ind_match_tpl} = $ind_match_tpl;
+    
+    # Doubles sanity check
+    $doubles = $doubles ? 1 : 0;
+    $response->{fields}{doubles} = $doubles;
+    if ( $doubles ) {
+      # Undef home / away players
+      undef($home_player);
+      undef($away_player);
+    } else {
+      # Check for invalid player numbers
+      if ( defined($home_player) ) {
+        # Selected, make sure it's valid
+        push(@{$response->{error}}, $lang->maketext("matches.resolve-draw.error.home-player-number-invalid", $team_match_tpl->singles_players_per_team)) if $home_player !~ m/\d{1,2}/ or $home_player > $team_match_tpl->singles_players_per_team;
+      } else {
+        # Not selected
+        push(@{$response->{error}}, $lang->maketext("matches.resolve-draw.error.home-player-number-blank"));
+      }
+      
+      if ( defined($away_player) ) {
+        # Selected, make sure it's valid
+        my ( $min, $max ) = ( $team_match_tpl->singles_players_per_team + 1, $team_match_tpl->singles_players_per_team * 2 );
+        push(@{$response->{error}}, $lang->maketext("matches.resolve-draw.error.away-player-number-invalid", $min, $max)) if $away_player !~ m/\d{1,2}/ or $away_player < $min or $away_player > $max;
+      } else {
+        # Not selected
+        push(@{$response->{error}}, $lang->maketext("matches.resolve-draw.error.away-player-number-blank"));
+      }
+    }
+    
+    # Put in a hash so we can loop through
+    my %handicaps = (
+      home => $home_handicap_adj,
+      away => $away_handicap_adj,
+    );
+    
+    foreach my $location ( reverse sort keys %handicaps ) {
+      if ( $handicaps{$location} ) {
+        my $team = $location eq "home" ? $self->team_season_home_team_season->full_name : $self->team_season_away_team_season->full_name;
+        push(@{$response->{error}}, $lang->maketext("matches.resolve-draw.error.handicap-invalid", encode_entities($team))) unless $handicaps{$location} =~ /^-?[1-9]\d{0,2}$/;
+      } else {
+        # Sanity check - false must be 0
+        $handicaps{$location} = 0;
+      }
+    }
+    
+    $home_handicap_adj = $handicaps{home};
+    $away_handicap_adj = $handicaps{away};
+    $response->{fields}{home_team_handicap} = $home_handicap_adj;
+    $response->{fields}{away_team_handicap} = $away_handicap_adj;
+    
+    if ( scalar @{$response->{error}} == 0 ) {
+      # No errors, create the new game
+      my $next_game_number = $self->next_game_number;
+      $logger->("debug", "Creating new game for draw resolution, game $next_game_number");
+      
+      my @match_legs = ();
+      foreach my $i ( 1 .. $ind_match_tpl->legs_per_game ) {
+        push(@match_legs, {leg_number => $i});
+      }
+      my $new_game = $self->create_related("team_match_games", {
+        scheduled_game_number => $next_game_number,
+        individual_match_template => $ind_match_tpl->id,
+        actual_game_number => $next_game_number,
+        home_player_number => $home_player,
+        away_player_number => $away_player,
+        doubles_game => $doubles,
+        home_team_handicap_adjustment => $home_handicap_adj,
+        away_team_handicap_adjustment => $away_handicap_adj,
+        draw_resolution_game => 1,
+        team_match_legs => \@match_legs,
+      });
+      
+      push(@{$response->{success}}, $lang->maketext("matches.resolve-draw.success.new-game-created", $next_game_number));
+      
+      # We've added a new game, that game now has to be completed, so the draw resolution isn't complete yet - but the action of choosing a resolution is, so the completed flag needs setting.
+      $response->{completed} = 1;
+    }
+    
+  } elsif ( $resolution_type eq "choose_winner" ) {
+    # Check the team chosen to be the winner is valid and one of the teams in the match
+    if ( defined($chosen_winner) ) {
+      $chosen_winner = $schema->resultset("Team")->find_id_or_url_key($chosen_winner) unless blessed($chosen_winner) and $chosen_winner->isa("TopTable::Schema::Result::Team");
+      if ( defined($chosen_winner) ) {
+        push(@{$response->{error}}, $lang->maketext("matches.resolve-draw.error.chosen-winner-not-in-match")) unless $chosen_winner->id == $self->team_season_home_team_season->team->id or $chosen_winner->id == $self->team_season_away_team_season->team->id;
+      } else {
+        # Invalid team
+        push(@{$response->{error}}, $lang->maketext("matches.resolve-draw.error.chosen-winner-invalid"));
+      }
+    } else {
+      # Match template not submitted
+      push(@{$response->{error}}, $lang->maketext("matches.resolve-draw.error.chosen-winner-blank"));
+    }
+    
+    $response->{fields}{chosen_winner} = $chosen_winner;
+    
+    if ( scalar @{$response->{error}} == 0 ) {
+      # No errors, set the winner
+      $self->update({
+        chosen_winner => $chosen_winner->id,
+        draw_resolved => 1,
+        complete => 1,
+      });
+      
+      push(@{$response->{success}}, $lang->maketext("matches.resolve-draw.success.winner-chosen", encode_entities($self->team_season_home_team_season->full_name)));
+      
+      # We've chosen a winner, so the draw resolution is complete
+      $response->{completed} = 1;
+    }
   }
   
   return $response;
@@ -3336,7 +3757,7 @@ In list context, a hash will be returned with keys 'allowed' (1 or 0) and potent
 
 No permissions are checked here, this is purely to see if it's possible to update the match based on season / tournament.
 
-$type tells us what we want to update and could be "handicaps", "score", "delete-score", "date", "venue", "handicap" or "override" (score override).  If not passed, we get a hash (or hashref in scalar context) of all types - scalar context just returns 1 or 0 for all of these, list context returns the hashref with allowed and reason keys.  If nothing can be updated for the same reason (i.e., the season is complete), the types will not be returned, and you'll get a 1 or 0 in scalar context, or 'allowed' and 'reason' keys in list context, just as if it had been called with a specific type.
+$type tells us what we want to update and could be "handicaps", "score", "delete-score", "date", "venue", "handicap", "override" (score override) or "resolve-draw".  If not passed, we get a hash (or hashref in scalar context) of all types - scalar context just returns 1 or 0 for all of these, list context returns the hashref with allowed and reason keys.  If nothing can be updated for the same reason (i.e., the season is complete), the types will not be returned, and you'll get a 1 or 0 in scalar context, or 'allowed' and 'reason' keys in list context, just as if it had been called with a specific type.
 
 =cut
 
@@ -3351,7 +3772,7 @@ sub can_update {
   my $lang = $schema->lang;
   
   # Check we have a valid type, if it's provided (if it's not provided, check all types)
-  return undef if defined($type) and $type ne "handicaps" and $type ne "score" and $type ne "delete-score" and $type ne "cancel" and $type ne "uncancel" and $type ne "override" and $type ne "date" and $type ne "venue" and $type ne "postponed";
+  return undef if defined($type) and $type ne "handicaps" and $type ne "score" and $type ne "delete-score" and $type ne "cancel" and $type ne "uncancel" and $type ne "override" and $type ne "resolve-draw" and $type ne "date" and $type ne "venue" and $type ne "postponed";
   
   # Default to allowed.
   my $allowed = 1;
@@ -3407,6 +3828,10 @@ sub can_update {
               allowed => 0,
               reason => $reason,
               level => "error",
+            }, "resolve-draw" => {
+              allowed => 0,
+              reason => $reason,
+              level => "error",
             },
           ) # We want the reasons back if we've asked for an array, the hash will contain 'allowed' and 'reason' keys
         : (
@@ -3417,6 +3842,7 @@ sub can_update {
           uncancel => 0,
           override => 0,
           postponed => 0,
+          "resolve-draw" => 0,
           date => 0,
           venue => 0,
         );
@@ -3443,6 +3869,8 @@ sub can_update {
       %can = $self->_can_update_override;
     } elsif ( $type eq "postponed") {
       %can = $self->_can_postpone_match;
+    } elsif ( $type eq "resolve-draw" ) {
+      %can = $self->_can_resolve_draw;
     } # Date and venue - nothing to check, if the season isn't complete, these can be updated
     
     # Grab the reason and allowed flag
@@ -3461,6 +3889,7 @@ sub can_update {
     my %uncancel = $self->_can_uncancel_match;
     my %override = $self->_can_update_override;
     my %postponed = $self->_can_postpone_match;
+    my %resolve_draw = $self->_can_resolve_draw;
     
     my %types = wantarray
       ? (
@@ -3496,6 +3925,10 @@ sub can_update {
             allowed => $postponed{allowed},
             reason => $postponed{reason},
             level => $postponed{level},
+          }, "resolve-draw" => {
+            allowed => $resolve_draw{allowed},
+            reason => $resolve_draw{reason},
+            level => $resolve_draw{level},
           },
         ) # We want the reasons back if we've asked for an array, the hash will contain 'allowed' and 'reason' keys
       : (
@@ -3506,6 +3939,7 @@ sub can_update {
         uncancel => $uncancel{allowed},
         override => $override{allowed},
         postponed => $postponed{allowed},
+        "resolve-draw" => $resolve_draw{allowed},
         date => 1,
         venue => 1,
       );
@@ -3515,7 +3949,7 @@ sub can_update {
   }
 }
 
-=head2 _can_update_handicaps, _can_update_score, _can_delete_score, _can_cancel_match, _can_uncancel_match, _can_update_override, _can_postpone_match
+=head2 _can_update_handicaps, _can_update_score, _can_delete_score, _can_cancel_match, _can_uncancel_match, _can_update_override, _can_postpone_match, _can_resolve_draw
 
 Internal methods, do not call directly.  These assume the check for $season->complete has been done, so we only check the other parts.  Called from can_update.
 
@@ -3590,6 +4024,15 @@ sub _can_update_score {
         $level = "error";
       }
     }
+    
+    if ( $allowed ) {
+      if ( defined($self->chosen_winner) ) {
+        # If we've chosen a winner, we can't update the score
+        $allowed = 0;
+        $reason = $lang->maketext("matches.update.error.draw-resolution-game-winner-chosen");
+        $level = "error";
+      }
+    }
   }
   
   return (allowed => $allowed, reason => $reason, level => $level);
@@ -3627,6 +4070,15 @@ sub _can_delete_score {
       } elsif ( $next_round->has_entrants ) {
         $allowed = 0;
         $reason = $lang->maketext("matches.update.error.next-round-entry-list-complete", $round->name);
+        $level = "error";
+      }
+    }
+    
+    if ( $allowed ) {
+      if ( defined($self->chosen_winner) ) {
+        # If we've chosen a winner, we can't update the score
+        $allowed = 0;
+        $reason = $lang->maketext("matches.update.delete.error.draw-resolution-game-winner-chosen");
         $level = "error";
       }
     }
@@ -3800,6 +4252,48 @@ sub _can_postpone_match {
         $level = "error";
       }
     }
+  }
+  
+  return (allowed => $allowed, reason => $reason, level => $level);
+}
+
+sub _can_resolve_draw {
+  my $self = shift;
+  my ( $params ) = @_;
+  # Setup schema / logging
+  my $logger = delete $params->{logger} || sub { my $level = shift; printf "LOG - [%s]: %s\n", $level, @_; }; # Default to a sub that prints the log, as we don't want errors if we haven't passed in a logger.
+  my $locale = delete $params->{locale} || "en_GB"; # Usually handled by the app, other clients (i.e., for cmdline testing) can pass it in.
+  my $schema = $self->result_source->schema;
+  $schema->_set_maketext(TopTable::Maketext->get_handle($locale)) unless defined($schema->lang);
+  my $lang = $schema->lang;
+  
+  # Score can be updated, so long as the match isn't cancelled and (if handicapped) has the handicap set
+  my $allowed = 1;
+  my ( $reason, $level );
+  if ( $self->is_league_match ) {
+    $allowed = 0;
+    $reason = $lang->maketext("matches.resolve-draw.error.not-a-tournament-match");
+    $level = "error";
+  } elsif ( $self->is_tournament_group_match ) {
+    $allowed = 0;
+    $reason = $lang->maketext("matches.resolve-draw.error.tournament-group-match", encode_entities($self->tournament_round->tournament->name));
+    $level = "error";
+  } elsif ( $self->cancelled ) {
+    $allowed = 0;
+    $reason = $lang->maketext("matches.resolve-draw.error.match-cancelled");
+    $level = "error";
+  } elsif ( !$self->all_games_complete ) {
+    $allowed = 0;
+    $reason = $lang->maketext("matches.resolve-draw.error.match-not-complete");
+    $level = "error";
+  } elsif ( $self->team_score("home") != $self->team_score("away") ) {
+    $allowed = 0;
+    $reason = $lang->maketext("matches.resolve-draw.error.not-a-draw");
+    $level = "error";
+  } elsif ( defined($self->chosen_winner) ) {
+    $allowed = 0;
+    $reason = $lang->maketext("matches.resolve-draw.error.winner-chosen");
+    $level = "error";
   }
   
   return (allowed => $allowed, reason => $reason, level => $level);
