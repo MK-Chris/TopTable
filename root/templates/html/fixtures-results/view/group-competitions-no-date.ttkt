@@ -63,13 +63,13 @@
       END;
       
       IF match.complete AND match.winner AND match.is_final;
-        IF match.winner.id == home_team.team.id;
+        IF match.winner.team.id == home_team.team.id;
           # Home win
           SET home_trophy_img_src = c.uri_for("/static/images/icons/trophy-1st-32.png");
           SET home_trophy_alt = c.maketext("stats.positions.team.1");
           SET away_trophy_img_src = c.uri_for("/static/images/icons/trophy-2nd-32.png");
           SET away_trophy_alt = c.maketext("stats.positions.team.2");
-        ELSIF match.winner.id == away_team.team.id;
+        ELSIF match.winner.team.id == away_team.team.id;
           # Away win
           SET home_trophy_img_src = c.uri_for("/static/images/icons/trophy-2nd-32.png");
           SET home_trophy_alt = c.maketext("stats.positions.team.2");

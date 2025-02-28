@@ -13,13 +13,27 @@ $(document).ready(function(){
     ordering: false,
     fixedHeader: true,
     searching: false,
-    columns: [
-      {responsivePriority: 5}, // Game number
-      {responsivePriority: 1}, // Result (X beat Y)
-      {responsivePriority: 3}, // Detailed scores
-      {responsivePriority: 2}, // Score (3-1)
-      {responsivePriority: 4} // Match score
-    ]
+    columnDefs: [{
+      // Game number
+      targets: 0,
+      responsivePriority: 5
+    }, {
+      // Result (X beat Y)
+      targets: 1,
+      responsivePriority: 1
+    }, {
+      // Detailed scores
+      targets: 2,
+      responsivePriority: 3
+    }, {
+      // Score (3-1)
+      targets: 3,
+      responsivePriority: 2
+    }, {
+      // Match score
+      targets: 4,
+      responsivePriority: 4
+    }]
   });
   
   var teams_table = $("#teams-table").DataTable({

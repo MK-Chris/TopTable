@@ -232,6 +232,12 @@ sub view :Private {
       text => $c->maketext("admin.override-score-object", $scoreless_name),
       link_uri => $c->uri_for_action("/matches/team/override_score_by_url_keys", $match->url_keys),
     }) if $can_update->{override};
+    
+    push(@title_links, {
+      image_uri => $c->uri_for("/static/images/icons/resolve-draw-32.png"),
+      text => $c->maketext("admin.resolve-draw-object", $scoreless_name),
+      link_uri => $c->uri_for_action("/matches/team/resolve_draw_by_url_keys", $match->url_keys),
+    }) if $can_update->{"resolve-draw"};
   }
   
   push(@title_links, {
@@ -261,10 +267,10 @@ sub view :Private {
   my $hcp_flag = $match->handicapped ? "/hcp" : "";
   if ( $match->started ) {
     # The match has started, we don't specify a tab and it will default to the first one (games)
-    push(@external_scripts, $c->uri_for("/static/script/matches/team$tourn_flag$hcp_flag/view.js", {v => 5}));
+    push(@external_scripts, $c->uri_for("/static/script/matches/team$tourn_flag$hcp_flag/view.js", {v => 6}));
   } else {
     # The match has not started, start on the match details tab
-    push(@external_scripts, $c->uri_for("/static/script/matches/team$tourn_flag$hcp_flag/view-not-started.js", {v => 5}));
+    push(@external_scripts, $c->uri_for("/static/script/matches/team$tourn_flag$hcp_flag/view-not-started.js", {v => 6}));
   }
   
   # Inform that the scorecard is not yet complete if it's started but not complete
@@ -285,6 +291,10 @@ sub view :Private {
     # Match complete
     $page_description = $c->maketext("description.team-matches.view-completed", $scoreless_name, $score, $c->i18n_datetime_format_date->format_datetime($date));
   }
+  
+  # Draw resolution handicap adjustments
+  $c->add_status_messages({info => $c->maketext("matches.message.info.draw-resolution.handicap-adjusted", $match->team_total_handicap($match->handicap_rec_team))}) if $match->has_handicap_adjustments;
+  $c->add_status_messages({info => $c->maketext("matches.message.info.draw-resolution.winner-chosen", encode_entities($match->team_season_chosen_winner_season->full_name))}) if defined($match->chosen_winner);
   
   # Scorecard overridden
   $c->add_status_messages({warning => $c->maketext("matches.message.info.score-overridden", sprintf("%d-%d", $match->home_team_match_score, $match->away_team_match_score))}) if $match->score_overridden;
@@ -347,11 +357,12 @@ sub update :Private {
   # Check that we are authorised to update scorecards
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["match_update", $c->maketext("user.auth.update-matches"), 1]);
   
+  my %can = $match->can_update;
+  
   # Don't cache this page.
   $c->res->header("Cache-Control" => "no-cache, no-store, must-revalidate");
   $c->res->header("Pragma" => "no-cache");
   $c->res->header("Expires" => 0);
-  
   
   $c->add_status_messages({warning => $c->maketext("matches.update.warning.handicap-not-set")}) if $match->handicapped and !$match->handicap_set;
   
@@ -512,11 +523,17 @@ sub update_game_score :Private {
   
   # Generate the redirect URI and pass it back if the match wasn't complete, but now is.
   # We have to do this because the JS routine either has access to the messages (through the JSON passed back) or the set_status_msg routine (via TT method calling), but can't use both
+  my $redirect_uri;
   if ( $response->{match_complete} and !$response->{match_originally_complete} ) {
     my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});
-    my $redirect_uri = $c->uri_for_action("/matches/team/view_by_url_keys", [$match->team_season_home_team_season->club_season->club->url_key, $match->team_season_home_team_season->team->url_key, $match->team_season_away_team_season->club_season->club->url_key, $match->team_season_away_team_season->team->url_key, $match->scheduled_date->year, sprintf("%02d", $match->scheduled_date->month), sprintf("%02d", $match->scheduled_date->day)], {mid => $mid});
+    my $redirect_uri = $c->uri_for_action("/matches/team/view_by_url_keys", $match->url_keys, {mid => $mid});
     $c->stash->{json_data}{redirect_uri} = $redirect_uri->as_string;
-  } 
+  } elsif ( $response->{can_resolve_draw} ) {
+    # If we can resolve a draw, we need to pass back the URI to the resolve draw page
+    my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});
+    my $redirect_uri = $c->uri_for_action("/matches/team/resolve_draw_by_url_keys", $match->url_keys, {mid => $mid});
+    $c->stash->{json_data}{redirect_uri} = $redirect_uri->as_string;
+  }
   
   if ( $response->{completed} ) {
     # Completed, log that we updated the match
@@ -1182,6 +1199,140 @@ sub do_override_score :Private {
     
     # Flash the entered values we've got so we can set them into the form
     $c->flash->{$_} = $response->{fields}{$_} foreach @field_names;
+  }
+  
+  # Now actually do the redirection
+  $c->response->redirect($redirect_uri);
+  $c->detach;
+  return;
+}
+
+=head2 resolve_draw_by_ids, resolve_draw_by_url_keys
+
+Resolve a draw (tournament matches in knock-out rounds only).  Use the information given in base_by_ids / base_by_url_keys.  Forwards to resolve_draw.
+
+=cut
+
+sub resolve_draw_by_ids :Chained("base_by_ids") :PathPart("resolve-draw") :Args(0) {
+  my ( $self, $c ) = @_;
+  $c->detach("resolve_draw");
+}
+
+sub resolve_draw_by_url_keys :Chained("base_by_url_keys") :PathPart("resolve-draw") :Args(0) {
+  my ( $self, $c ) = @_;
+  $c->detach("resolve_draw");
+}
+
+=head2 resolve_draw
+
+Provide a form to resolve a draw for a knock-out tournament match.
+
+=cut
+
+sub resolve_draw :Private {
+  my ( $self, $c ) = @_;
+  my $match = $c->stash->{match};
+  
+  # Check that we are authorised to view matches
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["match_update", $c->maketext("user.auth.update-matches"), 1]);
+  
+  # First check if we can actually resolve the draw for this match
+  my %can_change = $match->can_update("resolve-draw");
+  if ( !$can_change{allowed} ) {
+    $c->response->redirect($c->uri_for_action("/matches/team/view_by_url_keys", $match->url_keys,
+                                {mid => $c->set_status_msg({$can_change{level} => $can_change{reason}})}));
+    $c->detach;
+    return;
+  }
+  
+  # Stash the template values
+  $c->stash({
+    template => "html/matches/team/resolve-draw.ttkt",
+    form_action => $c->uri_for_action("/matches/team/do_resolve_draw_by_ids", [$match->team_season_home_team_season->team->id, $match->team_season_away_team_season->team->id, $match->scheduled_date->year, $match->scheduled_date->month, $match->scheduled_date->day]),
+    external_scripts => [
+      $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
+      $c->uri_for("/static/script/standard/chosen.js"),
+      $c->uri_for("/static/script/standard/prettycheckable.js"),
+      $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
+      $c->uri_for("/static/script/matches/team/resolve-draw.js"),
+    ],
+    external_styles => [
+      $c->uri_for("/static/css/prettycheckable/prettyCheckable.css"),
+      $c->uri_for("/static/css/chosen/chosen.min.css"),
+    ],
+    individual_match_templates => [$c->model("DB::TemplateMatchIndividual")->all_templates],
+    view_online_display => sprintf("Resolving draw for match %s %s v %s %s", $match->team_season_home_team_season->club_season->short_name, $match->team_season_home_team_season->name, $match->team_season_away_team_season->club_season->short_name, $match->team_season_away_team_season->name),
+    view_online_link => 0,
+  });
+  
+  # Breadcrumbs
+  push(@{$c->stash->{breadcrumbs}}, {
+    path => $c->uri_for_action("/matches/team/resolve_draw_by_url_keys", $match->url_keys),
+    label => $c->maketext("admin.resolve-draw"),
+  });
+}
+
+=head2 do_resolve_draw_by_ids, do_resolve_draw_by_url_keys
+
+Process the draw resolution form (for knock-out tournament matches).  Use the information given in base_by_ids / base_by_url_keys.  Forwards to do_resolve_draw.
+
+=cut
+
+sub do_resolve_draw_by_ids :Chained("base_by_ids") :PathPart("do-resolve-draw") :Args(0) {
+  my ( $self, $c ) = @_;
+  $c->detach("do_resolve_draw");
+}
+
+sub do_resolve_draw_by_url_keys :Chained("base_by_url_keys") :PathPart("do-resolve-draw") :Args(0) {
+  my ( $self, $c ) = @_;
+  $c->detach("do_resolve_draw");
+}
+
+=head2 do_resolve_draw
+
+Process the form to resolve the draw for a knock-out tournament match.
+
+=cut
+
+sub do_resolve_draw :Private {
+  my ( $self, $c ) = @_;
+  my $match = $c->stash->{match};
+  
+  # Check that we are authorised to view matches
+  $c->forward("TopTable::Controller::Users", "check_authorisation", ["match_update", $c->maketext("user.auth.update-matches"), 1]);
+  
+  my @field_names = qw( resolution_type ind_match_tpl doubles home_player away_player home_handicap_adj away_handicap_adj chosen_winner );
+  my @processed_field_names = @field_names;
+  my $response = $match->resolve_draw({
+    logger => sub{ my $level = shift; $c->log->$level( @_ ); },
+    map {$_ => $c->req->params->{$_}} @field_names, # All the fields from the form
+  });
+  
+  # Set the status messages we need to show back to the user
+  my @errors = @{$response->{error}};
+  my @warnings = @{$response->{warning}};
+  my @info = @{$response->{info}};
+  my @success = @{$response->{success}};
+  my $mid = $c->set_status_msg({error => \@errors, warning => \@warnings, info => \@info, success => \@success});
+  my $redirect_uri;
+  
+  if ( $response->{completed} ) {
+    # Was completed, display the view page
+    # If the resolution type is new game, we now need to go in and update the match scores with that game's scores; otherwise if we just picked a winner, redirect to the match
+    # view page
+    my $redir_action = $c->req->param("resolution_type") eq "new_game" ? "update_by_url_keys" : "view_by_url_keys";
+    $redirect_uri = $c->uri_for_action("/matches/team/$redir_action", $match->url_keys, {mid => $mid});
+    
+    # Only log if we had things to do
+    $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["team-match", "resolve-draw", {home_team => $match->team_season_home_team_season->team->id, away_team => $match->team_season_away_team_season->team->id, scheduled_date => $match->scheduled_date->ymd}, $match->name_with_competition]);
+  } else {
+    # Not complete - check if we need to redirect back to the create or view page
+    $redirect_uri = $response->{can}
+      ? $c->uri_for_action("/matches/team/resolve_draw_by_url_keys", $match->url_keys, {mid => $mid})
+      : $c->uri_for_action("/matches/team/view_by_url_keys", $match->url_keys, {mid => $mid});
+    
+    # Flash the entered values we've got so we can set them into the form
+    $c->flash->{$_} = $response->{fields}{$_} foreach @processed_field_names;
   }
   
   # Now actually do the redirection

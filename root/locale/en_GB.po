@@ -2721,6 +2721,12 @@ msgstr "Not received"
 msgid "matches.versus.postponed"
 msgstr "Postponed, awaiting new date"
 
+msgid "matches.versus.incomplete"
+msgstr "Incomplete: %1"
+
+msgid "matches.versus.cancelled"
+msgstr "Cancelled: %1"
+
 msgid "matches.handicap.not-yet-set"
 msgstr "Handicap not set"
 
@@ -2863,6 +2869,12 @@ msgstr "Score"
 msgid "matches.game.field.match-score"
 msgstr "Match score"
 
+msgid "matches.game.field.handicap-adjustment-abbr"
+msgstr "HCP Adj"
+
+msgid "matches.game.field.handicap-adjustment-full"
+msgstr "Handicap adjustment"
+
 msgid "matches.game.fill-out-players.singles-notice"
 msgstr "Please enter both players before filling out the score for this game."
 
@@ -2880,6 +2892,9 @@ msgstr "The actual set number specified (%1) for scheduled set %2 is invalid; it
 
 msgid "matches.update-playing-order.error.game-specified-multiple"
 msgstr "The number %1 has been specified more than once (for set number %2 and %3)."
+
+msgid "matches.update-playing-order.error.game-draw-resolution"
+msgstr "Set %1 cannot be moved because it&#39;s a draw resolution set, so is the deciding set at the end of the match."
 
 msgid "matches.postpone-match.error.match-started"
 msgstr "The match cannot be postponed because there are scores entered for it already."
@@ -3028,8 +3043,26 @@ msgstr "The round following the one that this match is in already has its matche
 msgid "matches.update.error.next-round-entry-list-complete"
 msgstr "The entry list for the round following the one that this match is in already is already set, so scores in %1 cannot be altered."
 
+msgid "matches.update.error.draw-resolution-game-winner-chosen"
+msgstr "The winner has been chosen for this match via a draw resolution, so set scores cannot be updated."
+
+msgid "matches.games.update.error.draw-resolution-game"
+msgstr "There are draw resolutions in place for this match, so the regular sets are unable to be updated."
+
+msgid "matches.games.update.error.draw-resolution-game-not-last"
+msgstr "There are draw resolution sets in this match; only the final set can be updated."
+
 msgid "matches.update.delete.error.score-overridden"
 msgstr "You cannot delete scores in a match that&#39;s had the score overridden; delete the score override before deleting scores."
+
+msgid "matches.update.delete.error.draw-resolution-game-winner-chosen"
+msgstr "The winner has been chosen for this match via a draw resolution, so set scores cannot be deleted."
+
+msgid "matches.games.update.delete.error.draw-resolution-game"
+msgstr "There are draw resolutions in place for this match, so the regular sets are unable to be deleted."
+
+msgid "matches.games.update.delete.error.draw-resolution-game-not-last"
+msgstr "There are draw resolution sets in this match; only the final set score can be deleted."
 
 msgid "matches.override-score.legend.details"
 msgstr "Override the match score"
@@ -3054,6 +3087,78 @@ msgstr "The match score was not selected to be overridden, there was nothing to 
 
 msgid "matches.override-score.error.score-invalid"
 msgstr "The %1 score is invalid; it must be a number greater than 0."
+
+msgid "matches.resolve-draw.legend.details"
+msgstr "Resolve a match draw"
+
+msgid "matches.resolve-draw.error.not-a-tournament-match"
+msgstr "This match is a league match, so draws are valid and do not need resolving."
+
+msgid "matches.resolve-draw.error.tournament-group-match"
+msgstr "This match is part of the group stage of %1; therefore draws are valid and do not need resolving."
+
+msgid "matches.resolve-draw.error.match-cancelled"
+msgstr "This match was cancelled, so isn&#39; a draw that needs resolving."
+
+msgid "matches.resolve-draw.error.match-not-complete"
+msgstr "All sets in the match must be completed before a draw can be resolved."
+
+msgid "matches.resolve-draw.error.not-a-draw"
+msgstr "The match is not a draw and doesn&#39;t need resolving."
+
+msgid "matches.resolve-draw.error.winner-chosen"
+msgstr "The drawn result in this match has already been resolved by choosing the winner."
+
+msgid "matches.resolve-draw.field.resolution-type.new-game"
+msgstr "Add a set"
+
+msgid "matches.resolve-draw.field.resolution-type.choose-winner"
+msgstr "Manually choose the winner"
+
+msgid "matches.resolve-draw.field.chosen-winner.placeholder"
+msgstr "Choose which team goes through as winners"
+
+msgid "matches.resolve-draw.handicaps.points-headstart"
+msgstr "%1 handicap adjustment"
+
+msgid "matches.resolve-draw.error.invalid-type"
+msgstr "The resolution type is invalid, please select &quot;Add a set&quot; or &quot;Manually choose the winner&quot;"
+
+msgid "matches.resolve-draw.error.match-template-blank"
+msgstr "As you have selected to add a set, a template must be selected for that set."
+
+msgid "matches.resolve-draw.error.match-template-invalid"
+msgstr "The selected template for the set is invalid."
+
+msgid "matches.resolve-draw.error.home-player-number-invalid"
+msgstr "The singles home player number is invalid; it must be a number between 1 and %1."
+
+msgid "matches.resolve-draw.error.home-player-number-blank"
+msgstr "You must select a home player number, or tick to specify a doubles set."
+
+msgid "matches.resolve-draw.error.away-player-number-invalid"
+msgstr "The singles home player number is invalid; it must be a number between %1 and %2."
+
+msgid "matches.resolve-draw.error.away-player-number-blank"
+msgstr "You must select an away player in set %2, or tick to specify a doubles set."
+
+msgid "matches.resolve-draw.error.handicap-invalid"
+msgstr "The handicap for %1 is invalid; please enter a number."
+
+msgid "matches.resolve-draw.error.chosen-winner-invalid"
+msgstr "The winner chosen is not a valid team."
+
+msgid "matches.resolve-draw.error.chosen-winner-not-in-match"
+msgstr "The winner chosen (%1) is not a part of this match; you must choose either %2 or %3."
+
+msgid "matches.resolve-draw.error.chosen-winner-blank"
+msgstr "You have selected to choose the winner, so must select one of the teams from the list as the winner."
+
+msgid "matches.resolve-draw.success.new-game-created"
+msgstr "Set %1 was created to resolve the draw; you may now enter the score for this set."
+
+msgid "matches.resolve-draw.success.winner-chosen"
+msgstr "%1 was chosen as the winner of this match."
 
 msgid "matches.update-single.error.game-invalid"
 msgstr "The set specified is invalid."
@@ -3101,7 +3206,7 @@ msgid "matches.game.update-doubles.error.player-ineligible"
 msgstr "%1 is ineligible to play doubles for %2."
 
 msgid "matches.game.update-doubles.add.success"
-msgstr "%1 &amp; %2 have been set as the %3 doubles pair for game %4."
+msgstr "%1 &amp; %2 have been set as the %3 doubles pair for set %4."
 
 msgid "matches.game.update-doubles.remove.success"
 msgstr "The %1 doubles pair has been removed from set %2; if any scores were input, they have been zeroed and will need to be reinput when you enter the doubles pair."
@@ -3131,13 +3236,19 @@ msgid "matches.game.update-score.error.score-incomplete"
 msgstr "The score submitted in set %1 does not appear to be a complete score; please fill out the fields completely."
 
 msgid "matches.game.update-score.success-game-complete"
-msgstr "The scorecard was successfully updated."
+msgstr "Set %1 was successfully updated."
 
 msgid "matches.game.update-score.success-game-reset"
 msgstr "The set score was successfully reset and will now have to be entered again."
 
+msgid "matches.game.update-score.success-game-voided"
+msgstr "The set score was successfully voided."
+
 msgid "matches.game.update-score.success-match-complete"
-msgstr "The match has been successfully completed."
+msgstr "The match scorecard has been successfully completed."
+
+msgid "matches.game.update-score.success-game-complete-resolve-draw"
+msgstr "Set %1 was successfully completed, but the draw for this match must be resolved before it can be completed."
 
 msgid "matches.game.button.score-reset"
 msgstr "Reset set score to 0-0.  This set will have to have the score re-entered."
@@ -3153,6 +3264,12 @@ msgstr "This match was cancelled and any match scores showing have been awarded.
 
 msgid "matches.message.info.started-not-complete"
 msgstr "This match scorecard has been started, but is not yet complete."
+
+msgid "matches.message.info.draw-resolution.handicap-adjusted"
+msgstr "This match has had its handicap adjusted to %1 in order to account for the extra sets added to determine a winner."
+
+msgid "matches.message.info.draw-resolution.winner-chosen"
+msgstr "The match winner was chosen as <strong>%1</strong> after the result ended in a draw."
 
 msgid "matches.message.info.score-overridden"
 msgstr "This match has had the score overridden from the correctly calculated score of %1."
@@ -5299,6 +5416,9 @@ msgstr "Report"
 msgid "admin.cancel"
 msgstr "Cancel"
 
+msgid "admin.resolve-draw"
+msgstr "Resolve draw"
+
 msgid "admin.upload"
 msgstr "Upload"
 
@@ -5350,6 +5470,9 @@ msgstr "Update %1"
 
 msgid "admin.override-score-object"
 msgstr "Override the score for %1"
+
+msgid "admin.resolve-draw-object"
+msgstr "Resolve the draw for %1"
 
 msgid "admin.cancel-object"
 msgstr "Cancel %1"
@@ -7368,6 +7491,12 @@ msgstr "Overrode the score for %1%2."
 
 msgid "system-event-log.description.override-score-remove"
 msgstr "Removed the score override for %1%2."
+
+msgid "system-event-log.description.resolve-draw"
+msgstr "Resolved the draw in %1%2."
+
+msgid "system-event-log.description.resolve-draw-delete"
+msgstr "Deleted the draw resolution for %1%2."
 
 msgid "system-event-log.description.cancel"
 msgstr "Cancelled %1%2."
