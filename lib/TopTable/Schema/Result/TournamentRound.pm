@@ -1402,38 +1402,39 @@ sub get_table_order_attribs {
   my $rank_template = $self->rank_template;
   my $match_template = $self->match_template;
   my $winner_type = $match_template->winner_type->id;
+  my $alias = $params->{alias} || "me";
   
   my $order_by;
   if ( defined($rank_template) and $rank_template->assign_points ) {
     if ( $winner_type eq "games" ) {
       $order_by = [{
-        -desc => [qw( me.table_points me.games_won me.matches_won me.matches_drawn me.matches_played )],
+        -desc => ["$alias.table_points", "$alias.games_won", "$alias.matches_won", "$alias.matches_drawn", "$alias.matches_played"],
       }, {
-        -asc  => [qw( me.games_lost me.matches_lost )],
+        -asc  => ["$alias.games_lost", "$alias.matches_lost"],
       }, {
-        -desc => [qw( me.games_won )],
+        -desc => ["$alias.games_won"],
       }];
     } else {
       $order_by = [{
-        -desc => [qw( me.table_points me.points_difference me.points_won me.matches_played )],
+        -desc => ["$alias.table_points", "$alias.points_difference", "$alias.points_won", "$alias.matches_played"],
       }, {
-        -asc  => [qw( me.points_lost me.matches_lost )],
+        -asc  => ["$alias.points_lost", "$alias.matches_lost"],
       }];
     }
   } else {
     if ( $winner_type eq "games" ) {
       $order_by = [{
-        -desc => [qw( me.games_won me.matches_won me.matches_drawn me.matches_played )],
+        -desc => ["$alias.games_won", "$alias.matches_won", "$alias.matches_drawn", "$alias.matches_played"],
       }, {
-        -asc  => [qw( me.games_lost me.matches_lost )],
+        -asc  => ["$alias.games_lost", "$alias.matches_lost"],
       }, {
-        -desc => [qw( me.games_won )],
+        -desc => ["$alias.games_won"],
       }];
     } else {
       $order_by = [{
-        -desc => [qw( me.points_difference me.points_won me.matches_played )],
+        -desc => ["$alias.points_difference", "$alias.points_won", "$alias.matches_played"],
       }, {
-        -asc  => [qw( me.points_lost me.matches_lost )],
+        -asc  => ["$alias.points_lost", "$alias.matches_lost"],
       }];
     }
   }
@@ -1509,6 +1510,7 @@ sub auto_qualifiers {
       "$round_rel.round_number" => $self->round_number,
     }, {
       join => $round_rel,
+      order_by => $self->get_table_order_attribs({alias => $comp_round_rel}),
     });
   }
 }
