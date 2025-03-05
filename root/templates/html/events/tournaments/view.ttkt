@@ -24,11 +24,15 @@ END;
 [%
 IF round_tabs.size;
   FOREACH round = round_tabs;
-    SET matches = round.scalar.matches;
 -%]
   <div id="[% round.url_key %]">
 [%
-INCLUDE "html/fixtures-results/view$handicapped/group-days-ordering-no-comp.ttkt" round_view = 1;
+    IF round.is_final_round;
+      INCLUDE "html/events/tournaments/rounds/final.ttkt" round_view = 1, final = round;
+    ELSE;
+      SET matches = round.scalar.matches;
+      INCLUDE "html/fixtures-results/view$handicapped/group-days-ordering-no-comp.ttkt" round_view = 1;
+    END;
 -%]
   </div>
 [%

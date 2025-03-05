@@ -4373,6 +4373,24 @@ msgstr "%1 entrants for the round were selected; %2 must be selected."
 msgid "events.legend.tournament.round.delete-entrants"
 msgstr "Delete entrants"
 
+msgid "events.tournaments.winner-team"
+msgstr "Champions"
+
+msgid "events.tournaments.winner-doubles"
+msgstr "Champions"
+
+msgid "events.tournaments.winner-singles"
+msgstr "Champion"
+
+msgid "events.tournaments.runner-up-team"
+msgstr "Runners up"
+
+msgid "events.tournaments.runner-up-doubles"
+msgstr "Runners up"
+
+msgid "events.tournaments.runner-up-singles"
+msgstr "Runner up"
+
 ### Reports
 msgid "reports.name.loan-players"
 msgstr "Loan players"

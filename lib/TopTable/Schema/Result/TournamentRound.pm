@@ -1364,7 +1364,7 @@ Return 1 if this is the final round, or 0 if not.
 
 sub is_final_round {
   my $self = shift;
-  return $self->round_of == 2 ? 1 : 0;
+  return (defined($self->round_of) and $self->round_of == 2) ? 1 : 0;
 }
 
 =head2 num_qualifiers

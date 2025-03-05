@@ -245,8 +245,9 @@ sub matches_for_team {
   # These attributes are constant
   my $attributes = {
     prefetch => [qw( venue ), {
-      team_season_home_team_season => [ qw( team ), {club_season => "club"}],
-      team_season_away_team_season => [ qw( team ), {club_season => "club"}],
+      team_season_home_team_season => [qw( team ), {club_season => "club"}],
+      team_season_away_team_season => [qw( team ), {club_season => "club"}],
+      team_season_winner_season => [qw( team ), {club_season => "club"}],
       division_season => [qw( division )],
       tournament_round => {
         tournament => {event_season => [qw( event )]},
@@ -345,6 +346,7 @@ sub matches_in_division {
     prefetch  => [qw( venue ), {
       team_season_home_team_season => [qw( team ), {club_season => [qw( club )]}],
       team_season_away_team_season => [qw( team ), {club_season => [qw( club )]}],
+      team_season_winner_season => [qw( team ), {club_season => "club"}],
       division_season => [qw( division )],
     }],
     order_by => {
@@ -385,6 +387,7 @@ sub matches_in_date_range {
     prefetch  => [qw( venue ), {
       team_season_home_team_season => [qw( team ), {club_season => "club"}],
       team_season_away_team_season => [qw( team ), {club_season => "club"}],
+      team_season_winner_season => [qw( team ), {club_season => "club"}],
       division_season => [qw( division )],
       tournament_round => {
         tournament => {
@@ -507,9 +510,8 @@ sub matches_on_date {
   my $attributes = {
     prefetch  => [qw( venue ), {
       team_season_home_team_season => [qw( team ), {club_season => [qw( club )]}],
-    }, {
       team_season_away_team_season => [qw( team ), {club_season => [qw( club )]}],
-    }, {
+      team_season_winner_season => [qw( team ), {club_season => "club"}],
       division_season => [qw( division )],
     }],
     order_by  =>  {
@@ -562,9 +564,8 @@ sub matches_at_venue {
   my %attrib = (
     prefetch  => [{
       team_season_home_team_season => [qw( team ), {club_season => [qw( club )]}],
-    }, {
       team_season_away_team_season => [qw( team ), {club_season => [qw( club )]}],
-    }, {
+      team_season_winner_season => [qw( team ), {club_season => "club"}],
       division_season => [qw( division )],
     }],
     join => [qw( venue )],

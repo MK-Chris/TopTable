@@ -926,6 +926,28 @@ fieldset {min-width: 100%;}
   padding-left: 4px;
 }
 
+/* Tournament final display of two columns */
+.column-final-match {
+  width: 43%;
+  padding: 0px;
+  font-size: 4em;
+  text-align: center;
+}
+
+.column-final-match-score {
+  float: left;
+  padding: 0px;
+  width: 13%;
+  font-size: 2em;
+}
+
+.final-competitor {
+  background: #999;
+  -webkit-border-radius: 25px;
+  -moz-border-radius: 25px;
+  border-radius: 25px;
+}
+
 /* Clear floats after the columns */
 .row:after {
   content: "";
@@ -1063,6 +1085,7 @@ span.team-position-name {padding-left: 30px;}
 /* Fixtures list displays */
 td.match-score, td.match-versus {text-align: center;}
 td.match-score {padding: 0;}
+a.winner {font-weight: bold;}
 
 /* System roles */
 .system {font-weight: bold;}
