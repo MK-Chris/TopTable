@@ -182,6 +182,8 @@ sub index :Path :Args(0) {
       date => $today,
     });
     
+    $c->log->debug("Matches today: (" . $today->dmy . "): " . $matches->count);
+    
     $matches_started = $matches->matches_started->count;
     $matches_to_show = $matches->count;
     
@@ -195,11 +197,14 @@ sub index :Path :Args(0) {
           season => $current_season,
           date => $next_match_date,
         });
+    
+        $c->log->debug("Matches on next date (" . $next_match_date->dmy . "): " . $matches->count);
         
         $matches_to_show = $matches->count;
       } else {
         $matches_started = 0;
         $matches_to_show = 0;
+        $c->log->debug("No matches found for today or future");
       }
     }
     
@@ -208,6 +213,7 @@ sub index :Path :Args(0) {
   } else {
     $matches_started = 0;
     $matches_to_show = 0;
+    $c->log->debug("No current season");
   }
   
   my $news_articles_to_show = $c->config->{Index}{news_articles_visible};
