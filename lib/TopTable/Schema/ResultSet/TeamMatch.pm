@@ -510,7 +510,9 @@ sub matches_on_date {
   my $attributes = {
     prefetch  => [qw( venue ), {
       team_season_home_team_season => [qw( team ), {club_season => [qw( club )]}],
+    }, {
       team_season_away_team_season => [qw( team ), {club_season => [qw( club )]}],
+    }, {
       team_season_winner_season => [qw( team ), {club_season => "club"}],
       division_season => [qw( division )],
     }],
@@ -564,7 +566,9 @@ sub matches_at_venue {
   my %attrib = (
     prefetch  => [{
       team_season_home_team_season => [qw( team ), {club_season => [qw( club )]}],
+    }, {
       team_season_away_team_season => [qw( team ), {club_season => [qw( club )]}],
+    }, {
       team_season_winner_season => [qw( team ), {club_season => "club"}],
       division_season => [qw( division )],
     }],
