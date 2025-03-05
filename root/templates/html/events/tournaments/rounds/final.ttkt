@@ -1,0 +1,76 @@
+[%
+USE scalar;
+
+# There's only one match in the final, so no need to loop
+SET match = final.matches.first;
+SET home_team = match.team_season_home_team_season;
+SET away_team = match.team_season_away_team_season;
+SET score = match.score({winner_first = 1}); # The winner first logic only works if the match is complete, so we can get the score here regardless, it'll be the home team first if the match isn't done
+
+IF match.complete;
+  # If the match is complete, display the winner before the runner up
+  SET finished = 1;
+  
+  IF match.team_season_winner_season.team.id == home_team.team.id;
+    SET team1 = home_team;
+    SET team2 = away_team;
+    SET winning_score = team_score("home");
+    SET losing_score = team_score("away");
+  ELSE;
+    SET team1 = away_team;
+    SET team2 = home_team;
+    SET winning_score = team_score("away");
+    SET losing_score = team_score("home");
+  END;
+ELSE;
+  # If the match isn't complete, show the 'home' team first
+  SET finished = 0;
+  SET team1 = home_team;
+  SET team2 = away_team;
+END;
+
+team1_html = team1.full_name | html_entity;
+team2_html = team2.full_name | html_entity;
+
+# Set URLs
+IF specific_season;
+  SET team1_uri = c.uri_for_action("/events/teams_view_by_url_key_specific_season", [event.url_key, season.url_key, team1.club_season.club.url_key, team1.team.url_key]);
+  SET team2_uri = c.uri_for_action("/events/teams_view_by_url_key_specific_season", [event.url_key, season.url_key, team2.club_season.club.url_key, team2.team.url_key]);
+ELSE;
+  SET team1_uri = c.uri_for_action("/events/teams_view_by_url_key_current_season", [event.url_key, team1.club_season.club.url_key, team1.team.url_key]);
+  SET team2_uri = c.uri_for_action("/events/teams_view_by_url_key_current_season", [event.url_key, team2.club_season.club.url_key, team2.team.url_key]);
+END;
+-%]
+
+    <div class="table-wrap">
+      <div class="table-layout table-layout-centre">
+        <div class="row">
+          <div class="column-final-match left">
+[%
+IF finished;
+  SET img_title = c.maketext("events.tournaments.winner-" _ event_detail.entry_type.id);
+-%]
+              <img src="[% c.uri_for("/static/images/icons/trophy-1st-48.png") %]" width="48" height="48" class="trophy" title="[% img_title %]" alt="[% img_title %]">
+[%
+END;
+-%]
+              <a href="[% team1_uri %]" title="[% c.maketext("matches.link-title.team-tournament", team1_html, event_html) %]">[% team1_html %]</a>
+          </div><!-- .column-match left -->
+          <div class="column-final-match-score">
+            <a href="[% c.uri_for_action('/matches/team/view_by_url_keys', match.url_keys) %]">[% score %]</a>
+          </div>
+          <div class="column-final-match right">
+[%
+IF finished;
+  SET img_title = c.maketext("events.tournaments.runner-up-" _ event_detail.entry_type.id);
+-%]
+              <img src="[% c.uri_for("/static/images/icons/trophy-2nd-48.png") %]" width="48" height="48" class="trophy" title="[% img_title %]" alt="[% img_title %]">
+[%
+END;
+-%]
+              <a href="[% team2_uri %]" title="[% c.maketext("matches.link-title.team-tournament", team2_html, event_html) %]">[% team2_html %]</a>
+          </div><!-- .column-match right -->
+          <div class="clear-fix"></div>
+        </div><!-- .row -->
+      </div><!-- .table-layout -->
+    </div><!-- .table-wrap -->

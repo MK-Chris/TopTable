@@ -35,6 +35,18 @@
     SET home_pos_img = "";
     SET away_pos_img = "";
     
+    SWITCH match.winner_location;
+      CASE "home";
+        SET home_class = 'class="winner"';
+        SET away_class = "";
+      CASE "away";
+        SET home_class = "";
+        SET away_class = 'class="winner"';
+      CASE;
+        SET home_class = "";
+        SET away_class = "";
+    END;
+    
     IF match.tournament_round;
       SET tourn_round = match.tournament_round;
       SET tourn = tourn_round.tournament;
@@ -111,8 +123,8 @@
     <td data-label="[% c.maketext("fixtures-results.heading.date") %]"><a href="[% fixtures_day_uri %]">[% c.i18n_datetime_format_date.format_datetime(date) %]</a></td>
     <td data-label="[% c.maketext("fixtures-results.heading.competition-sort") %]">[% match.competition_sort %]</td>
     <td data-label="[% c.maketext("fixtures-results.heading.competition") %]"><a href="[% comp_uri %]">[% match.competition_name %]</a></td>
-    <td data-label="[% c.maketext("fixtures-results.heading.home-team") %]"><a title="[% home_uri_title %]" href="[% home_team_uri %]">[% home_team_html %]</a>[% home_pos_img %]</td>
-    <td data-label="[% c.maketext("fixtures-results.heading.away-team") %]"><a title="[% away_uri_title %]" href="[% away_team_uri %]">[% away_team_html %]</a>[% away_pos_img %]</td>
+    <td data-label="[% c.maketext("fixtures-results.heading.home-team") %]"><a title="[% home_uri_title %]" href="[% home_team_uri %]"[% home_class %]>[% home_team_html %]</a>[% home_pos_img %]</td>
+    <td data-label="[% c.maketext("fixtures-results.heading.away-team") %]"><a title="[% away_uri_title %]" href="[% away_team_uri %]"[% away_class %]>[% away_team_html %]</a>[% away_pos_img %]</td>
     <td data-label="[% c.maketext("fixtures-results.heading.score-versus") %]"><a href="[% c.uri_for_action('/matches/team/view_by_url_keys', match.url_keys) %]" title="[% c.maketext("fixtures-results.view-scorecard") %]">[% match.score %]</a></td>
     <td data-label="[% c.maketext("fixtures-results.heading.venue") %]"><a href="[% c.uri_for_action('/venues/view', [match.venue.url_key]) %]">[% match.venue.name | html_entity %]</a></td>
 [%

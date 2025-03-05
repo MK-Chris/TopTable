@@ -1867,7 +1867,18 @@ sub score {
   
   if ( $self->started or $self->cancelled ) {
     # If the match is started, return the score regardless
-    my $score = sprintf("%d-%d", $self->team_score("home"), $self->team_score("away"));
+    my ( $home_score, $away_score ) = ( $self->team_score("home"), $self->team_score("away") );
+    my $winner_first = $params->{winner_first} // 0;
+    my $score;
+    if ( $self->complete and $winner_first and $home_score != $away_score ) {
+      # Match is complete and we've requested the winner's score to be listed first AND we know this match isn't a draw
+      # Set $score to the winner's score first, then the loser's score
+      $score = $home_score > $away_score ? sprintf("%d-%d", $home_score, $away_score) : sprintf("%d-%d", $away_score, $home_score);
+    } else {
+      # Match isn't complete, or we haven't requested the winner's score first
+      $score = sprintf("%d-%d", $self->team_score("home"), $self->team_score("away"));
+    }
+    
     if ( $self->complete ) {
       # If it's a complete score, just return the score
       return $score;
@@ -3647,6 +3658,19 @@ sub result {
   }
   
   return \%return_value;
+}
+
+=head2 winner_location
+
+Return "home" or "away" depending on which team won the match.  If the match was a draw (or isn't complete), return undef.
+
+=cut
+
+sub winner_location {
+  my $self = shift;
+  my $winner = $self->winner;
+  return undef unless defined($winner);
+  return $self->team_season_home_team_season->team->id == $self->team_season_winner_season->team->id ? "home" : "away";
 }
 
 =head2 generate_ical_data
