@@ -1,8 +1,8 @@
-package TopTable::Schema::Result::TeamMatchView;
+package TopTable::Schema::Result::VwTeamMatch;
 
 =head1 NAME
 
-TopTable::Schema::Result::TeamMatchView
+TopTable::Schema::Result::VwTeamMatch - a view to get all team matches joined with the necessary data for searching.
 
 =cut
 
@@ -30,13 +30,13 @@ extends 'DBIx::Class::Core';
 
 __PACKAGE__->load_components("InflateColumn::DateTime", "TimeStamp", "PassphraseColumn");
 
-=head1 VIEW: C<team_match_view>
+=head1 VIEW: C<vw_team_match>
 
 =cut
 
 __PACKAGE__->table_class('DBIx::Class::ResultSource::View');
 
-__PACKAGE__->table("team_match_view");
+__PACKAGE__->table("vw_team_match");
 __PACKAGE__->result_source_instance->is_virtual(1);
 __PACKAGE__->result_source_instance->view_definition(
   "SELECT m.home_team, m.away_team, m.scheduled_date, m.played_date, hc.url_key AS 'home_club_url_key', ht.url_key AS 'home_team_url_key', ac.url_key AS 'away_club_url_key', at.url_key AS 'away_team_url_key', CONCAT(hc.short_name, ' ', ht.name) AS 'home_team_name', CONCAT(ac.short_name, ' ', at.name) AS 'away_team_name', CONCAT(hc.short_name, ' ', ht.name, ' v ', ac.short_name, ' ', at.name) AS 'match_name', s.id AS 'season_id', s.name AS 'season_name', d.name AS 'division_name', v.name AS 'venue_name', m.home_team_match_score AS 'home_score', m.away_team_match_score AS 'away_score', m.complete, m.cancelled

@@ -1,4 +1,4 @@
-package TopTable::Schema::ResultSet::ClubTeamView;
+package TopTable::Schema::ResultSet::VwClubTeam;
 
 use strict;
 use warnings;

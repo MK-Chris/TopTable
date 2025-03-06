@@ -1,4 +1,4 @@
-package TopTable::Schema::ResultSet::SearchAllView;
+package TopTable::Schema::ResultSet::VwSearchAll;
 
 use strict;
 use warnings;

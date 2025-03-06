@@ -789,7 +789,7 @@ sub teams :Chained("base") :PathPart("teams") :Args(0) {
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["fixtures_edit", $c->maketext("user.auth.edit-fixtures-grids"), 1]);
   
   # Get the current season, so we know which teams and divisions we have.
-  my $current_season = $c->model("DB::Season")->get_current;
+  my $current_season = $c->stash->{current_season};
   
   # Check we have a current season
   unless ( defined($current_season) ) {
@@ -860,7 +860,7 @@ sub set_teams :Chained("base") :PathPart("set-teams") :Args(0) {
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["fixtures_edit", $c->maketext("user.auth.edit-fixtures-grids"), 1]);
   
   # Get the current season, so we know which teams and divisions we have.
-  my $current_season = $c->model("DB::Season")->get_current;
+  my $current_season = $c->stash->{current_season};
   
   # Check we have a current season
   unless ( defined($current_season) ) {
@@ -953,7 +953,7 @@ sub create_fixtures :Chained("base") :PathPart("create-fixtures") :Args(0) {
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["fixtures_create", $c->maketext("user.auth.create-fixtures"), 1]);
   
   # Get the current season, so we know which teams and divisions we have.
-  my $current_season = $c->model("DB::Season")->get_current;
+  my $current_season = $c->stash->{current_season};
   
   # Check we have a current season
   unless ( defined($current_season) ) {
@@ -1033,7 +1033,7 @@ sub do_create_fixtures :Chained("base") :PathPart("do-create-fixtures") :Args(0)
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["fixtures_create", $c->maketext("user.auth.create-fixtures"), 1]);
   
   # Check we have a current season
-  my $current_season = $c->model("DB::Season")->get_current;
+  my $current_season = $c->stash->{current_season};
   
   # Check we have a current season
   unless ( defined($current_season) ) {

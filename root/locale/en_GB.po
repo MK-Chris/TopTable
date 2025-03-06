@@ -481,6 +481,27 @@ msgstr "Use the menu above to view clubs, teams, players and statistics for the 
 msgid "home-page.updates.recent"
 msgstr "Recent updates"
 
+msgid "season.stats.heading"
+msgstr "Season stats"
+
+msgid "season.stats.most-deciding-leg-wins"
+msgstr "Most deciding game wins"
+
+msgid "season.stats.no-deciding-leg-wins"
+msgstr "No one has played a set that&#39;s gone to a deciding game yet."
+
+msgid "season.stats.most-deuce-wins"
+msgstr "Most deuce wins"
+
+msgid "season.stats.no-deuce-wins"
+msgstr "No one has played a deuce game yet."
+
+msgid "season.stats.highest-points-wins"
+msgstr "Highest points win"
+
+msgid "season.stats.highest-points-wins.beat"
+msgstr "beat"
+
 msgid "home-page.updates.view-more"
 msgstr "View more updates"
 

@@ -1,14 +1,23 @@
 <div class="index-text">
 [% index_text.page_text OR c.maketext("home-page.default-index-text") %]<br /><br />
 </div>
+[%
+IF current_season;
+  # Show the home page stats for this season
+  INCLUDE "html/seasons/stats.ttkt";
+END;
+-%]
 
 <h4>[% c.maketext("home-page.updates.recent") %]</h4>
+<div id="updates">
 [%
 # Recent updates
 SET table_width = 70;
 INCLUDE "html/event-viewer/view-preloaded.ttkt";
 -%]<br />
-<a href="[% c.uri_for("/event-viewer") %]">[% c.maketext("home-page.updates.view-more") %]</a><br /><br />
+<a href="[% c.uri_for("/event-viewer") %]">[% c.maketext("home-page.updates.view-more") %]</a>
+</div><!-- #updates -->
+
 [%
 # If there are matches to show, display as two columns
 IF matches_to_show;

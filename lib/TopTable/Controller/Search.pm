@@ -42,7 +42,7 @@ sub index :Path :Args(0) {
   push(@include_types, qw( template-league-table-ranking template-match-individual template-match-team )) if $c->stash->{authorisation}{template_view};
   
   $c->stash({
-    db_resultset => "SearchAllView",
+    db_resultset => "VwSearchAll",
     query_params => {
       q => $c->req->params->{q},
       include_types => \@include_types
@@ -133,7 +133,7 @@ sub do_search {
         $json_result->{name} = ( $result->result_source->schema->source($db_resultset)->has_column("date") and defined($result->date) ) ? sprintf("%s (%s)", $display{name}, $result->date->dmy("/")) : $display{name};
         
         
-        if ( $type eq "person" and $db_resultset ne "SearchAllView" ) {
+        if ( $type eq "person" and $db_resultset ne "VwSearchAll" ) {
           # Additional formatting options for people
           $json_result->{initial_and_surname} = $result->initial_and_surname;
           $json_result->{initials} = $result->initials;

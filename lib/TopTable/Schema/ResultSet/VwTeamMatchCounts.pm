@@ -1,4 +1,4 @@
-package TopTable::Schema::ResultSet::TeamMatchWeeksView;
+package TopTable::Schema::ResultSet::VwTeamMatchCounts;
 
 use strict;
 use warnings;
@@ -15,7 +15,7 @@ sub search_by_season {
   my $class = shift;
   my ( $season ) = @_;
   return $class->search({season_id => $season->id}, {
-    order_by => [qw( played_week )]
+    order_by => [qw( club_full_name team_name )]
   });
 }
 

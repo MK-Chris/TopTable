@@ -941,7 +941,7 @@ sub create :Chained("base_create") :PathPart("create") :CaptureArgs(0) {
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["team_create", $c->maketext("user.auth.create-teams"), 1] );
   
   # Get the current season
-  my $current_season = $c->model("DB::Season")->get_current;
+  my $current_season = $c->stash->{current_season};
   
   if ( defined($current_season) ) {
     # If there us a current season, we need to check we haven't progressed through
@@ -1105,7 +1105,7 @@ sub edit :Private {
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["team_edit", $c->maketext("user.auth.edit-teams"), 1]);
   
   # Get the current season
-  my $current_season = $c->model("DB::Season")->get_current;
+  my $current_season = $c->stash->{current_season};
   
   if ( !defined($current_season) ) {
     # Redirect and show the error
@@ -1218,7 +1218,6 @@ sub edit :Private {
     clubs => scalar $c->model("DB::Club")->all_clubs_by_name,
     divisions => $divisions,
     home_nights => scalar $c->model("DB::LookupWeekday")->all_days,
-    current_season => $current_season,
     team_season => $team_season,
     last_team_season => $last_team_season,
     form_action => $c->uri_for_action("/teams/do_edit_by_url_key", [$team->club->url_key, $team->url_key]),
@@ -1341,7 +1340,7 @@ sub points_adjustment :Private {
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["team_points_adjust", $c->maketext("user.auth.team-points-adjust"), 1]);
   
   # Get the current season
-  my $current_season = $c->model("DB::Season")->get_current;
+  my $current_season = $c->stash->{current_season};
   
   if ( !defined($current_season) ) {
     # Redirect and show the error
@@ -1626,7 +1625,7 @@ sub search :Local :Args(0) {
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["team_view", $c->maketext("user.auth.view-teams"), 1]);
   
   $c->stash({
-    db_resultset => "ClubTeamView",
+    db_resultset => "VwClubTeam",
     query_params => {q => $c->req->params->{q}},
     view_action => "/teams/view_current_season_by_url_key",
     search_action => "/teams/search",

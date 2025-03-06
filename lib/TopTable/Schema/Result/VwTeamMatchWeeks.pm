@@ -1,8 +1,8 @@
-package TopTable::Schema::Result::TeamMatchWeeksView;
+package TopTable::Schema::Result::VwTeamMatchWeeks;
 
 =head1 NAME
 
-TopTable::Schema::Result::TeamMatchCountsView
+TopTable::Schema::Result::VwTeamMatchCounts - a view to get team matches played in particular weeks
 
 =cut
 
@@ -30,13 +30,13 @@ extends 'DBIx::Class::Core';
 
 __PACKAGE__->load_components("InflateColumn::DateTime", "TimeStamp", "PassphraseColumn");
 
-=head1 VIEW: C<club_teams>
+=head1 VIEW: C<vw_team_match_weeks>
 
 =cut
 
 __PACKAGE__->table_class('DBIx::Class::ResultSource::View');
 
-__PACKAGE__->table("team_match_weeks");
+__PACKAGE__->table("vw_team_match_weeks");
 __PACKAGE__->result_source_instance->is_virtual(1);
 __PACKAGE__->result_source_instance->view_definition(
   "SELECT DATE_ADD(played_date, INTERVAL(-WEEKDAY(played_date)) DAY) AS played_week, COUNT(played_date) AS 'number_of_matches', s.id AS season_id, s.url_key AS season_url, s.`name` AS season_name

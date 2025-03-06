@@ -176,12 +176,7 @@ sub view_current_season :Chained("view") :PathPart("") :Args(0) {
   my $enc_name = $c->stash->{enc_name};
   
   # No season ID, try to find the current season
-  my $season = $c->model("DB::Season")->get_current;
-  
-  if ( !defined($season) ) {
-    # No current season season, try and find the last season.
-    $season = $c->model("DB::Season")->last_complete_season;
-  }
+  my $season = $c->model("DB::Season")->get_current_or_last;
   
   if ( defined($season) ) {
     $c->stash({
