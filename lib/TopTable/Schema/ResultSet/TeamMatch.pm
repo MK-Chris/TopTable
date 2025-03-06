@@ -246,7 +246,9 @@ sub matches_for_team {
   my $attributes = {
     prefetch => [qw( venue ), {
       team_season_home_team_season => [qw( team ), {club_season => "club"}],
+    }, {
       team_season_away_team_season => [qw( team ), {club_season => "club"}],
+    }, {
       team_season_winner_season => [qw( team ), {club_season => "club"}],
       division_season => [qw( division )],
       tournament_round => {
@@ -298,6 +300,7 @@ sub matches_in_tourn_round {
   my %attributes = (
     prefetch => [qw( venue ), {
       team_season_home_team_season => [ qw( team ), {club_season => "club"}],
+    }, {
       team_season_away_team_season => [ qw( team ), {club_season => "club"}],
       division_season => [qw( division )],
       tournament_round => {
@@ -345,7 +348,9 @@ sub matches_in_division {
   my %attrib = (
     prefetch  => [qw( venue ), {
       team_season_home_team_season => [qw( team ), {club_season => [qw( club )]}],
+    }, {
       team_season_away_team_season => [qw( team ), {club_season => [qw( club )]}],
+    }, {
       team_season_winner_season => [qw( team ), {club_season => "club"}],
       division_season => [qw( division )],
     }],
@@ -386,7 +391,9 @@ sub matches_in_date_range {
   my %attrib = (
     prefetch  => [qw( venue ), {
       team_season_home_team_season => [qw( team ), {club_season => "club"}],
+    }, {
       team_season_away_team_season => [qw( team ), {club_season => "club"}],
+    }, {
       team_season_winner_season => [qw( team ), {club_season => "club"}],
       division_season => [qw( division )],
       tournament_round => {
@@ -437,6 +444,7 @@ sub incomplete_matches {
   my $attrib = {
     prefetch => [qw( venue ), {
       team_season_home_team_season => [qw( team ), {club_season => "club"}],
+    }, {
       team_season_away_team_season => [qw( team ), {club_season => "club"}],
       division_season => [qw( division )],
     }],
