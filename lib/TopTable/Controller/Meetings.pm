@@ -781,7 +781,7 @@ sub process_form :Private {
   # If it's an event, work out if we can edit (we must be editing, can't create through this method).
   if ( $is_event ) {
     my ( $season, $event_season );
-    $season = $c->model("DB::Season")->get_current;
+    my $current_season = $c->stash->{current_season};
     
     if ( defined($season) ) {
       $event_season = $meeting->event_season;

@@ -674,7 +674,7 @@ sub create :Chained("base_no_object_specified") :PathPart("create") :CaptureArgs
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["person_create", $c->maketext("user.auth.create-people"), 1]);
   
   # Get the current season
-  my $current_season = $c->model("DB::Season")->get_current;
+  my $current_season = $c->stash->{current_season};
   
   unless ( defined($current_season) ) {
     # Redirect and show the error
@@ -888,7 +888,7 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["person_edit", $c->maketext("user.auth.edit-people"), 1]);
   
   # Get the current season
-  my $current_season = $c->model("DB::Season")->get_current;
+  my $current_season = $c->stash->{current_season};
   
   unless ( defined($current_season) ) {
     # Redirect and show the error
@@ -1200,7 +1200,7 @@ sub process_form :Private {
   my @processed_field_names = qw( first_name surname change_name_prev_seasons address1 address2 address3 address4 address5 postcode home_telephone mobile_telephone work_telephone email_address gender date_of_birth team captain_of secretary_of registration_date fees_paid user noindex );
   
   # Get the current season
-  my $current_season = $c->model("DB::Season")->get_current;
+  my $current_season = $c->stash->{current_season};
   
   unless ( defined( $current_season ) ) {
     # Redirect and show the error
@@ -1279,7 +1279,7 @@ sub import :Local {
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["person_create", $c->maketext("user.auth.create-people"), 1]);
   
   # Get the current season
-  my $current_season = $c->model("DB::Season")->get_current;
+  my $current_season = $c->stash->{current_season};
   
   unless ( defined($current_season) ) {
     # Redirect and show the error
@@ -1326,7 +1326,7 @@ sub import_results :Path("import-results") {
   my @allowed_types = qw( text/plain text/csv );
   
   # Get the current season
-  my $current_season = $c->model("DB::Season")->get_current;
+  my $current_season = $c->stash->{current_season};
   
   if ( defined($current_season) ) {
     # Stash the current season

@@ -276,7 +276,7 @@ sub create :Local {
   # Check that we are authorised to create events
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_create", $c->maketext("user.auth.create-events"), 1]);
   
-  my $current_season = $c->model("DB::Season")->get_current;
+  my $current_season = $c->stash->{current_season};
   
   unless ( defined($current_season) ) {
     # Redirect and show the error
@@ -3209,7 +3209,7 @@ sub edit_details :Chained("base") :PathPart("edit-details") :Args(0) {
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.edit-events"), 1]);  # Try to find the current season (or the last completed season if there is no current season)
   
   # Check we have a current season to edit (we can't edit archived seasons' events)
-  my $current_season = $c->model("DB::Season")->get_current;
+  my $current_season = $c->stash->{current_season};
     
   if ( defined($current_season) ) {
     # Forward to the routine that stashes the event's season details
@@ -3370,7 +3370,7 @@ sub do_edit_details :Chained("base") :PathPart("do-edit-details") :Args(0) {
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.edit-events"), 1]);  # Try to find the current season (or the last completed season if there is no current season)
   
   # Check we have a current season to edit (we can't edit archived seasons' events)
-  my $current_season = $c->model("DB::Season")->get_current;
+  my $current_season = $c->stash->{current_season};
     
   if ( defined($current_season) ) {
     # Forward to the routine that stashes the event's season details

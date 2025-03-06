@@ -121,7 +121,7 @@ sub create :Local {
   # Check that we are authorised to create committee positions
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["committee_create", $c->maketext("user.auth.create-officials"), 1]);
   
-  my $current_season = $c->model("DB::Season")->get_current;
+  my $current_season = $c->stash->{current_season};
   
   # Check we have a current season
   unless ( defined($current_season) ) {
@@ -208,7 +208,7 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
   # Check that we are authorised to create committee positions
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["committee_edit", $c->maketext("user.auth.edit-officials"), 1]);
   
-  my $current_season = $c->model("DB::Season")->get_current;
+  my $current_season = $c->stash->{current_season};
   
   # Check we have a current season
   unless ( defined($current_season) ) {

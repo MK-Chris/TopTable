@@ -227,7 +227,6 @@ sub view :Chained("base") :PathPart("") :Args(0) {
       $c->uri_for("/static/css/datatables/dataTables.dataTables.min.css"),
       $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
     ],
-    
     # Statistics
     clubs => $season->all_clubs->count,
     teams => $season->all_teams->count,
@@ -237,6 +236,9 @@ sub view :Chained("base") :PathPart("") :Args(0) {
     cancelled_matches => $season->league_matches({mode => "cancelled"})->count,
     matches_with_incomplete_teams => $season->league_matches({mode => "missing-players"})->count,
     matches_with_loan_players => $season->league_matches({mode => "loan-players"})->count,
+    deciding_game_winners => [$c->model("DB::VwMatchDecidingGame")->search_by_season($season, {top_only => 1, result => "win"})],
+    deuce_game_winners => [$c->model("DB::VwMatchLegDeuceCount")->search_by_season($season, {top_only => 1})],
+    highest_point_winners => [$c->model("DB::VwHighestPointsWin")->search_by_season($season, undef, {top_only => 1})],
   });
 }
 
@@ -254,11 +256,11 @@ sub create :Local {
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["season_create", $c->maketext("user.auth.create-seasons"), 1]);
   
   # Find an incomplete season; if there is one, we can' create a new one
-  my $incomplete_season = $c->model("DB::Season")->get_current;
+  my $current_season = $c->stash->{current_season};
   
-  if ( defined($incomplete_season) ) {
+  if ( defined($current_season) ) {
     # Now redirect to view the season
-    $c->response->redirect( $c->uri_for_action("/seasons/view", [$incomplete_season->url_key],
+    $c->response->redirect( $c->uri_for_action("/seasons/view", [$current_season->url_key],
                                 {mid => $c->set_status_msg({error => $c->maketext("seasons.form.error.current-season-exists")})}));
     $c->detach;
     return;
@@ -528,11 +530,11 @@ sub do_create :Path("do-create") {
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["season_create", $c->maketext("user.auth.create-seasons"), 1]);
   
   # Find an incomplete season; if there is one, we can' create a new one
-  my $incomplete_season = $c->model("DB::Season")->get_current;
+  my $current_season = $c->stash->{current_season};
   
-  if ( defined($incomplete_season) ) {
+  if ( defined($current_season) ) {
     # Now redirect to view the season
-    $c->response->redirect( $c->uri_for_action("/seasons/view", [$incomplete_season->url_key],
+    $c->response->redirect( $c->uri_for_action("/seasons/view", [$current_season->url_key],
                                 {mid => $c->set_status_msg( {error => $c->maketext("seasons.create.error.incomplete-season-exists")})}));
     $c->detach;
     return;

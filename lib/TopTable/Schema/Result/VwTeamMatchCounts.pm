@@ -1,8 +1,8 @@
-package TopTable::Schema::Result::TeamMatchCountsView;
+package TopTable::Schema::Result::VwTeamMatchCounts;
 
 =head1 NAME
 
-TopTable::Schema::Result::TeamMatchCountsView
+TopTable::Schema::Result::VwTeamMatchCounts - a view to get match counts for teams.
 
 =cut
 
@@ -30,13 +30,13 @@ extends 'DBIx::Class::Core';
 
 __PACKAGE__->load_components("InflateColumn::DateTime", "TimeStamp", "PassphraseColumn");
 
-=head1 VIEW: C<club_teams>
+=head1 VIEW: C<vw_team_match_count>
 
 =cut
 
 __PACKAGE__->table_class('DBIx::Class::ResultSource::View');
 
-__PACKAGE__->table("team_match_count");
+__PACKAGE__->table("vw_team_match_count");
 __PACKAGE__->result_source_instance->is_virtual(1);
 __PACKAGE__->result_source_instance->view_definition(
   "SELECT COUNT(*) AS 'number_of_matches', team_id, club_url, team_url, club_full_name, club_short_name, team_name, season_id, season_url, season_name

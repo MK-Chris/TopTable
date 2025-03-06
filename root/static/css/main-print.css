@@ -1090,6 +1090,35 @@ a.winner {font-weight: bold;}
 /* System roles */
 .system {font-weight: bold;}
 
+/*
+  Stats boxes on front page
+*/
+/* container */
+.stats-columns {
+  display:flex;
+  flex-wrap:wrap;
+}
+
+/* columns */
+.stats-columns > div {
+  width:29%;
+  padding:1rem;
+  margin: 1rem;
+  background: #e9e9e9;
+}
+
+div.stats-heading {
+  font-size: 1.5em;
+  font-weight: bold;
+  text-align: center;
+}
+
+div.stats-data {
+  font-size: 1.2em;
+  text-align: center;
+  font-style: italic;
+}
+
 /* Start by setting display:none to make this hidden.
    Then we position it in relation to the viewport window
    with position:fixed. Width, height, top and left speak

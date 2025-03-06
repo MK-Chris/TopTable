@@ -1,4 +1,4 @@
-package TopTable::Schema::ResultSet::TeamMatchView;
+package TopTable::Schema::ResultSet::VwTeamMatch;
 
 use strict;
 use warnings;

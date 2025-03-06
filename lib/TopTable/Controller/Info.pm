@@ -346,9 +346,9 @@ sub team_captains :Path("team-captains") :Args(1) {
   my ( $self, $c, $view_by ) = @_;
   
   # Check there's a current season, otherwise we'll error
-  my $season = $c->model("DB::Season")->get_current;
+  my $current_season = $c->stash->{current_season};
   
-  unless ( defined($season) ) {
+  unless ( defined($current_season) ) {
     # Error, no current season
     $c->response->redirect($c->uri_for("/",
                                 {mid => $c->set_status_msg({error => $c->maketext("team-captains.view.error.no-current-season")})}));
@@ -377,7 +377,7 @@ sub team_captains :Path("team-captains") :Args(1) {
     template => sprintf("html/info/team-captains/view-%s.ttkt", $view_by),
     subtitle1 => $c->maketext("menu.text.captains"),
     subtitle2 => $c->maketext(sprintf("menu.text.captains.%s", $view_by)),
-    teams => scalar $c->model("DB::Team")->get_teams_with_captains_in_season({season => $season, view_by => $view_by}),
+    teams => scalar $c->model("DB::Team")->get_teams_with_captains_in_season({season => $current_season, view_by => $view_by}),
     external_scripts => [
       $c->uri_for("/static/script/plugins/chosen/chosen.jquery.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),

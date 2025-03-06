@@ -1,0 +1,98 @@
+<h4>[% c.maketext("season.stats.heading") %]</h4>
+<div class="stats-columns">
+  <div id="most-decider-wins" class="stats-column">
+    <h5>[% c.maketext("season.stats.most-deciding-leg-wins") %]</h5>
+[%
+  IF deciding_game_winners.size;
+    SET people = 0;
+    FOREACH person = deciding_game_winners;
+      people = people + 1;
+      IF people == 1;
+        # First person, display the number (the number is the same for all people)
+%]
+      <div class="stats-heading">[% person.number_of_sets %]</div>
+[%
+      END;
+      
+      IF specific_season;
+        SET uri = c.uri_for_action("/people/view_specific_season", [person.player_url_key, season.url_key]);
+      ELSE;
+        SET uri = c.uri_for_action("/people/view_current_season", [person.player_url_key]);
+      END;
+%]
+      <div class="stats-data"><a href="[% uri %]">[% person.player_display_name | html_entity %]</a></div>
+[%
+    END;
+  ELSE;
+%]
+    <p>[% c.maketext("season.stats.no-deciding-leg-wins") %]</p>
+[%
+  END;
+%]
+  </div>
+  <div id="most-deuce-wins" class="stats-column">
+    <h5>[% c.maketext("season.stats.most-deuce-wins") %]</h5>
+[%
+  IF deuce_game_winners.size;
+    SET people = 0;
+    FOREACH person = deuce_game_winners;
+      people = people + 1;
+      IF people == 1;
+        # First person, display the number (the number is the same for all people)
+%]
+      <div class="stats-heading">[% person.number_of_deuce_wins %]</div>
+[%
+      END;
+      
+      IF specific_season;
+        SET uri = c.uri_for_action("/people/view_specific_season", [person.player_url_key, season.url_key]);
+      ELSE;
+        SET uri = c.uri_for_action("/people/view_current_season", [person.player_url_key]);
+      END;
+%]
+      <div class="stats-data"><a href="[% uri %]">[% person.player_display_name | html_entity %]</a></div>
+[%
+    END;
+  ELSE;
+%]
+    <p>[% c.maketext("season.stats.no-deuce-wins") %]</p>
+[%
+  END;
+%]
+  </div>
+  <div>
+    <h5>[% c.maketext("season.stats.highest-points-wins") %]</h5>
+[%
+  IF highest_point_winners.size;
+    SET people = 0;
+    FOREACH person = highest_point_winners;
+      people = people + 1;
+      IF people == 1;
+        # First person, display the number (the number is the same for all people)
+%]
+      <div class="stats-heading">[% person.winning_points %]-[% person.losing_points %]</div>
+[%
+      END;
+      
+      IF specific_season;
+        SET person_uri = c.uri_for_action("/people/view_specific_season", [person.player_url_key, season.url_key]);
+        SET opponent_uri = c.uri_for_action("/people/view_specific_season", [person.opponent_url_key, season.url_key]);
+      ELSE;
+        SET person_uri = c.uri_for_action("/people/view_current_season", [person.player_url_key]);
+        SET opponent_uri = c.uri_for_action("/people/view_current_season", [person.opponent_url_key]);
+      END;
+      
+      # Get the match so we can link to it
+      SET match = c.model("DB::TeamMatch").get_match_by_ids(person.home_team_id, person.away_team_id, person.scheduled_date);
+%]
+      <div class="stats-data"><a href="[% person_uri %]">[% person.player_display_name | html_entity %]</a> [% c.maketext("season.stats.highest-points-wins.beat") %] <a href="[% opponent_uri %]">[% person.opponent_display_name | html_entity %]</a>: <a href="[% c.uri_for_action("/matches/team/view_by_url_keys", match.url_keys) %]">[% match.name_with_competition %]</a></div>
+[%
+    END;
+  ELSE;
+%]
+    <p>[% c.maketext("season.stats.no-deuce-wins") %]</p>
+[%
+  END;
+%]
+  </div>
+</div>

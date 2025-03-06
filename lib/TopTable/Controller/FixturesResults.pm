@@ -337,7 +337,7 @@ sub filter_view :Private {
   
   if ( $view_method eq "teams" ) {
     # View by team; display a list of teams
-    $display_options = [$c->model("DB::TeamMatchCountsView")->search_by_season($season)];
+    $display_options = [$c->model("DB::VwTeamMatchCounts")->search_by_season($season)];
     $view_method_display = $c->maketext("fixtures-results.title.category.by-team");
     push(@external_scripts,
       $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
@@ -360,7 +360,7 @@ sub filter_view :Private {
     push(@external_styles, $c->uri_for("/static/css/datatables/rowGroup.dataTables.min.css"));
   } elsif ( $view_method eq "weeks" ) {
     # View by week; display a list of weeks with matches
-    $display_options = [$c->model("DB::TeamMatchWeeksView")->search_by_season($season)];
+    $display_options = [$c->model("DB::VwTeamMatchWeeks")->search_by_season($season)];
     $view_method_display = $c->maketext("fixtures-results.title.category.by-week");
     push(@external_scripts,
       $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),

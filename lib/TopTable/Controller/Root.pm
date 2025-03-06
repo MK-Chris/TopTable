@@ -90,7 +90,10 @@ sub begin :Private {
     }) unless $c->config->{breadcrumbs}{hide_home};
     
     # Stash what we have of the breadcrumbs so far (which will either be 'Home' or just an empty array ready for pushing)
-    $c->stash({breadcrumbs => \@breadcrumbs});
+    $c->stash({
+      breadcrumbs => \@breadcrumbs,
+      current_season => $c->model("DB::Season")->get_current,
+    });
   }
   
   Log::Log4perl::MDC->put("ip", $c->req->address);
@@ -169,7 +172,7 @@ sub index :Path :Args(0) {
   });
   
   # Today's matches (if there's a current season)
-  my $current_season = $c->model("DB::Season")->get_current;
+  my $current_season = $c->stash->{current_season};
   my $online_users_last_active_limit = $c->datetime_tz({time_zone => "UTC"})->subtract(minutes => 15);
   my $online_user_count = $c->model("DB::Session")->get_online_users({datetime_limit => $online_users_last_active_limit})->count;
   
@@ -259,6 +262,9 @@ sub index :Path :Args(0) {
     matches_started => $matches_started,
     next_match_date => $next_match_date,
     tomorrow => $tomorrow,
+    deciding_game_winners => [$c->model("DB::VwMatchDecidingGame")->search_by_season($current_season, {top_only => 1, result => "win"})],
+    deuce_game_winners => [$c->model("DB::VwMatchLegDeuceCount")->search_by_season($current_season, {top_only => 1})],
+    highest_point_winners => [$c->model("DB::VwHighestPointsWin")->search_by_season($current_season, undef, {top_only => 1})],
     articles => $articles,
     online_user_count => $online_user_count,
     index_text => $c->model("DB::PageText")->get_text("index"),
@@ -395,7 +401,7 @@ sub end :ActionClass("RenderView") {
   if ( !$c->stash->{no_wrapper} and !$c->is_ajax ) {
     ## Nav drop down menus
     # Current season, clubs in current season, archived seasons
-    my $current_season = $c->model("DB::Season")->get_current;
+    my $current_season = $c->stash->{current_season};
     #$stats->profile("got current season");
     my $clubs = [$c->model("DB::Club")->clubs_with_teams_in_season({
       season => $current_season,
@@ -443,7 +449,7 @@ sub end :ActionClass("RenderView") {
       wrapper => "html/wrappers/responsive.ttkt",
       
       # Nav elements
-      nav_current_season => $current_season,
+      current_season => $current_season,
       archived_seasons => [$c->model("DB::Season")->get_archived],
       archived_seasons_count => $c->model("DB::Season")->get_archived->count,
       nav_clubs => $clubs,

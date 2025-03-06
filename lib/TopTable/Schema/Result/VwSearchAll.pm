@@ -1,8 +1,8 @@
-package TopTable::Schema::Result::SearchAllView;
+package TopTable::Schema::Result::VwSearchAll;
 
 =head1 NAME
 
-TopTable::Schema::Result::SearchAllView
+TopTable::Schema::Result::VwSearchAll - A unionised view to get all searchable objects together for searching.
 
 =cut
 
@@ -30,13 +30,13 @@ extends 'DBIx::Class::Core';
 
 __PACKAGE__->load_components("InflateColumn::DateTime", "TimeStamp", "PassphraseColumn");
 
-=head1 VIEW: C<club_teams>
+=head1 VIEW: C<vw_search_all>
 
 =cut
 
 __PACKAGE__->table_class('DBIx::Class::ResultSource::View');
 
-__PACKAGE__->table("search_all");
+__PACKAGE__->table("vw_search_all");
 __PACKAGE__->result_source_instance->is_virtual(1);
 __PACKAGE__->result_source_instance->view_definition(
   "-- People

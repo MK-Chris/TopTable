@@ -219,7 +219,7 @@ sub reorder :Path("reorder") {
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["committee_edit", $c->maketext("user.auth.edit-officials"), 1]);
   
   # Get the current season, so we know which teams and divisions we have.
-  my $current_season = $c->model("DB::Season")->get_current;
+  my $current_season = $c->stash->{current_season};
   
   # Check we have a current season
   unless ( defined($current_season) ) {

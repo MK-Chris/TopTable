@@ -1664,7 +1664,7 @@ sub search :Local :Args(0) {
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["match_view", $c->maketext("user.auth.view-matches"), 1]);
   
   $c->stash({
-    db_resultset => "TeamMatchView",
+    db_resultset => "VwTeamMatch",
     query_params => {
       q => $c->req->params->{q},
       include_complete => $c->req->params->{complete},
