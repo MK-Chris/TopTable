@@ -44,6 +44,9 @@ END;
 
     <div class="table-wrap">
       <div class="table-layout table-layout-centre">
+        <div id="final-match-date">[% c.i18n_datetime_format_date_long.format_datetime(match.played_date) %]</div>
+        <div id="final-match-date">[% match.actual_start_time %]</div>
+        <div id="final-match-venue"><a href="[% c.uri_for_action("/venues/view", [match.venue.url_key]) %]">[% match.venue.name | html_entity %]</a></div>
         <div class="row">
           <div class="column-final-match left">
 [%
