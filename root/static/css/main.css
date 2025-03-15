@@ -941,6 +941,27 @@ fieldset {min-width: 100%;}
   padding-left: 4px;
 }
 
+/* Tournament final date / venue */
+#final-match-date {
+  font-size: 1.3em;
+  font-weight: bold;
+  text-align: center;
+}
+
+#final-match-time {
+  font-size: 1.2em;
+  font-style: italic;
+  text-align: center;
+}
+
+#final-match-venue {
+  font-size: 1.3em;
+  font-weight: bold;
+  font-style: italic;
+  text-align: center;
+  padding-bottom: 10px;
+}
+
 /* Tournament final display of two columns */
 .column-final-match {
   width: 40%;
