@@ -956,10 +956,7 @@ Returns the team's league position within the season.
 sub league_position {
   my $self = shift;
   
-  my $teams_in_division = $self->result_source->schema->resultset("TeamSeason")->get_teams_in_division_in_league_table_order({
-    season => $self->season,
-    division => $self->division_season->division,
-  });
+  my $teams_in_division = $self->division_season->league_table;
   
   my $pos = 0;
   

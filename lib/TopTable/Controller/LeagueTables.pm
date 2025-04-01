@@ -318,14 +318,8 @@ sub view_finalise :Private {
     divisions => [$season->divisions],
     view_online_display => sprintf("Viewing %s table for %s", $division->name, $season->name),
     view_online_link => 1,
-    entrants => [$c->model("DB::TeamSeason")->get_teams_in_division_in_league_table_order({
-      season => $season,
-      division => $division,
-    })],
-    last_updated => $c->model("DB::TeamSeason")->get_tables_last_updated_timestamp({
-      season => $season,
-      division => $division,
-    }),
+    entrants => [$division_season->league_table],
+    last_updated => $division_season->table_last_updated,
     table_complete => $division_season->table_complete,
     points_adjustments => $points_adjustments,
     ranking_template => $ranking_template,

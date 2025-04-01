@@ -1087,13 +1087,13 @@ sub has_entrant {
   return $self->search_related($member_rel, \%where, \%attrib)->count;
 }
 
-=head2 get_tables_last_updated_timestamp
+=head2 table_last_updated
 
 Return the last updated date / time.
 
 =cut
 
-sub get_tables_last_updated_timestamp {
+sub table_last_updated {
   my $self = shift;
   my $member_rel;
   my $entry_type = $self->entry_type;

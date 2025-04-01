@@ -2239,7 +2239,7 @@ sub group_view :Private {
     view_online_display => sprintf("Viewing %s", $enc_event_name),
     view_online_link => 1,
     entrants => [$group->get_entrants_in_table_order],
-    last_updated => $group->get_tables_last_updated_timestamp,
+    last_updated => $group->table_last_updated,
     ranking_template => $ranking_template,
     match_template => $match_template,
     matches => $matches,
