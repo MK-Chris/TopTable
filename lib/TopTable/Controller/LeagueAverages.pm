@@ -374,7 +374,7 @@ sub view_finalise :Private {
     
     $c->stash({
       singles_averages => $singles_averages,
-        singles_last_updated => $c->model("DB::PersonSeason")->get_tables_last_updated_timestamp({
+      singles_last_updated => $c->model("DB::PersonSeason")->get_tables_last_updated_timestamp({
         season => $season,
         division => $division,
       }),

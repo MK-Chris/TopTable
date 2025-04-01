@@ -272,6 +272,48 @@ __PACKAGE__->has_many(
 # Created by DBIx::Class::Schema::Loader v0.07049 @ 2020-02-03 10:04:05
 # DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:XP6XPWCZnyfGiG3Hu+HsmA
 
+=head2 league_table
+
+Get the teams in this division / season in league table order.
+
+=cut
+
+sub league_table {
+  my $self = shift;
+  
+  return $self->search_related("team_seasons", {}, {
+    prefetch  => ["team", {
+      club_season => "club",
+    }],
+    order_by  => [{
+      -desc => [qw( games_won matches_won matches_drawn )],
+    }, {
+      -asc  => [qw( games_lost matches_lost )],
+    }, {
+      -desc => [qw( legs_won )],
+    }, {
+      -asc => [qw( club_season.short_name me.name )],
+    }],
+  });
+}
+
+=head2 table_last_updated
+
+For a given season and division, return the last updated date / time.
+
+=cut
+
+sub table_last_updated {
+  my $self = shift;
+  
+  my $last_updated_team = $self->find_related("team_seasons", {}, {
+    rows => 1,
+    order_by => {-desc => "last_updated"}
+  });
+  
+  return $last_updated_team->last_updated if defined($last_updated_team);
+}
+
 =head2 points_adjustments
 
 Get a list of all points adjustments for this division/season from the team_seasons relation.

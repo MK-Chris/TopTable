@@ -5,37 +5,6 @@ use warnings;
 use base qw( TopTable::Schema::ResultSet );
 use DateTime;
 
-=head2 get_teams_in_division_in_league_table_order
-
-Retrieve people in a given season / division in averages order.  If the $criteria hashref is given, these will be added to the query.
-
-=cut
-
-sub get_teams_in_division_in_league_table_order {
-  my $class = shift;
-  my ( $params ) = @_;
-  my $season = delete $params->{season};
-  my $division = delete $params->{division};
-  
-  return $class->search({
-    "me.season" => $season->id,
-    division    => $division->id,
-  }, {
-    prefetch  => ["team", {
-      club_season => "club",
-    }],
-    order_by  => [{
-      -desc => [ qw( games_won matches_won matches_drawn matches_played ) ]
-    }, {
-      -asc  => [ qw( games_lost matches_lost ) ]
-    }, {
-      -desc => [ qw( games_won ) ]
-    }, {
-      -asc  => [ qw( club.short_name team.name ) ]
-    }],
-  });
-}
-
 =head2 get_doubles_teams_in_division_in_averages_order
 
 Retrieve doubles teams in a given season / division in averages order.
@@ -72,29 +41,6 @@ sub get_doubles_teams_in_division_in_averages_order {
       -asc  => [qw( club.short_name team.name )],
     }],
   });
-}
-
-=head2 get_tables_last_updated_timestamp
-
-For a given season and division, return the last updated date / time.
-
-=cut
-
-sub get_tables_last_updated_timestamp {
-  my $class = shift;
-  my ( $params ) = @_;
-  my $division = $params->{division};
-  my $season = $params->{season};
-  
-  my $last_updated_team = $class->find({
-    season => $season->id,
-    division => $division->id,
-  }, {
-    rows => 1,
-    order_by => {-desc => "last_updated"}
-  });
-  
-  return $last_updated_team->last_updated if defined($last_updated_team);
 }
 
 =head2 grid_positions_set
