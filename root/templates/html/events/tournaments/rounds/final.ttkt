@@ -32,6 +32,16 @@ END;
 team1_html = team1.full_name | html_entity;
 team2_html = team2.full_name | html_entity;
 
+IF match.handicapped;
+  IF match.home_team_handicap;
+    SET team1_handicap = " (+" _ match.relative_handicap("home") _ ")";
+  END;
+  
+  IF match.away_team_handicap;
+    SET team2_handicap = " (+" _ match.relative_handicap("away") _ ")";
+  END;
+END;
+
 # Set URLs
 IF specific_season;
   SET team1_uri = c.uri_for_action("/events/teams_view_by_url_key_specific_season", [event.url_key, season.url_key, team1.club_season.club.url_key, team1.team.url_key]);
@@ -57,7 +67,7 @@ IF finished;
 [%
 END;
 -%]
-              <a href="[% team1_uri %]" title="[% c.maketext("matches.link-title.team-tournament", team1_html, event_html) %]">[% team1_html %]</a>
+              <a href="[% team1_uri %]" title="[% c.maketext("matches.link-title.team-tournament", team1_html, event_html) %]">[% team1_html %]</a>[% team1_handicap %]
           </div><!-- .column-match left -->
           <div class="column-final-match-score">
             <a href="[% c.uri_for_action('/matches/team/view_by_url_keys', match.url_keys) %]">[% score %]</a>
@@ -71,7 +81,7 @@ IF finished;
 [%
 END;
 -%]
-              <a href="[% team2_uri %]" title="[% c.maketext("matches.link-title.team-tournament", team2_html, event_html) %]">[% team2_html %]</a>
+              <a href="[% team2_uri %]" title="[% c.maketext("matches.link-title.team-tournament", team2_html, event_html) %]">[% team2_html %]</a>[% team2_handicap %]
           </div><!-- .column-match right -->
           <div class="clear-fix"></div>
         </div><!-- .row -->
