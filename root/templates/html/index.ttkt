@@ -58,6 +58,9 @@ IF matches_to_show;
         SET matches_title = c.maketext("home-page.next-matches-year", matches_to_show, day_name, next_match_date.day, month_name, next_match_date.year);
       END;
     END;
+  ELSIF showing_incomplete_matches;
+    # Show incomplete matches
+    SET matches_title = c.maketext("home-page.incomplete-matches", matches_to_show);
   ELSE;
     # Show today's matches
     SET matches_title = c.maketext("home-page.todays-matches", matches_to_show);

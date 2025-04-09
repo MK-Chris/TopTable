@@ -191,7 +191,7 @@ sub index :Path :Args(0) {
     if ( !$matches_to_show ) {
       # No matches today, find the next match date
       $next_match_date = $c->model("DB::TeamMatch")->next_match_date;
-      $tomorrow = 1 if $next_match_date->clone->subtract(days => 1)->ymd eq $today->ymd;
+      $tomorrow = 1 if defined($next_match_date) and $next_match_date->clone->subtract(days => 1)->ymd eq $today->ymd;
       
       if ( defined($next_match_date) ) {
         $matches = $c->model("DB::TeamMatch")->matches_on_date({
@@ -201,9 +201,18 @@ sub index :Path :Args(0) {
         
         $matches_to_show = $matches->count;
       } else {
-        $matches_started = 0;
-        $matches_to_show = 0;
-        $c->log->debug("No matches found for today or future");
+        # No matches scheduled for today or future dates; the last thing we need to check is whether or not there are matches to be completed (postponed / cancelled matches still to be resolved)
+        $matches = $c->model("DB::TeamMatch")->incomplete_and_not_cancelled({season => $current_season});
+        
+        if ( $matches->count == 0 ) {
+          $matches_started = 0;
+          $matches_to_show = 0;
+          $c->log->debug("No matches found for today or future");
+        } else {
+          $matches_started = $matches->matches_started->count;
+          $matches_to_show = $matches->count;
+          $c->stash->{showing_incomplete_matches} = 1;
+        }
       }
     }
     

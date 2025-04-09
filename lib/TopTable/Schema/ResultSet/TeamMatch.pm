@@ -761,18 +761,45 @@ Returns matches that have either been completed or cancelled.  If a season param
 
 sub incomplete_and_not_cancelled {
   my $class = shift;
-  my ( $parameters ) = @_;
-  my $season = delete $parameters->{season};
+  my ( $params ) = @_;
+  my $season = $params->{season};
+  my $page_number = $params->{page_number};
+  my $results_per_page = $params->{results_per_page};
   
   # Set up the initial where clause that will exist regardless
-  my $where = {
+  my %where = (
     cancelled => 0,
     complete => 0,
-  };
+  );
   
-  $where->{season} = $season->id if defined($season);
+  my %attrib = (
+    prefetch  => [qw( venue ), {
+      team_season_home_team_season => [qw( team ), {club_season => [qw( club )]}],
+    }, {
+      team_season_away_team_season => [qw( team ), {club_season => [qw( club )]}],
+    }, {
+      team_season_winner_season => [qw( team ), {club_season => "club"}],
+      division_season => [qw( division )],
+    }],
+    order_by  =>  {
+      -asc => [qw( division.rank scheduled_date club_season.short_name team_season_home_team_season.name )]
+    }
+  );
   
-  return $class->search($where);
+  if ( defined($results_per_page) and $page_number ) {
+    $attrib{page} = $page_number;
+    $attrib{rows} = $results_per_page;
+  }
+  
+  if ( defined($season) ) {
+    $where{"me.season"} = $season->id;
+    $where{"team_season_home_team_season.season"} = $season->id;
+    $where{"club_season.season"} = $season->id;
+    $where{"team_season_away_team_season.season"} = $season->id;
+    $where{"club_season_2.season"} = $season->id;
+  }
+  
+  return $class->search(\%where, \%attrib);
 }
 
 1;

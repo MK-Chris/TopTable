@@ -538,6 +538,9 @@ msgstr "Next match: %1 %2 %3"
 msgid "home-page.next-match-year"
 msgstr "Next match: %1 %2 %3 %4"
 
+msgid "home-page.incomplete-matches"
+msgstr "%1 matches left to reschedule or cancel"
+
 ## Doubles
 msgid "menu.text.doubles"
 msgstr "Doubles"
