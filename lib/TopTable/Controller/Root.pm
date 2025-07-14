@@ -179,6 +179,9 @@ sub index :Path :Args(0) {
   my ( $matches, $matches_to_show, $matches_started, $next_match_date, $handicapped );
   my $tomorrow = 0; # Denote if the next match date is tomorrow, we have a special language code for this
   my $today = $c->datetime_tz({time_zone => $c->stash->{timezone}});
+  my $deciding_game_winners = [];
+  my $deuce_game_winners = [];
+  my $highest_point_winners = [];
   if ( defined($current_season) ) {
     $matches = $c->model("DB::TeamMatch")->matches_on_date({
       season => $current_season,
@@ -218,6 +221,11 @@ sub index :Path :Args(0) {
     
     # Add handicapped flag for template / JS if there are handicapped matches
     $handicapped = $matches->handicapped_matches->count ? "/hcp" : "";
+    
+    # Get current season stats
+    $deciding_game_winners = [$c->model("DB::VwMatchDecidingGame")->search_by_season($current_season, {top_only => 1, result => "win"})];
+    $deuce_game_winners = [$c->model("DB::VwMatchDeuceGame")->search_by_season($current_season, {top_only => 1})];
+    $highest_point_winners = [$c->model("DB::VwMatchHighestPoint")->search_by_season($current_season, {top_only => 1})];
   } else {
     $matches_started = 0;
     $matches_to_show = 0;
@@ -271,9 +279,9 @@ sub index :Path :Args(0) {
     matches_started => $matches_started,
     next_match_date => $next_match_date,
     tomorrow => $tomorrow,
-    deciding_game_winners => [$c->model("DB::VwMatchDecidingGame")->search_by_season($current_season, {top_only => 1, result => "win"})],
-    deuce_game_winners => [$c->model("DB::VwMatchLegDeuceCount")->search_by_season($current_season, {top_only => 1})],
-    highest_point_winners => [$c->model("DB::VwHighestPointsWin")->search_by_season($current_season, undef, {top_only => 1})],
+    deciding_game_winners => $deciding_game_winners,
+    deuce_game_winners => $deuce_game_winners,
+    highest_point_winners => $highest_point_winners,
     articles => $articles,
     online_user_count => $online_user_count,
     index_text => $c->model("DB::PageText")->get_text("index"),
