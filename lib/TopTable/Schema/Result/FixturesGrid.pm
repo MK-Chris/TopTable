@@ -1328,7 +1328,7 @@ sub create_matches {
                 division => $is_tournament ? undef : $grid_user_id, # If it's not a tournament, this 
                 tournament_round => $is_tournament ? $tourn_group->tournament_round->id : undef,
                 tournament_group => $is_tournament ? $tourn_group->id: undef,
-                venue => $home_team->club->venue->id,
+                venue => defined($home_team->venue) ? $home_team->venue->id : $home_team->club->venue->id,
                 scheduled_week => $scheduled_week,
                 team_match_template => $match_template->id,
                 fixtures_grid => $self->id,

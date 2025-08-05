@@ -2505,7 +2505,13 @@ sub create_matches {
         if ( defined($self->venue) ) {
           $rounds{$round}{matches}{$match}{venue} = $self->venue;
         } elsif ( defined($home_season) ) {
-          $rounds{$round}{matches}{$match}{venue} = $home_season->club_season->venue;
+          if ( defined($home_season->venue) ) {
+            # Home team has a custom venue, use that
+            $rounds{$round}{matches}{$match}{venue} = $home_season->venue;
+          } else {
+            # Home team has no custom venue, so use the club's default venue
+            $rounds{$round}{matches}{$match}{venue} = $home_season->club_season->venue;
+          }
         }
       }
       

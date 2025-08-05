@@ -68,6 +68,15 @@ __PACKAGE__->table("teams");
   is_foreign_key: 1
   is_nullable: 0
 
+=head2 venue
+
+  data_type: 'integer'
+  extra: {unsigned => 1}
+  is_foreign_key: 1
+  is_nullable: 1
+
+If NULL, use the club venue
+
 =head2 default_match_start
 
   data_type: 'time'
@@ -93,6 +102,13 @@ __PACKAGE__->add_columns(
     extra => { unsigned => 1 },
     is_foreign_key => 1,
     is_nullable => 0,
+  },
+  "venue",
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_foreign_key => 1,
+    is_nullable => 1,
   },
   "default_match_start",
   { data_type => "time", is_nullable => 1 },
@@ -262,9 +278,29 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
+=head2 venue
 
-# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-09-29 23:47:56
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:izvVcij50MYlkFylPAoMNA
+Type: belongs_to
+
+Related object: L<TopTable::Schema::Result::Venue>
+
+=cut
+
+__PACKAGE__->belongs_to(
+  "venue",
+  "TopTable::Schema::Result::Venue",
+  { id => "venue" },
+  {
+    is_deferrable => 1,
+    join_type     => "LEFT",
+    on_delete     => "RESTRICT",
+    on_update     => "RESTRICT",
+  },
+);
+
+
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2025-08-05 11:57:53
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:6g9NrRW4OmV/jgy6lOZWSw
 
 use HTML::Entities;
 

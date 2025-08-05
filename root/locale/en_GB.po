@@ -918,6 +918,9 @@ msgstr "Division rank"
 msgid "teams.field.home-night"
 msgstr "Home night"
 
+msgid "teams.field.venue"
+msgstr "Venue"
+
 msgid "teams.field.start-time"
 msgstr "Match start time"
 
@@ -1002,6 +1005,9 @@ msgstr "The club cannot be edited after matches have been created in the current
 msgid "teams.form.notice.cannot-edit-division"
 msgstr "The division cannot be edited after matches have been created in the current season."
 
+msgid "teams.form.notice.cannot-edit-venue"
+msgstr "The venue cannot be edited after matches have been created in the current season."
+
 msgid "teams.form.notice.no-people-captains"
 msgstr "There are no people currently in the database; you will get the option to add people as captains for teams when you create them."
 
@@ -1068,6 +1074,12 @@ msgstr "The home night is invalid."
 msgid "teams.form.error.home-night-blank"
 msgstr "You must specify a home night."
 
+msgid "teams.form.error.venue-inactive"
+msgstr "%1 is not an active venue; please select from the list, or activate %1 before trying to use it."
+
+msgid "teams.form.error.venue-invalid"
+msgstr "The venue specified is not valid."
+
 msgid "teams.form.error.start-hour-invalid"
 msgstr "The default match start hour value is invalid; it must be selected from the list (&#39;00&#39; to &#39;23&#39;).  You may leave this value blank and the team&#39;s home matches will default to the club&#39;s match start time; if this is blank, the season&#39;s default match start time will be used."
 
@@ -1133,6 +1145,9 @@ msgstr "Tournament results"
 
 msgid "teams.message.did-not-enter"
 msgstr "%1 did not enter %2."
+
+msgid "teams.venue.custom-notice"
+msgstr "%1 plays at a different venue to the rest of %2 - please ensure you are travelling to the correct venue."
 
 msgid "teams.fixtures.day"
 msgstr "Day"

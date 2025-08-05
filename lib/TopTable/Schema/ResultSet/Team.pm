@@ -498,6 +498,7 @@ sub create_or_edit {
   my $division = $params->{division} || undef;
   my $captain = $params->{captain} || undef;
   my $home_night = $params->{home_night} || undef;
+  my $venue = $params->{venue} || undef;
   my $start_hour = $params->{start_hour} || undef;
   my $start_minute = $params->{start_minute} || undef;
   my $players = $params->{players} || [];
@@ -549,7 +550,7 @@ sub create_or_edit {
     # Editing fatal checks
     if ( defined($team) ) {
       # Look up the team if it's not a valid team object already
-      $team = $class->find($team) unless ref($team) eq "TopTable::Model::DB::Team";
+      $team = $class->find($team) unless $team->isa("TopTable::Schema::Result::Team");
       
       unless ( defined($team) ) {
         push(@{$response->{error}}, $lang->maketext("teams.form.error.team-invalid"));
@@ -569,20 +570,20 @@ sub create_or_edit {
   # the club to be able to know whether or not the name is unique to that club.
   # We also do division checks here, as they are different depending on whether we're creating or editing, so it makes sense to do them
   # in the same if blocks as the clubs - so again, they need to be stored and pushed on to the error stack at the right place.
-  my ( $old_club, $old_division, $team_season, $club_error, $division_error );
+  my ( $old_club, $old_division, $old_venue, $team_season, $club_error, $division_error, $venue_error );
   if ( $action eq "create" ) {
     # Creating
     # Club and division checks - these are simpler than the ones we do when editing, so they need to be separate to the edit checks
     
     if ( defined($club) ) {
-      $club = $schema->resultset("Club")->find_id_or_url_key($club) unless ref($club) eq "TopTable::Model::DB::Club";
+      $club = $schema->resultset("Club")->find_id_or_url_key($club) unless $club->isa("TopTable::Schema::Result::Club");
       $club_error = $lang->maketext("teams.form.error.club-invalid") unless defined($club);
     } else {
       $club_error = $lang->maketext("teams.form.error.club-blank");
     }
     
     if ( defined($division) ) {
-      $division = $schema->resultset("Division")->find_id_or_url_key($division) unless ref($division) eq "TopTable::Model::DB::Division";
+      $division = $schema->resultset("Division")->find_id_or_url_key($division) unless $division->isa("TopTable::Schema::Result::Division");
       
       if ( defined($division) ) {
         # Division is valid, but we need to make sure it's being used in this season
@@ -595,6 +596,19 @@ sub create_or_edit {
     } else {
       $division_error = $lang->maketext("teams.form.error.division-blank");
     }
+    
+    # Venue can be blank, in which case we use the club's default venue, or it can be a valid venue ID / URL key
+    if ( defined($venue) ) {
+      $venue = $schema->resultset("Venue")->find_id_or_url_key($venue) unless $venue->isa("TopTable::Schema::Result::Venue");
+      
+      if ( defined($venue) ) {
+        # Venue is valid, but we need to make sure it's active
+        $venue_error = $lang->maketext("teams.form.error.venue-inactive", encode_entities($venue->name)) unless $venue->active;
+      } else {
+        # Invalid division
+        $venue_error = $lang->maketext("teams.form.error.venue-invalid");
+      }
+    }
   } else {
     # Editing
     $old_club = $team->club;
@@ -606,13 +620,14 @@ sub create_or_edit {
     } elsif ( defined($team_season) ) {
       # We have a team season, which means there must be a division
       $old_division = $team_season->division_season->division;
+      $old_venue = $team_season->venue;
     }
     
     # Club checks; fairly complex due to changes that may or may not be allowed.  The HTML form may have disabled the field,
     # in which case the value won't come through and will be undef
     if ( defined($club) ) {
       # Check the specified club is either a valid ID / URL key or a club object already (this will undef $club if it's not a valid ID)
-      $club = $schema->resultset("Club")->find_id_or_url_key($club) unless ref($club) eq "TopTable::Model::DB::Club";
+      $club = $schema->resultset("Club")->find_id_or_url_key($club) unless $club->isa("TopTable::Schema::Result::Club");
       
       if ( !defined($club) ) {
         $club_error = $lang->maketext("teams.form.error.club-invalid");
@@ -629,7 +644,7 @@ sub create_or_edit {
     # in which case the value won't come through and will be undef
     if ( defined($division) ) {
       # A division's been specified, but it's invalid
-      $division = $schema->resultset("Division")->find_id_or_url_key($division) unless ref($division) eq "TopTable::Model::DB::Division";
+      $division = $schema->resultset("Division")->find_id_or_url_key($division) unless $division->isa("TopTable::Schema::Result::Division");
       
       if ( defined($division) ) {
         # Division is valid, we need to first check if it's changed and if we're allowed to change divisions at this stage
@@ -652,10 +667,34 @@ sub create_or_edit {
       # No division specified; ensure we use the old one when we do the update (assigning here saves an additional check later on)
       $division = $old_division;
     }
+    
+    # Venue checks; fairly complex due to changes that may or may not be allowed (and it can be blank).  The HTML form may have disabled the field,
+    # in which case the value won't come through and will be undef; if we are allowed to edit the venue and it's undef, we can blank it; if we're not
+    # allowed to edit the venue, we need to use the old one (which may or may not be populated).
+    if ( $mid_season ) {
+      # Can't change the venue mid-season, so if the venue is specified we'll error, as it shouldn't be passed in
+      $venue_error = $lang->maketext("teams.form.error.venue-change-not-allowed") if defined($venue);
+      $venue = $old_venue; # Reset back to the old venue (we do this regardless of whether or not it's been specified).
+    } else {
+      # Not mid-seasons, so the venue can be specified / changed - in this case, if the venue is specified, we check and set it,
+      # if not, we need to remove it so the club's default venue is used.
+      if ( defined($venue) ) {
+        $venue = $schema->resultset("Venue")->find_id_or_url_key($venue) unless $venue->isa("TopTable::Schema::Result::Venue");
+        
+        if ( defined($venue) ) {
+          # Venue is valid, but we need to make sure it's active
+          $venue_error = $lang->maketext("teams.form.error.venue-inactive", encode_entities($venue->name)) unless $venue->active;
+        } else {
+          # Invalid division
+          $venue_error = $lang->maketext("teams.form.error.venue-invalid");
+        }
+      }
+    }
   }
   
   $response->{fields}{club} = $club;
   $response->{fields}{division} = $division;
+  $response->{fields}{venue} = $venue;
   
   # Check this doesn't ensure the division doesn't have too many teams to add another one
   if ( defined($division) ) {
@@ -713,7 +752,7 @@ sub create_or_edit {
   
   # Lookup the captain and check it if an ID was specified
   if ( defined($captain) ) {
-    $captain = $schema->resultset("Person")->find_id_or_url_key($captain) unless ref($captain) eq "TopTable::Model::DB::Person";
+    $captain = $schema->resultset("Person")->find_id_or_url_key($captain) unless $captain->isa("TopTable::Schema::Result::Person");
     push(@{$response->{error}}, $lang->maketext("teams.form.error.captain-invalid")) unless defined($captain);
   }
   
@@ -745,7 +784,7 @@ sub create_or_edit {
   
   # Check home night
   if ( defined($home_night) ) {
-    $home_night = $schema->resultset("LookupWeekday")->find($home_night) unless ref($home_night) eq "TopTable::Model::DB::LookupWeekday";
+    $home_night = $schema->resultset("LookupWeekday")->find($home_night) unless $home_night->isa("TopTable::Schema::Result::LookupWeekday");
     push(@{$response->{error}}, $lang->maketext("teams.form.error.home-night-invalid")) unless defined($home_night);
   } else {
     # Home night not specified
@@ -754,6 +793,8 @@ sub create_or_edit {
   
   # Add home night to the fields to pass back
   $response->{fields}{home_night} = $home_night;
+  
+  push(@{$response->{error}}, $venue_error) if defined($venue_error);
   
   # Grab the player IDs
   # Look up all the players first; these are submitted in a single field, comma separated
@@ -778,7 +819,7 @@ sub create_or_edit {
     my $player = $players->[$i];
     
     # Turn it into a DB object if it's not already
-    $player = $schema->resultset("Person")->find_id_or_url_key($player) unless ref($player) eq "TopTable::Model::DB::Person";
+    $player = $schema->resultset("Person")->find_id_or_url_key($player) unless $player->isa("TopTable::Schema::Result::Person");
     
     # Set the player back into the array
     $players->[$i] = $player;
@@ -864,6 +905,7 @@ sub create_or_edit {
         name => $name,
         url_key => $class->make_url_key($club, $name),
         club => $club->id,
+        venue => defined($venue) ? $venue->id : undef,
         default_match_start => $default_match_start,
         team_seasons => [{
           season => $season->id,
@@ -872,6 +914,7 @@ sub create_or_edit {
           division => $division->id,
           captain => defined($captain) ? $captain->id : undef,
           home_night => $home_night->weekday_number,
+          venue => defined($venue) ? $venue->id : undef,
           grid_position => undef,
         }],
       });
@@ -889,6 +932,7 @@ sub create_or_edit {
         name => $name,
         url_key => $class->make_url_key($club, $name, $team),
         club => $club->id,
+        venue => defined($venue) ? $venue->id : undef,
         default_match_start => $default_match_start,
       });
       
@@ -926,6 +970,7 @@ sub create_or_edit {
           club => $club->id,
           captain => defined($captain) ? $captain->id : undef,
           division => $division->id,
+          venue => defined($venue) ? $venue->id : undef,
           home_night => $home_night->weekday_number,
         });
       } else {
@@ -938,6 +983,7 @@ sub create_or_edit {
           division => $division->id,
           captain => defined($captain) ? $captain->id : undef,
           home_night => $home_night->weekday_number,
+          venue => defined($venue) ? $venue->id : undef,
           grid_position => undef,
         });
       }

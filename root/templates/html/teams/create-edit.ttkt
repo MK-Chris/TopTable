@@ -6,8 +6,10 @@ USE zeroes = format("%02d");
 IF mid_season;
   club_disabled = ' disabled="disabled"';
   division_disabled = ' disabled="disabled"';
+  venue_disabled = ' disabled="disabled"';
   club_tooltip = ' title="' _ c.maketext("teams.form.notice.cannot-edit-club");
   division_tooltip = ' title="' _ c.maketext("teams.form.notice.cannot-edit-division");
+  venue_tooltip = ' title="' _ c.maketext("teams.form.notice.cannot-edit-venue");
 END;
 
 IF c.flash.show_flashed;
@@ -15,6 +17,7 @@ IF c.flash.show_flashed;
   SET club = c.flash.club;
   SET division = c.flash.division;
   SET home_night = c.flash.home_night;
+  SET venue = c.flash.venue;
   SET start_hour = c.flash.start_hour;
   SET start_minute = c.flash.start_minute;
 ELSIF preset_club;
@@ -28,9 +31,11 @@ ELSE;
   IF team_season;
     SET division = team_season.division_season.division;
     SET home_night = team_season.home_night;
+    SET venue = team_season.venue;
   ELSE;
     SET division = last_team_season.division_season.division;
     SET home_night = last_team_season.home_night;
+    SET venue = last_team_season.venue;
   END;
   
   SET time_bits = team.default_match_start.split(":");
@@ -110,6 +115,29 @@ WHILE (night = home_nights.next);
   END;
 -%]
           <option value="[% night.weekday_number %]"[% selected %]>[% c.maketext("weekdays." _ night.weekday_number) %]</option>
+[%
+END;
+-%]
+    </select>
+  </div>
+  <div class="clear-fix"></div>
+</div>
+  
+<div class="label-field-container">
+  <label for="venue">[% c.maketext("teams.field.venue") %]</label>
+  <div class="field-container">
+    <select id="venue" name="venue"[% venue_disabled _ venue_tooltip %] data-placeholder="[% c.maketext("teams.field.venue") %]">
+      <option value=""></option>
+[%
+WHILE (lookup_venue = venues.next);
+  # Set selected text if needed;
+  IF venue.id == lookup_venue.id;
+    SET selected = ' selected="selected"';
+  ELSE;
+    SET selected = '';
+  END;
+-%]
+      <option value="[% lookup_venue.id %]"[% selected %]>[% lookup_venue.name | html_entity %]</option>
 [%
 END;
 -%]

@@ -83,6 +83,15 @@ __PACKAGE__->table("team_seasons");
   is_foreign_key: 1
   is_nullable: 1
 
+=head2 venue
+
+  data_type: 'integer'
+  extra: {unsigned => 1}
+  is_foreign_key: 1
+  is_nullable: 1
+
+If NULL, use the club_season venue
+
 =head2 matches_played
 
   data_type: 'tinyint'
@@ -403,6 +412,13 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
   },
   "captain",
+  {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_foreign_key => 1,
+    is_nullable => 1,
+  },
+  "venue",
   {
     data_type => "integer",
     extra => { unsigned => 1 },
@@ -905,9 +921,29 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
+=head2 venue
 
-# Created by DBIx::Class::Schema::Loader v0.07051 @ 2025-02-28 10:30:32
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:vJioYl4OU+/ERVGYZRCZYg
+Type: belongs_to
+
+Related object: L<TopTable::Schema::Result::Venue>
+
+=cut
+
+__PACKAGE__->belongs_to(
+  "venue",
+  "TopTable::Schema::Result::Venue",
+  { id => "venue" },
+  {
+    is_deferrable => 1,
+    join_type     => "LEFT",
+    on_delete     => "RESTRICT",
+    on_update     => "RESTRICT",
+  },
+);
+
+
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2025-08-05 11:57:53
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:YStnxJzSL/37OibT+ZnR9A
 
 __PACKAGE__->add_columns(
     "last_updated",
@@ -1001,6 +1037,17 @@ sub cancelled_matches {
   my $away_matches = $self->search_related("team_matches_away_team_seasons", {cancelled => 1});
   
   return $home_matches->union($away_matches);
+}
+
+=head2 custom_venue
+
+Returns true if the team season has a custom venue set, i.e., not the club season's venue.
+
+=cut
+
+sub custom_venue {
+  my $self = shift;
+  return defined($self->venue) && $self->venue->id != $self->club_season->venue->id;
 }
 
 =head2 points_adjustments

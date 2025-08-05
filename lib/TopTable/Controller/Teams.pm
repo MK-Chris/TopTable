@@ -328,21 +328,6 @@ sub get_team_season :Private {
   # Check if we have a team season - if so, the team has entered this season
   my $entered = defined($team_season) ? 1 : 0;
   
-  # Check if the name has changed since the season we're viewing
-  if ( $specific_season and $entered ) {
-    # Get the club_season too
-    my $club_season = $team_season->club_season;
-    my $team_season_name = $team_season->full_name;
-    my $enc_team_season_name = encode_entities($team_season_name);
-    my $team_current_name = sprintf("%s %s", $team->full_name);
-    
-    $c->add_status_messages({info => $c->maketext("teams.club.changed-notice", $enc_team_season_name, encode_entities($team->club->full_name), $c->uri_for_action("/clubs/view_current_season", [$team->club->url_key]))}) unless $club_season->club->id == $team->club->id;
-    $c->add_status_messages({info => $c->maketext("teams.name.changed-notice", $enc_team_season_name, encode_entities($team_current_name))}) unless $team_season->name eq $team->name;
-    $c->add_status_messages({info => $c->maketext("clubs.name.changed-notice", encode_entities($club_season->full_name), encode_entities($club_season->short_name), encode_entities($club_season->club->full_name), encode_entities($club_season->club->short_name))}) if $club_season->full_name ne $club_season->club->full_name or $club_season->short_name ne $club_season->club->short_name;
-    
-    $c->stash({subtitle1 => $enc_team_season_name});
-  }
-  
   # $team_players is called averages in the stash so we can include the team averages table
   $c->stash({
     team_season => $team_season,
@@ -353,7 +338,33 @@ sub get_team_season :Private {
     season => $season,
   });
   
-  if ( defined($team_season) ) {
+  if ( $entered ) {
+    # Check if the name has changed since the season we're viewing
+    my $club_season = $team_season->club_season;
+    my $team_season_name = $team_season->name;
+    my $enc_team_season_name = encode_entities($team_season_name);
+    my $team_season_full_name = $team_season->full_name;
+    my $enc_team_season_full_name = encode_entities($team_season_full_name);
+    my $club_full_name = $club_season->full_name;
+    my $enc_club_full_name = encode_entities($club_full_name);
+    my $club_short_name = $club_season->short_name;
+    my $enc_club_short_name = encode_entities($club_short_name);
+    
+    if ( $specific_season ) {
+      # Get the club_season too
+      my $enc_team_current_name = encode_entities($team->full_name);
+      my $enc_club_current_name = encode_entities($team->club->full_name);
+      
+      $c->add_status_messages({info => $c->maketext("teams.club.changed-notice", $enc_team_season_full_name, $enc_club_current_name, $c->uri_for_action("/clubs/view_current_season", [$team->club->url_key]))}) unless $club_season->club->id == $team->club->id;
+      $c->add_status_messages({info => $c->maketext("teams.name.changed-notice", $enc_team_season_full_name, $enc_team_current_name)}) unless $team_season->name eq $team->name;
+      $c->add_status_messages({info => $c->maketext("clubs.name.changed-notice", $enc_club_full_name, $enc_club_short_name, $enc_club_full_name, $enc_club_short_name)}) if $club_season->full_name ne $club_season->club->full_name or $club_season->short_name ne $club_season->club->short_name;
+      
+      $c->stash({subtitle1 => $enc_team_season_name});
+    }
+    
+    # Add a notification if the team's venue differs from the club's venue
+    $c->add_status_messages({info => $c->maketext("teams.venue.custom-notice", $enc_team_season_full_name, $enc_club_full_name)}) if $team_season->custom_venue;
+    
     # We only need to check the singles players for noindex - if they appear in one of the other lists, they'll also be in the singles list
     my $singles_averages = $c->model("DB::PersonSeason")->get_people_in_division_in_singles_averages_order({
       logger => sub{ my $level = shift; $c->log->$level( @_ ); },
@@ -1023,6 +1034,7 @@ sub create :Chained("base_create") :PathPart("create") :CaptureArgs(0) {
     clubs => scalar $c->model("DB::Club")->all_clubs_by_name,
     divisions => scalar $current_season->divisions,
     home_nights => scalar $c->model("DB::LookupWeekday")->all_days,
+    venues => scalar $c->model("DB::Venue")->active_venues,
     current_season => $current_season,
     form_action => $c->uri_for("do-create"),
     subtitle2 => $c->maketext("admin.create"),
@@ -1218,6 +1230,7 @@ sub edit :Private {
     clubs => scalar $c->model("DB::Club")->all_clubs_by_name,
     divisions => $divisions,
     home_nights => scalar $c->model("DB::LookupWeekday")->all_days,
+    venues => scalar $c->model("DB::Venue")->active_venues,
     team_season => $team_season,
     last_team_season => $last_team_season,
     form_action => $c->uri_for_action("/teams/do_edit_by_url_key", [$team->club->url_key, $team->url_key]),
@@ -1549,7 +1562,7 @@ sub process_form :Private {
     });
   } else {
     # Create or edit
-    @field_names = qw( name club division start_hour start_minute captain home_night );
+    @field_names = qw( name club division start_hour start_minute captain home_night venue );
     @processed_field_names = ( @field_names, qw( players ) );
     
     # Forward to the model to do the rest of the error checking.  The map MUST come last in this
