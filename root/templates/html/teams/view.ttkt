@@ -78,6 +78,16 @@ IF season;
 -%]
           <td><a href="[% club_uri %]">[% team.club.full_name | html_entity %]</a></td>
           </tr>
+[%
+      IF team_season.custom_venue;
+-%]
+          <tr>
+            <th scope="row">[% c.maketext("teams.field.venue") %]</th>
+            <td><a href="[% c.uri_for_action("/venues/view" [team_season.venue.url_key]) %]">[% team_season.venue.name | html_entity %]</a></td>
+          </tr>
+[%
+      END;
+-%]
           <tr>
             <th scope="row">[% c.maketext("teams.field.home-night") %]</th>
             <td>[% team_season.home_night.weekday_name %]</td>

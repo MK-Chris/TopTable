@@ -283,6 +283,36 @@ __PACKAGE__->has_many(
   { cascade_copy => 0, cascade_delete => 0 },
 );
 
+=head2 team_seasons
+
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::TeamSeason>
+
+=cut
+
+__PACKAGE__->has_many(
+  "team_seasons",
+  "TopTable::Schema::Result::TeamSeason",
+  { "foreign.venue" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
+=head2 teams
+
+Type: has_many
+
+Related object: L<TopTable::Schema::Result::Team>
+
+=cut
+
+__PACKAGE__->has_many(
+  "teams",
+  "TopTable::Schema::Result::Team",
+  { "foreign.venue" => "self.id" },
+  { cascade_copy => 0, cascade_delete => 0 },
+);
+
 =head2 tournament_rounds
 
 Type: has_many
@@ -314,8 +344,8 @@ __PACKAGE__->has_many(
 );
 
 
-# Created by DBIx::Class::Schema::Loader v0.07051 @ 2024-09-29 23:47:56
-# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:WClnG5gi5QQPhA1xKPzehQ
+# Created by DBIx::Class::Schema::Loader v0.07051 @ 2025-08-05 11:57:53
+# DO NOT MODIFY THIS OR ANYTHING ABOVE! md5sum:3TxgkpSVa6uDyq9/feiW/A
 
 use HTML::Entities;
 
