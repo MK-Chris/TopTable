@@ -90,7 +90,7 @@
     END;
   ELSE;
 %]
-    <p>[% c.maketext("season.stats.no-deuce-wins") %]</p>
+    <p>[% c.maketext("season.stats.no-highest-points-wins") %]</p>
 [%
   END;
 %]

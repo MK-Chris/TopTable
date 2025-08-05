@@ -499,6 +499,9 @@ msgstr "No one has played a deuce game yet."
 msgid "season.stats.highest-points-wins"
 msgstr "Highest points win"
 
+msgid "season.stats.no-highest-points-wins"
+msgstr "No deuce games have been played, so there are no highest points wins to show."
+
 msgid "season.stats.highest-points-wins.beat"
 msgstr "beat"
 

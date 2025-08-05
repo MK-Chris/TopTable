@@ -3,6 +3,7 @@ package TopTable::Schema::ResultSet::VwHighestPointsWin;
 use strict;
 use warnings;
 use base qw( TopTable::Schema::ResultSet );
+use Scalar::Util qw( blessed );
 
 
 =head2 search_by_name
@@ -18,7 +19,7 @@ sub search_by_season {
   
   my %where = (season_id => $season->id);
   
-  if ( defined($comp) ) {
+  if ( defined($comp) and blessed($comp) ) {
     if ( $comp->isa("TopTable::Schema::Result::Tournament") ) {
       $where{tourn_id} = $comp->id;
     } elsif ( $comp->isa("TopTable::Schema::Result::Division") ) {
