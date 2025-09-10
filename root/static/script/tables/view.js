@@ -17,7 +17,7 @@ $(document).ready(function() {
       {responsivePriority: 7}, // Won
       {responsivePriority: 9}, // Drawn
       {responsivePriority: 8}, // Lost
-      {responsivePriority: 3}, // For
+      {responsivePriority: 3, className: "rank-priority"}, // For
       {responsivePriority: 4}, // Against
       {responsivePriority: 5} // Points / games difference
     ],

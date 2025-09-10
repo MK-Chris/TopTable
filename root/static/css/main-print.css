@@ -1063,6 +1063,8 @@ td.game-number, th.game-number {text-align: center;}
 span.game-result {font-weight: bold;}
 span.leg-separator {display: none;}
 td.leg-scores {clear: both;}
+td.rank-priority {font-weight: bold; background-color: #DCDCDC;}
+
 span.leg-score {
   display: inline-block;
   width: 50px;
