@@ -11,7 +11,7 @@ IF tourn_group;
   END;
 END;
 -%]
-        <table class="league-table stripe hover row-border[% group_class %]" style="width:100%">
+        <table class="league-table stripe hover row-border nowrap[% group_class %]" style="width:100%">
           <thead>
             <tr>
               <th title="[% c.maketext("stats.table-heading.position.full") %]" class="numeric">[% c.maketext("stats.table-heading.position") %]</th>
@@ -112,7 +112,7 @@ FOREACH entrant = entrants;
 -%]
             <tr>
               <td data-label="[% c.maketext("stats.table-heading.position.full") %]" class="numeric">[% pos_display %]</td>
-              <td data-label="[% c.maketext("stats.table-heading.team") %]"><a href="[% team_uri %]"><nobr>[% team_season.club_season.short_name | html_entity %]</nobr> [% team_season.name | html_entity %]</a>[% qualified %]
+              <td data-label="[% c.maketext("stats.table-heading.team") %]"><a href="[% team_uri %]">[% team_season.club_season.short_name | html_entity %] [% team_season.name | html_entity %]</a>[% qualified %]
 [%-
   IF authorisation.team_edit;
 -%]

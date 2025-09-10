@@ -13,7 +13,7 @@ UNLESS no_filter;
   PROCESS "html/league-averages/filter-view-form.ttkt" competitors = c.maketext("averages.competitor-type.players");
 END;
 -%]
-    <table id="averages-singles" class="stripe hover row-border" style="width: 100%;">
+    <table id="averages-singles" class="stripe hover row-border nowrap" style="width: 100%;">
       <thead>
         <tr>
           <th class="numeric">[% c.maketext("stats.table-heading.position") %]</th>
@@ -85,7 +85,7 @@ WHILE (average = singles_averages.next);
     SET club = club_season.club;
     team_name = club_season.short_name _ " " _ team_season.name | html_entity;
 -%]
-          <td[% player_class %]><a href="[% team_uri %]"[% player_class %]><nobr>[% club_season.short_name | html_entity %]</nobr> [% team_season.name | html_entity %]</a>
+          <td[% player_class %]><a href="[% team_uri %]"[% player_class %]>[% club_season.short_name | html_entity %] [% team_season.name | html_entity %]</a>
 [%-
     IF authorisation.team_edit;
 -%]

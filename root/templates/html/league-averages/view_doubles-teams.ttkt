@@ -3,7 +3,7 @@
 [%
 IF doubles_team_averages.count;
 -%]
-    <table id="averages-doubles-teams" class="stripe hover row-border" width="100%;">
+    <table id="averages-doubles-teams" class="stripe hover row-border nowrap" width="100%;">
       <thead>
         <tr>
           <th class="numeric">[% c.maketext("stats.table-heading.position") %]</th>
@@ -31,7 +31,7 @@ IF doubles_team_averages.count;
 -%]
         <tr>
           <td class="numeric">[% i %]</td>
-          <td><a href="[% team_uri %]"><nobr>[% table_team.club_season.short_name | html_entity %]</nobr> [% table_team.name | html_entity %]</a>
+          <td><a href="[% team_uri %]">[% table_team.club_season.short_name | html_entity %] [% table_team.name | html_entity %]</a>
 [%-
 IF authorisation.team_edit;
 -%]

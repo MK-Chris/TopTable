@@ -14,7 +14,7 @@ UNLESS no_filter;
 END;
 -%]
 
-    <table id="averages-doubles-individuals" class="stripe hover row-border" style="width: 100%;">
+    <table id="averages-doubles-individuals" class="stripe hover row-border nowrap" style="width: 100%;">
       <thead>
         <tr>
           <th class="numeric">[% c.maketext("stats.table-heading.position") %]</th>
@@ -85,7 +85,7 @@ WHILE (average = doubles_individual_averages.next);
     SET club = club_season.club;
     team_name = team_season.full_name | html_entity;
 -%]
-          <td data-label="[% c.maketext("stats.table-heading.team") %]"[% player_class %]><a href="[% team_uri %]"[% player_class %]><nobr>[% club_season.short_name | html_entity %]</nobr> [% team_season.name | html_entity %]</a>
+          <td data-label="[% c.maketext("stats.table-heading.team") %]"[% player_class %]><a href="[% team_uri %]"[% player_class %]>[% club_season.short_name | html_entity %] [% team_season.name | html_entity %]</a>
 [%-
     IF authorisation.team_edit;
 -%]
