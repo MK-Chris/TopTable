@@ -21,7 +21,7 @@ $(document).ready(function() {
       {responsivePriority: 8}, // Against
       {responsivePriority: 5}, // Handicap
       {responsivePriority: 4}, // Points / games difference
-      {responsivePriority: 3} // Points
+      {responsivePriority: 3, className: "rank-priority"} // Points
     ],
   });
 });

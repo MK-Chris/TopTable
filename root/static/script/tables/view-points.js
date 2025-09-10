@@ -20,7 +20,7 @@ $(document).ready(function() {
       {responsivePriority: 6}, // For
       {responsivePriority: 7}, // Against
       {responsivePriority: 4}, // Points / games difference
-      {responsivePriority: 3} // Points
+      {responsivePriority: 3, className: "rank-priority"} // Points
     ],
   });
 });

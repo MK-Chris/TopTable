@@ -295,7 +295,7 @@ IF teams.size;
 -%]
     <ul class="option-list">
       <li>
-        [% c.maketext("people.no-singles-games-played", encoded_first_name) %]
+        [% c.maketext("people.no-singles-games-played", enc_first_name) %]
       </li>
     </ul>
 [%
@@ -455,7 +455,7 @@ IF teams.size;
 -%]
     <ul class="option-list">
       <li>
-        [% c.maketext("people.no-doubles-games-played", encoded_first_name) %]
+        [% c.maketext("people.no-doubles-games-played", enc_first_name) %]
       </li>
     </ul>
 [%
@@ -494,7 +494,7 @@ IF teams.size;
     SET averages_uri = c.uri_for_action("/league-averages/view_current_season", ["singles", team_season.division_season.division.url_key]);
   END;
   
-  team_name = team_season.club_season.full_name | html_entity;
+  team_name = team_season.club_season.short_name _ " " _ team_season.name | html_entity;
   SET team_display = '<a href="' _ team_uri _ '">' _ team_name _ '</a>';
 ELSE;
   SET team_display = c.maketext("people.message.not-registered");
@@ -549,7 +549,7 @@ IF captaincies.count;
       SET captain_team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [captaincy.club_season.club.url_key, captaincy.team.url_key]);
     END;
     
-    captaincy_team_name = captaincy.club_season.full_name | html_entity;
+    captaincy_team_name = captaincy.club_season.short_name _ " " _ captaincy.name | html_entity;
     IF cpt_printed > 1;
 -%]
               <br />
