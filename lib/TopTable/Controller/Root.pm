@@ -225,7 +225,7 @@ sub index :Path :Args(0) {
     # Get current season stats
     $deciding_game_winners = [$c->model("DB::VwMatchDecidingGame")->search_by_season($current_season, {top_only => 1, result => "win"})];
     $deuce_game_winners = [$c->model("DB::VwMatchLegDeuceCount")->search_by_season($current_season, {top_only => 1})];
-    $highest_point_winners = [$c->model("DB::VwHighestPointsWin")->search_by_season($current_season, {top_only => 1})];
+    $highest_point_winners = [$c->model("DB::VwHighestPointsWin")->search_by_season($current_season, undef, {top_only => 1})];
   } else {
     $matches_started = 0;
     $matches_to_show = 0;
