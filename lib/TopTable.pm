@@ -294,17 +294,6 @@ sub warn_on_non_https {
   }
 }
 
-=head2
-
-Temporary warning message for events
-
-=cut
-
-sub add_event_test_msg {
-  my ( $c ) = @_;
-  $c->add_status_messages({warning => "<strong><u>Please note:</u></strong> the events system is currently in test; results, group tables and details of these events may not reflect the final result and is subject to override by the committee."});
-}
-
 =head2 toptable_version
 
 Return the current version number

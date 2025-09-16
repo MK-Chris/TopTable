@@ -32,19 +32,19 @@ IF c.flash.show_flashed;
   SET missing_player_count_win_in_averages = c.flash.missing_player_count_win_in_averages;
 ELSE;
   event_name = event.name;
-  start_date = event_season.start_date_time;
-  end_date = event_season.end_date_time;
+  start_date = event_season.start_date_time OR last_event_season.start_date_time;
+  end_date = event_season.end_date_time OR last_event_season.end_date_time;
   CALL start_date.set_time_zone(c.timezone);
   CALL end_date.set_time_zone(c.timezone);
   event_type = event.event_type.id;
-  tournament_type = event_season.event_detail.entry_type.id;
-  online_entry_check = event_detail.allow_online_entries;
-  def_team_match_tpl = event_detail.default_team_match_template.id;
-  def_ind_match_tpl = event_detail.default_individual_match_template.id;
-  venue = event_season.venue;
+  tournament_type = event_season.event_detail.entry_type.id OR last_event_season.event_detail.entry_type.id;
+  online_entry_check = event_detail.allow_online_entries OR last_event_season.event_detail.allow_online_entries;
+  def_team_match_tpl = event_detail.default_team_match_template.id OR last_event_season.event_detail.default_team_match_template.id;
+  def_ind_match_tpl = event_detail.default_individual_match_template.id OR last_event_season.event_detail.default_individual_match_template.id;
+  venue = event_season.venue OR last_event_season.venue;
   start_hour = start_date.hour;
   start_minute = start_date.minute;
-  all_day = event_season.all_day;
+  all_day = event_season.all_day OR last_event_season.all_day;
   end_hour = end_date.hour;
   end_minute = end_date.minute;
   
@@ -157,7 +157,7 @@ END;
   </div>
   
 [%
-IF action == "create" OR event_detail.can_edit_default_templates;
+IF action == "create" OR event_detail.can_edit_default_templates OR !event_detail;
   SET template_disabled = "";
 ELSE;
   SET template_disabled = ' disabled="disabled"';
