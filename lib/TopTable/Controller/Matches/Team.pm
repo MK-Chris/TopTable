@@ -153,9 +153,6 @@ sub base :Private {
     $subtitle3 = $match->tournament_round->name;
     $subtitle3 .= sprintf(" - %s", $match->tournament_group->name) if defined($match->tournament_group);
     $is_tourn = 1;
-    
-    # Add a warning for matches that don't have a division (attached to an event instead)
-    $c->add_event_test_msg;
   }
   
   $subtitle4 = $date_str;

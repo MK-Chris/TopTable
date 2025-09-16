@@ -315,7 +315,8 @@ sub can_edit_default_templates {
     my $current_season = $schema->resultset("Season")->get_current;
     
     if ( defined($current_season) ) {
-      return $self->event_detail($current_season)->can_edit_default_templates;
+      my $event_detail = $self->event_detail($current_season);
+      return defined($event_detail) ? $self->event_detail($current_season)->can_edit_default_templates : 1;
     } else {
       # If there's no current season, we can't edit anything
       return 0;

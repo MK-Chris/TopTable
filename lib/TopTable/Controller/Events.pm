@@ -258,9 +258,6 @@ sub get_event_season :Private {
   
   if ( defined($event_season) ) {
     $c->stash({event_detail => $event_season->event_detail});
-    
-    # Add a warning, but not for meetings
-    $c->add_event_test_msg unless $event_season->event->event_type->id eq "meeting";
   }
 }
 
@@ -329,6 +326,7 @@ sub edit :Chained("base_current_season") :PathPart("edit") :Args(0) {
   }
   
   my $event_season = $event->get_season($season);
+  my $last_event_season = $event->last_event_season;
   
   # Stash the form action, this is dependent on the form
   $c->stash({
@@ -337,6 +335,7 @@ sub edit :Chained("base_current_season") :PathPart("edit") :Args(0) {
     subtitle2 => $c->maketext("admin.edit"),
     action => "edit",
     new_season => defined($event_season) ? 0 : 1, # Flag to show first round fields if this is going to be a new season instance
+    last_event_season => $last_event_season,
     #subtitle1 => $enc_event_name,
   });
   
@@ -660,57 +659,64 @@ sub view_finalise :Private {
     # Grab the tournament details
     my $tournament = $c->stash->{event_detail};
     $template_path = "events/tournaments/view.ttkt";
-    my @rounds = $tournament->rounds;
     
-    # Add handicapped flag for template / JS if there are handicapped matches in the knock-out rounds (we don't show matches)
-    # for the group stage here
-    my $handicapped = $tournament->matches({round_type => "ko"})->handicapped_matches->count ? "/hcp" : "";
-    
-    $c->stash({
-      tournament => $tournament,
-      rounds => \@rounds,
-      round_tabs => [$tournament->rounds_with_matches({ko_only => 1})],
-      handicapped => $handicapped,
-    });
-    
-    if ( $tournament->has_group_round ) {
-      # Get the ranking template for the table - we need this before we stash because one of the scripts depends
-      # on whether or not we're assigning points (as there's an extra column if we are)
-      my $ranking_template = $rounds[0]->rank_template;
-      my $match_template = $rounds[0]->match_template;
-  
-      # Base JS name - add to it based on whether we have points or not / handicaps or not
-      my $table_view_js = "view";
-      $table_view_js .= "-points" if $ranking_template->assign_points;
-      $table_view_js .= "-hcp" if $match_template->handicapped;
-      $table_view_js = $c->uri_for("/static/script/tables/$table_view_js.js", {v => 3});
+    if ( defined($tournament) ) {
+      my @rounds = $tournament->rounds;
       
-      push(@external_scripts,
-        $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
-        $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
-        $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
-        $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
-        $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
-        $table_view_js,
-        $c->uri_for("/static/script/tables/points-adjustments.js"),
-        $c->uri_for("/static/script/events/tournaments$handicapped/view.js"),
-      );
+      # Add handicapped flag for template / JS if there are handicapped matches in the knock-out rounds (we don't show matches)
+      # for the group stage here
+      my $handicapped = $tournament->matches({round_type => "ko"})->handicapped_matches->count ? "/hcp" : "";
       
-      push(@external_styles,
-        $c->uri_for("/static/css/datatables/dataTables.dataTables.min.css"),
-        $c->uri_for("/static/css/datatables/fixedColumns.dataTables.min.css"),
-        $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
-        $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
-        $c->uri_for("/static/css/datatables/rowGroup.dataTables.min.css"),
-      );
-      
-      my @groups = $rounds[0]->groups;
       $c->stash({
-        group_round => $rounds[0],
-        groups => \@groups,
-        ranking_template => $ranking_template,
-        match_template => $match_template,
+        tournament => $tournament,
+        rounds => \@rounds,
+        round_tabs => [$tournament->rounds_with_matches({ko_only => 1})],
+        handicapped => $handicapped,
       });
+      
+      if ( $tournament->has_group_round ) {
+        # Get the ranking template for the table - we need this before we stash because one of the scripts depends
+        # on whether or not we're assigning points (as there's an extra column if we are)
+        my $ranking_template = $rounds[0]->rank_template;
+        my $match_template = $rounds[0]->match_template;
+    
+        # Base JS name - add to it based on whether we have points or not / handicaps or not
+        my $table_view_js = "view";
+        $table_view_js .= "-points" if $ranking_template->assign_points;
+        $table_view_js .= "-hcp" if $match_template->handicapped;
+        $table_view_js = $c->uri_for("/static/script/tables/$table_view_js.js", {v => 3});
+        
+        push(@external_scripts,
+          $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
+          $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
+          $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
+          $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
+          $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
+          $table_view_js,
+          $c->uri_for("/static/script/tables/points-adjustments.js"),
+          $c->uri_for("/static/script/events/tournaments$handicapped/view.js"),
+        );
+        
+        push(@external_styles,
+          $c->uri_for("/static/css/datatables/dataTables.dataTables.min.css"),
+          $c->uri_for("/static/css/datatables/fixedColumns.dataTables.min.css"),
+          $c->uri_for("/static/css/datatables/fixedHeader.dataTables.min.css"),
+          $c->uri_for("/static/css/datatables/responsive.dataTables.min.css"),
+          $c->uri_for("/static/css/datatables/rowGroup.dataTables.min.css"),
+        );
+        
+        my @groups = $rounds[0]->groups;
+        $c->stash({
+          group_round => $rounds[0],
+          groups => \@groups,
+          ranking_template => $ranking_template,
+          match_template => $match_template,
+        });
+      }
+    } else {
+      push(@external_scripts,
+        $c->uri_for("/static/script/standard/responsive-tabs.js"),
+      );
     }
   } elsif ( $event_type eq "multi_tournament" ) {
     $template_path = "events/tournaments/multi-event/view.ttkt";
