@@ -182,6 +182,9 @@ sub index :Path :Args(0) {
   my $deciding_game_winners = [];
   my $deuce_game_winners = [];
   my $highest_point_winners = [];
+  my $highest_points_scored = [];
+  my $most_legs_played = [];
+  my $team_doubles_won = [];
   if ( defined($current_season) ) {
     $matches = $c->model("DB::TeamMatch")->matches_on_date({
       season => $current_season,
@@ -226,6 +229,9 @@ sub index :Path :Args(0) {
     $deciding_game_winners = [$c->model("DB::VwMatchDecidingGame")->search_by_season($current_season, {top_only => 1, result => "win"})];
     $deuce_game_winners = [$c->model("DB::VwMatchLegDeuceCount")->search_by_season($current_season, {top_only => 1})];
     $highest_point_winners = [$c->model("DB::VwHighestPointsWin")->search_by_season($current_season, undef, {top_only => 1})];
+    $highest_points_scored = [$c->model("DB::VwMatchPointsScored")->search_by_season($current_season, undef, {top_only => 1})];
+    $most_legs_played = [$c->model("DB::VwMatchLegsPlayed")->search_by_season($current_season, undef, {top_only => 1})];
+    $team_doubles_won = [$c->model("DB::VwTeamDoublesWon")->search_by_season($current_season, {top_only => 1})];
   } else {
     $matches_started = 0;
     $matches_to_show = 0;
@@ -282,6 +288,9 @@ sub index :Path :Args(0) {
     deciding_game_winners => $deciding_game_winners,
     deuce_game_winners => $deuce_game_winners,
     highest_point_winners => $highest_point_winners,
+    highest_points_scored => $highest_points_scored,
+    most_legs_played => $most_legs_played,
+    team_doubles_won => $team_doubles_won,
     articles => $articles,
     online_user_count => $online_user_count,
     index_text => $c->model("DB::PageText")->get_text("index"),

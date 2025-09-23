@@ -239,6 +239,9 @@ sub view :Chained("base") :PathPart("") :Args(0) {
     deciding_game_winners => [$c->model("DB::VwMatchDecidingGame")->search_by_season($season, {top_only => 1, result => "win"})],
     deuce_game_winners => [$c->model("DB::VwMatchLegDeuceCount")->search_by_season($season, {top_only => 1})],
     highest_point_winners => [$c->model("DB::VwHighestPointsWin")->search_by_season($season, undef, {top_only => 1})],
+    highest_points_scored => [$c->model("DB::VwMatchPointsScored")->search_by_season($season, undef, {top_only => 1})],
+    most_legs_played => [$c->model("DB::VwMatchLegsPlayed")->search_by_season($season, undef, {top_only => 1})],
+    team_doubles_won => [$c->model("DB::VwTeamDoublesWon")->search_by_season($season, {top_only => 1})],
   });
 }
 
