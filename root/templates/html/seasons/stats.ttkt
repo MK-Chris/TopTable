@@ -1,3 +1,6 @@
+[%
+USE zeroes = format("%02d");
+%]
 <h4>[% c.maketext("season.stats.heading") %]</h4>
 <div class="stats-columns">
   <div id="most-decider-wins" class="stats-column">
@@ -91,6 +94,103 @@
   ELSE;
 %]
     <p>[% c.maketext("season.stats.no-highest-points-wins") %]</p>
+[%
+  END;
+%]
+  </div>
+  <div>
+    <h5>[% c.maketext("season.stats.match-highest-points-scored") %]</h5>
+[%
+  IF highest_points_scored.size;
+    SET matches = 0;
+    FOREACH match = highest_points_scored;
+      home_team_html = match.home_team | html_entity;
+      away_team_html = match.away_team | html_entity;
+      SET match_name = home_team_html _ " " _ c.maketext("matches.versus-abbreviation") _ " " _ away_team_html;
+      SET date = match.scheduled_date;
+      CALL date.set_locale(c.locale);
+      SET year = date.year;
+      SET month = zeroes(date.month);
+      SET day = zeroes(date.day);
+      
+      matches = matches + 1;
+      IF matches == 1;
+        # First match, display the number (the number is the same for all matches)
+%]
+      <div class="stats-heading">[% match.total_points %]</div>
+[%
+      END;
+%]
+      <div class="stats-data"><a href="[% c.uri_for_action("/matches/team/view_by_url_keys", [match.home_club_url_key, match.home_team_url_key, match.away_club_url_key, match.away_team_url_key, year, month, day]) %]">[% match_name %]</a></div>
+[%
+    END;
+  ELSE;
+%]
+    <p>[% c.maketext("season.stats.no-highest-points-scored") %]</p>
+[%
+  END;
+%]
+  </div>
+  <div>
+    <h5>[% c.maketext("season.stats.match-most-legs-played") %]</h5>
+[%
+  IF most_legs_played.size;
+    SET matches = 0;
+    FOREACH match = most_legs_played;
+      home_team_html = match.home_team | html_entity;
+      away_team_html = match.away_team | html_entity;
+      SET match_name = home_team_html _ " " _ c.maketext("matches.versus-abbreviation") _ " " _ away_team_html;
+      SET date = match.scheduled_date;
+      CALL date.set_locale(c.locale);
+      SET year = date.year;
+      SET month = zeroes(date.month);
+      SET day = zeroes(date.day);
+      
+      matches = matches + 1;
+      IF matches == 1;
+        # First match, display the number (the number is the same for all matches)
+%]
+      <div class="stats-heading">[% match.total_legs %]</div>
+[%
+      END;
+%]
+      <div class="stats-data"><a href="[% c.uri_for_action("/matches/team/view_by_url_keys", [match.home_club_url_key, match.home_team_url_key, match.away_club_url_key, match.away_team_url_key, year, month, day]) %]">[% match_name %]</a></div>
+[%
+    END;
+  ELSE;
+%]
+    <p>[% c.maketext("season.stats.no-match-most-legs-played") %]</p>
+[%
+  END;
+%]
+  </div>
+  <div>
+    <h5>[% c.maketext("season.stats.doubles-games-won") %]</h5>
+[%
+  IF team_doubles_won.size;
+    SET teams = 0;
+    FOREACH team = team_doubles_won;
+      
+      teams = teams + 1;
+      IF teams == 1;
+        # First team, display the number (the number is the same for all teams)
+%]
+      <div class="stats-heading">[% team.doubles_games_won %]</div>
+[%
+      END;
+      
+      IF specific_season;
+        SET uri = c.uri_for_action("/teams/view_specific_season", [team.club_url_key, team.team_url_key, season.url_key]);
+      ELSE;
+        SET uri = c.uri_for_action("/teams/view_current_season", [team.club_url_key, team.team_url_key]);
+      END;
+%]
+      <div class="stats-data"><a href="[% uri %]">[% team.team_name | html_entity %]</a></div>
+[%
+    END;
+  ELSE;
+%]
+    <p>[% c.maketext("season.stats.no-doubles-games-won") %]</p>
 [%
   END;
 %]
