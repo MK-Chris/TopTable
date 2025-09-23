@@ -180,9 +180,9 @@ USE zeroes = format("%02d");
       END;
       
       IF specific_season;
-        SET uri = c.uri_for_action("/teams/view_specific_season", [team.club_url_key, team.team_url_key, season.url_key]);
+        SET uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [team.club_url_key, team.team_url_key, season.url_key]);
       ELSE;
-        SET uri = c.uri_for_action("/teams/view_current_season", [team.club_url_key, team.team_url_key]);
+        SET uri = c.uri_for_action("/teams/view_current_season_by_url_key", [team.club_url_key, team.team_url_key]);
       END;
 %]
       <div class="stats-data"><a href="[% uri %]">[% team.team_name | html_entity %]</a></div>
