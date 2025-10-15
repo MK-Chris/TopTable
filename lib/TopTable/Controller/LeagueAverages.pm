@@ -314,6 +314,7 @@ sub view_finalise :Private {
   my ( $self, $c ) = @_;
   my $averages_type = $c->stash->{averages_type};
   my $division = $c->stash->{division};
+  my $division_season = $c->stash->{division_season};
   my $season = $c->stash->{season};
   my $encoded_division_name = $c->stash->{encoded_division_name};
   my $encoded_season_name = $c->stash->{encoded_season_name};
@@ -421,10 +422,7 @@ sub view_finalise :Private {
     my $doubles_teams_averages = $c->model("DB::TeamSeason")->get_doubles_teams_in_division_in_averages_order($config);
     $c->stash({
       doubles_team_averages => $doubles_teams_averages,
-      doubles_teams_last_updated => $c->model("DB::TeamSeason")->get_tables_last_updated_timestamp({
-        season => $season,
-        division => $division,
-      }),
+      doubles_teams_last_updated => $division_season->table_last_updated,
     });
     
     # Check if we're authorised to display edit / delete links next to names

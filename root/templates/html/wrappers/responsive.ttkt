@@ -348,10 +348,13 @@ IF current_season;
   <li>
     <a href="[% c.uri_for("/reports") %]" title="[% c.maketext("menu.title.reports") %]">[% c.maketext("menu.text.report") %]</a>
     <ul>
-      <li><a href="[% c.uri_for_action("/reports/view_current_season", ["loan-players"]) %]" title="[% c.maketext("reports.name.loan-players") %]">[% c.maketext("reports.name.loan-players") %]</a></li>
-      <li><a href="[% c.uri_for_action("/reports/view_current_season", ["rearranged-matches"]) %]" title="[% c.maketext("reports.name.rearranged-matches") %]">[% c.maketext("reports.name.rearranged-matches") %]</a></li>
-      <li><a href="[% c.uri_for_action("/reports/view_current_season", ["cancelled-matches"]) %]" title="[% c.maketext("reports.name.cancelled-matches") %]">[% c.maketext("reports.name.cancelled-matches") %]</a></li>
-      <li><a href="[% c.uri_for_action("/reports/view_current_season", ["missing-players"]) %]" title="[% c.maketext("reports.name.missing-players") %]">[% c.maketext("reports.name.missing-players") %]</a></li>
+[%
+  FOREACH report IN reports;
+-%]
+      <li><a href="[% c.uri_for_action("/reports/view_current_season", [report]) %]" title="[% c.maketext("reports.name." _ report) %]">[% c.maketext("reports.name." _ report) %]</a></li>
+[%
+  END;
+-%]
     </ul>
   </li>
 [%
@@ -505,10 +508,13 @@ END;
           <li>
             <a href="javascript:void(0)" title="[% c.maketext("menu.title.reports") %]">[% c.maketext("menu.text.report") %]</a>
             <ul>
-              <li><a href="[% c.uri_for_action("/reports/view_specific_season", ["loan-players", season.url_key]) %]" title="[% c.maketext("reports.name.loan-players") %]">[% c.maketext("reports.name.loan-players") %]</a></li>
-              <li><a href="[% c.uri_for_action("/reports/view_specific_season", ["rearranged-matches", season.url_key]) %]" title="[% c.maketext("reports.name.rearranged-matches") %]">[% c.maketext("reports.name.rearranged-matches") %]</a></li>
-              <li><a href="[% c.uri_for_action("/reports/view_specific_season", ["cancelled-matches", season.url_key]) %]" title="[% c.maketext("reports.name.cancelled-matches") %]">[% c.maketext("reports.name.cancelled-matches") %]</a></li>
-              <li><a href="[% c.uri_for_action("/reports/view_specific_season", ["missing-players", season.url_key]) %]" title="[% c.maketext("reports.name.missing-players") %]">[% c.maketext("reports.name.missing-players") %]</a></li>
+[%
+        FOREACH report IN reports;
+-%]
+              <li><a href="[% c.uri_for_action("/reports/view_specific_season", [report, season.url_key]) %]" title="[% c.maketext("reports.name." _ report) %]">[% c.maketext("reports.name." _ report) %]</a></li>
+[%
+        END;
+-%]
             </ul>
           </li>
           <li>

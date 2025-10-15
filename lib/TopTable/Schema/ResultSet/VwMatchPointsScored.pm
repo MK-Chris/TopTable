@@ -16,6 +16,7 @@ sub search_by_season {
   my $class = shift;
   my ( $season, $comp, $params ) = @_;
   my $top_only = $params->{top_only} // 0; # Get the top matches only - this could be more than one, we need to get the number of matches on the highest number of winning points.
+  my $limit = $params->{limit} // 20;
   
   my %where = (season_id => $season->id);
   
@@ -44,6 +45,7 @@ sub search_by_season {
     }, {
       -asc => [qw( played_date )],
     }],
+    rows => $limit,
   });
 }
 

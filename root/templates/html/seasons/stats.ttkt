@@ -4,195 +4,251 @@ USE zeroes = format("%02d");
 <h4>[% c.maketext("season.stats.heading") %]</h4>
 <div class="stats-columns">
   <div id="most-decider-wins" class="stats-column">
-    <h5>[% c.maketext("season.stats.most-deciding-leg-wins") %]</h5>
 [%
-  IF deciding_game_winners.size;
-    SET people = 0;
-    FOREACH person = deciding_game_winners;
-      people = people + 1;
-      IF people == 1;
-        # First person, display the number (the number is the same for all people)
+IF specific_season;
+  SET report_uri = c.uri_for_action("/reports/view_specific_season", ["deciding-wins", season.url_key]);
+ELSE;
+  SET report_uri = c.uri_for_action("/reports/view_current_season", ["deciding-wins"]);
+END;
+-%]
+    <h5><a href="[% report_uri %]">[% c.maketext("season.stats.most-deciding-leg-wins") %]</a></h5>
+[%
+IF deciding_game_winners.size;
+  SET people = 0;
+  FOREACH person = deciding_game_winners;
+    people = people + 1;
+    IF people == 1;
+      # First person, display the number (the number is the same for all people)
 %]
       <div class="stats-heading">[% person.number_of_sets %]</div>
 [%
-      END;
-      
-      IF specific_season;
-        SET uri = c.uri_for_action("/people/view_specific_season", [person.player_url_key, season.url_key]);
-      ELSE;
-        SET uri = c.uri_for_action("/people/view_current_season", [person.player_url_key]);
-      END;
+    END;
+    
+    IF specific_season;
+      SET uri = c.uri_for_action("/people/view_specific_season", [person.player_url_key, season.url_key]);
+    ELSE;
+      SET uri = c.uri_for_action("/people/view_current_season", [person.player_url_key]);
+    END;
 %]
       <div class="stats-data"><a href="[% uri %]">[% person.player_display_name | html_entity %]</a></div>
 [%
-    END;
-  ELSE;
+  END;
+ELSE;
 %]
     <p>[% c.maketext("season.stats.no-deciding-leg-wins") %]</p>
 [%
-  END;
+END;
 %]
   </div>
   <div id="most-deuce-wins" class="stats-column">
-    <h5>[% c.maketext("season.stats.most-deuce-wins") %]</h5>
 [%
-  IF deuce_game_winners.size;
-    SET people = 0;
-    FOREACH person = deuce_game_winners;
-      people = people + 1;
-      IF people == 1;
-        # First person, display the number (the number is the same for all people)
+IF specific_season;
+  SET report_uri = c.uri_for_action("/reports/view_specific_season", ["deuce-wins", season.url_key]);
+ELSE;
+  SET report_uri = c.uri_for_action("/reports/view_current_season", ["deuce-wins"]);
+END;
+-%]
+    <h5><a href="[% report_uri %]">[% c.maketext("season.stats.most-deuce-wins") %]</a></h5>
+[%
+IF deuce_game_winners.size;
+  SET people = 0;
+  FOREACH person = deuce_game_winners;
+    people = people + 1;
+    IF people == 1;
+      # First person, display the number (the number is the same for all people)
 %]
       <div class="stats-heading">[% person.number_of_deuce_wins %]</div>
 [%
-      END;
-      
-      IF specific_season;
-        SET uri = c.uri_for_action("/people/view_specific_season", [person.player_url_key, season.url_key]);
-      ELSE;
-        SET uri = c.uri_for_action("/people/view_current_season", [person.player_url_key]);
-      END;
+    END;
+    
+    IF specific_season;
+      SET uri = c.uri_for_action("/people/view_specific_season", [person.player_url_key, season.url_key]);
+    ELSE;
+      SET uri = c.uri_for_action("/people/view_current_season", [person.player_url_key]);
+    END;
 %]
       <div class="stats-data"><a href="[% uri %]">[% person.player_display_name | html_entity %]</a></div>
 [%
-    END;
-  ELSE;
+  END;
+ELSE;
 %]
     <p>[% c.maketext("season.stats.no-deuce-wins") %]</p>
 [%
-  END;
+END;
 %]
   </div>
   <div>
-    <h5>[% c.maketext("season.stats.highest-points-wins") %]</h5>
 [%
-  IF highest_point_winners.size;
-    SET people = 0;
-    FOREACH person = highest_point_winners;
-      people = people + 1;
-      IF people == 1;
-        # First person, display the number (the number is the same for all people)
+IF specific_season;
+  SET report_uri = c.uri_for_action("/reports/view_specific_season", ["highest-points-wins", season.url_key]);
+ELSE;
+  SET report_uri = c.uri_for_action("/reports/view_current_season", ["highest-points-wins"]);
+END;
+-%]
+    <h5><a href="[% report_uri %]">[% c.maketext("season.stats.highest-points-wins") %]</a></h5>
+[%
+IF highest_point_winners.size;
+  SET people = 0;
+  FOREACH person = highest_point_winners;
+    people = people + 1;
+    IF people == 1;
+      # First person, display the number (the number is the same for all people)
 %]
       <div class="stats-heading">[% person.winning_points %]-[% person.losing_points %]</div>
 [%
-      END;
-      
-      IF specific_season;
-        SET person_uri = c.uri_for_action("/people/view_specific_season", [person.player_url_key, season.url_key]);
-        SET opponent_uri = c.uri_for_action("/people/view_specific_season", [person.opponent_url_key, season.url_key]);
-      ELSE;
-        SET person_uri = c.uri_for_action("/people/view_current_season", [person.player_url_key]);
-        SET opponent_uri = c.uri_for_action("/people/view_current_season", [person.opponent_url_key]);
-      END;
-      
-      # Get the match so we can link to it
-      SET match = c.model("DB::TeamMatch").get_match_by_ids(person.home_team_id, person.away_team_id, person.scheduled_date);
+    END;
+    
+    IF specific_season;
+      SET person_uri = c.uri_for_action("/people/view_specific_season", [person.player_url_key, season.url_key]);
+      SET opponent_uri = c.uri_for_action("/people/view_specific_season", [person.opponent_url_key, season.url_key]);
+    ELSE;
+      SET person_uri = c.uri_for_action("/people/view_current_season", [person.player_url_key]);
+      SET opponent_uri = c.uri_for_action("/people/view_current_season", [person.opponent_url_key]);
+    END;
+    
+    # Get the match so we can link to it
+    SET match = c.model("DB::TeamMatch").get_match_by_ids(person.home_team_id, person.away_team_id, person.scheduled_date);
 %]
       <div class="stats-data"><a href="[% person_uri %]">[% person.player_display_name | html_entity %]</a> [% c.maketext("season.stats.highest-points-wins.beat") %] <a href="[% opponent_uri %]">[% person.opponent_display_name | html_entity %]</a>: <a href="[% c.uri_for_action("/matches/team/view_by_url_keys", match.url_keys) %]">[% match.name_with_competition %]</a></div>
 [%
-    END;
-  ELSE;
+  END;
+ELSE;
 %]
     <p>[% c.maketext("season.stats.no-highest-points-wins") %]</p>
 [%
-  END;
+END;
 %]
   </div>
   <div>
-    <h5>[% c.maketext("season.stats.match-highest-points-scored") %]</h5>
 [%
-  IF highest_points_scored.size;
-    SET matches = 0;
-    FOREACH match = highest_points_scored;
-      home_team_html = match.home_team | html_entity;
-      away_team_html = match.away_team | html_entity;
-      SET match_name = home_team_html _ " " _ c.maketext("matches.versus-abbreviation") _ " " _ away_team_html;
-      SET date = match.scheduled_date;
-      CALL date.set_locale(c.locale);
-      SET year = date.year;
-      SET month = zeroes(date.month);
-      SET day = zeroes(date.day);
-      
-      matches = matches + 1;
-      IF matches == 1;
-        # First match, display the number (the number is the same for all matches)
+IF specific_season;
+  SET report_uri = c.uri_for_action("/reports/view_specific_season", ["points-in-match", season.url_key]);
+ELSE;
+  SET report_uri = c.uri_for_action("/reports/view_current_season", ["points-in-match"]);
+END;
+-%]
+    <h5><a href="[% report_uri %]">[% c.maketext("season.stats.match-highest-points-scored") %]</a></h5>
+[%
+IF highest_points_scored.size;
+  SET matches = 0;
+  FOREACH match = highest_points_scored;
+    home_team_html = match.home_team | html_entity;
+    away_team_html = match.away_team | html_entity;
+    SET match_name = home_team_html _ " " _ c.maketext("matches.versus-abbreviation") _ " " _ away_team_html;
+    SET date = match.scheduled_date;
+    CALL date.set_locale(c.locale);
+    SET year = date.year;
+    SET month = zeroes(date.month);
+    SET day = zeroes(date.day);
+    
+    matches = matches + 1;
+    IF matches == 1;
+      # First match, display the number (the number is the same for all matches)
 %]
       <div class="stats-heading">[% match.total_points %]</div>
 [%
-      END;
-%]
-      <div class="stats-data"><a href="[% c.uri_for_action("/matches/team/view_by_url_keys", [match.home_club_url_key, match.home_team_url_key, match.away_club_url_key, match.away_team_url_key, year, month, day]) %]">[% match_name %]</a></div>
-[%
     END;
-  ELSE;
+    
+    IF specific_season;
+      SET division_uri = c.uri_for_action("/league-tables/view_specific_season", [match.division_url_key, season.url_key]);
+    ELSE;
+      SET division_uri = c.uri_for_action("/league-tables/view_current_season", [match.division_url_key]);
+    END;
+-%]
+      <div class="stats-data"><a href="[% c.uri_for_action("/matches/team/view_by_url_keys", [match.home_club_url_key, match.home_team_url_key, match.away_club_url_key, match.away_team_url_key, year, month, day]) %]">[% match_name %]</a> (<a href="[% division_uri %]">[% match.division_name | html_entity %]</a>)</div>
+[%
+  END;
+ELSE;
 %]
     <p>[% c.maketext("season.stats.no-highest-points-scored") %]</p>
 [%
-  END;
+END;
 %]
   </div>
   <div>
-    <h5>[% c.maketext("season.stats.match-most-legs-played") %]</h5>
 [%
-  IF most_legs_played.size;
-    SET matches = 0;
-    FOREACH match = most_legs_played;
-      home_team_html = match.home_team | html_entity;
-      away_team_html = match.away_team | html_entity;
-      SET match_name = home_team_html _ " " _ c.maketext("matches.versus-abbreviation") _ " " _ away_team_html;
-      SET date = match.scheduled_date;
-      CALL date.set_locale(c.locale);
-      SET year = date.year;
-      SET month = zeroes(date.month);
-      SET day = zeroes(date.day);
-      
-      matches = matches + 1;
-      IF matches == 1;
-        # First match, display the number (the number is the same for all matches)
+IF specific_season;
+  SET report_uri = c.uri_for_action("/reports/view_specific_season", ["games-in-match", season.url_key]);
+ELSE;
+  SET report_uri = c.uri_for_action("/reports/view_current_season", ["games-in-match"]);
+END;
+-%]
+    <h5><a href="[% report_uri %]">[% c.maketext("season.stats.match-most-legs-played") %]</a></h5>
+[%
+IF most_legs_played.size;
+  SET matches = 0;
+  FOREACH match = most_legs_played;
+    home_team_html = match.home_team | html_entity;
+    away_team_html = match.away_team | html_entity;
+    SET match_name = home_team_html _ " " _ c.maketext("matches.versus-abbreviation") _ " " _ away_team_html;
+    SET date = match.scheduled_date;
+    CALL date.set_locale(c.locale);
+    SET year = date.year;
+    SET month = zeroes(date.month);
+    SET day = zeroes(date.day);
+    
+    matches = matches + 1;
+    IF matches == 1;
+      # First match, display the number (the number is the same for all matches)
 %]
       <div class="stats-heading">[% match.total_legs %]</div>
 [%
-      END;
-%]
-      <div class="stats-data"><a href="[% c.uri_for_action("/matches/team/view_by_url_keys", [match.home_club_url_key, match.home_team_url_key, match.away_club_url_key, match.away_team_url_key, year, month, day]) %]">[% match_name %]</a></div>
-[%
     END;
-  ELSE;
+    
+    IF specific_season;
+      SET division_uri = c.uri_for_action("/league-tables/view_specific_season", [match.division_url_key, season.url_key]);
+    ELSE;
+      SET division_uri = c.uri_for_action("/league-tables/view_current_season", [match.division_url_key]);
+    END;
+%]
+      <div class="stats-data"><a href="[% c.uri_for_action("/matches/team/view_by_url_keys", [match.home_club_url_key, match.home_team_url_key, match.away_club_url_key, match.away_team_url_key, year, month, day]) %]">[% match_name %]</a> (<a href="[% division_uri %]">[% match.division_name | html_entity %]</a>)</div>
+[%
+  END;
+ELSE;
 %]
     <p>[% c.maketext("season.stats.no-match-most-legs-played") %]</p>
 [%
-  END;
+END;
 %]
   </div>
   <div>
-    <h5>[% c.maketext("season.stats.doubles-games-won") %]</h5>
 [%
-  IF team_doubles_won.size;
-    SET teams = 0;
-    FOREACH team = team_doubles_won;
-      
-      teams = teams + 1;
-      IF teams == 1;
-        # First team, display the number (the number is the same for all teams)
+IF specific_season;
+  SET report_uri = c.uri_for_action("/reports/view_specific_season", ["doubles-sets", season.url_key]);
+ELSE;
+  SET report_uri = c.uri_for_action("/reports/view_current_season", ["doubles-sets"]);
+END;
+-%]
+    <h5><a href="[% report_uri %]">[% c.maketext("season.stats.doubles-games-won") %]</a></h5>
+[%
+IF team_doubles_won.size;
+  SET teams = 0;
+  FOREACH team = team_doubles_won;
+    
+    teams = teams + 1;
+    IF teams == 1;
+      # First team, display the number (the number is the same for all teams)
 %]
       <div class="stats-heading">[% team.doubles_games_won %]</div>
 [%
-      END;
-      
-      IF specific_season;
-        SET uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [team.club_url_key, team.team_url_key, season.url_key]);
-      ELSE;
-        SET uri = c.uri_for_action("/teams/view_current_season_by_url_key", [team.club_url_key, team.team_url_key]);
-      END;
-%]
-      <div class="stats-data"><a href="[% uri %]">[% team.team_name | html_entity %]</a></div>
-[%
     END;
-  ELSE;
+    
+    IF specific_season;
+      SET team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [team.club_url_key, team.team_url_key, season.url_key]);
+      SET division_uri = c.uri_for_action("/league-tables/view_specific_season", [team.division_url_key, season.url_key]);
+    ELSE;
+      SET team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [team.club_url_key, team.team_url_key]);
+      SET division_uri = c.uri_for_action("/league-tables/view_current_season", [team.division_url_key]);
+    END;
+%]
+      <div class="stats-data"><a href="[% team_uri %]">[% team.team_name | html_entity %]</a> (<a href="[% division_uri %]">[% team.division_name | html_entity %]</a>)</div>
+[%
+  END;
+ELSE;
 %]
     <p>[% c.maketext("season.stats.no-doubles-games-won") %]</p>
 [%
-  END;
+END;
 %]
   </div>
 </div>

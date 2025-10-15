@@ -77,8 +77,11 @@ sub begin :Private {
     # Update user IP / browser combination; we do this here so we can stash and use the user agent later on if needed
     my $user_agent = $c->model("DB::UserAgent")->update_user_agents($c->req->browser_detect->user_agent, $c->user, $c->req->address);
     
-    # Stash the user agent object for later on
-    $c->stash({user_agent => $user_agent});
+    # Stash the user agent object for later on as well as the report list
+    $c->stash({
+      user_agent => $user_agent,
+      reports => $c->forward("TopTable::Controller::Reports", "get_report_list"),
+    });
     
     # Set up breadcrumbs as an empty array to begin with
     my @breadcrumbs = ();

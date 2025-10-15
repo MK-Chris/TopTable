@@ -47,7 +47,7 @@ Chain base for getting the report ID and checking it.
 
 sub base :Chained("/") :PathPart("reports") :CaptureArgs(1) {
   my ( $self, $c, $report_id ) = @_;
-  my @reports = qw( loan-players rearranged-matches cancelled-matches missing-players );
+  my @reports = @{$c->stash->{reports}};
   
   if ( grep( $_ eq $report_id, @reports ) ) {
     # Report ID is in the list, stash it and continue
@@ -60,7 +60,7 @@ sub base :Chained("/") :PathPart("reports") :CaptureArgs(1) {
     
     # Push the people list page on to the breadcrumbs
     push(@{$c->stash->{breadcrumbs}}, {
-      # Club view page (current season)
+      # Report view page (current season)
       path => $c->uri_for_action("/reports/view_current_season", [$report_id]),
       label => $report_name,
     });
@@ -91,6 +91,18 @@ sub base_list :Chained("/") :PathPart("reports") :Args(0) {
       $c->uri_for("/static/script/standard/option-list.js"),
     ],
   });
+}
+
+=head2 get_report_list
+
+Private method to get the list of available report codes.
+
+=cut
+
+sub get_report_list :Private {
+  my ( $self, $c ) = @_;
+  my @reports = qw( loan-players rearranged-matches cancelled-matches missing-players deciding-wins deuce-wins highest-points-wins points-in-match games-in-match doubles-sets );
+  return \@reports;
 }
 
 =head2 view
@@ -191,17 +203,52 @@ sub view_finalise :Private {
   my $report_id = $c->stash->{report_id};
   my $season  = $c->stash->{season};
   my $report_name = $c->stash->{report_name};
+  my $max_row_limit = $c->config->{Reports}{max_row_limit};
+  my $row_limit = $c->req->params->{rows} // $c->config->{Reports}{default_row_limit};
+  
+  if ( $row_limit > $max_row_limit ) {
+    $c->add_status_messages({info => $c->maketext("reports.notice.max-limit-excdeeded", $row_limit, $max_row_limit)});
+    $row_limit = $max_row_limit;
+  }
   
   # Get the list of seasons they have played in
   my $report_data;
   if ( $report_id eq "loan-players" ) {
+    # Loan players
     $report_data = $c->model("DB::TeamMatchPlayer")->loan_players({season => $season});
   } elsif ( $report_id eq "rearranged-matches" ) {
+    # Rearranged matches
     $report_data = $season->league_matches({mode => "rearranged", prefetch => 1});
   } elsif ( $report_id eq "cancelled-matches" ) {
+    # Cancelled matches
     $report_data = $season->league_matches({mode => "cancelled", prefetch => 1});
   } elsif ( $report_id eq "missing-players" ) {
+    # Matches with missing players
     $report_data = $season->league_matches({mode => "missing-players", prefetch => 1});
+  } elsif ( $report_id eq "deciding-wins" ) {
+    # Sets won in a deciding game
+    $report_data = $c->model("DB::VwMatchDecidingGame")->search_by_season($season, {limit => $row_limit, result => "win"});
+    $c->stash->{subtitle2} = $c->maketext("reports.subtitle.top-x", $row_limit);
+  } elsif ( $report_id eq "deuce-wins" ) {
+    # Games won in deuce
+    $report_data = $c->model("DB::VwMatchLegDeuceCount")->search_by_season($season, {limit => $row_limit});
+    $c->stash->{subtitle2} = $c->maketext("reports.subtitle.top-x", $row_limit);
+  } elsif ( $report_id eq "highest-points-wins" ) {
+    # Highest number of points won in a game
+    $report_data = $c->model("DB::VwHighestPointsWin")->search_by_season($season, undef, {limit => $row_limit});
+    $c->stash->{subtitle2} = $c->maketext("reports.subtitle.top-x", $row_limit);
+  } elsif ( $report_id eq "points-in-match" ) {
+    # Highest total points scored in a match
+    $report_data = $c->model("DB::VwMatchPointsScored")->search_by_season($season, undef, {limit => $row_limit});
+    $c->stash->{subtitle2} = $c->maketext("reports.subtitle.top-x", $row_limit);
+  } elsif ( $report_id eq "games-in-match" ) {
+    # Highest number of games played in a match
+    $report_data = $c->model("DB::VwMatchLegsPlayed")->search_by_season($season, undef, {limit => $row_limit});
+    $c->stash->{subtitle2} = $c->maketext("reports.subtitle.top-x", $row_limit);
+  } elsif ( $report_id eq "doubles-sets" ) {
+    # Highest number of doubles sets won by a team
+    $report_data = $c->model("DB::VwTeamDoublesWon")->search_by_season($season, undef, {limit => $row_limit});
+    $c->stash->{subtitle2} = $c->maketext("reports.subtitle.top-x", $row_limit);
   }
   
   my $canonical_uri = $season->complete

@@ -39,7 +39,7 @@ __PACKAGE__->table_class('DBIx::Class::ResultSource::View');
 __PACKAGE__->table("vw_match_leg_deuces");
 __PACKAGE__->result_source_instance->is_virtual(1);
 __PACKAGE__->result_source_instance->view_definition(
-  "SELECT COUNT(*) AS number_of_deuce_wins, player_id, player_url_key, player_first_name, player_surname, player_display_name, season_id, season_url_key, season_name, season_start_date, season_end_date, season_complete
+  "SELECT COUNT(*) AS number_of_deuce_wins, player_id, player_url_key, player_first_name, player_surname, player_display_name, club_id, club_url_key, team_id, team_url_key, registered_team, division_id, division_url_key, division_rank, registered_division,  season_id, season_url_key, season_name, season_start_date, season_end_date, season_complete
 FROM ((
 	SELECT
 		g.home_player AS player_id,
@@ -47,6 +47,15 @@ FROM ((
 		ps.first_name AS player_first_name,
 		ps.surname AS player_surname,
 		ps.display_name AS player_display_name,
+		c.id AS club_id,
+		c.url_key AS club_url_key,
+		t.id AS team_id,
+		t.url_key AS team_url_key,
+		CONCAT(cs.short_name, ' ', ts.`name`) AS registered_team,
+		d.id AS division_id,
+		d.url_key AS division_url_key,
+		d.`rank` AS division_rank,
+		ds.`name` AS registered_division,
 		s.id AS season_id,
 		s.url_key AS season_url_key,
 		s.`name` AS season_name,
@@ -60,6 +69,12 @@ FROM ((
 	JOIN people p ON g.home_player = p.id
 	JOIN seasons s ON m.season = s.id
 	JOIN person_seasons ps ON p.id = ps.person AND s.id = ps.season AND ps.team_membership_type = 'active'
+	JOIN team_seasons ts ON ps.season = ts.season AND ps.team = ts.team
+	JOIN teams t ON ts.team = t.id
+	JOIN club_seasons cs ON ts.club = cs.club AND ts.season = cs.season
+	JOIN clubs c ON cs.club = c.id
+	JOIN division_seasons ds ON ts.division = ds.division AND ts.season = ds.season
+	JOIN divisions d ON ds.division = d.id
 	WHERE l.home_team_points_won > tpl.minimum_points_win AND l.home_team_points_won > l.away_team_points_won)
 	UNION ALL
 	(
@@ -69,6 +84,15 @@ FROM ((
 		ps.first_name AS player_first_name,
 		ps.surname AS player_surname,
 		ps.display_name AS player_display_name,
+		c.id AS club_id,
+		c.url_key AS club_url_key,
+		t.id AS team_id,
+		t.url_key AS team_url_key,
+		CONCAT(cs.short_name, ' ', ts.`name`) AS registered_team,
+		d.id AS division_id,
+		d.url_key AS division_url_key,
+		d.`rank` AS division_rank,
+		ds.`name` AS registered_division,
 		s.id AS season_id,
 		s.url_key AS season_url_key,
 		s.`name` AS season_name,
@@ -82,6 +106,12 @@ FROM ((
 	JOIN people p ON g.away_player = p.id
 	JOIN seasons s ON m.season = s.id
 	JOIN person_seasons ps ON p.id = ps.person AND s.id = ps.season AND ps.team_membership_type = 'active'
+	JOIN team_seasons ts ON ps.season = ts.season AND ps.team = ts.team
+	JOIN teams t ON ts.team = t.id
+	JOIN club_seasons cs ON ts.club = cs.club AND ts.season = cs.season
+	JOIN clubs c ON cs.club = c.id
+	JOIN division_seasons ds ON ts.division = ds.division AND ts.season = ds.season
+	JOIN divisions d ON ds.division = d.id
 	WHERE l.away_team_points_won > tpl.minimum_points_win AND l.away_team_points_won > l.home_team_points_won)) AS legs
 GROUP BY player_id, season_id"
 );
@@ -117,6 +147,55 @@ __PACKAGE__->add_columns(
     data_type => "varchar",
     is_nullable => 0,
     size => 301
+  },
+  "club_id" => {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_auto_increment => 1,
+    is_nullable => 0,
+  },
+  "club_url_key" => {
+    data_type => "varchar",
+    is_nullable => 0,
+    size => 30,
+  },
+  "team_id" => {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_auto_increment => 1,
+    is_nullable => 0,
+  },
+  "team_url_key" => {
+    data_type => "varchar",
+    is_nullable => 0,
+    size => 30,
+  },
+  "registered_team" => {
+    data_type => "varchar",
+    is_nullable => 0,
+    size => 301
+  },
+  "division_id" => {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_auto_increment => 1,
+    is_nullable => 0,
+  },
+  "division_url_key" => {
+    data_type => "varchar",
+    is_nullable => 0,
+    size => 30,
+  },
+  "division_rank" => {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_auto_increment => 1,
+    is_nullable => 0,
+  },
+  "registered_division" => {
+    data_type => "varchar",
+    is_nullable => 0,
+    size => 150
   },
   "season_id" => {
     data_type => "integer",

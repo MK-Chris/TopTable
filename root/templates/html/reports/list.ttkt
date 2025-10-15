@@ -1,4 +1,10 @@
 <ul class="option-list">
-  <li><a href="[% c.uri_for_action("/reports/view_current_season", ["loan-players"]) %]">[% c.maketext("reports.name.loan-players") %]</a></li>
-  <li><a href="[% c.uri_for_action("/reports/view_current_season", ["rearranged-matches"]) %]">[% c.maketext("reports.name.rearranged-matches") %]</a></li>
+[%
+CALL c.log.debug("Reports: " _ reports.size);
+FOREACH report IN reports;
+-%]
+  <li><a href="[% c.uri_for_action("/reports/view_current_season", [report]) %]">[% c.maketext("reports.name." _ report) %]</a></li>
+[%
+END;
+-%]
 </ul>

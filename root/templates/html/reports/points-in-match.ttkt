@@ -1,0 +1,53 @@
+<table id="report" class="stripe hover order-column row-border" style="width: 100%;">
+  <thead>
+    <tr>
+      <th>[% c.maketext("reports.columns.points-in-match.total-points") %]</th>
+      <th>[% c.maketext("reports.columns.points-in-match.home-team") %]</th>
+      <th>[% c.maketext("reports.columns.points-in-match.home-team-points") %]</th>
+      <th>[% c.maketext("reports.columns.points-in-match.away-team") %]</th>
+      <th>[% c.maketext("reports.columns.points-in-match.away-team-points") %]</th>
+      <th>[% c.maketext("reports.columns.points-in-match.score") %]</th>
+      <th>[% c.maketext("reports.columns.points-in-match.date-sort") %]</th>
+      <th>[% c.maketext("reports.columns.points-in-match.date") %]</th>
+      <th>[% c.maketext("reports.columns.points-in-match.division-sort") %]</th>
+      <th>[% c.maketext("reports.columns.points-in-match.division") %]</th>
+    </tr>
+  </thead>
+  <tbody>
+[%
+USE zeroes = format("%02d");
+WHILE (match = report_data.next);
+  SET year = match.scheduled_date.year;
+  SET month = zeroes(match.scheduled_date.month);
+  SET day = zeroes(match.scheduled_date.day);
+  
+  IF specific_season;
+    SET home_team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [match.home_club_url_key, match.home_team_url_key, match.season_url_key]);
+    SET away_team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [match.away_club_url_key, match.away_team_url_key, match.season_url_key]);
+    SET division_uri = c.uri_for_action("/league-tables/view_specific_season", [match.division_url_key, match.season_url_key]);
+  ELSE;
+    SET home_team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [match.home_club_url_key, match.home_team_url_key]);
+    SET away_team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [match.away_club_url_key, match.away_team_url_key]);
+    SET division_uri = c.uri_for_action("/league-tables/view_current_season", [person.division_url_key]);
+  END;
+-%]
+    <tr>
+      <td data-label="[% c.maketext("reports.columns.points-in-match.total-points") %]">[% match.total_points %]</td>
+      <td data-label="[% c.maketext("reports.columns.points-in-match.home-team") %]"><a href="[% home_team_uri %]">[% match.home_team | html_entity %]</a></td>
+      <td data-label="[% c.maketext("reports.columns.points-in-match.home-team-points") %]">[% match.home_team_points_won %]</a></td>
+      <td data-label="[% c.maketext("reports.columns.points-in-match.away-team") %]"><a href="[% away_team_uri %]">[% match.away_team | html_entity %]</a></td>
+      <td data-label="[% c.maketext("reports.columns.points-in-match.away-team-points") %]">[% match.away_team_points_won %]</td>
+      <td data-label="[% c.maketext("reports.columns.points-in-match.score") %]"><a href="[% c.uri_for_action("/matches/team/view_by_url_keys", [match.home_club_url_key, match.home_team_url_key, match.away_club_url_key, match.away_team_url_key, year, month, day]) %]">[% match.home_team_match_score _ "-" _ match.away_team_match_score %]</a></td>
+      <td data-label="[% c.maketext("reports.columns.points-in-match.date-sort") %]">[% match.played_date.ymd %]</td>
+      <td data-label="[% c.maketext("reports.columns.points-in-match.date") %]">[% c.i18n_datetime_format_date.format_datetime(match.played_date) %]</td>
+      <td data-label="[% c.maketext("reports.columns.points-in-match.division-sort") %]">[% match.division_rank %]</td>
+      <td data-label="[% c.maketext("reports.columns.points-in-match.division") %]"><a href="[% division_uri %]">[% match.division_name | html_entity %]</a></td>
+    </tr>
+[%
+END;
+-%]
+  </tbody>
+</table>
+[%
+INCLUDE "html/includes/js-lang/datatables-lang.ttkt";
+-%]

@@ -39,7 +39,7 @@ __PACKAGE__->table_class('DBIx::Class::ResultSource::View');
 __PACKAGE__->table("vw_team_doubles_won");
 __PACKAGE__->result_source_instance->is_virtual(1);
 __PACKAGE__->result_source_instance->view_definition(
-  "SELECT team_name, team_id, club_url_key, team_url_key, doubles_games_won, season_id, season_url_key, season_name, season_start_date, season_end_date, season_complete, division_id, division_url_key, division_name
+  "SELECT team_name, team_id, club_url_key, team_url_key, doubles_games_won, season_id, season_url_key, season_name, season_start_date, season_end_date, season_complete, division_id, division_url_key, division_rank, division_name
 FROM ((
 	SELECT
 		t.id AS team_id,
@@ -55,6 +55,7 @@ FROM ((
 		s.complete AS season_complete,
 		d.id AS division_id,
 		d.url_key AS division_url_key,
+    d.rank AS division_rank,
 		ds.`name` AS division_name
 	FROM team_seasons ts
 	JOIN seasons s ON ts.season = s.id
@@ -131,6 +132,11 @@ __PACKAGE__->add_columns(
     data_type => "varchar",
     is_nullable => 0,
     size => 45
+  },
+  "division_rank" => {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_nullable => 0,
   },
   "division_name" => {
     data_type => "varchar",

@@ -16,6 +16,7 @@ sub search_by_season {
   my $class = shift;
   my ( $season, $params ) = @_;
   my $top_only = $params->{top_only} // 0; # Get the top matches only - this could be more than one, we need to get the number of matches on the highest number of legs played.
+  my $limit = $params->{limit} // 20;
   
   my %where = (season_id => $season->id);
   
@@ -28,8 +29,9 @@ sub search_by_season {
     order_by => [{
       -desc => [qw( doubles_games_won )],
     }, {
-      -asc => [qw( team_name )],
+      -asc => [qw( division_rank team_name )],
     }],
+    rows => $limit,
   });
 }
 

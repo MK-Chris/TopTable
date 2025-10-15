@@ -39,7 +39,7 @@ __PACKAGE__->table_class('DBIx::Class::ResultSource::View');
 __PACKAGE__->table("vw_match_legs_played");
 __PACKAGE__->result_source_instance->is_virtual(1);
 __PACKAGE__->result_source_instance->view_definition(
-  "SELECT total_legs, home_team, away_team, scheduled_date, played_date, home_team_id, home_club_url_key, home_team_url_key, away_team_id, away_club_url_key, away_team_url_key, season_id, season_url_key, season_name, season_start_date, season_end_date, season_complete, division_id, division_url_key, division_name, tourn_id, tourn_url_key, tourn_name
+  "SELECT total_legs, home_team, away_team, home_team_legs_won, away_team_legs_won, home_team_match_score, away_team_match_score, scheduled_date, played_date, home_team_id, home_club_url_key, home_team_url_key, away_team_id, away_club_url_key, away_team_url_key, season_id, season_url_key, season_name, season_start_date, season_end_date, season_complete, division_id, division_url_key, division_name, tourn_id, tourn_url_key, tourn_name
 FROM ((
 	SELECT
 		ht.id AS home_team_id,
@@ -51,6 +51,16 @@ FROM ((
 		m.scheduled_date AS scheduled_date,
 		m.played_date AS played_date,
 		m.home_team_legs_won + m.away_team_legs_won AS total_legs,
+    m.home_team_legs_won,
+    m.away_team_legs_won,
+    CASE
+      WHEN m.home_team_match_score_override IS NOT NULL THEN m.home_team_match_score_override
+      ELSE m.home_team_match_score
+    END AS home_team_match_score,
+    CASE
+      WHEN m.away_team_match_score_override IS NOT NULL THEN m.away_team_match_score_override
+      ELSE m.away_team_match_score
+    END AS away_team_match_score,
 		CONCAT(hcs.short_name, ' ', hts.`name`) AS home_team,
 		CONCAT(acs.short_name, ' ', ats.`name`) AS away_team,
 		s.id AS season_id,
@@ -99,6 +109,16 @@ __PACKAGE__->add_columns(
     is_nullable => 0,
     size => 150
   },
+  "home_team_legs_won" => {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
+  "away_team_legs_won" => {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
   "scheduled_date" => {
     data_type => "date",
     datetime_undef_if_invalid => 1,
@@ -138,6 +158,16 @@ __PACKAGE__->add_columns(
     data_type => "varchar",
     is_nullable => 0,
     size => 45,
+  },
+  "home_team_match_score" => {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
+  "away_team_match_score" => {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_nullable => 0,
   },
   "season_id" => {
     data_type => "integer",
