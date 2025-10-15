@@ -16,6 +16,7 @@ sub search_by_season {
   my ( $season, $params ) = @_;
   my $result = $params->{result};
   my $top_only = $params->{top_only} // 0; # Get the top people only - this could be more than one, we need to get the number of people on the top number of sets.
+  my $limit = $params->{limit} // 20;
   
   my %where = (season_id => $season->id);
   $where{result} = $result if defined $result;
@@ -30,6 +31,7 @@ sub search_by_season {
     }, {
       -asc => [qw( player_surname player_first_name )],
     }],
+    rows => $limit,
   });
 }
 

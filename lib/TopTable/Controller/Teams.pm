@@ -341,7 +341,7 @@ sub get_team_season :Private {
   if ( $entered ) {
     # Check if the name has changed since the season we're viewing
     my $club_season = $team_season->club_season;
-    my $team_season_name = $team_season->name;
+    my $team_season_name = $team_season->full_name;
     my $enc_team_season_name = encode_entities($team_season_name);
     my $team_season_full_name = $team_season->full_name;
     my $enc_team_season_full_name = encode_entities($team_season_full_name);

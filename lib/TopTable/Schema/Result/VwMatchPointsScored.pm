@@ -39,7 +39,7 @@ __PACKAGE__->table_class('DBIx::Class::ResultSource::View');
 __PACKAGE__->table("vw_match_points_scored");
 __PACKAGE__->result_source_instance->is_virtual(1);
 __PACKAGE__->result_source_instance->view_definition(
-  "SELECT total_points, winning_points, losing_points, most_points_won, home_team, away_team, scheduled_date, played_date, home_team_id, home_club_url_key, home_team_url_key, away_team_id, away_club_url_key, away_team_url_key, season_id, season_url_key, season_name, season_start_date, season_end_date, season_complete, division_id, division_url_key, division_name, tourn_id, tourn_url_key, tourn_name
+  "SELECT total_points, winning_points, losing_points, most_points_won, home_team_points_won, away_team_points_won, home_team_match_score, away_team_match_score, home_team, away_team, scheduled_date, played_date, home_team_id, home_club_url_key, home_team_url_key, away_team_id, away_club_url_key, away_team_url_key, season_id, season_url_key, season_name, season_start_date, season_end_date, season_complete, division_id, division_url_key, division_rank, division_name, tourn_id, tourn_url_key, tourn_name
 FROM ((
 	SELECT
 		ht.id AS home_team_id,
@@ -54,6 +54,16 @@ FROM ((
 		m.home_team_points_won AS winning_points,
 		m.away_team_points_won AS losing_points,
 		'home' AS most_points_won,
+    CASE
+      WHEN m.home_team_match_score_override IS NOT NULL THEN m.home_team_match_score_override
+      ELSE m.home_team_match_score
+    END AS home_team_match_score,
+    CASE
+      WHEN m.away_team_match_score_override IS NOT NULL THEN m.away_team_match_score_override
+      ELSE m.away_team_match_score
+    END AS away_team_match_score,
+    m.home_team_points_won,
+    m.away_team_points_won,
 		CONCAT(hcs.short_name, ' ', hts.`name`) AS home_team,
 		CONCAT(acs.short_name, ' ', ats.`name`) AS away_team,
 		s.id AS season_id,
@@ -64,6 +74,7 @@ FROM ((
 		s.complete AS season_complete,
 		d.id AS division_id,
 		d.url_key AS division_url_key,
+    d.rank AS division_rank,
 		ds.`name` AS division_name,
 		e.url_key AS tourn_url_key,
 		tou.id AS tourn_id,
@@ -99,6 +110,16 @@ FROM ((
 		m.away_team_points_won AS winning_points,
 		m.home_team_points_won AS losing_points,
 		'away' AS most_points_won,
+    CASE
+      WHEN m.home_team_match_score_override IS NOT NULL THEN m.home_team_match_score_override
+      ELSE m.home_team_match_score
+    END AS home_team_match_score,
+    CASE
+      WHEN m.away_team_match_score_override IS NOT NULL THEN m.away_team_match_score_override
+      ELSE m.away_team_match_score
+    END AS away_team_match_score,
+    m.home_team_points_won,
+    m.away_team_points_won,
 		CONCAT(hcs.short_name, ' ', hts.`name`) AS home_team,
 		CONCAT(acs.short_name, ' ', ats.`name`) AS away_team,
 		s.id AS season_id,
@@ -109,6 +130,7 @@ FROM ((
 		s.complete AS season_complete,
 		d.id AS division_id,
 		d.url_key AS division_url_key,
+    d.rank AS division_rank,
 		ds.`name` AS division_name,
 		e.url_key AS tourn_url_key,
 		tou.id AS tourn_id,
@@ -151,6 +173,26 @@ __PACKAGE__->add_columns(
     data_type => "varchar",
     is_nullable => 0,
     size => 4
+  },
+  "home_team_points_won" => {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
+  "away_team_points_won" => {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
+  "home_team_match_score" => {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_nullable => 0,
+  },
+  "away_team_match_score" => {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_nullable => 0,
   },
   "home_team" => {
     data_type => "varchar",
@@ -241,6 +283,11 @@ __PACKAGE__->add_columns(
     data_type => "varchar",
     is_nullable => 0,
     size => 45
+  },
+  "division_rank" => {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_nullable => 0,
   },
   "division_name" => {
     data_type => "varchar",

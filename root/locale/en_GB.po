@@ -4452,6 +4452,12 @@ msgid "events.tournaments.runner-up-singles"
 msgstr "Runner up"
 
 ### Reports
+msgid "reports.subtitle.top-x"
+msgstr "Top %1"
+
+msgid "reports.notice.max-limit-excdeeded"
+msgstr "Unable to show %1 rows; %2 is  the maxumum number of rows to show."
+
 msgid "reports.name.loan-players"
 msgstr "Loan players"
 
@@ -4463,6 +4469,24 @@ msgstr "Cancelled matches"
 
 msgid "reports.name.missing-players"
 msgstr "Matches with players absent"
+
+msgid "reports.name.deciding-wins"
+msgstr "Most deciding game wins"
+
+msgid "reports.name.deuce-wins"
+msgstr "Most deuce wins"
+
+msgid "reports.name.highest-points-wins"
+msgstr "Highest points wins"
+
+msgid "reports.name.points-in-match"
+msgstr "Most points scored in a match"
+
+msgid "reports.name.games-in-match"
+msgstr "Most games played in a match"
+
+msgid "reports.name.doubles-sets"
+msgstr "Most doubles sets won"
 
 msgid "reports.control.group"
 msgstr "Select a column to group data by"
@@ -4551,6 +4575,9 @@ msgstr "Date (sort)"
 msgid "reports.columns.cancelled-matches.date"
 msgstr "Date"
 
+msgid "reports.columns.cancelled-matches.division"
+msgstr "Division"
+
 msgid "reports.columns.cancelled-matches.competition-sort"
 msgstr "Competition (sort)
 
@@ -4596,6 +4623,146 @@ msgstr "Awarded score"
 
 msgid "reports.columns.missing-players.venue"
 msgstr "Venue"
+
+## Highest wins in deciding game columns
+msgid "reports.columns.deciding-wins.player-sort"
+msgstr "Player (sortable)"
+
+msgid "reports.columns.deciding-wins.player"
+msgstr "Player"
+
+msgid "reports.columns.deciding-wins.num"
+msgstr "Sets won in a decider"
+
+msgid "reports.columns.deciding-wins.team"
+msgstr "Registered team"
+
+msgid "reports.columns.deciding-wins.division-sort"
+msgstr "Registered division (sortable)"
+
+msgid "reports.columns.deciding-wins.division"
+msgstr "Registered division"
+
+## Most wins in deuce columns
+msgid "reports.columns.deuce-wins.player-sort"
+msgstr "Player (sortable)"
+
+msgid "reports.columns.deuce-wins.player"
+msgstr "Player"
+
+msgid "reports.columns.deuce-wins.num"
+msgstr "Games won in deuce"
+
+msgid "reports.columns.deuce-wins.team"
+msgstr "Registered team"
+
+msgid "reports.columns.deuce-wins.division-sort"
+msgstr "Registered division (sortable)"
+
+msgid "reports.columns.deuce-wins.division"
+msgstr "Registered division"
+
+msgid "reports.columns.highest-points-wins.date-sort"
+msgstr "Date (sortable)"
+
+msgid "reports.columns.highest-points-wins.date"
+msgstr "Date"
+
+msgid "reports.columns.highest-points-wins.winner-sort"
+msgstr "Game winner (sortable)"
+
+msgid "reports.columns.highest-points-wins.winner"
+msgstr "Game winner"
+
+msgid "reports.columns.highest-points-wins.opponent-sort"
+msgstr "Opponent (sortable)"
+
+msgid "reports.columns.highest-points-wins.opponent"
+msgstr "Opponent"
+
+msgid "reports.columns.highest-points-wins.match"
+msgstr "Match"
+
+msgid "reports.columns.highest-points-wins.division-sort"
+msgstr "Division (sortable)"
+
+msgid "reports.columns.highest-points-wins.match"
+msgstr "Division"
+
+## Most points played in a match
+msgid "reports.columns.points-in-match.total-points"
+msgstr "Total points"
+
+msgid "reports.columns.points-in-match.home-team"
+msgstr "Home team"
+
+msgid "reports.columns.points-in-match.home-team-points"
+msgstr "Home team points won"
+
+msgid "reports.columns.points-in-match.away-team"
+msgstr "Away team"
+
+msgid "reports.columns.points-in-match.away-team-points"
+msgstr "Away team points won"
+
+msgid "reports.columns.points-in-match.score"
+msgstr "Match score"
+
+msgid "reports.columns.points-in-match.date-sort"
+msgstr "Date (sortable)"
+
+msgid "reports.columns.points-in-match.date"
+msgstr "Date"
+
+msgid "reports.columns.points-in-match.division-sort"
+msgstr "Division (sortable)"
+
+msgid "reports.columns.points-in-match.division"
+msgstr "Division"
+
+## Most games played in a match
+msgid "reports.columns.games-in-match.total-games"
+msgstr "Total games"
+
+msgid "reports.columns.games-in-match.home-team"
+msgstr "Home team"
+
+msgid "reports.columns.games-in-match.home-team-games"
+msgstr "Home team games won"
+
+msgid "reports.columns.games-in-match.away-team"
+msgstr "Away team"
+
+msgid "reports.columns.games-in-match.away-team-games"
+msgstr "Away team games won"
+
+msgid "reports.columns.games-in-match.score"
+msgstr "Match score"
+
+msgid "reports.columns.games-in-match.date-sort"
+msgstr "Date (sortable)"
+
+msgid "reports.columns.games-in-match.date"
+msgstr "Date"
+
+msgid "reports.columns.games-in-match.division-sort"
+msgstr "Division (sortable)"
+
+msgid "reports.columns.games-in-match.division"
+msgstr "Division"
+
+## Most doubles sets won by a team
+msgid "reports.columns.doubles-sets.num"
+msgstr "Doubles sets won"
+
+msgid "reports.columns.doubles-sets.team"
+msgstr "Team"
+
+msgid "reports.columns.doubles-sets.division-sort"
+msgstr "Division (sortable)"
+
+msgid "reports.columns.doubles-sets.division"
+msgstr "Division"
 
 ### Meetings
 msgid "meetings.none"

@@ -1,6 +1,3 @@
-[%
-IF report_data.count;
--%]
 <div id="report-grouper">
   <label for="group-table">[% c.maketext("reports.control.group") %]</label>
   <select id="group-table" data-placeholder="[% c.maketext("reports.control.group") %]" autocomplete="off" data-previous-value="">
@@ -36,56 +33,56 @@ IF report_data.count;
   </thead>
   <tbody>
 [%
-  USE zeroes = format("%02d");
-  WHILE (game_player = report_data.next);
-    SET match = game_player.team_match;
-    SET year  = match.scheduled_date.year;
-    SET month = zeroes( match.scheduled_date.month );
-    SET day   = zeroes( match.scheduled_date.day );
-    SWITCH game_player.location.id;
-      CASE "home";
-        SET played_for_club = match.team_season_home_team_season.club_season.club.url_key;
-        SET played_for_team = match.team_season_home_team_season.team.url_key;
-        SET played_for_season = match.team_season_home_team_season;
-        SET played_for_name = match.team_season_home_team_season.club_season.short_name _ " " _ played_for_season.name;
-        SET played_against_club = match.team_season_away_team_season.club_season.club.url_key;
-        SET played_against_team = match.team_season_away_team_season.team.url_key;
-        SET played_against_season = match.team_season_away_team_season;
-        SET played_against_name = match.team_season_away_team_season.club_season.short_name _ " " _ played_against_season.name;
-      CASE "away";
-        SET played_for_club = match.team_season_away_team_season.club_season.club.url_key;
-        SET played_for_team = match.team_season_away_team_season.team.url_key;
-        SET played_for_season = match.team_season_away_team_season;
-        SET played_for_name = match.team_season_away_team_season.club_season.short_name _ " " _ played_for_season.name;
-        SET played_against_club = match.team_season_home_team_season.club_season.club.url_key;
-        SET played_against_team = match.team_season_home_team_season.team.url_key;
-        SET played_against_season = match.team_season_home_team_season;
-        SET played_against_name = match.team_season_home_team_season.club_season.short_name _ " " _ played_against_season.name;
-    END;
-    
-    SET played_from_team_season = game_player.loan_team.team_seasons.first;
-    SET played_from_division_season = played_from_team_season.division_season;
-    IF specific_season;
-      SET played_for_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [played_for_club, played_for_team, season.url_key]);
-      SET played_against_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [played_against_club, played_against_team, season.url_key]);
-      SET person_uri = c.uri_for_action("/people/view_specific_season", [game_player.player.url_key, season.url_key]);
-      SET tables_uri = c.uri_for_action("/league-averages/view_specific_season", ["singles", game_player.team_match.division_season.division.url_key, season.url_key]);
-      SET played_from_team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [played_from_team_season.club_season.club.url_key, game_player.loan_team.url_key, season.url_key]);
-      SET played_from_division_uri = c.uri_for_action("/league-averages/view_specific_season", ["singles", played_from_team_season.division_season.division.url_key, season.url_key]);
-    ELSE;
-      SET played_for_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [played_for_club, played_for_team]);
-      SET played_against_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [played_against_club, played_against_team]);
-      SET person_uri = c.uri_for_action("/people/view_current_season", [game_player.player.url_key]);
-      SET tables_uri = c.uri_for_action("/league-averages/view_current_season", ["singles", game_player.team_match.division_season.division.url_key]);
-      SET played_from_team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [played_from_team_season.club_season.club.url_key, game_player.loan_team.url_key]);
-      SET played_from_division_uri = c.uri_for_action("/league-averages/view_current_season", ["singles", played_from_team_season.division_season.division.url_key]);
-    END;
-    
-    SET played_from_team_name = played_from_team_season.club_season.short_name _ " " _ played_from_team_season.name;
-    
-    # Just do this once so we don't keep having to go back to the DB (which is what first does)
-    SET person_season = game_player.player.person_seasons.first;
-    SET division_season = game_player.team_match.division_season;
+USE zeroes = format("%02d");
+WHILE (game_player = report_data.next);
+  SET match = game_player.team_match;
+  SET year  = match.scheduled_date.year;
+  SET month = zeroes( match.scheduled_date.month );
+  SET day   = zeroes( match.scheduled_date.day );
+  SWITCH game_player.location.id;
+    CASE "home";
+      SET played_for_club = match.team_season_home_team_season.club_season.club.url_key;
+      SET played_for_team = match.team_season_home_team_season.team.url_key;
+      SET played_for_season = match.team_season_home_team_season;
+      SET played_for_name = match.team_season_home_team_season.club_season.short_name _ " " _ played_for_season.name;
+      SET played_against_club = match.team_season_away_team_season.club_season.club.url_key;
+      SET played_against_team = match.team_season_away_team_season.team.url_key;
+      SET played_against_season = match.team_season_away_team_season;
+      SET played_against_name = match.team_season_away_team_season.club_season.short_name _ " " _ played_against_season.name;
+    CASE "away";
+      SET played_for_club = match.team_season_away_team_season.club_season.club.url_key;
+      SET played_for_team = match.team_season_away_team_season.team.url_key;
+      SET played_for_season = match.team_season_away_team_season;
+      SET played_for_name = match.team_season_away_team_season.club_season.short_name _ " " _ played_for_season.name;
+      SET played_against_club = match.team_season_home_team_season.club_season.club.url_key;
+      SET played_against_team = match.team_season_home_team_season.team.url_key;
+      SET played_against_season = match.team_season_home_team_season;
+      SET played_against_name = match.team_season_home_team_season.club_season.short_name _ " " _ played_against_season.name;
+  END;
+  
+  SET played_from_team_season = game_player.loan_team.team_seasons.first;
+  SET played_from_division_season = played_from_team_season.division_season;
+  IF specific_season;
+    SET played_for_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [played_for_club, played_for_team, season.url_key]);
+    SET played_against_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [played_against_club, played_against_team, season.url_key]);
+    SET person_uri = c.uri_for_action("/people/view_specific_season", [game_player.player.url_key, season.url_key]);
+    SET tables_uri = c.uri_for_action("/league-averages/view_specific_season", ["singles", game_player.team_match.division_season.division.url_key, season.url_key]);
+    SET played_from_team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [played_from_team_season.club_season.club.url_key, game_player.loan_team.url_key, season.url_key]);
+    SET played_from_division_uri = c.uri_for_action("/league-averages/view_specific_season", ["singles", played_from_team_season.division_season.division.url_key, season.url_key]);
+  ELSE;
+    SET played_for_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [played_for_club, played_for_team]);
+    SET played_against_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [played_against_club, played_against_team]);
+    SET person_uri = c.uri_for_action("/people/view_current_season", [game_player.player.url_key]);
+    SET tables_uri = c.uri_for_action("/league-averages/view_current_season", ["singles", game_player.team_match.division_season.division.url_key]);
+    SET played_from_team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [played_from_team_season.club_season.club.url_key, game_player.loan_team.url_key]);
+    SET played_from_division_uri = c.uri_for_action("/league-averages/view_current_season", ["singles", played_from_team_season.division_season.division.url_key]);
+  END;
+  
+  SET played_from_team_name = played_from_team_season.club_season.short_name _ " " _ played_from_team_season.name;
+  
+  # Just do this once so we don't keep having to go back to the DB (which is what first does)
+  SET person_season = game_player.player.person_seasons.first;
+  SET division_season = game_player.team_match.division_season;
 -%]
     <tr>
       <td data-label="[% c.maketext("reports.columns.loan-players.name") %]"><a href="[% person_uri %]">[% person_season.display_name | html_entity %]</a></td>
@@ -103,18 +100,10 @@ IF report_data.count;
       <td data-label="[% c.maketext("reports.columns.loan-players.games-won") %]">[% game_player.games_won %]</td>
     </tr>
 [%
-  END;
+END;
 -%]
   </tbody>
 </table>
 [%
   INCLUDE "html/includes/js-lang/datatables-lang.ttkt";
-ELSE;
 -%]
-<ul class="option-list">
-  <li>[% c.maketext("reports.no-data") %]</li>
-</ul>
-[%
-END;
--%]
-<br /><br />
