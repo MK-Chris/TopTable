@@ -18,65 +18,65 @@ false;
     let dt_empty = opponent_populated ? "[% c.maketext("people.head-to-head.singles.opponent-populated.no-results") %]" : "[% c.maketext("people.head-to-head.singles.opponent-not-populated.no-results") %]";
     
     let head_to_heads = $("#head-to-heads-table").DataTable({
-      "responsive": true,
-      "paging": true,
+      responsive: true,
+      paging: true,
       "pageLength": 25,
-      "lengthChange": true,
-      "searching": false,
-      "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-      "info": true,
-      "fixedHeader": true,
-      "language": {
-          "emptyTable": dt_empty
+      lengthChange: true,
+      searching: false,
+      lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+      info: true,
+      fixedHeader: true,
+      language: {
+          emptyTable: dt_empty
       },
-      "columns": [{
+      columns: [{
         // Season
-        "data": "season",
-        "responsivePriority": 6
+        data: "season",
+        responsivePriority: 6
       }, {
         // Date (display)
-        "data": "date",
-        "orderData": 2,
-        "responsivePriority": 4
+        data: "date",
+        orderData: 2,
+        responsivePriority: 4
       }, {
         // Date (sort)
-        "data": "date-sort",
-        "visible": false
+        data: "date-sort",
+        visible: false
       }, {
-        // Division (display)
-        "data": "division",
-        "orderData": 4,
-        "responsivePriority": 5
+        // Competition (display)
+        data: "competition",
+        orderData: 4,
+        responsivePriority: 5
       }, {
-        // Division (rank)
-        "data": "division-rank",
-        "visible": false
+        // Competition (sortable)
+        data: "competition-sort",
+        visible: false
       }, {
         // For team
-        "data": "for-team",
-        "responsivePriority": 7
+        data: "for-team",
+        responsivePriority: 7
       }, {
         // Against team
-        "data": "against-team",
-        "responsivePriority": 8
+        data: "against-team",
+        responsivePriority: 8
       }, {
         // Game score
-        "data": "game-score",
-        "orderable": false,
-        "responsivePriority": 1
+        data: "game-score",
+        orderable: false,
+        responsivePriority: 1
       }, {
         // Scores (legs)
-        "data": "scores",
-        "orderable": false,
-        "responsivePriority": 3
+        data: "scores",
+        orderable: false,
+        responsivePriority: 3
       }, {
         // Result
-        "data": "result",
-        "responsivePriority": 2
+        data: "result",
+        responsivePriority: 2
       }, {
         // Venue
-        "data": "venue",
-        "responsivePriority": 9
+        data: "venue",
+        responsivePriority: 9
       }]
     });
     

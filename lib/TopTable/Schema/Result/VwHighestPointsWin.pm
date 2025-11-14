@@ -39,7 +39,7 @@ __PACKAGE__->table_class('DBIx::Class::ResultSource::View');
 __PACKAGE__->table("vw_highest_points_win");
 __PACKAGE__->result_source_instance->is_virtual(1);
 __PACKAGE__->result_source_instance->view_definition(
-  "SELECT player_id, player_url_key, player_first_name, player_surname, player_display_name, opponent_id, opponent_url_key, opponent_first_name, opponent_surname, opponent_display_name, season_id, season_url_key, season_name, season_start_date, season_end_date, season_complete, home_team_id, home_club_url_key, home_team_url_key, away_team_id, away_club_url_key, away_team_url_key, scheduled_date, played_date, home_team, away_team, division_id, division_url_key, division_name, tourn_id, tourn_url_key, tourn_name, winning_points, losing_points, scheduled_game_number, leg_number
+  "SELECT player_id, player_url_key, player_first_name, player_surname, player_display_name, opponent_id, opponent_url_key, opponent_first_name, opponent_surname, opponent_display_name, season_id, season_url_key, season_name, season_start_date, season_end_date, season_complete, home_team_id, home_club_url_key, home_team_url_key, away_team_id, away_club_url_key, away_team_url_key, scheduled_date, played_date, home_team, away_team, division_id, division_url_key, division_rank, division_name, tourn_id, tourn_url_key, tourn_name, winning_points, losing_points, scheduled_game_number, leg_number
 FROM ((
 	SELECT
 		g.home_player AS player_id,
@@ -72,6 +72,7 @@ FROM ((
 		s.complete AS season_complete,
 		d.id AS division_id,
 		d.url_key AS division_url_key,
+    d.rank AS division_rank,
 		ds.`name` AS division_name,
 		e.url_key AS tourn_url_key,
 		tou.id AS tourn_id,
@@ -135,6 +136,7 @@ FROM ((
 		s.complete AS season_complete,
 		d.id AS division_id,
 		d.url_key AS division_url_key,
+    d.rank AS division_rank,
 		ds.`name` AS division_name,
 		tou.id AS tourn_id,
 		e.url_key AS tourn_url_key,
@@ -310,6 +312,11 @@ __PACKAGE__->add_columns(
     data_type => "varchar",
     is_nullable => 1,
     size => 45
+  },
+  "division_rank" => {
+    data_type => "integer",
+    extra => { unsigned => 1 },
+    is_nullable => 1,
   },
   "division_name" => {
     data_type => "varchar",
