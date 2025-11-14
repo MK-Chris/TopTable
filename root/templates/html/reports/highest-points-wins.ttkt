@@ -46,7 +46,7 @@ WHILE (match = report_data.next);
       <td data-label="[% c.maketext("reports.columns.highest-points-wins.winner") %]"><a href="[% winner_uri %]">[% match.player_display_name | html_entity %]</a></td>
       <td data-label="[% c.maketext("reports.columns.highest-points-wins.opponent-sort") %]">[% opponent_sort %]</td>
       <td data-label="[% c.maketext("reports.columns.highest-points-wins.opponent") %]"><a href="[% opponent_uri %]">[% match.opponent_display_name | html_entity %]</a></td>
-      <td data-label="[% c.maketext("reports.columns.highest-points-wins.match") %]"><a href="[% c.uri_for_action("/matches/team/view_by_url_keys", match.home_club_url_key, match.home_team_url_key, match.away_club_url_key, match.away_team_url_key, year, month, day) %]">[% home_team %] [% c.maketext("matches.versus-abbreviation") %] [% away_team %]</a></td>
+      <td data-label="[% c.maketext("reports.columns.highest-points-wins.match") %]"><a href="[% c.uri_for_action("/matches/team/view_by_url_keys", [match.home_club_url_key, match.home_team_url_key, match.away_club_url_key, match.away_team_url_key, year, month, day]) %]">[% home_team %] [% c.maketext("matches.versus-abbreviation") %] [% away_team %]</a></td>
       <td data-label="[% c.maketext("reports.columns.highest-points-wins.division-sort") %]">[% match.division_rank %]</td>
       <td data-label="[% c.maketext("reports.columns.highest-points-wins.division") %]"><a href="[% division_uri %]">[% match.division_name | html_entity %]</a></td>
     </tr>
