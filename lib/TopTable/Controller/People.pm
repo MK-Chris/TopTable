@@ -577,9 +577,9 @@ sub head_to_head :Chained("base") :PathPart("head-to-head") :Args(0) {
       if ( $game->complete ) {
         if ( defined($game->winner) ) {
           if ( $game->winner->id == $for_team->id ) { 
-            $result = $game->started ? $c->maketext("matches.result.win") : $c->maketext("matches-result.forefeited-win");
+            $result = $game->started ? $c->maketext("matches.result.win") : $c->maketext("matches.result.forefeited-win");
           } elsif ( $game->winner->id == $against_team->id ) {
-            $result = $game->started ? $c->maketext("matches.result.loss") : $c->maketext("matches-result.forefeited-loss");
+            $result = $game->started ? $c->maketext("matches.result.loss") : $c->maketext("matches.result.forefeited-loss");
           }
         } else {
           $result = $c->maketext("matches.result.draw");
@@ -590,6 +590,19 @@ sub head_to_head :Chained("base") :PathPart("head-to-head") :Args(0) {
       
       my $season = $match->season;
       
+      my $comp_uri;
+      if ( defined($match->tournament_round) ) {
+        # Tournament match
+        if ( defined($match->tournament_group) ) {
+          $comp_uri = $c->uri_for_action("/events/group_view_specific_season", [$match->tournament_round->tournament->event_season->event->url_key, $season->url_key, $match->tournament_round->url_key, $match->tournament_group->url_key]);
+        } else {
+          $comp_uri = $c->uri_for_action("/events/round_view_specific_season", [$match->tournament_round->tournament->event_season->event->url_key, $season->url_key, $match->tournament_round->url_key]);
+        }
+      } else {
+        # League match
+        $comp_uri = $c->uri_for_action("/league-averages/view_specific_season", ["singles", $match->division_season->division->url_key, $season->url_key]);
+      }
+      
       # Return the hashref
       {
         season => {
@@ -598,11 +611,11 @@ sub head_to_head :Chained("base") :PathPart("head-to-head") :Args(0) {
         },
         date => {display => $c->i18n_datetime_format_date->format_datetime($date)},
         "date-sort" => {display => $date->ymd},
-        division => {
-          display => encode_entities($match->division_season->name),
-          uri => $c->uri_for_action("/league-averages/view_specific_season", ["singles", $match->division_season->division->url_key, $season->url_key])->as_string,
+        competition => {
+          display => encode_entities($match->competition_name),
+          uri => $comp_uri->as_string,
         },
-        "division-rank" => {display => $match->division_season->division->rank},
+        "competition-sort" => {display => $match->competition_sort},
         "for-team" => {
           display => encode_entities(sprintf("%s %s", $for_team->club_season->short_name, $for_team->name)),
           uri => $c->uri_for_action("/teams/view_specific_season_by_url_key", [$for_team->club_season->club->url_key, $for_team->team->url_key, $season->url_key])->as_string,

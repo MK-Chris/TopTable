@@ -1516,11 +1516,11 @@ msgstr "Date (sortable)"
 msgid "people.head-to-head.heading.date"
 msgstr "Date"
 
-msgid "people.head-to-head.heading.division"
-msgstr "Division"
+msgid "people.head-to-head.heading.competition"
+msgstr "Competition"
 
-msgid "people.head-to-head.heading.division-rank"
-msgstr "Division (rank)"
+msgid "people.head-to-head.heading.competition-sort"
+msgstr "Competition (sortable)"
 
 msgid "people.head-to-head.heading.team"
 msgstr "Team"
@@ -4662,6 +4662,12 @@ msgstr "Registered division (sortable)"
 msgid "reports.columns.deuce-wins.division"
 msgstr "Registered division"
 
+msgid "reports.columns.highest-points-wins.score-sort"
+msgstr "Score (sortable)"
+
+msgid "reports.columns.highest-points-wins.score"
+msgstr "Score"
+
 msgid "reports.columns.highest-points-wins.date-sort"
 msgstr "Date (sortable)"
 
@@ -4686,7 +4692,7 @@ msgstr "Match"
 msgid "reports.columns.highest-points-wins.division-sort"
 msgstr "Division (sortable)"
 
-msgid "reports.columns.highest-points-wins.match"
+msgid "reports.columns.highest-points-wins.division"
 msgstr "Division"
 
 ## Most points played in a match
