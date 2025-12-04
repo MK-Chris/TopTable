@@ -406,7 +406,7 @@ sub view_seasons :Chained("view") :PathPart("seasons") :Args(0) {
   
   # Set up the template to use
   $c->stash({
-    template => "html/clubs/list-seasons-table.ttkt",
+    template => "html/clubs/seasons.ttkt",
     subtitle2 => $c->maketext("menu.text.season"),
     page_description => $c->maketext("description.clubs.list-seasons", $enc_full_name, $site_name),
     view_online_display => sprintf( "Viewing seasons for %s", $club->full_name ),

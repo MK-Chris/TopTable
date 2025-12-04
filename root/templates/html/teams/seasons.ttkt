@@ -6,14 +6,15 @@ IF seasons.count;
     <table id="datatable" class="stripe hover order-column row-border">
     <thead>
       <tr>
-        <th>[% c.maketext("seasons.list.season-name") %]</th>
-        <th>[% c.maketext("seasons.list.season-name") %]</th>
+        <th>[% c.maketext("teams.seasons.season-sort") %]</th>
+        <th>[% c.maketext("teams.seasons.season-name") %]</th>
         <th>[% c.maketext("teams.seasons.registered-as") %]</th>
         <th>[% c.maketext("teams.seasons.club") %]</th>
-        <th>[% c.maketext("teams.field.division") %]</th>
-        <th>[% c.maketext("teams.field.division") %]</th>
-        <th>[% c.maketext("teams.field.captain") %]</th>
-        <th>[% c.maketext("teams.field.captain") %]</th>
+        <th>[% c.maketext("teams.seasons.division-rank") %]</th>
+        <th>[% c.maketext("teams.seasons.division") %]</th>
+        <th>[% c.maketext("teams.seasons.league-position") %]</th>
+        <th>[% c.maketext("teams.seasons.captain-sort") %]</th>
+        <th>[% c.maketext("teams.seasons.captain-name") %]</th>
       </tr>
     <thead>
     <tbody>
@@ -44,7 +45,8 @@ IF seasons.count;
         <td><a href="[% c.uri_for_action("/clubs/view_specific_season", [team.club.url_key, team_season.season.url_key]) %]">[% team_season.club_season.full_name | html_entity %]</a></td>
         <td>[% team_season.division_season.division.rank %]</td>
         <td><a href="[% c.uri_for_action("/league-tables/view_specific_season", [team_season.division_season.division.url_key, team_season.season.url_key]) %]">[% team_season.division_season.name | html_entity %]</a></td>
-        <td>[% SET_CAPTAIN_SORT | html_entity %]</td>
+        <td>[% team_season.league_position %]</td>
+        <td>[% captain_sort | html_entity %]</td>
         <td><a href="[% c.uri_for_action("/people/view_specific_season", [team_season.captain.url_key, team_season.season.url_key]) %]">[% captain_name | html_entity %]</a></td>
       </tr>
 [%

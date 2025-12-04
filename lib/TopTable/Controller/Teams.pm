@@ -902,7 +902,7 @@ sub view_seasons :Private {
       $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
-      $c->uri_for("/static/script/teams/seasons.js"),
+      $c->uri_for("/static/script/teams/seasons.js", {v => 2}),
     ];
     $ext_styles = [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
@@ -917,7 +917,7 @@ sub view_seasons :Private {
   
   # Set up the template to use
   $c->stash({
-    template => "html/teams/list-seasons-table.ttkt",
+    template => "html/teams/seasons.ttkt",
     subtitle2 => $c->maketext("menu.text.season"),
     page_description  => $c->maketext("description.teams.list-seasons", $team_name, $site_name),
     view_online_display => sprintf( "Viewing seasons for %s %s", $team->club->short_name, $team->name ),

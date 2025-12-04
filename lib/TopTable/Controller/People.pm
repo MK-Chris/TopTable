@@ -452,7 +452,7 @@ sub view_seasons :Chained("view") :PathPart("seasons") :Args(0) {
   
   # Set up the template to use
   $c->stash({
-    template => "html/people/list-seasons-table.ttkt",
+    template => "html/people/seasons.ttkt",
     subtitle2 => $c->maketext("menu.text.season"),
     page_description => $c->maketext("description.people.list-seasons", $person_name, $site_name),
     view_online_display => sprintf("Viewing seasons for %s", $person->display_name),
@@ -463,7 +463,7 @@ sub view_seasons :Chained("view") :PathPart("seasons") :Args(0) {
       $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
-      $c->uri_for("/static/script/people/seasons.js", {v => 2}),
+      $c->uri_for("/static/script/people/seasons.js", {v => 3}),
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),

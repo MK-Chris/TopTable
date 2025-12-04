@@ -13,6 +13,9 @@ IF seasons.count;
         <th>[% c.maketext("people.seasons.team") %]</th>
         <th>[% c.maketext("people.seasons.division-sort") %]</th>
         <th>[% c.maketext("people.seasons.division") %]</th>
+        <th>[% c.maketext("people.seasons.sets-played") %]</th>
+        <th>[% c.maketext("people.seasons.sets-won") %]</th>
+        <th>[% c.maketext("people.seasons.sets-average") %]</th>
       </tr>
     </thead>
     <tbody>
@@ -45,6 +48,9 @@ IF seasons.count;
         <td data-label="[% c.maketext("people.seasons.team") %]"><a href="[% c.uri_for_action("/teams/view_specific_season_by_url_key", [team.club.url_key, team.url_key, season.url_key]) %]">[% person_season.team_season.full_name | html_entity %]</a></td>
         <td data-label="[% c.maketext("people.seasons.division-sort") %]">[% division.rank %]</td>
         <td data-label="[% c.maketext("people.seasons.division") %]"><a href="[% c.uri_for_action("/league-averages/view_specific_season", ["singles", division.url_key, season.url_key]) %]">[% division_season.name | html_entity %]</a></td>
+        <td data-label="[% c.maketext("people.seasons.sets-played") %]">[% person_season.games_played %]</td>
+        <td data-label="[% c.maketext("people.seasons.sets-won") %]">[% person_season.games_won %]</td>
+        <td data-label="[% c.maketext("people.seasons.sets-average") %]">[% person_season.average_game_wins | format("%.2f") %]%</td>
       </tr>
 [%
   END;

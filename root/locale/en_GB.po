@@ -1197,11 +1197,32 @@ msgstr "Options"
 msgid "teams.seasons.count-text"
 msgstr "%1 has been registered in %2 %3."
 
+msgid "teams.seasons.season-sort"
+msgstr "Season (sortable)"
+
+msgid "teams.seasons.season-name"
+msgstr "Season"
+
 msgid "teams.seasons.registered-as"
 msgstr "Registered name"
 
 msgid "teams.seasons.club"
-msgstr "Registered for"
+msgstr "Club"
+
+msgid "teams.seasons.division-rank"
+msgstr "Division (rank)"
+
+msgid "teams.seasons.division"
+msgstr "Division"
+
+msgid "teams.seasons.league-position"
+msgstr "League position"
+
+msgid "teams.seasons.captain-sort"
+msgstr "Captain (sortable)"
+
+msgid "teams.seasons.captain-name"
+msgstr "Captain"
 
 msgid "teams.list.none"
 msgstr "There are no teams."
@@ -1476,6 +1497,15 @@ msgstr "Division (sortable)"
 
 msgid "people.summary.division"
 msgstr "Division"
+
+msgid "people.seasons.sets-played"
+msgstr "Played"
+
+msgid "people.seasons.sets-won"
+msgstr "Won"
+
+msgid "people.seasons.sets-average"
+msgstr "Average (%)"
 
 msgid "people.summary.matches-on-loan"
 msgstr "Matches played on loan"

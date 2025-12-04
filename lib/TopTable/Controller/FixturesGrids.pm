@@ -391,7 +391,7 @@ sub view_seasons :Chained("view") :PathPart("seasons") :Args(0) {
     subtitle1 => $enc_name,
     page_description => $c->maketext("description.fixtures-grids.list-seasons", $enc_name, $site_name),
     external_scripts => [$c->uri_for("/static/script/standard/option-list.js")],
-    template => "html/fixtures-grids/list-seasons-table.ttkt",
+    template => "html/fixtures-grids/seasons.ttkt",
     view_online_display => sprintf("Viewing seasons for %1", $grid->name),
     view_online_link => 1,
     seasons => scalar $grid->get_seasons,
