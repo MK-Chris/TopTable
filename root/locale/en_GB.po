@@ -2809,7 +2809,7 @@ msgid "matches.versus.not-yet-received"
 msgstr "Not received"
 
 msgid "matches.versus.postponed"
-msgstr "Postponed, awaiting new date"
+msgstr "Postponed"
 
 msgid "matches.versus.incomplete"
 msgstr "Incomplete: %1"
