@@ -286,10 +286,7 @@ sub create_or_edit {
       
       if ( defined($official_season) ) {
         # Delete all existing people, then re-add our new list.  Eventually we'll try and do something cleverer than this, but this will do for now
-        $official_season->update({
-          position_name => $position_name,
-          position_order => $position_order,
-        });
+        $official_season->update({position_name => $position_name});
         
         $official_season->delete_related("official_season_people");
         $official_season->create_related("official_season_people", $_) foreach @holder_list;
