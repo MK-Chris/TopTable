@@ -282,7 +282,7 @@ sub view_finalise :Private {
   my $table_view_js = "view";
   $table_view_js .= "-points" if $ranking_template->assign_points;
   $table_view_js .= "-hcp" if $match_template->handicapped;
-  $table_view_js = $c->uri_for("/static/script/tables/$table_view_js.js", {v => 4});
+  $table_view_js = $c->uri_for("/static/script/tables/$table_view_js.js", {v => 5});
   
   my @ext_scripts = (
     $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
