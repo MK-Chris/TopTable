@@ -75,8 +75,8 @@ END;
 SET start_date = c.i18n_datetime_format_date.format_datetime(start_date) IF start_date;
 SET start_date = c.i18n_datetime_format_date.format_datetime(end_date) IF end_date;
 season_name = season.name | html_entity;
-CALL c.log.debug("flashed name: " _ c.flash.name);
-CALL c.log.debug("var name: " _ event_name);
+#CALL c.log.debug("flashed name: " _ c.flash.name);
+#CALL c.log.debug("var name: " _ event_name);
 -%]
 
 <form method="post" action="[% form_action %]">

@@ -178,11 +178,11 @@ IF tournament_groups.count;
       SET event_uri = c.uri_for_action("/events/view_current_season", [event.url_key]);
       SET group_uri = c.uri_for_action("/events/group_view_current_season", [event.url_key, round.url_key, group.url_key]);
     END;
-    CALL c.log.debug(group.name);
+    #CALL c.log.debug(group.name);
     
     SET last_grid_position = 0;
     SET entrants = group.scalar.get_entrants_in_grid_position_order;
-    CALL c.log.debug(entrants.count);
+    #CALL c.log.debug(entrants.count);
     WHILE (entrant = entrants.next);
       IF entrant.grid_position;
         IF entrant.grid_position - last_grid_position > 1 AND last_position_set;

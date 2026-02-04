@@ -4,7 +4,7 @@ SET has_handicap_adjustments = match.has_handicap_adjustments;
 CALL match_date.set_locale(c.locale);
 IF match.rescheduled;
   SET og_date = match.scheduled_date;
-  CALL c.log.debug(og_date);
+  #CALL c.log.debug(og_date);
   CALL rescheduled_date.set_locale(c.locale);
   SET match_date_header = c.maketext("matches.heading.new-date");
 ELSE;

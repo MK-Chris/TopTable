@@ -64,10 +64,11 @@ $(document).ready(function() {
     startCollapsed: false,
     setHash: false,
     activate: function(event, tab) {
-      if (tab.selector == "#summary") {
+      //if (tab.selector == "#summary") {
         // Redraw the adjustments table
-        rounds_table.responsive.recalc();
-      }
+        //rounds_table.responsive.recalc();
+        $.fn.dataTable.tables({visible: true, api: true}).columns.adjust();
+      //}
     }
   });
 });

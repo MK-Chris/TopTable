@@ -11,8 +11,8 @@ $(document).ready(function() {
     fixedHeader: true,
     searching: false,
     columns: [
-      {responsivePriority: 1}, // Pos
-      {responsivePriority: 2}, // Team / competitor
+      {responsivePriority: 3}, // Pos
+      {responsivePriority: 1}, // Team / competitor
       {responsivePriority: 5}, // Played
       {responsivePriority: 8}, // Won
       {responsivePriority: 10}, // Drawn
@@ -20,7 +20,7 @@ $(document).ready(function() {
       {responsivePriority: 6}, // For
       {responsivePriority: 7}, // Against
       {responsivePriority: 4}, // Points / games difference
-      {responsivePriority: 3, className: "rank-priority"} // Points
+      {responsivePriority: 2, className: "rank-priority all"} // Points
     ],
   });
 });

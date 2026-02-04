@@ -1,6 +1,6 @@
 <ul class="option-list">
 [%
-CALL c.log.debug("Reports: " _ reports.size);
+#CALL c.log.debug("Reports: " _ reports.size);
 FOREACH report IN reports;
 -%]
   <li><a href="[% c.uri_for_action("/reports/view_current_season", [report]) %]">[% c.maketext("reports.name." _ report) %]</a></li>

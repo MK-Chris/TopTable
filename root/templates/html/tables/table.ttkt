@@ -158,15 +158,13 @@ END;
 [%
 IF points_adjustments.count;
   IF multi_groups;
-    SET heading_tag = "h6";
     SET heading = c.maketext("tables.adjustments.title-group", group.name);
   ELSE;
-    SET heading_tag = "h6";
     SET heading = c.maketext("tables.adjustments.title");
   END;
 -%]
         <div class="spacer"></div>
-        <[% heading_tag %]>[% heading %]</[% heading_tag %]>
+        <h6>[% heading %]</h6>
         
         <table id="adjustments" class="stripe hover row-border">
           <thead>

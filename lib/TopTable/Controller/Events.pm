@@ -663,8 +663,8 @@ sub view_finalise :Private {
     if ( defined($tournament) ) {
       my @rounds = $tournament->rounds;
       
-      # Add handicapped flag for template / JS if there are handicapped matches in the knock-out rounds (we don't show matches)
-      # for the group stage here
+      # Add handicapped flag for template / JS if there are handicapped matches in the knock-out rounds (we don't show matches
+      # for the group stage here)
       my $handicapped = $tournament->matches({round_type => "ko"})->handicapped_matches->count ? "/hcp" : "";
       
       $c->stash({
@@ -694,7 +694,7 @@ sub view_finalise :Private {
           $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
           $table_view_js,
           $c->uri_for("/static/script/tables/points-adjustments.js"),
-          $c->uri_for("/static/script/events/tournaments$handicapped/view.js"),
+          $c->uri_for("/static/script/events/tournaments$handicapped/view.js", {v => 2}),
         );
         
         push(@external_styles,

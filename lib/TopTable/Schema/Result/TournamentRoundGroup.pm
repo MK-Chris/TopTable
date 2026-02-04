@@ -998,6 +998,34 @@ sub get_entrants_in_table_order {
   return $self->search_related($member_rel, {}, \%attrib);
 }
 
+=head2 get_tables_last_updated_timestamp
+
+Return the last updated date / time for the group.
+
+=cut
+
+sub get_tables_last_updated_timestamp {
+  my $class = shift;
+  my $member_rel;
+  my $entry_type = $class->entry_type;
+  my %attrib = ();
+  
+  if ( $entry_type eq "team" ) {
+    $member_rel = "tournament_round_teams";
+  } elsif ( $entry_type eq "singles" ) {
+    $member_rel = "tournament_round_people";
+  } elsif ( $entry_type eq "doubles" ) {
+    $member_rel = "tournament_round_doubles";
+  }
+  
+  my $member_last_updated = $class->find_related($member_rel, {}, {
+    rows => 1,
+    order_by => {-desc => "last_updated"},
+  });
+  
+  return defined($member_last_updated) ? $member_last_updated->last_updated : undef;
+}
+
 =head2 get_automatic_qualifiers
 
 Return the current automatic qualifiers in the top [automatic_qualifiers] positions.

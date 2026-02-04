@@ -4,7 +4,7 @@
 [%
 # Loop through the matches in this round
 SET match = 1;
-CALL c.log.debug("matches: " _ round.number_of_matches);
+#CALL c.log.debug("matches: " _ round.number_of_matches);
 WHILE (match <= round.number_of_matches);
 -%]
   <fieldset>
