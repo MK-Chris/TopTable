@@ -56,7 +56,7 @@ FOREACH entrant = entrants;
     
     # Links to team tournament page
     IF specific_season;
-      SET team_uri = c.uri_for_action("/events/teams_view_by_url_key_specific_season", [event.url_key, season.url_key, team_season.team.club.url_key, team_season.team.url_key, season.url_key]);
+      SET team_uri = c.uri_for_action("/events/teams_view_by_url_key_specific_season", [event.url_key, season.url_key, team_season.team.club.url_key, team_season.team.url_key]);
     ELSE;
       SET team_uri = c.uri_for_action("/events/teams_view_by_url_key_current_season", [event.url_key, team_season.team.club.url_key, team_season.team.url_key]);
     END;

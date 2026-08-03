@@ -686,6 +686,21 @@ sub weeks {
   });
 }
 
+=head2 events
+
+Return the events that have an association with the season.
+
+=cut
+
+sub events {
+  my $self = shift;
+  
+  return $self->search_related("event_seasons", undef, {
+    prefetch => "event",
+    order_by => {-asc => [qw( event.name )]}
+  });
+}
+
 =head2 can_complete
 
 Checks whether or not we can complete this season, by checking that the matches are either completed or cancelled.  There may be other additions to this in future.

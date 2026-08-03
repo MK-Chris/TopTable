@@ -157,7 +157,10 @@ sub get_archived {
         qw( division.rank )
       ],
     }],
-    prefetch => {division_seasons  => "division"},
+    prefetch => {
+      division_seasons => "division",
+      event_seasons => "event",
+    },
   });
 }
 

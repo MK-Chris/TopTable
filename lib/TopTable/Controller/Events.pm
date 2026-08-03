@@ -766,6 +766,25 @@ sub teams_by_id_specific_season :Chained("base_specific_season") :PathPart("team
   $c->forward("teams_by_id", [$team_id]);
 }
 
+=head2 get_season
+
+Retrieve and stash the season from the URL key or ID provided in the URL.  This is used by the teams_by_url_key_specific_season and teams_by_id_specific_season routines to get the season before they get the team.
+
+=cut
+
+sub get_season :Private {
+  my ( $self, $c, $season_url_key ) = @_;
+  my $season = $c->model("DB::Season")->find_id_or_url_key($season_url_key);
+  
+  if ( defined($season) ) {
+    $c->stash({season => $season});
+  } else {
+    # Season doesn't exist
+    $c->detach(qw(TopTable::Controller::Root default));
+    return;
+  }
+}
+
 sub teams_by_url_key :Private {
   my ( $self, $c, $club_url_key, $team_url_key ) = @_;
   my $tournament = $c->stash->{event_detail};

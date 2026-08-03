@@ -2433,10 +2433,10 @@ msgid "fixtures-grids.form.matches.away-team-blank"
 msgstr "The away team for round %1, match %2 is blank."
 
 msgid "fixtures-grids.form.matches.home-number-invalid"
-msgstr "The home team for round %1, match %2 is invalid; it must be a number between 1 and %3."
+msgstr "The home team for round %1, match %2 is invalid; it must be a number between 1 and %3, but was given as %4."
 
 msgid "fixtures-grids.form.matches.away-number-invalid"
-msgstr "The home team for round %1, match %2 is invalid; it must be a number between 1 and %3."
+msgstr "The away team for round %1, match %2 is invalid; it must be a number between 1 and %3, but was given as %4."
 
 msgid "fixtures-grids.form.matches.error.team-overused"
 msgstr "In round %1, team %2 is used more than once: (%3).  Please ensure each team is used only once in a given round."

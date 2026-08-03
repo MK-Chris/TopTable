@@ -183,6 +183,39 @@ sub get_season {
   return $self->find_related("event_seasons", {season => $season->id});
 }
 
+=head2 get_seasons
+
+Get event_seasons for this event (all seasons this event has been run in).
+
+=cut
+
+sub get_seasons {
+  my ( $self, $parameters ) = @_;
+  my $page_number = $parameters->{page_number} || undef;
+  my $results_per_page = $parameters->{results_per_page} || undef;
+  
+  my $attrib = {
+    prefetch => [qw( season )],
+    order_by => [{
+      -asc => [qw( season.complete )],
+    }, {
+      -desc => [qw( season.start_date season.end_date )],
+    }],
+  };
+  
+  if ( defined($results_per_page) ) {
+    # If we're passing in a number of results per page and it's numeric, add that in to the query (along with a 
+    # page number - which defaults to 1 if it's not passed in, or it's garbage).
+    if ( $results_per_page !~ /^\d+$/ ) {
+      $page_number = 1 unless defined($page_number) and $page_number =~ /^\d+$/;
+      $attrib->{page} = $page_number;
+      $attrib->{rows} = $results_per_page;
+    }
+  }
+  
+  return $self->search_related("event_seasons", undef, $attrib);
+}
+
 =head2 can_edit_details
 
 Check whether we can edit details (essentially if we have an instance of the event in the current season).

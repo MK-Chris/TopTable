@@ -15,7 +15,7 @@ IF seasons.size;
 -%]
 
   <li>
-    <a href="[% c.uri_for_action("/clubs/view_specific_season", [club.url_key, season.url_key]) %]">[% season.name | html_entity %]</a>[% current_text %]
+    <a href="[% c.uri_for_action("/events/view_specific_season", [event.url_key, season.url_key]) %]">[% season.name | html_entity %]</a>[% current_text %]
   </li>
 [%
   END;

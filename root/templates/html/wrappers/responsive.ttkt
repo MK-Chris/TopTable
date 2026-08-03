@@ -504,7 +504,19 @@ END;
               </li>
             </ul>
           </li>
-          <li><a href="[% c.uri_for("/event") %]" title="[% c.maketext("menu.title.events", season_html) | html_entity %]">[% c.maketext("menu.text.event") %]</a></li>
+          <li>
+            <a href="javascript:void(0)" title="[% c.maketext("menu.title.events", season_html) | html_entity %]">[% c.maketext("menu.text.event") %]</a>
+            <ul>
+[%
+        FOREACH event_season = season.events;
+          event_html = event_season.name | html_entity;
+-%]
+              <li><a href="[% c.uri_for_action("/events/view_specific_season", [event_season.event.url_key, season.url_key]) %]" title="[% c.maketext("menu.title.event.view", event_html, season_html) %]">[% event_html %]</a></li>
+[%
+        END;
+-%]
+            </ul>
+          </li>
           <li>
             <a href="javascript:void(0)" title="[% c.maketext("menu.title.reports") %]">[% c.maketext("menu.text.report") %]</a>
             <ul>

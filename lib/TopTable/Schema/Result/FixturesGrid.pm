@@ -659,8 +659,8 @@ sub set_matches {
           
           if ( !$team ) {
             push(@{$response->{error}}, $lang->maketext("fixtures-grids.form.matches.$location-team-blank", $week->{week}, $match->{match_number}));
-          } elsif ( $team !~ m/^[1-$max_check]$/ ) {
-            push(@{$response->{error}}, $lang->maketext("fixtures-grids.form.matches.$location-number-invalid", $week->{week}, $match->{match_number}, $max_teams));
+          } elsif ( $team !~ m/^\d+$/ or $team < 1 or $team > $max_check ) {
+            push(@{$response->{error}}, $lang->maketext("fixtures-grids.form.matches.$location-number-invalid", $week->{week}, $match->{match_number}, $max_teams, $team));
           } else {
             if ( $type->id eq "static" ) {
               # Static checks to make sure we only see each team once
