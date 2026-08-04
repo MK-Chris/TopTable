@@ -347,7 +347,7 @@ sub table_complete {
   my $self = shift;
   my $season = $self->season;
   
-  return ($season->complete or $self->matches->incomplete_and_not_cancelled->count == 0) ? 1 : 0;
+  return ($season->complete or ($self->matches->count != 0 && $self->matches->incomplete_and_not_cancelled->count == 0)) ? 1 : 0;
 }
 
 # You can replace this text with custom code or comments, and it will be preserved on regeneration

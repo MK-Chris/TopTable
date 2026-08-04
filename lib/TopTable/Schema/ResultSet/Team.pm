@@ -920,7 +920,7 @@ sub create_or_edit {
       });
       
       $response->{completed} = 1;
-      push(@{$response->{success}}, $lang->maketext("admin.forms.success", encode_entities($club->full_name), $lang->maketext("admin.message.created")));
+      push(@{$response->{success}}, $lang->maketext("admin.forms.success", encode_entities(sprintf("%s %s", $club->short_name, $team->name)), $lang->maketext("admin.message.created")));
     } else {
       # Editing
       
@@ -993,7 +993,7 @@ sub create_or_edit {
       $old_club->delete_related("club_seasons", {season => $season->id}) if $club->id != $old_club->id and $old_club->get_team_seasons({season => $season})->count == 0;
       
       $response->{completed} = 1;
-      push(@{$response->{success}}, $lang->maketext("admin.forms.success", encode_entities($club->full_name), $lang->maketext("admin.message.edited")));
+      push(@{$response->{success}}, $lang->maketext("admin.forms.success", encode_entities(sprintf("%s %s", $club->short_name, $team->name)), $lang->maketext("admin.message.edited")));
     }
     
     # Commit the database transactions
