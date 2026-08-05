@@ -936,25 +936,35 @@ sub create_or_edit {
         default_match_start => $default_match_start,
       });
       
-      if ( $mid_season and $old_home_night->weekday_number != $home_night->weekday_number ) {
+      if ( $mid_season and $old_home_night->weekday_number != $home_night->weekday_number and defined($team_season) ) {
         # If we're mid-season and the home night has changed, we'll look for matches where this team is at home
         # this season and re-calculate the match date.
-        my $matches = $team->search_related("team_matches_home_teams", {
-          "me.season" => $season->id,
-        }, {
+        my $matches = $team_season->search_related("team_matches_home_team_seasons", undef, {
           prefetch => "scheduled_week",
+          order_by => {-asc => "scheduled_week.week_beginning_date"},
         });
         
         # Now we've searched, we need to loop through and update them
         while ( my $match = $matches->next ) {
           # Get the week beginning date
           my $week_beginning_date = $match->scheduled_week->week_beginning_date;
+          my $og_date = $match->scheduled_week->week_beginning_date->dmy;
           
           # Get the new match date in that week
           my $new_match_date = TopTable::Controller::Root::get_day_in_same_week($week_beginning_date, $home_night->weekday_number);
           
+          # Setup the update - always update the scheduled date
+          my $update = {
+            scheduled_date => $new_match_date->ymd,
+          };
+          
+          # Only update the played date if it matches the scheduled date - otherwise it's been rescheduled and we don't need to change that
+          if ( defined($match->played_date) and $match->played_date->ymd eq $match->scheduled_date->ymd ) {
+            $update->{played_date} = $new_match_date->ymd;
+          }
+          
           # Update the match
-          $match->update({scheduled_date  => $new_match_date->ymd});
+          $match->update($update);
         }
         
         $response->{home_night_changed} = 1;
