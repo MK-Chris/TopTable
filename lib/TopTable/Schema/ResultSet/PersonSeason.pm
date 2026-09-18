@@ -120,9 +120,14 @@ sub get_people_in_division_in_singles_averages_order {
       team_season => [qw( team ), {club_season => "club"}],
     }],
     order_by  => [{
-      -desc => [qw( me.average_game_wins me.games_played me.games_won me.matches_played)]}, {
-      -asc => [qw( me.surname me.first_name)]}
-    ],
+      -desc => [qw( me.average_game_wins me.games_won )]
+    }, {
+      -asc => [qw( me.games_lost )]
+    }, {
+      -desc => [qw( me.legs_won )]
+    }, {
+      -asc => [qw( me.surname me.first_name)]
+    }],
   });
 }
 
