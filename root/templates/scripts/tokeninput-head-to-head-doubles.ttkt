@@ -43,13 +43,13 @@ false;
         "data": "date-sort",
         "visible": false
       }, {
-        // Division (display)
-        "data": "division",
+        // Competition (display)
+        "data": "competition",
         "orderData": 4,
         "responsivePriority": 5
       }, {
-        // Division (rank)
-        "data": "division-rank",
+        // Competition (rank)
+        "data": "competition-sort",
         "visible": false
       }, {
         // For team

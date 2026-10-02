@@ -95,12 +95,27 @@ IF match.started;
     IF game.complete;
       IF game.doubles_game;
         # Setup the correct links - complete season show specific season links; incomplete season show current season links
+        IF game.home_doubles_pair AND game.away_doubles_pair;
+          SET h2h_action_path = "/doubles/" _ game.home_doubles_pair.person_season_person1_season_team.person.url_key _ "/" _ game.home_doubles_pair.person_season_person2_season_team.person.url_key;
+        ELSE;
+          # No player set in at least one of the positions, so no link to show
+          SET h2h_action_path = "";
+        END;
+
         IF season.complete;
           SET home_uri = c.uri_for_action("/doubles/view_specific_season", [game.home_doubles_pair.person_season_person1_season_team.person.url_key, game.home_doubles_pair.person_season_person2_season_team.person.url_key, season.url_key]);
           SET away_uri = c.uri_for_action("/doubles/view_specific_season", [game.away_doubles_pair.person_season_person1_season_team.person.url_key, game.away_doubles_pair.person_season_person2_season_team.person.url_key, season.url_key]);
+          
+          SET h2h_action_path = h2h_action_path _ "/seasons/" _ season.url_key IF h2h_action_path;
         ELSE;
           SET home_uri = c.uri_for_action("/doubles/view_current_season", [game.home_doubles_pair.person_season_person1_season_team.person.url_key, game.home_doubles_pair.person_season_person2_season_team.person.url_key]);
           SET away_uri = c.uri_for_action("/doubles/view_current_season", [game.away_doubles_pair.person_season_person1_season_team.person.url_key, game.away_doubles_pair.person_season_person2_season_team.person.url_key]);
+        END;
+
+        IF h2h_action_path;
+          SET h2h_uri = c.uri_for(h2h_action_path, {opponents = [game.away_doubles_pair.person_season_person1_season_team.person.url_key, game.away_doubles_pair.person_season_person2_season_team.person.url_key]}) _ "#head-to-head";
+        ELSE;
+          SET h2h_uri = "";
         END;
         
         # Filter the display names for HTML
@@ -108,6 +123,8 @@ IF match.started;
         home2_name_html = game.home_doubles_pair.person_season_person2_season_team.display_name | html_entity;
         away1_name_html = game.away_doubles_pair.person_season_person1_season_team.display_name | html_entity;
         away2_name_html = game.away_doubles_pair.person_season_person2_season_team.display_name | html_entity;
+        
+        SET h2h_desc = c.maketext("people.links.head-to-head.doubles", home1_name_html, home2_name_html, away1_name_html, away2_name_html);
         
         IF game.home_doubles_pair.person1_loan;
           SET home1_class = '<span class="loan-player">';
@@ -141,17 +158,33 @@ IF match.started;
           SET away2_class_end = '';
         END;
       ELSE; # ELSE for IF game.doubles_game
+        IF game.home_player AND game.away_player;
+          SET h2h_action_path = "/people/" _ game.home_player.url_key;
+        ELSE;
+          # No player set in at least one of the positions, so no link to show
+          SET h2h_action_path = "";
+        END;
+
         IF season.complete;
           SET home_uri = c.uri_for_action("/people/view_specific_season", [game.home_player.url_key, season.url_key]);
           SET away_uri = c.uri_for_action("/people/view_specific_season", [game.away_player.url_key, season.url_key]);
+          
+          SET h2h_action_path = h2h_action_path _ "/seasons/" _ season.url_key IF h2h_action_path;
         ELSE;
           SET home_uri = c.uri_for_action("/people/view_current_season", [game.home_player.url_key]);
           SET away_uri = c.uri_for_action("/people/view_current_season", [game.away_player.url_key]);
+        END;
+
+        IF h2h_action_path;
+          SET h2h_uri = c.uri_for(h2h_action_path, {opponent = game.away_player.url_key}) _ "#head-to-head";
+        ELSE;
+          SET h2h_uri = "";
         END;
         
         # Filter the display names for HTML
         home_name_html = game.home_player.display_name OR game.get_player_from_match_number({location => "home"}).display_name | html_entity;
         away_name_html = game.away_player.display_name OR game.get_player_from_match_number({location => "away"}).display_name | html_entity;
+        h2h_desc = c.maketext("people.links.head-to-head.singles", home_name_html, away_name_html);
         
         # Set player classes if the player isn't an active team member
         SWITCH game.singles_player_membership_type({"location" => "home"});
@@ -273,6 +306,10 @@ IF match.started;
         
         SET result = home_links _ winner_text _ away_links;
       END; # END for IF game.awarded
+
+      IF h2h_uri;
+        SET result = result _ ' <a href="' _ h2h_uri _ '"><img src="' _ c.uri_for("/static/images/icons/headtohead-32.png") _ '" alt="' _ h2h_desc _ '" title="' _ h2h_desc _ '" /></a>';
+      END;
 -%]
           <td>[% result %]</td>
 [%

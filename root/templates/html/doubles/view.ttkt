@@ -198,11 +198,15 @@ IF season;
         SET opponent1 = opponents.person_season_person1_season_team;
         SET opponent2 = opponents.person_season_person2_season_team;
         
+        SET h2h_action_path = "/doubles/" _ people.item(0).url_key _ "/" _ people.item(1).url_key;
+        
         IF specific_season;
           SET for_team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [for_team_season.club_season.club.url_key, for_team.url_key, season.url_key]);
           SET against_team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [against_team_season.club_season.club.url_key, against_team.url_key, season.url_key]);
           SET partner_uri = c.uri_for_action("/people/view_specific_season", [partner.person.url_key, season.url_key]);
           SET opponents_uri = c.uri_for_action("/doubles/view_specific_season", [opponent1.person.url_key, opponent2.person.url_key, season.url_key]);
+          
+          SET h2h_action_path = h2h_action_path _ "/seasons/" _ season.url_key;
         ELSE;
           SET for_team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [for_team_season.club_season.club.url_key, for_team.url_key]);
           SET against_team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [against_team_season.club_season.club.url_key, against_team.url_key]);
@@ -210,6 +214,8 @@ IF season;
           SET partner_uri = c.uri_for_action("/people/view_current_season", [partner.person.url_key]);
           SET opponents_uri = c.uri_for_action("/doubles/view_current_season", [opponent1.person.url_key, opponent2.person.url_key]);
         END;
+        
+        SET h2h_uri = c.uri_for(h2h_action_path, {opponents = [opponent1.person.url_key, opponent2.person.url_key]}) _ "#head-to-head";
         
         # These only get displayed if the game is complete
         # Set the detailed (leg) scores up
@@ -237,13 +243,18 @@ IF season;
         ELSE;
           SET result = c.maketext("matches.result.draw");
         END;
+        
+        opponent1_display_name = opponent1.display_name | html_entity;
+        opponent2_display_name = opponent2.display_name | html_entity;
+        
+        SET h2h_desc = c.maketext("people.links.head-to-head.doubles", enc_names.display_names.0, enc_names.display_names.1, opponent1_display_name, opponent2_display_name);
 -%]
           <tr[% game_class %]>
             <td data-label="[% c.maketext("people.games.date") %]">[% c.i18n_datetime_format_date.format_datetime(match.actual_date) %]</td>
             <td data-label="[% c.maketext("people.games.date") %]">[% match.actual_date.ymd %]</td>
             <td data-label="[% c.maketext("people.games.playing-for") %]"><a href="[% for_team_uri %]">[% for_team_season.club_season.short_name | html_entity %] [% for_team_season.name | html_entity %]</a></td>
             <td data-label="[% c.maketext("people.games.playing-against") %]"><a href="[% against_team_uri %]">[% against_team_season.club_season.short_name | html_entity %] [% against_team_season.name | html_entity %]</a></td>
-            <td data-label="[% c.maketext("people.doubles-games.opponents") %]"><a href="[% opponents_uri %]">[% opponent1.display_name | html_entity %] [% c.maketext("matches.game.result.doubles-and") %] [% opponent2.display_name | html_entity %]</a></td>
+            <td data-label="[% c.maketext("people.doubles-games.opponents") %]"><a href="[% opponents_uri %]">[% opponent1_display_name %] [% c.maketext("matches.game.result.doubles-and") %] [% opponent2_display_name %]</a> <a href="[% h2h_uri %]"><img src="[% c.uri_for("/static/images/icons/headtohead-32.png") %]" alt="[% h2h_desc %]" title="[% h2h_desc %]" /></a></td>
             <td data-label="[% c.maketext("people.games.score") %]">[% score_html %]</td>
             <td data-label="[% c.maketext("people.games.result") %]"><a href="[% c.uri_for_action("/matches/team/view_by_url_keys", match.url_keys) %]">[% result %]</a></td>
             <td data-label="[% c.maketext("people.games.membership-type") %]">[% c.maketext("team-membership-type.name." _ membership_type) %]</td>
@@ -309,8 +320,8 @@ END;
             <th>[% c.maketext("people.head-to-head.heading.season") %]</th>
             <th>[% c.maketext("people.head-to-head.heading.date") %]</th>
             <th>[% c.maketext("people.head-to-head.heading.date-sort") %]</th>
-            <th>[% c.maketext("people.head-to-head.heading.division") %]</th>
-            <th>[% c.maketext("people.head-to-head.heading.division-rank") %]</th>
+            <th>[% c.maketext("people.head-to-head.heading.competition") %]</th>
+            <th>[% c.maketext("people.head-to-head.heading.competition-sort") %]</th>
             <th>[% c.maketext("people.head-to-head.heading.team") %]</th>
             <th>[% c.maketext("people.head-to-head.heading.opposing-team") %]</th>
             <th>[% c.maketext("people.head-to-head.heading.game-score") %]</th>
@@ -342,8 +353,30 @@ FOREACH h2h IN head_to_heads;
   
   for_team_name = for_team.club_season.short_name _ " " _ for_team.name | html_entity;
   against_team_name = against_team.club_season.short_name _ " " _ against_team.name | html_entity;
-  SET for_team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [for_team.club_season.club.url_key, for_team.team.url_key, season.url_key]);
-  SET against_team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [against_team.club_season.club.url_key, against_team.team.url_key, season.url_key]);
+    
+  IF match.tournament_round;
+    SET tourn_round = match.tournament_round;
+    SET tourn = tourn_round.tournament;
+    SET event = tourn.event_season.event;
+    SET for_uri_title = c.maketext("matches.link-title.team-tournament", home_team_html, event_html);
+    SET against_uri_title = c.maketext("matches.link-title.team-tournament", away_team_html, event_html);
+    
+    SET for_team_uri = c.uri_for_action("/events/teams_view_by_url_key_specific_season", [event.url_key, season.url_key, for_team.club_season.club.url_key, for_team.team.url_key]);
+    SET against_team_uri = c.uri_for_action("/events/teams_view_by_url_key_specific_season", [event.url_key, season.url_key, against_team.club_season.club.url_key, against_team.team.url_key]);
+    
+    IF match.tournament_group;
+      SET comp_uri = c.uri_for_action("/events/group_view_specific_season", [match.tournament_round.tournament.event_season.event.url_key, season.url_key, match.tournament_round.url_key, match.tournament_group.url_key]);
+    ELSE;
+      SET comp_uri = c.uri_for_action("/events/round_view_specific_season", [match.tournament_round.tournament.event_season.event.url_key, season.url_key, match.tournament_round.url_key]);
+    END;
+  ELSE;
+    SET for_uri_title = c.maketext("matches.link-title.team-league", home_team_html);
+    SET against_uri_title = c.maketext("matches.link-title.team-league", away_team_html);
+    
+    SET comp_uri = c.uri_for_action("/league-averages/view_specific_season", ["doubles-pairs", match.division_season.division.url_key, season.url_key]);
+    SET for_team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [for_team.club_season.club.url_key, for_team.team.url_key, season.url_key]);
+    SET against_team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [against_team.club_season.club.url_key, against_team.team.url_key, season.url_key]);
+  END;
   
   # These only get displayed if the game is complete
   # Set the detailed (leg) scores up
@@ -376,8 +409,8 @@ FOREACH h2h IN head_to_heads;
             <td data-label="[% c.maketext("people.head-to-head.heading.season") %]"><a href="[% c.uri_for_action("/seasons/view", [match.season.url_key]) %]">[% match.season.name | html_entity %]</a></td>
             <td data-label="[% c.maketext("people.head-to-head.heading.date") %]">[% c.i18n_datetime_format_date.format_datetime(date) %]</td>
             <td data-label="[% c.maketext("people.head-to-head.heading.date-sort") %]">[% date.ymd %]</td>
-            <td data-label="[% c.maketext("people.head-to-head.heading.division") %]"><a href="[% c.uri_for_action("/league-averages/view_specific_season", ["singles", match.division_season.division.url_key, match.season.url_key]) %]">[% match.division_season.name | html_entity %]</a></td>
-            <td data-label="[% c.maketext("people.head-to-head.heading.division-rank") %]">[% match.division_season.division.rank %]</td>
+            <td data-label="[% c.maketext("people.head-to-head.heading.competition") %]"><a href="[% comp_uri %]">[% match.competition_name %]</a></td>
+            <td data-label="[% c.maketext("people.head-to-head.heading.competition-sort") %]">[% match.competition_sort %]</td>
             <td data-label="[% c.maketext("people.head-to-head.heading.team") %]"><a href="[% for_team_uri %]">[% for_team_name %]</a></td>
             <td data-label="[% c.maketext("people.head-to-head.heading.opposing-team") %]"><a href="[% against_team_uri %]">[% against_team_name %]</a></td>
             <td data-label="[% c.maketext("people.head-to-head.heading.game-score") %]">[% score %]</td>

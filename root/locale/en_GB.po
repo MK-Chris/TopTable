@@ -1711,6 +1711,12 @@ msgstr "Season statistics successfully transferred."
 msgid "people.name.changed-notice"
 msgstr "%1 is now known as %2."
 
+msgid "people.links.head-to-head.singles"
+msgstr "View the head-to-head record between %1 and %2 across all seasons"
+
+msgid "people.links.head-to-head.doubles"
+msgstr "View the head-to-head record between %1 &amp; %2 and %3 &amp; %4 across all seasons"
+
 ### Doubles Pairs
 msgid "doubles.pair.display_names"
 msgstr "%1 &amp; %2"
