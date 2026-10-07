@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /people/*?opponent=
+Disallow: /people/*/seasons/*?opponent=
+Disallow: /doubles/*/*?opponents=
+Disallow: /doubles/*/*/seasons/*?opponents=
