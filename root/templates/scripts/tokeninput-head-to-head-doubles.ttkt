@@ -118,7 +118,7 @@ false;
         if ( populated.length == 2 ) {
           $.ajax({
             url: "[% c.uri_for_action("/doubles/head_to_head", [people.item(0).url_key, people.item(1).url_key]) %]",
-            type: "GET",
+            type: "POST",
             dataType: "json",
             data: {opponents: [populated[0].id, populated[1].id]},
             success: function(response) {
