@@ -284,6 +284,7 @@ sub view_specific_season :Private {
       specific_season => 1,
       enc_season_name => $enc_season_name,
       page_description => $c->maketext("description.teams.view-specific", $enc_name, $site_name, $enc_season_name),
+      cache => $season->can_cache,
     });
     
     # Breadcrumbs
