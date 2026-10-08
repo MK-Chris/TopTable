@@ -540,6 +540,14 @@ sub end :ActionClass("RenderView") {
       # User last active stuff
       $c->user->update({last_active_date => sprintf("%s %s", $last_active_datetime->ymd, $last_active_datetime->hms)});
       #$stats->profile("done user update");
+      
+      # Store the logged in flag for cache control
+      $c->res->cookies->{logged_in} = {
+        value => 1,
+        expires => sprintf("+%ss", $c->config->{"Plugin::Session"}{expires}),
+        path => "/",
+        httponly => 0,
+      };
     } else {
       # Not logged in, user ID is null, view online is true
       $user = undef;
