@@ -943,11 +943,6 @@ Display a form to collect information for creating a team.
 sub create :Chained("base_create") :PathPart("create") :CaptureArgs(0) {
   my ($self, $c) = @_;
   
-  # Don't cache this page.
-  $c->response->header("Cache-Control" => "no-cache, no-store, must-revalidate");
-  $c->response->header("Pragma" => "no-cache");
-  $c->response->header("Expires" => 0);
-  
   # Check that we are authorised to create clubs
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["team_create", $c->maketext("user.auth.create-teams"), 1] );
   
@@ -1107,11 +1102,6 @@ sub edit :Private {
   my ( $team_season, $divisions, $last_team_season_changes );
   my $team = $c->stash->{team};
   my $enc_name = $c->stash->{enc_name};
-  
-  # Don't cache this page.
-  $c->response->header("Cache-Control" => "no-cache, no-store, must-revalidate");
-  $c->response->header("Pragma" => "no-cache");
-  $c->response->header("Expires" => 0);
   
   # Check that we are authorised to create clubs
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["team_edit", $c->maketext("user.auth.edit-teams"), 1]);
@@ -1343,11 +1333,6 @@ sub points_adjustment :Private {
   my ( $self, $c ) = @_;
   my $team = $c->stash->{team};
   my $enc_name = $c->stash->{enc_name};
-  
-  # Don't cache this page.
-  $c->response->header("Cache-Control" => "no-cache, no-store, must-revalidate");
-  $c->response->header("Pragma" => "no-cache");
-  $c->response->header("Expires" => 0);
   
   # Check that we are authorised to adjust points
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["team_points_adjust", $c->maketext("user.auth.team-points-adjust"), 1]);

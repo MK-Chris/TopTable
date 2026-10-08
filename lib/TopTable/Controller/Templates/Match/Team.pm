@@ -275,11 +275,6 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
     return;
   }
   
-  # Don't cache this page.
-  $c->response->header("Cache-Control" => "no-cache, no-store, must-revalidate");
-  $c->response->header("Pragma" => "no-cache");
-  $c->response->header("Expires" => 0);
-  
   # Get venues to list
   $c->stash({
     template => "html/templates/match/team/create-edit.ttkt",

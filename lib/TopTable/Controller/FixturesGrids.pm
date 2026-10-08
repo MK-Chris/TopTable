@@ -246,6 +246,7 @@ sub view_specific_season :Chained("view") :PathPart("seasons") :Args(1) {
       view_online_display => sprintf("Viewing %s for %s", $grid->name, $season->name),
       view_online_link => 1,
       page_description => $c->maketext("description.fixtures-grids.view-specific", $enc_name, $site_name, $enc_season_name),
+      cache => $season->can_cache,
     });
     
     # Push the season list URI and the current URI on to the breadcrumbs
@@ -661,11 +662,6 @@ sub matches :Chained("base") :PathPart("matches") :Args(0) {
   my $grid = $c->stash->{grid};
   my $enc_name = $c->stash->{enc_name};
   
-  # Don't cache this page.
-  $c->response->header("Cache-Control" => "no-cache, no-store, must-revalidate");
-  $c->response->header("Pragma" => "no-cache");
-  $c->response->header("Expires" => 0);
-  
   # Check that we are authorised to create fixtures grids
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["fixtures_edit", $c->maketext("user.auth.edit-fixtures-grids"), 1]);
   
@@ -779,11 +775,6 @@ sub teams :Chained("base") :PathPart("teams") :Args(0) {
   my ( $self, $c ) = @_;
   my $grid = $c->stash->{grid};
   my $enc_name = $c->stash->{enc_name};
-  
-  # Don't cache this page.
-  $c->response->header("Cache-Control" => "no-cache, no-store, must-revalidate");
-  $c->response->header("Pragma" => "no-cache");
-  $c->response->header("Expires" => 0);
   
   # Check that we are authorised to create fixtures grids
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["fixtures_edit", $c->maketext("user.auth.edit-fixtures-grids"), 1]);
@@ -943,11 +934,6 @@ sub create_fixtures :Chained("base") :PathPart("create-fixtures") :Args(0) {
   my ( $self, $c ) = @_;
   my $grid = $c->stash->{grid};
   my $enc_name = $c->stash->{enc_name};
-  
-  # Don't cache this page.
-  $c->response->header("Cache-Control" => "no-cache, no-store, must-revalidate");
-  $c->response->header("Pragma" => "no-cache");
-  $c->response->header("Expires" => 0);
   
   # Check that we are authorised to create fixtures grids
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["fixtures_create", $c->maketext("user.auth.create-fixtures"), 1]);

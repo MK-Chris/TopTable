@@ -236,6 +236,7 @@ sub view_specific_season :Chained("view") :PathPart("seasons") :Args(1) {
       specific_season => 1,
       subtitle2 => $enc_season_name,
       page_description => $c->maketext("description.clubs.view-specific", $enc_full_name, $enc_season_name, $site_name),
+      cache => $season->can_cache,
     });
   
     # Push the season list URI and the current URI on to the breadcrumbs
@@ -519,11 +520,6 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
   my ( $self, $c ) = @_;
   my $club = $c->stash->{club};
   my $enc_full_name = $c->stash->{enc_full_name};
-  
-  # Don't cache this page.
-  $c->response->header("Cache-Control" => "no-cache, no-store, must-revalidate");
-  $c->response->header("Pragma" => "no-cache");
-  $c->response->header("Expires" => 0);
   
   # Check that we are authorised to edit clubs
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["club_edit", $c->maketext("user.auth.edit-clubs"), 1]);

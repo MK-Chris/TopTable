@@ -533,6 +533,10 @@ form:after {
 	visibility: hidden;
 }
 
+form.bot-defeat-link {
+  display: inline;
+}
+
 div.form-column {
   float: left;
   margin-right: 20px;

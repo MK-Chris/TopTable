@@ -210,11 +210,6 @@ Edit the display order for the list of committee members for the current season;
 sub reorder :Path("reorder") {
   my ( $self, $c ) = @_;
   
-  # Don't cache this page.
-  $c->response->header("Cache-Control" => "no-cache, no-store, must-revalidate");
-  $c->response->header("Pragma" => "no-cache");
-  $c->response->header("Expires" => 0);
-  
   # Check that we are authorised to create committee positions
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["committee_edit", $c->maketext("user.auth.edit-officials"), 1]);
   

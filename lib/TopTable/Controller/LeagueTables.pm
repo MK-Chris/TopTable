@@ -229,6 +229,7 @@ sub view_specific_season :Chained("view") :PathPart("seasons") :Args(1) {
         encoded_season_name => $encoded_season_name,
         specific_season => 1,
         page_description => $c->maketext("description.league-tables.view-specific", $division_name, $site_name, $encoded_season_name),
+        cache => $season->can_cache,
       });
       
       # Push the current URI on to the breadcrumbs

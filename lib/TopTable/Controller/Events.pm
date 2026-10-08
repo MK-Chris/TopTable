@@ -359,11 +359,6 @@ sub prepare_form_event :Private {
   my $event = $c->stash->{event};
   my $enc_event_name = $c->stash->{enc_event_name};
   
-  # Don't cache this page.
-  $c->response->header("Cache-Control" => "no-cache, no-store, must-revalidate");
-  $c->response->header("Pragma" => "no-cache");
-  $c->response->header("Expires" => 0);
-  
   # Add the pre-population if needed
   my $organiser;
   if ( $c->flash->{show_flashed} ) {
@@ -1046,11 +1041,6 @@ sub teams_points_adjustment :Private {
   # Check that we are authorised to adjust points
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.team-points-adjust-tourn"), 1]);
   
-  # Don't cache this page.
-  $c->response->header("Cache-Control" => "no-cache, no-store, must-revalidate");
-  $c->response->header("Pragma" => "no-cache");
-  $c->response->header("Expires" => 0);
-  
   # Setup the template and stash the values we need to show the points adjustment form
   $c->stash({
     template => "html/teams/points-adjustment.ttkt",
@@ -1544,11 +1534,6 @@ sub edit_round :Chained("rounds_current_season") :PathPart("edit") :Args(0) {
     return;
   }
   
-  # Don't cache this page.
-  $c->response->header("Cache-Control" => "no-cache, no-store, must-revalidate");
-  $c->response->header("Pragma" => "no-cache");
-  $c->response->header("Expires" => 0);
-  
   $c->stash({
     form_action => $c->uri_for_action("/events/do_edit_round", [$event->url_key, $round->url_key]),
   });
@@ -1617,11 +1602,6 @@ sub add_next_round :Chained("base_current_season") :PathPart("add-next-round") :
     $c->detach;
     return;
   }
-  
-  # Don't cache this page.
-  $c->response->header("Cache-Control" => "no-cache, no-store, must-revalidate");
-  $c->response->header("Pragma" => "no-cache");
-  $c->response->header("Expires" => 0);
   
   $c->stash({
     form_action => $c->uri_for_action("/events/do_add_next_round", [$event->url_key]),
@@ -1849,11 +1829,6 @@ sub round_create_matches :Chained("rounds_current_season") :PathPart("create-mat
     return;
   }
   
-  # Don't cache this page.
-  $c->response->header("Cache-Control" => "no-cache, no-store, must-revalidate");
-  $c->response->header("Pragma" => "no-cache");
-  $c->response->header("Expires" => 0);
-  
   # Stash the bits we need that don't care if there's a grid or not
   $c->stash({
     template => "html/events/tournaments/rounds/create-matches.ttkt",
@@ -1972,11 +1947,6 @@ sub round_do_delete_matches :Chained("rounds_current_season") :PathPart("do-dele
   
   # Check that we are authorised to edit events
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.edit-events"), 1]);
-  
-  # Don't cache this page.
-  $c->response->header("Cache-Control" => "no-cache, no-store, must-revalidate");
-  $c->response->header("Pragma" => "no-cache");
-  $c->response->header("Expires" => 0);
   
   my $response = $round->delete_matches;
   
@@ -2398,11 +2368,6 @@ sub prepare_form_group :Private {
   # Setup group members tokeninput
   my ( $tokeninput_hint, $token_search_url );
   
-  # Don't cache this page.
-  $c->response->header("Cache-Control" => "no-cache, no-store, must-revalidate");
-  $c->response->header("Pragma" => "no-cache");
-  $c->response->header("Expires" => 0);
-  
   if ( $tournament->entry_type->id eq "team" ) {
     $tokeninput_hint = $c->maketext("teams.tokeninput.type");
     $token_search_url = $c->uri_for("/teams/search");
@@ -2509,11 +2474,6 @@ sub group_do_create :Chained("rounds_current_season") :PathPart("groups/do-creat
     return;
   }
   
-  # Don't cache this page.
-  $c->response->header("Cache-Control" => "no-cache, no-store, must-revalidate");
-  $c->response->header("Pragma" => "no-cache");
-  $c->response->header("Expires" => 0);
-  
   # Forward to the create / edit routine
   $c->detach("process_form", [qw( group create )]);
 }
@@ -2535,11 +2495,6 @@ sub group_do_edit :Chained("groups_current_season") :PathPart("do-edit") :Args(0
   
   # Check that we are authorised to edit events
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.edit-events"), 1]);
-  
-  # Don't cache this page.
-  $c->response->header("Cache-Control" => "no-cache, no-store, must-revalidate");
-  $c->response->header("Pragma" => "no-cache");
-  $c->response->header("Expires" => 0);
   
   # Forward to the create / edit routine
   $c->detach("process_form", [qw( group edit )]);
@@ -2608,11 +2563,6 @@ sub group_grid_positions :Chained("groups_current_season") :PathPart("grid-posit
   # Check that we are authorised to edit events
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.edit-events"), 1]);
   
-  # Don't cache this page.
-  $c->response->header("Cache-Control" => "no-cache, no-store, must-revalidate");
-  $c->response->header("Pragma" => "no-cache");
-  $c->response->header("Expires" => 0);
-  
   # Check the season hasn't had matches created already
   if ( $group->matches->count ) {
     # Error, matches set already
@@ -2666,11 +2616,6 @@ sub group_set_grid_positions :Chained("groups_current_season") :PathPart("set-gr
   # Check that we are authorised to edit events
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.edit-events"), 1]);
   
-  # Don't cache this page.
-  $c->response->header("Cache-Control" => "no-cache, no-store, must-revalidate");
-  $c->response->header("Pragma" => "no-cache");
-  $c->response->header("Expires" => 0);
-  
   # Forward to the create / edit routine
   $c->detach("process_form", [qw( group positions )]);
 }
@@ -2701,11 +2646,6 @@ sub group_create_matches :Chained("groups_current_season") :PathPart("create-mat
     $c->detatch;
     return;
   }
-  
-  # Don't cache this page.
-  $c->response->header("Cache-Control" => "no-cache, no-store, must-revalidate");
-  $c->response->header("Pragma" => "no-cache");
-  $c->response->header("Expires" => 0);
   
   # Stash the bits we need that don't care if there's a grid or not
   $c->stash({
@@ -2781,11 +2721,6 @@ sub group_do_create_matches :Chained("groups_current_season") :PathPart("do-crea
   # Check that we are authorised to edit events
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.edit-events"), 1]);
   
-  # Don't cache this page.
-  $c->response->header("Cache-Control" => "no-cache, no-store, must-revalidate");
-  $c->response->header("Pragma" => "no-cache");
-  $c->response->header("Expires" => 0);
-  
   # Forward to the create / edit routine
   $c->detach("process_form", [qw( group create-matches )]);
 }
@@ -2849,11 +2784,6 @@ sub group_do_delete_matches :Chained("groups_current_season") :PathPart("do-dele
   
   # Check that we are authorised to edit events
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["event_edit", $c->maketext("user.auth.edit-events"), 1]);
-  
-  # Don't cache this page.
-  $c->response->header("Cache-Control" => "no-cache, no-store, must-revalidate");
-  $c->response->header("Pragma" => "no-cache");
-  $c->response->header("Expires" => 0);
   
   my $response = $group->delete_matches;
   

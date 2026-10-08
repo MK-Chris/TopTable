@@ -321,6 +321,7 @@ sub view :Private {
     original_report => $match->get_original_report,
     canonical_uri => $c->uri_for_action("/matches/team/view_by_url_keys", $match->url_keys),
     page_description => $page_description,
+    cache => $match->can_cache,
   });
 }
 

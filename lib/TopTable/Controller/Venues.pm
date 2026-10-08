@@ -300,11 +300,6 @@ sub edit :Chained('base') :PathPart('edit') :Args(0) {
   my ($self, $c) = @_;
   my $venue = $c->stash->{venue};
   
-  # Don't cache this page.
-  $c->response->header("Cache-Control" => "no-cache, no-store, must-revalidate");
-  $c->response->header("Pragma" => "no-cache");
-  $c->response->header("Expires" => 0);
-  
   # Check that we are authorised to edit venues
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["venue_edit", $c->maketext("user.auth.edit-venues"), 1]);
   
