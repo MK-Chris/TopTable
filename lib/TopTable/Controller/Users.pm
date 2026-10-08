@@ -1738,6 +1738,12 @@ sub logout :Global {
     # Log out
     $c->logout;
     
+    # Delete the logged in flag for cache control
+    $c->res->cookies->{logged_in} = {
+      value => "",
+      expires => "-1d",
+    };
+    
     # Log the logout action - this needs to be done before we log out so we have the user object.
     $c->forward("TopTable::Controller::SystemEventLog", "add_event", ["user", "logout", {id => $user_id}, $user_display_name]);
     
