@@ -653,7 +653,7 @@ END;
   </div>
   <div id="head-to-head">
     <div class="info-message-small"><span class="message-text">[% c.maketext("people.head-to-head.singles.all-seasons.notice", enc_first_name) %]</span></div>
-    <form action="[% c.uri_for_action("/people/head_to_head", [person.url_key]) %]" method="get">
+    <form action="[% c.uri_for_action("/people/head_to_head", [person.url_key]) %]" method="post">
     <div class="label-field-container">
       <label for="opponent">[% c.maketext("people.head-to-head.form.field.opponent") %]</label>
       <div class="field-container">

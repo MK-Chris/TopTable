@@ -115,7 +115,7 @@ false;
         // Add a new person, do the query
         $.ajax({
           url: "[% c.uri_for_action("/people/head_to_head", [person.url_key]) %]",
-          type: "GET",
+          type: "POST",
           dataType: "json",
           data: {opponent: item.id},
           success: function(response) {
