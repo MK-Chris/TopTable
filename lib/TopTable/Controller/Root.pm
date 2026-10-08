@@ -532,10 +532,13 @@ sub end :ActionClass("RenderView") {
     
     # Set up the session update / create data
     # Check if we have a user
-    if ( $c->user_exists ) {
+    if ( $c->user ) {
       # User logged in, use the values from the user record
       $user = $c->user->id;
       $hide_online = $c->user->hide_online;
+      
+      # Compute a safe fallback lifespan window
+      my $expiry_seconds = $c->config->{"Plugin::Session"}{expires} || 7200;
       
       # User last active stuff
       $c->user->update({last_active_date => sprintf("%s %s", $last_active_datetime->ymd, $last_active_datetime->hms)});
@@ -543,15 +546,26 @@ sub end :ActionClass("RenderView") {
       
       # Store the logged in flag for cache control
       $c->res->cookies->{logged_in} = {
-        value => 1,
-        expires => sprintf("+%ss", $c->config->{"Plugin::Session"}{expires}),
-        path => "/",
+        value    => 1,
+        expires  => sprintf("+%ss", $expiry_seconds),
+        path     => "/",
         httponly => 0,
       };
+      
+      #$c->log->debug("User is logged in, setting logged_in cookie to 1");
     } else {
       # Not logged in, user ID is null, view online is true
       $user = undef;
       $hide_online = 0;
+      
+      # SAFEGUARD: Force anonymous browsers and bots to explicitly delete the flag
+      $c->res->cookies->{logged_in} = {
+        value   => '',
+        expires => '-1d',
+        path    => '/',
+      };
+      
+      #$c->log->debug("User is not logged in, clearing logged_in cookie");
     }
     
     my $session_data = {};
