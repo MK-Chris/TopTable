@@ -111,6 +111,7 @@ sub load_specific_season :Chained("base") :PathPart("seasons") :CaptureArgs(1) {
       specific_season => 1,
       page_header => $page_header,
       subtitle1 => $page_header,
+      cache => $season->can_cache,
     });
   
     # Push the fixtures and results options page on to the breadcrumbs

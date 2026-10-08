@@ -426,6 +426,15 @@ sub end :ActionClass("RenderView") {
   #$stats->profile("noindex");
   $c->res->header("X-Robots-Tag" => "noindex") if exists($c->stash->{noindex}) and $c->stash->{noindex};
   
+  # Set caching
+  my $cache = exists($c->stash->{cache}) ? $c->stash->{cache} : 0;
+  
+  if ( $cache ) {
+    $c->res->header("Cache-Control" => "public, max-age=3600");
+  } else {
+    $c->res->header("Cache-Control" => "no-cache, no-store, must-revalidate");
+  }
+  
   #$stats->profile(begin => "ajax check");
   if ( !$c->stash->{no_wrapper} and !$c->is_ajax ) {
     ## Nav drop down menus

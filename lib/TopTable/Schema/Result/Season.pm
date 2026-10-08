@@ -795,6 +795,17 @@ sub can_delete {
  return $matches == 0 ? 1 : 0;
 }
 
+=head2 can_cache
+
+We can cache the data from this season if it's complete.
+
+=cut
+
+sub can_cache {
+  my $self = shift;
+  return $self->complete;
+}
+
 =head2 check_and_delete
 
 Checks that the season can be deleted (via can_delete) and then does the deletion.

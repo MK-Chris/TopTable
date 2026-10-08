@@ -276,6 +276,7 @@ sub view_specific_season :Chained("view") :PathPart("seasons") :Args(1) {
         specific_season => 1,
         division_season => $division_season,
         page_description => $c->maketext("description.league-averages.view-specific", lc($c->maketext( sprintf("menu.text.league-averages-%s", $averages_type))), $division_name, $site_name, $encoded_season_name),
+        cache => $season->can_cache,
       });
       
       # Push the season list URI and the current URI on to the breadcrumbs

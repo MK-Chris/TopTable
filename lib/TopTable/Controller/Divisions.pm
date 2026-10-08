@@ -226,6 +226,7 @@ sub view_specific_season :Chained("view") :PathPart("seasons") :Args(1) {
       view_online_display => sprintf("Viewing %s for %s", $division->name, $season->name),
       view_online_link => 1,
       page_description => $c->maketext("description.divisions.view-specific", $enc_name, $site_name, $enc_season_name),
+      cache => $season->can_cache,
     });
     
     # Push the season list URI and the current URI on to the breadcrumbs

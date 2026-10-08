@@ -288,11 +288,6 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
   my ($self, $c) = @_;
   my $filter = $c->stash->{filter};
   
-  # Don't cache this page.
-  $c->response->header("Cache-Control" => "no-cache, no-store, must-revalidate");
-  $c->response->header("Pragma" => "no-cache");
-  $c->response->header("Expires" => 0);
-  
   # Check that we are authorised to create filters
   if ( !defined( $filter->user ) ) {
     # This is a public filter, so we need to check we can edit public filters

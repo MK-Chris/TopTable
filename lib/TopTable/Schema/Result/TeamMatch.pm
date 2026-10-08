@@ -4465,6 +4465,19 @@ sub add_report {
   return $response;
 }
 
+=head2 can_cache
+
+Work out whether or not the match view can be cached by whether the season it occurs in is complete.
+
+=cut
+
+sub can_cache {
+  my $self = shift;
+  my $season = $self->season;
+  
+  return $season->complete;
+}
+
 # You can replace this text with custom code or comments, and it will be preserved on regeneration
 __PACKAGE__->meta->make_immutable;
 1;

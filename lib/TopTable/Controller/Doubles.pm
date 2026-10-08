@@ -156,6 +156,7 @@ sub view_specific_season :Chained("view") :PathPart("seasons") :Args(1) {
       subtitle2 => $enc_season_name,
       enc_season_name => $enc_season_name,
       page_description => $c->maketext("description.doubles.view-specific", $enc_names{display_names}[0], $enc_names{display_names}[1], $enc_season_name, $site_name),
+      cache => $season->can_cache,
     });
   } else {
     # Invalid season

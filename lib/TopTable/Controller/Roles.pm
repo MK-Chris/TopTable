@@ -303,11 +303,6 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
   my ($self, $c) = @_;
   my $role = $c->stash->{role};
   
-  # Don't cache this page.
-  $c->response->header("Cache-Control" => "no-cache, no-store, must-revalidate");
-  $c->response->header("Pragma" => "no-cache");
-  $c->response->header("Expires" => 0);
-  
   # Check that we are authorised to create clubs
   $c->forward( "TopTable::Controller::Users", "check_authorisation", ["role_edit", $c->maketext("user.auth.edit-roles"), 1] );
   

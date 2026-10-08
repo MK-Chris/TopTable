@@ -255,11 +255,6 @@ sub edit :Chained("base") :PathPart("edit") :Args(0) {
   # Check that we are authorised to create clubs
   $c->forward("TopTable::Controller::Users", "check_authorisation", ["template_edit", $c->maketext("user.auth.edit-templates"), 1]);
   
-  # Don't cache this page.
-  $c->response->header("Cache-Control" => "no-cache, no-store, must-revalidate");
-  $c->response->header("Pragma" => "no-cache");
-  $c->response->header("Expires" => 0);
-  
   unless ( $tt_template->can_edit_or_delete ) {
     $c->response->redirect($c->uri_for_action("/templates/match/individual/view", [$tt_template->url_key],
                                 {mid => $c->set_status_msg({error => $c->maketext("templates.edit.error.not-allowed", $tt_template->name)})}));
