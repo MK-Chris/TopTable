@@ -258,6 +258,7 @@ sub view :Private {
     $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
     $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
     $c->uri_for("/static/script/standard/vertical-table.js"),
+    $c->uri_for("/static/script/head-to-heads/head-to-head-buttons.js"),
   );
   
   my $tourn_flag = $is_tourn ? "/tourn" : "";

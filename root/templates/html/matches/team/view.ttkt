@@ -95,27 +95,29 @@ IF match.started;
     IF game.complete;
       IF game.doubles_game;
         # Setup the correct links - complete season show specific season links; incomplete season show current season links
-        IF game.home_doubles_pair AND game.away_doubles_pair;
-          SET h2h_action_path = "/doubles/" _ game.home_doubles_pair.person_season_person1_season_team.person.url_key _ "/" _ game.home_doubles_pair.person_season_person2_season_team.person.url_key;
-        ELSE;
-          # No player set in at least one of the positions, so no link to show
-          SET h2h_action_path = "";
-        END;
-
         IF season.complete;
           SET home_uri = c.uri_for_action("/doubles/view_specific_season", [game.home_doubles_pair.person_season_person1_season_team.person.url_key, game.home_doubles_pair.person_season_person2_season_team.person.url_key, season.url_key]);
           SET away_uri = c.uri_for_action("/doubles/view_specific_season", [game.away_doubles_pair.person_season_person1_season_team.person.url_key, game.away_doubles_pair.person_season_person2_season_team.person.url_key, season.url_key]);
           
-          SET h2h_action_path = h2h_action_path _ "/seasons/" _ season.url_key IF h2h_action_path;
+          IF game.home_doubles_pair AND game.away_doubles_pair;
+            SET h2h_uri = c.uri_for_action("/doubles/view_specific_season", [game.home_doubles_pair.person_season_person1_season_team.person.url_key, game.home_doubles_pair.person_season_person2_season_team.person.url_key, season.url_key]);
+          ELSE;
+            SET h2h_uri = "";
+          END;
         ELSE;
           SET home_uri = c.uri_for_action("/doubles/view_current_season", [game.home_doubles_pair.person_season_person1_season_team.person.url_key, game.home_doubles_pair.person_season_person2_season_team.person.url_key]);
           SET away_uri = c.uri_for_action("/doubles/view_current_season", [game.away_doubles_pair.person_season_person1_season_team.person.url_key, game.away_doubles_pair.person_season_person2_season_team.person.url_key]);
+          
+          IF game.home_doubles_pair AND game.away_doubles_pair;
+            SET h2h_uri = c.uri_for_action("/doubles/view_current_season", [game.home_doubles_pair.person_season_person1_season_team.person.url_key, game.home_doubles_pair.person_season_person2_season_team.person.url_key]);
+          ELSE;
+            SET h2h_uri = "";
+          END;
         END;
-
-        IF h2h_action_path;
-          SET h2h_uri = c.uri_for(h2h_action_path, {opponents = [game.away_doubles_pair.person_season_person1_season_team.person.url_key, game.away_doubles_pair.person_season_person2_season_team.person.url_key]}) _ "#head-to-head";
-        ELSE;
-          SET h2h_uri = "";
+        
+        IF h2h_uri;
+          h2h_uri.fragment("head-to-head");
+          SET h2h_opponent_params = ' data-opponent1="' _ game.away_doubles_pair.person_season_person1_season_team.person.url_key _ '" data-opponent2="' _ game.away_doubles_pair.person_season_person2_season_team.person.url_key _ '"';
         END;
         
         # Filter the display names for HTML
@@ -158,27 +160,29 @@ IF match.started;
           SET away2_class_end = '';
         END;
       ELSE; # ELSE for IF game.doubles_game
-        IF game.home_player AND game.away_player;
-          SET h2h_action_path = "/people/" _ game.home_player.url_key;
-        ELSE;
-          # No player set in at least one of the positions, so no link to show
-          SET h2h_action_path = "";
-        END;
-
         IF season.complete;
           SET home_uri = c.uri_for_action("/people/view_specific_season", [game.home_player.url_key, season.url_key]);
           SET away_uri = c.uri_for_action("/people/view_specific_season", [game.away_player.url_key, season.url_key]);
           
-          SET h2h_action_path = h2h_action_path _ "/seasons/" _ season.url_key IF h2h_action_path;
+          IF game.home_player AND game.away_player;
+            SET h2h_uri = c.uri_for_action("/people/view_specific_season", [game.home_player.url_key, season.url_key]);
+          ELSE;
+            SET h2h_uri = "";
+          END;
         ELSE;
           SET home_uri = c.uri_for_action("/people/view_current_season", [game.home_player.url_key]);
           SET away_uri = c.uri_for_action("/people/view_current_season", [game.away_player.url_key]);
+          
+          IF game.home_player AND game.away_player;
+            SET h2h_uri = c.uri_for_action("/people/view_current_season", [game.home_player.url_key]);
+          ELSE;
+            SET h2h_uri = "";
+          END;
         END;
-
-        IF h2h_action_path;
-          SET h2h_uri = c.uri_for(h2h_action_path, {opponent = game.away_player.url_key}) _ "#head-to-head";
-        ELSE;
-          SET h2h_uri = "";
+        
+        IF h2h_uri;
+          h2h_uri.fragment("head-to-head");
+          SET h2h_opponent_params = ' data-opponent="' _ game.away_player.url_key _ '"';
         END;
         
         # Filter the display names for HTML
@@ -308,7 +312,7 @@ IF match.started;
       END; # END for IF game.awarded
 
       IF h2h_uri;
-        SET result = result _ ' <a href="' _ h2h_uri _ '"><img src="' _ c.uri_for("/static/images/icons/headtohead-32.png") _ '" alt="' _ h2h_desc _ '" title="' _ h2h_desc _ '" /></a>';
+        SET result = result _ ' <span class="h2h-icon-trigger" data-h2h-uri="' _ h2h_uri _ '"' _ h2h_opponent_params _ ' data-icon="' _ c.uri_for("/static/images/icons/headtohead-32.png") _ '"' _ ' data-button-title="' _ h2h_desc _ '"></span>';
       END;
 -%]
           <td>[% result %]</td>
