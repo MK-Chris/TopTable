@@ -430,7 +430,7 @@ sub end :ActionClass("RenderView") {
   my $cache = exists($c->stash->{cache}) ? $c->stash->{cache} : 0;
   
   if ( $cache ) {
-    $c->res->header("Cache-Control" => "public, max-age=3600");
+    $c->res->header("Cache-Control" => "max-age=31536000, immutable");
   } else {
     $c->res->header("Cache-Control" => "no-cache, no-store, must-revalidate");
   }
