@@ -315,6 +315,7 @@ sub view_finalise :Private {
       $c->uri_for("/static/script/doubles/view.js"),
       $c->uri_for("/static/script/standard/option-list.js"),
       $c->uri_for("/static/script/standard/vertical-table.js"),
+      $c->uri_for("/static/script/head-to-heads/head-to-head-buttons.js"),
     ],
     external_styles => [
       $c->uri_for("/static/css/responsive-tabs/responsive-tabs.css"),

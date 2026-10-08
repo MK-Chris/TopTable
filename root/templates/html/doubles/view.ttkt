@@ -198,24 +198,22 @@ IF season;
         SET opponent1 = opponents.person_season_person1_season_team;
         SET opponent2 = opponents.person_season_person2_season_team;
         
-        SET h2h_action_path = "/doubles/" _ people.item(0).url_key _ "/" _ people.item(1).url_key;
-        
         IF specific_season;
           SET for_team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [for_team_season.club_season.club.url_key, for_team.url_key, season.url_key]);
           SET against_team_uri = c.uri_for_action("/teams/view_specific_season_by_url_key", [against_team_season.club_season.club.url_key, against_team.url_key, season.url_key]);
           SET partner_uri = c.uri_for_action("/people/view_specific_season", [partner.person.url_key, season.url_key]);
           SET opponents_uri = c.uri_for_action("/doubles/view_specific_season", [opponent1.person.url_key, opponent2.person.url_key, season.url_key]);
-          
-          SET h2h_action_path = h2h_action_path _ "/seasons/" _ season.url_key;
+          SET h2h_uri = c.uri_for_action("/doubles/view_specific_season", [people.item(0).url_key, people.item(1).url_key, season.url_key]);
         ELSE;
           SET for_team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [for_team_season.club_season.club.url_key, for_team.url_key]);
           SET against_team_uri = c.uri_for_action("/teams/view_current_season_by_url_key", [against_team_season.club_season.club.url_key, against_team.url_key]);
           SET opponents_uri = c.uri_for_action("/people/view_current_season", [opponents.url_key]);
           SET partner_uri = c.uri_for_action("/people/view_current_season", [partner.person.url_key]);
           SET opponents_uri = c.uri_for_action("/doubles/view_current_season", [opponent1.person.url_key, opponent2.person.url_key]);
+          SET h2h_uri = c.uri_for_action("/doubles/view_current_season", [people.item(0).url_key, people.item(1).url_key]);
         END;
         
-        SET h2h_uri = c.uri_for(h2h_action_path, {opponents = [opponent1.person.url_key, opponent2.person.url_key]}) _ "#head-to-head";
+        h2h_uri.fragment("head-to-head");
         
         # These only get displayed if the game is complete
         # Set the detailed (leg) scores up
@@ -254,7 +252,11 @@ IF season;
             <td data-label="[% c.maketext("people.games.date") %]">[% match.actual_date.ymd %]</td>
             <td data-label="[% c.maketext("people.games.playing-for") %]"><a href="[% for_team_uri %]">[% for_team_season.club_season.short_name | html_entity %] [% for_team_season.name | html_entity %]</a></td>
             <td data-label="[% c.maketext("people.games.playing-against") %]"><a href="[% against_team_uri %]">[% against_team_season.club_season.short_name | html_entity %] [% against_team_season.name | html_entity %]</a></td>
-            <td data-label="[% c.maketext("people.doubles-games.opponents") %]"><a href="[% opponents_uri %]">[% opponent1_display_name %] [% c.maketext("matches.game.result.doubles-and") %] [% opponent2_display_name %]</a> <a href="[% h2h_uri %]"><img src="[% c.uri_for("/static/images/icons/headtohead-32.png") %]" alt="[% h2h_desc %]" title="[% h2h_desc %]" /></a></td>
+            <td data-label="[% c.maketext("people.doubles-games.opponents") %]">
+              <a href="[% opponents_uri %]">[% opponent1_display_name %] [% c.maketext("matches.game.result.doubles-and") %] [% opponent2_display_name %]</a>
+              
+              <span class="h2h-icon-trigger" data-h2h-uri="[% h2h_uri %]" data-opponent1="[% opponent1.person.url_key %]" data-opponent2="[% opponent2.person.url_key %]" data-icon="[% c.uri_for("/static/images/icons/headtohead-32.png") %]" data-button-title="[% h2h_desc %]"></span>
+            </td>
             <td data-label="[% c.maketext("people.games.score") %]">[% score_html %]</td>
             <td data-label="[% c.maketext("people.games.result") %]"><a href="[% c.uri_for_action("/matches/team/view_by_url_keys", match.url_keys) %]">[% result %]</a></td>
             <td data-label="[% c.maketext("people.games.membership-type") %]">[% c.maketext("team-membership-type.name." _ membership_type) %]</td>
