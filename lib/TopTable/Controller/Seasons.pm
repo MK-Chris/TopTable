@@ -242,6 +242,7 @@ sub view :Chained("base") :PathPart("") :Args(0) {
     highest_points_scored => [$c->model("DB::VwMatchPointsScored")->search_by_season($season, undef, {top_only => 1})],
     most_legs_played => [$c->model("DB::VwMatchLegsPlayed")->search_by_season($season, undef, {top_only => 1})],
     team_doubles_won => [$c->model("DB::VwTeamDoublesWon")->search_by_season($season, {top_only => 1})],
+    cache => $season->can_cache,
   });
 }
 
