@@ -230,8 +230,6 @@ IF teams.size;
       
       h2h_uri.fragment("head-to-head");
       
-      CALL c.log.debug("Head-to-head: " _ h2h_uri);
-      
       # These only get displayed if the game is complete
       # Set the detailed (leg) scores up
       IF game.started;

@@ -249,6 +249,7 @@ sub view_specific_season :Chained("view") :PathPart("seasons") :Args(1) {
       subtitle2 => $enc_season_name,
       enc_season_name => $enc_season_name,
       page_description => $c->maketext("description.people.view-specific", $person_name, $enc_season_name, $site_name),
+      cache => $season->can_cache,
     });
   } else {
     # Invalid season

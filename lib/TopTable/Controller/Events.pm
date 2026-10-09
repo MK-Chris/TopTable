@@ -227,6 +227,7 @@ sub base_specific_season :Chained("base") :PathPart("seasons") :CaptureArgs(1) {
       specific_season => 1,
       enc_season_name => $enc_season_name,
       subtitle2 => $enc_season_name,
+      cache => $season->can_cache,
     });
     
     # Get the event's details for the season.
