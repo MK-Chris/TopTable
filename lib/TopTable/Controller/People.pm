@@ -359,8 +359,8 @@ sub view_finalise :Private {
   my @tokeninput_confs = ();
   my @scripts = ("tokeninput-head-to-head-singles");
   
-  my @head_to_heads;
-  if ( my $opponent = $c->req->params->{opponent} ) {
+  my ( @head_to_heads, $opponent );
+  if ( $opponent = $c->req->params->{opponent} ) {
     # Add the pre-population if required
     $opponent = $c->model("DB::Person")->find_id_or_url_key($opponent);
     
@@ -399,6 +399,7 @@ sub view_finalise :Private {
     title_links => \@title_links,
     view_online_display => sprintf("Viewing %s", $enc_display_name),
     view_online_link => 1,
+    opponent => $opponent,
     person_seasons => $person_seasons,
     seasons => $person_seasons->count,
     head_to_heads => \@head_to_heads,
@@ -552,7 +553,7 @@ sub head_to_head :Chained("base") :PathPart("head-to-head") :Args(0) {
         $against_team = $home_team;
       }
       
-      my ( $score, $leg_scores, $leg_number, $result );
+      my ( $score, $leg_scores, $leg_number, $winner );
       if ( $game->started ) {
         $leg_scores = "";
         my $detailed_scores = $game->detailed_scores;
@@ -576,18 +577,23 @@ sub head_to_head :Chained("base") :PathPart("head-to-head") :Args(0) {
         $score = $c->maketext("msg.not-applicable");
       }
       
+      my $won_by_default = $game->started ? 0 : 1;
+      
+      my $winner_id;
       if ( $game->complete ) {
         if ( defined($game->winner) ) {
           if ( $game->winner->id == $for_team->id ) { 
-            $result = $game->started ? $c->maketext("matches.result.win") : $c->maketext("matches.result.forefeited-win");
+            $winner = $person->display_name;
+            $winner_id = $person->id;
           } elsif ( $game->winner->id == $against_team->id ) {
-            $result = $game->started ? $c->maketext("matches.result.loss") : $c->maketext("matches.result.forefeited-loss");
+            $winner = $opponent->display_name;
+            $winner_id = $opponent->id;
           }
         } else {
-          $result = $c->maketext("matches.result.draw");
+          $winner = $c->maketext("matches.result.draw");
         }
       } else {
-        $result = $c->maketext("matches.result.not-played");
+        $winner = $c->maketext("matches.result.not-played");
       }
       
       my $season = $match->season;
@@ -611,7 +617,10 @@ sub head_to_head :Chained("base") :PathPart("head-to-head") :Args(0) {
           display => encode_entities($season->name),
           uri => $c->uri_for_action("/seasons/view", [$season->url_key])->as_string,
         },
-        date => {display => $c->i18n_datetime_format_date->format_datetime($date)},
+        date => {
+          display => $c->i18n_datetime_format_date->format_datetime($date),
+          uri => $c->uri_for_action("/matches/team/view_by_url_keys", $match->url_keys)->as_string,
+        },
         "date-sort" => {display => $date->ymd},
         competition => {
           display => encode_entities($match->competition_name),
@@ -628,10 +637,11 @@ sub head_to_head :Chained("base") :PathPart("head-to-head") :Args(0) {
         },
         "game-score" => {display => $score},
         scores => $game->detailed_scores,
-        result => {
-          display => $result,
-          uri => $c->uri_for_action("/matches/team/view_by_url_keys", $match->url_keys)->as_string,
-        },
+        winner => $winner_id == $opponent->id
+          ? {display => encode_entities($winner), uri => $c->uri_for_action("/people/view_current_season", [$opponent->url_key])->as_string}
+          : {display => encode_entities($winner)},
+        "winner-raw" => {display => $winner},
+        "won-by-default" => {display => $won_by_default},
         venue => {
           display => encode_entities($match->venue->name),
           uri => $c->uri_for_action("/venues/view", [$match->venue->url_key])->as_string,

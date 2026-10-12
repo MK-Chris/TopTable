@@ -1564,11 +1564,26 @@ msgstr "Set score"
 msgid "people.head-to-head.heading.scores"
 msgstr "Scores"
 
-msgid "people.head-to-head.heading.result"
-msgstr "Result"
+msgid "people.head-to-head.heading.winner"
+msgstr "Winner"
+
+msgid "people.head-to-head.heading.winner-raw"
+msgstr "Winner (raw data)"
+
+msgid "people.head-to-head.heading.won-by-default"
+msgstr "Won by default"
 
 msgid "people.head-to-head.heading.venue"
 msgstr "Venue"
+
+msgid "people.head-to-head.totals.total"
+msgstr "Totals:"
+
+msgid "people.head-to-head.totals.page-total"
+msgstr "Totals on this page:"
+
+msgid "people.head-to-head.totals.wins"
+msgstr "wins"
 
 msgid "people.head-to-head.error.nobody-specified"
 msgstr "Nobody was selected; please search for a person to display head-to-head data with."

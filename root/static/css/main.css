@@ -165,6 +165,9 @@ div.loan-player-key, div.inactive-player-key {
   width: 15px;
 }
 
+table th span.h2h-total-data {font-weight: normal; font-size: 0.9em;}
+table th span.h2h-total-heading {font-weight: bold; font-size: 0.9em;}
+
 a.tooltip:active, a.tooltip:visited, a.tooltip {
   color: #ffffff;
   text-decoration: underline;

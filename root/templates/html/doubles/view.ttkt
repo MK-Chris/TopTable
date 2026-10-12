@@ -18,6 +18,7 @@ END;
 IF season;
   # Check there's a person's season
   IF season_pairs.count;
+    SET pair_for_seaons_link = season_pairs.first;
     WHILE (season_pair = season_pairs.next);
       SET team_season = season_pair.team_season;
       
@@ -328,7 +329,9 @@ END;
             <th>[% c.maketext("people.head-to-head.heading.opposing-team") %]</th>
             <th>[% c.maketext("people.head-to-head.heading.game-score") %]</th>
             <th>[% c.maketext("people.head-to-head.heading.scores") %]</th>
-            <th>[% c.maketext("people.head-to-head.heading.result") %]</th>
+            <th>[% c.maketext("people.head-to-head.heading.winner") %]</th>
+            <th>[% c.maketext("people.head-to-head.heading.winner-raw") %]</th>
+            <th>[% c.maketext("people.head-to-head.heading.won-by-default") %]</th>
             <th>[% c.maketext("people.head-to-head.heading.venue") %]</th>
           </tr>
         </thead>
@@ -343,14 +346,16 @@ FOREACH h2h IN head_to_heads;
   CALL date.set_locale(c.locale);
   SET score = h2h.summary_score.home _ "-" _ h2h.summary_score.away;
   
-  IF h2h.home_player.id == person.id;
+  IF h2h.home_doubles_pair.id == pair.id;
     SET location = "home";
     SET for_team = home_team;
     SET against_team = away_team;
+    SET opponents = h2h.away_doubles_pair;
   ELSE;
     SET location = "away";
     SET for_team = away_team;
     SET against_team = home_team;
+    SET opponents = h2h.home_doubles_pair;
   END;
   
   for_team_name = for_team.club_season.short_name _ " " _ for_team.name | html_entity;
@@ -399,17 +404,39 @@ FOREACH h2h IN head_to_heads;
     SET score_html = c.maketext("msg.not-applicable");
   END;
   
+  CALL c.log.debug("match / game: " _ match.team_season_home_team_season.team.id _ "/" _ match.team_season_away_team_season.team.id _ "/" _ match.scheduled_date.ymd _ "/" _ h2h.scheduled_game_number);
+  CALL c.log.debug("H2H winner: " _ h2h.winner.id _ " for team: " _ for_team.team.id _ " against team: " _ against_team.team.id);
   IF h2h.winner.id == for_team.team.id;
-    SET result = c.maketext("matches.result.win");
+    SET winner = enc_names.display_names.0 _ " &amp; " _ enc_names.display_names.1;
+    SET winner_uri = ""; # Don't link to the page we're already on
+    CALL c.log.debug("Winner is for team, don't link: " _ winner);
   ELSIF h2h.winner.id == against_team.team.id;
-    SET result = c.maketext("matches.result.loss");
+    winner1 = opponents.object_name1 | html_entity;
+    winner2 = opponents.object_name2 | html_entity;
+    SET winner = winner1 _ " &amp; " _ winner2;
+    CALL c.log.debug("Winner is against team, link to their page: " _ winner);
+    
+    IF spefic_season;
+      SET winner_uri = c.uri_for_action("/doubles/view_specific_season", [opponents.person_season_person1_season_team.person.url_key, opponents.person_season_person2_season_team.person.url_key, season.url_key]);
+    ELSE;
+      SET winner_uri = c.uri_for_action("/doubles/view_current_season", [opponents.person_season_person1_season_team.person.url_key, opponents.person_season_person2_season_team.person.url_key]);
+    END;
   ELSE;
-    SET result = c.maketext("matches.result.draw");
+    SET winner = c.maketext("matches.result.draw");
   END;
+  
+  IF winner_uri;
+    SET winner_td = '<a href="' _ winner_uri _ '">' _ winner _ '</a>';
+  ELSE;
+    SET winner_td = winner;
+  END;
+  
+  CALL c.log.debug("H2H winner_uri: " _ winner_uri);
+  CALL c.log.debug("H2H winner_td: " _ winner_td);
 -%]
           <tr>
             <td data-label="[% c.maketext("people.head-to-head.heading.season") %]"><a href="[% c.uri_for_action("/seasons/view", [match.season.url_key]) %]">[% match.season.name | html_entity %]</a></td>
-            <td data-label="[% c.maketext("people.head-to-head.heading.date") %]">[% c.i18n_datetime_format_date.format_datetime(date) %]</td>
+            <td data-label="[% c.maketext("people.head-to-head.heading.date") %]"><a href="[% c.uri_for_action("/matches/team/view_by_url_keys", match.url_keys) %]">[% c.i18n_datetime_format_date.format_datetime(date) %]</a></td>
             <td data-label="[% c.maketext("people.head-to-head.heading.date-sort") %]">[% date.ymd %]</td>
             <td data-label="[% c.maketext("people.head-to-head.heading.competition") %]"><a href="[% comp_uri %]">[% match.competition_name %]</a></td>
             <td data-label="[% c.maketext("people.head-to-head.heading.competition-sort") %]">[% match.competition_sort %]</td>
@@ -417,13 +444,22 @@ FOREACH h2h IN head_to_heads;
             <td data-label="[% c.maketext("people.head-to-head.heading.opposing-team") %]"><a href="[% against_team_uri %]">[% against_team_name %]</a></td>
             <td data-label="[% c.maketext("people.head-to-head.heading.game-score") %]">[% score %]</td>
             <td data-label="[% c.maketext("people.head-to-head.heading.scores") %]">[% score_html %]</td>
-            <td data-label="[% c.maketext("people.head-to-head.heading.result") %]"><a href="[% c.uri_for_action("/matches/team/view_by_url_keys", match.url_keys) %]">[% result %]</a></td>
+            <td data-label="[% c.maketext("people.head-to-head.heading.winner") %]">[% winner_td %]</td>
+            <td data-label="[% c.maketext("people.head-to-head.heading.winner-raw") %]">[% winner %]</td>
+            <td data-label="[% c.maketext("people.head-to-head.heading.won-by-default") %]">[% h2h.won_by_default ? c.maketext("msg.yes") : c.maketext("msg.no") %]</td>
             <td data-label="[% c.maketext("people.head-to-head.heading.venue") %]"><a href="[% c.uri_for_action("/venues/view", [match.venue.url_key]) %]">[% match.venue.name | html_entity %]</a></td>
           </tr>
 [%
 END;
 -%]
         </tbody>
+        <tfoot>
+          <tr>
+            <th>&nbsp;</th>
+            <th colspan="5">&nbsp;</th>
+            <th colspan="2">&nbsp;</th>
+            <th colspan="6">&nbsp;</th>
+        </tfoot>
       </table>
     </div>
   </div>
@@ -439,8 +475,9 @@ ELSE;
 END;
 
 SET seasons_link_text = c.maketext("doubles.seasons.count-text", enc_names.display_names.0, enc_names.display_names.1, seasons, season_text);
+SET pair_season = pair_seasons.first;
 -%]
-<div class="seasons-count"><a href="[% c.uri_for_action("/doubles/view_seasons", [season_pairs.first.person_season_person1_season_team.person.url_key, season_pairs.first.person_season_person2_season_team.person.url_key]) %]">[% seasons_link_text %]</a></div>
+<div class="seasons-count"><a href="[% c.uri_for_action("/doubles/view_seasons", [pair_season.person_season_person1_season_team.person.url_key, pair_season.person_season_person2_season_team.person.url_key]) %]">[% seasons_link_text %]</a></div>
 [%
 INCLUDE "html/includes/js-lang/datatables-lang.ttkt";
 %]
