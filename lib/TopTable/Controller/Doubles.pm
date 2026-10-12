@@ -488,7 +488,7 @@ sub head_to_head :Chained("base") :PathPart("head-to-head") :Args(0) {
     @head_to_heads = map{
       # Map our variables into the hash
       my $game = $_;
-      my ( $for_team, $against_team, $for_team_name, $against_team_name );
+      my ( $for_team, $against_team, $for_team_name, $against_team_name, $opponents );
       
       # Grah the match / teams
       my $match = $game->team_match;
@@ -503,12 +503,14 @@ sub head_to_head :Chained("base") :PathPart("head-to-head") :Args(0) {
       if ( $location eq "home" ) {
         $for_team = $home_team;
         $against_team = $away_team;
+        $opponents = $game->away_doubles_pair;
       } else {
         $for_team = $away_team;
         $against_team = $home_team;
+        $opponents = $game->home_doubles_pair;
       }
       
-      my ( $score, $leg_scores, $leg_number, $result );
+      my ( $score, $leg_scores, $leg_number, $winner );
       if ( $game->started ) {
         $leg_scores = "";
         my $detailed_scores = $game->detailed_scores;
@@ -532,12 +534,23 @@ sub head_to_head :Chained("base") :PathPart("head-to-head") :Args(0) {
         $score = $c->maketext("msg.not-applicable");
       }
       
-      if ( $game->winner->id == $for_team->id ) { 
-        $result = $c->maketext("matches.result.win");
-      } elsif ( $game->winner->id == $against_team->id ) {
-        $result = $c->maketext("matches.result.loss");
+      my $won_by_default = $game->started ? 0 : 1;
+      
+      my $winner_id;
+      if ( $game->complete ) {
+        if ( defined($game->winner) ) {
+          if ( $game->winner->id == $for_team->id ) { 
+            $winner = sprintf("%s & %s", $pair->person_season_person1_season_team->display_name, $pair->person_season_person2_season_team->display_name);
+            $winner_id = $pair->id;
+          } elsif ( $game->winner->id == $against_team->id ) {
+            $winner = sprintf("%s & %s", $opponents->person_season_person1_season_team->display_name, $opponents->person_season_person2_season_team->display_name);
+            $winner_id = $opponents->id;
+          }
+        } else {
+          $winner = $c->maketext("matches.result.draw");
+        }
       } else {
-        $result = $c->maketext("matches.result.draw");
+        $winner = $c->maketext("matches.result.not-played");
       }
       
       my $season = $match->season;
@@ -561,7 +574,10 @@ sub head_to_head :Chained("base") :PathPart("head-to-head") :Args(0) {
           display => encode_entities($season->name),
           uri => $c->uri_for_action("/seasons/view", [$season->url_key])->as_string,
         },
-        date => {display => $c->i18n_datetime_format_date->format_datetime($date)},
+        date => {
+          display => $c->i18n_datetime_format_date->format_datetime($date),
+          uri => $c->uri_for_action("/matches/team/view_by_url_keys", $match->url_keys)->as_string,
+        },
         "date-sort" => {display => $date->ymd},
         competition => {
           display => encode_entities($match->competition_name),
@@ -578,10 +594,11 @@ sub head_to_head :Chained("base") :PathPart("head-to-head") :Args(0) {
         },
         "game-score" => {display => $score},
         scores => $game->detailed_scores,
-        result => {
-          display => $result,
-          uri => $c->uri_for_action("/matches/team/view_by_url_keys", $match->url_keys)->as_string,
-        },
+        winner => $winner_id == $opponents->id
+          ? {display => encode_entities($winner), uri => $c->uri_for_action("/doubles/view_current_season", [$opponents->person_season_person1_season_team->person->url_key, $opponents->person_season_person2_season_team->person->url_key])->as_string}
+          : {display => encode_entities($winner)},
+        "winner-raw" => {display => $winner},
+        "won-by-default" => {display => $won_by_default},
         venue => {
           display => encode_entities($match->venue->name),
           uri => $c->uri_for_action("/venues/view", [$match->venue->url_key])->as_string,

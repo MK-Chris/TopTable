@@ -27,7 +27,7 @@ false;
       info: true,
       fixedHeader: true,
       language: {
-          emptyTable: dt_empty
+        emptyTable: dt_empty
       },
       columns: [{
         // Season
@@ -70,14 +70,85 @@ false;
         orderable: false,
         responsivePriority: 3
       }, {
-        // Result
-        data: "result",
+        // Winner
+        data: "winner",
         responsivePriority: 2
+      }, {
+        // Winner (raw)
+        data: "winner-raw",
+        visible: false
+      }, {
+        // Won by default
+        data: "won-by-default",
+        visible: false
       }, {
         // Venue
         data: "venue",
         responsivePriority: 9
-      }]
+      }],
+      footerCallback: function (tr, data, start, end, display) {
+        let api = this.api();
+        let winnerCounts = {};
+        let pageWinnerCounts = {};
+        let totalGames = api.column(10).data().count();
+        
+        api.column(10).data().each(function (colData) {
+          if (winnerCounts[colData]) {
+            winnerCounts[colData].won++;
+          } else {
+            winnerCounts[colData] = {won: 1};
+          }
+        });
+        
+        Object.values(winnerCounts).forEach(function (stats) {
+          stats.percentage = ((stats.won / totalGames) * 100).toFixed(2);
+        });
+        
+        let pageGames = api.column(10, {page: "current"}).data().count();
+        api.column(10, {page: "current"}).data().sort().each(function (colData) {
+          if (pageWinnerCounts[colData]) {
+            pageWinnerCounts[colData].won++;
+          } else {
+            pageWinnerCounts[colData] = {won: 1};
+          }
+        });
+        
+        Object.values(pageWinnerCounts).forEach(function (stats) {
+          stats.percentage = ((stats.won / pageGames) * 100).toFixed(2);
+        });
+        
+        if ( totalGames > 0 ) {
+          $(api.column(0).footer()).html(
+            "[% c.maketext("people.head-to-head.totals.total") %]"
+          );
+          
+          $(api.column(1).footer()).html(
+            Object.entries(winnerCounts).map(([person, stats]) => {
+              return `<span class="h2h-total-heading">${person}:</span> <span class="h2h-total-data">${stats.won} wins (${stats.percentage}%)</span>`;
+            }).join("<br>")
+          );
+          
+          if ( pageGames < totalGames ) {
+            $(api.column(6).footer()).html(
+              "[% c.maketext("people.head-to-head.totals.page-total") %]"
+            );
+            
+            $(api.column(8).footer()).html(
+              Object.entries(pageWinnerCounts).map(([person, stats]) => {
+                return `<span class="h2h-total-heading">${person}:</span> <span class="h2h-total-data">${stats.won} wins (${stats.percentage}%)</span>`;
+              }).join("<br>")
+            );
+          } else {
+            $(api.column(6).footer()).html("&nbsp;");
+            $(api.column(8).footer()).html("&nbsp;");
+          }
+        } else {
+          $(api.column(0).footer()).html("&nbsp;");
+          $(api.column(1).footer()).html("&nbsp;");
+          $(api.column(6).footer()).html("&nbsp;");
+          $(api.column(8).footer()).html("&nbsp;");
+        }
+      }
     });
     
     head_to_heads.on("draw", function () {
