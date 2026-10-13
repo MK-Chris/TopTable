@@ -20,12 +20,13 @@ false;
     let head_to_heads = $("#head-to-heads-table").DataTable({
       responsive: true,
       paging: true,
-      "pageLength": 25,
+      pageLength: 25,
       lengthChange: true,
       searching: false,
       lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
       info: true,
       fixedHeader: true,
+      order: [1, "desc"],
       language: {
         emptyTable: dt_empty
       },
@@ -123,7 +124,7 @@ false;
           );
           
           $(api.column(1).footer()).html(
-            Object.entries(winnerCounts).map(([person, stats]) => {
+            Object.entries(winnerCounts).sort().map(([person, stats]) => {
               return `<span class="h2h-total-heading">${person}:</span> <span class="h2h-total-data">${stats.won} wins (${stats.percentage}%)</span>`;
             }).join("<br>")
           );
@@ -134,7 +135,7 @@ false;
             );
             
             $(api.column(8).footer()).html(
-              Object.entries(pageWinnerCounts).map(([person, stats]) => {
+              Object.entries(pageWinnerCounts).sort().map(([person, stats]) => {
                 return `<span class="h2h-total-heading">${person}:</span> <span class="h2h-total-data">${stats.won} wins (${stats.percentage}%)</span>`;
               }).join("<br>")
             );
@@ -148,6 +149,14 @@ false;
           $(api.column(6).footer()).html("&nbsp;");
           $(api.column(8).footer()).html("&nbsp;");
         }
+      },
+      drawCallback: function () {
+        let api = this.api();
+        let dateClasses = api.column(2).header().className;
+        api.column(1).header().className = dateClasses;
+        
+        let competitionClasses = api.column(4).header().className;
+        api.column(3).header().className = competitionClasses;
       }
     });
     
@@ -173,16 +182,16 @@ false;
 [%-
   IF opposition_ti_prepopulate;
 %]
-      "prePopulate": [% opposition_ti_prepopulate %],
+      prePopulate: [% opposition_ti_prepopulate %],
 [%-
   END;
 %]
-      "tokenLimit": 1,
-      "searchingText": "[% c.maketext("tokeninput.text.searching") %]",
-      "noResultsText": "[% c.maketext("tokeninput.text.no-results") %]",
-      "hintText": "[% c.maketext("person.tokeninput.type") %]",
-      "jsonContainer":"json_search",
-      "onAdd": function(item) {
+      tokenLimit: 1,
+      searchingText: "[% c.maketext("tokeninput.text.searching") %]",
+      noResultsText: "[% c.maketext("tokeninput.text.no-results") %]",
+      hintText: "[% c.maketext("person.tokeninput.type") %]",
+      jsonContainer: "json_search",
+      onAdd: function(item) {
         // Add a new person, do the query
         $.ajax({
           url: "[% c.uri_for_action("/people/head_to_head", [person.url_key]) %]",
@@ -250,7 +259,7 @@ false;
         });
         
       },
-      "onDelete": function(item) {
+      onDelete: function(item) {
         // Remove person, delete table
         opponent_populated = false;
         head_to_heads.clear().draw();
