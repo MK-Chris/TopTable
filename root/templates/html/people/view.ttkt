@@ -1,3 +1,6 @@
+[%
+USE zeroes = format("%02d");
+%]
 <div id="tabs">
   <ul>
 [%
@@ -786,13 +789,13 @@ FOREACH h2h IN head_to_heads;
 -%]
           <tr>
             <td data-label="[% c.maketext("people.head-to-head.heading.season") %]"><a href="[% c.uri_for_action("/seasons/view", [match.season.url_key]) %]">[% match.season.name | html_entity %]</a></td>
-            <td data-label="[% c.maketext("people.head-to-head.heading.date") %]"><a href="[% c.uri_for_action("/matches/team/view_by_url_keys", match.url_keys) %]">[% c.i18n_datetime_format_date.format_datetime(date) %]</a></td>
+            <td data-label="[% c.maketext("people.head-to-head.heading.date") %]"><a href="[% c.uri_for_action("/fixtures-results/view_day_specific_season_end", [match.season.url_key, date.year, zeroes(date.month), zeroes(date.day)]) %]">[% c.i18n_datetime_format_date.format_datetime(date) %]</a></td>
             <td data-label="[% c.maketext("people.head-to-head.heading.date-sort") %]">[% date.ymd %]</td>
             <td data-label="[% c.maketext("people.head-to-head.heading.competition") %]"><a href="[% comp_uri %]">[% match.competition_name %]</a></td>
             <td data-label="[% c.maketext("people.head-to-head.heading.competition-sort") %]">[% match.competition_sort %]</td>
             <td data-label="[% c.maketext("people.head-to-head.heading.team") %]"><a href="[% for_team_uri %]" title="[% for_uri_title %]">[% for_team_html %]</a></td>
             <td data-label="[% c.maketext("people.head-to-head.heading.opposing-team") %]"><a href="[% against_team_uri %]" title="[% against_uri_title %]">[% against_team_html %]</a></td>
-            <td data-label="[% c.maketext("people.head-to-head.heading.game-score") %]">[% score %]</td>
+            <td data-label="[% c.maketext("people.head-to-head.heading.game-score") %]"><a href="[% c.uri_for_action("/matches/team/view_by_url_keys", match.url_keys) %]">[% score %]</a></td>
             <td data-label="[% c.maketext("people.head-to-head.heading.scores") %]">[% score_html %]</td>
             <td data-label="[% c.maketext("people.head-to-head.heading.winner") %]">[% winner_td %]</td>
             <td data-label="[% c.maketext("people.head-to-head.heading.winner-raw") %]">[% winner %]</td>
