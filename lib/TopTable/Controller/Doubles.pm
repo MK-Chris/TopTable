@@ -576,7 +576,7 @@ sub head_to_head :Chained("base") :PathPart("head-to-head") :Args(0) {
         },
         date => {
           display => $c->i18n_datetime_format_date->format_datetime($date),
-          uri => $c->uri_for_action("/matches/team/view_by_url_keys", $match->url_keys)->as_string,
+          uri => $c->uri_for_action("/fixtures-results/view_day_specific_season_end", [$season->url_key, $date->year, sprintf("%02d", $date->month), sprintf("%02d", $date->day)])->as_string,
         },
         "date-sort" => {display => $date->ymd},
         competition => {
@@ -592,7 +592,10 @@ sub head_to_head :Chained("base") :PathPart("head-to-head") :Args(0) {
           display => encode_entities(sprintf("%s %s", $against_team->club_season->short_name, $against_team->name)),
           uri => $c->uri_for_action("/teams/view_specific_season_by_url_key", [$against_team->club_season->club->url_key, $against_team->team->url_key, $season->url_key])->as_string,
         },
-        "game-score" => {display => $score},
+        "game-score" => {
+          display => $score,
+          uri => $c->uri_for_action("/matches/team/view_by_url_keys", $match->url_keys)->as_string,
+        },
         scores => $game->detailed_scores,
         winner => $winner_id == $opponents->id
           ? {display => encode_entities($winner), uri => $c->uri_for_action("/doubles/view_current_season", [$opponents->person_season_person1_season_team->person->url_key, $opponents->person_season_person2_season_team->person->url_key])->as_string}
