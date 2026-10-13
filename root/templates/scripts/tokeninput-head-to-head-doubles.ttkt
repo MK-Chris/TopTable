@@ -18,73 +18,74 @@ false;
     let dt_empty = opponent_populated ? "[% c.maketext("people.head-to-head.doubles.opponent-populated.no-results") %]" : "[% c.maketext("people.head-to-head.doubles.opponent-not-populated.no-results") %]";
     
     let head_to_heads = $("#head-to-heads-table").DataTable({
-      "responsive": true,
-      "paging": true,
-      "pageLength": 25,
-      "lengthChange": true,
-      "searching": false,
-      "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-      "info": true,
-      "fixedHeader": true,
-      "language": {
-        "emptyTable": dt_empty
+      responsive: true,
+      paging: true,
+      pageLength: 25,
+      lengthChange: true,
+      searching: false,
+      lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+      info: true,
+      fixedHeader: true,
+      order: [1, "desc"],
+      language: {
+        emptyTable: dt_empty
       },
-      "columns": [{
+      columns: [{
         // Season
-        "data": "season",
-        "responsivePriority": 6
+        data: "season",
+        responsivePriority: 6
       }, {
         // Date (display)
-        "data": "date",
-        "orderData": 2,
-        "responsivePriority": 4
+        data: "date",
+        orderData: 2,
+        responsivePriority: 4
       }, {
         // Date (sort)
-        "data": "date-sort",
-        "visible": false
+        data: "date-sort",
+        visible: false
       }, {
         // Competition (display)
-        "data": "competition",
-        "orderData": 4,
-        "responsivePriority": 5
+        data: "competition",
+        orderData: 4,
+        responsivePriority: 5
       }, {
         // Competition (rank)
-        "data": "competition-sort",
-        "visible": false
+        data: "competition-sort",
+        visible: false
       }, {
         // For team
-        "data": "for-team",
-        "responsivePriority": 7
+        data: "for-team",
+        responsivePriority: 7
       }, {
         // Against team
-        "data": "against-team",
-        "responsivePriority": 8
+        data: "against-team",
+        responsivePriority: 8
       }, {
         // Game score
-        "data": "game-score",
+        data: "game-score",
         "orderable": false,
-        "responsivePriority": 1
+        responsivePriority: 1
       }, {
         // Scores (legs)
-        "data": "scores",
+        data: "scores",
         "orderable": false,
-        "responsivePriority": 3
+        responsivePriority: 3
       }, {
         // Winner
-        "data": "winner",
-        "responsivePriority": 2
+        data: "winner",
+        responsivePriority: 2
       }, {
         // Winner (raw)
-        "data": "winner-raw",
-        "visible": false
+        data: "winner-raw",
+        visible: false
       }, {
         // Won by default
-        "data": "won-by-default",
-        "visible": false
+        data: "won-by-default",
+        visible: false
       }, {
         // Venue
-        "data": "venue",
-        "responsivePriority": 9
+        data: "venue",
+        responsivePriority: 9
       }],
       footerCallback: function (tr, data, start, end, display) {
         let api = this.api();
@@ -123,7 +124,7 @@ false;
           );
           
           $(api.column(1).footer()).html(
-            Object.entries(winnerCounts).map(([person, stats]) => {
+            Object.entries(winnerCounts).sort().map(([person, stats]) => {
               return `<span class="h2h-total-heading">${person}:</span> <span class="h2h-total-data">${stats.won} wins (${stats.percentage}%)</span>`;
             }).join("<br>")
           );
@@ -134,7 +135,7 @@ false;
             );
             
             $(api.column(8).footer()).html(
-              Object.entries(pageWinnerCounts).map(([person, stats]) => {
+              Object.entries(pageWinnerCounts).sort().map(([person, stats]) => {
                 return `<span class="h2h-total-heading">${person}:</span> <span class="h2h-total-data">${stats.won} wins (${stats.percentage}%)</span>`;
               }).join("<br>")
             );
@@ -148,6 +149,14 @@ false;
           $(api.column(6).footer()).html("&nbsp;");
           $(api.column(8).footer()).html("&nbsp;");
         }
+      },
+      drawCallback: function () {
+        let api = this.api();
+        let dateClasses = api.column(2).header().className;
+        api.column(1).header().className = dateClasses;
+        
+        let competitionClasses = api.column(4).header().className;
+        api.column(3).header().className = competitionClasses;
       }
     });
     
@@ -177,12 +186,12 @@ false;
 [%-
   END;
 %]
-      "tokenLimit": 2,
-      "searchingText": "[% c.maketext("tokeninput.text.searching") %]",
-      "noResultsText": "[% c.maketext("tokeninput.text.no-results") %]",
-      "hintText": "[% c.maketext("person.tokeninput.type") %]",
-      "jsonContainer":"json_search",
-      "onAdd": function(item) {
+      tokenLimit: 2,
+      searchingText: "[% c.maketext("tokeninput.text.searching") %]",
+      noResultsText: "[% c.maketext("tokeninput.text.no-results") %]",
+      hintText: "[% c.maketext("person.tokeninput.type") %]",
+      jsonContainer: "json_search",
+      onAdd: function(item) {
         let populated = opponents_input.tokenInput("get");
         
         // Add a new person, do the query if we have two
@@ -255,7 +264,7 @@ false;
           });
         }
       },
-      "onDelete": function(item) {
+      onDelete: function(item) {
         // Remove person, delete table
         opponent_populated = false;
         head_to_heads.clear().draw();

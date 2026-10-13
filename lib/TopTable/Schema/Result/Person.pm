@@ -1255,7 +1255,7 @@ sub head_to_heads {
       }],
     }, qw( season venue )],
   }, qw( home_player away_player team_match_legs )],
-    order_by => {-asc => [qw( season.start_date season.end_date team_match.played_date )]},
+    order_by => {-desc => [qw( season.start_date season.end_date team_match.played_date )]},
   });
 }
 
