@@ -1523,10 +1523,25 @@ msgid "people.summary.officialdoms"
 msgstr "Official positions"
 
 msgid "people.head-to-head.singles.all-seasons.notice"
-msgstr "This form is not specific to the season you're viewing and will show all sets between %1 and the opposition person you enter, regardless of the season it was played in."
+msgstr "This form is not specific to the season you&#39;re viewing and will show all sets between %1 and the opposition person you enter, regardless of the season it was played in."
 
 msgid "people.head-to-head.doubles.all-seasons.notice"
-msgstr "This form is not specific to the season you're viewing and will show all sets between %1 &amp; %2 and the opposition pairing you enter, regardless of the season it was played in."
+msgstr "This form is not specific to the season you&#39;re viewing and will show all sets between %1 &amp; %2 and the opposition pairing you enter, regardless of the season it was played in."
+
+msgid "people.frequent-opponents.all-seasons.notice"
+msgstr "This table is not specific to the season you&#39;re viewing and will show the most frequent opposition for %1 across all seasons."
+
+msgid "people.frequent-opponents.heading.position"
+msgstr "#"
+
+msgid "people.frequent-opponents.heading.opponent"
+msgstr "Opponent"
+
+msgid "people.frequent-opponents.heading.opponent-sort"
+msgstr "Opponent (sortable)"
+
+msgid "people.frequent-opponents.heading.games-played"
+msgstr "Sets played"
 
 msgid "people.head-to-head.singles.form.field.opponent"
 msgstr "Search for an opponent"
@@ -1695,6 +1710,9 @@ msgstr "%1 summary"
 
 msgid "people.tabs.head-to-head"
 msgstr "Head-to-head"
+
+msgid "people.tabs.frequent-opponents"
+msgstr "Frequent opponents"
 
 msgid "people.transfer-season"
 msgstr "Transfer season statistics"

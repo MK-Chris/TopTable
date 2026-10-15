@@ -1259,6 +1259,25 @@ sub head_to_heads {
   });
 }
 
+=head2 frequent_opponents
+
+Get the list of people this person has gone head-to-head with ordered by the number of times they've played against each other.
+
+=cut
+
+sub frequent_opponents {
+  my ( $self, $params ) = @_;
+  my $schema = $self->result_source->schema;
+  
+  return $schema->resultset("VwSinglesFrequentOpponent")->search([{
+    player1_id => $self->id,
+  }, {
+    player2_id => $self->id,
+  }], {
+    order_by => {-desc => "total_games"},
+  });
+}
+
 =head2 plays_for
 
 Returns true if the person plays for the specified team in the specified season.

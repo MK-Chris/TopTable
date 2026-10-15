@@ -33,6 +33,7 @@ END;
 -%]
     <li><a href="#summary">[% c.maketext("people.tabs.season-summary", season_html) %]</a></li>
     <li><a href="#head-to-head">[% c.maketext("people.tabs.head-to-head") %]</a></li>
+    <li><a href="#frequent-opponents">[% c.maketext("people.tabs.frequent-opponents") %]</a></li>
   </ul>
 [%
 IF teams.size;
@@ -276,7 +277,7 @@ IF teams.size;
           <td data-label="[% c.maketext("people.singles-games.opponent") %]">
             <a href="[% opponent_uri %]">[% opponent_display_name %]</a>
             
-            <span class="h2h-icon-trigger" data-h2h-uri="[% h2h_uri %]" data-opponent="[% opponent.url_key %]" data-icon="[% c.uri_for("/static/images/icons/headtohead-32.png") %]" data-button-title="[% h2h_desc %]"></span>
+            <span class="h2h-icon-trigger" data-h2h-uri="[% h2h_uri %]" data-opponent="[% opponent.url_key %]" data-opponent-name="[% opponent_display_name %]"  data-icon="[% c.uri_for("/static/images/icons/headtohead-32.png") %]" data-button-title="[% h2h_desc %]"></span>
           </td>
           <td data-label="[% c.maketext("people.games.score") %]">[% score_html %]</td>
           <td data-label="[% c.maketext("people.games.result") %]"><a href="[% c.uri_for_action("/matches/team/view_by_url_keys", match.url_keys) %]">[% result %]</a></td>
@@ -662,7 +663,7 @@ END;
   </div>
   <div id="head-to-head">
     <div class="info-message-small"><span class="message-text">[% c.maketext("people.head-to-head.singles.all-seasons.notice", enc_first_name) %]</span></div>
-    <form action="[% c.uri_for_action("/people/head_to_head", [person.url_key]) %]" method="post">
+    <form action="[% c.uri_for_action("/people/head_to_head", [person.url_key]) %]" method="post" id="h2h-lookup-form">
     <div class="label-field-container">
       <label for="opponent">[% c.maketext("people.head-to-head.form.field.opponent") %]</label>
       <div class="field-container">
@@ -814,6 +815,32 @@ END;
             <th colspan="6">&nbsp;</th>
         </tfoot>
       </table>
+    </div>
+  </div>
+  <div id="frequent-opponents">
+    <div class="info-message-small"><span class="message-text">[% c.maketext("people.frequent-opponents.all-seasons.notice", enc_first_name) %]</span></div>
+    <div id="frequent-opponents-data" style="display:none;" data-uri="[% c.uri_for_action("/people/frequent_opponents", [person.url_key]) %]" data-txt-ajax-error-refresh="[% c.maketext("ajax.error.refresh-advice") %]"></div>
+[%
+SET h2h_uri = c.uri_for_action("/people/view_current_season", [person.url_key]);
+h2h_uri.fragment("head-to-head");
+-%]
+
+    <div id="h2h-config" style="display:none;" data-h2h-uri="[% h2h_uri %]" data-icon="[% c.uri_for("/static/images/icons/headtohead-32.png") %]"></div>
+    <div class="table-wrap">
+      <div class="table-layout table-layout-centre">
+        <table id="frequent-opponents-table" class="stripe hover order-column row-border" style="width: 100%;">
+          <thead>
+            <tr>
+              <th>[% c.maketext("people.frequent-opponents.heading.position") %]</th>
+              <th>[% c.maketext("people.frequent-opponents.heading.opponent") %]</th>
+              <th>[% c.maketext("people.frequent-opponents.heading.opponent-sort") %]</th>
+              <th>[% c.maketext("people.frequent-opponents.heading.games-played") %]</th>
+            </tr>
+          </thead>
+          <tbody>
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
 </div>
