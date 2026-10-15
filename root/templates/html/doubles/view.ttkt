@@ -255,7 +255,7 @@ IF season;
           <td data-label="[% c.maketext("people.doubles-games.opponents") %]">
             <a href="[% opponents_uri %]">[% opponent1_display_name %] [% c.maketext("matches.game.result.doubles-and") %] [% opponent2_display_name %]</a>
             
-            <span class="h2h-icon-trigger" data-h2h-uri="[% h2h_uri %]" data-opponent1="[% opponent1.person.url_key %]" data-opponent2="[% opponent2.person.url_key %]" data-icon="[% c.uri_for("/static/images/icons/headtohead-32.png") %]" data-button-title="[% h2h_desc %]"></span>
+            <span class="h2h-icon-trigger" data-h2h-uri="[% h2h_uri %]" data-opponent1="[% opponent1.person.url_key %]" data-opponent1-name="[% opponent1.person.display_name | html_entity %]" data-opponent2="[% opponent2.person.url_key %]" data-opponent2-name="[% opponent2.person.display_name | html_entity %]" data-icon="[% c.uri_for("/static/images/icons/headtohead-32.png") %]" data-button-title="[% h2h_desc %]"></span>
           </td>
           <td data-label="[% c.maketext("people.games.score") %]">[% score_html %]</td>
           <td data-label="[% c.maketext("people.games.result") %]"><a href="[% c.uri_for_action("/matches/team/view_by_url_keys", match.url_keys) %]">[% result %]</a></td>

@@ -419,8 +419,8 @@ sub view_finalise :Private {
       $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js", {v => 2}),
       $c->uri_for("/static/script/plugins/toastmessage/jquery.toastmessage.js"),
       $c->uri_for("/static/script/standard/messages.js"),
-      $c->uri_for("/static/script/head-to-heads/head-to-head-buttons.js"),
-      $c->uri_for("/static/script/people/view.js", {v => 3}),
+      $c->uri_for("/static/script/head-to-heads/head-to-head-buttons.js", {v => 2}),
+      $c->uri_for("/static/script/people/view.js", {v => 4}),
     ],
     external_styles => [
       $c->uri_for("/static/css/responsive-tabs/responsive-tabs.css"),
@@ -687,6 +687,118 @@ sub head_to_head :Chained("base") :PathPart("head-to-head") :Args(0) {
     $c->detach;
     return;
   }
+}
+
+=head2 frequent_opponents
+
+AJAX query to return a list of frequent opponents for a given person.
+
+=cut
+
+sub frequent_opponents :Chained("base") :PathPart("frequent-opponents") :Args(0) {
+  my ( $self, $c ) = @_;
+  my $person = $c->stash->{person};
+  my $enc_display_name = $c->stash->{enc_display_name};
+  my $h2h_uri = $c->uri_for_action("/people/view_current_season", [$person->url_key]);
+  $h2h_uri->fragment("head-to-head");
+  
+  # Get the opponents
+  my @opponents = $person->frequent_opponents;
+  
+  # Map into a hashref with the ID and name
+  my $position = 0;
+  my $loop_count = 0;
+  my ( $previous_pos, $previous_total );
+  @opponents = map {
+    # Set up the opponent data hashref
+    $loop_count++;
+    my $opponent = {};
+    my $position_display; # This may not be the same as $position, as we may need to add an = before it, if it's equal to the previous row
+    my $total_games = $_->total_games;
+    
+    my $display_name1 = encode_entities($_->player1_display_name);
+    my $first_name1 = encode_entities($_->player1_first_name);
+    my $surname1 = encode_entities($_->player1_surname);
+    
+    my $display_name2 = encode_entities($_->player2_display_name);
+    my $first_name2 = encode_entities($_->player2_first_name);
+    my $surname2 = encode_entities($_->player2_surname);
+    my ( $h2h_title, $h2h_opponent_url_key );
+    
+    if ( $_->player1_id == $person->id ) {
+      # If the player 1 ID matches the person we're viewing, player 2 must be the opponent
+      $h2h_title = $c->maketext("people.links.head-to-head.singles", $enc_display_name, $display_name2);
+      $h2h_opponent_url_key = $_->player2_url_key;
+      
+      $opponent->{"opponent-name"} = {
+        display => $_->player2_display_name,
+        uri => $c->uri_for_action("/people/view_current_season", [$_->player2_url_key])->as_string,
+      };
+      
+      $opponent->{"opponent-name-sortable"} = {display => sprintf("%s, %s", $surname2, $first_name2)};
+    } else {
+      # Otherwise, player 1 is the opponent (player 2 must be the person we're viewing)
+      $h2h_title = $c->maketext("people.links.head-to-head.singles", $enc_display_name, $display_name1);
+      $h2h_opponent_url_key = $_->player1_url_key;
+      
+      $opponent->{"opponent-name"} = {
+        display => $_->player1_display_name,
+        uri => $c->uri_for_action("/people/view_current_season", [$_->player1_url_key])->as_string,
+      };
+      
+      $opponent->{"opponent-name-sortable"} = {display => sprintf("%s %s", $surname1, $first_name1)};
+    }
+    
+    my %h2h_data = (
+      title => $h2h_title,
+      opponent_url_key => $h2h_opponent_url_key,
+      opponent_name => $opponent->{"opponent-name"}{display},
+    );
+    
+    # Setup the position of this opponent in the table
+    if ( defined($previous_pos) ) {
+      if ( defined($previous_total) ) {
+        if ( $previous_total == $total_games ) {
+          # Total matches the previous total, just display the same value
+          $position_display = $position;
+        } else {
+          # Total games doesn't match the previous one, so set it to the loop counter (which keeps a running total of people so far)
+          $position = $loop_count;
+          $position_display = $position; # Display matches the position, since we've increased it
+          $previous_total = $total_games; # Set the previous total to this total for the next iteration / check
+        }
+      } else {
+        # If we don't have a last position, increase this one, and set the last position
+        $position++;
+        $previous_pos = $position;
+        $position_display = $position; # Display matches the position, since this is the first one
+        $previous_total = $total_games;
+      }
+    } else {
+      # If we don't have a last position, increase this one, and set the last position
+      $position++;
+      $previous_pos = $position;
+      $position_display = $position; # Display matches the position, since this is the first one
+      $previous_total = $total_games;
+    }
+    
+    # Set the total games and position
+    $opponent->{"total-games"} = {display => $total_games};
+    $opponent->{position} = {display => $position_display};
+    $opponent->{"h2h-data"} = \%h2h_data;
+    
+    $opponent;
+  } @opponents;
+  
+  # Stash the data
+  $c->stash({
+      json_data => {
+        table => \@opponents,
+      }
+  });
+  
+  # Detach to the JSON view
+  $c->detach($c->view("JSON"));
 }
 
 =head2 create
