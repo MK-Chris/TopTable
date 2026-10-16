@@ -3298,6 +3298,15 @@ msgstr "The game specified is invalid."
 msgid "matches.game.update-doubles.error.not-doubles-game"
 msgstr "Set %1 is not a doubles set."
 
+msgid "matches.game.update-doubles.error.already-void"
+msgstr "Set %1 is already marked as void; the doubles pairs can't be changed or removed until it's been unvoided."
+
+msgid "matches.game.update-doubles.error.already-awarded"
+msgstr "Set %1 is already marked as awarded; the doubles pairs can't be changed or removed until it's been unawarded."
+
+msgid "matches.game.update-doubles.error.already-complete"
+msgstr "Set %1 already has a score filled out; to change or remove the doubles pair, you must delete the score, change the doubles pair and then re-enter the score."
+
 msgid "matches.game.update-doubles.error.location-invalid"
 msgstr "The location must be specified as &#39;home&#39; or &#39;away&#39; to indicate which team is being updated."
 
