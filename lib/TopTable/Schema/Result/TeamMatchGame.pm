@@ -3061,543 +3061,314 @@ sub update_doubles_pair {
     # Error, season is complete
     push(@{$response->{error}}, $lang->maketext("matches.update.error.season-complete"));
     return $response;
-  } else {
-    # Check the game we're updating is actually a doubles game
-    if ( $self->doubles_game ) {
-      # Check we have a location
-      if ( defined($location) and ( $location eq "home" or $location eq "away" ) ) {
-        # Validate the players or the doubles pair.  Regardless of how specified, we need both the doubles pair and each player, so will look
-        # one up from the other.  The doubles pair will be created if it doesn't exist.
-        $players = [$players] unless ref($players) eq "ARRAY";
-        my ( $doubles_pair, $player1, $player2 );
-        my $player_count = scalar @{$players};
-        my $action = "add"; # default, unless nothing is supplied in the players list
-        if ( $player_count == 0 ) {
-          # Remove the doubles pair
-          $action = "remove";
-        } elsif ( $player_count == 2 ) {
-          # Two elements - should be player 1 and player 2 (order doesn't matter)
-          ( $player1, $player2 ) = ( $players->[0], $players->[1] );
-        } else {
-          # More than two elements is an error
-          push(@{$response->{error}}, $lang->maketext("matches.game.update-doubles.error.wrong-number-of-players"));
-          return $response;
-        }
-        
-        # Get the team and relevant DB fields for updating
-        my ( $location_team, $location_doubles_pair, $team_legs_won, $opposition_legs_won, $team_points_won, $opposition_points_won );
-        
-        if ( $location eq "home" ) {
-          $location_team = "team_season_home_team_season";
-          $location_doubles_pair = "home_doubles_pair";
-          $team_legs_won = "home_team_legs_won";
-          $opposition_legs_won = "away_team_legs_won";
-          $team_points_won = "home_team_points_won";
-          $opposition_points_won = "away_team_points_won";
-        } else {
-          $location_team = "team_season_away_team_season";
-          $location_doubles_pair = "away_doubles_pair";
-          $team_legs_won = "away_team_legs_won";
-          $opposition_legs_won = "home_team_legs_won";
-          $team_points_won = "away_team_points_won";
-          $opposition_points_won = "home_team_points_won";
-        }
-        
-        my $team = $match->$location_team->team;
-        my $team_name = sprintf("%s %s", $team->club->short_name, $team->name);
-        my $enc_team_name = encode_entities($team_name);
-        my $og_doubles_pair = $self->$location_doubles_pair;
-        
-        my $transaction = $self->result_source->schema->txn_scope_guard;
-        
-        my ( @og_pair_stats, @og_player_stats, %og_stats, %og_stats_deletable, $round_team, $tourn_team, $tourn_round, $tourn_group );
-        my $tourn_match = defined($match->tournament_round) ? 1 : 0;
-        my $tourn_group_round = ($tourn_match and defined($match->tournament_group)) ? 1 : 0;
-        
-        # Grab the tournament / round team objects up here, so we can do the lookups 
-        if ( $tourn_match ) {
-          # This match is part of a tournament, find the team membership.  No need to check if the tournament round team exists, as the team is not user defined,
-          # it's taken from a match object - we'll never have a match in a tournament round that doesn't contain any of the teams in that round.
-          $tourn_round = $match->tournament_round;
-          $round_team = $tourn_round->find_related("tournament_round_teams", {"tournament_team.team" => $team->id}, {prefetch => [qw( tournament_team )]});
-          $tourn_team = $round_team->tournament_team;
-          $tourn_group = $match->tournament_group if $tourn_group_round;
-        }
-        
-        if ( defined($og_doubles_pair) ) {
-          # If we've had an original doubles pair, do all the lookups for them
-          # The pairing has changed, and there was originally a pair entered.  We need to transfer stats for this
-          # game from one to the other
-          if ( $tourn_match ) {
-            # This match is part of a tournament, find the team membership.  No need to check if the tournament round team exists, as the team is not user defined,
-            # it's taken from a match object - we'll never have a match in a tournament round that doesn't contain any of the teams in that round.
-            # Get the people involved so we can look based on their IDs.
-            my $og_player1 = $og_doubles_pair->person_season_person1_season_team->person;
-            my $og_player2 = $og_doubles_pair->person_season_person2_season_team->person;
-            
-            # Tournament pair
-            my $og_tourn_pair = $tourn_team->find_related("tournaments_doubles", {
-              "season_pair.id" => $og_doubles_pair->id,
-              "me.event" => $match->tournament_round->tournament->event_season->event->id,
-              "me.season" => $season->id,
-            }, {
-              join => [qw( season_pair )],
-              prefetch => [qw( tournament_rounds_doubles )],
-            });
-            
-            # Round pair
-            my $og_round_pair = $og_tourn_pair->find_related("tournament_rounds_doubles", {
-              "tournament_team.id" => $tourn_team->id,
-              "tournament_round.id" => $match->tournament_round->id,
-            }, {
-              prefetch => [qw( tournament_pair )],
-              join => [qw( tournament_round ), {
-                tournament_pair => [qw( season_pair )],
-                tournament_round_team => [qw( tournament_team )],
-              }],
-            });
-            
-            # Lookup player 1 and 2 stats
-            my $og_tourn_player1 = $tourn_team->find_related("tournament_people", {
-              "me.event" => $match->tournament_round->tournament->event_season->event->id,
-              "me.season" => $season->id,
-              "me.person" => $og_player1->id,
-            }, {
-              prefetch => [qw( tournament_round_people ), {
-                person_season => [qw( person )],
-              }],
-            });
-            
-            my $og_round_player1 = $og_tourn_player1->find_related("tournament_round_people", {
-              "tournament_team.id" => $tourn_team->id,
-              "tournament_round.id" => $match->tournament_round->id,
-            }, {
-              join => [qw( tournament_round ), {
-                tournament_person => [qw( tournament_team )],
-              }],
-            });
-            
-            my $og_tourn_player2 = $tourn_team->find_related("tournament_people", {
-              "me.event" => $match->tournament_round->tournament->event_season->event->id,
-              "me.season" => $season->id,
-              "me.person" => $og_player2->id,
-            }, {
-              prefetch => [qw( tournament_round_people ), {
-                person_season => [qw( person )],
-              }],
-            });
-            
-            my $og_round_player2 = $og_tourn_player2->find_related("tournament_round_people", {
-              "tournament_team.id" => $tourn_team->id,
-              "tournament_round.id" => $match->tournament_round->id,
-            }, {
-              join => [qw( tournament_round ), {
-                tournament_person => [qw( tournament_team )],
-              }],
-            });
-            
-            @og_pair_stats = ( $og_tourn_pair, $og_round_pair );
-            @og_player_stats = ( $og_tourn_player1, $og_round_player1, $og_tourn_player2, $og_round_player2 );
-          } else {
-            # League match
-            @og_pair_stats = ( $og_doubles_pair );
-            @og_player_stats = ( $og_doubles_pair->person_season_person1_season_team, $og_doubles_pair->person_season_person2_season_team );
-          }
-          
-          # Add to a hash so we can loop through keys and do all the updates at once
-          %og_stats = (pair => \@og_pair_stats, player => \@og_player_stats);
-          %og_stats_deletable = $tourn_match
-           ? (pair => \@og_pair_stats, player => \@og_player_stats) # Tournament match, everything is deletable if relevant (no games played)
-           : (pair => \@og_pair_stats, player => []); # League match, the pair is deletable, but the players are not
-        }
-        
-        # Check if we are adding or removing - if $player_ids is undefined, we'll remove
-        if ( $action eq "add" ) {
-          # Add - first check the players are valid people
-          if ( defined($player1) ) {
-            $player1 = $schema->resultset("Person")->find_id_or_url_key($player1) unless $player1->isa("TopTable::Schema::Result::Person");
-            push(@{$response->{error}}, $lang->maketext("matches.game.update-doubles.error.$location-player1-invalid")) unless defined($player1);
-          } else {
-            # We shouldn't get here, but just to make sure
-            push(@{$response->{error}}, $lang->maketext("matches.game.update-doubles.error.$location-player1-blank"));
-          }
-          
-          if ( defined($player2) ) {
-            $player2 = $schema->resultset("Person")->find_id_or_url_key($player2) unless $player2->isa("TopTable::Schema::Result::Person");
-            push(@{$response->{error}}, $lang->maketext("matches.game.update-doubles.error.$location-player2-invalid")) unless defined($player2);
-          } else {
-            # We shouldn't get here, but just to make sure
-            push(@{$response->{error}}, $lang->maketext("matches.game.update-doubles.error.$location-player2-blank"));
-          }
-          
-          # If either player is invalid, we return at this point, as they are fatal errors
-          if ( scalar @{$response->{error}} ) {
-            return $response;
-            $transaction->rollback;
-          }
-          
-          my $enc_player1_display = encode_entities($player1->display_name);
-          my $enc_player2_display = encode_entities($player2->display_name);
-          
-          # Check we don't have two references to the same person
-          push(@{$response->{error}}, $lang->maketext("matches.game.update-doubles.error.players-identical", $location)) if $player1->id == $player2->id;
-          
-          # Return if we have an error here
-          return $response if scalar @{$response->{error}};
-          
-          # Get person season for this team if there is one so we can search from the doubles pair from that
-          
-          # Work out if either player is a loan player
-          my $person1_season = $player1->find_related("person_seasons", {season => $season->id, team => $team->id});
-          my $person2_season = $player2->find_related("person_seasons", {season => $season->id, team => $team->id});
-          
-          # Now check if there's a doubles pairing with the two players
-          my $doubles_pair1 = $person1_season->search_related("doubles_pairs_person1_season_teams", {season => $season->id, person2 => $player2->id, team => $team->id});
-          my $doubles_pair2 = $person1_season->search_related("doubles_pairs_person2_season_teams", {season => $season->id, person1 => $player2->id, team => $team->id});
-          $doubles_pair = $doubles_pair1->union_all($doubles_pair2)->first;
-          
-          # Work out if either player is a loan player
-          my $person1_active_season = $player1->search_related("person_seasons", {season => $season->id, team => $team->id, team_membership_type => "active"}, {rows => 1})->single;
-          my $person2_active_season = $player2->search_related("person_seasons", {season => $season->id, team => $team->id, team_membership_type => "active"}, {rows => 1})->single;
-          my $person1_loan = defined($person1_active_season) ? 0 : 1;
-          my $person2_loan = defined($person2_active_season) ? 0 : 1;
-          
-          # If the doubles pair was returned okay, we don't need to do any more verification, just use the existing one
-          if ( !defined($doubles_pair) ) {
-            # The doubles pair doesn't exist, so we need to verify the people specified are eligible to play in the
-            # doubles game; to do this we first need to get a list of eligible players (which will include all players
-            # registered for the team plus any players playing as a loan player if appropriate).
-            my @player_list = @{$self->team_match->eligible_players({location => $location})};
-            
-            # Check each player against the list of eligible players - start off with both eligible flags set to false
-            my $player1_eligible = 0;
-            my $player2_eligible = 0;
-            foreach my $eligible_player ( @player_list ) {
-              if ( $eligible_player->id == $player1->id ) {
-                # If player 1 is eligible, set the flag to true
-                $player1_eligible = 1;
-              } elsif ( $eligible_player->id == $player2->id ) {
-                # If player 1 is eligible, set the flag to true
-                $player2_eligible = 1;
-              }
-              
-              # Don't loop through any more if we've already established both players are eligible
-              last if $player1_eligible and $player2_eligible;
-            }
-          
-            # Advise about ineligible players if either are
-            push(@{$response->{error}}, $lang->maketext("matches.game.update-doubles.error.player-ineligible", $enc_player1_display, $enc_team_name)) unless $player1_eligible;
-            push(@{$response->{error}}, $lang->maketext("matches.game.update-doubles.error.player-ineligible", $enc_player2_display, $enc_team_name)) unless $player2_eligible;
-            
-            return $response if scalar @{$response->{error}};
-            
-            # Now do the create
-            $doubles_pair = $person1_season->create_related("doubles_pairs_person1_season_teams", {
-              person2 => $player2->id,
-              season => $season->id,
-              team => $team->id,
-              person1_loan => $person1_loan,
-              person2_loan => $person2_loan,
-            });
-          }
-          
-          # Now regardless we have a doubles pair, whether we created or used the existing one, so finally we can set the doubles team for this game
-          $self->$location_doubles_pair($doubles_pair);
-          
-          # Update the statistics for the original doubles pair if it's changed and there was an original doubles pair specified
-          if ( $self->is_column_changed($location_doubles_pair) ) {
-            # The doubles pair column has changed, so we need to recalculate some values
-            # Grab some of the values we'll be checking frequently
-            my $complete = $self->complete;
-            my $winner = defined($self->winner) ? $self->winner->id : undef;
-            my $team_id = $match->$location_team->id;
-            
-            if ( defined($og_doubles_pair) ) {
-              # There is an original doubles pair to take some games off
-              foreach my $stat_type ( keys %og_stats ) {
-                # Field names - setup initial names, as these bits don't change regardless.  If it's an individual stat, we need to prefix "doubles_"
-                my ( $fld_games_played, $fld_games_won, $fld_games_lost, $fld_games_drawn, $fld_legs_played, $fld_legs_won, $fld_legs_lost, $fld_points_played, $fld_points_won, $fld_points_lost, $fld_average_game_wins, $fld_average_leg_wins, $fld_average_point_wins );
-                
-                if ( $stat_type eq "pair" ) {
-                  $fld_games_played = "games_played";
-                  $fld_games_won = "games_won";
-                  $fld_games_lost = "games_lost";
-                  $fld_games_drawn = "games_drawn";
-                  $fld_legs_played = "legs_played";
-                  $fld_legs_won = "legs_won";
-                  $fld_legs_lost = "legs_lost";
-                  $fld_points_played = "points_played";
-                  $fld_points_won = "points_won";
-                  $fld_points_lost = "points_lost";
-                  $fld_average_game_wins = "average_game_wins";
-                  $fld_average_leg_wins = "average_leg_wins";
-                  $fld_average_point_wins = "average_point_wins";
-                } else {
-                  $fld_games_played = "doubles_games_played";
-                  $fld_games_won = "doubles_games_won";
-                  $fld_games_lost = "doubles_games_lost";
-                  $fld_games_drawn = "doubles_games_drawn";
-                  $fld_legs_played = "doubles_legs_played";
-                  $fld_legs_won = "doubles_legs_won";
-                  $fld_legs_lost = "doubles_legs_lost";
-                  $fld_points_played = "doubles_points_played";
-                  $fld_points_won = "doubles_points_won";
-                  $fld_points_lost = "doubles_points_lost";
-                  $fld_average_game_wins = "doubles_average_game_wins";
-                  $fld_average_leg_wins = "doubles_average_leg_wins";
-                  $fld_average_point_wins = "doubles_average_point_wins";
-                }
-                
-                foreach my $stat ( @{$og_stats{$stat_type}} ) {
-                  # Games - remove as appropriate from played, won, lost and drawn
-                  if ( $complete ) {
-                    # If the game is complete, we have to remove one played from the original pair
-                    $stat->$fld_games_played($stat->$fld_games_played - 1);
-                    
-                    if ( defined($winner) ) {
-                      # If we have a winner, we have to remove 1 from either games won or lost, depending on the winner
-                      if ( $winner == $team_id ) {
-                        # Game won by the doubles pairing we're changing
-                        $stat->$fld_games_won($stat->$fld_games_won - 1);
-                      } else {
-                        # Game lost by the doubles pairing we're changing
-                        $stat->$fld_games_lost($stat->$fld_games_lost - 1);
-                      }
-                    } else {
-                      # Game complete but no winner: draw (only relevant for games with a static number of legs)
-                      $stat->$fld_games_drawn($stat->$fld_games_drawn - 1);
-                    }
-                  }
-                  
-                  # Legs
-                  $stat->$fld_legs_played($stat->$fld_legs_played - ( $self->$team_legs_won + $self->$opposition_legs_won ));
-                  $stat->$fld_legs_won($stat->$fld_legs_won - $self->$team_legs_won);
-                  $stat->$fld_legs_lost($stat->$fld_legs_lost - $self->$opposition_legs_won);
-                  
-                  # Points
-                  $stat->$fld_points_played($stat->$fld_points_played - ( $self->$team_points_won + $self->$opposition_points_won ));
-                  $stat->$fld_points_won($stat->$fld_points_won - $self->$team_points_won);
-                  $stat->$fld_points_lost($stat->$fld_points_lost - $self->$opposition_points_won);
-                  
-                  # Game / leg / point averages
-                  $stat->$fld_games_played ? $stat->$fld_average_game_wins(( $stat->$fld_games_won / $stat->$fld_games_played ) * 100) : $stat->$fld_average_game_wins(0);
-                  $stat->$fld_legs_played ? $stat->$fld_average_leg_wins(( $stat->$fld_legs_won / $stat->$fld_legs_played ) * 100) : $stat->$fld_average_leg_wins(0);
-                  $stat->$fld_points_played ? $stat->$fld_average_point_wins(( $stat->$fld_points_won / $stat->$fld_points_played ) * 100) : $stat->$fld_average_point_wins(0);
-                  
-                  # All fields have been calculated, do the update
-                  $stat->update;
-                }
-              }
-            }
-            
-            # Stats arrays - league matches will only have one item per array (season stats for the pair / players)
-            # tournaments will have at least one - stats for the pair / player in the tournament; if it's a group round,
-            # there will be a stats element for that too
-            my ( @pair_stats, @player_stats );
-            
-            if ( $tourn_match ) {
-              # This match is part of a tournament, find the team membership.  No need to check if the tournament round team exists, as the team is not user defined,
-              # it's taken from a match object - we'll never have a match in a tournament round that doesn't contain any of the teams in that round.
-              # Tournament pair
-              my $tourn_pair = $tourn_team->find_or_create_related("tournaments_doubles", {
-                "me.season_pair" => $doubles_pair->id,
-                "me.event" => $match->tournament_round->tournament->event_season->event->id,
-                "me.season" => $season->id,
-                "me.tournament_team" => $tourn_team->id,
-              }, {
-                join => [qw( season_pair )],
-                prefetch => [qw( tournament_rounds_doubles )],
-              });
-              
-              # Round pair
-              my $round_pair = $tourn_pair->find_or_create_related("tournament_rounds_doubles", {
-                "me.tournament_round_team" => $round_team->id,
-                "me.tournament_round" => $match->tournament_round->id,
-                "me.tournament_group" => $tourn_group_round ? $tourn_group->id : undef,
-              }, {
-                prefetch => [qw( tournament_pair tournament_round_team )],
-              });
-              
-              # Lookup player 1 and 2 stats
-              my $tourn_player1 = $tourn_team->find_or_create_related("tournament_people", {
-                "me.event" => $match->tournament_round->tournament->event_season->event->id,
-                "me.season" => $season->id,
-                "me.person" => $player1->id,
-                "me.team" => $team->id,
-              }, {
-                prefetch => [qw( tournament_round_people ), {
-                  person_season => [qw( person )],
-                }],
-              });
-              
-              my $round_player1 = $tourn_player1->find_or_create_related("tournament_round_people", {
-                "tournament_team.id" => $tourn_team->id,
-                "me.tournament_round" => $match->tournament_round->id,
-                "me.tournament_round_team" => $round_team->id,
-                "me.tournament_group" => $tourn_group_round ? $tourn_group->id : undef,
-              }, {
-                join => [qw( tournament_round ), {
-                  tournament_person => [qw( tournament_team )],
-                }],
-              });
-              
-              my $tourn_player2 = $tourn_team->find_or_create_related("tournament_people", {
-                "me.event" => $match->tournament_round->tournament->event_season->event->id,
-                "me.season" => $season->id,
-                "me.person" => $player2->id,
-                "me.team" => $team->id,
-              }, {
-                prefetch => [qw( tournament_round_people )], {
-                  person_season => [qw( person )],
-                },
-              });
-              
-              my $round_player2 = $tourn_player2->find_or_create_related("tournament_round_people", {
-                "tournament_team.id" => $tourn_team->id,
-                "me.tournament_round" => $match->tournament_round->id,
-                "me.tournament_round_team" => $round_team->id,
-                "me.tournament_group" => $tourn_group_round ? $tourn_group->id : undef,
-              }, {
-                join => [qw( tournament_round ), {
-                  tournament_person => [qw( tournament_team )],
-                }],
-              });
-              
-              @pair_stats = ( $tourn_pair, $round_pair );
-              @player_stats = ( $tourn_player1, $round_player1, $tourn_player2, $round_player2 );
-            } else {
-              # League matches will always just have the one object per team / doubles player in the game, but we put it in the array to save on complicated logic later on
-              @pair_stats = ( $doubles_pair );
-              @player_stats = ( $doubles_pair->person_season_person1_season_team, $doubles_pair->person_season_person2_season_team );
-            }
-            
-            # Add to a hash so we can loop through keys and do all the updates at once
-            my %stats = (pair => \@pair_stats, player => \@player_stats);
-              
-            # There is an original doubles pair to take some games off
-            foreach my $stat_type ( keys %stats ) {
-              # Field names - setup initial names, as these bits don't change regardless.  If it's an individual stat, we need to prefix "doubles_"
-              my ( $fld_games_played, $fld_games_won, $fld_games_lost, $fld_games_drawn, $fld_legs_played, $fld_legs_won, $fld_legs_lost, $fld_points_played, $fld_points_won, $fld_points_lost, $fld_average_game_wins, $fld_average_leg_wins, $fld_average_point_wins );
-              
-              if ( $stat_type eq "pair" ) {
-                $fld_games_played = "games_played";
-                $fld_games_won = "games_won";
-                $fld_games_lost = "games_lost";
-                $fld_games_drawn = "games_drawn";
-                $fld_legs_played = "legs_played";
-                $fld_legs_won = "legs_won";
-                $fld_legs_lost = "legs_lost";
-                $fld_points_played = "points_played";
-                $fld_points_won = "points_won";
-                $fld_points_lost = "points_lost";
-                $fld_average_game_wins = "average_game_wins";
-                $fld_average_leg_wins = "average_leg_wins";
-                $fld_average_point_wins = "average_point_wins";
-              } else {
-                $fld_games_played = "doubles_games_played";
-                $fld_games_won = "doubles_games_won";
-                $fld_games_lost = "doubles_games_lost";
-                $fld_games_drawn = "doubles_games_drawn";
-                $fld_legs_played = "doubles_legs_played";
-                $fld_legs_won = "doubles_legs_won";
-                $fld_legs_lost = "doubles_legs_lost";
-                $fld_points_played = "doubles_points_played";
-                $fld_points_won = "doubles_points_won";
-                $fld_points_lost = "doubles_points_lost";
-                $fld_average_game_wins = "doubles_average_game_wins";
-                $fld_average_leg_wins = "doubles_average_leg_wins";
-                $fld_average_point_wins = "doubles_average_point_wins";
-              }
-              
-              foreach my $stat ( @{$og_stats{$stat_type}} ) {
-                # Games - add as appropriate from played, won, lost and drawn
-                if ( $complete ) {
-                  # If the game is complete, we have to add one played to the new pair
-                  $stat->$fld_games_played($stat->$fld_games_played + 1);
-                  
-                  if ( defined($winner) ) {
-                    # If we have a winner, we have to add 1 to either games won or lost, depending on the winner
-                    if ( $winner == $team_id ) {
-                      # Game won by the doubles pairing we're changing
-                      $stat->$fld_games_won($stat->$fld_games_won + 1);
-                    } else {
-                      # Game lost by the doubles pairing we're changing
-                      $stat->$fld_games_lost($stat->$fld_games_lost + 1);
-                    }
-                  } else {
-                    # Game complete but no winner: draw (only relevant for games with a static number of legs)
-                    $stat->$fld_games_drawn($stat->$fld_games_drawn + 1);
-                  }
-                }
-                
-                # Legs
-                $stat->$fld_legs_played($stat->$fld_legs_played + ( $self->$team_legs_won + $self->$opposition_legs_won ));
-                $stat->$fld_legs_won($stat->$fld_legs_won + $self->$team_legs_won);
-                $stat->$fld_legs_lost($stat->$fld_legs_lost + $self->$opposition_legs_won);
-                
-                # Points
-                $stat->$fld_points_played($stat->$fld_points_played + ( $self->$team_points_won + $self->$opposition_points_won ));
-                $stat->$fld_points_won($stat->$fld_points_won + $self->$team_points_won);
-                $stat->$fld_points_lost($stat->$fld_points_lost + $self->$opposition_points_won);
-                
-                # Game / leg / point averages
-                $stat->$fld_games_played ? $stat->$fld_average_game_wins(( $stat->$fld_games_won / $stat->$fld_games_played ) * 100) : $stat->$fld_average_game_wins(0);
-                $stat->$fld_legs_played ? $stat->$fld_average_leg_wins(( $stat->$fld_legs_won / $stat->$fld_legs_played ) * 100) : $stat->$fld_average_leg_wins(0);
-                $stat->$fld_points_played ? $stat->$fld_average_point_wins(( $stat->$fld_points_won / $stat->$fld_points_played ) * 100) : $stat->$fld_average_point_wins(0);
-                
-                # All fields have been calculated, do the update
-                $stat->update;
-              }
-            }
-          }
-          
-          # Update our column if needed - we've already 'changed' the value, but not committed it
-          $self->update;
-          
-          # Complete
-          $response->{completed} = 1;
-          push(@{$response->{success}}, $lang->maketext("matches.game.update-doubles.add.success", $enc_player1_display, $enc_player2_display, $location, $self->scheduled_game_number));
-        } elsif ( $action eq "remove" ) {
-          # Remove
-          # There is an original doubles pair, we need to delete the score - this will handle the statistics for that doubles pair too
-          $self->update_score({delete => 1}) if defined($og_doubles_pair);
-          
-          # Blank the doubles pair in this game
-          $self->update({$location_doubles_pair => undef});
-          
-          # Complete
-          $response->{completed} = 1;
-          push(@{$response->{success}}, $lang->maketext("matches.game.update-doubles.remove.success", $location, $self->scheduled_game_number));
-        }
-        
-        # Go through the deletable stats deleting if the games played are 0 (doubles games played AND games played for players)
-        if ( ($action eq "add" and defined($og_doubles_pair) and $og_doubles_pair->id != $doubles_pair->id) or ($action eq "remove") and defined($og_doubles_pair) ) {
-          # * If we're removing, we'll delete (subject to games played checks) regardless if the original doubles pair is defined (i.e., was set)
-          # * If we're adding, we'll delete (subject to games played checks) only if the original doubles pair is defined (was set as a pair) AND is different to the new one.
-          foreach my $stat_type ( reverse sort keys %og_stats_deletable ) {
-            
-            foreach my $stat ( reverse @{$og_stats_deletable{$stat_type}} ) {
-              
-              if ( $stat_type eq "pair" ) {
-                # Pair stat - just check games played
-                $stat->delete if defined($stat) and $stat->games_played == 0;
-              } else {
-                # Player - check games played and doubles games played
-                $stat->delete if defined($stat) and $stat->games_played == 0 and $stat->doubles_games_played == 0;
-              }
-            }
-          }
-        }
-        
-        $transaction->commit;
-      } else {
-        # Invalid location
-        push(@{$response->{error}}, $lang->maketext("matches.game.update-doubles.error.location-invalid"));
-      }
+  }
+  
+  # Check the game we're updating is actually a doubles game
+  if ( !$self->doubles_game ) {
+    # Error, game is not a doubles game.
+    push(@{$response->{error}}, $lang->maketext("matches.game.update-doubles.error.not-doubles-game", $self->scheduled_game_number));
+    return $response;
+  }
+  
+  if ( $self->void ) {
+    # Void, can't change doubles pair
+    push(@{$response->{error}}, $lang->maketext("matches.game.update-doubles.error.already-void", $self->scheduled_game_number));
+    return $response;
+  } elsif ( $self->awarded ) {
+    # Match awarded, can't change doubles pair
+    push(@{$response->{error}}, $lang->maketext("matches.game.update-doubles.error.already-awarded", $self->scheduled_game_number));
+    return $response;
+  } elsif ( $self->complete ) {
+    # Match already complete, can't change doubles pair (we technically could, but it's complicated and much easier to make people remove
+    # the score and then change the doubles pair before re-entering the score)
+    push(@{$response->{error}}, $lang->maketext("matches.game.update-doubles.error.already-complete", $self->scheduled_game_number));
+    return $response;
+  }
+  
+  # If we get this far, it's a doubles game in the current season and the match is not cancelled.  Good to go.
+  
+  # Check we have a location
+  if ( defined($location) and ( $location eq "home" or $location eq "away" ) ) {
+    # Validate the players or the doubles pair.  Regardless of how specified, we need both the doubles pair and each player, so will look
+    # one up from the other.  The doubles pair will be created if it doesn't exist.
+    $players = [$players] unless ref($players) eq "ARRAY";
+    my ( $doubles_pair, $player1, $player2 );
+    my $player_count = scalar @{$players};
+    my $action = "add"; # default, unless nothing is supplied in the players list
+    if ( $player_count == 0 ) {
+      # Remove the doubles pair
+      $action = "remove";
+    } elsif ( $player_count == 2 ) {
+      # Two elements - should be player 1 and player 2 (order doesn't matter)
+      ( $player1, $player2 ) = ( $players->[0], $players->[1] );
     } else {
-      # Error, game is not a doubles game.
-      push(@{$response->{error}}, $lang->maketext("matches.game.update-doubles.error.not-doubles-game", $self->scheduled_game_number));
+      # More than two elements is an error
+      push(@{$response->{error}}, $lang->maketext("matches.game.update-doubles.error.wrong-number-of-players"));
+      return $response;
     }
+    
+    # Get the team and relevant DB fields for updating
+    my ( $location_team, $location_doubles_pair, $team_legs_won, $opposition_legs_won, $team_points_won, $opposition_points_won );
+    
+    if ( $location eq "home" ) {
+      $location_team = "team_season_home_team_season";
+      $location_doubles_pair = "home_doubles_pair";
+      $team_legs_won = "home_team_legs_won";
+      $opposition_legs_won = "away_team_legs_won";
+      $team_points_won = "home_team_points_won";
+      $opposition_points_won = "away_team_points_won";
+    } else {
+      $location_team = "team_season_away_team_season";
+      $location_doubles_pair = "away_doubles_pair";
+      $team_legs_won = "away_team_legs_won";
+      $opposition_legs_won = "home_team_legs_won";
+      $team_points_won = "away_team_points_won";
+      $opposition_points_won = "home_team_points_won";
+    }
+    
+    my $team = $match->$location_team->team;
+    my $team_name = sprintf("%s %s", $team->club->short_name, $team->name);
+    my $enc_team_name = encode_entities($team_name);
+    my $og_doubles_pair = $self->$location_doubles_pair;
+    
+    my $transaction = $self->result_source->schema->txn_scope_guard;
+    
+    my ( @og_pair_stats, @og_player_stats, %og_stats, %og_stats_deletable, $round_team, $tourn_team, $tourn_round, $tourn_group );
+    my $tourn_match = defined($match->tournament_round) ? 1 : 0;
+    my $tourn_group_round = ($tourn_match and defined($match->tournament_group)) ? 1 : 0;
+    
+    # Grab the tournament / round team objects up here, so we can do the lookups 
+    if ( $tourn_match ) {
+      # This match is part of a tournament, find the team membership.  No need to check if the tournament round team exists, as the team is not user defined,
+      # it's taken from a match object - we'll never have a match in a tournament round that doesn't contain any of the teams in that round.
+      $tourn_round = $match->tournament_round;
+      $round_team = $tourn_round->find_related("tournament_round_teams", {"tournament_team.team" => $team->id}, {prefetch => [qw( tournament_team )]});
+      $tourn_team = $round_team->tournament_team;
+      $tourn_group = $match->tournament_group if $tourn_group_round;
+    }
+    
+    if ( defined($og_doubles_pair) ) {
+      # If we've had an original doubles pair, do all the lookups for them
+      # The pairing has changed, and there was originally a pair entered.  We need to transfer stats for this
+      # game from one to the other
+      if ( $tourn_match ) {
+        # This match is part of a tournament, find the team membership.  No need to check if the tournament round team exists, as the team is not user defined,
+        # it's taken from a match object - we'll never have a match in a tournament round that doesn't contain any of the teams in that round.
+        # Get the people involved so we can look based on their IDs.
+        my $og_player1 = $og_doubles_pair->person_season_person1_season_team->person;
+        my $og_player2 = $og_doubles_pair->person_season_person2_season_team->person;
+        
+        # Tournament pair
+        my $og_tourn_pair = $tourn_team->find_related("tournaments_doubles", {
+          "season_pair.id" => $og_doubles_pair->id,
+          "me.event" => $match->tournament_round->tournament->event_season->event->id,
+          "me.season" => $season->id,
+        }, {
+          join => [qw( season_pair )],
+          prefetch => [qw( tournament_rounds_doubles )],
+        });
+        
+        # Round pair
+        my $og_round_pair = $og_tourn_pair->find_related("tournament_rounds_doubles", {
+          "tournament_team.id" => $tourn_team->id,
+          "tournament_round.id" => $match->tournament_round->id,
+        }, {
+          prefetch => [qw( tournament_pair )],
+          join => [qw( tournament_round ), {
+            tournament_pair => [qw( season_pair )],
+            tournament_round_team => [qw( tournament_team )],
+          }],
+        });
+        
+        # Lookup player 1 and 2 stats
+        my $og_tourn_player1 = $tourn_team->find_related("tournament_people", {
+          "me.event" => $match->tournament_round->tournament->event_season->event->id,
+          "me.season" => $season->id,
+          "me.person" => $og_player1->id,
+        }, {
+          prefetch => [qw( tournament_round_people ), {
+            person_season => [qw( person )],
+          }],
+        });
+        
+        my $og_round_player1 = $og_tourn_player1->find_related("tournament_round_people", {
+          "tournament_team.id" => $tourn_team->id,
+          "tournament_round.id" => $match->tournament_round->id,
+        }, {
+          join => [qw( tournament_round ), {
+            tournament_person => [qw( tournament_team )],
+          }],
+        });
+        
+        my $og_tourn_player2 = $tourn_team->find_related("tournament_people", {
+          "me.event" => $match->tournament_round->tournament->event_season->event->id,
+          "me.season" => $season->id,
+          "me.person" => $og_player2->id,
+        }, {
+          prefetch => [qw( tournament_round_people ), {
+            person_season => [qw( person )],
+          }],
+        });
+        
+        my $og_round_player2 = $og_tourn_player2->find_related("tournament_round_people", {
+          "tournament_team.id" => $tourn_team->id,
+          "tournament_round.id" => $match->tournament_round->id,
+        }, {
+          join => [qw( tournament_round ), {
+            tournament_person => [qw( tournament_team )],
+          }],
+        });
+        
+        @og_pair_stats = ( $og_tourn_pair, $og_round_pair );
+        @og_player_stats = ( $og_tourn_player1, $og_round_player1, $og_tourn_player2, $og_round_player2 );
+      } else {
+        # League match
+        @og_pair_stats = ( $og_doubles_pair );
+        @og_player_stats = ( $og_doubles_pair->person_season_person1_season_team, $og_doubles_pair->person_season_person2_season_team );
+      }
+      
+      # Add to a hash so we can loop through keys and do all the updates at once
+      %og_stats = (pair => \@og_pair_stats, player => \@og_player_stats);
+      %og_stats_deletable = $tourn_match
+        ? (pair => \@og_pair_stats, player => \@og_player_stats) # Tournament match, everything is deletable if relevant (no games played)
+        : (pair => \@og_pair_stats, player => []); # League match, the pair is deletable, but the players are not
+    }
+    
+    # Check if we are adding or removing - if $player_ids is undefined, we'll remove
+    if ( $action eq "add" ) {
+      # Add - first check the players are valid people
+      if ( defined($player1) ) {
+        $player1 = $schema->resultset("Person")->find_id_or_url_key($player1) unless $player1->isa("TopTable::Schema::Result::Person");
+        push(@{$response->{error}}, $lang->maketext("matches.game.update-doubles.error.$location-player1-invalid")) unless defined($player1);
+      } else {
+        # We shouldn't get here, but just to make sure
+        push(@{$response->{error}}, $lang->maketext("matches.game.update-doubles.error.$location-player1-blank"));
+      }
+      
+      if ( defined($player2) ) {
+        $player2 = $schema->resultset("Person")->find_id_or_url_key($player2) unless $player2->isa("TopTable::Schema::Result::Person");
+        push(@{$response->{error}}, $lang->maketext("matches.game.update-doubles.error.$location-player2-invalid")) unless defined($player2);
+      } else {
+        # We shouldn't get here, but just to make sure
+        push(@{$response->{error}}, $lang->maketext("matches.game.update-doubles.error.$location-player2-blank"));
+      }
+      
+      # If either player is invalid, we return at this point, as they are fatal errors
+      if ( scalar @{$response->{error}} ) {
+        return $response;
+        $transaction->rollback;
+      }
+      
+      my $enc_player1_display = encode_entities($player1->display_name);
+      my $enc_player2_display = encode_entities($player2->display_name);
+      
+      # Check we don't have two references to the same person
+      push(@{$response->{error}}, $lang->maketext("matches.game.update-doubles.error.players-identical", $location)) if $player1->id == $player2->id;
+      
+      # Return if we have an error here
+      return $response if scalar @{$response->{error}};
+      
+      # Get person season for this team if there is one so we can search from the doubles pair from that
+      
+      # Work out if either player is a loan player
+      my $person1_season = $player1->find_related("person_seasons", {season => $season->id, team => $team->id});
+      my $person2_season = $player2->find_related("person_seasons", {season => $season->id, team => $team->id});
+      
+      # Now check if there's a doubles pairing with the two players
+      my $doubles_pair1 = $person1_season->search_related("doubles_pairs_person1_season_teams", {season => $season->id, person2 => $player2->id, team => $team->id});
+      my $doubles_pair2 = $person1_season->search_related("doubles_pairs_person2_season_teams", {season => $season->id, person1 => $player2->id, team => $team->id});
+      $doubles_pair = $doubles_pair1->union_all($doubles_pair2)->first;
+      
+      # Work out if either player is a loan player
+      my $person1_active_season = $player1->search_related("person_seasons", {season => $season->id, team => $team->id, team_membership_type => "active"}, {rows => 1})->single;
+      my $person2_active_season = $player2->search_related("person_seasons", {season => $season->id, team => $team->id, team_membership_type => "active"}, {rows => 1})->single;
+      my $person1_loan = defined($person1_active_season) ? 0 : 1;
+      my $person2_loan = defined($person2_active_season) ? 0 : 1;
+      
+      # If the doubles pair was returned okay, we don't need to do any more verification, just use the existing one
+      if ( !defined($doubles_pair) ) {
+        # The doubles pair doesn't exist, so we need to verify the people specified are eligible to play in the
+        # doubles game; to do this we first need to get a list of eligible players (which will include all players
+        # registered for the team plus any players playing as a loan player if appropriate).
+        my @player_list = @{$self->team_match->eligible_players({location => $location})};
+        
+        # Check each player against the list of eligible players - start off with both eligible flags set to false
+        my $player1_eligible = 0;
+        my $player2_eligible = 0;
+        foreach my $eligible_player ( @player_list ) {
+          if ( $eligible_player->id == $player1->id ) {
+            # If player 1 is eligible, set the flag to true
+            $player1_eligible = 1;
+          } elsif ( $eligible_player->id == $player2->id ) {
+            # If player 1 is eligible, set the flag to true
+            $player2_eligible = 1;
+          }
+          
+          # Don't loop through any more if we've already established both players are eligible
+          last if $player1_eligible and $player2_eligible;
+        }
+      
+        # Advise about ineligible players if either are
+        push(@{$response->{error}}, $lang->maketext("matches.game.update-doubles.error.player-ineligible", $enc_player1_display, $enc_team_name)) unless $player1_eligible;
+        push(@{$response->{error}}, $lang->maketext("matches.game.update-doubles.error.player-ineligible", $enc_player2_display, $enc_team_name)) unless $player2_eligible;
+        
+        return $response if scalar @{$response->{error}};
+        
+        # Now do the create
+        $doubles_pair = $person1_season->create_related("doubles_pairs_person1_season_teams", {
+          person2 => $player2->id,
+          season => $season->id,
+          team => $team->id,
+          person1_loan => $person1_loan,
+          person2_loan => $person2_loan,
+        });
+      }
+      
+      # Now regardless we have a doubles pair, whether we created or used the existing one, so finally we can set the doubles team for this game
+      $self->$location_doubles_pair($doubles_pair);
+      
+      # Update our column if needed - we've already 'changed' the value, but not committed it
+      $self->update;
+      
+      # Complete
+      $response->{completed} = 1;
+      push(@{$response->{success}}, $lang->maketext("matches.game.update-doubles.add.success", $enc_player1_display, $enc_player2_display, $location, $self->scheduled_game_number));
+    } elsif ( $action eq "remove" ) {
+      # Remove
+      # There is an original doubles pair, we need to delete the score - this will handle the statistics for that doubles pair too
+      $self->update_score({delete => 1}) if defined($og_doubles_pair);
+      
+      # Blank the doubles pair in this game
+      $self->update({$location_doubles_pair => undef});
+      
+      # Complete
+      $response->{completed} = 1;
+      push(@{$response->{success}}, $lang->maketext("matches.game.update-doubles.remove.success", $location, $self->scheduled_game_number));
+    }
+    
+    # Go through the deletable stats deleting if the games played are 0 (doubles games played AND games played for players)
+    if ( ($action eq "add" and defined($og_doubles_pair) and $og_doubles_pair->id != $doubles_pair->id) or ($action eq "remove") and defined($og_doubles_pair) ) {
+      # * If we're removing, we'll delete (subject to games played checks) regardless if the original doubles pair is defined (i.e., was set)
+      # * If we're adding, we'll delete (subject to games played checks) only if the original doubles pair is defined (was set as a pair) AND is different to the new one.
+      foreach my $stat_type ( reverse sort keys %og_stats_deletable ) {
+        
+        foreach my $stat ( reverse @{$og_stats_deletable{$stat_type}} ) {
+          
+          if ( $stat_type eq "pair" ) {
+            # Pair stat - just check games played
+            $stat->delete if defined($stat) and $stat->games_played == 0;
+          } else {
+            # Player - check games played and doubles games played
+            $stat->delete if defined($stat) and $stat->games_played == 0 and $stat->doubles_games_played == 0;
+          }
+        }
+      }
+    }
+    
+    $transaction->commit;
+  } else {
+    # Invalid location
+    push(@{$response->{error}}, $lang->maketext("matches.game.update-doubles.error.location-invalid"));
   }
   
   return $response;
