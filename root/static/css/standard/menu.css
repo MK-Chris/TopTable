@@ -1,0 +1,417 @@
+/* ==========================================================================
+   1. CORE NAVBAR STYLES (Global & Desktop Context)
+   ========================================================================= */
+.gen-nav {
+  display: flex;
+  align-items: center;
+  background: #0372b9;
+  min-height: 52px;
+  border-radius: 8px;
+  border: 0px solid #1e3a8a;
+  box-shadow: 0 4px 12px rgba(0,0,0,.18);
+  padding: 0 16px;
+  position: relative;
+  flex-wrap: wrap;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  box-sizing: border-box;
+}
+
+.gen-nav *, .gen-nav *::before, .gen-nav *::after {
+  box-sizing: border-box;
+}
+
+.gen-nav ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.gen-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-right: auto;
+}
+
+.gen-logo-text {
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Hide Hamburger Menu icon on Desktop viewports by default */
+.gen-hamburger {
+  display: none !important; /* Enforces strict hidden layout on desktop screens */
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  margin-left: auto;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column; 
+  gap: 0;
+}
+
+.gen-hamburger span {
+  display: block;
+  background: #ffffff;
+  transition: all .3s;
+  width: 22px; 
+  height: 2px; 
+  border-radius: 2px; 
+  margin: 3px 0;
+}
+
+/* Top Level Desktop Menu Row Container */
+.gen-nav > ul {
+  display: flex; 
+  justify-content: center; 
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.gen-nav > ul > li {
+  position: relative;
+}
+
+/* Primary Top Level Links Style Configuration */
+.gen-nav > ul > li > a {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 16px;
+  height: 52px;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 500;
+  text-transform: none;
+  text-decoration: none;
+  transition: background .2s, color .2s;
+  white-space: nowrap;
+}
+
+.gen-nav > ul > li > a:hover,
+.gen-nav > ul > li:hover > a {
+  background: #1e3a8a;
+  color: #bfdbfe;
+}
+
+.gen-arrow { 
+  font-size: .7em; 
+  opacity: .8; 
+  vertical-align: middle;
+  margin-left: 4px;
+}
+
+/* Automatically injects a clean, cross-browser safe down arrow symbol */
+.gen-arrow::before {
+  content: "\25be"; 
+}
+
+
+/* ==========================================================================
+   2. NESTED DESKTOP DROPDOWNS (5+ Layers with Hover Hide Delay)
+   ========================================================================== */
+:root {
+  --menu-width: 170px;
+}
+
+/* Setup positioning constraints for ALL nested submenus recursively */
+.gen-nav li ul {
+  position: absolute;
+  background: #ffffff; /* Preserved Custom Submenu Background Color */
+  min-width: var(--menu-width);
+  box-shadow: 0 8px 24px rgba(0,0,0,.18);
+  z-index: 1000;
+  top: 0;
+  left: 100%; /* Standard expansion trajectory: open outwards rightward */
+  
+  /* Modern Transitions for Hover Delay */
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.2s ease, visibility 0s linear;
+  transition-delay: 0.3s, 0.3s; /* Keeps the 300ms hover exit delay tunnel live */
+}
+
+/* Level 1 Dropdown Override (Cascades straight downwards beneath top link) */
+.gen-nav > ul > li > ul {
+  top: 100%;
+  left: 0;
+  border-radius: 0 0 6px 6px;
+}
+
+/* Desktop Hover Trigger Activation Rule */
+.gen-nav li:hover > ul,
+.gen-nav li.sm-activated > ul {
+  opacity: 1 !important;
+  visibility: visible !important;
+  transition-delay: 0s, 0s !important; 
+}
+
+/* Ensure subsequent deeply nested items show correctly on multi-tier branches */
+.gen-nav li:hover > ul li:hover > ul,
+.gen-nav li.sm-activated li.sm-activated > ul {
+  opacity: 1 !important;
+  visibility: visible !important;
+  transition-delay: 0s, 0s !important;
+}
+
+/* Submenu Typography & Hover Item Adjustments */
+.gen-nav ul ul li a {
+  display: block;
+  padding: 10px 18px;
+  color: #0372b9; /* Preserved Custom Submenu Link Color */
+  font-size: 13px;
+  text-decoration: none;
+  transition: background .15s, color .15s;
+  white-space: nowrap;
+}
+
+.gen-nav ul ul li:hover > a {
+  background: #0372b9;
+  color: #ffffff;
+}
+
+/* --- HARDENED 5-LAYER POSITION INVERSIONS --- */
+/* Level 3 cascading submenus: Flip back to the left */
+.gen-nav > ul > li > ul > li > ul > li > ul {
+  left: auto;
+  right: 100%;
+}
+
+/* Level 4 cascading submenus: Keep tracking back to the left */
+.gen-nav > ul > li > ul > li > ul > li > ul > li > ul {
+  left: auto;
+  right: 100%;
+}
+
+/* Level 5 cascading submenus: Keep tracking back to the left */
+.gen-nav > ul > li > ul > li > ul > li > ul > li > ul > li > ul {
+  left: auto;
+  right: 100%;
+}
+
+
+/* ==========================================================================
+   3. PROGRESSIVE ENHANCEMENT OVERFLOW CONTROLLERS
+   ========================================================================== */
+/* Core Layout Container: By default, if JS fails or is disabled, 
+   items wrap naturally on a secondary line so everything stays clickable */
+.gen-nav > ul {
+  display: flex;
+  justify-content: center;
+  flex: 1;
+  flex-wrap: wrap; 
+  overflow: visible;
+}
+
+/* Hide the "More" button on page load. It will display only when JavaScript is active */
+.gen-nav #gen-more-btn {
+  display: none;
+}
+
+/* When JavaScript is active, lock the row layout to prevent items from wrapping */
+.gen-nav > ul.has-overflow-active {
+  flex-wrap: nowrap !important;
+  height: 52px;
+}
+
+/* Hide any top-level items on the main row that have been moved to the "More" menu */
+.gen-nav > ul.has-overflow-active > li[data-overflow="true"] {
+  display: none !important;
+}
+
+/* --- Keep the 5-Layer Deep Dropdowns Flowing Accurately Inside the More Box --- */
+#gen-more-submenu > li {
+  width: 100%;
+  position: relative;
+}
+
+/* Position submenus inside the "More" dropdown so they open cleanly to the side */
+#gen-more-submenu > li > ul {
+  top: 0 !important;
+  left: 100% !important;
+  right: auto !important;
+}
+
+
+/* ==========================================================================
+   4. "MORE" DROPDOWN EDGE PROTECTION (5+ Levels Inversion Safe)
+   ========================================================================== */
+/* Level 1: The "More" button dropdown container drops straight down */
+#gen-more-btn > ul {
+  top: 100%;
+  left: auto;
+  right: 0; /* Align the main "More" panel against the right edge of the button */
+  border-radius: 0 0 6px 6px;
+}
+
+/* Level 2: Items inside "More" open their first submenus to the LEFT 
+   instead of the right, keeping them safely on-screen */
+#gen-more-submenu > li > ul {
+  top: 0 !important;
+  left: auto !important;
+  right: 100% !important; /* Fly out directly to the left */
+  border-radius: 6px 0 6px 6px;
+}
+
+/* Level 3: Keep cascading deeper submenus opening to the left */
+#gen-more-submenu > li > ul > li > ul {
+  top: 0 !important;
+  left: auto !important;
+  right: 100% !important;
+}
+
+/* Level 4: Keep cascading deeper submenus opening to the left */
+#gen-more-submenu > li > ul > li > ul > li > ul {
+  top: 0 !important;
+  left: auto !important;
+  right: 100% !important;
+}
+
+/* Level 5: Keep cascading deeper submenus opening to the left */
+#gen-more-submenu > li > ul > li > ul > li > ul > li > ul {
+  top: 0 !important;
+  left: auto !important;
+  right: 100% !important;
+}
+
+
+/* ==========================================================================
+   5. RESPONSIVE MOBILE ACCORDION (Viewports <= 768px)
+   ========================================================================== */
+@media (max-width: 768px) {
+  /* Reveal Hamburger Button Icon inside mobile layouts */
+  .gen-hamburger { 
+    display: flex !important; 
+    margin-left: 0; 
+    background: transparent !important; /* FIXED: Removes default white fill from the inactive button container */
+  }
+  
+  /* Sync hamburger button hover and open states with top-level menu link styles */
+  .gen-hamburger:hover,
+  .gen-nav.mobile-open .gen-hamburger {
+    background-color: #1e3a8a !important; 
+    border-radius: 4px;
+    transition: background-color .2s ease;
+  }
+
+  /* Tint the lines inside the hamburger icon light blue when interacted with */
+  .gen-hamburger:hover span,
+  .gen-nav.mobile-open .gen-hamburger span {
+    background-color: #bfdbfe !important; 
+  }
+  
+  .gen-nav {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  
+  .gen-logo { 
+    margin-right: auto; 
+    margin-left: 0; 
+    justify-self: unset; 
+    order: -1; 
+  }
+  
+  /* Convert Top Level horizontal menu into a full-width vertical block panel */
+  .gen-nav > ul {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0; 
+    right: 0;
+    flex-direction: column;
+    background: #0372b9;
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 12px 32px rgba(0,0,0,.2);
+    z-index: 9999;
+    padding: 8px 0;
+  }
+  
+  /* Triggered by JS when hamburger is clicked */
+  .gen-nav > ul.open { 
+    display: flex; 
+  }
+  
+  .gen-nav.mobile-open { 
+    border-radius: 8px 8px 0 0; 
+  }
+  
+  .gen-nav > ul > li > a { 
+    height: auto; 
+    padding: 14px 20px; 
+  }
+  
+  /* Strip out Desktop border-rounding quirks */
+  .gen-nav > ul > li:last-child { 
+    border-radius: 0; 
+    overflow: visible; 
+  }
+  .gen-nav > ul > li:last-child > a { 
+    border-radius: 0; 
+  }
+  
+  /* Mobile Reset: Enforce continuous vertical flow for accordions */
+  .gen-nav li ul,
+  .gen-nav > ul > li > ul,
+  .gen-nav > ul > li > ul > li > ul > li > ul,
+  .gen-nav > ul > li > ul > li > ul > li > ul > li > ul,
+  .gen-nav > ul > li > ul > li > ul > li > ul > li > ul > li > ul,
+  #gen-more-btn > ul,
+  #gen-more-submenu > li > ul,
+  #gen-more-submenu > li > ul > li > ul,
+  #gen-more-submenu > li > ul > li > ul > li > ul,
+  #gen-more-submenu > li > ul > li > ul > li > ul > li > ul {
+    display: none;
+    position: static;
+    box-shadow: none;
+    border-radius: 0;
+    min-width: 0;
+    left: auto;
+    right: auto;
+    
+    /* SYNCED: Apply your custom white background to mobile submenus */
+    background: #ffffff !important;
+    
+    /* Enforce immediate visual updates on touch screens */
+    opacity: 1 !important;
+    visibility: visible !important;
+    transition: none !important;
+    transition-delay: 0s !important;
+  }
+  
+  /* Programmatic click visibility handler for mobile accordion views */
+  .gen-nav li.sub-open > ul {
+    display: block !important;
+  }
+  .gen-nav > ul > li.has-sub > a .gen-arrow {
+    display: inline-block;
+  }
+  /* SYNCED: Apply custom blue text and styling definitions to mobile submenu links */
+  .gen-nav ul ul li a {
+    color: #0372b9 !important; /* Matches desktop text color */
+    background: #ffffff;
+    border-bottom: 1px solid rgba(29, 78, 216, 0.08); /* Optional delicate structural dividing lines */
+  }
+  
+  /* SYNCED: Handle mobile hover/active tap highlights identically to desktop profiles */
+  .gen-nav ul ul li a:hover,
+  .gen-nav ul ul li.sub-open > a {
+    background: #0372b9 !important;
+    color: #ffffff !important;
+  }
+  /* Progressively indent nested elements on mobile screens for clean structural hierarchy */
+  .gen-nav ul ul li a { padding-left: 32px; }
+  .gen-nav ul ul ul li a { padding-left: 44px; }
+  .gen-nav ul ul ul ul li a { padding-left: 56px; }
+  .gen-nav ul ul ul ul ul li a { padding-left: 68px; }
+  
+  /* Hamburger Transformation Shapes (Morphs icon to an 'X' when active) */
+  .gen-nav.mobile-open .gen-hamburger span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .gen-nav.mobile-open .gen-hamburger span:nth-child(2) { opacity: 0; }
+  .gen-nav.mobile-open .gen-hamburger span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+}

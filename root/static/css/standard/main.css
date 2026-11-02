@@ -33,11 +33,16 @@ h3,h4,h5,h6 {
 
 article,aside,details,figcaption,figure,footer,header,hgroup,menu,section {display: block;}
 
-nav {display: none;}
+nav {
+  width: 95%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 div.data-only {display: none;}
 
 /* _Typography */
-h1, h2, h3, h4, h5 {font-weight: normal;}
+h1, h2, h3, h4 {font-weight: normal;}
 
 h1 {
   font-size: 2.2em;
@@ -151,14 +156,17 @@ a, a:active, a:visited {
 
 table td, table th {vertical-align: top;}
 div.match-player-notice{margin-top: 5px;}
-td.loan-player, td.loan-player > a, a.loan-player, a.loan-player:active, a.loan-player:visited {color: #4cb1e0;}
-td.inactive-player, td.inactive-player > a, a.inactive-player, a.inactive-player:active, a.inactive-player:visited {color: #ff0000;}
+tr.loan-player, tr.loan-player a, td.loan-player, td.loan-player > a, a.loan-player, a.loan-player:active, a.loan-player:visited {color: #4cb1e0;}
+tr.inactive-player, tr.inactive-player a, td.inactive-player, td.inactive-player > a, a.inactive-player, a.inactive-player:active, a.inactive-player:visited {color: #ff0000;}
 div.loan-player-key {background: #4cb1e0;}
 div.inactive-player-key {background: #ff0000;}
 div.loan-player-key, div.inactive-player-key {
   display: inline-block;
   width: 15px;
 }
+
+table th span.h2h-total-data {font-weight: normal; font-size: 0.9em;}
+table th span.h2h-total-heading {font-weight: bold; font-size: 0.9em;}
 
 a.tooltip:active, a.tooltip:visited, a.tooltip {
   color: #ffffff;
@@ -178,17 +186,20 @@ div.info-message, div.success-message, div.warning-message, div.error-message, d
   box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
 }
 
-div.info-message, div.success-message, div.warning-message, div.error-message {min-height: 48px;}
+div.info-message, div.success-message, div.warning-message, div.error-message {
+  min-height: 48px; 
+  vertical-align: middle;
+}
 div.info-message-small, div.success-message-small, div.warning-message-small, div.error-message-small {min-height: 32px;}
-div.info-message > span.message-text, div.success-message > span.message-text, div.warning-message > span.message-text, div.error-message > span.message-text, div.info-message-small > span.message-text, div.success-message-small > span.message-text, div.warning-message-small > span.message-text, div.error-message-small > span.message-text {padding: 10% 0;}
-div.info-message {background: #BDE5F8 url("../images/icons/0011-Info-icon-48.png") no-repeat left center;}
-div.success-message {background: #DFF2BF url("../images/icons/0007-Tick-icon-48.png") no-repeat left center;}
-div.warning-message {background: #FEEFB3 url("../images/icons/0010-Alert-icon-48.png") no-repeat left center;}
-div.error-message {background: #FFBABA url("../images/icons/0006-Cross-icon-48.png") no-repeat left center;}
-div.info-message-small {background: #BDE5F8 url("../images/icons/0011-Info-icon-32.png") no-repeat left center;}
-div.success-message-small {background: #DFF2BF url("../images/icons/0007-Tick-icon-32.png") no-repeat left center;}
-div.warning-message-small {background: #FEEFB3 url("../images/icons/0010-Alert-icon-32.png") no-repeat left center;}
-div.error-message-small {background: #FFBABA url("../images/icons/0006-Cross-icon-32.png") no-repeat left center;}
+/*div.info-message > span.message-text, div.success-message > span.message-text, div.warning-message > span.message-text, div.error-message > span.message-text, div.info-message-small > span.message-text, div.success-message-small > span.message-text, div.warning-message-small > span.message-text, div.error-message-small > span.message-text {vertical-align: middle; display: table-cell;}*/
+div.info-message {background: #BDE5F8 url("../../images/icons/0011-Info-icon-48.png") no-repeat left center;}
+div.success-message {background: #DFF2BF url("../../images/icons/0007-Tick-icon-48.png") no-repeat left center;}
+div.warning-message {background: #FEEFB3 url("../../images/icons/0010-Alert-icon-48.png") no-repeat left center;}
+div.error-message {background: #FFBABA url("../../images/icons/0006-Cross-icon-48.png") no-repeat left center;}
+div.info-message-small {background: #BDE5F8 url("../../images/icons/0011-Info-icon-32.png") no-repeat left center;}
+div.success-message-small {background: #DFF2BF url("../../images/icons/0007-Tick-icon-32.png") no-repeat left center;}
+div.warning-message-small {background: #FEEFB3 url("../../images/icons/0010-Alert-icon-32.png") no-repeat left center;}
+div.error-message-small {background: #FFBABA url("../../images/icons/0006-Cross-icon-32.png") no-repeat left center;}
 div.info-message a:link, div.info-message a:visited, div.info-message a:hover, div.info-message a:active, div.info-message-small a:link, div.info-message-small a:visited, div.info-message-small a:hover, div.info-message-small a:active {color: #00529B}
 div.success-message a:link, div.success-message a:visited, div.success-message a:hover, div.success-message a:active, div.success-message-small a:link, div.success-message-small a:visited, div.success-message-small a:hover, div.success-message-small a:active {color: #4F8A10}
 div.warning-message a:link, div.warning-message a:visited, div.warning-message a:hover, div.warning-message a:active, div.warning-message-small a:link, div.warning-message-small a:visited, div.warning-message-small a:hover, div.warning-message-small a:active {color: #9F6000}
@@ -259,6 +270,10 @@ span.qual {
   .table-layout {
     margin-left: -16px;
   }
+}
+
+.filter-options {
+  padding-top: 30px;
 }
 
 /* Breadcrumbs */
@@ -332,28 +347,10 @@ span.qual {
   content: normal;  
 }
 
-/* Back to top elements */
-#back-to-top {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  z-index: 9999;
-  width: 64px;
-  height: 64px;
+div.links-list {
   text-align: center;
-  background-image: url('../images/icons/back-to-top.png');
-  cursor: pointer;
-  border: 0;
-  border-radius: 2px;
-  text-decoration: none;
-  transition: opacity 0.2s ease-out;
-  opacity: 0;
-}
-#back-to-top.show {opacity: 0.5;}
-#back-to-top.show:hover {opacity: 1;}
-
-div.links-list, a.admin-links, #filter-options1, #filter-options2, .filter-defined, .filter-custom {
-  display: none;
+  font-size: 0.85em;
+  margin-top: 20px;
 }
 
 div.links-list > div.list-header {font-weight: bold;}
@@ -441,8 +438,8 @@ table.vertical tr th {
   width: 50%;
   padding: 8px 10px;
   border-right: none;
-  /*width: 1%;
-  white-space: nowrap;*/
+  /*width: 1%;*/
+  /*white-space: nowrap;*/
 }
 
 table.vertical tr td {
@@ -465,7 +462,7 @@ table.vertical tr th:after {content: ":";}
 .pagination {
 	height: 1%;
 	width: auto;
-	margin-top: 5px;
+	margin-top: 25px;
 }
 
 .pagination span.page-separator {display: none;}
@@ -572,7 +569,7 @@ button, input, textarea, select {
 }
 
 input.button-approve {
-  background-image: url("../images/icons/0007-Tick-icon-32.png");
+  background-image: url("../../images/icons/0007-Tick-icon-32.png");
   background-size: cover;
   border: none;
   width: 32px;
@@ -582,7 +579,7 @@ input.button-approve {
 }
 
 input.button-deny {
-  background-image: url("../images/icons/0006-Cross-icon-32.png");
+  background-image: url("../../images/icons/0006-Cross-icon-32.png");
   background-size: cover;
   border: none;
   width: 32px;
@@ -592,7 +589,7 @@ input.button-deny {
 }
 
 input.button-reset {
-  background-image: url("../images/icons/0005-Delete-icon-32.png");
+  background-image: url("../../images/icons/0005-Delete-icon-32.png");
   background-size: cover;
   border: none;
   width: 32px;
@@ -626,8 +623,6 @@ input::-moz-focus-inner, button::-moz-focus-inner {
   padding:0;
 }
 
-.no-boxshadow .blurred:invalid {background-color:#f0dddd;}
-
 div.field-container-search {
   margin-left: 5px;
   width: 100%;
@@ -641,11 +636,10 @@ div.field-container-search-right {
   width: 95%;
   max-width: 480px;
 	float: right;
-  display: none;
 }
 
 input.search-box {
-  background-image: url("../images/icons/0030-Search-icon-16.png");
+  background-image: url("../../images/icons/0030-Search-icon-16.png");
   background-repeat: no-repeat;
   background-position: right 10px center;
   float: left;
@@ -655,6 +649,8 @@ input.search-box {
 input.search-button {
   float: left;
 }
+
+.no-boxshadow .blurred:invalid {background-color:#f0dddd;}
 
 /* Responsive images */
 img {
@@ -681,14 +677,14 @@ input[disabled="disabled"], div.chosen-disabled, div.chosen-disabled a, div.chos
 
 #content {
   padding: 10px;
-  /*-webkit-border-radius: 10px;
+  -webkit-border-radius: 10px;
   -moz-border-radius: 10px;
   border-radius: 10px;
   border: 1px solid #999;
   border: inset 1px solid #333;
   -webkit-box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.3);
   -moz-box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.3);
-  box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.3);*/
+  box-shadow: 0px 0px 8px rgba(0, 0, 0, 0.3);
   width: 90%;
   background-color: #fff;
   margin-left: auto;
@@ -697,6 +693,8 @@ input[disabled="disabled"], div.chosen-disabled, div.chosen-disabled a, div.chos
   position: relative;
   /*overflow: auto;*/
 }
+
+p {margin-bottom: 15px;}
 
 #footer {
   text-align: center;
@@ -813,7 +811,6 @@ input, textarea {
 input.active, textarea.active {
   margin-bottom:5px;
   line-height:18px;
-  padding:2px 5px;
   -webkit-border-radius: 5px;
   -moz-border-radius: 5px;
   border-radius: 5px;
@@ -921,6 +918,7 @@ fieldset {min-width: 100%;}
   float: left;
   padding-right: 4px;
 }
+
 .right {
   float: right;
   padding-left: 4px;
@@ -949,24 +947,31 @@ fieldset {min-width: 100%;}
 
 /* Tournament final display of two columns */
 .column-final-match {
-  width: 43%;
+  width: 40%;
   padding: 0px;
-  font-size: 4em;
+  font-size: 1.5em;
+  background: #e9e9e9;
+  -webkit-border-radius: 25px;
+  -moz-border-radius: 25px;
+  border-radius: 25px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
   text-align: center;
 }
 
 .column-final-match-score {
   float: left;
   padding: 0px;
-  width: 13%;
-  font-size: 2em;
-}
-
-.final-competitor {
-  background: #999;
-  -webkit-border-radius: 25px;
-  -moz-border-radius: 25px;
-  border-radius: 25px;
+  width: 18%;
+  font-size: 1.1em;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
 }
 
 /* Clear floats after the columns */
@@ -980,8 +985,7 @@ fieldset {min-width: 100%;}
 @media screen and (max-width: 900px) {
   .column {width: 100%;}
   .column-narrow {width: 100%;}
-  .column-wide {width: 100%;}
-}
+  .column-wide {width: 100%;}}
 
 span.player_total {
   vertical-align: top;
@@ -1049,7 +1053,8 @@ div.doubles_home_player_selection, div.doubles_away_player_selection {
 .field_title {font-weight: bold;}
 
 .links {
-  display: none;
+  font-size: -1em;
+  text-align: center;
 }
 
 .links .header {font-weight: bold;}
@@ -1058,8 +1063,7 @@ div.doubles_home_player_selection, div.doubles_away_player_selection {
 .nav_list {text-align: center;}
 td.numeric, th.numeric, dd.numeric {text-align: right !important;}
 td.game-number, th.game-number {text-align: center;}
-.match_score {float: right;}
-.sort-handle {float: right; background-color: #fff;}
+.match_score, .sort-handle {float: right;}
 span.game-result {font-weight: bold;}
 span.leg-separator {display: none;}
 td.leg-scores {clear: both;}
@@ -1102,8 +1106,8 @@ span.leg-score-link {
 /*
   Sortable team position numbers
 */
-span.team-position-number {padding-left: 15px;}
-span.team-position-name {padding-left: 30px;}
+span.team-position-number, span.official-position-number {padding-left: 15px;}
+span.team-position-name, span.official-position-name {padding-left: 30px;}
 
 /* Fixtures list displays */
 td.match-score, td.match-versus {text-align: center;}
@@ -1197,6 +1201,11 @@ html[xmlns] .clearfix, html[xmlns] .clear-fix {display: block;}
   #index-matches-today, #season-fixtures-results {
     float: none;
     padding-bottom: 20px;
+  }
+
+  /* tablet breakpoint */
+  .stats-columns > div {
+    width:100%;
   }
   
   /* Hide label placeholders so we don't get an odd gap between one field and another in say a collection of address fields */

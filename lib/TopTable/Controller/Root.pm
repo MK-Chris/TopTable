@@ -181,7 +181,8 @@ sub index :Path :Args(0) {
   
   my ( $matches, $matches_to_show, $matches_started, $next_match_date, $handicapped );
   my $tomorrow = 0; # Denote if the next match date is tomorrow, we have a special language code for this
-  my $today = $c->datetime_tz({time_zone => $c->stash->{timezone}});
+  my $timezone = $c->stash->{timezone};
+  my $today = $c->datetime_tz({time_zone => $timezone});
   my $deciding_game_winners = [];
   my $deuce_game_winners = [];
   my $highest_point_winners = [];
@@ -199,7 +200,7 @@ sub index :Path :Args(0) {
     
     if ( !$matches_to_show ) {
       # No matches today, find the next match date
-      $next_match_date = $c->model("DB::TeamMatch")->next_match_date;
+      $next_match_date = $c->model("DB::TeamMatch")->next_match_date({timezone => $timezone});
       $tomorrow = 1 if defined($next_match_date) and $next_match_date->clone->subtract(days => 1)->ymd eq $today->ymd;
       
       if ( defined($next_match_date) ) {

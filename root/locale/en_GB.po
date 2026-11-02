@@ -6984,9 +6984,6 @@ msgstr "Error %1"
 msgid "footer.copyright"
 msgstr "Copyright"
 
-msgid "footer.back-to-top"
-msgstr "Back to top"
-
 msgid "ajax.error.refresh-advice"
 msgstr "Please refresh the page and try again; if the issue persists, please contact the system administrator."
 
