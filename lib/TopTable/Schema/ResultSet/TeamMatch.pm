@@ -480,11 +480,13 @@ Get the next date with matches.
 
 sub next_match_date {
   my $class = shift;
+  my $params = shift;
+  my $timezone = $params->{timezone};
   my $schema = $class->result_source->schema;
   my $dtf = $schema->storage->datetime_parser;
   
   my $date = $class->search({
-    played_date => {">=" => DateTime->now->ymd}
+    played_date => {">=" => DateTime->now(time_zone => $timezone)->ymd}
   }, {
     columns => [{
       date => {min => "played_date"}
