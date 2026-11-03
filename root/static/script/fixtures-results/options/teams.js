@@ -3,33 +3,35 @@
  *
  */
 $(document).ready(function() {
+  let isMobile = window.matchMedia("(max-width: 767px)").matches;
+  
   $("#fixtures-options").DataTable({
-    "responsive": true,
-    "paging": true,
-    "pageLength": 25,
+    responsive: true,
+    paging: true,
+    pageLength: 25,
     //pagingType: "full_numbers",
-    "lengthChange": true,
-    "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-    "info": true,
-    "fixedHeader": true,
-    "searching": true,
-    "order": [0, "asc"],
-    "ordering": true,
-    "rowGroup": {
-      "dataSrc": 0
+    lengthChange: true,
+    lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+    info: true,
+    fixedHeader: isMobile ? false : true,
+    searching: true,
+    order: [0, "asc"],
+    ordering: true,
+    rowGroup: {
+      dataSrc: 0
     },
-    "columnDefs": [{
+    columnDefs: [{
       // Club
-      "visible": 0,
-      "targets": 0
+      visible: 0,
+      targets: 0
     }, {
       // Team
-      "responsivePriority": 1,
-      "targets": 1
+      responsivePriority: 1,
+      targets: 1
     }, {
       // Number of matches
-      "responsivePriority": 2,
-      "targets": 2
+      responsivePriority: 2,
+      targets: 2
     }]
   });
   

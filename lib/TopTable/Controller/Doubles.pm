@@ -312,7 +312,7 @@ sub view_finalise :Private {
       $c->uri_for("/static/script/plugins/tokeninput/jquery.tokeninput.mod.js", {v => 2}),
       $c->uri_for("/static/script/plugins/toastmessage/jquery.toastmessage.js"),
       $c->uri_for("/static/script/standard/messages.js"),
-      $c->uri_for("/static/script/doubles/view.js"),
+      $c->uri_for("/static/script/doubles/view.js", {v => 2}),
       $c->uri_for("/static/script/standard/option-list.js"),
       $c->uri_for("/static/script/standard/vertical-table.js"),
       $c->uri_for("/static/script/head-to-heads/head-to-head-buttons.js", {v => 2}),
@@ -358,7 +358,7 @@ sub view_seasons :Chained("view") :PathPart("seasons") :Args(0) {
       $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
-      $c->uri_for("/static/script/doubles/seasons.js"),
+      $c->uri_for("/static/script/doubles/seasons.js", {v => 2}),
     ];
     $ext_styles = [
       $c->uri_for("/static/css/chosen/chosen.min.css"),

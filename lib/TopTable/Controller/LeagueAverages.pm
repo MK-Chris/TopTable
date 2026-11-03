@@ -450,7 +450,7 @@ sub view_finalise :Private {
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
-      sprintf($c->uri_for("/static/script/league-averages/view-%s.js"), $averages_type),
+      sprintf($c->uri_for("/static/script/league-averages/view-%s.js"), $averages_type, {v => 2}),
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),

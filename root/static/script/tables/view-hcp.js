@@ -3,12 +3,14 @@
  *
  */
 $(document).ready(function() {
+  let isMobile = window.matchMedia("(max-width: 767px)").matches;
+  
   $("table.league-table").DataTable({
     responsive: true,
     paging: false,
     info: false,
     ordering: false,
-    fixedHeader: true,
+    fixedHeader: isMobile ? false : true,
     searching: false,
     columns: [
       {responsivePriority: 3}, // Pos

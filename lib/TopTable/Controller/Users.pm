@@ -101,8 +101,8 @@ sub list :Chained("/") :PathPart("users") :Args(0) {
   my $users = $c->model("DB::User")->all_users;
   
   my $user_list_script = ( $c->stash->{authorisation}{user_edit_all} or $c->stash->{authorisation}{user_approve_new} )
-    ? $c->uri_for("/static/script/users/user-list-with-email.js")
-    : $c->uri_for("/static/script/users/user-list.js");
+    ? $c->uri_for("/static/script/users/user-list-with-email.js", {v => 2})
+    : $c->uri_for("/static/script/users/user-list.js", {v => 2});
   
   # Set up the template to use
   $c->stash({
@@ -881,7 +881,7 @@ sub approval_list :Path("approval-list") :Args(0) {
         $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
         $c->uri_for("/static/script/plugins/prettycheckable/prettyCheckable.min.js"),
         $c->uri_for("/static/script/standard/prettycheckable.js"),
-        $c->uri_for("/static/script/users/approval-list.js"),
+        $c->uri_for("/static/script/users/approval-list.js", {v => 2}),
       ],
       external_styles => [
         $c->uri_for("/static/css/chosen/chosen.min.css"),
@@ -1784,7 +1784,7 @@ sub current_activity :Path("/users-online") {
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedColumns.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
-      $c->uri_for("/static/script/users/online.js"),
+      $c->uri_for("/static/script/users/online.js", {v => 2}),
     ],
     external_styles => [
       $c->uri_for("/static/css/datatables/dataTables.dataTables.min.css"),

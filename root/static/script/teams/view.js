@@ -3,6 +3,8 @@
  *
  */
 $(document).ready(function() {
+  let isMobile = window.matchMedia("(max-width: 767px)").matches;
+  
   /*
     DataTables
   */
@@ -11,7 +13,7 @@ $(document).ready(function() {
     paging: false,
     info: false,
     ordering: true,
-    fixedHeader: true,
+    fixedHeader: isMobile ? false : true,
     searching: false,
     order: [1, "asc"],
     ordering: true,
@@ -40,7 +42,7 @@ $(document).ready(function() {
     paging: false,
     info: false,
     ordering: false,
-    fixedHeader: true,
+    fixedHeader: isMobile ? false : true,
     searching: false,
     columns: [
       {responsivePriority: 1},
@@ -59,7 +61,7 @@ $(document).ready(function() {
     paging: false,
     info: false,
     ordering: false,
-    fixedHeader: true,
+    fixedHeader: isMobile ? false : true,
     searching: false,
     columns: [
       {responsivePriority: 1},
@@ -76,7 +78,7 @@ $(document).ready(function() {
     paging: false,
     info: false,
     ordering: false,
-    fixedHeader: true,
+    fixedHeader: isMobile ? false : true,
     searching: false,
     columns: [
       {responsivePriority: 1},
@@ -95,7 +97,7 @@ $(document).ready(function() {
     lengthChange: true,
     lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
     info: true,
-    fixedHeader: true,
+    fixedHeader: isMobile ? false : true,
     searching: true,
     ordering: true,
     order: [[3, "asc"]],

@@ -3,21 +3,23 @@
  *
  */
 $(document).ready(function() {
-  var report_table = $("#report").DataTable({
-    "responsive": true,
-    "paging": true,
-    "pageLength": 25,
+  let isMobile = window.matchMedia("(max-width: 767px)").matches;
+  
+  let report_table = $("#report").DataTable({
+    responsive: true,
+    paging: true,
+    pageLength: 25,
     //pagingType: "full_numbers",
-    "lengthChange": true,
-    "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, $("#dt-lang").data("dt-paging-all")]],
-    "info": true,
-    "fixedHeader": true,
-    "colReorder": true,
-    "rowGroup": {
-      "enable": false,
-      "dataSrc": 0,
-      "startRender": function (rows, group) {
-        var rowsText;
+    lengthChange: true,
+    lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, $("#dt-lang").data("dt-paging-all")]],
+    info: true,
+    fixedHeader: isMobile ? false : true,
+    colReorder: true,
+    rowGroup: {
+      enable: false,
+      dataSrc: 0,
+      startRender: function (rows, group) {
+        let rowsText;
         
         if (rows.count() == 1) {
           rowsText = $("#dt-lang").data("dt-rows-singular");
@@ -28,41 +30,41 @@ $(document).ready(function() {
         return group + " (" + rows.count() + " " + rowsText + ")";
       }
     },
-    "columnDefs": [{
-      "visible": false,
-      "targets": [0, 2, 4] // Original date, rescheduled date, division rank
+    columnDefs: [{
+      visible: false,
+      targets: [0, 2, 4] // Original date, rescheduled date, division rank
     }, {
       // Original date
-      "orderData": 0,
-      "responsivePriority": 3,
-      "targets": 1
+      orderData: 0,
+      responsivePriority: 3,
+      targets: 1
     }, {
       // Rescheduled date
-      "orderData": 2,
-      "responsivePriority": 4,
-      "targets": 3
+      orderData: 2,
+      responsivePriority: 4,
+      targets: 3
     }, {
       // Division
-      "orderData": 4,
-      "responsivePriority": 5,
-      "targets": 5
+      orderData: 4,
+      responsivePriority: 5,
+      targets: 5
     }, {
       // Home team
-      "responsivePriority": 1,
-      "targets": 6
+      responsivePriority: 1,
+      targets: 6
     }, {
       // Away team
-      "responsivePriority": 2,
-      "targets": 7
+      responsivePriority: 2,
+      targets: 7
     }, {
       // Score
-      "responsivePriority": 6,
-      "orderable": false,
-      "targets": 8
+      responsivePriority: 6,
+      orderable: false,
+      targets: 8
     }, {
       // Venue
-      "responsivePriority": 7,
-      "targets": 9
+      responsivePriority: 7,
+      targets: 9
     }]
   });
   
@@ -82,10 +84,10 @@ $(document).ready(function() {
     Handle chosen selectbox change
   */
   $("#group-table").on("change", function() {
-    var $this = $(this);
+    let $this = $(this);
     
     // Set the previous column to visible.
-    var $previous_value = $this.data("previous-value");
+    let $previous_value = $this.data("previous-value");
     if ( $previous_value !== "" ) report_table.column($previous_value).visible(true);
     
     if ( $this.val() === "" ) {

@@ -283,7 +283,7 @@ sub view_finalise :Private {
   my $table_view_js = "view";
   $table_view_js .= "-points" if $ranking_template->assign_points;
   $table_view_js .= "-hcp" if $match_template->handicapped;
-  $table_view_js = $c->uri_for("/static/script/tables/$table_view_js.js", {v => 5});
+  $table_view_js = $c->uri_for("/static/script/tables/$table_view_js.js", {v => 6});
   
   my @ext_scripts = (
     $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
@@ -305,7 +305,7 @@ sub view_finalise :Private {
   if ( $points_adjustments->count ) {
     push(@ext_scripts,
       $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
-      $c->uri_for("/static/script/tables/points-adjustments.js")
+      $c->uri_for("/static/script/tables/points-adjustments.js", {v => 2}),
     );
     
     push(@ext_styles, $c->uri_for("/static/css/datatables/rowGroup.dataTables.min.css"));

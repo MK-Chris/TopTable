@@ -3,6 +3,8 @@
  *
  */
 $(document).ready(function() {
+  let isMobile = window.matchMedia("(max-width: 767px)").matches;
+  
   var singles_games = $("#singles-table").DataTable({
     responsive: true,
     paging: true,
@@ -10,7 +12,7 @@ $(document).ready(function() {
     lengthChange: true,
     lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
     info: true,
-    fixedHeader: true,
+    fixedHeader: isMobile ? false : true,
     layout: {
       topStart: "pageLength",
       topEnd: "search",
@@ -88,7 +90,7 @@ $(document).ready(function() {
     lengthChange: true,
     lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
     info: true,
-    fixedHeader: true,
+    fixedHeader: isMobile ? false : true,
     layout: {
       topStart: "pageLength",
       topEnd: "search",
@@ -172,7 +174,7 @@ $(document).ready(function() {
     lengthChange: true,
     lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
     info: true,
-    fixedHeader: true,
+    fixedHeader: isMobile ? false : true,
     order: [[3, "desc"], [0, "asc"]],
     columns: [{
       // Position

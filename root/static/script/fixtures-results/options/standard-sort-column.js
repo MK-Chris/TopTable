@@ -3,31 +3,33 @@
  *
  */
 $(document).ready(function() {
+  let isMobile = window.matchMedia("(max-width: 767px)").matches;
+  
   $("#fixtures-options").DataTable({
-    "responsive": true,
-    "paging": true,
-    "pageLength": 25,
+    responsive: true,
+    paging: true,
+    pageLength: 25,
     //pagingType: "full_numbers",
-    "lengthChange": true,
-    "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-    "info": true,
-    "fixedHeader": true,
-    "searching": true,
-    "order": [0, "asc"],
-    "ordering": true,
-    "columnDefs": [{
+    lengthChange: true,
+    lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+    info: true,
+    fixedHeader: isMobile ? false : true,
+    searching: true,
+    order: [0, "asc"],
+    ordering: true,
+    columnDefs: [{
       // Month sort data
-      "visible": false,
-      "targets": 1
+      visible: false,
+      targets: 1
     }, {
       // Month
-      "responsivePriority": 1,
-      "orderData": 1,
-      "targets": 0
+      responsivePriority: 1,
+      orderData: 1,
+      targets: 0
     }, {
       // Number
-      "responsivePriority": 2,
-      "targets": 2
+      responsivePriority: 2,
+      targets: 2
     }]
   });
   

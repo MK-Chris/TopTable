@@ -3,11 +3,13 @@
  *
  */
 $(document).ready(function() {
+  let isMobile = window.matchMedia("(max-width: 767px)").matches;
+  
   $("table.round_view").DataTable({
     responsive: true,
     paging: false,
     info: true,
-    fixedHeader: true,
+    fixedHeader: isMobile ? false : true,
     searching: true,
     ordering: true,
     orderFixed: {pre: [1, "asc"]},
@@ -55,7 +57,7 @@ $(document).ready(function() {
     lengthChange: true,
     lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
     info: true,
-    fixedHeader: true,
+    fixedHeader: isMobile ? false : true,
     searching: true,
     ordering: false,
   });
