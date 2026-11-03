@@ -3,30 +3,32 @@
  *
  */
 $(document).ready(function() {
+  let isMobile = window.matchMedia("(max-width: 767px)").matches;
+  
   $("#datatable").DataTable({
-    "responsive": true,
-    "paging": true,
-    "pageLength": 25,
+    responsive: true,
+    paging: true,
+    pageLength: 25,
     //pagingType: "full_numbers",
-    "lengthChange": true,
-    "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-    "info": true,
-    "fixedHeader": true,
-    "orderFixed": [1, "asc"],
-    "ordering": true,
-    "rowGroup": {
-      "dataSrc": 1
+    lengthChange: true,
+    lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+    info: true,
+    fixedHeader: isMobile ? false : true,
+    orderFixed: [1, "asc"],
+    ordering: true,
+    rowGroup: {
+      dataSrc: 1
     },
-    "columnDefs": [{
+    columnDefs: [{
       // Hide columns position order, committee position (without admin links), sortable name
-      "visible": false,
-      "targets": [0, 1, 3]
+      visible: false,
+      targets: [0, 1, 3]
     }, {
-      "orderData": 0,
-      "targets": 1
+      orderData: 0,
+      targets: 1
     }, {
-      "orderData": 3,
-      "targets": 4
+      orderData: 3,
+      targets: 4
     }]
   });
   

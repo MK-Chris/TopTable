@@ -3,6 +3,8 @@
  *
  */
 $(document).ready(function() {
+  let isMobile = window.matchMedia("(max-width: 767px)").matches;
+  
   $("#fixtures-table").DataTable({
     responsive: true,
     paging: true,
@@ -10,7 +12,7 @@ $(document).ready(function() {
     lengthChange: true,
     lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
     info: true,
-    fixedHeader: true,
+    fixedHeader: isMobile ? false : true,
     searching: true,
     orderFixed: [1, "asc"],
     ordering: true,

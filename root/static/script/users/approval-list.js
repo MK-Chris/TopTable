@@ -3,31 +3,33 @@
  *
  */
 $(document).ready(function(){
-  var table = $("#datatable").DataTable({
-    "responsive": true,
-    "paging": true,
-    "pageLength": 25,
+  let isMobile = window.matchMedia("(max-width: 767px)").matches;
+  
+  let table = $("#datatable").DataTable({
+    responsive: true,
+    paging: true,
+    pageLength: 25,
     //pagingType: "full_numbers",
-    "lengthChange": true,
-    "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-    "info": true,
-    "fixedHeader": true,
-    "order": [[1, "asc"]],
-    "columnDefs": [{
-      "targets": [3, 7, 10],
-      "visible": false
+    lengthChange: true,
+    lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+    info: true,
+    fixedHeader: isMobile ? false : true,
+    order: [[1, "asc"]],
+    columnDefs: [{
+      targets: [3, 7, 10],
+      visible: false
     }, {
-      "targets": [4],
-      "orderData": 2
+      targets: [4],
+      orderData: 2
     }, {
-      "targets": [8],
-      "orderData": 6
+      targets: [8],
+      orderData: 6
     }, {
-      "targets": 9,
-      "orderData": 10
+      targets: 9,
+      orderData: 10
     }, {
-      "targets": [0],
-      "orderable": false
+      targets: [0],
+      orderable: false
     }]
   });
   
@@ -47,7 +49,7 @@ $(document).ready(function(){
    *
    */
   $("input#checkall").on("change", function(){
-    var t = $(this);
+    let t = $(this);
     
     if ( t.prop("checked") === false ) {
       // Uncheck everything
@@ -68,8 +70,8 @@ $(document).ready(function(){
    *
    */
 function calculateChecked() {
-  var checked = 0;
-  var checkboxes = 0;
+  let checked = 0;
+  let checkboxes = 0;
   
   $("input.single-check").each(function(){
     if ( $(this).prop("checked") ) {

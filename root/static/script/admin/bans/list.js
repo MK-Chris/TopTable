@@ -3,24 +3,26 @@
  *
  */
 $(document).ready(function() {
+  let isMobile = window.matchMedia("(max-width: 767px)").matches;
+  
   $("#bans-list").DataTable({
-    "responsive": true,
-    "paging": true,
-    "pageLength": 25,
+    responsive: true,
+    paging: true,
+    pageLength: 25,
     //pagingType: "full_numbers",
-    "lengthChange": true,
-    "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-    "info": true,
-    "fixedHeader": true,
-    "columnDefs": [{
-      "visible": false,
-      "targets": [1, 7]
+    lengthChange: true,
+    lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+    info: true,
+    fixedHeader: isMobile ? false : true,
+    columnDefs: [{
+      visible: false,
+      targets: [1, 7]
     }, {
-      "orderData": 1,
-      "targets": 2
+      orderData: 1,
+      targets: 2
     }, {
-      "orderData": 7,
-      "targets": 8
+      orderData: 7,
+      targets: 8
     }]
   });
   

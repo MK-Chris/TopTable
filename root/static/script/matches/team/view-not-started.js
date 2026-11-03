@@ -6,12 +6,13 @@ $(document).ready(function(){
   /*
     Initialise datatables
   */
-  var teams_table = $("#teams-table").DataTable({
+  let isMobile = window.matchMedia("(max-width: 767px)").matches;
+  let teams_table = $("#teams-table").DataTable({
     responsive: true,
     paging: false,
     info: false,
     ordering: false,
-    fixedHeader: true,
+    fixedHeader: isMobile ? false : true,
     searching: false,
     columnDefs: [{
       // Game number

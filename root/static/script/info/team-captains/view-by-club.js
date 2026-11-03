@@ -3,30 +3,32 @@
  *
  */
 $(document).ready(function() {
+  let isMobile = window.matchMedia("(max-width: 767px)").matches;
+  
   $("#datatable").DataTable({
-    "responsive": true,
-    "paging": true,
-    "pageLength": 25,
+    responsive: true,
+    paging: true,
+    pageLength: 25,
     //pagingType: "full_numbers",
-    "lengthChange": true,
-    "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-    "info": true,
-    "fixedHeader": true,
-    "orderFixed": [0, "asc"],
-    "ordering": true,
-    "rowGroup": {
-      "dataSrc": 0
+    lengthChange: true,
+    lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+    info: true,
+    fixedHeader: isMobile ? false : true,
+    orderFixed: [0, "asc"],
+    ordering: true,
+    rowGroup: {
+      dataSrc: 0
     },
-    "columnDefs": [{
+    columnDefs: [{
       // Hide columns club (because we're grouping by that) and division rank
-      "visible": false,
-      "targets": [0, 2, 4]
+      visible: false,
+      targets: [0, 2, 4]
     }, {
-      "orderData": 2,
-      "targets": 3
+      orderData: 2,
+      targets: 3
     }, {
-      "orderData": 4,
-      "targets": 5
+      orderData: 4,
+      targets: 5
     }]
   });
   

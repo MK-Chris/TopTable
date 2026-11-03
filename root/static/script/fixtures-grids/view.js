@@ -6,24 +6,26 @@ $(document).ready(function() {
   /*
     DataTables
   */
+  let isMobile = window.matchMedia("(max-width: 767px)").matches;
+  
   var matches = $("#matches-table").DataTable({
-    "ordering": false,
-    "fixedHeader": true,
-    "responsive": true,
-    "info": true,
-    "order": [[1, "asc"]],
-    "paging": true,
-    "pageLength": 25,
-    "lengthChange": true,
-    "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-    "ordering": false,
-    "rowGroup": {
-      "dataSrc": 0
+    ordering: false,
+    fixedHeader: isMobile ? false : true,
+    responsive: true,
+    info: true,
+    order: [[1, "asc"]],
+    paging: true,
+    pageLength: 25,
+    lengthChange: true,
+    lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+    ordering: false,
+    rowGroup: {
+      dataSrc: 0
     },
-    "columnDefs": [{
+    columnDefs: [{
       // Division rank, division name - division name invisible because it's grouped
-      "visible": false,
-      "targets": [0]
+      visible: false,
+      targets: [0]
     }]
   });
   
@@ -35,28 +37,28 @@ $(document).ready(function() {
   });
   
   var division_positions = $("#division-positions-table").DataTable({
-    "ordering": false,
-    "fixedHeader": true,
-    "responsive": true,
-    "info": true,
-    "orderFixed": {"pre": [1, "asc"]},
-    "order": [[2, "asc"]],
-    "paging": true,
-    "pageLength": 25,
-    "lengthChange": true,
-    "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-    "ordering": false,
-    "rowGroup": {
-      "dataSrc": 1
+    ordering: false,
+    fixedHeader: isMobile ? false : true,
+    responsive: true,
+    info: true,
+    orderFixed: {"pre": [1, "asc"]},
+    order: [[2, "asc"]],
+    paging: true,
+    pageLength: 25,
+    lengthChange: true,
+    lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+    ordering: false,
+    rowGroup: {
+      dataSrc: 1
     },
-    "columnDefs": [{
+    columnDefs: [{
       // Division rank, division name - invisible because the rank is just for sorting, division name invisible because it's grouped
-      "visible": false,
-      "targets": [0, 1]
+      visible: false,
+      targets: [0, 1]
     }, {
       // Order data for division name column will be the division ID column
-      "orderData": 0,
-      "targets": [1]
+      orderData: 0,
+      targets: [1]
     }]
   });
   
@@ -68,28 +70,28 @@ $(document).ready(function() {
   });
   
   var tournament_positions = $("#tournament-positions-table").DataTable({
-    "ordering": false,
-    "fixedHeader": true,
-    "responsive": true,
-    "info": true,
-    "orderFixed": {"pre": [[0, "asc"], [2, "asc"]]},
-    "order": [[2, "asc"]],
-    "paging": true,
-    "pageLength": 25,
-    "lengthChange": true,
-    "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-    "ordering": false,
-    "rowGroup": {
-      "dataSrc": [0, 2]
+    ordering: false,
+    fixedHeader: isMobile ? false : true,
+    responsive: true,
+    info: true,
+    orderFixed: {"pre": [[0, "asc"], [2, "asc"]]},
+    order: [[2, "asc"]],
+    paging: true,
+    pageLength: 25,
+    lengthChange: true,
+    lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+    ordering: false,
+    rowGroup: {
+      dataSrc: [0, 2]
     },
-    "columnDefs": [{
+    columnDefs: [{
       // Competition name invisible because it's grouped, group order column because it's a sort column
-      "visible": false,
-      "targets": [0, 1, 2]
+      visible: false,
+      targets: [0, 1, 2]
     }, {
       // Order data for group column will be the group_order column
-      "orderData": 1,
-      "targets": 2
+      orderData: 1,
+      targets: 2
     }]
   });
   

@@ -3,31 +3,33 @@
  *
  */
 $(document).ready(function(){
-  var table = $("#datatable").DataTable({
-    "responsive": true,
-    "paging": true,
-    "pageLength": 25,
+  let isMobile = window.matchMedia("(max-width: 767px)").matches;
+  
+  $("#datatable").DataTable({
+    responsive: true,
+    paging: true,
+    pageLength: 25,
     //pagingType: "full_numbers",
-    "lengthChange": true,
-    "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-    "info": true,
-    "fixedHeader": true,
-    "order": [[1, "asc"]],
-    "columnDefs": [{
-      "targets": [1, 5, 7, 9],
-      "visible": false
+    lengthChange: true,
+    lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+    info: true,
+    fixedHeader: isMobile ? false : true,
+    order: [[1, "asc"]],
+    columnDefs: [{
+      targets: [1, 5, 7, 9],
+      visible: false
     }, {
-      "targets": 2,
-      "orderData": 1
+      targets: 2,
+      orderData: 1
     }, {
-      "targets": 6,
-      "orderData": 5
+      targets: 6,
+      orderData: 5
     }, {
-      "targets": 8,
-      "orderData": 7
+      targets: 8,
+      orderData: 7
     }, {
-      "targets": 10,
-      "orderData": 9
+      targets: 10,
+      orderData: 9
     }]
   });
   

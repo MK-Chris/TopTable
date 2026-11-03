@@ -6,12 +6,13 @@ $(document).ready(function(){
   /*
     Initialise datatables
   */
-  var games_table = $("#games-table").DataTable({
+  let isMobile = window.matchMedia("(max-width: 767px)").matches;
+  let games_table = $("#games-table").DataTable({
     responsive: true,
     paging: false,
     info: false,
     ordering: false,
-    fixedHeader: true,
+    fixedHeader: isMobile ? false : true,
     searching: false,
     columnDefs: [{
       // Game number
@@ -36,12 +37,12 @@ $(document).ready(function(){
     }]
   });
   
-  var teams_table = $("#teams-table").DataTable({
+  let teams_table = $("#teams-table").DataTable({
     responsive: true,
     paging: false,
     info: false,
     ordering: false,
-    fixedHeader: true,
+    fixedHeader: isMobile ? false : true,
     searching: false,
     columnDefs: [{
       // Team
@@ -74,12 +75,12 @@ $(document).ready(function(){
     }]
   });
   
-  var players_table = $("#players-table").DataTable({
+  let players_table = $("#players-table").DataTable({
     responsive: true,
     paging: false,
     info: false,
     ordering: false,
-    fixedHeader: true,
+    fixedHeader: isMobile ? false : true,
     searching: false,
     rowGroup: {
       dataSrc: 0

@@ -16,7 +16,8 @@ false;
 -%]
     
     let dt_empty = opponent_populated ? "[% c.maketext("people.head-to-head.singles.opponent-populated.no-results") %]" : "[% c.maketext("people.head-to-head.singles.opponent-not-populated.no-results") %]";
-    
+    let isMobile = window.matchMedia("(max-width: 767px)").matches;
+  
     let head_to_heads = $("#head-to-heads-table").DataTable({
       responsive: true,
       paging: true,
@@ -25,7 +26,7 @@ false;
       searching: false,
       lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
       info: true,
-      fixedHeader: true,
+      fixedHeader: isMobile ? false : true,
       order: [1, "desc"],
       language: {
         emptyTable: dt_empty

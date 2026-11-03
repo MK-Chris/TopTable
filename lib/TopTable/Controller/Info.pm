@@ -384,7 +384,7 @@ sub team_captains :Path("team-captains") :Args(1) {
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
-      $c->uri_for(sprintf("/static/script/info/team-captains/view-%s.js", $view_by)),
+      $c->uri_for(sprintf("/static/script/info/team-captains/view-%s.js", $view_by), {v => 2}),
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),

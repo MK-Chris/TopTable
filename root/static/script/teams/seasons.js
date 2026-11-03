@@ -3,6 +3,8 @@
  *
  */
 $(document).ready(function() {
+  let isMobile = window.matchMedia("(max-width: 767px)").matches;
+  
   $("#datatable").DataTable({
     responsive: true,
     paging: true,
@@ -11,7 +13,7 @@ $(document).ready(function() {
     lengthChange: true,
     lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
     info: true,
-    fixedHeader: true,
+    fixedHeader: isMobile ? false : true,
     order: [1, "desc"],
     columnDefs: [{
       // Season sort, division rank, captain name sort

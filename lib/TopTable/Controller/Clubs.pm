@@ -358,7 +358,7 @@ sub view_finalise :Private {
       $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
-      $c->uri_for("/static/script/clubs/view.js", {v => 2}),
+      $c->uri_for("/static/script/clubs/view.js", {v => 3}),
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
@@ -392,7 +392,7 @@ sub view_seasons :Chained("view") :PathPart("seasons") :Args(0) {
       $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
-      $c->uri_for("/static/script/clubs/seasons.js"),
+      $c->uri_for("/static/script/clubs/seasons.js", {v => 2}),
     ];
     $ext_styles = [
       $c->uri_for("/static/css/chosen/chosen.min.css"),

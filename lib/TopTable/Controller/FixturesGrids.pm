@@ -359,7 +359,7 @@ sub view_finalise :Private {
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
-      $c->uri_for("/static/script/fixtures-grids/view.js", {v => 2}),
+      $c->uri_for("/static/script/fixtures-grids/view.js", {v => 3}),
     ],
     external_styles => [
       $c->uri_for("/static/css/responsive-tabs/responsive-tabs.css"),
@@ -401,7 +401,7 @@ sub view_seasons :Chained("view") :PathPart("seasons") :Args(0) {
       $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
-      $c->uri_for("/static/script/fixtures-grids/seasons.js"),
+      $c->uri_for("/static/script/fixtures-grids/seasons.js", {v => 2}),
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),

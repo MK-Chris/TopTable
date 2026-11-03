@@ -3,6 +3,8 @@
  *
  */
 $(document).ready(function() {
+  let isMobile = window.matchMedia("(max-width: 767px)").matches;
+  
   $("#report").DataTable({
     responsive: true,
     paging: true,
@@ -10,7 +12,7 @@ $(document).ready(function() {
     lengthChange: true,
     lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, $("#dt-lang").data("dt-paging-all")]],
     info: true,
-    fixedHeader: true,
+    fixedHeader: isMobile ? false : true,
     colReorder: true,
     orderFixed: {pre: [0, "desc"]},
     rowGroup: {

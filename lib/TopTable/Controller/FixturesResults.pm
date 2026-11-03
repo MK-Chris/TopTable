@@ -342,21 +342,21 @@ sub filter_view :Private {
     $view_method_display = $c->maketext("fixtures-results.title.category.by-team");
     push(@external_scripts,
       $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
-      $c->uri_for("/static/script/fixtures-results/options/teams.js"),
+      $c->uri_for("/static/script/fixtures-results/options/teams.js", {v => 2}),
     );
     push(@external_styles, $c->uri_for("/static/css/datatables/rowGroup.dataTables.min.css"));
   } elsif ( $view_method eq "divisions" ) {
     # View by division; display a list of divisions
     $display_options = [$c->model("DB::TeamMatch")->match_counts_by_division($season)];
     $view_method_display = $c->maketext("fixtures-results.title.category.by-division");
-    push(@external_scripts, $c->uri_for("/static/script/fixtures-results/options/standard-sort-column.js"));
+    push(@external_scripts, $c->uri_for("/static/script/fixtures-results/options/standard-sort-column.js", {v => 2}));
   } elsif ( $view_method eq "days" ) {
     # View by day; display a list of dates with matches
     $display_options = [$c->model("DB::TeamMatch")->match_counts_by_day($season)];
     $view_method_display = $c->maketext("fixtures-results.title.category.by-day");
     push(@external_scripts,
       $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
-      $c->uri_for("/static/script/fixtures-results/options/weeks.js"),
+      $c->uri_for("/static/script/fixtures-results/options/weeks.js", {v => 2}),
     );
     push(@external_styles, $c->uri_for("/static/css/datatables/rowGroup.dataTables.min.css"));
   } elsif ( $view_method eq "weeks" ) {
@@ -365,14 +365,14 @@ sub filter_view :Private {
     $view_method_display = $c->maketext("fixtures-results.title.category.by-week");
     push(@external_scripts,
       $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
-      $c->uri_for("/static/script/fixtures-results/options/weeks.js"),
+      $c->uri_for("/static/script/fixtures-results/options/weeks.js", {v => 2}),
     );
     push(@external_styles, $c->uri_for("/static/css/datatables/rowGroup.dataTables.min.css"));
   } elsif ( $view_method eq "months" ) {
     # View by month; display a list of months with matches
     $display_options = [$c->model("DB::TeamMatch")->match_counts_by_month($season)];
     $view_method_display = $c->maketext("fixtures-results.title.category.by-month");
-    push(@external_scripts, $c->uri_for("/static/script/fixtures-results/options/standard-sort-column.js"));
+    push(@external_scripts, $c->uri_for("/static/script/fixtures-results/options/standard-sort-column.js", {v => 2}));
   } elsif ( $view_method eq "date-range" ) {
     # Fixtures in a date range
     
@@ -381,7 +381,7 @@ sub filter_view :Private {
     # Fixtures in a venue
     $display_options = [$c->model("DB::TeamMatch")->match_counts_by_venue($season)];
     $view_method_display = $c->maketext("fixtures-results.title.category.by-venue");
-    push(@external_scripts, $c->uri_for("/static/script/fixtures-results/options/standard.js"));
+    push(@external_scripts, $c->uri_for("/static/script/fixtures-results/options/standard.js", {v => 2}));
   } else {
     # Detach to the 404 error if we don't recognise the view method.
     $c->detach(qw(TopTable::Controller::Root default));
@@ -578,7 +578,7 @@ sub view_team :Private {
       $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
-      $c->uri_for("/static/script/fixtures-results/view$handicapped/no-grouping.js", {v => 3}),
+      $c->uri_for("/static/script/fixtures-results/view$handicapped/no-grouping.js", {v => 4}),
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
@@ -846,7 +846,7 @@ sub view_division :Private {
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
-      $c->uri_for("/static/script/fixtures-results/view$handicapped/group-weeks-ordering-no-comp.js"),
+      $c->uri_for("/static/script/fixtures-results/view$handicapped/group-weeks-ordering-no-comp.js", {v => 2}),
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
@@ -1022,7 +1022,7 @@ sub view_venue :Private {
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
-      $c->uri_for("/static/script/fixtures-results/view$handicapped/group-weeks-ordering-no-venue.js"),
+      $c->uri_for("/static/script/fixtures-results/view$handicapped/group-weeks-ordering-no-venue.js", {v => 2}),
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
@@ -1212,7 +1212,7 @@ sub view_month :Private {
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
-      $c->uri_for("/static/script/fixtures-results/view$handicapped/group-week-competitions.js"),
+      $c->uri_for("/static/script/fixtures-results/view$handicapped/group-week-competitions.js", {v => 2}),
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
@@ -1311,7 +1311,7 @@ sub view_outstanding :Private {
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
-      $c->uri_for("/static/script/fixtures-results/view$handicapped/group-weeks-ordering.js", {v => 2}),
+      $c->uri_for("/static/script/fixtures-results/view$handicapped/group-weeks-ordering.js", {v => 3}),
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
@@ -1472,7 +1472,7 @@ sub view_week :Private {
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
-      $c->uri_for("/static/script/fixtures-results/view$handicapped/group-competitions.js"),
+      $c->uri_for("/static/script/fixtures-results/view$handicapped/group-competitions.js", {v => 3}),
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),
@@ -1653,7 +1653,7 @@ sub view_day :Private {
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
-      $c->uri_for("/static/script/fixtures-results/view$handicapped/group-competitions-no-date.js"),
+      $c->uri_for("/static/script/fixtures-results/view$handicapped/group-competitions-no-date.js", {v => 3}),
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),

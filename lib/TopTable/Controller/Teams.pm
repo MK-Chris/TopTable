@@ -462,7 +462,7 @@ sub view_finalise :Private {
     $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
     $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
     $c->uri_for("/static/script/standard/vertical-table.js"),
-    $c->uri_for("/static/script/teams$handicapped/view.js", {v => 4}),
+    $c->uri_for("/static/script/teams$handicapped/view.js", {v => 5}),
   );
   
   my $points_adjustments = defined($team_season) ? $team_season->points_adjustments : undef;
@@ -903,7 +903,7 @@ sub view_seasons :Private {
       $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
-      $c->uri_for("/static/script/teams/seasons.js", {v => 2}),
+      $c->uri_for("/static/script/teams/seasons.js", {v => 3}),
     ];
     $ext_styles = [
       $c->uri_for("/static/css/chosen/chosen.min.css"),

@@ -3,20 +3,22 @@
  *
  */
 $(document).ready(function() {
-  var report_table = $("#report").DataTable({
-    "responsive": true,
-    "paging": true,
-    "pageLength": 25,
+  let isMobile = window.matchMedia("(max-width: 767px)").matches;
+  
+  let report_table = $("#report").DataTable({
+    responsive: true,
+    paging: true,
+    pageLength: 25,
     //pagingType: "full_numbers",
-    "lengthChange": true,
-    "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, $("#dt-lang").data("dt-paging-all")]],
-    "info": true,
-    "fixedHeader": true,
-    "colReorder": true,
-    "rowGroup": {
-      "enable": false,
-      "dataSrc": 0,
-      "startRender": function (rows, group) {
+    lengthChange: true,
+    lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, $("#dt-lang").data("dt-paging-all")]],
+    info: true,
+    fixedHeader: isMobile ? false : true,
+    colReorder: true,
+    rowGroup: {
+      enable: false,
+      dataSrc: 0,
+      startRender: function (rows, group) {
         var rowsText;
         
         if (rows.count() == 1) {
@@ -28,36 +30,36 @@ $(document).ready(function() {
         return group + " (" + rows.count() + " " + rowsText + ")";
       }
     },
-    "columnDefs": [{
-      "visible": false,
-      "targets": [0, 2] // Sortable date, division rank
+    columnDefs: [{
+      visible: false,
+      targets: [0, 2] // Sortable date, division rank
     }, {
       // Date
-      "orderData": 0,
-      "responsivePriority": 5,
-      "targets": 1
+      orderData: 0,
+      responsivePriority: 5,
+      targets: 1
     }, {
       // Division
-      "orderData": 2,
-      "responsivePriority": 3,
-      "targets": 3
+      orderData: 2,
+      responsivePriority: 3,
+      targets: 3
     }, {
       // Home team
-      "responsivePriority": 1,
-      "targets": 4
+      responsivePriority: 1,
+      targets: 4
     }, {
       // Away team
-      "responsivePriority": 2,
-      "targets": 5
+      responsivePriority: 2,
+      targets: 5
     }, {
       // Score
-      "responsivePriority": 4,
-      "orderable": false,
-      "targets": 6
+      responsivePriority: 4,
+      orderable: false,
+      targets: 6
     }, {
       // Venue
-      "responsivePriority": 6,
-      "targets": 7
+      responsivePriority: 6,
+      targets: 7
     }]
   });
   

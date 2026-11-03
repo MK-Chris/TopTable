@@ -110,7 +110,7 @@ sub list :Chained("base") :PathPart("") :Args(0) {
       $c->uri_for("/static/script/plugins/datatables/dataTables.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
-      $c->uri_for("/static/script/admin/bans/list.js"),
+      $c->uri_for("/static/script/admin/bans/list.js", {v => 2}),
     ];
     
     $ext_styles = [

@@ -1476,7 +1476,7 @@ sub round_view :Private {
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
       $c->uri_for("/static/script/standard/vertical-table.js"),
-      $c->uri_for("/static/script/events/tournaments/rounds$handicapped/view.js"),
+      $c->uri_for("/static/script/events/tournaments/rounds$handicapped/view.js", {v => 2}),
     );
     
     @external_styles = (
@@ -1676,7 +1676,7 @@ sub round_select_entrants :Chained("rounds_current_season") :PathPart("select-en
   $js .= "-points" if defined($ranking_template) and $ranking_template->assign_points;
   $js .= "-hcp" if $match_template->handicapped;
   $js .= "-ko" unless $round->group_round;
-  $js = $c->uri_for("/static/script/events/tournaments/rounds/$js.js");
+  $js = $c->uri_for("/static/script/events/tournaments/rounds/$js.js", {v => 2});
   
   my @auto_qualifiers = $prev_round->auto_qualifiers;
   my @non_auto_qualifiers = $prev_round->non_auto_qualifiers;
@@ -1771,7 +1771,7 @@ sub round_delete_entrants :Chained("rounds_current_season") :PathPart("delete-en
       $c->uri_for("/static/script/plugins/datatables/dataTables.fixedHeader.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.responsive.min.js"),
       $c->uri_for("/static/script/plugins/datatables/dataTables.rowGroup.min.js"),
-      $c->uri_for("/static/script/events/tournaments/rounds/delete-entrants.js"),
+      $c->uri_for("/static/script/events/tournaments/rounds/delete-entrants.js", {v => 2}),
     ],
     external_styles => [
       $c->uri_for("/static/css/chosen/chosen.min.css"),

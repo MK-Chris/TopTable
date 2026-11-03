@@ -420,7 +420,7 @@ sub view_finalise :Private {
       $c->uri_for("/static/script/plugins/toastmessage/jquery.toastmessage.js"),
       $c->uri_for("/static/script/standard/messages.js"),
       $c->uri_for("/static/script/head-to-heads/head-to-head-buttons.js", {v => 2}),
-      $c->uri_for("/static/script/people/view.js", {v => 4}),
+      $c->uri_for("/static/script/people/view.js", {v => 5}),
     ],
     external_styles => [
       $c->uri_for("/static/css/responsive-tabs/responsive-tabs.css"),

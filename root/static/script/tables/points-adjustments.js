@@ -3,12 +3,14 @@
  *
  */
 $(document).ready(function() {
+  let isMobile = window.matchMedia("(max-width: 767px)").matches;
+  
   $("#adjustments").DataTable({
     responsive: true,
     paging: false,
     info: false,
     ordering: true,
-    fixedHeader: true,
+    fixedHeader: isMobile ? false : true,
     searching: false,
     orderFixed: {pre: [0, "asc"]},
     order: [2, "asc"],

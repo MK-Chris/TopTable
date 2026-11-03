@@ -3,10 +3,12 @@
  *
  */
 $(document).ready(function() {
+  let isMobile = window.matchMedia("(max-width: 767px)").matches;
+  
   $("#fixtures-table").DataTable({
     responsive: true,
     paging: false,
-    fixedHeader: true,
+    fixedHeader: isMobile ? false : true,
     searching: false,
     info: false,
     orderFixed: {pre: [1, "asc"]},

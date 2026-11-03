@@ -3,72 +3,74 @@
  *
  */
 $(document).ready(function() {
+  let isMobile = window.matchMedia("(max-width: 767px)").matches;
+  
   var games = $("#games_table").DataTable({
-    "responsive": true,
-    "paging": true,
-    "pageLength": 25,
-    "lengthChange": true,
-    "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
-    "info": true,
-    "fixedHeader": true,
-    "layout": {
-      "topStart": "pageLength",
-      "topEnd": "search",
-      "bottomStart": "info",
-      "bottomEnd": "paging",
-      "bottom2Start": "searchPanes"
+    responsive: true,
+    paging: true,
+    pageLength: 25,
+    lengthChange: true,
+    lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
+    info: true,
+    fixedHeader: isMobile ? false : true,
+    layout: {
+      topStart: "pageLength",
+      topEnd: "search",
+      bottomStart: "info",
+      bottomEnd: "paging",
+      bottom2Start: "searchPanes"
     },
-    "searchPanes": {
-      "layout": "columns-6",
-      "collapse": false,
-      "clear": false,
-      "dtOpts": {
-        "select": {style: "multi"}
+    searchPanes: {
+      layout: "columns-6",
+      collapse: false,
+      clear: false,
+      dtOpts: {
+        select: {style: "multi"}
       }
     },
-    "language": {
-      "searchPanes": {
-        "emptyPanes": null,
-        "title": $("#dt-data-only").data("dt-filter")
+    language: {
+      searchPanes: {
+        emptyPanes: null,
+        title: $("#dt-data-only").data("dt-filter")
       }
     },
-    "columnDefs": [{
+    columnDefs: [{
       // Date display
-      "orderData": 1,
-      "responsivePriority": 5,
+      orderData: 1,
+      responsivePriority: 5,
       "searchPanes": {"show": false},
       "targets": 0
     }, {
       // Date sortable
       "visible": false,
-      "responsivePriority": 5,
+      responsivePriority: 5,
       "searchPanes": {"show": false},
       "targets": 1
     }, {
       // Playing for (team)
-      "responsivePriority": 7,
+      responsivePriority: 7,
       "searchPanes": {"show": false},
       "targets": 2
     }, {
       // Playing against (team)
-      "responsivePriority": 6,
+      responsivePriority: 6,
       "searchPanes": {"show": false},
       "targets": 3
     }, {
       // Opponents (doubles pair)
-      "responsivePriority": 2,
+      responsivePriority: 2,
       "searchPanes": {"show": false},
       "targets": 4
     }, {
       // Score
       "orderable": false,
-      "responsivePriority": 4,
+      responsivePriority: 4,
       "searchPanes": {"show": false},
       "targets": 5
     }, {
       // Result
       "orderable": false,
-      "responsivePriority": 3,
+      responsivePriority: 3,
       "searchPanes": {"show": false},
       "targets": 6
     }, {
