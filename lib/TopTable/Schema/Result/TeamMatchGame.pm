@@ -3327,6 +3327,253 @@ sub update_doubles_pair {
       # Now regardless we have a doubles pair, whether we created or used the existing one, so finally we can set the doubles team for this game
       $self->$location_doubles_pair($doubles_pair);
       
+      # Update the statistics for the original doubles pair if it's changed and there was an original doubles pair specified
+      if ( $self->is_column_changed($location_doubles_pair) ) {
+        # The doubles pair column has changed, so we need to recalculate some values
+        # Grab some of the values we'll be checking frequently
+        my $complete = $self->complete;
+        my $winner = defined($self->winner) ? $self->winner->id : undef;
+        my $team_id = $match->$location_team->id;
+        
+        if ( defined($og_doubles_pair) ) {
+          # There is an original doubles pair to take some games off
+          foreach my $stat_type ( keys %og_stats ) {
+            # Field names - setup initial names, as these bits don't change regardless.  If it's an individual stat, we need to prefix "doubles_"
+            my ( $fld_games_played, $fld_games_won, $fld_games_lost, $fld_games_drawn, $fld_legs_played, $fld_legs_won, $fld_legs_lost, $fld_points_played, $fld_points_won, $fld_points_lost, $fld_average_game_wins, $fld_average_leg_wins, $fld_average_point_wins );
+            
+            if ( $stat_type eq "pair" ) {
+              $fld_games_played = "games_played";
+              $fld_games_won = "games_won";
+              $fld_games_lost = "games_lost";
+              $fld_games_drawn = "games_drawn";
+              $fld_legs_played = "legs_played";
+              $fld_legs_won = "legs_won";
+              $fld_legs_lost = "legs_lost";
+              $fld_points_played = "points_played";
+              $fld_points_won = "points_won";
+              $fld_points_lost = "points_lost";
+              $fld_average_game_wins = "average_game_wins";
+              $fld_average_leg_wins = "average_leg_wins";
+              $fld_average_point_wins = "average_point_wins";
+            } else {
+              $fld_games_played = "doubles_games_played";
+              $fld_games_won = "doubles_games_won";
+              $fld_games_lost = "doubles_games_lost";
+              $fld_games_drawn = "doubles_games_drawn";
+              $fld_legs_played = "doubles_legs_played";
+              $fld_legs_won = "doubles_legs_won";
+              $fld_legs_lost = "doubles_legs_lost";
+              $fld_points_played = "doubles_points_played";
+              $fld_points_won = "doubles_points_won";
+              $fld_points_lost = "doubles_points_lost";
+              $fld_average_game_wins = "doubles_average_game_wins";
+              $fld_average_leg_wins = "doubles_average_leg_wins";
+              $fld_average_point_wins = "doubles_average_point_wins";
+            }
+            
+            foreach my $stat ( @{$og_stats{$stat_type}} ) {
+              # Games - remove as appropriate from played, won, lost and drawn
+              if ( $complete ) {
+                # If the game is complete, we have to remove one played from the original pair
+                $stat->$fld_games_played($stat->$fld_games_played - 1);
+                
+                if ( defined($winner) ) {
+                  # If we have a winner, we have to remove 1 from either games won or lost, depending on the winner
+                  if ( $winner == $team_id ) {
+                    # Game won by the doubles pairing we're changing
+                    $stat->$fld_games_won($stat->$fld_games_won - 1);
+                  } else {
+                    # Game lost by the doubles pairing we're changing
+                    $stat->$fld_games_lost($stat->$fld_games_lost - 1);
+                  }
+                } else {
+                  # Game complete but no winner: draw (only relevant for games with a static number of legs)
+                  $stat->$fld_games_drawn($stat->$fld_games_drawn - 1);
+                }
+              }
+              
+              # Legs
+              $stat->$fld_legs_played($stat->$fld_legs_played - ( $self->$team_legs_won + $self->$opposition_legs_won ));
+              $stat->$fld_legs_won($stat->$fld_legs_won - $self->$team_legs_won);
+              $stat->$fld_legs_lost($stat->$fld_legs_lost - $self->$opposition_legs_won);
+              
+              # Points
+              $stat->$fld_points_played($stat->$fld_points_played - ( $self->$team_points_won + $self->$opposition_points_won ));
+              $stat->$fld_points_won($stat->$fld_points_won - $self->$team_points_won);
+              $stat->$fld_points_lost($stat->$fld_points_lost - $self->$opposition_points_won);
+              
+              # Game / leg / point averages
+              $stat->$fld_games_played ? $stat->$fld_average_game_wins(( $stat->$fld_games_won / $stat->$fld_games_played ) * 100) : $stat->$fld_average_game_wins(0);
+              $stat->$fld_legs_played ? $stat->$fld_average_leg_wins(( $stat->$fld_legs_won / $stat->$fld_legs_played ) * 100) : $stat->$fld_average_leg_wins(0);
+              $stat->$fld_points_played ? $stat->$fld_average_point_wins(( $stat->$fld_points_won / $stat->$fld_points_played ) * 100) : $stat->$fld_average_point_wins(0);
+              
+              # All fields have been calculated, do the update
+              $stat->update;
+            }
+          }
+        }
+        
+        # Stats arrays - league matches will only have one item per array (season stats for the pair / players)
+        # tournaments will have at least one - stats for the pair / player in the tournament; if it's a group round,
+        # there will be a stats element for that too
+        my ( @pair_stats, @player_stats );
+        
+        if ( $tourn_match ) {
+          # This match is part of a tournament, find the team membership.  No need to check if the tournament round team exists, as the team is not user defined,
+          # it's taken from a match object - we'll never have a match in a tournament round that doesn't contain any of the teams in that round.
+          # Tournament pair
+          my $tourn_pair = $tourn_team->find_or_create_related("tournaments_doubles", {
+            "me.season_pair" => $doubles_pair->id,
+            "me.event" => $match->tournament_round->tournament->event_season->event->id,
+            "me.season" => $season->id,
+            "me.tournament_team" => $tourn_team->id,
+          }, {
+            join => [qw( season_pair )],
+            prefetch => [qw( tournament_rounds_doubles )],
+          });
+          
+          # Round pair
+          my $round_pair = $tourn_pair->find_or_create_related("tournament_rounds_doubles", {
+            "me.tournament_round_team" => $round_team->id,
+            "me.tournament_round" => $match->tournament_round->id,
+            "me.tournament_group" => $tourn_group_round ? $tourn_group->id : undef,
+          }, {
+            prefetch => [qw( tournament_pair tournament_round_team )],
+          });
+          
+          # Lookup player 1 and 2 stats
+          my $tourn_player1 = $tourn_team->find_or_create_related("tournament_people", {
+            "me.event" => $match->tournament_round->tournament->event_season->event->id,
+            "me.season" => $season->id,
+            "me.person" => $player1->id,
+            "me.team" => $team->id,
+          }, {
+            prefetch => [qw( tournament_round_people ), {
+              person_season => [qw( person )],
+            }],
+          });
+          
+          my $round_player1 = $tourn_player1->find_or_create_related("tournament_round_people", {
+            "tournament_team.id" => $tourn_team->id,
+            "me.tournament_round" => $match->tournament_round->id,
+            "me.tournament_round_team" => $round_team->id,
+            "me.tournament_group" => $tourn_group_round ? $tourn_group->id : undef,
+          }, {
+            join => [qw( tournament_round ), {
+              tournament_person => [qw( tournament_team )],
+            }],
+          });
+          
+          my $tourn_player2 = $tourn_team->find_or_create_related("tournament_people", {
+            "me.event" => $match->tournament_round->tournament->event_season->event->id,
+            "me.season" => $season->id,
+            "me.person" => $player2->id,
+            "me.team" => $team->id,
+          }, {
+            prefetch => [qw( tournament_round_people )], {
+              person_season => [qw( person )],
+            },
+          });
+          
+          my $round_player2 = $tourn_player2->find_or_create_related("tournament_round_people", {
+            "tournament_team.id" => $tourn_team->id,
+            "me.tournament_round" => $match->tournament_round->id,
+            "me.tournament_round_team" => $round_team->id,
+            "me.tournament_group" => $tourn_group_round ? $tourn_group->id : undef,
+          }, {
+            join => [qw( tournament_round ), {
+              tournament_person => [qw( tournament_team )],
+            }],
+          });
+          
+          @pair_stats = ( $tourn_pair, $round_pair );
+          @player_stats = ( $tourn_player1, $round_player1, $tourn_player2, $round_player2 );
+        } else {
+          # League matches will always just have the one object per team / doubles player in the game, but we put it in the array to save on complicated logic later on
+          @pair_stats = ( $doubles_pair );
+          @player_stats = ( $doubles_pair->person_season_person1_season_team, $doubles_pair->person_season_person2_season_team );
+        }
+        
+        # Add to a hash so we can loop through keys and do all the updates at once
+        my %stats = (pair => \@pair_stats, player => \@player_stats);
+          
+        # There is an original doubles pair to take some games off
+        foreach my $stat_type ( keys %stats ) {
+          # Field names - setup initial names, as these bits don't change regardless.  If it's an individual stat, we need to prefix "doubles_"
+          my ( $fld_games_played, $fld_games_won, $fld_games_lost, $fld_games_drawn, $fld_legs_played, $fld_legs_won, $fld_legs_lost, $fld_points_played, $fld_points_won, $fld_points_lost, $fld_average_game_wins, $fld_average_leg_wins, $fld_average_point_wins );
+          
+          if ( $stat_type eq "pair" ) {
+            $fld_games_played = "games_played";
+            $fld_games_won = "games_won";
+            $fld_games_lost = "games_lost";
+            $fld_games_drawn = "games_drawn";
+            $fld_legs_played = "legs_played";
+            $fld_legs_won = "legs_won";
+            $fld_legs_lost = "legs_lost";
+            $fld_points_played = "points_played";
+            $fld_points_won = "points_won";
+            $fld_points_lost = "points_lost";
+            $fld_average_game_wins = "average_game_wins";
+            $fld_average_leg_wins = "average_leg_wins";
+            $fld_average_point_wins = "average_point_wins";
+          } else {
+            $fld_games_played = "doubles_games_played";
+            $fld_games_won = "doubles_games_won";
+            $fld_games_lost = "doubles_games_lost";
+            $fld_games_drawn = "doubles_games_drawn";
+            $fld_legs_played = "doubles_legs_played";
+            $fld_legs_won = "doubles_legs_won";
+            $fld_legs_lost = "doubles_legs_lost";
+            $fld_points_played = "doubles_points_played";
+            $fld_points_won = "doubles_points_won";
+            $fld_points_lost = "doubles_points_lost";
+            $fld_average_game_wins = "doubles_average_game_wins";
+            $fld_average_leg_wins = "doubles_average_leg_wins";
+            $fld_average_point_wins = "doubles_average_point_wins";
+          }
+          
+          foreach my $stat ( @{$og_stats{$stat_type}} ) {
+            # Games - add as appropriate from played, won, lost and drawn
+            if ( $complete ) {
+              # If the game is complete, we have to add one played to the new pair
+              $stat->$fld_games_played($stat->$fld_games_played + 1);
+              
+              if ( defined($winner) ) {
+                # If we have a winner, we have to add 1 to either games won or lost, depending on the winner
+                if ( $winner == $team_id ) {
+                  # Game won by the doubles pairing we're changing
+                  $stat->$fld_games_won($stat->$fld_games_won + 1);
+                } else {
+                  # Game lost by the doubles pairing we're changing
+                  $stat->$fld_games_lost($stat->$fld_games_lost + 1);
+                }
+              } else {
+                # Game complete but no winner: draw (only relevant for games with a static number of legs)
+                $stat->$fld_games_drawn($stat->$fld_games_drawn + 1);
+              }
+            }
+            
+            # Legs
+            $stat->$fld_legs_played($stat->$fld_legs_played + ( $self->$team_legs_won + $self->$opposition_legs_won ));
+            $stat->$fld_legs_won($stat->$fld_legs_won + $self->$team_legs_won);
+            $stat->$fld_legs_lost($stat->$fld_legs_lost + $self->$opposition_legs_won);
+            
+            # Points
+            $stat->$fld_points_played($stat->$fld_points_played + ( $self->$team_points_won + $self->$opposition_points_won ));
+            $stat->$fld_points_won($stat->$fld_points_won + $self->$team_points_won);
+            $stat->$fld_points_lost($stat->$fld_points_lost + $self->$opposition_points_won);
+            
+            # Game / leg / point averages
+            $stat->$fld_games_played ? $stat->$fld_average_game_wins(( $stat->$fld_games_won / $stat->$fld_games_played ) * 100) : $stat->$fld_average_game_wins(0);
+            $stat->$fld_legs_played ? $stat->$fld_average_leg_wins(( $stat->$fld_legs_won / $stat->$fld_legs_played ) * 100) : $stat->$fld_average_leg_wins(0);
+            $stat->$fld_points_played ? $stat->$fld_average_point_wins(( $stat->$fld_points_won / $stat->$fld_points_played ) * 100) : $stat->$fld_average_point_wins(0);
+            
+            # All fields have been calculated, do the update
+            $stat->update;
+          }
+        }
+      }
+      
       # Update our column if needed - we've already 'changed' the value, but not committed it
       $self->update;
       
