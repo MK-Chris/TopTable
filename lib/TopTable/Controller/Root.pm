@@ -9,6 +9,7 @@ use Data::Printer;
 use List::Util qw( min max );
 use Time::HiRes qw( gettimeofday tv_interval );
 use HTML::Entities;
+use Log::Log4perl::MDC;
 
 BEGIN { extends 'Catalyst::Controller' }
 
@@ -36,6 +37,9 @@ This module contains all the methods that are either used commonly in all / from
 
 sub auto :Private {
   my ( $self, $c ) = @_;
+  
+  # Store the URI for logging
+  Log::Log4perl::MDC->put("uri", $c->req->method . " " . $c->req->uri);
   
   # Stash the correct timezone
   # Only do timezone stuff if we're not processing a js file
