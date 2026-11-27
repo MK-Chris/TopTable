@@ -4,6 +4,7 @@ use namespace::autoclean;
 use DateTime;
 use DateTime::TimeZone;
 use Log::Log4perl::Catalyst;
+use File::Path qw(make_path);
 
 use Catalyst::Runtime 5.80;
 
@@ -85,6 +86,25 @@ __PACKAGE__->config(
   compression_format => "gzip",
 );
 
+=head2 finalize_config
+
+Override the finalize_config method to ensure the logs directory exists before Log4perl tries to open the log file and Log4perl config is read.
+
+=cut
+
+
+sub finalize_config {
+  my $c = shift;
+  $c->next::method(@_);
+  
+  # Ensure the logs directory exists before Log4perl opens the file
+  my $log_dir = $c->path_to('logs')->stringify;
+  make_path($log_dir) unless -d $log_dir;
+  
+  if ( my $l4p_conf = $c->config->{"Log4perl"} ) {
+    $c->log(Log::Log4perl::Catalyst->new($l4p_conf));
+  }
+}
 
 =head2 timezone
 
